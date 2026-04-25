@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import '../core/config/env.dart';
+import '../core/services/auth_deep_link_service.dart';
 import '../core/services/supabase_service.dart';
 import '../core/utils/logger.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
@@ -76,6 +77,12 @@ Future<void> bootstrap() async {
 
       // Sync favorites with the restored session before first frame.
       await sl<FavoritesCubit>().syncWithAuth(auth.state.user);
+
+      // Start auth deep-link observer AFTER `AuthCubit.bootstrap()` so
+      // the recovery-events subscription is already attached when
+      // Supabase fires `AuthChangeEvent.passwordRecovery` from an
+      // initial cold-start URL.
+      await sl<AuthDeepLinkService>().initialize();
 
       runApp(CarzonApp());
     },

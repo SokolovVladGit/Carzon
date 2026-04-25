@@ -28,6 +28,7 @@ class FavoritesCubit extends Cubit<FavoritesState> {
   final RemoveFavorite _removeFavorite;
 
   String? _currentUserId;
+  int _errorSeq = 0;
 
   /// Called by the app root on every auth state change.
   /// - Signed in: load this user's favorite ids.
@@ -49,11 +50,15 @@ class FavoritesCubit extends Cubit<FavoritesState> {
     emit(state.copyWith(status: FavoritesStatus.loading));
     final result = await _getFavoriteIds();
     result.fold(
-      (failure) => emit(state.copyWith(
+      (_) => emit(state.copyWith(
         status: FavoritesStatus.failure,
-        errorMessage: failure.message,
+        lastError: _nextError(FavoritesFailureKind.loadFailed),
       )),
-      (ids) => emit(state.copyWith(status: FavoritesStatus.ready, ids: ids)),
+      (ids) => emit(state.copyWith(
+        status: FavoritesStatus.ready,
+        ids: ids,
+        clearLastError: true,
+      )),
     );
   }
 
@@ -62,9 +67,9 @@ class FavoritesCubit extends Cubit<FavoritesState> {
     emit(state.copyWith(status: FavoritesStatus.loading));
     final result = await _getFavoriteListings();
     result.fold(
-      (failure) => emit(state.copyWith(
+      (_) => emit(state.copyWith(
         status: FavoritesStatus.failure,
-        errorMessage: failure.message,
+        lastError: _nextError(FavoritesFailureKind.loadFailed),
       )),
       (listings) {
         final ids = listings.map((l) => l.id).toSet();
@@ -72,14 +77,16 @@ class FavoritesCubit extends Cubit<FavoritesState> {
           status: FavoritesStatus.ready,
           listings: listings,
           ids: ids,
+          clearLastError: true,
         ));
       },
     );
   }
 
   /// Toggle favorite for [listingId]. No-op if not authenticated.
-  /// Emits a transient failure state with [errorMessage] on backend error;
-  /// the UI is responsible for surfacing it (e.g. snackbar).
+  /// Emits a transient failure state with a [FavoritesErrorEvent] on
+  /// backend error; the widget is responsible for surfacing it (e.g.
+  /// snackbar) and mapping the kind to a localized message.
   Future<void> toggle(String listingId) async {
     if (_currentUserId == null) return;
     if (state.isPending(listingId)) return;
@@ -94,10 +101,10 @@ class FavoritesCubit extends Cubit<FavoritesState> {
     final newPending = {...state.pending}..remove(listingId);
 
     result.fold(
-      (failure) => emit(state.copyWith(
+      (_) => emit(state.copyWith(
         status: FavoritesStatus.ready,
         pending: newPending,
-        errorMessage: failure.message,
+        lastError: _nextError(FavoritesFailureKind.toggleFailed),
       )),
       (_) {
         final newIds = {...state.ids};
@@ -115,8 +122,14 @@ class FavoritesCubit extends Cubit<FavoritesState> {
           pending: newPending,
           ids: newIds,
           listings: newListings,
+          clearLastError: true,
         ));
       },
     );
+  }
+
+  FavoritesErrorEvent _nextError(FavoritesFailureKind kind) {
+    _errorSeq += 1;
+    return FavoritesErrorEvent(id: _errorSeq, kind: kind);
   }
 }

@@ -15,6 +15,11 @@ class NewListingInput extends Equatable {
     required this.mileageKm,
     required this.type,
     required this.city,
+    required this.marketRegion,
+    required this.contactPhone,
+    this.telegramUsername,
+    this.whatsappEnabled = false,
+    this.coverImageUrl,
   });
 
   final String sellerId;
@@ -26,6 +31,44 @@ class NewListingInput extends Equatable {
   final int mileageKm;
   final ListingType type;
   final String city;
+  final MarketRegion marketRegion;
+
+  /// Required at the form level. Stored as a human-readable string;
+  /// the data layer trims whitespace before inserting.
+  final String contactPhone;
+
+  /// Optional Telegram username. Stored without the leading `@`.
+  final String? telegramUsername;
+
+  /// Seller opt-in: allow buyers to reach the same phone on WhatsApp.
+  final bool whatsappEnabled;
+
+  /// Optional public URL of the listing's cover image. When non-null and
+  /// non-empty the data layer will include it in the insert payload.
+  final String? coverImageUrl;
+
+  NewListingInput copyWith({
+    String? coverImageUrl,
+    String? contactPhone,
+    String? telegramUsername,
+    bool? whatsappEnabled,
+  }) =>
+      NewListingInput(
+        sellerId: sellerId,
+        title: title,
+        make: make,
+        model: model,
+        year: year,
+        priceEur: priceEur,
+        mileageKm: mileageKm,
+        type: type,
+        city: city,
+        marketRegion: marketRegion,
+        contactPhone: contactPhone ?? this.contactPhone,
+        telegramUsername: telegramUsername ?? this.telegramUsername,
+        whatsappEnabled: whatsappEnabled ?? this.whatsappEnabled,
+        coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+      );
 
   @override
   List<Object?> get props => [
@@ -38,5 +81,10 @@ class NewListingInput extends Equatable {
         mileageKm,
         type,
         city,
+        marketRegion,
+        contactPhone,
+        telegramUsername,
+        whatsappEnabled,
+        coverImageUrl,
       ];
 }

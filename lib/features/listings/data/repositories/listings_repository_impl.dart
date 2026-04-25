@@ -37,4 +37,37 @@ class ListingsRepositoryImpl implements ListingsRepository {
       return const FailureResult(UnknownFailure('Failed to load listing.'));
     }
   }
+
+  @override
+  Future<Result<Listing>> updateStatus(
+    String id,
+    ListingStatus status,
+  ) async {
+    try {
+      final item = await _remote.updateStatus(id, status.name);
+      return Success(item);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('updateStatus unknown error', e, st);
+      return const FailureResult(
+        UnknownFailure('Failed to update listing status.'),
+      );
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteListing(String id) async {
+    try {
+      await _remote.deleteListing(id);
+      return const Success(null);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('deleteListing unknown error', e, st);
+      return const FailureResult(
+        UnknownFailure('Failed to delete listing.'),
+      );
+    }
+  }
 }

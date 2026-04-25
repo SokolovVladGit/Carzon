@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../bloc/favorites_cubit.dart';
@@ -15,12 +17,13 @@ class FavoriteToggleButton extends StatelessWidget {
 
   void _handleTap(BuildContext context) {
     final auth = context.read<AuthCubit>().state;
+    final l10n = context.l10n;
     if (auth.status != AuthStatus.authenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Sign in to favorite listings.'),
+          content: Text(l10n.favoriteSignInRequired),
           action: SnackBarAction(
-            label: 'Sign in',
+            label: l10n.commonSignIn,
             onPressed: () => context.go(AppRoutes.signIn),
           ),
         ),
@@ -32,12 +35,15 @@ class FavoriteToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return BlocConsumer<FavoritesCubit, FavoritesState>(
       listenWhen: (prev, curr) =>
-          prev.errorMessage != curr.errorMessage && curr.errorMessage != null,
+          prev.lastError != curr.lastError && curr.lastError != null,
       listener: (context, state) {
+        final err = state.lastError;
+        if (err == null) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.errorMessage!)),
+          SnackBar(content: Text(_favoritesErrorMessage(l10n, err.kind))),
         );
       },
       buildWhen: (prev, curr) =>
@@ -47,7 +53,7 @@ class FavoriteToggleButton extends StatelessWidget {
         final isFav = state.isFavorite(listingId);
         final pending = state.isPending(listingId);
         return IconButton(
-          tooltip: isFav ? 'Remove from favorites' : 'Add to favorites',
+          tooltip: isFav ? l10n.favoriteRemove : l10n.favoriteAdd,
           onPressed: pending ? null : () => _handleTap(context),
           icon: pending
               ? const SizedBox(
@@ -63,4 +69,11 @@ class FavoriteToggleButton extends StatelessWidget {
       },
     );
   }
+}
+
+String _favoritesErrorMessage(AppLocalizations l10n, FavoritesFailureKind kind) {
+  return switch (kind) {
+    FavoritesFailureKind.loadFailed => l10n.favoritesLoadFailed,
+    FavoritesFailureKind.toggleFailed => l10n.favoriteToggleFailed,
+  };
 }

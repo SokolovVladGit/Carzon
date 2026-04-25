@@ -1,7 +1,11 @@
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/listing.dart';
 
 /// Display formatters shared by the listings tile and details page.
-/// Kept feature-local — not promoted to core until a second feature needs them.
+/// Kept feature-local — not promoted to core until a second feature
+/// needs them. Enum-backed label helpers accept an [AppLocalizations]
+/// so they can be called from any widget without reaching out to
+/// `context` themselves.
 
 String formatEur(num value) {
   if (value == value.truncate()) {
@@ -12,27 +16,36 @@ String formatEur(num value) {
 
 String formatKm(int km) => '${_thousands(km.toString())} km';
 
-String formatType(ListingType type) {
+String formatType(AppLocalizations l10n, ListingType type) {
   switch (type) {
     case ListingType.sale:
-      return 'For sale';
+      return l10n.formatTypeSale;
     case ListingType.exchange:
-      return 'Exchange';
+      return l10n.formatTypeExchange;
     case ListingType.both:
-      return 'Sale or exchange';
+      return l10n.formatTypeBoth;
   }
 }
 
-String formatStatus(ListingStatus status) {
+String formatMarketRegion(AppLocalizations l10n, MarketRegion region) {
+  switch (region) {
+    case MarketRegion.transnistria:
+      return l10n.regionTransnistria;
+    case MarketRegion.moldova:
+      return l10n.regionMoldova;
+  }
+}
+
+String formatStatus(AppLocalizations l10n, ListingStatus status) {
   switch (status) {
     case ListingStatus.active:
-      return 'Active';
+      return l10n.statusActive;
     case ListingStatus.hidden:
-      return 'Hidden';
+      return l10n.statusHidden;
     case ListingStatus.sold:
-      return 'Sold';
+      return l10n.statusSold;
     case ListingStatus.archived:
-      return 'Archived';
+      return l10n.statusArchived;
   }
 }
 

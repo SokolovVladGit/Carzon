@@ -1,3 +1,4 @@
+import '../../../../core/config/env.dart';
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/logger.dart';
@@ -44,7 +45,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<AuthUser>> signUpWithPassword({
+  Future<Result<AuthUser?>> signUpWithPassword({
     required String email,
     required String password,
   }) async {
@@ -73,4 +74,45 @@ class AuthRepositoryImpl implements AuthRepository {
       return const FailureResult(UnknownFailure('Sign-out failed.'));
     }
   }
+
+  @override
+  Future<Result<void>> requestPasswordReset(String email) async {
+    try {
+      await _remote.requestPasswordReset(
+        email: email,
+        // Optional env-driven redirect keeps the .env pattern consistent
+        // with how existing Supabase config is wired. Null is valid and
+        // uses the project's default Site URL.
+        redirectTo: Env.passwordResetRedirectUrl,
+      );
+      return const Success(null);
+    } on AuthException catch (e) {
+      return FailureResult(AuthFailure(e.message));
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('requestPasswordReset unknown error', e, st);
+      return const FailureResult(
+        UnknownFailure('Password-reset request failed.'),
+      );
+    }
+  }
+
+  @override
+  Future<Result<void>> updatePassword(String newPassword) async {
+    try {
+      await _remote.updatePassword(newPassword);
+      return const Success(null);
+    } on AuthException catch (e) {
+      return FailureResult(AuthFailure(e.message));
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('updatePassword unknown error', e, st);
+      return const FailureResult(UnknownFailure('Password update failed.'));
+    }
+  }
+
+  @override
+  Stream<void> get passwordRecoveryEvents => _remote.passwordRecoveryEvents();
 }

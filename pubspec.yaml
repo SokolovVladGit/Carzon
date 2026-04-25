@@ -9,6 +9,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Localization: Russian is the MVP product language (Transnistria
+  # launch). Romanian (ro) and English (en) are planned but intentionally
+  # not added in this pass — see lib/l10n/README.md and l10n.yaml.
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   cupertino_icons: ^1.0.8
 
   # State management
@@ -24,8 +30,20 @@ dependencies:
   # Backend
   supabase_flutter: ^2.8.0
 
+  # Native deep-link plumbing for Supabase auth callbacks
+  # (password recovery / email confirmation links back into the app).
+  # Pulled in via supabase_flutter transitively; declared explicitly
+  # because lib/core/services/auth_deep_link_service.dart imports it.
+  app_links: ^7.0.0
+
   # Configuration
   flutter_dotenv: ^5.2.1
+
+  # Media (MVP: single cover image picker for create-listing)
+  image_picker: ^1.1.2
+
+  # External actions (Call / Telegram / WhatsApp buttons on listing details)
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -36,5 +54,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - .env
