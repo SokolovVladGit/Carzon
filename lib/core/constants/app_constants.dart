@@ -3,7 +3,6 @@ class AppConstants {
   AppConstants._();
 
   static const String appName = 'Carzon';
-  static const String defaultLocale = 'ro_MD';
   static const Duration defaultRequestTimeout = Duration(seconds: 20);
   static const int defaultPageSize = 20;
 }

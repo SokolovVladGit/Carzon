@@ -3,21 +3,28 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
+import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../listings/presentation/widgets/listing_tile.dart';
 import '../bloc/favorites_cubit.dart';
 import '../bloc/favorites_state.dart';
+import '../widgets/favorites_empty_state.dart';
 
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Favorites')),
+    final l10n = context.l10n;
+    return TopLevelScaffold(
+      destination: TopLevelDestination.favorites,
+      appBar: AppBar(
+        title: Text(l10n.favoritesTitle),
+      ),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
           if (authState.status != AuthStatus.authenticated) {
@@ -38,6 +45,7 @@ class _SignInRequired extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -46,12 +54,12 @@ class _SignInRequired extends StatelessWidget {
           children: [
             const Icon(Icons.favorite_border, size: 48),
             const SizedBox(height: 12),
-            const Text(
-              'Sign in to view your favorite listings.',
+            Text(
+              l10n.favoritesSignInRequired,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onSignIn, child: const Text('Sign in')),
+            FilledButton(onPressed: onSignIn, child: Text(l10n.commonSignIn)),
           ],
         ),
       ),
@@ -78,6 +86,7 @@ class _FavoritesListState extends State<_FavoritesList> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return BlocBuilder<FavoritesCubit, FavoritesState>(
       builder: (context, state) {
         switch (state.status) {
@@ -86,24 +95,33 @@ class _FavoritesListState extends State<_FavoritesList> {
             return const LoadingView();
           case FavoritesStatus.failure:
             return ErrorView(
-              message: state.errorMessage ?? 'Failed to load favorites.',
+              message: l10n.favoritesLoadFailed,
               onRetry: () => context.read<FavoritesCubit>().loadListings(),
             );
           case FavoritesStatus.ready:
             if (state.listings.isEmpty) {
-              return const Center(child: Text('No favorites yet.'));
+              return FavoritesEmptyState(
+                onRefresh: () =>
+                    context.read<FavoritesCubit>().loadListings(),
+                onBrowseListings: () => context.go(AppRoutes.listings),
+              );
             }
             return RefreshIndicator(
               onRefresh: () => context.read<FavoritesCubit>().loadListings(),
               child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
                 itemCount: state.listings.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
+                separatorBuilder: (_, _) => const SizedBox(height: 28),
                 itemBuilder: (context, index) {
                   final item = state.listings[index];
                   return ListingTile(
                     listing: item,
-                    onTap: () =>
-                        context.go(AppRoutes.listingDetailsPath(item.id)),
+                    onTap: () => context.push(
+                      AppRoutes.listingDetailsPath(item.id),
+                      extra: ListingDetailsExtra(
+                        coverImageUrl: item.coverImageUrl,
+                      ),
+                    ),
                   );
                 },
               ),

@@ -1,10 +1,12 @@
 import 'package:get_it/get_it.dart';
 
+import '../../core/services/auth_deep_link_service.dart';
 import '../../core/services/supabase_service.dart';
 import '../../features/auth/di/auth_injection.dart';
-import '../../features/chat/di/chat_injection.dart';
 import '../../features/create_listing/di/create_listing_injection.dart';
+import '../../features/edit_listing/di/edit_listing_injection.dart';
 import '../../features/favorites/di/favorites_injection.dart';
+import '../../features/legal/di/legal_injection.dart';
 import '../../features/listings/di/listings_injection.dart';
 import '../../features/my_listings/di/my_listings_injection.dart';
 import '../../features/profile/di/profile_injection.dart';
@@ -21,13 +23,17 @@ final GetIt sl = GetIt.instance;
 Future<void> configureDependencies(SupabaseService supabaseService) async {
   // Core / shared singletons
   sl.registerSingleton<SupabaseService>(supabaseService);
+  sl.registerLazySingleton<AuthDeepLinkService>(
+    () => AuthDeepLinkService.forSupabase(sl<SupabaseService>()),
+  );
 
   // Feature registrations (order matters only if a feature depends on another).
   registerAuthFeature(sl);
   registerListingsFeature(sl);
   registerProfileFeature(sl);
   registerFavoritesFeature(sl);
-  registerChatFeature(sl);
   registerCreateListingFeature(sl);
   registerMyListingsFeature(sl);
+  registerEditListingFeature(sl);
+  registerLegalFeature(sl);
 }

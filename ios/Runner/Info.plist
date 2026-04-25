@@ -45,5 +45,25 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Carzon needs access to your photos so you can attach a cover photo to your car listing.</string>
+	<!--
+		Supabase auth callback deep link (password recovery / email
+		confirmation). Keep in sync with the Android intent-filter and
+		the SUPABASE_PASSWORD_RESET_REDIRECT_URL env variable.
+	-->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.carzon.auth-callback</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>carzon</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

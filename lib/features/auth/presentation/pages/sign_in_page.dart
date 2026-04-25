@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
+import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/widgets/app_back_button.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 
@@ -35,15 +38,19 @@ class _SignInPageState extends State<SignInPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign in')),
+      appBar: AppBar(
+        leading: const AppBackButton(fallback: AppRoutes.listings),
+        title: Text(l10n.signInTitle),
+      ),
       body: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) {
           if (state.status == AuthStatus.authenticated) {
             context.go(AppRoutes.listings);
           } else if (state.status == AuthStatus.error) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage ?? 'Sign-in error')),
+              SnackBar(content: Text(_authErrorMessage(l10n, state.errorKind))),
             );
           }
         },
@@ -58,18 +65,21 @@ class _SignInPageState extends State<SignInPage> {
                 children: [
                   TextFormField(
                     controller: _emailCtrl,
-                    decoration: const InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(labelText: l10n.authFieldEmail),
                     keyboardType: TextInputType.emailAddress,
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Email required' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? l10n.validationEmailRequired
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _passwordCtrl,
-                    decoration: const InputDecoration(labelText: 'Password'),
+                    decoration:
+                        InputDecoration(labelText: l10n.authFieldPassword),
                     obscureText: true,
-                    validator: (v) =>
-                        (v == null || v.length < 6) ? 'Min 6 characters' : null,
+                    validator: (v) => (v == null || v.length < 6)
+                        ? l10n.validationPasswordMin
+                        : null,
                   ),
                   const SizedBox(height: 24),
                   FilledButton(
@@ -80,7 +90,25 @@ class _SignInPageState extends State<SignInPage> {
                             width: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Sign in'),
+                        : Text(l10n.signInSubmit),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: loading
+                        ? null
+                        : () => context.go(AppRoutes.forgotPassword),
+                    child: Text(l10n.signInForgotPassword),
+                  ),
+                  TextButton(
+                    onPressed:
+                        loading ? null : () => context.go(AppRoutes.signUp),
+                    child: Text(l10n.signInCreateAccount),
+                  ),
+                  const SizedBox(height: 4),
+                  TextButton(
+                    onPressed:
+                        loading ? null : () => context.go(AppRoutes.legal),
+                    child: Text(l10n.legalLink),
                   ),
                 ],
               ),
@@ -90,4 +118,15 @@ class _SignInPageState extends State<SignInPage> {
       ),
     );
   }
+}
+
+/// Maps an [AuthErrorKind] to a localized snackbar message. Exposed at
+/// library level so shared auth flows can reuse it.
+String _authErrorMessage(AppLocalizations l10n, AuthErrorKind? kind) {
+  return switch (kind) {
+    AuthErrorKind.signInInvalidCredentials => l10n.signInInvalidCredentials,
+    AuthErrorKind.signInFailed || null => l10n.signInFailedRetry,
+    AuthErrorKind.signUpFailed => l10n.signUpFailedRetry,
+    AuthErrorKind.signOutFailed => l10n.signOutFailedRetry,
+  };
 }

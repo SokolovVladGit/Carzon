@@ -58,6 +58,14 @@ flutter run
 flutter test
 ```
 
+## Release
+
+Before cutting a staging or beta build, work through
+[`docs/mvp_release_checklist.md`](docs/mvp_release_checklist.md).
+It covers required env vars, Supabase dashboard configuration,
+deep-link sanity checks, a manual smoke-test script, and known MVP
+limitations.
+
 ## Adding a new feature
 
 1. Create `lib/features/<name>/{di,data,domain,presentation}/...`.

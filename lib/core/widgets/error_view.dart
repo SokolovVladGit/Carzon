@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class ErrorView extends StatelessWidget {
   const ErrorView({super.key, required this.message, this.onRetry});
 
@@ -8,6 +10,14 @@ class ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fall back to the bare retry label when this widget is mounted
+    // *before* the app's localization delegates are wired in (e.g. from
+    // `StartupErrorApp`, which runs before `MaterialApp.router` is
+    // mounted).
+    final retryLabel =
+        Localizations.of<AppLocalizations>(context, AppLocalizations)
+                ?.commonRetry ??
+            'Повторить';
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -19,7 +29,7 @@ class ErrorView extends StatelessWidget {
             Text(message, textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              FilledButton(onPressed: onRetry, child: const Text('Retry')),
+              FilledButton(onPressed: onRetry, child: Text(retryLabel)),
             ],
           ],
         ),

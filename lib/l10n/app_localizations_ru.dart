@@ -1,0 +1,825 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Russian (`ru`).
+class AppLocalizationsRu extends AppLocalizations {
+  AppLocalizationsRu([String locale = 'ru']) : super(locale);
+
+  @override
+  String get appName => 'Carzon';
+
+  @override
+  String get commonRetry => 'Повторить';
+
+  @override
+  String get commonSave => 'Сохранить';
+
+  @override
+  String get commonCancel => 'Отмена';
+
+  @override
+  String get commonDelete => 'Удалить';
+
+  @override
+  String get commonSignIn => 'Войти';
+
+  @override
+  String get commonSignOut => 'Выйти';
+
+  @override
+  String get commonRequired => 'Обязательно';
+
+  @override
+  String routeNotFound(String uri) {
+    return 'Страница не найдена: $uri';
+  }
+
+  @override
+  String get listingsAppBarTitle => 'Carzon';
+
+  @override
+  String get listingsTooltipSell => 'Подать объявление';
+
+  @override
+  String get listingsTooltipMyListings => 'Мои объявления';
+
+  @override
+  String get listingsTooltipFavorites => 'Избранное';
+
+  @override
+  String get listingsTooltipProfile => 'Профиль';
+
+  @override
+  String get catalogTitle => 'Каталог авто';
+
+  @override
+  String get catalogSubtitle =>
+      'Подберите автомобиль в Приднестровье и Молдове';
+
+  @override
+  String get regionFilterLabel => 'Регион';
+
+  @override
+  String get navListings => 'Поиск';
+
+  @override
+  String get navFavorites => 'Избранное';
+
+  @override
+  String get navSell => 'Подать';
+
+  @override
+  String get navMyListings => 'Мои';
+
+  @override
+  String get navProfile => 'Профиль';
+
+  @override
+  String get navMenu => 'Меню';
+
+  @override
+  String get menuTitle => 'Меню';
+
+  @override
+  String get menuAccount => 'Аккаунт';
+
+  @override
+  String get listingsLoadFailed => 'Не удалось загрузить объявления.';
+
+  @override
+  String get listingsEmpty => 'Подходящих объявлений не найдено.';
+
+  @override
+  String get listingsSearchHint => 'Поиск объявлений';
+
+  @override
+  String get listingsSearchClearTooltip => 'Очистить поиск';
+
+  @override
+  String get listingsFiltersTooltip => 'Фильтры';
+
+  @override
+  String get listingsEmptyTitle => 'Объявления не найдены';
+
+  @override
+  String get listingsEmptyBody =>
+      'В этом разделе пока нет активных объявлений.';
+
+  @override
+  String get listingsEmptyFilteredBody =>
+      'Попробуйте изменить поиск или фильтры.';
+
+  @override
+  String get listingsEmptyResetFilters => 'Сбросить фильтры';
+
+  @override
+  String get regionTransnistria => 'Приднестровье';
+
+  @override
+  String get regionMoldova => 'Молдова';
+
+  @override
+  String get regionBoth => 'Все';
+
+  @override
+  String get filtersTitle => 'Фильтры';
+
+  @override
+  String get filterMake => 'Марка';
+
+  @override
+  String get filterMakeHint => 'напр. Volkswagen';
+
+  @override
+  String get filterMinYear => 'Мин. год';
+
+  @override
+  String get filterMaxYear => 'Макс. год';
+
+  @override
+  String get filterMustBeNumber => 'Нужно число.';
+
+  @override
+  String get filterMustBeMaxYear => 'Должно быть ≤ максимального года.';
+
+  @override
+  String get filterMustBeMinYear => 'Должно быть ≥ минимального года.';
+
+  @override
+  String get filterType => 'Тип';
+
+  @override
+  String get typeAny => 'Любой';
+
+  @override
+  String get typeSale => 'Продажа';
+
+  @override
+  String get typeExchange => 'Обмен';
+
+  @override
+  String get typeBoth => 'Продажа или обмен';
+
+  @override
+  String get filterClear => 'Сбросить';
+
+  @override
+  String get filterApply => 'Применить';
+
+  @override
+  String get listingDetailsTitle => 'Объявление';
+
+  @override
+  String get listingDetailsLoadFailed => 'Не удалось загрузить объявление.';
+
+  @override
+  String get listingFieldMake => 'Марка';
+
+  @override
+  String get listingFieldModel => 'Модель';
+
+  @override
+  String get listingFieldYear => 'Год';
+
+  @override
+  String get listingFieldMileage => 'Пробег';
+
+  @override
+  String get listingFieldType => 'Тип';
+
+  @override
+  String get listingFieldCity => 'Город';
+
+  @override
+  String get listingFieldRegion => 'Регион';
+
+  @override
+  String get listingFieldPosted => 'Опубликовано';
+
+  @override
+  String get contactSellerSection => 'Связаться с продавцом';
+
+  @override
+  String get contactShowPhone => 'Показать телефон';
+
+  @override
+  String get contactPublicNotice =>
+      'Контакты продавца видны в активных объявлениях.';
+
+  @override
+  String contactTelegramLabel(String username) {
+    return 'Telegram @$username';
+  }
+
+  @override
+  String get contactWhatsapp => 'WhatsApp';
+
+  @override
+  String get contactActionFailed => 'Не удалось открыть действие.';
+
+  @override
+  String get reportListing => 'Пожаловаться на объявление';
+
+  @override
+  String get reportListingDescription =>
+      'Заметили подозрительную, неверную или недопустимую информацию? Сообщите нам.';
+
+  @override
+  String get reportListingMailFailed =>
+      'Не удалось открыть почтовое приложение.';
+
+  @override
+  String get formatTypeSale => 'Продажа';
+
+  @override
+  String get formatTypeExchange => 'Обмен';
+
+  @override
+  String get formatTypeBoth => 'Продажа или обмен';
+
+  @override
+  String get statusActive => 'Активно';
+
+  @override
+  String get statusHidden => 'Скрыто';
+
+  @override
+  String get statusSold => 'Продано';
+
+  @override
+  String get statusArchived => 'В архиве';
+
+  @override
+  String get publicContactNotice =>
+      'Ваш телефон и выбранные способы связи будут видны в активных объявлениях. Указывайте только те контакты, которыми готовы поделиться публично.';
+
+  @override
+  String get createListingTitle => 'Подать объявление';
+
+  @override
+  String get createListingSignInRequired => 'Войдите, чтобы подать объявление.';
+
+  @override
+  String get fieldTitle => 'Заголовок';
+
+  @override
+  String get fieldMake => 'Марка';
+
+  @override
+  String get fieldModel => 'Модель';
+
+  @override
+  String get fieldYear => 'Год';
+
+  @override
+  String get fieldPriceEur => 'Цена (EUR)';
+
+  @override
+  String get fieldMileageKm => 'Пробег (км)';
+
+  @override
+  String get fieldType => 'Тип';
+
+  @override
+  String get fieldRegion => 'Регион';
+
+  @override
+  String get fieldCity => 'Город';
+
+  @override
+  String get fieldPhone => 'Номер телефона';
+
+  @override
+  String get fieldPhoneHint => '+373 ...';
+
+  @override
+  String get fieldTelegram => 'Ник в Telegram (необязательно)';
+
+  @override
+  String get fieldTelegramHint => '@username';
+
+  @override
+  String get whatsappToggle => 'WhatsApp доступен по этому номеру';
+
+  @override
+  String get regionRequired => 'Выберите регион.';
+
+  @override
+  String get validationRequired => 'Обязательно';
+
+  @override
+  String validationYearRange(int maxYear) {
+    return '1900–$maxYear';
+  }
+
+  @override
+  String get validationPositive => 'Должно быть > 0';
+
+  @override
+  String get validationNonNegative => 'Должно быть ≥ 0';
+
+  @override
+  String get coverPhotoOptional => 'Обложка (необязательно)';
+
+  @override
+  String get coverRemoveTooltip => 'Удалить фото';
+
+  @override
+  String get coverAddPhoto => 'Добавить фото';
+
+  @override
+  String get publishListing => 'Опубликовать';
+
+  @override
+  String get listingCreated => 'Объявление создано.';
+
+  @override
+  String get listingCreateFailed => 'Не удалось создать объявление.';
+
+  @override
+  String imageLoadFailed(String error) {
+    return 'Не удалось загрузить изображение: $error';
+  }
+
+  @override
+  String get coverUploadFailedRetry =>
+      'Не удалось загрузить фото обложки. Попробуйте ещё раз.';
+
+  @override
+  String get listingCreateFailedRetry =>
+      'Не удалось создать объявление. Попробуйте ещё раз.';
+
+  @override
+  String get editListingTitle => 'Редактировать объявление';
+
+  @override
+  String get editListingLoadFailed =>
+      'Не удалось загрузить объявление. Попробуйте ещё раз.';
+
+  @override
+  String get listingUpdated => 'Объявление обновлено.';
+
+  @override
+  String get listingUpdateFailedRetry =>
+      'Не удалось обновить объявление. Попробуйте ещё раз.';
+
+  @override
+  String get notAllowedEdit =>
+      'У вас нет прав на редактирование этого объявления.';
+
+  @override
+  String get checkDetailsAndRetry =>
+      'Проверьте данные объявления и попробуйте ещё раз.';
+
+  @override
+  String get coverUpdateFailedRetry =>
+      'Не удалось обновить фото обложки. Попробуйте ещё раз.';
+
+  @override
+  String get coverPhotoLabel => 'Обложка';
+
+  @override
+  String get coverChangePhoto => 'Изменить фото';
+
+  @override
+  String get coverCancelChange => 'Отменить изменение';
+
+  @override
+  String get coverCancelRemoval => 'Отменить удаление';
+
+  @override
+  String get coverReplacePhoto => 'Заменить фото';
+
+  @override
+  String get coverRemovePhoto => 'Удалить фото';
+
+  @override
+  String get coverWillBeRemovedNotice =>
+      'Фото обложки будет удалено после сохранения.';
+
+  @override
+  String get coverWillBeReplacedNotice =>
+      'Новое фото будет загружено после сохранения.';
+
+  @override
+  String get coverPlaceholderWillBeRemoved => 'Обложка будет удалена';
+
+  @override
+  String get saveChanges => 'Сохранить';
+
+  @override
+  String get myListingsTitle => 'Мои объявления';
+
+  @override
+  String get myListingsSignInRequired =>
+      'Войдите, чтобы увидеть свои объявления.';
+
+  @override
+  String get myListingsLoadFailed => 'Не удалось загрузить ваши объявления.';
+
+  @override
+  String get myListingsEmpty => 'Вы ещё не опубликовали ни одного объявления.';
+
+  @override
+  String get myListingsEmptyTitle => 'У вас пока нет объявлений';
+
+  @override
+  String get myListingsEmptyBody =>
+      'Подайте первое объявление — оно появится здесь после публикации.';
+
+  @override
+  String get myListingsSellCta => 'Подать объявление';
+
+  @override
+  String get myListingActionsTooltip => 'Действия с объявлением';
+
+  @override
+  String get actionEdit => 'Редактировать';
+
+  @override
+  String get actionReactivate => 'Активировать';
+
+  @override
+  String get actionMarkSold => 'Отметить как проданное';
+
+  @override
+  String get actionHide => 'Скрыть';
+
+  @override
+  String get actionArchive => 'В архив';
+
+  @override
+  String get actionDeletePermanently => 'Удалить навсегда';
+
+  @override
+  String get deleteDialogTitle => 'Удалить объявление?';
+
+  @override
+  String get deleteDialogBody =>
+      'Объявление будет безвозвратно удалено из Carzon. Оно перестанет показываться пользователям и исчезнет у всех, кто добавил его в избранное.';
+
+  @override
+  String get notAllowedUpdateStatus =>
+      'У вас нет прав на обновление этого объявления.';
+
+  @override
+  String get statusNotSupported => 'Этот статус объявления не поддерживается.';
+
+  @override
+  String get updateStatusFailedRetry =>
+      'Не удалось обновить статус объявления. Попробуйте ещё раз.';
+
+  @override
+  String get notAllowedDelete => 'У вас нет прав на удаление этого объявления.';
+
+  @override
+  String get listingNotFound => 'Это объявление больше не существует.';
+
+  @override
+  String get deleteListingFailedRetry =>
+      'Не удалось удалить объявление. Попробуйте ещё раз.';
+
+  @override
+  String get favoritesTitle => 'Избранное';
+
+  @override
+  String get favoritesSignInRequired =>
+      'Войдите, чтобы увидеть избранные объявления.';
+
+  @override
+  String get favoritesLoadFailed => 'Не удалось загрузить избранное.';
+
+  @override
+  String get favoritesEmpty => 'Пока ничего не добавлено в избранное.';
+
+  @override
+  String get favoritesEmptyTitle => 'В избранном пока пусто';
+
+  @override
+  String get favoritesEmptyBody =>
+      'Добавляйте объявления в избранное, чтобы быстро вернуться к ним позже.';
+
+  @override
+  String get favoritesEmptyBrowse => 'Смотреть объявления';
+
+  @override
+  String get favoriteAdd => 'В избранное';
+
+  @override
+  String get favoriteRemove => 'Убрать из избранного';
+
+  @override
+  String get favoriteSignInRequired => 'Войдите, чтобы добавлять в избранное.';
+
+  @override
+  String get favoriteToggleFailed =>
+      'Не удалось обновить избранное. Попробуйте ещё раз.';
+
+  @override
+  String get profileTitle => 'Аккаунт';
+
+  @override
+  String get profileSignInRequired => 'Войдите, чтобы управлять аккаунтом.';
+
+  @override
+  String get profileSignedInFallback => 'Вы вошли в систему';
+
+  @override
+  String get profileSignOutFailedRetry =>
+      'Не удалось выйти. Попробуйте ещё раз.';
+
+  @override
+  String get profileMyListings => 'Мои объявления';
+
+  @override
+  String get profileFavorites => 'Избранное';
+
+  @override
+  String get profileCreateListing => 'Подать объявление';
+
+  @override
+  String get profileLegal => 'Условия и конфиденциальность';
+
+  @override
+  String get profileSignOut => 'Выйти';
+
+  @override
+  String get signInTitle => 'Вход';
+
+  @override
+  String get signInSubmit => 'Войти';
+
+  @override
+  String get signInError => 'Ошибка входа';
+
+  @override
+  String get signInInvalidCredentials => 'Неверный email или пароль.';
+
+  @override
+  String get signInFailedRetry => 'Не удалось войти. Попробуйте ещё раз.';
+
+  @override
+  String get signUpFailedRetry =>
+      'Не удалось создать аккаунт. Попробуйте ещё раз.';
+
+  @override
+  String get signOutFailedRetry => 'Не удалось выйти. Попробуйте ещё раз.';
+
+  @override
+  String get authFieldEmail => 'Email';
+
+  @override
+  String get authFieldPassword => 'Пароль';
+
+  @override
+  String get authFieldConfirmPassword => 'Подтвердите пароль';
+
+  @override
+  String get validationEmailRequired => 'Введите email';
+
+  @override
+  String get validationEmailInvalid => 'Введите корректный email';
+
+  @override
+  String get validationPasswordRequired => 'Введите пароль';
+
+  @override
+  String get validationPasswordMin => 'Минимум 6 символов';
+
+  @override
+  String get validationConfirmPassword => 'Подтвердите пароль';
+
+  @override
+  String get validationPasswordsDoNotMatch => 'Пароли не совпадают';
+
+  @override
+  String get signInForgotPassword => 'Забыли пароль?';
+
+  @override
+  String get signInCreateAccount => 'Создать аккаунт';
+
+  @override
+  String get legalLink => 'Условия и конфиденциальность';
+
+  @override
+  String get signUpTitle => 'Создать аккаунт';
+
+  @override
+  String get signUpSubmit => 'Создать аккаунт';
+
+  @override
+  String get signUpError => 'Ошибка регистрации';
+
+  @override
+  String get signUpHaveAccount => 'Уже есть аккаунт? Войти';
+
+  @override
+  String get signUpConfirmEmail =>
+      'Проверьте почту, чтобы подтвердить аккаунт.';
+
+  @override
+  String get forgotPasswordTitle => 'Восстановление пароля';
+
+  @override
+  String get forgotPasswordIntro =>
+      'Введите email аккаунта — мы пришлём инструкции по сбросу пароля.';
+
+  @override
+  String get forgotPasswordSubmit => 'Отправить письмо';
+
+  @override
+  String get forgotPasswordSuccess =>
+      'Если аккаунт с такой почтой существует, мы отправили инструкции по сбросу пароля.';
+
+  @override
+  String get forgotPasswordFailedRetry =>
+      'Не удалось отправить письмо. Попробуйте ещё раз.';
+
+  @override
+  String get forgotPasswordEmailEmpty => 'Введите email.';
+
+  @override
+  String get backToSignIn => 'Вернуться ко входу';
+
+  @override
+  String get resetPasswordTitle => 'Новый пароль';
+
+  @override
+  String get resetPasswordNoSession =>
+      'Откройте ссылку для сброса из письма, чтобы продолжить.';
+
+  @override
+  String get resetPasswordIntro => 'Выберите новый пароль для своего аккаунта.';
+
+  @override
+  String get resetPasswordNew => 'Новый пароль';
+
+  @override
+  String get resetPasswordConfirmNew => 'Подтвердите новый пароль';
+
+  @override
+  String get resetPasswordSuccess => 'Пароль обновлён. Теперь вы можете войти.';
+
+  @override
+  String get resetPasswordFailedRetry =>
+      'Не удалось обновить пароль. Попробуйте ещё раз.';
+
+  @override
+  String get resetPasswordSubmit => 'Обновить пароль';
+
+  @override
+  String get resetPasswordValidationNew => 'Введите новый пароль.';
+
+  @override
+  String resetPasswordValidationMin(int min) {
+    return 'Пароль должен содержать не менее $min символов.';
+  }
+
+  @override
+  String get resetPasswordValidationMismatch => 'Пароли не совпадают.';
+
+  @override
+  String get phoneRequired => 'Введите номер телефона.';
+
+  @override
+  String get phoneInvalidChars => 'Разрешены только цифры, пробелы, + ( ) -.';
+
+  @override
+  String get phoneInvalid => 'Введите корректный номер телефона.';
+
+  @override
+  String get telegramInvalid => '5–32 символа: буквы, цифры или подчёркивания.';
+
+  @override
+  String get reportSubjectPrefix => 'Жалоба на объявление Carzon';
+
+  @override
+  String get reportBodyIntro =>
+      'Хочу пожаловаться на следующее объявление Carzon:';
+
+  @override
+  String get reportBodyFieldTitle => 'Заголовок';
+
+  @override
+  String get reportBodyFieldListingId => 'ID объявления';
+
+  @override
+  String get reportBodyFieldMmy => 'Марка / Модель / Год';
+
+  @override
+  String get reportBodyFieldCity => 'Город';
+
+  @override
+  String get reportBodyFieldRegion => 'Регион';
+
+  @override
+  String get reportBodyPrompt =>
+      'Опишите, что подозрительно, неверно или недопустимо в этом объявлении:';
+
+  @override
+  String get legalTitle => 'Условия и конфиденциальность';
+
+  @override
+  String get legalDisclaimer =>
+      'Это ознакомительная версия условий и уведомления о конфиденциальности. Документ описывает, как сейчас работает Carzon, и не заменяет юридически выверенные условия. Пользуйтесь им как информационным материалом на ранней стадии продукта.';
+
+  @override
+  String get legalSectionAboutHeading => 'О Carzon';
+
+  @override
+  String get legalSectionAboutP1 =>
+      'Carzon — это площадка для объявлений о продаже и обмене автомобилей в Молдове и Приднестровье. Сервис помогает владельцам размещать объявления, а покупателям — находить машины и связываться с продавцами.';
+
+  @override
+  String get legalSectionAboutP2 =>
+      'Carzon не продаёт автомобили самостоятельно. Каждое объявление создаётся и принадлежит конкретному пользователю.';
+
+  @override
+  String get legalSectionListingsHeading => 'Объявления на площадке';
+
+  @override
+  String get legalSectionListingsP1 =>
+      'После публикации объявление становится активным и может отображаться другим пользователям Carzon в общей ленте и на странице объявления.';
+
+  @override
+  String get legalSectionListingsP2 =>
+      'Вы отвечаете за точность данных, которые публикуете: марка, модель, год, цена, пробег, регион, фотографии и контактная информация.';
+
+  @override
+  String get legalSectionListingsP3 =>
+      'Свои объявления вы можете скрыть, отметить как проданные, повторно активировать или отправить в архив в разделе «Мои объявления».';
+
+  @override
+  String get legalSectionContactHeading => 'Публичные контакты продавца';
+
+  @override
+  String get legalSectionContactP1 =>
+      'Пока ваше объявление активно, указанные для него контакты могут быть видны любым пользователям Carzon, в том числе без входа в аккаунт.';
+
+  @override
+  String get legalSectionContactP2 =>
+      'Это может быть номер телефона, ник в Telegram (если указан) и отметка о том, что по номеру доступен WhatsApp.';
+
+  @override
+  String get legalSectionContactP3 =>
+      'Указывайте только те контакты, которыми готовы поделиться публично для продажи или обмена автомобиля. Вы можете изменить или удалить их, отредактировав объявление или скрыв его, отправив в архив либо отметив как проданное.';
+
+  @override
+  String get legalSectionPhotosHeading =>
+      'Фотографии и изображения в объявлениях';
+
+  @override
+  String get legalSectionPhotosP1 =>
+      'Фотографии, прикреплённые к объявлению, хранятся в публичном хранилище изображений и могут быть видны всем, пока объявление активно.';
+
+  @override
+  String get legalSectionPhotosP2 =>
+      'Загружайте только те фотографии, которыми имеете право делиться. Не публикуйте личные документы, номерные знаки, которые не хотите показывать, и изображения людей, которые не давали на это согласия.';
+
+  @override
+  String get legalSectionAccountHeading => 'Аккаунт и вход';
+
+  @override
+  String get legalSectionAccountP1 =>
+      'Для публикации объявлений, добавления в избранное и работы с разделом «Мои объявления» нужен аккаунт. Аккаунты управляются по email и паролю.';
+
+  @override
+  String get legalSectionAccountP2 =>
+      'Вы отвечаете за сохранность своего пароля и за любые действия, выполненные из вашего аккаунта. Если вы подозреваете, что кто-то получил доступ к вашему аккаунту, выйдите из него и смените пароль.';
+
+  @override
+  String get legalSectionFavoritesHeading => 'Избранное';
+
+  @override
+  String get legalSectionFavoritesP1 =>
+      'Избранное видно только вам. Другие пользователи не знают, какие объявления вы добавили в избранное.';
+
+  @override
+  String get legalSectionSafetyHeading => 'Безопасность и ответственность';
+
+  @override
+  String get legalSectionSafetyP1 =>
+      'На данный момент Carzon не проводит платежи внутри приложения, не предоставляет эскроу, не инспектирует автомобили, не гарантирует сделки и не проверяет право собственности. Все сделки происходят напрямую между покупателем и продавцом вне платформы.';
+
+  @override
+  String get legalSectionSafetyP2 =>
+      'Перед покупкой, продажей или обменом проверяйте документы, состояние автомобиля и личность второй стороны. Встречайтесь в безопасном месте и не переводите деньги заранее, опираясь только на объявление.';
+
+  @override
+  String get legalSectionSafetyP3 =>
+      'Carzon не является стороной соглашений между покупателем и продавцом и не отвечает за результат сделок, оформленных через платформу.';
+
+  @override
+  String get legalSectionContactUsHeading => 'Обратная связь';
+
+  @override
+  String get legalSectionContactUsP1 =>
+      'Эти условия и уведомление о конфиденциальности могут обновляться по мере развития Carzon. Продолжая пользоваться приложением после обновления, вы принимаете новую версию документа.';
+
+  @override
+  String get legalSectionContactUsP2 =>
+      'Вопросы по этому документу и по содержимому платформы можно задать команде Carzon через канал поддержки, указанный на странице приложения в магазине.';
+}
