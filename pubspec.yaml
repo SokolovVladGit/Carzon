@@ -45,6 +45,11 @@ dependencies:
   # External actions (Call / Telegram / WhatsApp buttons on listing details)
   url_launcher: ^6.3.2
 
+  # SVG rendering for curated car-brand icons. Icons are resolved via
+  # `lib/shared/brands/brand_icon_resolver.dart` which maps free-text
+  # `make` values to assets under `assets/brands/svg/`.
+  flutter_svg: ^2.0.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -57,3 +62,5 @@ flutter:
   generate: true
   assets:
     - .env
+    - assets/brands/svg/
+    - assets/categories/svg/

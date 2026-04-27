@@ -12,6 +12,7 @@ import '../../../../core/widgets/top_level_scaffold.dart';
 import '../bloc/listings_bloc.dart';
 import '../bloc/listings_event.dart';
 import '../bloc/listings_state.dart';
+import '../widgets/category_chip.dart';
 import '../widgets/listing_card.dart';
 import '../widgets/listing_tile.dart';
 import '../widgets/listings_feed_empty_state.dart';
@@ -38,6 +39,11 @@ class _ListingsView extends StatefulWidget {
 class _ListingsViewState extends State<_ListingsView> {
   final _scrollCtrl = ScrollController();
   final _searchCtrl = TextEditingController();
+
+  /// UI-only body-category selection. Not wired to the bloc or query
+  /// layer yet — the listings schema has no `body_type` column, so the
+  /// chip row is purely visual until the backend dimension lands.
+  String _selectedCategoryId = 'all';
 
   @override
   void initState() {
@@ -137,6 +143,11 @@ class _ListingsViewState extends State<_ListingsView> {
                 _DiscoveryHeader(
                   searchCtrl: _searchCtrl,
                   onOpenFilters: () => _openFiltersSheet(context),
+                  selectedCategoryId: _selectedCategoryId,
+                  onCategorySelected: (id) {
+                    if (id == _selectedCategoryId) return;
+                    setState(() => _selectedCategoryId = id);
+                  },
                 ),
                 Expanded(
               child: BlocBuilder<ListingsBloc, ListingsState>(
@@ -356,24 +367,44 @@ class _DiscoveryHeader extends StatelessWidget {
   const _DiscoveryHeader({
     required this.searchCtrl,
     required this.onOpenFilters,
+    required this.selectedCategoryId,
+    required this.onCategorySelected,
   });
 
   final TextEditingController searchCtrl;
   final VoidCallback onOpenFilters;
 
+  /// UI-only body-category selection. Flows from the owning
+  /// `_ListingsView` so selection survives header rebuilds and can be
+  /// lifted into the bloc once the backend gains a `body_type`
+  /// dimension.
+  final String selectedCategoryId;
+  final ValueChanged<String> onCategorySelected;
+
   @override
   Widget build(BuildContext context) {
     // Shares the 20 px gutter with the header and the list below so
-    // the whole page reads as one editorial column. The extra top /
-    // bottom breathing room (vs. Pass 2) lets the search + filter
-    // row read as its own "control group" surface instead of a strip
-    // glued to the editorial title.
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
-      child: _SearchAndFilterBar(
-        searchCtrl: searchCtrl,
-        onOpenFilters: onOpenFilters,
-      ),
+    // the whole page reads as one editorial column. The search +
+    // filter row keeps its existing breathing room; the chip row
+    // sits directly beneath it as a secondary control strip.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
+          child: _SearchAndFilterBar(
+            searchCtrl: searchCtrl,
+            onOpenFilters: onOpenFilters,
+          ),
+        ),
+        const SizedBox(height: 10),
+        CategoryChipsRow(
+          categories: defaultUiCategories,
+          selectedId: selectedCategoryId,
+          onSelected: onCategorySelected,
+        ),
+      ],
     );
   }
 }

@@ -418,6 +418,12 @@ abstract class AppLocalizations {
   /// **'Не удалось загрузить объявление.'**
   String get listingDetailsLoadFailed;
 
+  /// No description provided for @listingDetailsSpecs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Характеристики'**
+  String get listingDetailsSpecs;
+
   /// No description provided for @listingFieldMake.
   ///
   /// In ru, this message translates to:
@@ -477,6 +483,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Показать телефон'**
   String get contactShowPhone;
+
+  /// No description provided for @contactCopyPhone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скопировать'**
+  String get contactCopyPhone;
+
+  /// No description provided for @contactPhoneCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Номер скопирован'**
+  String get contactPhoneCopied;
 
   /// No description provided for @contactPublicNotice.
   ///

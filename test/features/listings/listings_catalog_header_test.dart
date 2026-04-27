@@ -144,9 +144,18 @@ void main() {
         await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
         await tester.pump();
 
+        // Assert on the widget type, not raw text: the region label
+        // "Все" collides with the body-category chip "Все" that now
+        // lives on the home surface. The invariant we actually care
+        // about is "no region SegmentedButton on the home feed".
+        expect(
+          find.byType(SegmentedButton<MarketRegionFilter>),
+          findsNothing,
+        );
+        // The two region-specific labels do not collide with any
+        // other UI string, so the strict text check is preserved.
         expect(find.text(l10n.regionTransnistria), findsNothing);
         expect(find.text(l10n.regionMoldova), findsNothing);
-        expect(find.text(l10n.regionBoth), findsNothing);
       },
     );
 
