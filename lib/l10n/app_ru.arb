@@ -73,6 +73,7 @@
 
   "listingDetailsTitle": "Объявление",
   "listingDetailsLoadFailed": "Не удалось загрузить объявление.",
+  "listingDetailsSpecs": "Характеристики",
   "listingFieldMake": "Марка",
   "listingFieldModel": "Модель",
   "listingFieldYear": "Год",
@@ -84,6 +85,8 @@
 
   "contactSellerSection": "Связаться с продавцом",
   "contactShowPhone": "Показать телефон",
+  "contactCopyPhone": "Скопировать",
+  "contactPhoneCopied": "Номер скопирован",
   "contactPublicNotice": "Контакты продавца видны в активных объявлениях.",
   "contactTelegramLabel": "Telegram @{username}",
   "@contactTelegramLabel": {

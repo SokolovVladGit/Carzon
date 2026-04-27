@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/brands/brand_icon_resolver.dart';
 import '../../domain/entities/listing.dart';
 import '../utils/listing_formatters.dart';
 import 'listing_cover_image.dart';
@@ -71,10 +73,14 @@ class ListingCard extends StatefulWidget {
   static const double _panelRadius = 18;
 
   /// How far the info panel pushes up into the image's bottom edge.
-  /// At 32 px the panel clearly bites into the image instead of just
-  /// touching it — this is what makes the panel read as a separate
-  /// "floating" layer rather than a flush footer.
-  static const double _overlap = 32;
+  ///
+  /// The image's bottom corners are square (see the ClipRRect below),
+  /// so the overlap no longer needs to be ≥ image radius to hide a
+  /// curved cutout. A compact 12 px overlap keeps the panel visually
+  /// attached to the image while preserving the lower part of the
+  /// cover — important for cars framed low in the photo (plates,
+  /// wheels, stance).
+  static const double _overlap = 12;
 
   /// Horizontal inset of the info panel from the card edges.
   ///
@@ -145,8 +151,17 @@ class _ListingCardState extends State<ListingCard> {
               // that overlaps into this region. Kept very subtle
               // (α 0.10) so it reads as depth, not a dark overlay.
               ClipRRect(
-                borderRadius:
-                    BorderRadius.circular(ListingCard._imageRadius),
+                // Top corners rounded to match the card silhouette,
+                // bottom corners left square so the info panel's
+                // rounded top can overlap without exposing a curved
+                // cutout between the image's bottom rounding and the
+                // panel's top rounding.
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(ListingCard._imageRadius),
+                  topRight: Radius.circular(ListingCard._imageRadius),
+                  bottomLeft: Radius.zero,
+                  bottomRight: Radius.zero,
+                ),
                 child: Stack(
                   fit: StackFit.passthrough,
                   children: [
@@ -181,6 +196,7 @@ class _ListingCardState extends State<ListingCard> {
               _InfoPanel(
                 priceLabel: formatEur(listing.priceEur),
                 titleLabel: '${listing.make} ${listing.model}',
+                brandIconAsset: getBrandIconPath(listing.make),
                 mileageLabel: formatKm(listing.mileageKm),
                 yearLabel: listing.year.toString(),
                 city: listing.city,
@@ -278,6 +294,7 @@ class _InfoPanel extends StatelessWidget {
   const _InfoPanel({
     required this.priceLabel,
     required this.titleLabel,
+    required this.brandIconAsset,
     required this.mileageLabel,
     required this.yearLabel,
     required this.city,
@@ -290,6 +307,11 @@ class _InfoPanel extends StatelessWidget {
 
   final String priceLabel;
   final String titleLabel;
+
+  /// Pre-resolved brand SVG asset path (via [getBrandIconPath]). Always
+  /// a valid asset string — callers never need to null-check.
+  final String brandIconAsset;
+
   final String mileageLabel;
   final String yearLabel;
   final String city;
@@ -381,75 +403,185 @@ class _InfoPanel extends StatelessWidget {
           trailing != null ? 10 : 14,
           isFeatured ? 16 : 14,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        // Panel is a 2-column Row:
+        //   * left  — dedicated 48 px brand-icon column, vertically
+        //             centered against the whole content stack so the
+        //             mark reads as a column label rather than a
+        //             decoration attached to the top of the text,
+        //   * a 1 px white-alpha vertical divider that fades toward
+        //             the bottom, stretched to the full content
+        //             height via IntrinsicHeight so the soft fade
+        //             tracks card density,
+        //   * right — the full content stack (price → title → meta →
+        //             badges).
+        //
+        // The trailing slot (favorite toggle / owner menu) lives
+        // outside the IntrinsicHeight box: it must stay vertically
+        // centered against the content column without being stretched
+        // to the column's full height.
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              // Trailing action reads as a balanced, tappable
-              // affordance next to the text block when vertically
-              // centered against the price+title+meta column.
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        priceLabel,
-                        style: priceStyle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+            Expanded(
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      width: 48,
+                      child: Center(
+                        child: _BrandIconTile(assetPath: brandIconAsset),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        titleLabel,
-                        style: titleStyle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-                      DefaultTextStyle.merge(
-                        style: metaStyle ?? const TextStyle(),
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                mileageLabel,
-                                overflow: TextOverflow.ellipsis,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: SizedBox(
+                        height: double.infinity,
+                        child: Center(
+                          child: Container(
+                            width: 1,
+                            // 4 px (was 8) — extends the visible span
+                            // of the divider for a longer, more
+                            // elegant fade while still leaving a small
+                            // breathing gap at the very top / bottom.
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.9),
+                                  Colors.white.withValues(alpha: 0.6),
+                                  Colors.white.withValues(alpha: 0.25),
+                                  Colors.transparent,
+                                ],
                               ),
                             ),
-                            _MetaSeparator(color: scheme.onSurfaceVariant),
-                            Text(yearLabel),
-                            _MetaSeparator(color: scheme.onSurfaceVariant),
-                            Flexible(
-                              child: Text(
-                                city,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            priceLabel,
+                            style: priceStyle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            titleLabel,
+                            style: titleStyle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          DefaultTextStyle.merge(
+                            style: metaStyle ?? const TextStyle(),
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    mileageLabel,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                _MetaSeparator(
+                                    color: scheme.onSurfaceVariant),
+                                Text(yearLabel),
+                                _MetaSeparator(
+                                    color: scheme.onSurfaceVariant),
+                                Flexible(
+                                  child: Text(
+                                    city,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (badges.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: badges,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                if (trailing != null) ...[
-                  const SizedBox(width: 8),
-                  _PanelActionSlot(child: trailing!),
-                ],
-              ],
-            ),
-            if (badges.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: badges,
               ),
+            ),
+            if (trailing != null) ...[
+              const SizedBox(width: 8),
+              _PanelActionSlot(child: trailing!),
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Brand logo rendered next to the title, 26×26, with **no** tile,
+/// background, or border — the mark sits directly on the panel so
+/// the logo silhouette carries the hierarchy.
+///
+/// The asset path is pre-resolved by [getBrandIconPath], which is
+/// total (unknown / empty input returns the neutral `default.svg`).
+/// When that fallback path is detected the widget draws a generic
+/// `Icons.directions_car` glyph instead of the neutral SVG so the
+/// card reads as "unknown brand" rather than "generic car logo".
+class _BrandIconTile extends StatelessWidget {
+  const _BrandIconTile({required this.assetPath});
+
+  final String assetPath;
+
+  /// Rendered size. 32 px is large enough for the brand silhouette
+  /// to read at a glance from the feed while staying subordinate to
+  /// the price type on the right.
+  static const double _size = 32;
+
+  /// Sentinel suffix used to detect the resolver's neutral fallback.
+  /// The resolver is the sole source of truth for this path, so a
+  /// suffix match keeps this widget from needing to import an
+  /// internal constant.
+  static const String _defaultSuffix = '/default.svg';
+
+  /// Neutral metallic fill used ONLY by the unknown-brand fallback
+  /// glyph. Real brand SVGs are never tinted — multi-color logos
+  /// (e.g. Škoda, BMW, Alfa Romeo) must keep their native palette.
+  static const Color _fallbackSilver = Color(0xFF9E9E9E);
+
+  @override
+  Widget build(BuildContext context) {
+    final isUnknown = assetPath.endsWith(_defaultSuffix);
+
+    if (isUnknown) {
+      return const Icon(
+        Icons.directions_car,
+        size: _size,
+        color: _fallbackSilver,
+      );
+    }
+
+    return SizedBox(
+      width: _size,
+      height: _size,
+      child: SvgPicture.asset(
+        assetPath,
+        width: _size,
+        height: _size,
+        fit: BoxFit.contain,
+        placeholderBuilder: (_) => const SizedBox.shrink(),
       ),
     );
   }

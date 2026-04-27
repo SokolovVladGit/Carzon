@@ -176,6 +176,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingDetailsLoadFailed => 'Не удалось загрузить объявление.';
 
   @override
+  String get listingDetailsSpecs => 'Характеристики';
+
+  @override
   String get listingFieldMake => 'Марка';
 
   @override
@@ -204,6 +207,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get contactShowPhone => 'Показать телефон';
+
+  @override
+  String get contactCopyPhone => 'Скопировать';
+
+  @override
+  String get contactPhoneCopied => 'Номер скопирован';
 
   @override
   String get contactPublicNotice =>
