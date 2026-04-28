@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/error_view.dart';
+import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../listings/presentation/widgets/listing_tile.dart';
@@ -52,7 +54,7 @@ class _SignInRequired extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.favorite_border, size: 48),
+            const Icon(CarzonIcons.heartOutline, size: 48),
             const SizedBox(height: 12),
             Text(
               l10n.favoritesSignInRequired,
@@ -109,7 +111,12 @@ class _FavoritesListState extends State<_FavoritesList> {
             return RefreshIndicator(
               onRefresh: () => context.read<FavoritesCubit>().loadListings(),
               child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                padding: const EdgeInsets.fromLTRB(
+                  12,
+                  8,
+                  12,
+                  kFloatingCapsuleNavClearance,
+                ),
                 itemCount: state.listings.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 28),
                 itemBuilder: (context, index) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/presentation/widgets/listing_card.dart';
 
@@ -98,7 +99,7 @@ class _OwnerActionSlot extends StatelessWidget {
 
     return PopupMenuButton<MyListingAction>(
       tooltip: l10n.myListingActionsTooltip,
-      icon: const Icon(Icons.more_vert),
+      icon: const Icon(CarzonIcons.moreActions),
       onSelected: cb,
       itemBuilder: (context) => [
         PopupMenuItem<MyListingAction>(

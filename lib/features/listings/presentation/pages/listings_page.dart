@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/error_view.dart';
+import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
+import '../../../../shared/brands/brand_icon_resolver.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 import '../bloc/listings_bloc.dart';
 import '../bloc/listings_event.dart';
 import '../bloc/listings_state.dart';
@@ -40,6 +44,13 @@ class _ListingsViewState extends State<_ListingsView> {
   final _scrollCtrl = ScrollController();
   final _searchCtrl = TextEditingController();
 
+  /// Current feed scroll offset (pixels), mirrored from [_scrollCtrl]
+  /// on every scroll tick. Piped into the featured tile's [ListingCard]
+  /// so its cover photo parallaxes subtly as the feed scrolls. Only
+  /// the featured card's image `Stack` listens — the rest of the
+  /// feed has zero scroll-tick rebuild overhead.
+  final ValueNotifier<double> _feedScrollOffset = ValueNotifier<double>(0);
+
   /// UI-only body-category selection. Not wired to the bloc or query
   /// layer yet — the listings schema has no `body_type` column, so the
   /// chip row is purely visual until the backend dimension lands.
@@ -57,11 +68,13 @@ class _ListingsViewState extends State<_ListingsView> {
       ..removeListener(_onScroll)
       ..dispose();
     _searchCtrl.dispose();
+    _feedScrollOffset.dispose();
     super.dispose();
   }
 
   void _onScroll() {
     if (!_scrollCtrl.hasClients) return;
+    _feedScrollOffset.value = _scrollCtrl.position.pixels;
     final threshold = _scrollCtrl.position.maxScrollExtent - 200;
     if (_scrollCtrl.position.pixels >= threshold) {
       context.read<ListingsBloc>().add(const ListingsNextPageRequested());
@@ -109,14 +122,23 @@ class _ListingsViewState extends State<_ListingsView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    // Pass 1.7 flattens the feed background: pure white in light
+    // mode (the brief's "clean editorial canvas"), theme surface in
+    // dark. The old `_HomeBackdrop` gradient was removed because it
+    // pulled a primary tint over the top of the screen that made
+    // controls feel washed and "generic Flutter".
+    final feedBackground = isDark ? scheme.surface : Colors.white;
     return TopLevelScaffold(
       destination: TopLevelDestination.listings,
+      backgroundColor: feedBackground,
       // Deliberately invisible AppBar: no title, no elevation, no
       // tint — it only exists so Scaffold keeps the correct status-bar
       // inset. The editorial `_CatalogHeader` immediately below the
-      // status bar carries the brand.
+      // status bar carries the brand. Its background tracks the
+      // scaffold's so the header and feed read as one canvas.
       appBar: AppBar(
-        backgroundColor: scheme.surface,
+        backgroundColor: feedBackground,
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
         elevation: 0,
@@ -128,28 +150,19 @@ class _ListingsViewState extends State<_ListingsView> {
           final next = state.search ?? '';
           if (_searchCtrl.text != next) _searchCtrl.text = next;
         },
-        // Ambient backdrop behind the feed so the screen reads as a
-        // lit editorial surface instead of a default Scaffold white.
-        // The gradient is purely decorative (wrapped in an
-        // IgnorePointer inside `_HomeBackdrop`) — it never intercepts
-        // gestures from the cards above it.
-        child: Stack(
-          fit: StackFit.expand,
+        child: Column(
           children: [
-            const _HomeBackdrop(),
-            Column(
-              children: [
-                const _CatalogHeader(),
-                _DiscoveryHeader(
-                  searchCtrl: _searchCtrl,
-                  onOpenFilters: () => _openFiltersSheet(context),
-                  selectedCategoryId: _selectedCategoryId,
-                  onCategorySelected: (id) {
-                    if (id == _selectedCategoryId) return;
-                    setState(() => _selectedCategoryId = id);
-                  },
-                ),
-                Expanded(
+            _FeedHeaderLayer(
+              searchCtrl: _searchCtrl,
+              onOpenFilters: () => _openFiltersSheet(context),
+              onBrandSelected: _onBrandSelected,
+              selectedCategoryId: _selectedCategoryId,
+              onCategorySelected: (id) {
+                if (id == _selectedCategoryId) return;
+                setState(() => _selectedCategoryId = id);
+              },
+            ),
+            Expanded(
               child: BlocBuilder<ListingsBloc, ListingsState>(
                 builder: (context, state) {
                   switch (state.status) {
@@ -190,13 +203,31 @@ class _ListingsViewState extends State<_ListingsView> {
                         },
                         child: ListView.separated(
                           controller: _scrollCtrl,
+                          // iOS-style bounce on both platforms so the
+                          // feed reads as one cohesive, buttery scroll
+                          // surface — overscroll at the top also plays
+                          // well with the RefreshIndicator above.
+                          physics: const BouncingScrollPhysics(
+                            parent: AlwaysScrollableScrollPhysics(),
+                          ),
                           // Shared 20 px gutter with the header + search
                           // row so header, search, and cards line up on
-                          // one editorial column. Top `24` gives the
-                          // feature card deliberate breathing room under
-                          // the header; bottom `28` keeps the last card
-                          // clear of the floating nav.
-                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+                          // one editorial column. Top `10` lands
+                          // directly under the header layer's chip row
+                          // (which already carries 8 px bottom air),
+                          // yielding an ~18 px visual gap from chip
+                          // bottom → first card — squarely in the
+                          // 16–20 target. The bottom clearance is
+                          // driven by `kFloatingCapsuleNavClearance`
+                          // so the last card lands above the floating
+                          // pill (the scaffold uses `extendBody: true`,
+                          // so content renders behind the pill).
+                          padding: const EdgeInsets.fromLTRB(
+                            20,
+                            10,
+                            20,
+                            kFloatingCapsuleNavClearance,
+                          ),
                           itemCount: state.items.length +
                               (state.hasReachedEnd ? 0 : 1),
                           // Larger gap after the feature card (30) so the
@@ -222,15 +253,40 @@ class _ListingsViewState extends State<_ListingsView> {
                               );
                             }
                             final item = state.items[index];
-                            return ListingTile(
-                              listing: item,
-                              variant: index == 0
-                                  ? ListingCardVariant.featured
-                                  : ListingCardVariant.regular,
-                              onTap: () => context.push(
-                                AppRoutes.listingDetailsPath(item.id),
-                                extra: ListingDetailsExtra(
-                                  coverImageUrl: item.coverImageUrl,
+                            final isFeatured = index == 0;
+                            return _AppearAnimation(
+                              // Keyed by listing id so scroll-recycling
+                              // in the `ListView` does NOT re-trigger
+                              // the entrance animation for the same
+                              // listing; each card animates in once
+                              // per logical identity.
+                              key: ValueKey<String>('appear-${item.id}'),
+                              // Subtle staggered cascade: 0/30/60/90/120
+                              // ms based on feed index, capped at 120
+                              // so the 6th+ cards don't feel laggy.
+                              // Using `index * 30` keeps the stagger
+                              // invisible under casual scroll while
+                              // reading as deliberate on first paint.
+                              delay: Duration(
+                                milliseconds: (index * 30).clamp(0, 120),
+                              ),
+                              child: ListingTile(
+                                listing: item,
+                                variant: isFeatured
+                                    ? ListingCardVariant.featured
+                                    : ListingCardVariant.regular,
+                                // Only the featured hero wires the
+                                // scroll-offset listenable → parallax
+                                // cover. Regulars stay inert to keep
+                                // the scroll-tick rebuild surface tiny.
+                                coverParallax: isFeatured
+                                    ? _feedScrollOffset
+                                    : null,
+                                onTap: () => context.push(
+                                  AppRoutes.listingDetailsPath(item.id),
+                                  extra: ListingDetailsExtra(
+                                    coverImageUrl: item.coverImageUrl,
+                                  ),
                                 ),
                               ),
                             );
@@ -241,69 +297,210 @@ class _ListingsViewState extends State<_ListingsView> {
                 },
               ),
             ),
-              ],
-            ),
           ],
         ),
       ),
     );
   }
+
+  /// Dispatches a brand/make filter change from the horizontal brand
+  /// row without touching the other filters. Passing `null` means
+  /// "All brands" and clears the make.
+  ///
+  /// Re-uses the existing [ListingsFiltersApplied] event so the
+  /// repository/query contract stays unchanged: only the `make`
+  /// argument varies, all other filter dimensions are preserved
+  /// from the current bloc state.
+  void _onBrandSelected(String? brand) {
+    final bloc = context.read<ListingsBloc>();
+    final s = bloc.state;
+    final current = s.make;
+    // Short-circuit redundant taps: selecting the already-selected
+    // chip (or tapping "All" when no make filter is active) must
+    // not trigger a loading state / refetch.
+    if ((current ?? '') == (brand ?? '')) return;
+    bloc.add(ListingsFiltersApplied(
+      make: brand,
+      minYear: s.minYear,
+      maxYear: s.maxYear,
+      typeFilter: s.typeFilter,
+    ));
+  }
 }
 
-/// Ambient backdrop rendered behind the home feed.
+/// Premium white surface layer that hosts every control at the top
+/// of the feed: the CARZON wordmark, the search+filter row, the
+/// horizontal brand-logo row, and the body-type chips.
 ///
-/// A deliberately quiet top-to-bottom gradient: a low-alpha cool tint
-/// at the top (pulled from the theme `primary` so it follows the
-/// brand palette without looking like a paint job) fading into the
-/// base `surface` over the first ~55% of the viewport. The remaining
-/// space stays on the flat surface so cards sit on a neutral field.
+/// The goal (Pass 1.9) is to give the top of the feed a single
+/// intentional "layer" that sits above the list, so the eye reads
+/// "header surface → list" instead of "stack of independent rows".
+/// The layer is NOT a card — it is edge-to-edge and sits flush with
+/// the page surface — but it earns a soft bottom shadow so it lifts
+/// off the list below.
+/// One-shot cinematic appear animation used for each tile as it first
+/// builds into the home feed.
 ///
-/// The effect is meant to be *felt* — it gives the screen a sense of
-/// lit depth instead of default Flutter white / grey — but it is
-/// low-contrast on purpose and never demands attention.
+///   * opacity: 0 → 1
+///   * translateY: +14 → 0
+///   * 220 ms, `Curves.easeOutCubic`
 ///
-/// Implementation notes:
-///   * wrapped in [IgnorePointer] so the gradient never eats taps;
-///   * uses a 3-stop gradient (`[top tint, surface, surface]`) rather
-///     than a 2-stop so the bottom of the page is guaranteed to be
-///     the flat surface color, even on very tall viewports.
-class _HomeBackdrop extends StatelessWidget {
-  const _HomeBackdrop();
+/// Keyed by listing id at the call site so that [ListView]
+/// recycling does NOT re-run the animation when the user scrolls
+/// a previously-seen tile back into view — each card gets exactly
+/// one entrance per logical identity.
+///
+/// A staggered `delay` is applied at the feed level so the first
+/// few cards cascade in (20–30 ms between tiles) instead of
+/// snapping in simultaneously.
+class _AppearAnimation extends StatefulWidget {
+  const _AppearAnimation({
+    super.key,
+    required this.child,
+    this.delay = Duration.zero,
+  });
+
+  final Widget child;
+  final Duration delay;
+
+  @override
+  State<_AppearAnimation> createState() => _AppearAnimationState();
+}
+
+class _AppearAnimationState extends State<_AppearAnimation>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 220),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.delay == Duration.zero) {
+      _ctrl.forward();
+    } else {
+      // Using `Future.delayed` + a mounted check is enough: the
+      // delays stay short (≤ 120 ms) and we only schedule one
+      // timer per tile, so there is no measurable overhead.
+      Future<void>.delayed(widget.delay, () {
+        if (!mounted) return;
+        _ctrl.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, child) {
+        final t = Curves.easeOutCubic.transform(_ctrl.value);
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(
+            offset: Offset(0, (1 - t) * 14),
+            child: child,
+          ),
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
+class _FeedHeaderLayer extends StatelessWidget {
+  const _FeedHeaderLayer({
+    required this.searchCtrl,
+    required this.onOpenFilters,
+    required this.onBrandSelected,
+    required this.selectedCategoryId,
+    required this.onCategorySelected,
+  });
+
+  final TextEditingController searchCtrl;
+  final VoidCallback onOpenFilters;
+  final ValueChanged<String?> onBrandSelected;
+  final String selectedCategoryId;
+  final ValueChanged<String> onCategorySelected;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    // Cool top tint. Dark mode lifts a touch harder (0.09) because the
-    // surface is near-black and needs more signal to read; light mode
-    // stays whisper-soft (0.035) so the header never looks colored.
-    final topTint = Color.alphaBlend(
-      scheme.primary.withValues(alpha: isDark ? 0.09 : 0.035),
-      scheme.surface,
-    );
-    return IgnorePointer(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [topTint, scheme.surface, scheme.surface],
-            stops: const [0.0, 0.55, 1.0],
+    // Light mode: the layer is pure white on a pure-white page —
+    // the only thing separating the two is the soft bottom shadow.
+    // Dark mode: a one-step-lifted surface so the shadow has
+    // something to read against.
+    final layerColor = isDark ? scheme.surfaceContainer : Colors.white;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: layerColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.32 : 0.05),
+            blurRadius: 22,
+            spreadRadius: 0,
+            offset: const Offset(0, 8),
           ),
-        ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const _CatalogHeader(),
+          // CARZON → search/filter: 4 (the wordmark already has 14
+          // of bottom padding inside _CatalogHeader, keep this tight
+          // so the wordmark reads as "of the" controls, not adrift
+          // from them).
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+            child: _SearchAndFilterBar(
+              searchCtrl: searchCtrl,
+              onOpenFilters: onOpenFilters,
+            ),
+          ),
+          // search → brand row: 16
+          const SizedBox(height: 16),
+          _BrandFilterRow(onBrandSelected: onBrandSelected),
+          // brand row → body chips: 4 (brand row already carries
+          // its own 8 px vertical padding from the ListView).
+          const SizedBox(height: 4),
+          CategoryChipsRow(
+            categories: defaultUiCategories,
+            selectedId: selectedCategoryId,
+            onSelected: onCategorySelected,
+          ),
+          // Tight bottom air inside the layer — the chip row's
+          // own 8 px vertical padding is the real bottom gap; the
+          // 2 px here just lifts the shadow edge clear of the
+          // chip silhouette.
+          const SizedBox(height: 2),
+        ],
       ),
     );
   }
 }
 
-/// Editorial hero header at the top of the feed.
+/// Editorial wordmark header at the top of the feed.
 ///
-/// Carries the app's identity in place of an AppBar: a small
-/// letter-spaced eyebrow ("CARZON") sits above a strong, editorial
-/// catalog title. This mirrors how an automotive magazine opens a
-/// section — quiet brand, confident title — and lets the AppBar stay
-/// invisible.
+/// Pass 1.8 simplifies the header to a single centered "CARZON"
+/// wordmark. The earlier large catalog title was pulling the page
+/// into "generic app" territory; the magazine masthead treatment
+/// lets the brand sit alone at the top and hands visual authority
+/// to the discovery controls and brand-logo row below.
+///
+/// The wordmark is deliberately compact (label-size, heavily
+/// letter-spaced, onSurface with moderate opacity) so it reads as
+/// identity, not as a loud title. It carries no tagline, no large
+/// heading, and no trailing controls.
 class _CatalogHeader extends StatelessWidget {
   const _CatalogHeader();
 
@@ -311,100 +508,27 @@ class _CatalogHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final l10n = context.l10n;
-    // Header uses the same 20 px gutter as the search row and the
-    // card list below, so the eyebrow, title, search, and cards line
-    // up on a single editorial column instead of feeling randomly
-    // inset like form controls.
     return Padding(
-      // Bottom padding is 6 (not 0) so the editorial title has a
-      // small air below it; combined with the 22 px top padding on
-      // _DiscoveryHeader this gives a 28 px "title → search" gap,
-      // which is what makes the header feel like two distinct
-      // blocks (identity + controls) rather than one glued strip.
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'CARZON',
-            textAlign: TextAlign.start,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-              fontWeight: FontWeight.w600,
-              letterSpacing: 2.2,
-              height: 1.0,
-            ),
+      // Sits at the top of the header layer directly under the
+      // status bar inset. 16 top / 10 bottom keeps the wordmark
+      // floating on its own line without pushing the controls too
+      // far down — the surrounding layer adds the rest of the air.
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+      child: Center(
+        child: Text(
+          'CARZON',
+          textAlign: TextAlign.center,
+          style: theme.textTheme.titleSmall?.copyWith(
+            color: scheme.onSurface.withValues(alpha: 0.82),
+            fontWeight: FontWeight.w700,
+            // 4.0 is the sweet spot: loose enough to read as a
+            // magazine masthead, tight enough that the six glyphs
+            // still read as a single word on narrow devices.
+            letterSpacing: 4.0,
+            height: 1.0,
           ),
-          // 12 (not 8) lets the eyebrow breathe away from the
-          // title — the eyebrow is a brand signature, not a label.
-          const SizedBox(height: 12),
-          Text(
-            l10n.catalogTitle,
-            textAlign: TextAlign.start,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.3,
-              height: 1.05,
-            ),
-          ),
-        ],
+        ),
       ),
-    );
-  }
-}
-
-/// Top-of-feed discovery surface: pill search + filter icon on the
-/// first row, horizontal region chips on the second. Rendered on the
-/// scaffold background without a hard divider so the catalog header,
-/// discovery controls, and cards read as a single editorial stack.
-///
-/// The chips row is intentionally structured so future active-filter
-/// chips (e.g. applied make/year) can be appended inline without any
-/// layout rewrite.
-class _DiscoveryHeader extends StatelessWidget {
-  const _DiscoveryHeader({
-    required this.searchCtrl,
-    required this.onOpenFilters,
-    required this.selectedCategoryId,
-    required this.onCategorySelected,
-  });
-
-  final TextEditingController searchCtrl;
-  final VoidCallback onOpenFilters;
-
-  /// UI-only body-category selection. Flows from the owning
-  /// `_ListingsView` so selection survives header rebuilds and can be
-  /// lifted into the bloc once the backend gains a `body_type`
-  /// dimension.
-  final String selectedCategoryId;
-  final ValueChanged<String> onCategorySelected;
-
-  @override
-  Widget build(BuildContext context) {
-    // Shares the 20 px gutter with the header and the list below so
-    // the whole page reads as one editorial column. The search +
-    // filter row keeps its existing breathing room; the chip row
-    // sits directly beneath it as a secondary control strip.
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
-          child: _SearchAndFilterBar(
-            searchCtrl: searchCtrl,
-            onOpenFilters: onOpenFilters,
-          ),
-        ),
-        const SizedBox(height: 10),
-        CategoryChipsRow(
-          categories: defaultUiCategories,
-          selectedId: selectedCategoryId,
-          onSelected: onCategorySelected,
-        ),
-      ],
     );
   }
 }
@@ -428,30 +552,31 @@ class _SearchAndFilterBar extends StatelessWidget {
     final scheme = theme.colorScheme;
     final l10n = context.l10n;
     final isDark = theme.brightness == Brightness.dark;
-    // With the ambient backdrop now tinting the top of the page,
-    // controls need a touch more surface contrast so they read as
-    // elevated pills rather than "white holes". One step up on each
-    // tone (Highest / Low) gives a subtle lift without pushing the
-    // pill into loud-grey territory.
-    final fill = isDark
-        ? scheme.surfaceContainerHighest
-        : scheme.surfaceContainerLow;
+    // Feed background is now pure white in light mode. Controls sit
+    // almost flush on the canvas — a close-to-white fill with a
+    // hairline border + whisper shadow reads as a premium elevated
+    // pill, not a grey utility bar.
+    final fill = isDark ? scheme.surfaceContainerHighest : Colors.white;
+    final pillBorder = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : scheme.outlineVariant.withValues(alpha: 0.45);
     // Slightly shorter, squarer controls than Pass 1.5 so the search
     // row reads as a compact utility bar (not a fluffy pill that
     // competes with the editorial headline above it).
     const barHeight = 50.0;
-    const searchRadius = 20.0;
-    // 16 — locks the filter button onto the app-wide "buttons = 16"
-    // radius token; slightly tighter than the search pill so the two
-    // shapes layer visibly without looking identical.
-    const filterRadius = 16.0;
-    // Matches the filter button's shadow family (same direction,
-    // slightly softer) so the two controls read as a single elevated
-    // pair above the page surface.
+    const searchRadius = 16.0;
+    // Locked to the brand-tile radius (14) so the filter button
+    // reads as part of the same control family as the brand row
+    // directly below it, rather than a separate form element.
+    const filterRadius = 14.0;
+    // Whisper shadow only — the header layer itself carries the
+    // main drop shadow now, so the individual controls need just a
+    // hairline lift to read as distinct surfaces without stacking
+    // visual noise.
     final searchShadow = BoxShadow(
-      color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.06),
-      blurRadius: 10,
-      offset: const Offset(0, 3),
+      color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.025),
+      blurRadius: 8,
+      offset: const Offset(0, 2),
     );
     return SizedBox(
       height: barHeight,
@@ -473,7 +598,7 @@ class _SearchAndFilterBar extends StatelessWidget {
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
                 ),
                 prefixIcon: Icon(
-                  Icons.search_rounded,
+                  CarzonIcons.search,
                   size: 20,
                   color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
                 ),
@@ -484,7 +609,7 @@ class _SearchAndFilterBar extends StatelessWidget {
                   builder: (context, value, _) {
                     if (value.text.isEmpty) return const SizedBox.shrink();
                     return IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 18),
+                      icon: const Icon(CarzonIcons.close, size: 18),
                       tooltip: l10n.listingsSearchClearTooltip,
                       onPressed: () {
                         searchCtrl.clear();
@@ -506,7 +631,7 @@ class _SearchAndFilterBar extends StatelessWidget {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(searchRadius),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(color: pillBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(searchRadius),
@@ -528,43 +653,34 @@ class _SearchAndFilterBar extends StatelessWidget {
             builder: (context, state) {
               final active = state.hasActiveNonRegionFilters;
               // Icon-only utility control: same height as the search
-              // pill, soft rounded square so it does not compete with
-              // the headline. The base tone is one step *above* the
-              // search fill (surfaceContainerHigh in light, Highest in
-              // dark) so the two controls read as a related pair with
-              // the filter clearly on top. Active state earns a
-              // low-alpha primary tint and a tiny accent dot — no
-              // loud fill, no label.
-              final restingBg = isDark
-                  ? scheme.surfaceContainerHighest
-                  : scheme.surfaceContainerHigh;
+              // pill, same close-to-white fill, same hairline border
+              // and shadow family. This locks the filter button into
+              // the brand-tile language directly below it rather than
+              // reading as a separate form element. Active state
+              // earns a whisper primary tint plus the accent dot.
+              final restingBg =
+                  isDark ? scheme.surfaceContainerHighest : Colors.white;
               final bg = active
-                  ? scheme.primary.withValues(alpha: isDark ? 0.14 : 0.09)
+                  ? scheme.primary.withValues(alpha: isDark ? 0.14 : 0.07)
                   : restingBg;
               final fg = active
                   ? scheme.primary
                   : scheme.onSurfaceVariant.withValues(alpha: 0.85);
+              final border = active
+                  ? scheme.primary.withValues(alpha: isDark ? 0.5 : 0.35)
+                  : pillBorder;
               return Container(
                 height: barHeight,
                 width: barHeight,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(filterRadius),
-                  // Whisper-level shadow — just enough to tell the
-                  // button apart from the search pill without making
-                  // the header look "overdressed".
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black
-                          .withValues(alpha: isDark ? 0.22 : 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  boxShadow: [searchShadow],
                 ),
                 child: Material(
                   color: bg,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(filterRadius),
+                    side: BorderSide(color: border),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Tooltip(
@@ -582,7 +698,7 @@ class _SearchAndFilterBar extends StatelessWidget {
                             // variant so the silhouette stays stable
                             // across toggles.
                             Icon(
-                              Icons.tune_rounded,
+                              CarzonIcons.filter,
                               size: 20,
                               color: fg,
                             ),
@@ -609,6 +725,228 @@ class _SearchAndFilterBar extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Horizontal brand-logo quick filter rendered directly under the
+/// search/filter row on the feed.
+///
+/// Each brand is presented as an icon-only rounded tile. Tapping a
+/// tile drives the `make` filter through the existing
+/// [ListingsFiltersApplied] event (see [_ListingsViewState._onBrandSelected]);
+/// it never introduces a new bloc event or query parameter. The
+/// "All brands" tile at the front of the list is the unset state
+/// (dispatches a `null` make).
+///
+/// The brand list is curated from brands whose SVG assets are known
+/// to resolve via [getBrandIconPath] (no default fallback); order
+/// favors brands common in the target market. No brand names are
+/// rendered under the icons — semantics labels handle accessibility
+/// and long-press tooltips.
+class _BrandFilterRow extends StatelessWidget {
+  const _BrandFilterRow({required this.onBrandSelected});
+
+  final ValueChanged<String?> onBrandSelected;
+
+  /// Curated brand ordering. Each string is the canonical make value
+  /// passed to [getBrandIconPath] and dispatched as the make filter.
+  /// Values match the seller-facing spelling in [brand_icon_resolver]
+  /// aliases so the repository's case-insensitive `ilike` query
+  /// reliably matches listings of that brand.
+  static const List<String> _brands = [
+    'Toyota',
+    'Volkswagen',
+    'Skoda',
+    'Opel',
+    'BMW',
+    'Mercedes-Benz',
+    'Audi',
+    'Tesla',
+    'Renault',
+    'Ford',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 64,
+      child: BlocSelector<ListingsBloc, ListingsState, String?>(
+        selector: (state) => state.make,
+        builder: (context, currentMake) {
+          final normalized = currentMake?.trim().toLowerCase();
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            // Same 20 px gutter as the editorial column, with a bit
+            // of trailing air so the last tile never clips the edge
+            // of the viewport when fully scrolled.
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+            itemCount: _brands.length + 1,
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _BrandTile.all(
+                  selected: normalized == null || normalized.isEmpty,
+                  onTap: () => onBrandSelected(null),
+                );
+              }
+              final brand = _brands[index - 1];
+              final isSelected = normalized == brand.toLowerCase();
+              return _BrandTile.brand(
+                make: brand,
+                selected: isSelected,
+                onTap: () => onBrandSelected(brand),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Single rounded-square tile in the brand filter row. Two flavors:
+///   * [_BrandTile.all] — the "All brands" entry at the head of the
+///     row, rendered as a neutral search icon;
+///   * [_BrandTile.brand] — a concrete brand, rendered from the
+///     resolver-provided SVG asset.
+class _BrandTile extends StatelessWidget {
+  const _BrandTile._({
+    required this.selected,
+    required this.onTap,
+    required this.semanticsLabel,
+    required this.assetPath,
+    required this.fallbackIcon,
+  });
+
+  factory _BrandTile.all({
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return _BrandTile._(
+      selected: selected,
+      onTap: onTap,
+      semanticsLabel: null,
+      assetPath: null,
+      fallbackIcon: CarzonIcons.allBrands,
+    );
+  }
+
+  factory _BrandTile.brand({
+    required String make,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return _BrandTile._(
+      selected: selected,
+      onTap: onTap,
+      semanticsLabel: make,
+      assetPath: getBrandIconPath(make),
+      fallbackIcon: null,
+    );
+  }
+
+  final bool selected;
+  final VoidCallback onTap;
+
+  /// Raw brand string used for the semantics label. Null for the
+  /// "All brands" tile — [Widget.build] pulls the localized string
+  /// from the l10n bundle in that case.
+  final String? semanticsLabel;
+
+  /// SVG asset path for a concrete brand. Null for the "All" tile.
+  final String? assetPath;
+
+  /// Icon used when [assetPath] is null (i.e. the "All brands" head
+  /// tile).
+  final IconData? fallbackIcon;
+
+  static const double _size = 48;
+  static const double _radius = 14;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final l10n = context.l10n;
+
+    // Close-to-white resting background so the tile reads as a
+    // lifted chip on the pure-white feed surface, not a grey block.
+    // Selection is expressed via a whisper primary tint + a tinted
+    // hairline border rather than a strong fill, keeping the row
+    // quiet while still clearly indicating which brand is active.
+    final bg = selected
+        ? (isDark
+            ? scheme.primary.withValues(alpha: 0.14)
+            : Color.alphaBlend(
+                scheme.primary.withValues(alpha: 0.04),
+                Colors.white,
+              ))
+        : (isDark ? scheme.surfaceContainerHighest : Colors.white);
+    final borderColor = selected
+        ? scheme.primary.withValues(alpha: isDark ? 0.5 : 0.32)
+        : (isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : scheme.outlineVariant.withValues(alpha: 0.45));
+    final shadow = BoxShadow(
+      color: selected
+          ? scheme.primary.withValues(alpha: isDark ? 0.16 : 0.07)
+          : Colors.black.withValues(alpha: isDark ? 0.18 : 0.02),
+      blurRadius: selected ? 10 : 6,
+      offset: const Offset(0, 2),
+    );
+
+    final label = semanticsLabel != null
+        ? l10n.brandFilterBrandSemantics(semanticsLabel!)
+        : l10n.brandFilterAllSemantics;
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      container: true,
+      child: Tooltip(
+        message: semanticsLabel ?? l10n.brandFilterAllSemantics,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(_radius),
+            boxShadow: [shadow],
+          ),
+          child: Material(
+            color: bg,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_radius),
+              side: BorderSide(color: borderColor),
+            ),
+            child: InkWell(
+              onTap: onTap,
+              child: SizedBox(
+                width: _size,
+                height: _size,
+                child: Center(
+                  child: assetPath != null
+                      ? SvgPicture.asset(
+                          assetPath!,
+                          width: 28,
+                          height: 28,
+                          fit: BoxFit.contain,
+                        )
+                      : Icon(
+                          fallbackIcon,
+                          size: 20,
+                          color: selected
+                              ? scheme.primary
+                              : scheme.onSurfaceVariant
+                                  .withValues(alpha: 0.75),
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

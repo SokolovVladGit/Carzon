@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../favorites/presentation/widgets/favorite_toggle_button.dart';
@@ -16,6 +17,7 @@ class ListingTile extends StatelessWidget {
     required this.listing,
     this.onTap,
     this.variant = ListingCardVariant.regular,
+    this.coverParallax,
   });
 
   final Listing listing;
@@ -26,6 +28,12 @@ class ListingTile extends StatelessWidget {
   /// reads as the main car of the catalogue page.
   final ListingCardVariant variant;
 
+  /// Optional scroll-offset listenable forwarded to [ListingCard.coverParallax].
+  /// Only the home feed's featured tile wires this — other surfaces
+  /// (favorites, my listings) pass null so there is zero scroll-tick
+  /// rebuild cost anywhere outside the hero tile.
+  final ValueListenable<double>? coverParallax;
+
   @override
   Widget build(BuildContext context) {
     return ListingCard(
@@ -33,6 +41,7 @@ class ListingTile extends StatelessWidget {
       onTap: onTap,
       trailing: FavoriteToggleButton(listingId: listing.id),
       variant: variant,
+      coverParallax: coverParallax,
     );
   }
 }

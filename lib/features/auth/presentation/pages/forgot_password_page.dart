@@ -7,6 +7,7 @@ import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 import '../bloc/forgot_password_cubit.dart';
 import '../bloc/forgot_password_state.dart';
 
@@ -143,7 +144,7 @@ class _SuccessView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 24),
-          const Icon(Icons.mark_email_read_outlined, size: 48),
+          const Icon(CarzonIcons.mailCheck, size: 48),
           const SizedBox(height: 16),
           Text(
             l10n.forgotPasswordSuccess,

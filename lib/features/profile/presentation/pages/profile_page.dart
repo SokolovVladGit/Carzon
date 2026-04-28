@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/domain/entities/auth_user.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -77,7 +79,7 @@ class _SignInRequired extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.person_outline, size: 48),
+            const Icon(CarzonIcons.user, size: 48),
             const SizedBox(height: 12),
             Text(
               l10n.profileSignInRequired,
@@ -101,33 +103,38 @@ class _AccountView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.fromLTRB(
+        0,
+        8,
+        0,
+        kFloatingCapsuleNavClearance,
+      ),
       children: [
         _IdentityHeader(user: user),
         const Divider(height: 1),
         ListTile(
-          leading: const Icon(Icons.list_alt_outlined),
+          leading: const Icon(CarzonIcons.myListings),
           title: Text(l10n.profileMyListings),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: const Icon(CarzonIcons.chevronRight),
           onTap: () => context.go(AppRoutes.myListings),
         ),
         ListTile(
-          leading: const Icon(Icons.favorite_border),
+          leading: const Icon(CarzonIcons.heartOutline),
           title: Text(l10n.profileFavorites),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: const Icon(CarzonIcons.chevronRight),
           onTap: () => context.go(AppRoutes.favorites),
         ),
         ListTile(
-          leading: const Icon(Icons.add_circle_outline),
+          leading: const Icon(CarzonIcons.navCreateOutline),
           title: Text(l10n.profileCreateListing),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: const Icon(CarzonIcons.chevronRight),
           onTap: () => context.go(AppRoutes.createListing),
         ),
         const Divider(height: 1),
         ListTile(
-          leading: const Icon(Icons.privacy_tip_outlined),
+          leading: const Icon(CarzonIcons.privacy),
           title: Text(l10n.profileLegal),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: const Icon(CarzonIcons.chevronRight),
           onTap: () => context.go(AppRoutes.legal),
         ),
         const Divider(height: 1),
@@ -135,7 +142,7 @@ class _AccountView extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           child: OutlinedButton.icon(
             onPressed: () => context.read<AuthCubit>().signOut(),
-            icon: const Icon(Icons.logout),
+            icon: const Icon(CarzonIcons.signOut),
             label: Text(l10n.profileSignOut),
           ),
         ),
@@ -174,7 +181,7 @@ class _IdentityHeader extends StatelessWidget {
             radius: 24,
             backgroundColor: theme.colorScheme.primaryContainer,
             foregroundColor: theme.colorScheme.onPrimaryContainer,
-            child: const Icon(Icons.person_outline),
+            child: const Icon(CarzonIcons.user),
           ),
           const SizedBox(width: 12),
           Expanded(

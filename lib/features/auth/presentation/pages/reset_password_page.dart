@@ -7,6 +7,7 @@ import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 import '../bloc/reset_password_cubit.dart';
@@ -62,7 +63,7 @@ class _NoRecoverySessionView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.lock_reset, size: 48),
+            const Icon(CarzonIcons.keyReset, size: 48),
             const SizedBox(height: 16),
             Text(
               l10n.resetPasswordNoSession,

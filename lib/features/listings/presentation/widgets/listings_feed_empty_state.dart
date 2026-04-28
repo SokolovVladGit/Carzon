@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/empty_state_view.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 
 /// Empty-state surface rendered when the public listings feed query
 /// returns zero rows.
@@ -40,7 +41,7 @@ class ListingsFeedEmptyState extends StatelessWidget {
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: EmptyStateView(
-                icon: Icons.search_off,
+                icon: CarzonIcons.searchEmpty,
                 title: l10n.listingsEmptyTitle,
                 body: hasFilters
                     ? l10n.listingsEmptyFilteredBody

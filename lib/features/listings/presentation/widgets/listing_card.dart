@@ -1,3 +1,6 @@
+import 'dart:ui' as ui;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -5,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/brands/brand_icon_resolver.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/entities/listing.dart';
 import '../utils/listing_formatters.dart';
 import 'listing_cover_image.dart';
@@ -45,10 +49,24 @@ class ListingCard extends StatefulWidget {
     this.trailing,
     this.statusBadge,
     this.variant = ListingCardVariant.regular,
+    this.coverParallax,
   });
 
   final Listing listing;
   final VoidCallback? onTap;
+
+  /// Optional listenable feed-scroll offset (pixels) used to drive a
+  /// subtle parallax on the cover image. When provided the cover
+  /// translates vertically by `offset * 0.15`, creating the "image
+  /// moves slower than scroll" effect used on the first (featured)
+  /// card of the home feed. Only the image `Stack` rebuilds on
+  /// scroll — the info panel (including its backdrop blur) is NOT
+  /// inside the [AnimatedBuilder] subtree, so the expensive glass
+  /// layer stays stable.
+  ///
+  /// Null for regular cards, so no scroll listener overhead is
+  /// incurred on the rest of the feed.
+  final ValueListenable<double>? coverParallax;
 
   /// Optional widget rendered inside the info panel on the right side.
   /// Used for the favorite toggle on public cards and for the owner
@@ -64,13 +82,16 @@ class ListingCard extends StatefulWidget {
   /// Visual rhythm of the card. See [ListingCardVariant].
   final ListingCardVariant variant;
 
-  /// Corner radius system for the card:
-  ///   * image: 20 — the largest surface, sets the card silhouette,
-  ///   * panel: 18 — one notch tighter than the image so the panel
-  ///     reads as a smaller surface layered on top of it,
-  ///   * panel action slot: circular (36 px).
-  static const double _imageRadius = 20;
-  static const double _panelRadius = 18;
+  /// Corner radius system for the card.
+  ///
+  /// Featured hero cards use a deliberately **smaller** radius (16 /
+  /// 14) than regular cards (20 / 18) — the tighter corners feel
+  /// more editorial / magazine-like, while the rounder regular card
+  /// reads as a softer, friendlier tile. The panel is always one
+  /// notch tighter than the image so it visually layers on top of
+  /// the photo.
+  static double _imageRadiusFor(bool featured) => featured ? 16 : 20;
+  static double _panelRadiusFor(bool featured) => featured ? 14 : 18;
 
   /// How far the info panel pushes up into the image's bottom edge.
   ///
@@ -108,18 +129,21 @@ class _ListingCardState extends State<ListingCard> {
     final listing = widget.listing;
     final isFeatured = widget.variant == ListingCardVariant.featured;
 
+    final imageRadius = ListingCard._imageRadiusFor(isFeatured);
+    final panelRadius = ListingCard._panelRadiusFor(isFeatured);
+
     final badges = <Widget>[
       if (widget.statusBadge != null) widget.statusBadge!,
       if (!isFeatured)
         ListingBadge(
           label: formatMarketRegion(l10n, listing.marketRegion),
-          icon: Icons.map_outlined,
+          icon: CarzonIcons.map,
           tone: ListingBadgeTone.neutral,
         ),
       if (!isFeatured && listing.type != ListingType.sale)
         ListingBadge(
           label: formatType(l10n, listing.type),
-          icon: Icons.swap_horiz,
+          icon: CarzonIcons.swap,
           tone: ListingBadgeTone.accent,
         ),
     ];
@@ -135,7 +159,7 @@ class _ListingCardState extends State<ListingCard> {
         surfaceTintColor: Colors.transparent,
         child: InkWell(
           onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(ListingCard._imageRadius),
+          borderRadius: BorderRadius.circular(imageRadius),
           onHighlightChanged: (highlighted) {
             if (!mounted) return;
             setState(() => _pressed = highlighted);
@@ -150,47 +174,11 @@ class _ListingCardState extends State<ListingCard> {
               // bottom of the photo separates it from the panel
               // that overlaps into this region. Kept very subtle
               // (α 0.10) so it reads as depth, not a dark overlay.
-              ClipRRect(
-                // Top corners rounded to match the card silhouette,
-                // bottom corners left square so the info panel's
-                // rounded top can overlap without exposing a curved
-                // cutout between the image's bottom rounding and the
-                // panel's top rounding.
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(ListingCard._imageRadius),
-                  topRight: Radius.circular(ListingCard._imageRadius),
-                  bottomLeft: Radius.zero,
-                  bottomRight: Radius.zero,
-                ),
-                child: Stack(
-                  fit: StackFit.passthrough,
-                  children: [
-                    ListingCoverImage(
-                      imageUrl: listing.coverImageUrl,
-                      heroTag: listingCoverHeroTag(listing.id),
-                    ),
-                    const Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      height: 30,
-                      child: IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Color(0x00000000),
-                                Color(0x1A000000),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              _CoverStack(
+                imageRadius: imageRadius,
+                coverImageUrl: listing.coverImageUrl,
+                heroTag: listingCoverHeroTag(listing.id),
+                parallax: widget.coverParallax,
               ),
               // Child 1: info panel that overlaps the image's bottom.
               _InfoPanel(
@@ -204,12 +192,119 @@ class _ListingCardState extends State<ListingCard> {
                 isFeatured: isFeatured,
                 badges: badges,
                 trailing: widget.trailing,
-                radius: ListingCard._panelRadius,
+                radius: panelRadius,
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Image layer of the card: cover photo (Hero-wrapped) + cinematic
+/// bottom scrim + optional scroll parallax.
+///
+/// Pulled out of [ListingCard.build] so the parallax [AnimatedBuilder]
+/// (when wired) only rebuilds the image subtree on every scroll
+/// tick, NOT the glass info panel — keeping the expensive
+/// `BackdropFilter` layer stable across scroll frames.
+class _CoverStack extends StatelessWidget {
+  const _CoverStack({
+    required this.imageRadius,
+    required this.coverImageUrl,
+    required this.heroTag,
+    this.parallax,
+  });
+
+  final double imageRadius;
+  final String? coverImageUrl;
+  final Object heroTag;
+
+  /// Optional feed-scroll offset (pixels). When provided drives a
+  /// subtle `Transform.translate` so the cover photo "floats" at
+  /// ~15 % of the scroll speed. Positive feed scroll → negative
+  /// translateY (image drifts up slower than the rest of the
+  /// feed). Kept very small (clamped ≤ 24 px) so it reads as
+  /// depth, not motion sickness.
+  final ValueListenable<double>? parallax;
+
+  /// 3-stop gradient mapping transparent → deep black for a
+  /// cinematic fall. Alpha `0x55` ≈ 33 %, landing in the brief's
+  /// 30–40 % band. The mid-stop at 0.55 softens the curve so the
+  /// transition never reads as a hard band.
+  static const LinearGradient _scrim = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    stops: [0.0, 0.55, 1.0],
+    colors: [
+      Color(0x00000000),
+      Color(0x20000000),
+      Color(0x55000000),
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final stack = Stack(
+      fit: StackFit.passthrough,
+      children: [
+        ListingCoverImage(
+          imageUrl: coverImageUrl,
+          heroTag: heroTag,
+        ),
+        const Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          // 64 px bottom scrim lands behind the info panel's top
+          // edge (the panel overlaps the photo by 12 px) and fades
+          // smoothly into the middle third of the image so even
+          // photos framed low in the bottom band of the cover read
+          // cleanly into the glass.
+          height: 64,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(gradient: _scrim),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    final clipped = ClipRRect(
+      // Top corners rounded to match the card silhouette, bottom
+      // corners left square so the info panel's rounded top can
+      // overlap without exposing a curved cutout.
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(imageRadius),
+        topRight: Radius.circular(imageRadius),
+        bottomLeft: Radius.zero,
+        bottomRight: Radius.zero,
+      ),
+      child: stack,
+    );
+
+    final parallaxSource = parallax;
+    if (parallaxSource == null) return clipped;
+
+    // Only the image+scrim `ClipRRect` is inside the AnimatedBuilder
+    // subtree. The Hero lives inside `clipped`, so its current
+    // render position naturally reflects the parallax transform —
+    // exactly what we want when a flight starts from the visually
+    // translated image.
+    return AnimatedBuilder(
+      animation: parallaxSource,
+      builder: (context, child) {
+        // Clamp so long scrolls don't pull the photo off its frame.
+        final raw = parallaxSource.value;
+        final dy = -(raw * 0.15).clamp(-24.0, 24.0);
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: child,
+        );
+      },
+      child: clipped,
     );
   }
 }
@@ -327,16 +422,20 @@ class _InfoPanel extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     // Price carries the card's primary signal — full onSurface colour
-    // (no alpha dilution) and a slightly larger type size than the
-    // Pass 1 spec so it reads from a glance.
+    // (no alpha dilution), the largest type on the card, weight 800,
+    // and tightened `letterSpacing: -0.4` so multi-digit prices read
+    // as one condensed number instead of a sparse row of digits.
+    // The featured hero gets +2 px size (26 vs 24) so on a hero
+    // tile the price visibly dominates the composition. This is
+    // deliberately the strongest typographic element on the card.
     final priceStyle = (isFeatured
             ? theme.textTheme.headlineSmall
             : theme.textTheme.titleLarge)
         ?.copyWith(
-      fontSize: isFeatured ? 24 : 20,
+      fontSize: isFeatured ? 26 : 20,
       fontWeight: FontWeight.w800,
       color: scheme.onSurface,
-      letterSpacing: -0.3,
+      letterSpacing: -0.4,
       height: 1.1,
     );
     // Title sits one step below the price in the hierarchy: medium
@@ -352,51 +451,73 @@ class _InfoPanel extends StatelessWidget {
       height: 1.25,
     );
 
-    // Panel must read as a distinct layer hovering above the image:
-    //   * light mode: `surfaceContainerHighest` is too cold on its
-    //     own — we blend a 5 % primary tint into it to warm the
-    //     neutral and lift contrast vs. the scaffold background,
-    //   * dark mode: lift `surfaceContainerHigh` one step with a
-    //     hint of white so the panel is visibly brighter than the
-    //     page background (a flat surfaceContainer* tone in dark
-    //     mode reads as the same layer as the image).
+    // Pass 2.2 rebuilds the panel as a premium **glass sheet**:
+    //   * light mode: translucent white at α 0.90 over a 12-sigma
+    //     backdrop blur — where the panel overlaps the photo's
+    //     bottom the underlying image softens into a frosted haze,
+    //     selling the "glass over photo" feel promised by the
+    //     brief without changing the layout structure,
+    //   * dark mode: a lifted container tone at α 0.92 so the
+    //     panel still reads as a distinct layer; the backdrop
+    //     blur picks up the photo/page beneath for cohesion.
     final panelBg = isDark
         ? Color.alphaBlend(
-            Colors.white.withValues(alpha: 0.05),
+            Colors.white.withValues(alpha: 0.06),
             scheme.surfaceContainerHigh,
-          )
-        : Color.alphaBlend(
-            scheme.primary.withValues(alpha: 0.05),
-            scheme.surfaceContainerHighest,
-          );
-    // Directional shadow — deliberately heavier below the panel
-    // than around it so the panel reads as sitting on a real
-    // surface above the image (not a modal hovering in free space).
-    // The small 0.5 px top highlight creates the "material edge"
-    // that sells the lift: in light mode a whisper of white, in
-    // dark mode a faint specular line.
+          ).withValues(alpha: 0.92)
+        : Colors.white.withValues(alpha: 0.90);
+    // Featured vs. regular differentiation lives in the shadow,
+    // not in extra chrome:
+    //
+    //   * featured — α 0.11, blur 24, y 12: a firm editorial lift
+    //     so the hero card visibly "sits forward" on the feed,
+    //   * regular  — α 0.04, blur 14, y 6: a soft whisper so the
+    //     regular stream reads as a quiet, airy catalogue under
+    //     the featured hero.
+    //
+    // Dark mode leans heavier in both cases so the silhouette
+    // bites against deep surfaces.
     final panelShadowColor = isDark
-        ? Colors.black.withValues(alpha: 0.50)
-        : Colors.black.withValues(alpha: 0.13);
-    final panelHighlightColor = isDark
-        ? Colors.white.withValues(alpha: 0.04)
-        : Colors.white.withValues(alpha: 0.50);
+        ? Colors.black.withValues(alpha: isFeatured ? 0.52 : 0.32)
+        : Colors.black.withValues(alpha: isFeatured ? 0.11 : 0.04);
+    final panelShadowBlur = isFeatured ? 24.0 : 14.0;
+    final panelShadowOffset = isFeatured
+        ? const Offset(0, 12)
+        : const Offset(0, 6);
+    // Hairline edge. Light mode uses a faint white specular line
+    // (works on glass), dark mode a whisper white edge.
+    final panelBorderColor = isDark
+        ? Colors.white.withValues(alpha: 0.07)
+        : Colors.white.withValues(alpha: 0.55);
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: panelBg,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: panelHighlightColor, width: 0.5),
         boxShadow: [
           BoxShadow(
             color: panelShadowColor,
-            blurRadius: 26,
+            blurRadius: panelShadowBlur,
             spreadRadius: 0,
-            offset: const Offset(0, 11),
+            offset: panelShadowOffset,
           ),
         ],
       ),
-      child: Padding(
+      // ClipRRect + BackdropFilter give the panel a real glass
+      // effect: whatever is painted below (the photo's bottom
+      // edge, the scaffold background) is blurred through the
+      // translucent fill. Shadow is kept OUTSIDE the clip so it
+      // still casts cleanly below the card.
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: panelBg,
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(color: panelBorderColor, width: 0.5),
+            ),
+            child: Padding(
         padding: EdgeInsets.fromLTRB(
           14,
           12,
@@ -449,12 +570,22 @@ class _InfoPanel extends StatelessWidget {
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.9),
-                                  Colors.white.withValues(alpha: 0.6),
-                                  Colors.white.withValues(alpha: 0.25),
-                                  Colors.transparent,
-                                ],
+                                colors: isDark
+                                    ? [
+                                        Colors.white.withValues(alpha: 0.55),
+                                        Colors.white.withValues(alpha: 0.30),
+                                        Colors.white.withValues(alpha: 0.12),
+                                        Colors.transparent,
+                                      ]
+                                    : [
+                                        scheme.onSurface
+                                            .withValues(alpha: 0.14),
+                                        scheme.onSurface
+                                            .withValues(alpha: 0.09),
+                                        scheme.onSurface
+                                            .withValues(alpha: 0.04),
+                                        Colors.transparent,
+                                      ],
                               ),
                             ),
                           ),
@@ -525,6 +656,9 @@ class _InfoPanel extends StatelessWidget {
               _PanelActionSlot(child: trailing!),
             ],
           ],
+        ),
+      ),
+          ),
         ),
       ),
     );
@@ -605,9 +739,13 @@ class _MetaSeparator extends StatelessWidget {
 
 /// Rounded circular slot that hosts the card's right-side action
 /// (favorite toggle on public cards, owner overflow menu on My
-/// Listings) inside the info panel. Uses soft theme-aware tints so
-/// the slot reads as a tappable affordance on the panel surface, not
-/// as a glass chip over a photo.
+/// Listings) inside the info panel.
+///
+/// Pass 2.1 re-skins the slot as a **near-white glass chip** so it
+/// visually echoes the glass back/favorite buttons on the details
+/// page hero. Over the new white info panel the chip reads as a
+/// distinct, slightly translucent affordance with a hairline edge
+/// rather than a flat tinted circle.
 class _PanelActionSlot extends StatelessWidget {
   const _PanelActionSlot({required this.child});
 
@@ -618,27 +756,58 @@ class _PanelActionSlot extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    // Slot tint is one contrast step darker / lighter than the panel
-    // it sits on, so the circle reads as a tappable affordance at a
-    // glance without needing a border.
+    // Glass recipe — mirrors `_HeroGlassTile` on the details page:
+    //   * light mode: near-white @ 0.78 (slightly more opaque than
+    //     the panel itself so the chip reads as a distinct surface
+    //     *on* the glass), hairline white edge @ 0.60 to sell the
+    //     translucent curvature,
+    //   * dark mode: white @ 0.12 with a faint specular edge so
+    //     the slot stays legible on the dark panel.
     final bg = isDark
-        ? Colors.white.withValues(alpha: 0.11)
-        : Colors.black.withValues(alpha: 0.06);
-    // 36 px (not 40) keeps the slot in scale with the text block on
-    // its left — a chunkier circle visually crowds a single-line
-    // price + title. An IconTheme.merge at size 19 (not 20) gives
-    // the icon slightly more breathing room inside the circle.
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.white.withValues(alpha: 0.78);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.18)
+        : Colors.white.withValues(alpha: 0.60);
+    // Subtle lift — keeps the chip legibly "pressable" against the
+    // glass panel without reading as a heavy Material button.
+    final shadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.32)
+        : Colors.black.withValues(alpha: 0.08);
     return SizedBox(
       width: 36,
       height: 36,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: bg,
           shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 10,
+              spreadRadius: 0,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
-        child: IconTheme.merge(
-          data: IconThemeData(color: scheme.onSurface, size: 19),
-          child: child,
+        // ClipOval + BackdropFilter match the panel's glass
+        // language: the chip picks up and softens whatever sits
+        // behind it (the translucent panel + the photo peeking
+        // through the overlap region).
+        child: ClipOval(
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: bg,
+                shape: BoxShape.circle,
+                border: Border.all(color: borderColor, width: 0.5),
+              ),
+              child: IconTheme.merge(
+                data: IconThemeData(color: scheme.onSurface, size: 19),
+                child: child,
+              ),
+            ),
+          ),
         ),
       ),
     );
