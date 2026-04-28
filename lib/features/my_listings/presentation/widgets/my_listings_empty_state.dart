@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/empty_state_view.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 
 /// Empty-state surface rendered on My Listings when the authenticated
 /// user has never published a listing.
@@ -17,7 +18,7 @@ class MyListingsEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return EmptyStateView(
-      icon: Icons.inventory_2_outlined,
+      icon: CarzonIcons.inventoryEmpty,
       title: l10n.myListingsEmptyTitle,
       body: l10n.myListingsEmptyBody,
       primaryAction: EmptyStateAction(

@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 import '../../../create_listing/domain/entities/cover_image_upload.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/presentation/utils/contact_format.dart';
@@ -568,12 +569,12 @@ class _CoverEditor extends StatelessWidget {
       actions.addAll([
         TextButton.icon(
           onPressed: tapDisabled ? null : onPick,
-          icon: const Icon(Icons.photo_library_outlined),
+          icon: const Icon(CarzonIcons.photoLibrary),
           label: Text(l10n.coverChangePhoto),
         ),
         TextButton.icon(
           onPressed: tapDisabled ? null : onUndo,
-          icon: const Icon(Icons.undo),
+          icon: const Icon(CarzonIcons.undo),
           label: Text(l10n.coverCancelChange),
         ),
       ]);
@@ -582,7 +583,7 @@ class _CoverEditor extends StatelessWidget {
       actions.add(
         TextButton.icon(
           onPressed: tapDisabled ? null : onUndo,
-          icon: const Icon(Icons.undo),
+          icon: const Icon(CarzonIcons.undo),
           label: Text(l10n.coverCancelRemoval),
         ),
       );
@@ -591,12 +592,12 @@ class _CoverEditor extends StatelessWidget {
       actions.addAll([
         TextButton.icon(
           onPressed: tapDisabled ? null : onPick,
-          icon: const Icon(Icons.photo_library_outlined),
+          icon: const Icon(CarzonIcons.photoLibrary),
           label: Text(l10n.coverReplacePhoto),
         ),
         TextButton.icon(
           onPressed: tapDisabled ? null : onRemove,
-          icon: const Icon(Icons.delete_outline),
+          icon: const Icon(CarzonIcons.delete),
           label: Text(l10n.coverRemovePhoto),
         ),
       ]);
@@ -609,7 +610,7 @@ class _CoverEditor extends StatelessWidget {
       actions.add(
         TextButton.icon(
           onPressed: tapDisabled ? null : onPick,
-          icon: const Icon(Icons.add_a_photo_outlined),
+          icon: const Icon(CarzonIcons.addPhoto),
           label: Text(l10n.coverAddPhoto),
         ),
       );
@@ -682,7 +683,7 @@ class _NetworkPreview extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHighest,
         child: Center(
           child: Icon(
-            Icons.broken_image_outlined,
+            CarzonIcons.brokenImage,
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
@@ -718,7 +719,7 @@ class _RemovalPlaceholder extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.delete_outline,
+              CarzonIcons.delete,
               size: 32,
               color: theme.colorScheme.onErrorContainer,
             ),
@@ -766,7 +767,7 @@ class _EmptyPlaceholder extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.add_a_photo_outlined,
+                      CarzonIcons.addPhoto,
                       size: 32,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

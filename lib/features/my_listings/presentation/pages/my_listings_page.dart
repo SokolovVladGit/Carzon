@@ -6,6 +6,7 @@ import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/error_view.dart';
+import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -110,7 +111,12 @@ class _MyListingsView extends StatelessWidget {
               return RefreshIndicator(
                 onRefresh: () => context.read<MyListingsCubit>().load(sellerId),
                 child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                  padding: const EdgeInsets.fromLTRB(
+                    12,
+                    8,
+                    12,
+                    kFloatingCapsuleNavClearance,
+                  ),
                   itemCount: state.items.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 28),
                   itemBuilder: (context, index) {

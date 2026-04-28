@@ -58,6 +58,13 @@
   "filtersTitle": "Фильтры",
   "filterMake": "Марка",
   "filterMakeHint": "напр. Volkswagen",
+  "brandFilterAllSemantics": "Все марки",
+  "brandFilterBrandSemantics": "Марка: {brand}",
+  "@brandFilterBrandSemantics": {
+    "placeholders": {
+      "brand": { "type": "String" }
+    }
+  },
   "filterMinYear": "Мин. год",
   "filterMaxYear": "Макс. год",
   "filterMustBeNumber": "Нужно число.",
@@ -94,6 +101,9 @@
   },
   "contactWhatsapp": "WhatsApp",
   "contactActionFailed": "Не удалось открыть действие.",
+  "chatLabel": "Чат",
+  "chatNotAvailable": "Чат пока недоступен.",
+  "phoneNotProvided": "Телефон не указан",
 
   "reportListing": "Пожаловаться на объявление",
   "reportListingDescription": "Заметили подозрительную, неверную или недопустимую информацию? Сообщите нам.",

@@ -334,6 +334,18 @@ abstract class AppLocalizations {
   /// **'напр. Volkswagen'**
   String get filterMakeHint;
 
+  /// No description provided for @brandFilterAllSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все марки'**
+  String get brandFilterAllSemantics;
+
+  /// No description provided for @brandFilterBrandSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Марка: {brand}'**
+  String brandFilterBrandSemantics(String brand);
+
   /// No description provided for @filterMinYear.
   ///
   /// In ru, this message translates to:
@@ -519,6 +531,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не удалось открыть действие.'**
   String get contactActionFailed;
+
+  /// No description provided for @chatLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чат'**
+  String get chatLabel;
+
+  /// No description provided for @chatNotAvailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чат пока недоступен.'**
+  String get chatNotAvailable;
+
+  /// No description provided for @phoneNotProvided.
+  ///
+  /// In ru, this message translates to:
+  /// **'Телефон не указан'**
+  String get phoneNotProvided;
 
   /// No description provided for @reportListing.
   ///

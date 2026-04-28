@@ -86,21 +86,35 @@ class CategoryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
-    // Selected: low-alpha primary wash + primary-colored content.
-    // Unresolved: neutral container surface + onSurfaceVariant content.
-    // `surfaceContainerHighest` is used in place of the deprecated
-    // `surfaceVariant` so the chip matches the rest of the feed
-    // surfaces (search pill, filter button).
+    // Pass 1.9 aligns the chip with the brand-tile / search-pill
+    // language used throughout the feed header:
+    //   * inactive chip sits on a close-to-white / lifted dark
+    //     surface with a hairline outline, so it reads as a clean
+    //     control rather than a grey blob;
+    //   * selected chip earns a whisper primary wash + a tinted
+    //     hairline outline. No strong blue fill, no loud pill.
     final Color bg = isSelected
-        ? scheme.primary.withValues(alpha: 0.1)
-        : scheme.surfaceContainerHighest;
-    final Color fg =
-        isSelected ? scheme.primary : scheme.onSurfaceVariant;
+        ? (isDark
+            ? scheme.primary.withValues(alpha: 0.14)
+            : Color.alphaBlend(
+                scheme.primary.withValues(alpha: 0.05),
+                Colors.white,
+              ))
+        : (isDark ? scheme.surfaceContainerHighest : Colors.white);
+    final Color fg = isSelected
+        ? scheme.primary
+        : scheme.onSurfaceVariant.withValues(alpha: 0.85);
+    final Color borderColor = isSelected
+        ? scheme.primary.withValues(alpha: isDark ? 0.5 : 0.32)
+        : (isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : scheme.outlineVariant.withValues(alpha: 0.45));
 
     return Material(
       color: bg,
-      shape: const StadiumBorder(),
+      shape: StadiumBorder(side: BorderSide(color: borderColor)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/empty_state_view.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 
 /// Empty-state surface rendered when the signed-in user has no
 /// favorite listings yet.
@@ -32,7 +33,7 @@ class FavoritesEmptyState extends StatelessWidget {
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: EmptyStateView(
-                icon: Icons.favorite_border,
+                icon: CarzonIcons.heartOutline,
                 title: l10n.favoritesEmptyTitle,
                 body: l10n.favoritesEmptyBody,
                 primaryAction: EmptyStateAction(

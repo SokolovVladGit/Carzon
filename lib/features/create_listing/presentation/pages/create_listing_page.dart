@@ -7,8 +7,10 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../listings/domain/entities/listing.dart';
@@ -67,7 +69,7 @@ class _SignInRequired extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.lock_outline, size: 48),
+            const Icon(CarzonIcons.lock, size: 48),
             const SizedBox(height: 12),
             Text(
               l10n.createListingSignInRequired,
@@ -258,7 +260,12 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       builder: (context, state) {
         final submitting = state.status == CreateListingStatus.submitting;
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            kFloatingCapsuleNavClearance,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
@@ -466,7 +473,7 @@ class _CoverPhotoPicker extends StatelessWidget {
                           right: 8,
                           child: IconButton.filledTonal(
                             onPressed: tapDisabled ? null : onRemove,
-                            icon: const Icon(Icons.close),
+                            icon: const Icon(CarzonIcons.close),
                             tooltip: l10n.coverRemoveTooltip,
                           ),
                         ),
@@ -483,7 +490,7 @@ class _CoverPhotoPicker extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.add_a_photo_outlined,
+                                  CarzonIcons.addPhoto,
                                   size: 32,
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),

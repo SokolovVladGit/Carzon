@@ -115,17 +115,17 @@ void main() {
 
   group('Listings feed editorial header', () {
     testWidgets(
-      'renders the CARZON eyebrow + localized catalog title and no '
-      'marketing subtitle',
+      'renders the CARZON wordmark as the sole header identity, with '
+      'no large catalog title and no marketing subtitle',
       (tester) async {
         await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
         await tester.pump();
 
-        // Pass 1.3 promotes the header into an editorial hero. The
-        // AppBar no longer carries a visible title, so the eyebrow +
-        // title block has to be present on the home surface.
+        // Pass 1.8 simplifies the editorial header to a centered
+        // CARZON wordmark — the large catalog title was pulling the
+        // page into "generic app" territory and has been removed.
         expect(find.text('CARZON'), findsOneWidget);
-        expect(find.text(l10n.catalogTitle), findsOneWidget);
+        expect(find.text(l10n.catalogTitle), findsNothing);
         expect(find.text(l10n.catalogSubtitle), findsNothing);
       },
     );

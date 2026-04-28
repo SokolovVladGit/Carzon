@@ -9,6 +9,7 @@ import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
 import 'package:carzon/features/listings/presentation/pages/listing_details_page.dart';
 import 'package:carzon/l10n/app_localizations.dart';
+import 'package:carzon/shared/ui/carzon_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -116,7 +117,7 @@ void main() {
       await tester.pump();
 
       expect(find.text(l10n.reportListing), findsNothing);
-      expect(find.byIcon(Icons.flag_outlined), findsNothing);
+      expect(find.byIcon(CarzonIcons.report), findsNothing);
       expect(find.text(l10n.reportListingDescription), findsNothing);
     },
   );
@@ -143,7 +144,7 @@ void main() {
       await tester.pump();
 
       expect(reportLabel, findsOneWidget);
-      expect(find.byIcon(Icons.flag_outlined), findsOneWidget);
+      expect(find.byIcon(CarzonIcons.report), findsOneWidget);
       expect(find.text(l10n.reportListingDescription), findsOneWidget);
     },
   );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 
 /// Small seller-facing notice displayed near contact fields on the
 /// create-listing and edit-listing forms.
@@ -28,7 +29,7 @@ class PublicContactNotice extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, size: 20, color: fg),
+          Icon(CarzonIcons.info, size: 20, color: fg),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

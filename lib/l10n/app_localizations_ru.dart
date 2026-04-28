@@ -134,6 +134,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get filterMakeHint => 'напр. Volkswagen';
 
   @override
+  String get brandFilterAllSemantics => 'Все марки';
+
+  @override
+  String brandFilterBrandSemantics(String brand) {
+    return 'Марка: $brand';
+  }
+
+  @override
   String get filterMinYear => 'Мин. год';
 
   @override
@@ -228,6 +236,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get contactActionFailed => 'Не удалось открыть действие.';
+
+  @override
+  String get chatLabel => 'Чат';
+
+  @override
+  String get chatNotAvailable => 'Чат пока недоступен.';
+
+  @override
+  String get phoneNotProvided => 'Телефон не указан';
 
   @override
   String get reportListing => 'Пожаловаться на объявление';

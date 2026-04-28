@@ -123,16 +123,25 @@ void main() {
   }
 
   group('ListingDetailsPage AppBar', () {
-    testWidgets('renders a visible back button, title and favorite action',
-        (tester) async {
-      await tester.pumpWidget(wrapWithRouter(initialLocation: '/listings/l1'));
-      await tester.pump();
+    testWidgets(
+      'renders a visible back button and favorite action without a '
+      'generic "Объявление" page label',
+      (tester) async {
+        await tester.pumpWidget(
+          wrapWithRouter(initialLocation: '/listings/l1'),
+        );
+        await tester.pump();
 
-      expect(find.byType(AppBackButton), findsOneWidget);
-      expect(find.byType(BackButtonIcon), findsOneWidget);
-      expect(find.text(l10n.listingDetailsTitle), findsOneWidget);
-      expect(find.byType(FavoriteToggleButton), findsOneWidget);
-    });
+        expect(find.byType(AppBackButton), findsOneWidget);
+        expect(find.byType(BackButtonIcon), findsOneWidget);
+        expect(find.byType(FavoriteToggleButton), findsOneWidget);
+        // The page intentionally no longer shows the
+        // `listingDetailsTitle` overline — the brand identity row
+        // replaces it so the header reads as an automotive marker,
+        // not a generic "Listing" page label.
+        expect(find.text(l10n.listingDetailsTitle), findsNothing);
+      },
+    );
 
     testWidgets(
       'deep-linked details tap of back falls back to the listings feed',
@@ -147,7 +156,7 @@ void main() {
         await tester.tap(find.byType(BackButtonIcon));
         await tester.pumpAndSettle();
 
-        expect(find.text(l10n.listingDetailsTitle), findsNothing);
+        expect(find.byType(FavoriteToggleButton), findsNothing);
         expect(find.text('home-feed-stub'), findsOneWidget);
       },
     );

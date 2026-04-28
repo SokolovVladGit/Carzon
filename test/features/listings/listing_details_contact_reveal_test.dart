@@ -9,6 +9,7 @@ import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
 import 'package:carzon/features/listings/presentation/pages/listing_details_page.dart';
 import 'package:carzon/l10n/app_localizations.dart';
+import 'package:carzon/shared/ui/carzon_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -141,7 +142,7 @@ void main() {
 
       expect(find.text(l10n.contactShowPhone), findsNothing);
       expect(find.text(phone), findsOneWidget);
-      expect(find.byIcon(Icons.call), findsOneWidget);
+      expect(find.byIcon(CarzonIcons.phoneCall), findsOneWidget);
     },
   );
 

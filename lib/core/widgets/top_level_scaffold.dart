@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/router/app_router.dart';
+import '../../shared/ui/carzon_icons.dart';
 import '../l10n/app_localizations_x.dart';
 import 'floating_capsule_nav.dart';
 
@@ -64,6 +65,7 @@ class TopLevelScaffold extends StatelessWidget {
     required this.body,
     this.appBar,
     this.floatingActionButton,
+    this.backgroundColor,
   });
 
   /// Which top-level tab this page represents. Drives the selected
@@ -83,6 +85,12 @@ class TopLevelScaffold extends StatelessWidget {
 
   final Widget? floatingActionButton;
 
+  /// Optional override for the scaffold background color. Feed pages
+  /// (e.g. the main listings feed) pass a pure white (light) / surface
+  /// (dark) value so the feed reads as one clean editorial canvas;
+  /// pages that do not pass a value fall back to the Material default.
+  final Color? backgroundColor;
+
   void _onDestinationSelected(BuildContext context, int index) {
     final target = TopLevelDestination.values[index];
     if (target == destination) return;
@@ -96,34 +104,42 @@ class TopLevelScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Scaffold(
+      backgroundColor: backgroundColor,
+      // Let the body render full-height behind the floating nav so
+      // the scaffold does not paint a flat rectangle of background
+      // around the pill (which made the nav read as a default
+      // Material bottom bar with a capsule stuck inside it). Pages
+      // add `kFloatingCapsuleNavClearance` to their scrollable
+      // bottom padding so the last row clears the pill.
+      extendBody: true,
       appBar: appBar,
       body: body,
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: FloatingCapsuleNav(
         selectedIndex: destination.index,
         onDestinationSelected: (i) => _onDestinationSelected(context, i),
-        // All four destinations use the `_rounded` icon family so the
-        // bar reads as a single set — same stroke weight, same corner
-        // radius, no mix of outlined-sharp and rounded.
+        // All four destinations use the Lucide outline family so the
+        // bar reads as a single set — same stroke weight, consistent
+        // geometry, no mix of outlined and rounded Material glyphs.
         destinations: [
           CapsuleNavDestination(
             // Listings tab doubles as the search/discovery surface,
             // so a magnifying-glass icon reads truer than a car icon.
-            icon: Icons.search_rounded,
-            selectedIcon: Icons.search_rounded,
+            icon: CarzonIcons.navListings,
+            selectedIcon: CarzonIcons.navListings,
             label: l10n.navListings,
           ),
           CapsuleNavDestination(
-            icon: Icons.favorite_border_rounded,
-            selectedIcon: Icons.favorite_rounded,
+            icon: CarzonIcons.navFavoritesOutline,
+            selectedIcon: CarzonIcons.navFavoritesFilled,
             label: l10n.navFavorites,
           ),
           CapsuleNavDestination(
-            // Stronger silhouette than `add_circle_outline` so the
-            // central "Sell" destination holds its own next to the
-            // dense search and heart icons either side of it.
-            icon: Icons.add_circle_outline_rounded,
-            selectedIcon: Icons.add_circle_rounded,
+            // Stronger silhouette than a plain plus so the central
+            // "Sell" destination holds its own next to the search and
+            // heart icons on either side.
+            icon: CarzonIcons.navCreateOutline,
+            selectedIcon: CarzonIcons.navCreateFilled,
             label: l10n.navSell,
             // Center/create action — the nav gives it a slightly
             // larger icon so it reads as the primary action without
@@ -131,8 +147,8 @@ class TopLevelScaffold extends StatelessWidget {
             isEmphasized: true,
           ),
           CapsuleNavDestination(
-            icon: Icons.menu_rounded,
-            selectedIcon: Icons.menu_rounded,
+            icon: CarzonIcons.navMenu,
+            selectedIcon: CarzonIcons.navMenu,
             label: l10n.navMenu,
           ),
         ],

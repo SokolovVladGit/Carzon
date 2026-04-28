@@ -31,6 +31,23 @@ class CapsuleNavDestination {
   final bool isEmphasized;
 }
 
+/// Vertical clearance (in logical pixels) that the floating capsule
+/// nav occupies above the system bottom safe area.
+///
+/// Consists of:
+///   * 64 px capsule height,
+///   * 6 px padding above the capsule,
+///   * 12 px minimum SafeArea bottom (when the device reports no
+///     system home-indicator padding),
+///   * ~14 px of breathing room so the last scrollable item lands
+///     clearly above the capsule's shadow edge.
+///
+/// Pages wrapped in [TopLevelScaffold] render with `extendBody: true`,
+/// so scrollables visually continue behind the pill. They must add
+/// this constant to their bottom scroll padding so the last row is
+/// not obscured by the floating nav.
+const double kFloatingCapsuleNavClearance = 96.0;
+
 /// Premium, label-less floating capsule bottom navigation (Pass 1.5).
 ///
 /// Visual language:
@@ -67,45 +84,46 @@ class FloatingCapsuleNav extends StatelessWidget {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // The capsule must stay visibly distinct from the scaffold
-    // background:
-    //   * dark: one step above `surfaceContainerHighest` so the
-    //     capsule feels like a lifted dark surface,
-    //   * light: `surfaceContainerLow` — a soft warm grey that sits
-    //     clearly on top of the warm-white scaffold. Previously this
-    //     used `scheme.surface`, but the scaffold *is* now warm
-    //     white, so re-using `surface` would make the capsule
-    //     disappear into the background.
+    // Pass 2.0 flattens the capsule to a single premium white
+    // surface, relying on the shadow (not a grey fill) to separate
+    // it from the page. Dark mode keeps a lifted container tone so
+    // the silhouette stays readable against deep surfaces.
     final capsuleBg = isDark
         ? Color.alphaBlend(
             Colors.white.withValues(alpha: 0.04),
             scheme.surfaceContainerHighest,
           )
-        : scheme.surfaceContainerLow;
+        : Colors.white;
+    // Hairline border — enough to bite the edge when the capsule
+    // sits over a near-white page, but never a visible grey line.
     final borderColor = isDark
         ? Colors.white.withValues(alpha: 0.06)
-        : scheme.outlineVariant.withValues(alpha: 0.6);
+        : scheme.outlineVariant.withValues(alpha: 0.18);
 
-    const capsuleHeight = 60.0;
-    const radius = 34.0;
+    const capsuleHeight = 64.0;
+    // 32 lands mid-range of the premium floating-pill target band
+    // (30–34); the resulting geometry reads as a deliberate
+    // rounded rectangle, not a stadium.
+    const radius = 32.0;
 
     return SafeArea(
       top: false,
-      minimum: const EdgeInsets.only(bottom: 10),
+      minimum: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 6, 18, 0),
+        padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius),
-            // Soft, diffused shadow — not Material default. Darker
-            // and more pronounced in dark mode so the capsule reads
-            // as lifted above deep surfaces.
+            // Heavier, wider drop shadow sells the "floating" feel
+            // against the pure-white feed background. Dark mode
+            // still leans on a darker alpha for contrast over deep
+            // surfaces.
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.38 : 0.08),
-                blurRadius: 24,
+                color: Colors.black.withValues(alpha: isDark ? 0.42 : 0.10),
+                blurRadius: 30,
                 spreadRadius: 0,
-                offset: const Offset(0, 8),
+                offset: const Offset(0, 12),
               ),
             ],
           ),
@@ -189,19 +207,27 @@ class _CapsuleNavItemState extends State<_CapsuleNavItem> {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // Active icon stays neutral-firm (not a primary-color blast);
-    // the colored pill behind it carries the accent.
-    final activeIconColor = scheme.onSurface;
+    // Pass 1.9: the active tab now reads primarily through color —
+    // the icon shifts to `primary` and earns a whisper primary pill
+    // behind it. Inactive icons stay readable (not ghosted) but
+    // clearly secondary, at ~0.55 onSurfaceVariant opacity.
+    final activeIconColor = scheme.primary;
     final inactiveIconColor =
-        scheme.onSurfaceVariant.withValues(alpha: 0.65);
+        scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.62 : 0.55);
     final iconColor =
         widget.selected ? activeIconColor : inactiveIconColor;
 
     final pillColor = widget.selected
-        ? scheme.primary.withValues(alpha: isDark ? 0.14 : 0.10)
+        ? scheme.primary.withValues(alpha: isDark ? 0.18 : 0.10)
         : Colors.transparent;
 
-    final iconSize = widget.destination.isEmphasized ? 24.0 : 22.0;
+    // Pass 2.0 bumps the selected icon +1 px so the active tab
+    // reads stronger without turning the capsule into a FAB; the
+    // emphasized "Sell" destination still gains another +2 px on
+    // top of that.
+    final iconSize = widget.destination.isEmphasized
+        ? (widget.selected ? 25.0 : 24.0)
+        : (widget.selected ? 23.0 : 22.0);
 
     return Semantics(
       button: true,
@@ -225,11 +251,15 @@ class _CapsuleNavItemState extends State<_CapsuleNavItem> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOut,
-                width: 48,
-                height: 36,
+                // 44×44 rounded-square highlight (radius 14) —
+                // lands in the 42–46 target for the active tab's
+                // soft pill and pairs visually with the brand-row
+                // tiles used elsewhere on the feed.
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: pillColor,
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   widget.selected
