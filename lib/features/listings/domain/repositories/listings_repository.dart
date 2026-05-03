@@ -1,5 +1,6 @@
 import '../../../../core/utils/result.dart';
 import '../entities/listing.dart';
+import '../entities/listing_image.dart';
 
 class ListingsQuery {
   const ListingsQuery({
@@ -62,4 +63,8 @@ abstract interface class ListingsRepository {
   /// the caller, the caller is not authenticated, or the transport
   /// fails. Cascades to `favorites` rows via the existing FK.
   Future<Result<void>> deleteListing(String id);
+
+  /// Ordered gallery rows (`listing_images`). Read-only; INSERT/UPDATE/DELETE
+  /// stay RPC-only in later phases.
+  Future<Result<List<ListingImage>>> getListingImages(String listingId);
 }

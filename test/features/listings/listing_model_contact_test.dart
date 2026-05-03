@@ -1,4 +1,5 @@
 import 'package:carzon/features/listings/data/models/listing_model.dart';
+import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -16,6 +17,23 @@ void main() {
         'created_at': '2026-01-01T00:00:00Z',
         'status': 'active',
       };
+
+  group('ListingModel.fromJson — price_currency', () {
+    test('defaults to EUR when column missing', () {
+      final m = ListingModel.fromJson(baseJson());
+      expect(m.priceCurrency, ListingCurrency.eur);
+    });
+
+    test('parses usd', () {
+      final m = ListingModel.fromJson(baseJson()..['price_currency'] = 'usd');
+      expect(m.priceCurrency, ListingCurrency.usd);
+    });
+
+    test('toJson includes price_currency', () {
+      final m = ListingModel.fromJson(baseJson()..['price_currency'] = 'usd');
+      expect(m.toJson()['price_currency'], 'usd');
+    });
+  });
 
   group('ListingModel.fromJson — contact fields', () {
     test('parses all three fields when present', () {

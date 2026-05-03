@@ -1,5 +1,6 @@
 import 'package:carzon/features/edit_listing/domain/entities/edit_listing_input.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
+import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 EditListingInput _input({
@@ -16,25 +17,37 @@ EditListingInput _input({
   String contactPhone = '+373 690 00001',
   String? telegramUsername,
   bool whatsappEnabled = false,
-}) =>
-    EditListingInput(
-      listingId: listingId,
-      title: title,
-      make: make,
-      model: model,
-      year: year,
-      priceEur: priceEur,
-      mileageKm: mileageKm,
-      type: type,
-      city: city,
-      marketRegion: marketRegion,
-      contactPhone: contactPhone,
-      telegramUsername: telegramUsername,
-      whatsappEnabled: whatsappEnabled,
-    );
+  ListingCurrency priceCurrency = ListingCurrency.eur,
+}) => EditListingInput(
+  listingId: listingId,
+  title: title,
+  make: make,
+  model: model,
+  year: year,
+  priceEur: priceEur,
+  mileageKm: mileageKm,
+  type: type,
+  city: city,
+  marketRegion: marketRegion,
+  contactPhone: contactPhone,
+  telegramUsername: telegramUsername,
+  whatsappEnabled: whatsappEnabled,
+  priceCurrency: priceCurrency,
+);
 
 void main() {
   group('EditListingInput', () {
+    test('defaults priceCurrency to EUR', () {
+      expect(_input().priceCurrency, ListingCurrency.eur);
+    });
+
+    test('differing priceCurrency breaks equality', () {
+      expect(
+        _input(priceCurrency: ListingCurrency.eur),
+        isNot(_input(priceCurrency: ListingCurrency.usd)),
+      );
+    });
+
     test('equal instances with identical fields are equal', () {
       expect(_input(), _input());
     });
@@ -72,6 +85,7 @@ void main() {
       expect(a.props, contains(a.model));
       expect(a.props, contains(a.year));
       expect(a.props, contains(a.priceEur));
+      expect(a.props, contains(a.priceCurrency));
       expect(a.props, contains(a.mileageKm));
       expect(a.props, contains(a.type));
       expect(a.props, contains(a.city));

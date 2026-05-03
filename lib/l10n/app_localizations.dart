@@ -658,6 +658,132 @@ abstract class AppLocalizations {
   /// **'Цена (EUR)'**
   String get fieldPriceEur;
 
+  /// No description provided for @createListingMediaTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото объявления'**
+  String get createListingMediaTitle;
+
+  /// No description provided for @createListingMediaSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Первое фото станет главным на карточке.'**
+  String get createListingMediaSubtitle;
+
+  /// No description provided for @createListingMediaHeroEmptyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нажмите, чтобы добавить фото объявления. До девяти снимков — по одному из галереи.'**
+  String get createListingMediaHeroEmptyHint;
+
+  /// No description provided for @createListingAddPhoto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить фото'**
+  String get createListingAddPhoto;
+
+  /// No description provided for @createListingAddMorePhotos.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё фото'**
+  String get createListingAddMorePhotos;
+
+  /// No description provided for @createListingMaxPhotos.
+  ///
+  /// In ru, this message translates to:
+  /// **'Можно не больше {count} фотографий.'**
+  String createListingMaxPhotos(int count);
+
+  /// No description provided for @createListingRemovePhoto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить фото'**
+  String get createListingRemovePhoto;
+
+  /// No description provided for @createListingCoverBadge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обложка'**
+  String get createListingCoverBadge;
+
+  /// No description provided for @createListingPriceAmount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена — сумма'**
+  String get createListingPriceAmount;
+
+  /// No description provided for @createListingCurrency.
+  ///
+  /// In ru, this message translates to:
+  /// **'Валюта'**
+  String get createListingCurrency;
+
+  /// No description provided for @currencyCodeEur.
+  ///
+  /// In ru, this message translates to:
+  /// **'EUR'**
+  String get currencyCodeEur;
+
+  /// No description provided for @currencyCodeUsd.
+  ///
+  /// In ru, this message translates to:
+  /// **'USD'**
+  String get currencyCodeUsd;
+
+  /// No description provided for @createListingBrandLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Марка'**
+  String get createListingBrandLabel;
+
+  /// No description provided for @createListingChooseBrand.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите марку'**
+  String get createListingChooseBrand;
+
+  /// No description provided for @createListingBrandOther.
+  ///
+  /// In ru, this message translates to:
+  /// **'Другая'**
+  String get createListingBrandOther;
+
+  /// No description provided for @createListingCustomBrandHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите марку'**
+  String get createListingCustomBrandHint;
+
+  /// No description provided for @createListingYearLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Год выпуска'**
+  String get createListingYearLabel;
+
+  /// No description provided for @createListingChooseYear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите год'**
+  String get createListingChooseYear;
+
+  /// No description provided for @createListingPhotosUploadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить фото. Попробуйте ещё раз.'**
+  String get createListingPhotosUploadFailed;
+
+  /// No description provided for @commonDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Готово'**
+  String get commonDone;
+
+  /// No description provided for @createListingSearchBrandsHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск марки'**
+  String get createListingSearchBrandsHint;
+
   /// No description provided for @fieldMileageKm.
   ///
   /// In ru, this message translates to:
@@ -796,6 +922,24 @@ abstract class AppLocalizations {
   /// **'Не удалось создать объявление. Попробуйте ещё раз.'**
   String get listingCreateFailedRetry;
 
+  /// No description provided for @imagePickerLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось выбрать фото. Попробуйте другое изображение.'**
+  String get imagePickerLoadFailed;
+
+  /// No description provided for @listingCreateSessionExpired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сессия истекла или доступ запрещён. Войдите снова и повторите попытку.'**
+  String get listingCreateSessionExpired;
+
+  /// No description provided for @listingCreateServiceUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сервис временно недоступен. Попробуйте позже.'**
+  String get listingCreateServiceUnavailable;
+
   /// No description provided for @editListingTitle.
   ///
   /// In ru, this message translates to:
@@ -897,6 +1041,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Сохранить'**
   String get saveChanges;
+
+  /// No description provided for @editListingGalleryReadOnlyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Галерея не загрузилась. Фото ниже только для справки; изменить их сейчас нельзя — сохранятся текст и другие поля объявления.'**
+  String get editListingGalleryReadOnlyHint;
+
+  /// No description provided for @editListingGalleryReplaceFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось обновить фотографии. Попробуйте ещё раз.'**
+  String get editListingGalleryReplaceFailed;
 
   /// No description provided for @myListingsTitle.
   ///

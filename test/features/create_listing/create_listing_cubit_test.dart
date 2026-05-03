@@ -5,12 +5,15 @@ import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/create_listing/domain/entities/cover_image_upload.dart';
 import 'package:carzon/features/create_listing/domain/entities/new_listing_input.dart';
+import 'package:carzon/features/create_listing/domain/entities/uploaded_listing_image.dart';
 import 'package:carzon/features/create_listing/domain/repositories/create_listing_repository.dart';
-import 'package:carzon/features/create_listing/domain/usecases/create_listing.dart';
-import 'package:carzon/features/create_listing/domain/usecases/upload_listing_cover_image.dart';
+import 'package:carzon/features/create_listing/domain/usecases/create_listing_v2.dart';
+import 'package:carzon/features/create_listing/domain/usecases/delete_uploaded_listing_images_best_effort.dart';
+import 'package:carzon/features/create_listing/domain/usecases/upload_listing_images_sequential.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_cubit.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_state.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
+import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -18,51 +21,77 @@ class _MockCreateRepo extends Mock implements CreateListingRepository {}
 
 class _MockImageRepo extends Mock implements ListingImageRepository {}
 
-NewListingInput _input({String? coverImageUrl}) => NewListingInput(
-      sellerId: 's1',
-      title: 't',
-      make: 'M',
-      model: 'm',
-      year: 2020,
-      priceEur: 10000,
-      mileageKm: 50000,
-      type: ListingType.sale,
-      city: 'Tiraspol',
-      marketRegion: MarketRegion.transnistria,
-      coverImageUrl: coverImageUrl,
-      contactPhone: '+373 690 00001',
-    );
+NewListingInput _input({
+  ListingCurrency? priceCurrency,
+  String make = 'M',
+  int year = 2020,
+}) => NewListingInput(
+  sellerId: 's1',
+  title: 't',
+  make: make,
+  model: 'm',
+  year: year,
+  priceEur: 10000,
+  priceCurrency: priceCurrency ?? ListingCurrency.eur,
+  mileageKm: 50000,
+  type: ListingType.sale,
+  city: 'Tiraspol',
+  marketRegion: MarketRegion.transnistria,
+  contactPhone: '+373 690 00001',
+);
 
-Listing _listing(String? coverImageUrl) => Listing(
-      id: 'l1',
-      title: 't',
-      make: 'M',
-      model: 'm',
-      year: 2020,
-      priceEur: 10000,
-      mileageKm: 50000,
-      type: ListingType.sale,
-      city: 'Tiraspol',
-      marketRegion: MarketRegion.transnistria,
-      createdAt: DateTime.utc(2026, 1, 1),
-      status: ListingStatus.active,
-      coverImageUrl: coverImageUrl,
-      sellerId: 's1',
-    );
+Listing _listing({String? coverImageUrl}) => Listing(
+  id: 'l1',
+  title: 't',
+  make: 'M',
+  model: 'm',
+  year: 2020,
+  priceCurrency: ListingCurrency.eur,
+  priceEur: 10000,
+  mileageKm: 50000,
+  type: ListingType.sale,
+  city: 'Tiraspol',
+  marketRegion: MarketRegion.transnistria,
+  createdAt: DateTime.utc(2026, 1, 1),
+  status: ListingStatus.active,
+  coverImageUrl: coverImageUrl,
+  sellerId: 's1',
+);
 
-CoverImageUpload _upload() => CoverImageUpload(
-      sellerId: 's1',
-      bytes: Uint8List.fromList([1, 2, 3]),
-      contentType: 'image/jpeg',
-    );
+CoverImageUpload _upload([List<int>? data]) => CoverImageUpload(
+  sellerId: 's1',
+  bytes: Uint8List.fromList(data ?? [1, 2, 3]),
+  contentType: 'image/jpeg',
+);
 
 void main() {
   setUpAll(() {
     registerFallbackValue(_input());
+    registerFallbackValue(<CoverImageUpload>[]);
     registerFallbackValue(_upload());
+    registerFallbackValue(const UploadedListingImage(publicUrl: 'x'));
   });
 
-  group('CreateListingCubit.submit', () {
+  group('stagingGalleryAttached', () {
+    test(
+      'null gallery clears gallery + cover staging only when base lacked them',
+      () {
+        final base = _input();
+        expect(
+          CreateListingCubit.stagingGalleryAttached(base, null).uploadedGallery,
+          isNull,
+        );
+        final withUrls = UploadedListingImage(publicUrl: 'https://x/a.jpg');
+        final merged = CreateListingCubit.stagingGalleryAttached(base, [
+          withUrls,
+        ]);
+        expect(merged.uploadedGallery?.single.publicUrl, withUrls.publicUrl);
+        expect(merged.coverImageUrl, isNull);
+      },
+    );
+  });
+
+  group('CreateListingCubit.submit (v2 + gallery)', () {
     late _MockCreateRepo createRepo;
     late _MockImageRepo imageRepo;
     late CreateListingCubit cubit;
@@ -71,114 +100,209 @@ void main() {
       createRepo = _MockCreateRepo();
       imageRepo = _MockImageRepo();
       cubit = CreateListingCubit(
-        createListing: CreateListing(createRepo),
-        uploadListingCoverImage: UploadListingCoverImage(imageRepo),
+        createListingV2: CreateListingV2(createRepo),
+        uploadListingImagesSequential: UploadListingImagesSequential(imageRepo),
+        deleteUploadedListingImagesBestEffort:
+            DeleteUploadedListingImagesBestEffort(imageRepo),
       );
+      when(
+        () => imageRepo.deleteUploadedBatchBestEffort(
+          images: any(named: 'images'),
+          sellerId: any(named: 'sellerId'),
+        ),
+      ).thenAnswer((_) async => const Success(null));
     });
 
     tearDown(() => cubit.close());
 
     blocTest<CreateListingCubit, CreateListingState>(
-      'without cover image, inserts the listing as-is',
+      'no photos → skips upload and passes null gallery/default EUR via createV2',
       setUp: () {
-        when(() => createRepo.create(any())).thenAnswer(
-          (_) async => Success(_listing(null)),
-        );
+        when(
+          () => createRepo.createV2(any()),
+        ).thenAnswer((_) async => Success(_listing()));
       },
       build: () => cubit,
-      act: (c) => c.submit(_input()),
+      act: (c) => c.submit(listingInput: _input(), orderedPhotos: []),
       expect: () => [
         const CreateListingState.submitting(),
-        CreateListingState.success(_listing(null)),
+        CreateListingState.success(_listing()),
       ],
       verify: (_) {
-        verifyNever(() => imageRepo.uploadCover(any()));
-        final captured = verify(() => createRepo.create(captureAny())).captured;
-        expect((captured.single as NewListingInput).coverImageUrl, isNull);
+        verifyNever(() => imageRepo.uploadSequential(any()));
+        final captured =
+            verify(() => createRepo.createV2(captureAny())).captured.single
+                as NewListingInput;
+        expect(captured.uploadedGallery, isNull);
+        expect(captured.priceCurrency, ListingCurrency.eur);
       },
     );
 
     blocTest<CreateListingCubit, CreateListingState>(
-      'with cover image, uploads first and passes public URL to insert',
+      'multiple photos → uploads sequentially then invokes createV2 with gallery '
+      '(order preserved); cover URL param remains null — gallery drives cover',
       setUp: () {
-        when(() => imageRepo.uploadCover(any())).thenAnswer(
-          (_) async => const Success('https://cdn.example.com/cover.jpg'),
+        when(() => imageRepo.uploadSequential(any())).thenAnswer(
+          (_) async => Success([
+            const UploadedListingImage(publicUrl: 'https://cdn/a.jpg'),
+            const UploadedListingImage(publicUrl: 'https://cdn/b.jpg'),
+          ]),
         );
-        when(() => createRepo.create(any())).thenAnswer(
-          (_) async => Success(_listing('https://cdn.example.com/cover.jpg')),
+        when(() => createRepo.createV2(any())).thenAnswer(
+          (_) async => Success(_listing(coverImageUrl: 'https://cdn/a.jpg')),
         );
       },
       build: () => cubit,
-      act: (c) => c.submit(_input(), coverImage: _upload()),
+      act: (c) => c.submit(
+        listingInput: _input(),
+        orderedPhotos: [
+          _upload([10]),
+          _upload([20, 21]),
+        ],
+      ),
       expect: () => [
         const CreateListingState.submitting(),
-        CreateListingState.success(_listing('https://cdn.example.com/cover.jpg')),
+        CreateListingState.success(
+          _listing(coverImageUrl: 'https://cdn/a.jpg'),
+        ),
       ],
       verify: (_) {
-        verify(() => imageRepo.uploadCover(any())).called(1);
-        final captured = verify(() => createRepo.create(captureAny())).captured;
-        expect(
-          (captured.single as NewListingInput).coverImageUrl,
-          'https://cdn.example.com/cover.jpg',
-        );
+        final uploadArg =
+            verify(
+                  () => imageRepo.uploadSequential(captureAny()),
+                ).captured.single
+                as List<CoverImageUpload>;
+        expect(uploadArg.length, 2);
+        expect(uploadArg.first.bytes.first, 10);
+        expect(uploadArg[1].bytes.length, 2);
+        expect(uploadArg[1].bytes.first, 20);
+
+        final io =
+            verify(() => createRepo.createV2(captureAny())).captured.single
+                as NewListingInput;
+        expect(io.uploadedGallery!.map((e) => e.publicUrl).toList(), [
+          'https://cdn/a.jpg',
+          'https://cdn/b.jpg',
+        ]);
+        expect(io.coverImageUrl, isNull);
       },
     );
 
     blocTest<CreateListingCubit, CreateListingState>(
-      'if upload fails, listing insert is NOT called and a friendly '
-      'cover-photo message is emitted',
+      'USD + make/year propagated into createV2 NewListingInput',
       setUp: () {
-        when(() => imageRepo.uploadCover(any())).thenAnswer(
-          (_) async => const FailureResult(ServerFailure(
-            'new row violates row-level security policy',
-          )),
-        );
+        when(
+          () => createRepo.createV2(any()),
+        ).thenAnswer((_) async => Success(_listing()));
       },
       build: () => cubit,
-      act: (c) => c.submit(_input(), coverImage: _upload()),
+      act: (c) => c.submit(
+        listingInput: _input(
+          priceCurrency: ListingCurrency.usd,
+          make: 'Toyota',
+          year: 2019,
+        ),
+        orderedPhotos: [],
+      ),
+      expect: () => [
+        const CreateListingState.submitting(),
+        CreateListingState.success(_listing()),
+      ],
+      verify: (_) {
+        final io =
+            verify(() => createRepo.createV2(captureAny())).captured.single
+                as NewListingInput;
+        expect(io.priceCurrency, ListingCurrency.usd);
+        expect(io.make, 'Toyota');
+        expect(io.year, 2019);
+      },
+    );
+
+    blocTest<CreateListingCubit, CreateListingState>(
+      'upload failure ⇒ createV2 not called',
+      setUp: () {
+        when(
+          () => imageRepo.uploadSequential(any()),
+        ).thenAnswer((_) async => FailureResult(ServerFailure('rls')));
+      },
+      build: () => cubit,
+      act: (c) => c.submit(listingInput: _input(), orderedPhotos: [_upload()]),
       expect: () => const [
         CreateListingState.submitting(),
         CreateListingState.failure(CreateListingFailureKind.upload),
       ],
       verify: (_) {
-        verifyNever(() => createRepo.create(any()));
+        verifyNever(() => createRepo.createV2(any()));
       },
     );
 
     blocTest<CreateListingCubit, CreateListingState>(
-      'if insert fails after a successful upload, emits the create '
-      'failure kind so the widget can render a localized message',
+      'after successful uploads createV2 fails ⇒ batch delete invoked; '
+      'surface failure still generic mapped kind',
       setUp: () {
-        when(() => imageRepo.uploadCover(any())).thenAnswer(
-          (_) async => const Success('https://cdn.example.com/cover.jpg'),
-        );
-        when(() => createRepo.create(any())).thenAnswer(
-          (_) async => const FailureResult(ServerFailure('db down')),
-        );
-      },
-      build: () => cubit,
-      act: (c) => c.submit(_input(), coverImage: _upload()),
-      expect: () => const [
-        CreateListingState.submitting(),
-        CreateListingState.failure(CreateListingFailureKind.create),
-      ],
-    );
+        final staged = [
+          const UploadedListingImage(publicUrl: 'https://cdn/a.jpg'),
+          const UploadedListingImage(publicUrl: 'https://cdn/b.jpg'),
+        ];
+        when(
+          () => imageRepo.uploadSequential(any()),
+        ).thenAnswer((_) async => Success(staged));
 
-    blocTest<CreateListingCubit, CreateListingState>(
-      'no-cover path insert failure also emits the create failure kind',
-      setUp: () {
-        when(() => createRepo.create(any())).thenAnswer(
-          (_) async => const FailureResult(UnknownFailure('boom')),
-        );
+        when(
+          () => createRepo.createV2(any()),
+        ).thenAnswer((_) async => const FailureResult(ServerFailure('db')));
       },
       build: () => cubit,
-      act: (c) => c.submit(_input()),
+      act: (c) => c.submit(
+        listingInput: _input(),
+        orderedPhotos: [
+          _upload([1]),
+          _upload([2, 3]),
+        ],
+      ),
       expect: () => const [
         CreateListingState.submitting(),
-        CreateListingState.failure(CreateListingFailureKind.create),
+        CreateListingState.failure(CreateListingFailureKind.genericCreate),
       ],
       verify: (_) {
-        verifyNever(() => imageRepo.uploadCover(any()));
+        verify(
+          () => imageRepo.deleteUploadedBatchBestEffort(
+            images: any<List<UploadedListingImage>>(
+              named: 'images',
+              that: predicate<List<UploadedListingImage>>(
+                (imgs) =>
+                    imgs.length == 2 &&
+                    imgs[0].publicUrl == 'https://cdn/a.jpg' &&
+                    imgs[1].publicUrl == 'https://cdn/b.jpg',
+              ),
+            ),
+            sellerId: 's1',
+          ),
+        ).called(1);
+      },
+    );
+
+    blocTest<CreateListingCubit, CreateListingState>(
+      'no-cover createV2 failure never touches batch delete.',
+      setUp: () {
+        when(
+          () => createRepo.createV2(any()),
+        ).thenAnswer((_) async => const FailureResult(UnknownFailure('x')));
+      },
+      build: () => cubit,
+      act: (c) => c.submit(listingInput: _input(), orderedPhotos: []),
+      expect: () => const [
+        CreateListingState.submitting(),
+        CreateListingState.failure(CreateListingFailureKind.genericCreate),
+      ],
+      verify: (_) {
+        verifyNever(() => imageRepo.uploadSequential(any()));
+        verifyNever(
+          () => imageRepo.deleteUploadedBatchBestEffort(
+            images: any(named: 'images'),
+            sellerId: any(named: 'sellerId'),
+          ),
+        );
       },
     );
   });

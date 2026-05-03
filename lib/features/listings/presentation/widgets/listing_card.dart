@@ -182,7 +182,7 @@ class _ListingCardState extends State<ListingCard> {
               ),
               // Child 1: info panel that overlaps the image's bottom.
               _InfoPanel(
-                priceLabel: formatEur(listing.priceEur),
+                priceLabel: formatListingPriceFromListing(listing),
                 titleLabel: '${listing.make} ${listing.model}',
                 brandIconAsset: getBrandIconPath(listing.make),
                 mileageLabel: formatKm(listing.mileageKm),

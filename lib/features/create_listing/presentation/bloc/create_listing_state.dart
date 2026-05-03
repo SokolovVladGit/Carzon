@@ -7,7 +7,23 @@ enum CreateListingStatus { idle, submitting, success, failure }
 /// Discriminates which stage of the create-listing flow failed so the
 /// presentation layer can pick the correct localized message without
 /// embedding English strings in the cubit.
-enum CreateListingFailureKind { upload, create }
+/// User-facing buckets for localized copy (never expose raw RPC/SQL strings).
+enum CreateListingFailureKind {
+  /// Cover upload/storage failed before RPC.
+  upload,
+
+  /// Auth/session revoked or insufficient rights for the RPC layer.
+  sessionExpired,
+
+  /// Transport / reachability failures.
+  serviceUnavailable,
+
+  /// Server rejected input (validation/business-rule style messages).
+  validationRejected,
+
+  /// Other server/transient failures — generic retry messaging.
+  genericCreate,
+}
 
 class CreateListingState extends Equatable {
   const CreateListingState({
@@ -25,11 +41,12 @@ class CreateListingState extends Equatable {
   String? get errorMessage => null;
 
   const CreateListingState.idle() : this();
-  const CreateListingState.submitting() : this(status: CreateListingStatus.submitting);
+  const CreateListingState.submitting()
+    : this(status: CreateListingStatus.submitting);
   const CreateListingState.success(Listing listing)
-      : this(status: CreateListingStatus.success, created: listing);
+    : this(status: CreateListingStatus.success, created: listing);
   const CreateListingState.failure(CreateListingFailureKind kind)
-      : this(status: CreateListingStatus.failure, failureKind: kind);
+    : this(status: CreateListingStatus.failure, failureKind: kind);
 
   @override
   List<Object?> get props => [status, created, failureKind];

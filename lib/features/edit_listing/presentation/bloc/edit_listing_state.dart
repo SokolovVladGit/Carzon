@@ -1,7 +1,8 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../create_listing/domain/entities/cover_image_upload.dart';
 import '../../../listings/domain/entities/listing.dart';
+import '../../../listings/domain/entities/listing_image.dart';
+import '../models/edit_listing_gallery_slot.dart';
 
 /// Lifecycle of the edit-listing screen:
 ///   * `initial` → page just opened
@@ -26,7 +27,7 @@ enum EditListingFailureKind {
   /// auth issue reported by the RPC).
   notAllowed,
 
-  /// The `update_listing_details` RPC rejected the input for data
+  /// The `update_listing_details_v2` RPC rejected the input for data
   /// validation reasons (bad year range, missing required field, …).
   invalidDetails,
 
@@ -34,28 +35,26 @@ enum EditListingFailureKind {
   /// validation.
   detailsFailed,
 
-  /// Uploading the staged cover image to Storage failed.
+  /// Uploading one or more new gallery images to Storage failed.
   uploadFailed,
 
-  /// The `update_listing_cover_image` RPC rejected the new URL.
+  /// The `replace_listing_images` RPC failed after successful uploads.
+  galleryReplaceFailed,
+
+  /// Legacy: cover-only path (kept for localization / tests that still
+  /// reference historical failure kinds). No longer produced by the v2
+  /// save flow when using [EditListingCubit.save].
   coverUpdateFailed,
 }
 
-/// Pending user-initiated change to the cover image, staged locally
-/// until the Save action. Exactly one of the three branches is active
-/// at a time:
-///   * a [CoverImageUpload] value → user picked a new image to upload
-///     on save
-///   * pending removal flag → user tapped "Remove photo"; on save the
-///     cover will be cleared
-///   * neither → cover stays exactly as it is on the server
 class EditListingState extends Equatable {
   const EditListingState({
     this.status = EditListingStatus.initial,
     this.listing,
     this.failureKind,
-    this.pendingCoverReplacement,
-    this.pendingCoverRemoval = false,
+    this.listingGalleryImages = const <ListingImage>[],
+    this.galleryLoadSucceeded = false,
+    this.initialGallerySlots = const <EditListingGallerySlot>[],
   });
 
   final EditListingStatus status;
@@ -65,75 +64,124 @@ class EditListingState extends Equatable {
   /// if the initial load failed.
   final Listing? listing;
 
+  /// Cached gallery rows ordered by backend `position` (preload).
+  final List<ListingImage> listingGalleryImages;
+
+  /// Whether [GetListingImages] succeeded (including an empty list).
+  /// When false, the edit flow must avoid `replace_listing_images`.
+  final bool galleryLoadSucceeded;
+
+  /// Immutable snapshot of editable gallery slots captured on load;
+  /// compared against the current draft to decide whether replacing
+  /// images is required.
+  final List<EditListingGallerySlot> initialGallerySlots;
+
   /// Reason for the current failure state, when [status] is
-  /// [EditListingStatus.failure]. Presentation maps this to a
-  /// localized message via [AppLocalizations].
+  /// [EditListingStatus.failure]. Presentation maps this to
+  /// localized copy.
   final EditListingFailureKind? failureKind;
-
-  /// A locally-picked replacement image that has not been uploaded
-  /// yet. When non-null, [pendingCoverRemoval] is always false.
-  final CoverImageUpload? pendingCoverReplacement;
-
-  /// True when the user tapped "Remove photo" and has not yet saved.
-  /// When true, [pendingCoverReplacement] is always null.
-  final bool pendingCoverRemoval;
 
   const EditListingState.initial() : this();
 
   const EditListingState.loading()
-      : this(status: EditListingStatus.loading);
+    : this(
+        status: EditListingStatus.loading,
+        listingGalleryImages: const <ListingImage>[],
+      );
 
-  const EditListingState.ready(Listing listing)
-      : this(status: EditListingStatus.ready, listing: listing);
+  const EditListingState.ready(
+    Listing listing, {
+    List<ListingImage> listingGalleryImages = const <ListingImage>[],
+    bool galleryLoadSucceeded = true,
+    List<EditListingGallerySlot> initialGallerySlots =
+        const <EditListingGallerySlot>[],
+  }) : this(
+         status: EditListingStatus.ready,
+         listing: listing,
+         listingGalleryImages: listingGalleryImages,
+         galleryLoadSucceeded: galleryLoadSucceeded,
+         initialGallerySlots: initialGallerySlots,
+       );
 
-  const EditListingState.submitting(Listing listing)
-      : this(status: EditListingStatus.submitting, listing: listing);
+  const EditListingState.submitting(
+    Listing listing, {
+    List<ListingImage> listingGalleryImages = const <ListingImage>[],
+    bool galleryLoadSucceeded = true,
+    List<EditListingGallerySlot> initialGallerySlots =
+        const <EditListingGallerySlot>[],
+  }) : this(
+         status: EditListingStatus.submitting,
+         listing: listing,
+         listingGalleryImages: listingGalleryImages,
+         galleryLoadSucceeded: galleryLoadSucceeded,
+         initialGallerySlots: initialGallerySlots,
+       );
 
-  const EditListingState.success(Listing listing)
-      : this(status: EditListingStatus.success, listing: listing);
+  const EditListingState.success(
+    Listing listing, {
+    List<ListingImage> listingGalleryImages = const <ListingImage>[],
+    bool galleryLoadSucceeded = true,
+    List<EditListingGallerySlot> initialGallerySlots =
+        const <EditListingGallerySlot>[],
+  }) : this(
+         status: EditListingStatus.success,
+         listing: listing,
+         listingGalleryImages: listingGalleryImages,
+         galleryLoadSucceeded: galleryLoadSucceeded,
+         initialGallerySlots: initialGallerySlots,
+       );
 
   const EditListingState.loadFailure()
-      : this(
-          status: EditListingStatus.failure,
-          failureKind: EditListingFailureKind.load,
-        );
+    : this(
+        status: EditListingStatus.failure,
+        failureKind: EditListingFailureKind.load,
+        listingGalleryImages: const <ListingImage>[],
+        galleryLoadSucceeded: false,
+        initialGallerySlots: const <EditListingGallerySlot>[],
+      );
 
   const EditListingState.saveFailure(
     Listing listing,
-    EditListingFailureKind kind,
-  ) : this(
-          status: EditListingStatus.failure,
-          listing: listing,
-          failureKind: kind,
-        );
+    EditListingFailureKind kind, {
+    List<ListingImage> listingGalleryImages = const <ListingImage>[],
+    bool galleryLoadSucceeded = true,
+    List<EditListingGallerySlot> initialGallerySlots =
+        const <EditListingGallerySlot>[],
+  }) : this(
+         status: EditListingStatus.failure,
+         listing: listing,
+         failureKind: kind,
+         listingGalleryImages: listingGalleryImages,
+         galleryLoadSucceeded: galleryLoadSucceeded,
+         initialGallerySlots: initialGallerySlots,
+       );
 
   EditListingState copyWith({
     EditListingStatus? status,
     Listing? listing,
+    List<ListingImage>? listingGalleryImages,
+    bool? galleryLoadSucceeded,
+    List<EditListingGallerySlot>? initialGallerySlots,
     EditListingFailureKind? failureKind,
     bool clearFailureKind = false,
-    CoverImageUpload? pendingCoverReplacement,
-    bool clearPendingCoverReplacement = false,
-    bool? pendingCoverRemoval,
   }) {
     return EditListingState(
       status: status ?? this.status,
       listing: listing ?? this.listing,
-      failureKind:
-          clearFailureKind ? null : (failureKind ?? this.failureKind),
-      pendingCoverReplacement: clearPendingCoverReplacement
-          ? null
-          : (pendingCoverReplacement ?? this.pendingCoverReplacement),
-      pendingCoverRemoval: pendingCoverRemoval ?? this.pendingCoverRemoval,
+      listingGalleryImages: listingGalleryImages ?? this.listingGalleryImages,
+      galleryLoadSucceeded: galleryLoadSucceeded ?? this.galleryLoadSucceeded,
+      initialGallerySlots: initialGallerySlots ?? this.initialGallerySlots,
+      failureKind: clearFailureKind ? null : (failureKind ?? this.failureKind),
     );
   }
 
   @override
   List<Object?> get props => [
-        status,
-        listing,
-        failureKind,
-        pendingCoverReplacement,
-        pendingCoverRemoval,
-      ];
+    status,
+    listing,
+    listingGalleryImages,
+    galleryLoadSucceeded,
+    initialGallerySlots,
+    failureKind,
+  ];
 }

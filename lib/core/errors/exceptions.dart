@@ -12,7 +12,19 @@ class AppException implements Exception {
 }
 
 class ServerException extends AppException {
-  ServerException(super.message, {super.cause, super.stackTrace});
+  ServerException(
+    super.message, {
+    super.cause,
+    super.stackTrace,
+    this.postgrestCode,
+    this.diagnosticsDetails,
+  });
+
+  /// PostgREST / Postgres wire `code` when the source was a PostgrestException.
+  final String? postgrestCode;
+
+  /// Optional clipped `details`/`hint` blob for debug logs (never show raw to users).
+  final String? diagnosticsDetails;
 }
 
 class AuthException extends AppException {

@@ -13,7 +13,22 @@ sealed class Failure extends Equatable {
 }
 
 class ServerFailure extends Failure {
-  const ServerFailure(super.message);
+  const ServerFailure(
+    super.message, {
+    this.postgrestCode,
+    this.diagnosticsDetails,
+  });
+
+  final String? postgrestCode;
+  final String? diagnosticsDetails;
+
+  @override
+  List<Object?> get props => [
+        message,
+        postgrestCode,
+        diagnosticsDetails,
+        runtimeType,
+      ];
 }
 
 class AuthFailure extends Failure {

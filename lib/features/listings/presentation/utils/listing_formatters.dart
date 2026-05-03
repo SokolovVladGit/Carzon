@@ -1,5 +1,6 @@
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/listing.dart';
+import '../../domain/entities/listing_currency.dart';
 
 /// Display formatters shared by the listings tile and details page.
 /// Kept feature-local — not promoted to core until a second feature
@@ -7,12 +8,27 @@ import '../../domain/entities/listing.dart';
 /// so they can be called from any widget without reaching out to
 /// `context` themselves.
 
-String formatEur(num value) {
+String _corePriceAmount(num value) {
   if (value == value.truncate()) {
-    return '€${_thousands(value.toInt().toString())}';
+    return _thousands(value.toInt().toString());
   }
-  return '€${value.toStringAsFixed(2)}';
+  return value.toStringAsFixed(2);
 }
+
+String formatListingPrice(num amount, ListingCurrency currency) {
+  final core = _corePriceAmount(amount);
+  switch (currency) {
+    case ListingCurrency.eur:
+      return '€$core';
+    case ListingCurrency.usd:
+      return '\$$core';
+  }
+}
+
+String formatListingPriceFromListing(Listing listing) =>
+    formatListingPrice(listing.priceEur, listing.priceCurrency);
+
+String formatEur(num value) => formatListingPrice(value, ListingCurrency.eur);
 
 String formatKm(int km) => '${_thousands(km.toString())} km';
 
