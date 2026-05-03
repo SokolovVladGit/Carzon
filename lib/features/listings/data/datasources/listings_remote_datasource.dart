@@ -3,11 +3,13 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../domain/repositories/listings_repository.dart';
+import '../models/listing_image_model.dart';
 import '../models/listing_model.dart';
 
 abstract interface class ListingsRemoteDataSource {
   Future<List<ListingModel>> fetch(ListingsQuery query);
   Future<ListingModel> fetchById(String id);
+  Future<List<ListingImageModel>> fetchListingImages(String listingId);
 
   /// Calls the `set_listing_status` SQL function. Ownership and the
   /// allowed status set are enforced in the function body; the client
@@ -27,6 +29,7 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
 
   final SupabaseService _supabase;
   static const String _table = 'listings';
+  static const String _imagesTable = 'listing_images';
 
   @override
   Future<List<ListingModel>> fetch(ListingsQuery query) async {
@@ -82,19 +85,57 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
     } on sb.PostgrestException catch (e, st) {
       throw ServerException(e.message, cause: e, stackTrace: st);
     } catch (e, st) {
-      throw ServerException('Failed to fetch listings', cause: e, stackTrace: st);
+      throw ServerException(
+        'Failed to fetch listings',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 
   @override
   Future<ListingModel> fetchById(String id) async {
     try {
-      final row = await _supabase.client.from(_table).select().eq('id', id).single();
+      final row = await _supabase.client
+          .from(_table)
+          .select()
+          .eq('id', id)
+          .single();
       return ListingModel.fromJson(row);
     } on sb.PostgrestException catch (e, st) {
       throw ServerException(e.message, cause: e, stackTrace: st);
     } catch (e, st) {
-      throw ServerException('Failed to fetch listing $id', cause: e, stackTrace: st);
+      throw ServerException(
+        'Failed to fetch listing $id',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<List<ListingImageModel>> fetchListingImages(String listingId) async {
+    try {
+      final rows = await _supabase.client
+          .from(_imagesTable)
+          .select()
+          .eq('listing_id', listingId)
+          .order('position', ascending: true);
+      return rows
+          .map<ListingImageModel>(
+            (row) => ListingImageModel.fromJson(
+              Map<String, dynamic>.from(row as Map),
+            ),
+          )
+          .toList(growable: false);
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      throw ServerException(
+        'Failed to fetch listing images for $listingId',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 
@@ -103,10 +144,7 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
     try {
       final dynamic data = await _supabase.client.rpc(
         'set_listing_status',
-        params: {
-          'p_listing_id': id,
-          'p_status': status,
-        },
+        params: {'p_listing_id': id, 'p_status': status},
       );
       // Postgrest can return the row as either a JSON object (single-row
       // scalar return) or a single-element list depending on versions.

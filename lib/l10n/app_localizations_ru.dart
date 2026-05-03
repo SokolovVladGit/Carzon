@@ -304,6 +304,74 @@ class AppLocalizationsRu extends AppLocalizations {
   String get fieldPriceEur => 'Цена (EUR)';
 
   @override
+  String get createListingMediaTitle => 'Фото объявления';
+
+  @override
+  String get createListingMediaSubtitle =>
+      'Первое фото станет главным на карточке.';
+
+  @override
+  String get createListingMediaHeroEmptyHint =>
+      'Нажмите, чтобы добавить фото объявления. До девяти снимков — по одному из галереи.';
+
+  @override
+  String get createListingAddPhoto => 'Добавить фото';
+
+  @override
+  String get createListingAddMorePhotos => 'Ещё фото';
+
+  @override
+  String createListingMaxPhotos(int count) {
+    return 'Можно не больше $count фотографий.';
+  }
+
+  @override
+  String get createListingRemovePhoto => 'Удалить фото';
+
+  @override
+  String get createListingCoverBadge => 'Обложка';
+
+  @override
+  String get createListingPriceAmount => 'Цена — сумма';
+
+  @override
+  String get createListingCurrency => 'Валюта';
+
+  @override
+  String get currencyCodeEur => 'EUR';
+
+  @override
+  String get currencyCodeUsd => 'USD';
+
+  @override
+  String get createListingBrandLabel => 'Марка';
+
+  @override
+  String get createListingChooseBrand => 'Выберите марку';
+
+  @override
+  String get createListingBrandOther => 'Другая';
+
+  @override
+  String get createListingCustomBrandHint => 'Укажите марку';
+
+  @override
+  String get createListingYearLabel => 'Год выпуска';
+
+  @override
+  String get createListingChooseYear => 'Выберите год';
+
+  @override
+  String get createListingPhotosUploadFailed =>
+      'Не удалось загрузить фото. Попробуйте ещё раз.';
+
+  @override
+  String get commonDone => 'Готово';
+
+  @override
+  String get createListingSearchBrandsHint => 'Поиск марки';
+
+  @override
   String get fieldMileageKm => 'Пробег (км)';
 
   @override
@@ -379,6 +447,18 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось создать объявление. Попробуйте ещё раз.';
 
   @override
+  String get imagePickerLoadFailed =>
+      'Не удалось выбрать фото. Попробуйте другое изображение.';
+
+  @override
+  String get listingCreateSessionExpired =>
+      'Сессия истекла или доступ запрещён. Войдите снова и повторите попытку.';
+
+  @override
+  String get listingCreateServiceUnavailable =>
+      'Сервис временно недоступен. Попробуйте позже.';
+
+  @override
   String get editListingTitle => 'Редактировать объявление';
 
   @override
@@ -435,6 +515,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get saveChanges => 'Сохранить';
+
+  @override
+  String get editListingGalleryReadOnlyHint =>
+      'Галерея не загрузилась. Фото ниже только для справки; изменить их сейчас нельзя — сохранятся текст и другие поля объявления.';
+
+  @override
+  String get editListingGalleryReplaceFailed =>
+      'Не удалось обновить фотографии. Попробуйте ещё раз.';
 
   @override
   String get myListingsTitle => 'Мои объявления';

@@ -20,6 +20,7 @@ import '../bloc/listing_details_cubit.dart';
 import '../bloc/listing_details_state.dart';
 import '../utils/contact_format.dart';
 import '../utils/listing_formatters.dart';
+import '../utils/listing_details_header_titles.dart';
 import '../utils/report_listing_mailto.dart';
 import '../widgets/listing_cover_image.dart';
 
@@ -64,12 +65,10 @@ class ListingDetailsPage extends StatelessWidget {
   /// Test seam for the "Report listing" mailto launcher.
   final ListingDetailsUriLauncher? uriLauncher;
 
-  /// Cover image URL already known by the navigating caller, passed
-  /// through `GoRouter` `extra` so the Hero flight on the push
-  /// transition animates the real tapped photo instead of the
-  /// placeholder. Used only until [ListingDetailsCubit] emits a
-  /// loaded [Listing], after which that listing's own
-  /// `coverImageUrl` takes over.
+  /// through `GoRouter` `extra` so the Hero flight matches the tapped
+  /// card while [ListingDetailsCubit] has not emitted resolved gallery
+  /// URLs yet ([ListingDetailsStatus.loading]). After success, carousel
+  /// URLs come exclusively from [`ListingDetailsState.heroImageUrls`].
   final String? initialCoverImageUrl;
 
   @override
@@ -86,7 +85,7 @@ class ListingDetailsPage extends StatelessWidget {
   }
 }
 
-class _ListingDetailsView extends StatelessWidget {
+class _ListingDetailsView extends StatefulWidget {
   const _ListingDetailsView({
     required this.id,
     required this.reportEmail,
@@ -100,76 +99,134 @@ class _ListingDetailsView extends StatelessWidget {
   final String? initialCoverImageUrl;
 
   @override
+  State<_ListingDetailsView> createState() => _ListingDetailsViewState();
+}
+
+class _ListingDetailsViewState extends State<_ListingDetailsView> {
+  int _carouselPageIndex = 0;
+
+  /// Single source of truth for the hoisted hero PageView (loading route
+  /// extra, success `heroImageUrls`, or `listing.coverImageUrl` fallback).
+  List<String> _effectiveHeroUrls(ListingDetailsState state) {
+    switch (state.status) {
+      case ListingDetailsStatus.loading:
+      case ListingDetailsStatus.initial:
+        final s = widget.initialCoverImageUrl?.trim();
+        return (s != null && s.isNotEmpty) ? [s] : const <String>[];
+      case ListingDetailsStatus.success:
+        if (state.heroImageUrls.isNotEmpty) {
+          return List<String>.from(state.heroImageUrls);
+        }
+        final c = state.listing?.coverImageUrl?.trim();
+        return (c != null && c.isNotEmpty) ? [c] : const <String>[];
+      case ListingDetailsStatus.failure:
+        return const <String>[];
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Pure white surface — hero image and bottom bar carry all the
-      // colour, the body stays clean.
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.zero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Hero lives ABOVE the state-dependent BlocBuilder so the
-            // destination Hero widget and its `Image.network` child
-            // are not torn down mid-flight when the Cubit transitions
-            // `initial → loading → success` during the push. The URL
-            // prefers the route-extra value (which matches the tapped
-            // card exactly) and only updates to the Cubit-loaded URL
-            // if it actually differs — typically after the flight has
-            // already completed.
-            BlocSelector<ListingDetailsCubit, ListingDetailsState, String?>(
-              // Use the route-extra cover URL only while the Cubit
-              // has not resolved a listing yet. Once it has, the
-              // loaded listing's own `coverImageUrl` takes over —
-              // including when that URL is `null`, so a stale extra
-              // URL can never mask a listing that has no cover.
-              selector: (state) => state.listing == null
-                  ? initialCoverImageUrl
-                  : state.listing!.coverImageUrl,
-              builder: (context, imageUrl) => _HeroSection(
-                listingId: id,
-                imageUrl: imageUrl,
+    return BlocListener<ListingDetailsCubit, ListingDetailsState>(
+      listenWhen: (prev, curr) =>
+          curr.status == ListingDetailsStatus.loading ||
+          prev.listing?.id != curr.listing?.id ||
+          !_urlsListEquiv(prev.heroImageUrls, curr.heroImageUrls),
+      listener: (context, s) {
+        if (!context.mounted) return;
+        setState(() {
+          _carouselPageIndex = 0;
+          switch (s.status) {
+            case ListingDetailsStatus.initial:
+            case ListingDetailsStatus.loading:
+            case ListingDetailsStatus.success:
+            case ListingDetailsStatus.failure:
+              break;
+          }
+        });
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SingleChildScrollView(
+          padding: EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              BlocBuilder<ListingDetailsCubit, ListingDetailsState>(
+                buildWhen: (p, c) =>
+                    p.status != c.status ||
+                    !_urlsListEquiv(p.heroImageUrls, c.heroImageUrls) ||
+                    p.listing?.id != c.listing?.id ||
+                    p.listing?.coverImageUrl != c.listing?.coverImageUrl,
+                builder: (context, state) {
+                  final carouselUrls = _effectiveHeroUrls(state);
+                  return SizedBox(
+                    height: _heroHeight,
+                    width: double.infinity,
+                    child: _ListingHeroCarousel(
+                      listingId: widget.id,
+                      urls: carouselUrls,
+                      onPageChanged: (i) =>
+                          setState(() => _carouselPageIndex = i),
+                    ),
+                  );
+                },
               ),
-            ),
+              BlocBuilder<ListingDetailsCubit, ListingDetailsState>(
+                builder: (context, state) {
+                  switch (state.status) {
+                    case ListingDetailsStatus.initial:
+                    case ListingDetailsStatus.loading:
+                      return const _LoadingBelowHero();
+                    case ListingDetailsStatus.failure:
+                      return _FailureBelowHero(
+                        message:
+                            state.errorMessage ??
+                            context.l10n.listingDetailsLoadFailed,
+                        onRetry: () =>
+                            context.read<ListingDetailsCubit>().load(widget.id),
+                      );
+                    case ListingDetailsStatus.success:
+                      final heroUrls = _effectiveHeroUrls(state);
+                      final n = heroUrls.length;
+                      final clipped = n > 0
+                          ? _carouselPageIndex.clamp(0, n - 1)
+                          : 0;
+                      return _SuccessBelowHero(
+                        listing: state.listing!,
+                        carouselPageZeroBased: clipped,
+                        carouselPhotoCount: n,
+                        reportEmail: widget.reportEmail,
+                        uriLauncher: widget.uriLauncher,
+                      );
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        bottomNavigationBar:
             BlocBuilder<ListingDetailsCubit, ListingDetailsState>(
+              buildWhen: (p, c) =>
+                  p.status != c.status || p.listing != c.listing,
               builder: (context, state) {
-                switch (state.status) {
-                  case ListingDetailsStatus.initial:
-                  case ListingDetailsStatus.loading:
-                    return const _LoadingBelowHero();
-                  case ListingDetailsStatus.failure:
-                    return _FailureBelowHero(
-                      message: state.errorMessage ??
-                          context.l10n.listingDetailsLoadFailed,
-                      onRetry: () =>
-                          context.read<ListingDetailsCubit>().load(id),
-                    );
-                  case ListingDetailsStatus.success:
-                    return _SuccessBelowHero(
-                      listing: state.listing!,
-                      reportEmail: reportEmail,
-                      uriLauncher: uriLauncher,
-                    );
+                if (state.status != ListingDetailsStatus.success) {
+                  return const SizedBox.shrink();
                 }
+                return _ContactBottomBar(listing: state.listing!);
               },
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar:
-          BlocBuilder<ListingDetailsCubit, ListingDetailsState>(
-        buildWhen: (p, c) =>
-            p.status != c.status || p.listing != c.listing,
-        builder: (context, state) {
-          if (state.status != ListingDetailsStatus.success) {
-            return const SizedBox.shrink();
-          }
-          return _ContactBottomBar(listing: state.listing!);
-        },
       ),
     );
   }
+}
+
+bool _urlsListEquiv(List<String> a, List<String> b) {
+  if (identical(a, b)) return true;
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }
 
 // --------------------------------------------------------------------
@@ -186,11 +243,17 @@ class _ListingDetailsView extends StatelessWidget {
 class _SuccessBelowHero extends StatelessWidget {
   const _SuccessBelowHero({
     required this.listing,
+    required this.carouselPageZeroBased,
+    required this.carouselPhotoCount,
     required this.reportEmail,
     required this.uriLauncher,
   });
 
   final Listing listing;
+  final int carouselPageZeroBased;
+
+  /// Number of carousel photos from `listing_images` (+ cover fallback).
+  final int carouselPhotoCount;
   final String? reportEmail;
   final ListingDetailsUriLauncher? uriLauncher;
 
@@ -199,13 +262,20 @@ class _SuccessBelowHero extends StatelessWidget {
     // Cosmetic overlap: pulls the rounded header panel up over the
     // hero's bottom edge. Children keep their natural layout; this is
     // a paint-time offset only.
+    final Widget indicator;
+    if (carouselPhotoCount <= 0) {
+      indicator = const SizedBox.shrink();
+    } else {
+      indicator = _ListingPagerIndicator(
+        current: carouselPageZeroBased.clamp(0, carouselPhotoCount - 1) + 1,
+        total: carouselPhotoCount,
+      );
+    }
+
     return Transform.translate(
       offset: const Offset(0, -_heroContentOverlap),
       child: _ListingContentPanel(
-        header: _ListingHeader(
-          listing: listing,
-          indicator: const _ListingPagerIndicator(current: 1, total: 1),
-        ),
+        header: _ListingHeader(listing: listing, indicator: indicator),
         body: _BelowHeroContent(
           listing: listing,
           reportEmail: reportEmail,
@@ -255,51 +325,133 @@ class _FailureBelowHero extends StatelessWidget {
 }
 
 // --------------------------------------------------------------------
-// Hero section
+// Hero carousel (ordered gallery URLs + Hero on first slide)
 // --------------------------------------------------------------------
 
-/// Edge-to-edge hero header. Keeps the photo as the visual focus —
-/// no title / badges / price overlay any more. Painting order:
-///   1. The cover image (shared `Hero` tag with the feed card),
-///   2. A very light top scrim so the back / favorite icons stay
-///      legible on bright photos,
-///   3. Top chrome (back button + favorite) pinned tight to
-///      `SafeArea`.
-///
-/// Always renders exactly one [ListingCoverImage] with the id-based
-/// `Hero` tag so the push transition from the feed always has a
-/// single valid destination, regardless of state.
-class _HeroSection extends StatelessWidget {
-  const _HeroSection({required this.listingId, required this.imageUrl});
+Iterable<Widget>? _spreadOptionalTrailing(Widget? w) =>
+    w == null ? null : <Widget>[w];
+
+/// Full-bleed hero: single image, swipe carousel, or placeholder.
+/// Exactly one slide carries the listing `Hero` tag for feed→details transit.
+class _ListingHeroCarousel extends StatefulWidget {
+  const _ListingHeroCarousel({
+    required this.listingId,
+    required this.urls,
+    required this.onPageChanged,
+  });
 
   final String listingId;
-  final String? imageUrl;
+  final List<String> urls;
+  final ValueChanged<int> onPageChanged;
+
+  @override
+  State<_ListingHeroCarousel> createState() => _ListingHeroCarouselState();
+}
+
+class _ListingHeroCarouselState extends State<_ListingHeroCarousel> {
+  late PageController _pageController = PageController(initialPage: 0);
+  int _pageIndexVisual = 0;
+
+  @override
+  void didUpdateWidget(covariant _ListingHeroCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_urlsListEquiv(widget.urls, oldWidget.urls)) {
+      _pageController.dispose();
+      _pageController = PageController(initialPage: 0);
+      _pageIndexVisual = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Widget _heroStack({required Widget backdrop, Widget? pageDots}) {
+    return ClipRect(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          backdrop,
+          const _HeroScrim(),
+          ...?_spreadOptionalTrailing(pageDots),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: _HeroTopControls(listingId: widget.listingId),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: _heroHeight,
-      width: double.infinity,
-      child: ClipRect(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ListingCoverImage(
-              imageUrl: imageUrl,
-              heroTag: listingCoverHeroTag(listingId),
-            ),
-            const _HeroScrim(),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                bottom: false,
-                child: _HeroTopControls(listingId: listingId),
+    final urls = widget.urls;
+    final tag = listingCoverHeroTag(widget.listingId);
+
+    if (urls.isEmpty) {
+      return _heroStack(
+        backdrop: ListingCoverImage(imageUrl: null, heroTag: tag),
+      );
+    }
+    if (urls.length == 1) {
+      return _heroStack(
+        backdrop: ListingCoverImage(imageUrl: urls.first, heroTag: tag),
+      );
+    }
+
+    final pageDots = Positioned(
+      left: 0,
+      right: 0,
+      bottom: 14,
+      child: IgnorePointer(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(urls.length, (i) {
+            final active = i == _pageIndexVisual.clamp(0, urls.length - 1);
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              width: active ? 7 : 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: active ? 0.95 : 0.35),
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: active ? 0.35 : 0.22),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
-            ),
-          ],
+            );
+          }),
         ),
+      ),
+    );
+
+    return _heroStack(
+      pageDots: pageDots,
+      backdrop: PageView.builder(
+        controller: _pageController,
+        itemCount: urls.length,
+        onPageChanged: (i) {
+          setState(() => _pageIndexVisual = i);
+          widget.onPageChanged(i);
+        },
+        itemBuilder: (context, i) {
+          return ListingCoverImage(
+            imageUrl: urls[i],
+            heroTag: i == 0 ? tag : null,
+          );
+        },
       ),
     );
   }
@@ -351,9 +503,7 @@ class _HeroTopControls extends StatelessWidget {
             child: const AppBackButton(fallback: AppRoutes.listings),
           ),
           const Spacer(),
-          _HeroGlassTile(
-            child: FavoriteToggleButton(listingId: listingId),
-          ),
+          _HeroGlassTile(child: FavoriteToggleButton(listingId: listingId)),
         ],
       ),
     );
@@ -484,10 +634,11 @@ class _ListingContentPanel extends StatelessWidget {
 }
 
 /// New listing header that lives at the top of the white content
-/// panel (not over the photo). Shows, in order:
-///   1. The pager indicator centred just under the image,
+/// panel (not over the photo). Shows:
+///   1. The pager indicator (hidden when no photos exist),
 ///   2. The brand mark,
-///   3. Listing title,
+///   3. Primary vehicle identity (`make` + `model`) with optional subtitle
+///      from the seller's listing title when it differs semantically,
 ///   4. Region + type badges,
 ///   5. Secondary meta row (year • mileage • city),
 ///   6. Price in the primary accent colour.
@@ -501,6 +652,7 @@ class _ListingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
+    final headerDisplay = ListingDetailsHeaderDisplay.fromListing(listing);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(_pageHPadding, 14, _pageHPadding, 8),
@@ -512,13 +664,27 @@ class _ListingHeader extends StatelessWidget {
           _BrandMark(make: listing.make),
           const SizedBox(height: 16),
           Text(
-            listing.title,
+            headerDisplay.primaryLine,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w700,
               letterSpacing: -0.3,
               height: 1.1,
             ),
           ),
+          if ((headerDisplay.tagline ?? '').isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              headerDisplay.tagline!,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: .88,
+                ),
+                fontWeight: FontWeight.w500,
+                height: 1.25,
+                letterSpacing: 0.02,
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           _MetaBadgesRow(
             badges: [
@@ -546,7 +712,7 @@ class _ListingHeader extends StatelessWidget {
           ),
           const SizedBox(height: 22),
           Text(
-            formatEur(listing.priceEur),
+            formatListingPriceFromListing(listing),
             style: theme.textTheme.headlineMedium?.copyWith(
               color: theme.colorScheme.primary,
               fontWeight: FontWeight.w800,
@@ -647,11 +813,7 @@ class _FeatureCard extends StatelessWidget {
   }
 }
 
-/// Small pill that hints at image pagination. Rendered inside the
-/// white header panel (centred, just under the photo), not over the
-/// image. Carzon's MVP stores a single photo per listing so [total]
-/// is effectively always `1` today — the widget is kept so the
-/// affordance is in place for the later multi-image migration.
+/// Pager affordance: `current / total` when the listing has carousel photos.
 class _ListingPagerIndicator extends StatelessWidget {
   const _ListingPagerIndicator({required this.current, required this.total});
 
@@ -714,7 +876,8 @@ class _BrandMark extends StatelessWidget {
       width: _iconSize,
       height: _iconSize,
       fit: BoxFit.contain,
-      placeholderBuilder: (_) => const SizedBox(width: _iconSize, height: _iconSize),
+      placeholderBuilder: (_) =>
+          const SizedBox(width: _iconSize, height: _iconSize),
     );
   }
 
@@ -774,10 +937,9 @@ class _HairlineDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context)
-        .colorScheme
-        .onSurface
-        .withValues(alpha: 0.07);
+    final color = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.07);
     return Divider(height: 1, thickness: 0.5, color: color);
   }
 }
@@ -953,8 +1115,9 @@ class _SecondaryContactLinks extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final telegram = listing.telegramUsername;
-    final waDigits =
-        listing.whatsappEnabled ? whatsappDigits(listing.contactPhone) : null;
+    final waDigits = listing.whatsappEnabled
+        ? whatsappDigits(listing.contactPhone)
+        : null;
 
     final buttons = <Widget>[
       if (telegram != null && telegram.isNotEmpty)
@@ -977,11 +1140,7 @@ class _SecondaryContactLinks extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(top: 8),
-      child: Wrap(
-        spacing: 4,
-        runSpacing: 4,
-        children: buttons,
-      ),
+      child: Wrap(spacing: 4, runSpacing: 4, children: buttons),
     );
   }
 }
@@ -1088,9 +1247,7 @@ class _ContactBottomBarState extends State<_ContactBottomBar> {
     final messenger = ScaffoldMessenger.of(context);
     try {
       await Clipboard.setData(ClipboardData(text: rawPhone.trim()));
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.contactPhoneCopied)),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l10n.contactPhoneCopied)));
     } catch (_) {
       if (context.mounted) {
         messenger.showSnackBar(
@@ -1101,15 +1258,15 @@ class _ContactBottomBarState extends State<_ContactBottomBar> {
   }
 
   void _showError(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.contactActionFailed)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.contactActionFailed)));
   }
 
   void _onChatTap(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.chatNotAvailable)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(context.l10n.chatNotAvailable)));
   }
 
   @override
@@ -1162,8 +1319,8 @@ const double _bottomButtonHeight = 50;
 const double _bottomButtonRadius = 12;
 
 RoundedRectangleBorder _bottomButtonShape() => const RoundedRectangleBorder(
-      borderRadius: BorderRadius.all(Radius.circular(_bottomButtonRadius)),
-    );
+  borderRadius: BorderRadius.all(Radius.circular(_bottomButtonRadius)),
+);
 
 class _ChatPillButton extends StatelessWidget {
   const _ChatPillButton({required this.onTap});
@@ -1182,8 +1339,9 @@ class _ChatPillButton extends StatelessWidget {
         icon: const Icon(CarzonIcons.chat, size: 20),
         label: Text(l10n.chatLabel),
         style: FilledButton.styleFrom(
-          backgroundColor:
-              scheme.surfaceContainerHighest.withValues(alpha: 0.9),
+          backgroundColor: scheme.surfaceContainerHighest.withValues(
+            alpha: 0.9,
+          ),
           foregroundColor: scheme.onSurface,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           shape: _bottomButtonShape(),
@@ -1216,17 +1374,15 @@ class _PhonePrimaryPill extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = context.l10n;
 
-    ButtonStyle buttonStyle({bool disabled = false}) =>
-        FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          shape: _bottomButtonShape(),
-          backgroundColor:
-              disabled ? theme.colorScheme.surfaceContainerHigh : null,
-          textStyle: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.2,
-          ),
-        );
+    ButtonStyle buttonStyle({bool disabled = false}) => FilledButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      shape: _bottomButtonShape(),
+      backgroundColor: disabled ? theme.colorScheme.surfaceContainerHigh : null,
+      textStyle: theme.textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.2,
+      ),
+    );
 
     if (tel == null) {
       return SizedBox(
@@ -1274,10 +1430,7 @@ class _PhonePrimaryPill extends StatelessWidget {
             ),
             if (onCopy != null) ...[
               const SizedBox(width: 6),
-              _InlineCopyAction(
-                tooltip: l10n.contactCopyPhone,
-                onTap: onCopy!,
-              ),
+              _InlineCopyAction(tooltip: l10n.contactCopyPhone, onTap: onCopy!),
             ],
           ],
         ),

@@ -9,7 +9,7 @@ import '../datasources/edit_listing_remote_datasource.dart';
 
 class EditListingRepositoryImpl implements EditListingRepository {
   EditListingRepositoryImpl(this._remote)
-      : _logger = AppLogger('EditListingRepository');
+    : _logger = AppLogger('EditListingRepository');
 
   final EditListingRemoteDataSource _remote;
   final AppLogger _logger;
@@ -24,6 +24,42 @@ class EditListingRepositoryImpl implements EditListingRepository {
     } catch (e, st) {
       _logger.error('updateDetails unknown error', e, st);
       return const FailureResult(UnknownFailure('Failed to update listing.'));
+    }
+  }
+
+  @override
+  Future<Result<Listing>> updateDetailsV2(EditListingInput input) async {
+    try {
+      final listing = await _remote.updateDetailsV2(input);
+      return Success(listing);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('updateDetailsV2 unknown error', e, st);
+      return const FailureResult(UnknownFailure('Failed to update listing.'));
+    }
+  }
+
+  @override
+  Future<Result<Listing>> replaceListingImages({
+    required String listingId,
+    required List<String> imagePublicUrls,
+    List<String?>? storagePaths,
+  }) async {
+    try {
+      final listing = await _remote.replaceListingImages(
+        listingId: listingId,
+        imagePublicUrls: imagePublicUrls,
+        storagePaths: storagePaths,
+      );
+      return Success(listing);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('replaceListingImages unknown error', e, st);
+      return const FailureResult(
+        UnknownFailure('Failed to replace listing images.'),
+      );
     }
   }
 

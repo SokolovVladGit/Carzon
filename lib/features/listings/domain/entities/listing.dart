@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'listing_currency.dart';
+
 enum ListingType { sale, exchange, both }
 
 enum ListingStatus { active, hidden, sold, archived }
@@ -19,6 +21,7 @@ class Listing extends Equatable {
     required this.model,
     required this.year,
     required this.priceEur,
+    this.priceCurrency = ListingCurrency.eur,
     required this.mileageKm,
     required this.type,
     required this.city,
@@ -38,6 +41,9 @@ class Listing extends Equatable {
   final String model;
   final int year;
   final num priceEur;
+
+  /// Stored amount; column name remains `price_eur` until a dedicated amount migration.
+  final ListingCurrency priceCurrency;
   final int mileageKm;
   final ListingType type;
   final String city;
@@ -59,24 +65,28 @@ class Listing extends Equatable {
   /// separate WhatsApp number is stored.
   final bool whatsappEnabled;
 
+  /// Semantic alias until the backing column outgrows its historical name.
+  num get priceAmount => priceEur;
+
   @override
   List<Object?> get props => [
-        id,
-        title,
-        make,
-        model,
-        year,
-        priceEur,
-        mileageKm,
-        type,
-        city,
-        marketRegion,
-        createdAt,
-        status,
-        coverImageUrl,
-        sellerId,
-        contactPhone,
-        telegramUsername,
-        whatsappEnabled,
-      ];
+    id,
+    title,
+    make,
+    model,
+    year,
+    priceEur,
+    priceCurrency,
+    mileageKm,
+    type,
+    city,
+    marketRegion,
+    createdAt,
+    status,
+    coverImageUrl,
+    sellerId,
+    contactPhone,
+    telegramUsername,
+    whatsappEnabled,
+  ];
 }

@@ -1,63 +1,104 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/errors/failures.dart';
+import '../../../../core/utils/result.dart';
 import '../../domain/entities/cover_image_upload.dart';
 import '../../domain/entities/new_listing_input.dart';
-import '../../domain/usecases/create_listing.dart';
-import '../../domain/usecases/upload_listing_cover_image.dart';
+import '../../domain/entities/uploaded_listing_image.dart';
+import '../../domain/usecases/create_listing_v2.dart';
+import '../../domain/usecases/delete_uploaded_listing_images_best_effort.dart';
+import '../../domain/usecases/upload_listing_images_sequential.dart';
+import '../utils/create_listing_failure_kind_for.dart';
 import 'create_listing_state.dart';
 
-/// Single submit action — Cubit is sufficient (no event-driven flow).
+/// Create listing via RPC `create_listing_v2` with optional sequential gallery uploads.
 ///
-/// MVP flow with optional cover image:
-///   1. If a cover image is provided, upload it first and take the
-///      resulting public URL.
-///   2. Insert the listing row, passing `coverImageUrl` only when the
-///      upload succeeded (or was skipped entirely).
-///   3. Any upload failure short-circuits the whole submit — no listing
-///      row is created, and the user sees the failure message.
+/// Order:
+/// * Validate on the presentation layer (`Form`).
+/// * Upload staged photos sequentially; any failure ⇒ [CreateListingFailureKind.upload].
+/// * Call [CreateListingV2]; on failure ⇒ best-effort [DeleteUploadedListingImagesBestEffort]
+///   for all uploaded objects. Cleanup failures are swallowed in the repo and never replace
+///   the surfaced create failure.
 class CreateListingCubit extends Cubit<CreateListingState> {
   CreateListingCubit({
-    required CreateListing createListing,
-    required UploadListingCoverImage uploadListingCoverImage,
-  })  : _createListing = createListing,
-        _uploadCover = uploadListingCoverImage,
-        super(const CreateListingState.idle());
+    required CreateListingV2 createListingV2,
+    required UploadListingImagesSequential uploadListingImagesSequential,
+    required DeleteUploadedListingImagesBestEffort
+    deleteUploadedListingImagesBestEffort,
+  }) : _createListingV2 = createListingV2,
+       _uploadSequential = uploadListingImagesSequential,
+       _deleteStaging = deleteUploadedListingImagesBestEffort,
+       super(const CreateListingState.idle());
 
-  final CreateListing _createListing;
-  final UploadListingCoverImage _uploadCover;
+  final CreateListingV2 _createListingV2;
+  final UploadListingImagesSequential _uploadSequential;
+  final DeleteUploadedListingImagesBestEffort _deleteStaging;
 
-  Future<void> submit(
-    NewListingInput input, {
-    CoverImageUpload? coverImage,
+  /// [orderedPhotos]: index 0 = cover; max 9 enforced in the UI layer.
+  /// [listingInput] must not include staging URLs — gallery is attached here after upload.
+  Future<void> submit({
+    required NewListingInput listingInput,
+    required List<CoverImageUpload> orderedPhotos,
   }) async {
     if (state.status == CreateListingStatus.submitting) return;
     emit(const CreateListingState.submitting());
 
-    var effectiveInput = input;
-
-    if (coverImage != null) {
-      final uploadResult = await _uploadCover(coverImage);
-      final uploaded = uploadResult.fold<({bool ok, String? url})>(
-        (_) => (ok: false, url: null),
-        (url) => (ok: true, url: url),
-      );
-      if (!uploaded.ok) {
-        emit(const CreateListingState.failure(
-          CreateListingFailureKind.upload,
-        ));
-        return;
-      }
-      if (uploaded.url != null && uploaded.url!.isNotEmpty) {
-        effectiveInput = effectiveInput.copyWith(coverImageUrl: uploaded.url);
+    List<UploadedListingImage>? stagedGallery;
+    if (orderedPhotos.isNotEmpty) {
+      final uploads = await _uploadSequential(orderedPhotos);
+      switch (uploads) {
+        case FailureResult(:final failure):
+          emit(
+            CreateListingState.failure(
+              _failureKindDuringGalleryUpload(failure),
+            ),
+          );
+          return;
+        case Success(:final value):
+          stagedGallery = value;
+          break;
       }
     }
 
-    final result = await _createListing(effectiveInput);
-    result.fold(
-      (_) => emit(
-        const CreateListingState.failure(CreateListingFailureKind.create),
-      ),
-      (listing) => emit(CreateListingState.success(listing)),
-    );
+    final inputForRpc = stagingGalleryAttached(listingInput, stagedGallery);
+
+    final result = await _createListingV2(inputForRpc);
+    switch (result) {
+      case FailureResult(:final failure):
+        if (stagedGallery != null && stagedGallery.isNotEmpty) {
+          await _deleteStaging(
+            images: stagedGallery,
+            sellerId: listingInput.sellerId,
+          );
+        }
+        emit(CreateListingState.failure(createListingFailureKindFor(failure)));
+      case Success(:final value):
+        emit(CreateListingState.success(value));
+    }
+  }
+
+  /// Gallery upload failures are surfaced under [CreateListingFailureKind.upload]
+  /// unless the mapper recognizes auth/network buckets on the wire.
+  static CreateListingFailureKind _failureKindDuringGalleryUpload(
+    Failure failure,
+  ) {
+    if (failure is AuthFailure) {
+      return CreateListingFailureKind.sessionExpired;
+    }
+    if (failure is NetworkFailure) {
+      return CreateListingFailureKind.serviceUnavailable;
+    }
+    return CreateListingFailureKind.upload;
+  }
+
+  /// Exposed for cubit tests: mirrors production gallery attachment rules.
+  static NewListingInput stagingGalleryAttached(
+    NewListingInput base,
+    List<UploadedListingImage>? gallery,
+  ) {
+    if (gallery == null || gallery.isEmpty) {
+      return base.copyWith(uploadedGallery: null, coverImageUrl: null);
+    }
+    return base.copyWith(uploadedGallery: gallery, coverImageUrl: null);
   }
 }

@@ -2,9 +2,11 @@ import '../../../../core/utils/result.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../entities/cover_image_upload.dart';
 import '../entities/new_listing_input.dart';
+import '../entities/uploaded_listing_image.dart';
 
 abstract interface class CreateListingRepository {
   Future<Result<Listing>> create(NewListingInput input);
+  Future<Result<Listing>> createV2(NewListingInput input);
 }
 
 /// Narrow capability for managing a listing's cover image in storage.
@@ -23,6 +25,18 @@ abstract interface class ListingImageRepository {
   /// never flip the main user operation into a user-visible error.
   Future<Result<void>> deleteByPublicUrl({
     required String publicUrl,
+    required String sellerId,
+  });
+
+  /// Sequential upload in caller order — at most nine uploads per listing.
+  Future<Result<List<UploadedListingImage>>> uploadSequential(
+    List<CoverImageUpload> uploads,
+  );
+
+  /// Invokes best-effort [deleteByPublicUrl] for each metadata row; failures
+  /// are swallowed and the result remains [Success].
+  Future<Result<void>> deleteUploadedBatchBestEffort({
+    required List<UploadedListingImage> images,
     required String sellerId,
   });
 }

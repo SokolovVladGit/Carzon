@@ -3,11 +3,13 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/listing.dart';
+import '../../domain/entities/listing_image.dart';
 import '../../domain/repositories/listings_repository.dart';
 import '../datasources/listings_remote_datasource.dart';
 
 class ListingsRepositoryImpl implements ListingsRepository {
-  ListingsRepositoryImpl(this._remote) : _logger = AppLogger('ListingsRepository');
+  ListingsRepositoryImpl(this._remote)
+    : _logger = AppLogger('ListingsRepository');
 
   final ListingsRemoteDataSource _remote;
   final AppLogger _logger;
@@ -39,10 +41,7 @@ class ListingsRepositoryImpl implements ListingsRepository {
   }
 
   @override
-  Future<Result<Listing>> updateStatus(
-    String id,
-    ListingStatus status,
-  ) async {
+  Future<Result<Listing>> updateStatus(String id, ListingStatus status) async {
     try {
       final item = await _remote.updateStatus(id, status.name);
       return Success(item);
@@ -65,8 +64,21 @@ class ListingsRepositoryImpl implements ListingsRepository {
       return FailureResult(ServerFailure(e.message));
     } catch (e, st) {
       _logger.error('deleteListing unknown error', e, st);
+      return const FailureResult(UnknownFailure('Failed to delete listing.'));
+    }
+  }
+
+  @override
+  Future<Result<List<ListingImage>>> getListingImages(String listingId) async {
+    try {
+      final images = await _remote.fetchListingImages(listingId);
+      return Success(images);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('getListingImages unknown error', e, st);
       return const FailureResult(
-        UnknownFailure('Failed to delete listing.'),
+        UnknownFailure('Failed to load listing images.'),
       );
     }
   }

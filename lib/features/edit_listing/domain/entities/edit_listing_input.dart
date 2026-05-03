@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../listings/domain/entities/listing.dart';
+import '../../../listings/domain/entities/listing_currency.dart';
 
 /// Pure-Dart value object describing the fields an owner may edit on
 /// an existing listing. No knowledge of Supabase or any data layer.
@@ -25,6 +26,7 @@ class EditListingInput extends Equatable {
     required this.contactPhone,
     this.telegramUsername,
     this.whatsappEnabled = false,
+    this.priceCurrency = ListingCurrency.eur,
   });
 
   final String listingId;
@@ -33,6 +35,9 @@ class EditListingInput extends Equatable {
   final String model;
   final int year;
   final num priceEur;
+
+  /// Display/settlement currency for [priceEur] (`update_listing_details_v2`).
+  final ListingCurrency priceCurrency;
   final int mileageKm;
   final ListingType type;
   final String city;
@@ -51,18 +56,19 @@ class EditListingInput extends Equatable {
 
   @override
   List<Object?> get props => [
-        listingId,
-        title,
-        make,
-        model,
-        year,
-        priceEur,
-        mileageKm,
-        type,
-        city,
-        marketRegion,
-        contactPhone,
-        telegramUsername,
-        whatsappEnabled,
-      ];
+    listingId,
+    title,
+    make,
+    model,
+    year,
+    priceEur,
+    priceCurrency,
+    mileageKm,
+    type,
+    city,
+    marketRegion,
+    contactPhone,
+    telegramUsername,
+    whatsappEnabled,
+  ];
 }

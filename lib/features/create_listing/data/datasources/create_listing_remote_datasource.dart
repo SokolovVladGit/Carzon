@@ -3,11 +3,26 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../listings/data/models/listing_model.dart';
+import '../../../listings/domain/entities/listing_currency.dart';
+import '../../domain/constants/listing_gallery_limits.dart';
 import '../../domain/entities/new_listing_input.dart';
 
 /// Only this class talks to Supabase for create-listing.
 abstract interface class CreateListingRemoteDataSource {
   Future<ListingModel> insert(NewListingInput input);
+  Future<ListingModel> insertV2(NewListingInput input);
+}
+
+String? _clipPostgresDiagnosticDetail(Object? details, String? hint) {
+  final parts = <String>[];
+  final d = details?.toString().trim();
+  if (d != null && d.isNotEmpty) parts.add(d);
+  final h = hint?.trim();
+  if (h != null && h.isNotEmpty) parts.add(h);
+  if (parts.isEmpty) return null;
+  var joined = parts.join(' — ');
+  if (joined.length > 420) joined = '${joined.substring(0, 420)}…';
+  return joined;
 }
 
 class SupabaseCreateListingRemoteDataSource
@@ -15,53 +30,161 @@ class SupabaseCreateListingRemoteDataSource
   SupabaseCreateListingRemoteDataSource(this._supabase);
 
   final SupabaseService _supabase;
-  static const String _table = 'listings';
+  static const String _rpc = 'create_listing';
+  static const String _rpcV2 = 'create_listing_v2';
 
   @override
   Future<ListingModel> insert(NewListingInput input) async {
     try {
-      final payload = <String, dynamic>{
-        'title': input.title,
-        'make': input.make,
-        'model': input.model,
-        'year': input.year,
-        'price_eur': input.priceEur,
-        'mileage_km': input.mileageKm,
-        'type': input.type.name,
-        'city': input.city,
-        'market_region': input.marketRegion.name,
-        'seller_id': input.sellerId,
-        'contact_phone': input.contactPhone.trim(),
-        'whatsapp_enabled': input.whatsappEnabled,
-        // status & created_at use DB defaults ('active', now()).
-      };
-      final cover = input.coverImageUrl?.trim();
-      if (cover != null && cover.isNotEmpty) {
-        payload['cover_image_url'] = cover;
-      }
       final telegram = input.telegramUsername?.trim();
-      if (telegram != null && telegram.isNotEmpty) {
-        // Strip any leading `@` as a defensive measure; the UI
-        // validator already normalizes, this is belt-and-braces.
-        final normalized =
-            telegram.startsWith('@') ? telegram.substring(1) : telegram;
-        if (normalized.isNotEmpty) {
-          payload['telegram_username'] = normalized;
-        }
-      }
+      final normalizedTelegram = (telegram == null || telegram.isEmpty)
+          ? null
+          : (telegram.startsWith('@') ? telegram.substring(1) : telegram);
 
-      final row = await _supabase.client
-          .from(_table)
-          .insert(payload)
-          .select()
-          .single();
+      final cover = input.coverImageUrl?.trim();
+      final coverParam = (cover == null || cover.isEmpty) ? null : cover;
+
+      final dynamic data = await _supabase.client.rpc(
+        _rpc,
+        params: <String, dynamic>{
+          'p_title': input.title.trim(),
+          'p_make': input.make.trim(),
+          'p_model': input.model.trim(),
+          'p_year': input.year,
+          'p_price_eur': input.priceEur,
+          'p_mileage_km': input.mileageKm,
+          'p_type': input.type.name,
+          'p_city': input.city.trim(),
+          'p_market_region': input.marketRegion.name,
+          'p_contact_phone': input.contactPhone.trim(),
+          'p_telegram_username': normalizedTelegram,
+          'p_whatsapp_enabled': input.whatsappEnabled,
+          'p_cover_image_url': coverParam,
+        },
+      );
+
+      Map<String, dynamic>? row;
+      if (data is Map<String, dynamic>) {
+        row = data;
+      } else if (data is List && data.isNotEmpty && data.first is Map) {
+        row = Map<String, dynamic>.from(data.first as Map);
+      }
+      if (row == null) {
+        throw ServerException('Unexpected response from create_listing RPC.');
+      }
 
       return ListingModel.fromJson(row);
     } on sb.PostgrestException catch (e, st) {
-      // RLS rejection surfaces as PostgrestException with a 4xx code.
-      throw ServerException(e.message, cause: e, stackTrace: st);
+      throw ServerException(
+        e.message,
+        cause: e,
+        stackTrace: st,
+        postgrestCode: e.code,
+        diagnosticsDetails: _clipPostgresDiagnosticDetail(e.details, e.hint),
+      );
     } catch (e, st) {
-      throw ServerException('Failed to create listing', cause: e, stackTrace: st);
+      throw ServerException(
+        'Failed to create listing',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<ListingModel> insertV2(NewListingInput input) async {
+    try {
+      final telegram = input.telegramUsername?.trim();
+      final normalizedTelegram = (telegram == null || telegram.isEmpty)
+          ? null
+          : (telegram.startsWith('@') ? telegram.substring(1) : telegram);
+
+      final gallery = input.uploadedGallery;
+      if (gallery != null && gallery.length > kMaxListingPhotos) {
+        throw ServerException(
+          'Too many images for listing_gallery (${gallery.length}).',
+        );
+      }
+
+      final urls = <String>[];
+      final paths = <String>[];
+      if (gallery != null) {
+        for (final img in gallery) {
+          final u = img.publicUrl.trim();
+          if (u.isEmpty) continue;
+          urls.add(u);
+          final rawPath = img.storagePath?.trim();
+          paths.add((rawPath == null || rawPath.isEmpty) ? '' : rawPath);
+        }
+        if (urls.length != paths.length) {
+          throw ServerException(
+            'Internal gallery compaction mismatch (urls vs storage paths).',
+          );
+        }
+      }
+
+      final useGalleryDriveCover = urls.isNotEmpty;
+
+      final cover = input.coverImageUrl?.trim();
+      final legacyCover =
+          (!useGalleryDriveCover && cover != null && cover.isNotEmpty)
+          ? cover
+          : null;
+
+      final params = <String, dynamic>{
+        'p_title': input.title.trim(),
+        'p_make': input.make.trim(),
+        'p_model': input.model.trim(),
+        'p_year': input.year,
+        'p_price_eur': input.priceEur,
+        'p_mileage_km': input.mileageKm,
+        'p_type': input.type.name,
+        'p_city': input.city.trim(),
+        'p_market_region': input.marketRegion.name,
+        'p_contact_phone': input.contactPhone.trim(),
+        'p_telegram_username': normalizedTelegram,
+        'p_whatsapp_enabled': input.whatsappEnabled,
+        'p_cover_image_url': legacyCover,
+        'p_price_currency': listingCurrencyToDbString(input.priceCurrency),
+      };
+
+      if (useGalleryDriveCover) {
+        params['p_image_urls'] = urls;
+        params['p_storage_paths'] = paths;
+      } else {
+        params['p_image_urls'] = null;
+        params['p_storage_paths'] = null;
+      }
+
+      final dynamic data = await _supabase.client.rpc(_rpcV2, params: params);
+
+      Map<String, dynamic>? row;
+      if (data is Map<String, dynamic>) {
+        row = data;
+      } else if (data is List && data.isNotEmpty && data.first is Map) {
+        row = Map<String, dynamic>.from(data.first as Map);
+      }
+      if (row == null) {
+        throw ServerException(
+          'Unexpected response from create_listing_v2 RPC.',
+        );
+      }
+
+      return ListingModel.fromJson(row);
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(
+        e.message,
+        cause: e,
+        stackTrace: st,
+        postgrestCode: e.code,
+        diagnosticsDetails: _clipPostgresDiagnosticDetail(e.details, e.hint),
+      );
+    } catch (e, st) {
+      throw ServerException(
+        'Failed to create listing',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 }

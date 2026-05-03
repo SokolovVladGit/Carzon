@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../listings/domain/entities/listing.dart';
+import '../../../listings/domain/entities/listing_currency.dart';
+import 'uploaded_listing_image.dart';
 
 /// Pure-Dart value object describing the data required to create a new
 /// listing. No knowledge of Supabase or any data layer.
@@ -12,6 +14,7 @@ class NewListingInput extends Equatable {
     required this.model,
     required this.year,
     required this.priceEur,
+    this.priceCurrency = ListingCurrency.eur,
     required this.mileageKm,
     required this.type,
     required this.city,
@@ -20,6 +23,7 @@ class NewListingInput extends Equatable {
     this.telegramUsername,
     this.whatsappEnabled = false,
     this.coverImageUrl,
+    this.uploadedGallery,
   });
 
   final String sellerId;
@@ -28,6 +32,7 @@ class NewListingInput extends Equatable {
   final String model;
   final int year;
   final num priceEur;
+  final ListingCurrency priceCurrency;
   final int mileageKm;
   final ListingType type;
   final String city;
@@ -47,44 +52,52 @@ class NewListingInput extends Equatable {
   /// non-empty the data layer will include it in the insert payload.
   final String? coverImageUrl;
 
+  /// Ordered staging metadata for `create_listing_v2` (URLs + optional paths).
+  final List<UploadedListingImage>? uploadedGallery;
+
   NewListingInput copyWith({
     String? coverImageUrl,
     String? contactPhone,
     String? telegramUsername,
     bool? whatsappEnabled,
-  }) =>
-      NewListingInput(
-        sellerId: sellerId,
-        title: title,
-        make: make,
-        model: model,
-        year: year,
-        priceEur: priceEur,
-        mileageKm: mileageKm,
-        type: type,
-        city: city,
-        marketRegion: marketRegion,
-        contactPhone: contactPhone ?? this.contactPhone,
-        telegramUsername: telegramUsername ?? this.telegramUsername,
-        whatsappEnabled: whatsappEnabled ?? this.whatsappEnabled,
-        coverImageUrl: coverImageUrl ?? this.coverImageUrl,
-      );
+    ListingCurrency? priceCurrency,
+    List<UploadedListingImage>? uploadedGallery,
+  }) => NewListingInput(
+    sellerId: sellerId,
+    title: title,
+    make: make,
+    model: model,
+    year: year,
+    priceEur: priceEur,
+    priceCurrency: priceCurrency ?? this.priceCurrency,
+    mileageKm: mileageKm,
+    type: type,
+    city: city,
+    marketRegion: marketRegion,
+    contactPhone: contactPhone ?? this.contactPhone,
+    telegramUsername: telegramUsername ?? this.telegramUsername,
+    whatsappEnabled: whatsappEnabled ?? this.whatsappEnabled,
+    coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+    uploadedGallery: uploadedGallery ?? this.uploadedGallery,
+  );
 
   @override
   List<Object?> get props => [
-        sellerId,
-        title,
-        make,
-        model,
-        year,
-        priceEur,
-        mileageKm,
-        type,
-        city,
-        marketRegion,
-        contactPhone,
-        telegramUsername,
-        whatsappEnabled,
-        coverImageUrl,
-      ];
+    sellerId,
+    title,
+    make,
+    model,
+    year,
+    priceEur,
+    priceCurrency,
+    mileageKm,
+    type,
+    city,
+    marketRegion,
+    contactPhone,
+    telegramUsername,
+    whatsappEnabled,
+    coverImageUrl,
+    uploadedGallery,
+  ];
 }

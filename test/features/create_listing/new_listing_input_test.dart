@@ -1,5 +1,7 @@
 import 'package:carzon/features/create_listing/domain/entities/new_listing_input.dart';
+import 'package:carzon/features/create_listing/domain/entities/uploaded_listing_image.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
+import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -73,6 +75,39 @@ void main() {
       expect(updated.contactPhone, '+373 777 11111');
       expect(updated.telegramUsername, 'new_user');
       expect(updated.whatsappEnabled, true);
+    });
+
+    test('defaults priceCurrency to EUR and uploadedGallery to null', () {
+      expect(base().priceCurrency, ListingCurrency.eur);
+      expect(base().uploadedGallery, isNull);
+    });
+
+    test('equality considers currency and staged gallery metadata', () {
+      expect(
+        base().copyWith(priceCurrency: ListingCurrency.usd),
+        isNot(equals(base())),
+      );
+      expect(
+        base().copyWith(
+          uploadedGallery: const [
+            UploadedListingImage(publicUrl: 'https://x'),
+          ],
+        ),
+        isNot(equals(base())),
+      );
+    });
+
+    test('copyWith sets priceCurrency and uploadedGallery', () {
+      final g = [
+        const UploadedListingImage(
+          publicUrl: 'https://cdn.example/a.jpg',
+          storagePath: 'listings/u/a.jpg',
+        ),
+      ];
+      final updated =
+          base().copyWith(priceCurrency: ListingCurrency.usd, uploadedGallery: g);
+      expect(updated.priceCurrency, ListingCurrency.usd);
+      expect(updated.uploadedGallery, g);
     });
   });
 }

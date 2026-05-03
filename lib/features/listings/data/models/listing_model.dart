@@ -1,5 +1,6 @@
 import '../../../../core/errors/exceptions.dart';
 import '../../domain/entities/listing.dart';
+import '../../domain/entities/listing_currency.dart';
 
 class ListingModel extends Listing {
   const ListingModel({
@@ -9,6 +10,7 @@ class ListingModel extends Listing {
     required super.model,
     required super.year,
     required super.priceEur,
+    super.priceCurrency,
     required super.mileageKm,
     required super.type,
     required super.city,
@@ -30,12 +32,16 @@ class ListingModel extends Listing {
       model: (json['model'] as String?) ?? '',
       year: (json['year'] as num?)?.toInt() ?? 0,
       priceEur: (json['price_eur'] as num?) ?? 0,
+      priceCurrency: listingCurrencyFromDbString(
+        json['price_currency'] as String?,
+      ),
       mileageKm: (json['mileage_km'] as num?)?.toInt() ?? 0,
       type: _parseType(json['type'] as String?),
       city: (json['city'] as String?) ?? '',
       marketRegion: _parseMarketRegion(json['market_region'] as String?),
       createdAt:
-          DateTime.tryParse((json['created_at'] as String?) ?? '') ?? DateTime.now(),
+          DateTime.tryParse((json['created_at'] as String?) ?? '') ??
+          DateTime.now(),
       status: _parseStatus(json['status'] as String?),
       coverImageUrl: json['cover_image_url'] as String?,
       sellerId: json['seller_id'] as String?,
@@ -90,22 +96,23 @@ class ListingModel extends Listing {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'make': make,
-        'model': model,
-        'year': year,
-        'price_eur': priceEur,
-        'mileage_km': mileageKm,
-        'type': type.name,
-        'city': city,
-        'market_region': marketRegion.name,
-        'created_at': createdAt.toIso8601String(),
-        'status': status.name,
-        'cover_image_url': coverImageUrl,
-        'seller_id': sellerId,
-        'contact_phone': contactPhone,
-        'telegram_username': telegramUsername,
-        'whatsapp_enabled': whatsappEnabled,
-      };
+    'id': id,
+    'title': title,
+    'make': make,
+    'model': model,
+    'year': year,
+    'price_eur': priceEur,
+    'price_currency': listingCurrencyToDbString(priceCurrency),
+    'mileage_km': mileageKm,
+    'type': type.name,
+    'city': city,
+    'market_region': marketRegion.name,
+    'created_at': createdAt.toIso8601String(),
+    'status': status.name,
+    'cover_image_url': coverImageUrl,
+    'seller_id': sellerId,
+    'contact_phone': contactPhone,
+    'telegram_username': telegramUsername,
+    'whatsapp_enabled': whatsappEnabled,
+  };
 }
