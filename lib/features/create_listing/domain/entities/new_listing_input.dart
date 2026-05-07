@@ -19,6 +19,7 @@ class NewListingInput extends Equatable {
     required this.type,
     required this.city,
     required this.marketRegion,
+    this.bodyType,
     required this.contactPhone,
     this.telegramUsername,
     this.whatsappEnabled = false,
@@ -37,6 +38,9 @@ class NewListingInput extends Equatable {
   final ListingType type;
   final String city;
   final MarketRegion marketRegion;
+
+  /// Optional (`listings.body_type` nullable until seller chooses).
+  final ListingBodyType? bodyType;
 
   /// Required at the form level. Stored as a human-readable string;
   /// the data layer trims whitespace before inserting.
@@ -62,6 +66,7 @@ class NewListingInput extends Equatable {
     bool? whatsappEnabled,
     ListingCurrency? priceCurrency,
     List<UploadedListingImage>? uploadedGallery,
+    ListingBodyType? bodyType,
   }) => NewListingInput(
     sellerId: sellerId,
     title: title,
@@ -74,6 +79,7 @@ class NewListingInput extends Equatable {
     type: type,
     city: city,
     marketRegion: marketRegion,
+    bodyType: bodyType ?? this.bodyType,
     contactPhone: contactPhone ?? this.contactPhone,
     telegramUsername: telegramUsername ?? this.telegramUsername,
     whatsappEnabled: whatsappEnabled ?? this.whatsappEnabled,
@@ -94,6 +100,7 @@ class NewListingInput extends Equatable {
     type,
     city,
     marketRegion,
+    bodyType,
     contactPhone,
     telegramUsername,
     whatsappEnabled,

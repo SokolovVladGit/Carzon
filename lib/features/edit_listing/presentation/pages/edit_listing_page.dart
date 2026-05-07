@@ -14,12 +14,14 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../create_listing/domain/constants/listing_gallery_limits.dart';
 import '../../../create_listing/domain/entities/cover_image_upload.dart';
+import '../../../create_listing/presentation/widgets/create_listing_compose_layout.dart';
 import '../../../listings/domain/catalog/listing_brands.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../../listings/domain/entities/listing_image.dart';
 import '../../../listings/domain/validation/listing_valid_years.dart';
 import '../../../listings/presentation/utils/contact_format.dart';
+import '../../../listings/presentation/utils/listing_formatters.dart';
 import '../../../listings/presentation/widgets/public_contact_notice.dart';
 import '../../domain/entities/edit_listing_input.dart';
 import '../bloc/edit_listing_cubit.dart';
@@ -195,6 +197,7 @@ class _EditListingFormState extends State<_EditListingForm> {
 
   late ListingType _type;
   late MarketRegion _marketRegion;
+  ListingBodyType? _bodyType;
   late bool _whatsappEnabled;
   late ListingCurrency _priceCurrency;
 
@@ -224,6 +227,7 @@ class _EditListingFormState extends State<_EditListingForm> {
     _telegram = TextEditingController(text: l.telegramUsername ?? '');
     _type = l.type;
     _marketRegion = l.marketRegion;
+    _bodyType = l.bodyType;
     _whatsappEnabled = l.whatsappEnabled;
     _priceCurrency = l.priceCurrency;
 
@@ -400,6 +404,7 @@ class _EditListingFormState extends State<_EditListingForm> {
       type: _type,
       city: _city.text.trim(),
       marketRegion: _marketRegion,
+      bodyType: _bodyType,
       contactPhone: _phone.text.trim(),
       telegramUsername: normalizeTelegramUsername(_telegram.text),
       whatsappEnabled: _whatsappEnabled,
@@ -728,6 +733,50 @@ class _EditListingFormState extends State<_EditListingForm> {
                                 _marketRegion = v ?? MarketRegion.transnistria,
                           ),
                     validator: (v) => v == null ? l10n.regionRequired : null,
+                  ),
+                  const SizedBox(height: 18),
+                  CreateListingFieldLabel(l10n.listingBodyTypeSectionTitle),
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.listingBodyTypeSectionSubtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  KeyedSubtree(
+                    key: ValueKey(_bodyType),
+                    child: DropdownButtonFormField<ListingBodyType?>(
+                      key: const ValueKey('edit_listing_body_type_field'),
+                      initialValue: _bodyType,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface.withValues(
+                          alpha: .22,
+                        ),
+                        labelText: l10n.listingBodyTypeSectionTitle,
+                      ),
+                      items: [
+                        DropdownMenuItem<ListingBodyType?>(
+                          value: null,
+                          child: Text(l10n.listingBodyTypeNotSpecified),
+                        ),
+                        ...ListingBodyType.values.map(
+                          (e) => DropdownMenuItem<ListingBodyType?>(
+                            value: e,
+                            child: Text(formatListingBodyType(l10n, e)),
+                          ),
+                        ),
+                      ],
+                      onChanged: submitting
+                          ? null
+                          : (v) => setState(() => _bodyType = v),
+                    ),
                   ),
                 ],
               ),

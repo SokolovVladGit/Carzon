@@ -6,6 +6,7 @@ import '../../helpers/l10n_test_helpers.dart';
 
 Widget _host({
   required bool hasFilters,
+  bool includeBodyFilterEmptyHint = false,
   VoidCallback? onResetFilters,
   Future<void> Function()? onRefresh,
 }) {
@@ -13,6 +14,7 @@ Widget _host({
     home: Scaffold(
       body: ListingsFeedEmptyState(
         hasFilters: hasFilters,
+        includeBodyFilterEmptyHint: includeBodyFilterEmptyHint,
         onResetFilters: onResetFilters ?? () {},
         onRefresh: onRefresh ?? () async {},
       ),
@@ -24,8 +26,9 @@ void main() {
   final l10n = ruStrings();
 
   group('ListingsFeedEmptyState', () {
-    testWidgets('renders the no-filters copy and no reset action',
-        (tester) async {
+    testWidgets('renders the no-filters copy and no reset action', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host(hasFilters: false));
       await tester.pump();
 
@@ -40,22 +43,42 @@ void main() {
     });
 
     testWidgets(
-        'renders the filter-active copy and an OutlinedButton reset action',
-        (tester) async {
-      await tester.pumpWidget(_host(hasFilters: true));
-      await tester.pump();
+      'renders the filter-active copy and an OutlinedButton reset action',
+      (tester) async {
+        await tester.pumpWidget(_host(hasFilters: true));
+        await tester.pump();
 
-      expect(find.text(l10n.listingsEmptyTitle), findsOneWidget);
-      expect(find.text(l10n.listingsEmptyFilteredBody), findsOneWidget);
-      expect(find.text(l10n.listingsEmptyBody), findsNothing);
-      expect(
-        find.widgetWithText(OutlinedButton, l10n.listingsEmptyResetFilters),
-        findsOneWidget,
-      );
-    });
+        expect(find.text(l10n.listingsEmptyTitle), findsOneWidget);
+        expect(find.text(l10n.listingsEmptyFilteredBody), findsOneWidget);
+        expect(find.text(l10n.listingsEmptyBody), findsNothing);
+        expect(
+          find.widgetWithText(OutlinedButton, l10n.listingsEmptyResetFilters),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets('tapping the reset-filters action fires the callback',
-        (tester) async {
+    testWidgets(
+      'with body-chip context, appends localized note about NULL body_type',
+      (tester) async {
+        await tester.pumpWidget(
+          _host(hasFilters: true, includeBodyFilterEmptyHint: true),
+        );
+        await tester.pump();
+
+        expect(
+          find.text(
+            '${l10n.listingsEmptyFilteredBody}\n\n'
+            '${l10n.listingsEmptyBodyTypeFilterNote}',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('tapping the reset-filters action fires the callback', (
+      tester,
+    ) async {
       var fired = 0;
       await tester.pumpWidget(
         _host(hasFilters: true, onResetFilters: () => fired += 1),

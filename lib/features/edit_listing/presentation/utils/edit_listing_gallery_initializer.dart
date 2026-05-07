@@ -20,7 +20,9 @@ List<EditListingGallerySlot> buildInitialEditListingGallerySlots({
     ..sort((a, b) => a.position.compareTo(b.position));
 
   if (sorted.isNotEmpty) {
-    return [for (final row in sorted) EditListingGalleryRemoteSlot.fromRow(row)];
+    return [
+      for (final row in sorted) EditListingGalleryRemoteSlot.fromRow(row),
+    ];
   }
 
   final cover = listing.coverImageUrl?.trim();

@@ -23,6 +23,7 @@ class EditListingInput extends Equatable {
     required this.type,
     required this.city,
     required this.marketRegion,
+    this.bodyType,
     required this.contactPhone,
     this.telegramUsername,
     this.whatsappEnabled = false,
@@ -42,6 +43,8 @@ class EditListingInput extends Equatable {
   final ListingType type;
   final String city;
   final MarketRegion marketRegion;
+
+  final ListingBodyType? bodyType;
 
   /// Required. Stored as a human-readable string; the data layer and
   /// the RPC both trim whitespace before writing.
@@ -67,6 +70,7 @@ class EditListingInput extends Equatable {
     type,
     city,
     marketRegion,
+    bodyType,
     contactPhone,
     telegramUsername,
     whatsappEnabled,

@@ -10,6 +10,7 @@ class ListingsQuery {
     this.maxYear,
     this.sellerId,
     this.marketRegion,
+    this.bodyType,
     this.status,
     this.typeIn,
     this.page = 0,
@@ -28,6 +29,9 @@ class ListingsQuery {
   /// When set, restricts the result to a single market region. When null,
   /// both regions are returned (e.g. the "Both" feed option).
   final MarketRegion? marketRegion;
+
+  /// When set, restricts results to this `body_type`. When null, no filter.
+  final ListingBodyType? bodyType;
 
   /// Explicit status filter for the caller. The public feed must pass
   /// [ListingStatus.active] so owners do not see their own hidden/sold/

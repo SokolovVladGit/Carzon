@@ -8,8 +8,10 @@ import '../../features/edit_listing/di/edit_listing_injection.dart';
 import '../../features/favorites/di/favorites_injection.dart';
 import '../../features/legal/di/legal_injection.dart';
 import '../../features/listings/di/listings_injection.dart';
+import '../../features/messaging/di/messaging_injection.dart';
 import '../../features/my_listings/di/my_listings_injection.dart';
 import '../../features/profile/di/profile_injection.dart';
+import '../../features/sellers/di/sellers_injection.dart';
 
 /// Single global service locator used across the app.
 ///
@@ -30,6 +32,8 @@ Future<void> configureDependencies(SupabaseService supabaseService) async {
   // Feature registrations (order matters only if a feature depends on another).
   registerAuthFeature(sl);
   registerListingsFeature(sl);
+  registerSellersFeature(sl);
+  registerMessagingFeature(sl);
   registerProfileFeature(sl);
   registerFavoritesFeature(sl);
   registerCreateListingFeature(sl);

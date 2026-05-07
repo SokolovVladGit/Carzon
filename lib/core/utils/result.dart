@@ -6,7 +6,10 @@ import '../errors/failures.dart';
 sealed class Result<T> {
   const Result();
 
-  R fold<R>(R Function(Failure failure) onFailure, R Function(T value) onSuccess);
+  R fold<R>(
+    R Function(Failure failure) onFailure,
+    R Function(T value) onSuccess,
+  );
 }
 
 class Success<T> extends Result<T> {
@@ -14,8 +17,10 @@ class Success<T> extends Result<T> {
   final T value;
 
   @override
-  R fold<R>(R Function(Failure failure) onFailure, R Function(T value) onSuccess) =>
-      onSuccess(value);
+  R fold<R>(
+    R Function(Failure failure) onFailure,
+    R Function(T value) onSuccess,
+  ) => onSuccess(value);
 }
 
 class FailureResult<T> extends Result<T> {
@@ -23,6 +28,8 @@ class FailureResult<T> extends Result<T> {
   final Failure failure;
 
   @override
-  R fold<R>(R Function(Failure failure) onFailure, R Function(T value) onSuccess) =>
-      onFailure(failure);
+  R fold<R>(
+    R Function(Failure failure) onFailure,
+    R Function(T value) onSuccess,
+  ) => onFailure(failure);
 }

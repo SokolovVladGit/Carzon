@@ -40,10 +40,7 @@ void main() {
       await pumpLocalizedWidget(
         tester,
         const Scaffold(
-          body: EmptyStateView(
-            icon: Icons.inbox_outlined,
-            title: 'Пусто',
-          ),
+          body: EmptyStateView(icon: Icons.inbox_outlined, title: 'Пусто'),
         ),
       );
 

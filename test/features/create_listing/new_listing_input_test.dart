@@ -10,29 +10,30 @@ void main() {
     String contactPhone = '+373 690 00001',
     String? telegramUsername,
     bool whatsappEnabled = false,
-  }) =>
-      NewListingInput(
-        sellerId: 's1',
-        title: 't',
-        make: 'BMW',
-        model: '320',
-        year: 2019,
-        priceEur: 18750,
-        mileageKm: 95000,
-        type: ListingType.sale,
-        city: 'Tiraspol',
-        marketRegion: MarketRegion.transnistria,
-        coverImageUrl: coverImageUrl,
-        contactPhone: contactPhone,
-        telegramUsername: telegramUsername,
-        whatsappEnabled: whatsappEnabled,
-      );
+  }) => NewListingInput(
+    sellerId: 's1',
+    title: 't',
+    make: 'BMW',
+    model: '320',
+    year: 2019,
+    priceEur: 18750,
+    mileageKm: 95000,
+    type: ListingType.sale,
+    city: 'Tiraspol',
+    marketRegion: MarketRegion.transnistria,
+    coverImageUrl: coverImageUrl,
+    contactPhone: contactPhone,
+    telegramUsername: telegramUsername,
+    whatsappEnabled: whatsappEnabled,
+  );
 
   group('NewListingInput', () {
     test('equality considers coverImageUrl', () {
       expect(base(), equals(base()));
-      expect(base(coverImageUrl: 'https://example.com/a.jpg'),
-          isNot(equals(base())));
+      expect(
+        base(coverImageUrl: 'https://example.com/a.jpg'),
+        isNot(equals(base())),
+      );
       expect(
         base(coverImageUrl: 'https://example.com/a.jpg'),
         equals(base(coverImageUrl: 'https://example.com/a.jpg')),
@@ -40,18 +41,9 @@ void main() {
     });
 
     test('equality considers contact fields', () {
-      expect(
-        base(telegramUsername: 'carzon_dev'),
-        isNot(equals(base())),
-      );
-      expect(
-        base(whatsappEnabled: true),
-        isNot(equals(base())),
-      );
-      expect(
-        base(contactPhone: '+373 777 00000'),
-        isNot(equals(base())),
-      );
+      expect(base(telegramUsername: 'carzon_dev'), isNot(equals(base())));
+      expect(base(whatsappEnabled: true), isNot(equals(base())));
+      expect(base(contactPhone: '+373 777 00000'), isNot(equals(base())));
       expect(
         base(telegramUsername: 'u', whatsappEnabled: true),
         equals(base(telegramUsername: 'u', whatsappEnabled: true)),
@@ -89,9 +81,7 @@ void main() {
       );
       expect(
         base().copyWith(
-          uploadedGallery: const [
-            UploadedListingImage(publicUrl: 'https://x'),
-          ],
+          uploadedGallery: const [UploadedListingImage(publicUrl: 'https://x')],
         ),
         isNot(equals(base())),
       );
@@ -104,8 +94,10 @@ void main() {
           storagePath: 'listings/u/a.jpg',
         ),
       ];
-      final updated =
-          base().copyWith(priceCurrency: ListingCurrency.usd, uploadedGallery: g);
+      final updated = base().copyWith(
+        priceCurrency: ListingCurrency.usd,
+        uploadedGallery: g,
+      );
       expect(updated.priceCurrency, ListingCurrency.usd);
       expect(updated.uploadedGallery, g);
     });

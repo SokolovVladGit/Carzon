@@ -13,6 +13,20 @@ enum ListingStatus { active, hidden, sold, archived }
 /// listing belongs to exactly one region.
 enum MarketRegion { transnistria, moldova }
 
+/// Vehicle body style (`listings.body_type`). Null in DB/UI means unspecified.
+enum ListingBodyType {
+  sedan,
+  hatchback,
+  wagon,
+  suv,
+  coupe,
+  convertible,
+  minivan,
+  pickup,
+  van,
+  other,
+}
+
 class Listing extends Equatable {
   const Listing({
     required this.id,
@@ -26,6 +40,7 @@ class Listing extends Equatable {
     required this.type,
     required this.city,
     required this.marketRegion,
+    this.bodyType,
     required this.createdAt,
     this.status = ListingStatus.active,
     this.coverImageUrl,
@@ -48,6 +63,10 @@ class Listing extends Equatable {
   final ListingType type;
   final String city;
   final MarketRegion marketRegion;
+
+  /// Optional body style; legacy listings may omit this field.
+  final ListingBodyType? bodyType;
+
   final DateTime createdAt;
   final ListingStatus status;
   final String? coverImageUrl;
@@ -81,6 +100,7 @@ class Listing extends Equatable {
     type,
     city,
     marketRegion,
+    bodyType,
     createdAt,
     status,
     coverImageUrl,

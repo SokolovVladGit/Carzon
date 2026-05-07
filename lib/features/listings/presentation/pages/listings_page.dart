@@ -16,6 +16,7 @@ import '../../../../shared/ui/carzon_icons.dart';
 import '../bloc/listings_bloc.dart';
 import '../bloc/listings_event.dart';
 import '../bloc/listings_state.dart';
+import '../utils/feed_home_body_chips.dart';
 import '../widgets/category_chip.dart';
 import '../widgets/listing_card.dart';
 import '../widgets/listing_tile.dart';
@@ -50,11 +51,6 @@ class _ListingsViewState extends State<_ListingsView> {
   /// the featured card's image `Stack` listens — the rest of the
   /// feed has zero scroll-tick rebuild overhead.
   final ValueNotifier<double> _feedScrollOffset = ValueNotifier<double>(0);
-
-  /// UI-only body-category selection. Not wired to the bloc or query
-  /// layer yet — the listings schema has no `body_type` column, so the
-  /// chip row is purely visual until the backend dimension lands.
-  String _selectedCategoryId = 'all';
 
   @override
   void initState() {
@@ -109,12 +105,14 @@ class _ListingsViewState extends State<_ListingsView> {
       if (region != null && region != current.regionFilter) {
         bloc.add(ListingsRegionFilterChanged(region));
       }
-      bloc.add(ListingsFiltersApplied(
-        make: result.make,
-        minYear: result.minYear,
-        maxYear: result.maxYear,
-        typeFilter: result.typeFilter,
-      ));
+      bloc.add(
+        ListingsFiltersApplied(
+          make: result.make,
+          minYear: result.minYear,
+          maxYear: result.maxYear,
+          typeFilter: result.typeFilter,
+        ),
+      );
     }
   }
 
@@ -156,11 +154,6 @@ class _ListingsViewState extends State<_ListingsView> {
               searchCtrl: _searchCtrl,
               onOpenFilters: () => _openFiltersSheet(context),
               onBrandSelected: _onBrandSelected,
-              selectedCategoryId: _selectedCategoryId,
-              onCategorySelected: (id) {
-                if (id == _selectedCategoryId) return;
-                setState(() => _selectedCategoryId = id);
-              },
             ),
             Expanded(
               child: BlocBuilder<ListingsBloc, ListingsState>(
@@ -171,35 +164,38 @@ class _ListingsViewState extends State<_ListingsView> {
                       return const LoadingView();
                     case ListingsStatus.failure:
                       return ErrorView(
-                        message: state.errorMessage ??
+                        message:
+                            state.errorMessage ??
                             context.l10n.listingsLoadFailed,
-                        onRetry: () => context
-                            .read<ListingsBloc>()
-                            .add(const ListingsRefreshed()),
+                        onRetry: () => context.read<ListingsBloc>().add(
+                          const ListingsRefreshed(),
+                        ),
                       );
                     case ListingsStatus.success:
                     case ListingsStatus.loadingMore:
                       if (state.items.isEmpty) {
                         return ListingsFeedEmptyState(
                           hasFilters: state.hasActiveNonRegionFilters,
+                          includeBodyFilterEmptyHint:
+                              state.bodyTypeFilter != null,
                           onResetFilters: () {
                             _searchCtrl.clear();
-                            context
-                                .read<ListingsBloc>()
-                                .add(const ListingsFiltersCleared());
+                            context.read<ListingsBloc>().add(
+                              const ListingsFiltersCleared(),
+                            );
                           },
                           onRefresh: () async {
-                            context
-                                .read<ListingsBloc>()
-                                .add(const ListingsRefreshed());
+                            context.read<ListingsBloc>().add(
+                              const ListingsRefreshed(),
+                            );
                           },
                         );
                       }
                       return RefreshIndicator(
                         onRefresh: () async {
-                          context
-                              .read<ListingsBloc>()
-                              .add(const ListingsRefreshed());
+                          context.read<ListingsBloc>().add(
+                            const ListingsRefreshed(),
+                          );
                         },
                         child: ListView.separated(
                           controller: _scrollCtrl,
@@ -228,7 +224,8 @@ class _ListingsViewState extends State<_ListingsView> {
                             20,
                             kFloatingCapsuleNavClearance,
                           ),
-                          itemCount: state.items.length +
+                          itemCount:
+                              state.items.length +
                               (state.hasReachedEnd ? 0 : 1),
                           // Larger gap after the feature card (30) so the
                           // first/second cards read as two beats rather
@@ -248,8 +245,9 @@ class _ListingsViewState extends State<_ListingsView> {
                             if (index >= state.items.length) {
                               return const Padding(
                                 padding: EdgeInsets.all(16),
-                                child:
-                                    Center(child: CircularProgressIndicator()),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
                               );
                             }
                             final item = state.items[index];
@@ -319,12 +317,14 @@ class _ListingsViewState extends State<_ListingsView> {
     // chip (or tapping "All" when no make filter is active) must
     // not trigger a loading state / refetch.
     if ((current ?? '') == (brand ?? '')) return;
-    bloc.add(ListingsFiltersApplied(
-      make: brand,
-      minYear: s.minYear,
-      maxYear: s.maxYear,
-      typeFilter: s.typeFilter,
-    ));
+    bloc.add(
+      ListingsFiltersApplied(
+        make: brand,
+        minYear: s.minYear,
+        maxYear: s.maxYear,
+        typeFilter: s.typeFilter,
+      ),
+    );
   }
 }
 
@@ -420,15 +420,11 @@ class _FeedHeaderLayer extends StatelessWidget {
     required this.searchCtrl,
     required this.onOpenFilters,
     required this.onBrandSelected,
-    required this.selectedCategoryId,
-    required this.onCategorySelected,
   });
 
   final TextEditingController searchCtrl;
   final VoidCallback onOpenFilters;
   final ValueChanged<String?> onBrandSelected;
-  final String selectedCategoryId;
-  final ValueChanged<String> onCategorySelected;
 
   @override
   Widget build(BuildContext context) {
@@ -473,10 +469,25 @@ class _FeedHeaderLayer extends StatelessWidget {
           // brand row → body chips: 4 (brand row already carries
           // its own 8 px vertical padding from the ListView).
           const SizedBox(height: 4),
-          CategoryChipsRow(
-            categories: defaultUiCategories,
-            selectedId: selectedCategoryId,
-            onSelected: onCategorySelected,
+          BlocBuilder<ListingsBloc, ListingsState>(
+            buildWhen: (p, q) => p.bodyTypeFilter != q.bodyTypeFilter,
+            builder: (context, listState) {
+              final l10n = context.l10n;
+              final chipId = listState.bodyTypeFilter == null
+                  ? 'all'
+                  : listState.bodyTypeFilter!.name;
+              return CategoryChipsRow(
+                categories: feedHomeBodyChipDescriptors(l10n),
+                selectedId: chipId,
+                onSelected: (id) {
+                  context.read<ListingsBloc>().add(
+                    ListingsBodyTypeFilterChanged(
+                      listingBodyTypeFromFeedChipId(id),
+                    ),
+                  );
+                },
+              );
+            },
           ),
           // Tight bottom air inside the layer — the chip row's
           // own 8 px vertical padding is the real bottom gap; the
@@ -589,60 +600,65 @@ class _SearchAndFilterBar extends StatelessWidget {
                 boxShadow: [searchShadow],
               ),
               child: TextField(
-              controller: searchCtrl,
-              textInputAction: TextInputAction.search,
-              style: theme.textTheme.bodyMedium,
-              decoration: InputDecoration(
-                hintText: l10n.listingsSearchHint,
-                hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
+                controller: searchCtrl,
+                textInputAction: TextInputAction.search,
+                style: theme.textTheme.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: l10n.listingsSearchHint,
+                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
+                  ),
+                  prefixIcon: Icon(
+                    CarzonIcons.search,
+                    size: 20,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
+                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: searchCtrl,
+                    builder: (context, value, _) {
+                      if (value.text.isEmpty) return const SizedBox.shrink();
+                      return IconButton(
+                        icon: const Icon(CarzonIcons.close, size: 18),
+                        tooltip: l10n.listingsSearchClearTooltip,
+                        onPressed: () {
+                          searchCtrl.clear();
+                          context.read<ListingsBloc>().add(
+                            const ListingsSearchChanged(null),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  filled: true,
+                  fillColor: fill,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 13,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(searchRadius),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(searchRadius),
+                    borderSide: BorderSide(color: pillBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(searchRadius),
+                    borderSide: BorderSide(
+                      color: scheme.primary.withValues(alpha: 0.5),
+                    ),
+                  ),
                 ),
-                prefixIcon: Icon(
-                  CarzonIcons.search,
-                  size: 20,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-                ),
-                prefixIconConstraints:
-                    const BoxConstraints(minWidth: 44, minHeight: 44),
-                suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: searchCtrl,
-                  builder: (context, value, _) {
-                    if (value.text.isEmpty) return const SizedBox.shrink();
-                    return IconButton(
-                      icon: const Icon(CarzonIcons.close, size: 18),
-                      tooltip: l10n.listingsSearchClearTooltip,
-                      onPressed: () {
-                        searchCtrl.clear();
-                        context
-                            .read<ListingsBloc>()
-                            .add(const ListingsSearchChanged(null));
-                      },
-                    );
-                  },
-                ),
-                filled: true,
-                fillColor: fill,
-                isDense: true,
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(searchRadius),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(searchRadius),
-                  borderSide: BorderSide(color: pillBorder),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(searchRadius),
-                  borderSide:
-                      BorderSide(color: scheme.primary.withValues(alpha: 0.5)),
+                onSubmitted: (value) => context.read<ListingsBloc>().add(
+                  ListingsSearchChanged(value),
                 ),
               ),
-              onSubmitted: (value) => context
-                  .read<ListingsBloc>()
-                  .add(ListingsSearchChanged(value)),
-            ),
             ),
           ),
           const SizedBox(width: 12),
@@ -658,8 +674,9 @@ class _SearchAndFilterBar extends StatelessWidget {
               // the brand-tile language directly below it rather than
               // reading as a separate form element. Active state
               // earns a whisper primary tint plus the accent dot.
-              final restingBg =
-                  isDark ? scheme.surfaceContainerHighest : Colors.white;
+              final restingBg = isDark
+                  ? scheme.surfaceContainerHighest
+                  : Colors.white;
               final bg = active
                   ? scheme.primary.withValues(alpha: isDark ? 0.14 : 0.07)
                   : restingBg;
@@ -697,11 +714,7 @@ class _SearchAndFilterBar extends StatelessWidget {
                             // the tint + dot below; use a single icon
                             // variant so the silhouette stays stable
                             // across toggles.
-                            Icon(
-                              CarzonIcons.filter,
-                              size: 20,
-                              color: fg,
-                            ),
+                            Icon(CarzonIcons.filter, size: 20, color: fg),
                             if (active)
                               Positioned(
                                 top: 12,
@@ -879,17 +892,17 @@ class _BrandTile extends StatelessWidget {
     // quiet while still clearly indicating which brand is active.
     final bg = selected
         ? (isDark
-            ? scheme.primary.withValues(alpha: 0.14)
-            : Color.alphaBlend(
-                scheme.primary.withValues(alpha: 0.04),
-                Colors.white,
-              ))
+              ? scheme.primary.withValues(alpha: 0.14)
+              : Color.alphaBlend(
+                  scheme.primary.withValues(alpha: 0.04),
+                  Colors.white,
+                ))
         : (isDark ? scheme.surfaceContainerHighest : Colors.white);
     final borderColor = selected
         ? scheme.primary.withValues(alpha: isDark ? 0.5 : 0.32)
         : (isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : scheme.outlineVariant.withValues(alpha: 0.45));
+              ? Colors.white.withValues(alpha: 0.05)
+              : scheme.outlineVariant.withValues(alpha: 0.45));
     final shadow = BoxShadow(
       color: selected
           ? scheme.primary.withValues(alpha: isDark ? 0.16 : 0.07)
@@ -939,8 +952,7 @@ class _BrandTile extends StatelessWidget {
                           size: 20,
                           color: selected
                               ? scheme.primary
-                              : scheme.onSurfaceVariant
-                                  .withValues(alpha: 0.75),
+                              : scheme.onSurfaceVariant.withValues(alpha: 0.75),
                         ),
                 ),
               ),
@@ -968,12 +980,12 @@ class _FiltersResult {
   }) : cleared = false;
 
   const _FiltersResult.clear()
-      : cleared = true,
-        make = null,
-        minYear = null,
-        maxYear = null,
-        typeFilter = ListingTypeFilter.any,
-        region = null;
+    : cleared = true,
+      make = null,
+      minYear = null,
+      maxYear = null,
+      typeFilter = ListingTypeFilter.any,
+      region = null;
 
   final bool cleared;
   final String? make;
@@ -1020,10 +1032,12 @@ class _FiltersBottomSheetState extends State<_FiltersBottomSheet> {
   void initState() {
     super.initState();
     _make = TextEditingController(text: widget.initialMake ?? '');
-    _minYear =
-        TextEditingController(text: widget.initialMinYear?.toString() ?? '');
-    _maxYear =
-        TextEditingController(text: widget.initialMaxYear?.toString() ?? '');
+    _minYear = TextEditingController(
+      text: widget.initialMinYear?.toString() ?? '',
+    );
+    _maxYear = TextEditingController(
+      text: widget.initialMaxYear?.toString() ?? '',
+    );
     _type = widget.initialType;
     _region = widget.initialRegion;
   }
@@ -1078,13 +1092,15 @@ class _FiltersBottomSheetState extends State<_FiltersBottomSheet> {
       return;
     }
 
-    Navigator.of(context).pop(_FiltersResult.apply(
-      make: make.isEmpty ? null : make,
-      minYear: minYear,
-      maxYear: maxYear,
-      typeFilter: _type,
-      region: _region,
-    ));
+    Navigator.of(context).pop(
+      _FiltersResult.apply(
+        make: make.isEmpty ? null : make,
+        minYear: minYear,
+        maxYear: maxYear,
+        typeFilter: _type,
+        region: _region,
+      ),
+    );
   }
 
   void _clear() {

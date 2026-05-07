@@ -9,14 +9,20 @@ import '../models/auth_user_model.dart';
 abstract interface class AuthRemoteDataSource {
   Stream<AuthUserModel?> authStateChanges();
   AuthUserModel? currentUser();
-  Future<AuthUserModel> signInWithPassword({required String email, required String password});
+  Future<AuthUserModel> signInWithPassword({
+    required String email,
+    required String password,
+  });
 
   /// Returns the signed-up user when Supabase also established an active
   /// session (email confirmation disabled in the project), or `null` when
   /// the sign-up succeeded but no session was issued (email confirmation
   /// required). In both cases a non-failure return means the server
   /// accepted the request; a failure is always signalled by an exception.
-  Future<AuthUserModel?> signUpWithPassword({required String email, required String password});
+  Future<AuthUserModel?> signUpWithPassword({
+    required String email,
+    required String password,
+  });
   Future<void> signOut();
 
   /// Requests a password-reset email for [email]. Supabase intentionally
@@ -73,7 +79,10 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
     required String password,
   }) async {
     try {
-      final response = await _auth.signInWithPassword(email: email, password: password);
+      final response = await _auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
       final user = response.user;
       if (user == null) {
         throw AuthException('Sign-in returned no user.');
@@ -82,7 +91,11 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
     } on sb.AuthException catch (e, st) {
       throw AuthException(e.message, cause: e, stackTrace: st);
     } catch (e, st) {
-      throw ServerException('Unexpected sign-in error', cause: e, stackTrace: st);
+      throw ServerException(
+        'Unexpected sign-in error',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 
@@ -116,7 +129,11 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
     } on sb.AuthException catch (e, st) {
       throw AuthException(e.message, cause: e, stackTrace: st);
     } catch (e, st) {
-      throw ServerException('Unexpected sign-up error', cause: e, stackTrace: st);
+      throw ServerException(
+        'Unexpected sign-up error',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 
@@ -127,7 +144,11 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
     } on sb.AuthException catch (e, st) {
       throw AuthException(e.message, cause: e, stackTrace: st);
     } catch (e, st) {
-      throw ServerException('Unexpected sign-out error', cause: e, stackTrace: st);
+      throw ServerException(
+        'Unexpected sign-out error',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 

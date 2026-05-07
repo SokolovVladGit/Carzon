@@ -116,13 +116,9 @@ class SupabaseEditListingRemoteDataSource
 
   @override
   Future<ListingModel> updateDetailsV2(EditListingInput input) {
-    return _rpcListingRow(
-      _supabase.client.rpc(
-        _rpcV2,
-        params: _detailsParams(input, currency: true),
-      ),
-      _rpcV2,
-    );
+    final params = _detailsParams(input, currency: true)
+      ..['p_body_type'] = input.bodyType?.name;
+    return _rpcListingRow(_supabase.client.rpc(_rpcV2, params: params), _rpcV2);
   }
 
   @override

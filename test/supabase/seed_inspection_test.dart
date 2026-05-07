@@ -44,8 +44,7 @@ void main() {
       expect(
         count,
         greaterThanOrEqualTo(12),
-        reason:
-            'expected ≥12 active Transnistria listings, found $count',
+        reason: 'expected ≥12 active Transnistria listings, found $count',
       );
     });
 
@@ -77,31 +76,28 @@ void main() {
       );
     });
 
-    test(
-      'every contact_phone literal matches the synthetic '
-      '+373 000 000 XXX pattern',
-      () {
-        final phoneLiterals =
-            RegExp(r"'\+\d[\d\s]+'").allMatches(sql).map((m) => m.group(0)!);
+    test('every contact_phone literal matches the synthetic '
+        '+373 000 000 XXX pattern', () {
+      final phoneLiterals = RegExp(
+        r"'\+\d[\d\s]+'",
+      ).allMatches(sql).map((m) => m.group(0)!);
+      expect(
+        phoneLiterals,
+        isNotEmpty,
+        reason: 'seed must have phone literals to assert on',
+      );
+      final syntheticPattern = RegExp(r"^'\+373 000 000 \d{3}'$");
+      for (final literal in phoneLiterals) {
         expect(
-          phoneLiterals,
-          isNotEmpty,
-          reason: 'seed must have phone literals to assert on',
+          syntheticPattern.hasMatch(literal),
+          isTrue,
+          reason:
+              'non-synthetic phone literal found in seed: $literal. '
+              'all seed phones must follow the `+373 000 000 XXX` '
+              'placeholder pattern.',
         );
-        final syntheticPattern =
-            RegExp(r"^'\+373 000 000 \d{3}'$");
-        for (final literal in phoneLiterals) {
-          expect(
-            syntheticPattern.hasMatch(literal),
-            isTrue,
-            reason:
-                'non-synthetic phone literal found in seed: $literal. '
-                'all seed phones must follow the `+373 000 000 XXX` '
-                'placeholder pattern.',
-          );
-        }
-      },
-    );
+      }
+    });
 
     test('telegram usernames follow the synthetic carzon_demo_NN pattern', () {
       // The row shape is:
@@ -115,8 +111,7 @@ void main() {
       expect(
         telegramMatches,
         isNotEmpty,
-        reason:
-            'expected the phone→telegram row shape to be present in seed',
+        reason: 'expected the phone→telegram row shape to be present in seed',
       );
       var nonNullCount = 0;
       for (final match in telegramMatches) {
@@ -221,12 +216,12 @@ void main() {
       // Sanity check: seeds must not bind a seller_id, since they are
       // intentionally un-owned demo rows. If a real auth.users UUID is
       // ever pasted here by mistake, this check flags it.
-      final uuidRefs = RegExp(
-        r"auth\.users\s*\(",
-        caseSensitive: false,
+      final uuidRefs = RegExp(r"auth\.users\s*\(", caseSensitive: false);
+      expect(
+        uuidRefs.hasMatch(sql),
+        isFalse,
+        reason: 'seed must not reference auth.users directly',
       );
-      expect(uuidRefs.hasMatch(sql), isFalse,
-          reason: 'seed must not reference auth.users directly');
       // The seller_id column value in every insert tuple must be the
       // literal `null`. The row shape places seller_id between
       // `status` and `contact_phone`, so: `'active', null,` or
@@ -268,10 +263,10 @@ void main() {
     test('is idempotent via on conflict do update', () {
       // Re-running the seed file is a supported workflow. Every insert
       // block must have an `on conflict (id) do update` clause.
-      final insertCount =
-          RegExp(r'insert\s+into\s+public\.listings', caseSensitive: false)
-              .allMatches(sql)
-              .length;
+      final insertCount = RegExp(
+        r'insert\s+into\s+public\.listings',
+        caseSensitive: false,
+      ).allMatches(sql).length;
       final conflictCount = RegExp(
         r'on\s+conflict\s*\(\s*id\s*\)\s+do\s+update',
         caseSensitive: false,

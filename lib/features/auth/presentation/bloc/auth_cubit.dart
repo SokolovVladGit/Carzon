@@ -19,12 +19,12 @@ class AuthCubit extends Cubit<AuthState> {
     required SignInWithPassword signInWithPassword,
     required SignUpWithPassword signUpWithPassword,
     required SignOut signOut,
-  })  : _repository = repository,
-        _getCurrentUser = getCurrentUser,
-        _signInWithPassword = signInWithPassword,
-        _signUpWithPassword = signUpWithPassword,
-        _signOut = signOut,
-        super(const AuthState.unknown());
+  }) : _repository = repository,
+       _getCurrentUser = getCurrentUser,
+       _signInWithPassword = signInWithPassword,
+       _signUpWithPassword = signUpWithPassword,
+       _signOut = signOut,
+       super(const AuthState.unknown());
 
   final AuthRepository _repository;
   final GetCurrentUser _getCurrentUser;
@@ -47,9 +47,11 @@ class AuthCubit extends Cubit<AuthState> {
     final result = await _getCurrentUser();
     result.fold(
       (failure) => emit(const AuthState.unauthenticated()),
-      (user) => emit(user == null
-          ? const AuthState.unauthenticated()
-          : AuthState.authenticated(user)),
+      (user) => emit(
+        user == null
+            ? const AuthState.unauthenticated()
+            : AuthState.authenticated(user),
+      ),
     );
 
     _authSub?.cancel();
@@ -132,9 +134,11 @@ class AuthCubit extends Cubit<AuthState> {
     }
     _inPasswordRecovery = false;
     final user = state.user;
-    emit(user == null
-        ? const AuthState.unauthenticated()
-        : AuthState.authenticated(user));
+    emit(
+      user == null
+          ? const AuthState.unauthenticated()
+          : AuthState.authenticated(user),
+    );
   }
 
   /// Maps a sign-in [Failure] to an [AuthErrorKind] so the widget layer

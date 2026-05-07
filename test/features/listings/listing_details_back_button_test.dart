@@ -11,6 +11,7 @@ import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
 import 'package:carzon/features/listings/presentation/pages/listing_details_page.dart';
 import 'package:carzon/features/listings/presentation/widgets/listing_cover_image.dart';
+import 'package:carzon/features/sellers/domain/usecases/get_seller_public_profile.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,6 +20,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
+import '../../helpers/seller_public_profile_test_mocks.dart';
 
 class _MockDetailsCubit extends MockCubit<ListingDetailsState>
     implements ListingDetailsCubit {}
@@ -29,25 +31,26 @@ class _MockFavoritesCubit extends MockCubit<FavoritesState>
     implements FavoritesCubit {}
 
 Listing _seed() => Listing(
-      id: 'l1',
-      title: 'VW Golf',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2016,
-      priceEur: 8900,
-      mileageKm: 120000,
-      type: ListingType.sale,
-      city: 'Chișinău',
-      marketRegion: MarketRegion.moldova,
-      createdAt: DateTime.utc(2026, 4, 1),
-      status: ListingStatus.active,
-      sellerId: 's1',
-    );
+  id: 'l1',
+  title: 'VW Golf',
+  make: 'Volkswagen',
+  model: 'Golf',
+  year: 2016,
+  priceEur: 8900,
+  mileageKm: 120000,
+  type: ListingType.sale,
+  city: 'Chișinău',
+  marketRegion: MarketRegion.moldova,
+  createdAt: DateTime.utc(2026, 4, 1),
+  status: ListingStatus.active,
+  sellerId: 's1',
+);
 
 void main() {
   late _MockDetailsCubit detailsCubit;
   late _MockAuthCubit authCubit;
   late _MockFavoritesCubit favoritesCubit;
+  late MockGetSellerPublicProfile sellerProfileUseCase;
   final l10n = ruStrings();
 
   setUp(() async {
@@ -55,10 +58,13 @@ void main() {
     detailsCubit = _MockDetailsCubit();
     authCubit = _MockAuthCubit();
     favoritesCubit = _MockFavoritesCubit();
+    sellerProfileUseCase = MockGetSellerPublicProfile();
+    stubSellerPublicProfileHidden(sellerProfileUseCase);
 
     when(() => detailsCubit.load(any())).thenAnswer((_) async {});
-    when(() => detailsCubit.state)
-        .thenReturn(ListingDetailsState.success(_seed()));
+    when(
+      () => detailsCubit.state,
+    ).thenReturn(ListingDetailsState.success(_seed()));
     whenListen(
       detailsCubit,
       const Stream<ListingDetailsState>.empty(),
@@ -80,6 +86,7 @@ void main() {
     );
 
     sl.registerFactory<ListingDetailsCubit>(() => detailsCubit);
+    sl.registerFactory<GetSellerPublicProfile>(() => sellerProfileUseCase);
   });
 
   tearDown(() async {
@@ -95,9 +102,8 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, _) => const Scaffold(
-            body: Center(child: Text('home-feed-stub')),
-          ),
+          builder: (_, _) =>
+              const Scaffold(body: Center(child: Text('home-feed-stub'))),
         ),
         GoRoute(
           path: '/listings/:id',
@@ -123,25 +129,20 @@ void main() {
   }
 
   group('ListingDetailsPage AppBar', () {
-    testWidgets(
-      'renders a visible back button and favorite action without a '
-      'generic "Объявление" page label',
-      (tester) async {
-        await tester.pumpWidget(
-          wrapWithRouter(initialLocation: '/listings/l1'),
-        );
-        await tester.pump();
+    testWidgets('renders a visible back button and favorite action without a '
+        'generic "Объявление" page label', (tester) async {
+      await tester.pumpWidget(wrapWithRouter(initialLocation: '/listings/l1'));
+      await tester.pump();
 
-        expect(find.byType(AppBackButton), findsOneWidget);
-        expect(find.byType(BackButtonIcon), findsOneWidget);
-        expect(find.byType(FavoriteToggleButton), findsOneWidget);
-        // The page intentionally no longer shows the
-        // `listingDetailsTitle` overline — the brand identity row
-        // replaces it so the header reads as an automotive marker,
-        // not a generic "Listing" page label.
-        expect(find.text(l10n.listingDetailsTitle), findsNothing);
-      },
-    );
+      expect(find.byType(AppBackButton), findsOneWidget);
+      expect(find.byType(BackButtonIcon), findsOneWidget);
+      expect(find.byType(FavoriteToggleButton), findsOneWidget);
+      // The page intentionally no longer shows the
+      // `listingDetailsTitle` overline — the brand identity row
+      // replaces it so the header reads as an automotive marker,
+      // not a generic "Listing" page label.
+      expect(find.text(l10n.listingDetailsTitle), findsNothing);
+    });
 
     testWidgets(
       'deep-linked details tap of back falls back to the listings feed',
@@ -165,7 +166,9 @@ void main() {
       'listing details is a secondary page and does not render the top-level '
       'NavigationBar',
       (tester) async {
-        await tester.pumpWidget(wrapWithRouter(initialLocation: '/listings/l1'));
+        await tester.pumpWidget(
+          wrapWithRouter(initialLocation: '/listings/l1'),
+        );
         await tester.pump();
 
         expect(find.byType(NavigationBar), findsNothing);
@@ -176,7 +179,9 @@ void main() {
       'cover image area wraps the photo in a Hero tagged with the listing id '
       'so feed→details animates the same cover',
       (tester) async {
-        await tester.pumpWidget(wrapWithRouter(initialLocation: '/listings/l1'));
+        await tester.pumpWidget(
+          wrapWithRouter(initialLocation: '/listings/l1'),
+        );
         await tester.pump();
 
         expect(find.byType(ListingCoverImage), findsOneWidget);
@@ -197,15 +202,18 @@ void main() {
       (tester) async {
         // Override the default `success` state from setUp with a pure
         // `loading` state — no listing payload, no cover URL yet.
-        when(() => detailsCubit.state)
-            .thenReturn(const ListingDetailsState.loading());
+        when(
+          () => detailsCubit.state,
+        ).thenReturn(const ListingDetailsState.loading());
         whenListen(
           detailsCubit,
           const Stream<ListingDetailsState>.empty(),
           initialState: const ListingDetailsState.loading(),
         );
 
-        await tester.pumpWidget(wrapWithRouter(initialLocation: '/listings/l1'));
+        await tester.pumpWidget(
+          wrapWithRouter(initialLocation: '/listings/l1'),
+        );
         await tester.pump();
 
         // Existing loading UI is still rendered.
@@ -215,8 +223,9 @@ void main() {
         // already in the tree even though the cubit hasn't resolved.
         expect(find.byType(ListingCoverImage), findsOneWidget);
         final heroes = tester.widgetList<Hero>(find.byType(Hero));
-        final matches =
-            heroes.where((h) => h.tag == listingCoverHeroTag('l1')).toList();
+        final matches = heroes
+            .where((h) => h.tag == listingCoverHeroTag('l1'))
+            .toList();
         expect(
           matches,
           hasLength(1),
@@ -232,8 +241,9 @@ void main() {
       'during loading the cover uses the initial cover URL passed via route '
       'extra so the Hero flight animates the real tapped photo',
       (tester) async {
-        when(() => detailsCubit.state)
-            .thenReturn(const ListingDetailsState.loading());
+        when(
+          () => detailsCubit.state,
+        ).thenReturn(const ListingDetailsState.loading());
         whenListen(
           detailsCubit,
           const Stream<ListingDetailsState>.empty(),
@@ -307,8 +317,9 @@ void main() {
       'deep-linked details (no route extra) still renders the cover Hero '
       'with a null image URL during loading — placeholder fallback',
       (tester) async {
-        when(() => detailsCubit.state)
-            .thenReturn(const ListingDetailsState.loading());
+        when(
+          () => detailsCubit.state,
+        ).thenReturn(const ListingDetailsState.loading());
         whenListen(
           detailsCubit,
           const Stream<ListingDetailsState>.empty(),

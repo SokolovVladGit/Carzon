@@ -4,17 +4,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../shared/brands/brand_icon_resolver.dart';
 import '../../../../shared/ui/carzon_icons.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../favorites/presentation/widgets/favorite_toggle_button.dart';
+import '../../../messaging/domain/repositories/messaging_repository.dart';
+import '../../../messaging/presentation/utils/messaging_failure_mapper.dart';
+import '../../../messaging/presentation/utils/messaging_user_messages.dart';
 import '../../domain/entities/listing.dart';
 import '../bloc/listing_details_cubit.dart';
 import '../bloc/listing_details_state.dart';
@@ -23,6 +30,7 @@ import '../utils/listing_formatters.dart';
 import '../utils/listing_details_header_titles.dart';
 import '../utils/report_listing_mailto.dart';
 import '../widgets/listing_cover_image.dart';
+import '../../../sellers/presentation/widgets/seller_trust_section.dart';
 
 /// Minimal launcher seam local to this page — mirrors the
 /// `EditListingImagePicker` typedef on the edit-listing page so widget
@@ -969,6 +977,10 @@ class _BelowHeroContent extends StatelessWidget {
         const SizedBox(height: 24),
         _DetailsList(listing: listing),
         const SizedBox(height: 24),
+        if (listing.sellerId != null &&
+            listing.sellerId!.trim().isNotEmpty) ...[
+          SellerTrustSection(sellerId: listing.sellerId!.trim()),
+        ],
         Text(
           l10n.contactPublicNotice,
           style: theme.textTheme.bodySmall?.copyWith(
@@ -1007,6 +1019,11 @@ class _DetailsList extends StatelessWidget {
       _DetailsRowData(l10n.listingFieldYear, listing.year.toString()),
       _DetailsRowData(l10n.listingFieldMileage, formatKm(listing.mileageKm)),
       _DetailsRowData(l10n.listingFieldType, formatType(l10n, listing.type)),
+      if (listing.bodyType != null)
+        _DetailsRowData(
+          l10n.listingFieldBodyType,
+          formatListingBodyType(l10n, listing.bodyType!),
+        ),
       _DetailsRowData(l10n.listingFieldCity, listing.city),
       _DetailsRowData(
         l10n.listingFieldRegion,
@@ -1210,10 +1227,7 @@ class _ReportLink extends StatelessWidget {
 // Bottom contact bar (unchanged behaviour)
 // --------------------------------------------------------------------
 
-/// Sticky bottom contact bar. Kept structurally identical to the
-/// previous revision — only the hero refactor above this point
-/// changed, everything here (chat placeholder, phone reveal flow,
-/// inline copy affordance) is preserved.
+// Bottom contact bar (chat + phone reveal + copy).
 class _ContactBottomBar extends StatefulWidget {
   const _ContactBottomBar({required this.listing});
 
@@ -1225,6 +1239,7 @@ class _ContactBottomBar extends StatefulWidget {
 
 class _ContactBottomBarState extends State<_ContactBottomBar> {
   bool _phoneRevealed = false;
+  bool _openingChat = false;
 
   Future<void> _onPhoneTap(BuildContext context, String tel) async {
     if (!_phoneRevealed) {
@@ -1263,10 +1278,56 @@ class _ContactBottomBarState extends State<_ContactBottomBar> {
     ).showSnackBar(SnackBar(content: Text(context.l10n.contactActionFailed)));
   }
 
-  void _onChatTap(BuildContext context) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.l10n.chatNotAvailable)));
+  Future<void> _onChatTap(BuildContext context) async {
+    final l10n = context.l10n;
+    final auth = context.read<AuthCubit>().state;
+    if (auth.status != AuthStatus.authenticated || auth.user == null) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.messagingSignInRequired),
+          action: SnackBarAction(
+            label: l10n.commonSignIn,
+            onPressed: () => context.go(AppRoutes.signIn),
+          ),
+        ),
+      );
+      return;
+    }
+    final listing = widget.listing;
+    if (listing.sellerId == null) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.messagingUnavailableNoSeller)),
+      );
+      return;
+    }
+    if (listing.sellerId == auth.user!.id) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.messagingCannotMessageSelf)));
+      return;
+    }
+
+    setState(() => _openingChat = true);
+    try {
+      final result = await sl<MessagingRepository>().getOrCreateConversation(
+        listing.id,
+      );
+      if (!context.mounted) return;
+      switch (result) {
+        case FailureResult(:final failure):
+          final kind = messagingFailureKindFrom(failure);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(messagingFailureMessage(l10n, kind))),
+          );
+        case Success(:final value):
+          await context.push(AppRoutes.messagesThreadPath(value));
+      }
+    } finally {
+      if (mounted) setState(() => _openingChat = false);
+    }
   }
 
   @override
@@ -1290,7 +1351,10 @@ class _ContactBottomBarState extends State<_ContactBottomBar> {
               height: _bottomButtonHeight,
               child: Row(
                 children: [
-                  _ChatPillButton(onTap: () => _onChatTap(context)),
+                  _ChatPillButton(
+                    loading: _openingChat,
+                    onPressed: _openingChat ? null : () => _onChatTap(context),
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: _PhonePrimaryPill(
@@ -1323,9 +1387,10 @@ RoundedRectangleBorder _bottomButtonShape() => const RoundedRectangleBorder(
 );
 
 class _ChatPillButton extends StatelessWidget {
-  const _ChatPillButton({required this.onTap});
+  const _ChatPillButton({required this.loading, required this.onPressed});
 
-  final VoidCallback onTap;
+  final bool loading;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -1335,8 +1400,17 @@ class _ChatPillButton extends StatelessWidget {
     return SizedBox(
       height: _bottomButtonHeight,
       child: FilledButton.tonalIcon(
-        onPressed: onTap,
-        icon: const Icon(CarzonIcons.chat, size: 20),
+        onPressed: onPressed,
+        icon: loading
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: scheme.onSurface,
+                ),
+              )
+            : const Icon(CarzonIcons.chat, size: 20),
         label: Text(l10n.chatLabel),
         style: FilledButton.styleFrom(
           backgroundColor: scheme.surfaceContainerHighest.withValues(

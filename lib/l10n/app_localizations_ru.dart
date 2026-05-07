@@ -113,7 +113,54 @@ class AppLocalizationsRu extends AppLocalizations {
       'Попробуйте изменить поиск или фильтры.';
 
   @override
+  String get listingsEmptyBodyTypeFilterNote =>
+      'Объявления без указанного типа кузова не показываются в фильтрах по кузову. Продавец может добавить тип при редактировании объявления.';
+
+  @override
   String get listingsEmptyResetFilters => 'Сбросить фильтры';
+
+  @override
+  String get listingsBodyChipAll => 'Все';
+
+  @override
+  String get listingBodyTypeSedan => 'Седан';
+
+  @override
+  String get listingBodyTypeHatchback => 'Хэтчбек';
+
+  @override
+  String get listingBodyTypeWagon => 'Универсал';
+
+  @override
+  String get listingBodyTypeSuv => 'SUV';
+
+  @override
+  String get listingBodyTypeCoupe => 'Купе';
+
+  @override
+  String get listingBodyTypeConvertible => 'Кабриолет';
+
+  @override
+  String get listingBodyTypeMinivan => 'Минивэн';
+
+  @override
+  String get listingBodyTypePickup => 'Пикап';
+
+  @override
+  String get listingBodyTypeVan => 'Фургон';
+
+  @override
+  String get listingBodyTypeOther => 'Другое';
+
+  @override
+  String get listingBodyTypeNotSpecified => 'Не указано';
+
+  @override
+  String get listingBodyTypeSectionTitle => 'Тип кузова';
+
+  @override
+  String get listingBodyTypeSectionSubtitle =>
+      'Укажите кузов — иначе объявление не попадёт в фильтры «Седан», «SUV» и т.д. Если не подходит ни один вариант, выберите «Другое».';
 
   @override
   String get regionTransnistria => 'Приднестровье';
@@ -208,6 +255,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingFieldRegion => 'Регион';
 
   @override
+  String get listingFieldBodyType => 'Кузов';
+
+  @override
   String get listingFieldPosted => 'Опубликовано';
 
   @override
@@ -242,6 +292,99 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get chatNotAvailable => 'Чат пока недоступен.';
+
+  @override
+  String get messagingTitle => 'Сообщения';
+
+  @override
+  String get messagingSignInRequired => 'Войдите, чтобы написать продавцу.';
+
+  @override
+  String get messagingCannotMessageSelf =>
+      'Нельзя написать самому себе по своему объявлению.';
+
+  @override
+  String get messagingUnavailableNoSeller =>
+      'Чат для этого объявления недоступен.';
+
+  @override
+  String get messagingLoadFailed => 'Не удалось загрузить переписки.';
+
+  @override
+  String get messagingSendFailed => 'Не удалось отправить сообщение.';
+
+  @override
+  String get messagingNetworkError =>
+      'Проблема с сетью. Проверьте подключение.';
+
+  @override
+  String get messagingServerError =>
+      'Не удалось выполнить действие. Попробуйте ещё раз.';
+
+  @override
+  String get messagingConversationNotFound =>
+      'Переписка не найдена или у вас нет доступа.';
+
+  @override
+  String get messagingInvalidMessage => 'Проверьте текст сообщения.';
+
+  @override
+  String get messagingEmptyTitle => 'Пока нет переписок';
+
+  @override
+  String get messagingEmptyBody =>
+      'Напишите продавцу с экрана объявления — диалог появится здесь.';
+
+  @override
+  String get messagingNoPreview => 'Нет сообщений';
+
+  @override
+  String get messagingThreadEmptyBody =>
+      'Начните переписку: задайте вопрос по объявлению или договоритесь о просмотре.';
+
+  @override
+  String get messagingThreadTitle => 'Чат';
+
+  @override
+  String get messagingThreadViewListingHint => 'Открыть объявление';
+
+  @override
+  String get messagingComposerHint => 'Сообщение…';
+
+  @override
+  String get messagingSend => 'Отправить';
+
+  @override
+  String get messagingDateToday => 'Сегодня';
+
+  @override
+  String get messagingDateYesterday => 'Вчера';
+
+  @override
+  String get messagingMessageCopied => 'Сообщение скопировано';
+
+  @override
+  String get messagingQuickReplyHint =>
+      'Быстрые ответы — нажмите, чтобы вставить в поле ввода';
+
+  @override
+  String get messagingQuickReplyStillAvailable =>
+      'Здравствуйте, объявление актуально?';
+
+  @override
+  String get messagingQuickReplyWhereToView =>
+      'Где можно посмотреть автомобиль?';
+
+  @override
+  String get messagingQuickReplyNegotiable => 'Возможен торг?';
+
+  @override
+  String get messagingQuickReplyWhenCall => 'Когда удобно созвониться?';
+
+  @override
+  String messagingListingFallback(String shortId) {
+    return 'Объявление $shortId';
+  }
 
   @override
   String get phoneNotProvided => 'Телефон не указан';
@@ -286,6 +429,51 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createListingTitle => 'Подать объявление';
 
   @override
+  String get createListingComposeHeadline => 'Создайте объявление';
+
+  @override
+  String get createListingComposeSubtitle =>
+      'Сильные фото и точные данные помогают быстрее связаться с покупателем.';
+
+  @override
+  String get createListingSectionPhotosLead => 'Фото и заголовок';
+
+  @override
+  String get createListingSectionPhotosLeadSubtitle =>
+      'Первое фото станет обложкой в каталоге — выберите удачный ракурс.';
+
+  @override
+  String get createListingSectionVehicle => 'Об автомобиле';
+
+  @override
+  String get createListingSectionVehicleSubtitle =>
+      'Город, марка, модель и год выпуска.';
+
+  @override
+  String get createListingSectionDeal => 'Сделка и рынок';
+
+  @override
+  String get createListingSectionDealSubtitle =>
+      'Тип сделки и регион размещения.';
+
+  @override
+  String get createListingSectionPrice => 'Цена и пробег';
+
+  @override
+  String get createListingSectionPriceSubtitle =>
+      'Выберите валюту и укажите фактические значения.';
+
+  @override
+  String get createListingSectionPublish => 'Контакты и публикация';
+
+  @override
+  String get createListingSectionPublishSubtitle =>
+      'Проверьте контакты — они появятся в активном объявлении.';
+
+  @override
+  String get createListingPublishKicker => 'Финальный шаг';
+
+  @override
   String get createListingSignInRequired => 'Войдите, чтобы подать объявление.';
 
   @override
@@ -313,6 +501,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get createListingMediaHeroEmptyHint =>
       'Нажмите, чтобы добавить фото объявления. До девяти снимков — по одному из галереи.';
+
+  @override
+  String get createListingHeroEmptyTitle => 'Добавьте фотографии';
+
+  @override
+  String get createListingHeroEmptyDetail =>
+      'До девяти кадров из галереи. Первое фото станет обложкой в каталоге.';
 
   @override
   String get createListingAddPhoto => 'Добавить фото';
@@ -661,6 +856,73 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileSignOut => 'Выйти';
 
   @override
+  String get profilePublicSellerNameTitle => 'Публичное имя продавца';
+
+  @override
+  String get profilePublicSellerNameDescription =>
+      'Это имя будут видеть покупатели в ваших объявлениях и в профиле продавца.';
+
+  @override
+  String get profilePublicSellerNameFieldLabel => 'Имя для покупателей';
+
+  @override
+  String get profilePublicSellerNameFieldHint =>
+      'Например: Анна или «Авто-Плюс Тирасполь»';
+
+  @override
+  String get profilePublicSellerNameSave => 'Сохранить';
+
+  @override
+  String get profilePublicSellerNameSaved => 'Имя сохранено';
+
+  @override
+  String get profilePublicSellerNameSaveFailed =>
+      'Не удалось сохранить имя. Попробуйте ещё раз.';
+
+  @override
+  String get profilePublicSellerNameTooLong =>
+      'Слишком длинное имя (максимум 80 символов).';
+
+  @override
+  String get profilePublicSellerNameLooksLikeEmail =>
+      'Укажите имя, а не адрес email.';
+
+  @override
+  String get profilePublicSellerNameLoadFailed =>
+      'Не удалось загрузить настройки имени продавца.';
+
+  @override
+  String get profilePublicSellerAvatarTitle => 'Фото продавца';
+
+  @override
+  String get profilePublicSellerAvatarDescription =>
+      'Эту фотографию будут видеть покупатели рядом с вашим именем в объявлениях и в профиле продавца.';
+
+  @override
+  String get profilePublicSellerAvatarChangePhoto => 'Выбрать фото';
+
+  @override
+  String get profilePublicSellerAvatarRemovePhoto => 'Удалить фото';
+
+  @override
+  String get profilePublicSellerAvatarUpdated => 'Фото обновлено';
+
+  @override
+  String get profilePublicSellerAvatarRemoved => 'Фото удалено';
+
+  @override
+  String get profilePublicSellerAvatarUploadFailed =>
+      'Не удалось загрузить фото. Попробуйте ещё раз.';
+
+  @override
+  String get profilePublicSellerAvatarRemoveFailed =>
+      'Не удалось удалить фото. Попробуйте ещё раз.';
+
+  @override
+  String get profilePublicSellerAvatarUnsupportedType =>
+      'Поддерживаются только JPEG, PNG или WebP.';
+
+  @override
   String get signInTitle => 'Вход';
 
   @override
@@ -936,4 +1198,102 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get legalSectionContactUsP2 =>
       'Вопросы по этому документу и по содержимому платформы можно задать команде Carzon через канал поддержки, указанный на странице приложения в магазине.';
+
+  @override
+  String get sellerSectionTitle => 'Продавец';
+
+  @override
+  String get sellerViewProfile => 'Смотреть профиль';
+
+  @override
+  String get sellerProfileTitle => 'Профиль продавца';
+
+  @override
+  String get sellerFallbackName => 'Продавец';
+
+  @override
+  String get sellerUnavailableTitle => 'Профиль продавца недоступен';
+
+  @override
+  String get sellerUnavailableMessage => 'Этот профиль скрыт или недоступен.';
+
+  @override
+  String get sellerListingsSectionTitle => 'Объявления продавца';
+
+  @override
+  String get sellerNoActiveListingsTitle => 'Нет активных объявлений';
+
+  @override
+  String get sellerNoActiveListingsMessage =>
+      'У продавца сейчас нет активных объявлений в каталоге.';
+
+  @override
+  String get sellerMonthGenitiveJanuary => 'января';
+
+  @override
+  String get sellerMonthGenitiveFebruary => 'февраля';
+
+  @override
+  String get sellerMonthGenitiveMarch => 'марта';
+
+  @override
+  String get sellerMonthGenitiveApril => 'апреля';
+
+  @override
+  String get sellerMonthGenitiveMay => 'мая';
+
+  @override
+  String get sellerMonthGenitiveJune => 'июня';
+
+  @override
+  String get sellerMonthGenitiveJuly => 'июля';
+
+  @override
+  String get sellerMonthGenitiveAugust => 'августа';
+
+  @override
+  String get sellerMonthGenitiveSeptember => 'сентября';
+
+  @override
+  String get sellerMonthGenitiveOctober => 'октября';
+
+  @override
+  String get sellerMonthGenitiveNovember => 'ноября';
+
+  @override
+  String get sellerMonthGenitiveDecember => 'декабря';
+
+  @override
+  String sellerMemberSince(String monthYear) {
+    return 'На Carzon с $monthYear';
+  }
+
+  @override
+  String sellerActiveListingsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count активных объявлений',
+      many: '$count активных объявлений',
+      few: '$count активных объявления',
+      one: '$count активное объявление',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sellerTypePrivate => 'Частный продавец';
+
+  @override
+  String get sellerTypeDealer => 'Дилер';
+
+  @override
+  String get sellerProfileLoadFailed =>
+      'Не удалось загрузить профиль продавца.';
+
+  @override
+  String get sellerListingsLoadFailed => 'Не удалось загрузить объявления.';
+
+  @override
+  String get sellerLoadMore => 'Показать ещё';
 }

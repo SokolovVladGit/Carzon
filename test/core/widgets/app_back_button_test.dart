@@ -40,9 +40,8 @@ MaterialApp _harness({
       ),
       GoRoute(
         path: '/fallback-landing',
-        builder: (_, _) => const Scaffold(
-          body: Center(child: Text('fallback-landing')),
-        ),
+        builder: (_, _) =>
+            const Scaffold(body: Center(child: Text('fallback-landing'))),
       ),
     ],
   );
@@ -51,12 +50,13 @@ MaterialApp _harness({
 
 void main() {
   group('AppBackButton', () {
-    testWidgets('pops when a back stack exists (pushed route)',
-        (tester) async {
-      await tester.pumpWidget(_harness(
-        initialLocation: '/',
-        navigateToSecond: (context) => context.push('/second'),
-      ));
+    testWidgets('pops when a back stack exists (pushed route)', (tester) async {
+      await tester.pumpWidget(
+        _harness(
+          initialLocation: '/',
+          navigateToSecond: (context) => context.push('/second'),
+        ),
+      );
 
       await tester.tap(find.text('go-to-second'));
       await tester.pumpAndSettle();
@@ -70,28 +70,29 @@ void main() {
     });
 
     testWidgets(
-        'navigates to fallback when there is no back stack (deep-link)',
-        (tester) async {
-      await tester.pumpWidget(_harness(
-        initialLocation: '/second',
-        navigateToSecond: (_) {},
-        fallback: '/fallback-landing',
-      ));
-      expect(find.text('second'), findsOneWidget);
+      'navigates to fallback when there is no back stack (deep-link)',
+      (tester) async {
+        await tester.pumpWidget(
+          _harness(
+            initialLocation: '/second',
+            navigateToSecond: (_) {},
+            fallback: '/fallback-landing',
+          ),
+        );
+        expect(find.text('second'), findsOneWidget);
 
-      await tester.tap(find.byType(BackButtonIcon));
-      await tester.pumpAndSettle();
+        await tester.tap(find.byType(BackButtonIcon));
+        await tester.pumpAndSettle();
 
-      expect(find.text('second'), findsNothing);
-      expect(find.text('fallback-landing'), findsOneWidget);
-    });
+        expect(find.text('second'), findsNothing);
+        expect(find.text('fallback-landing'), findsOneWidget);
+      },
+    );
 
-    testWidgets('renders a visible back arrow icon button',
-        (tester) async {
-      await tester.pumpWidget(_harness(
-        initialLocation: '/second',
-        navigateToSecond: (_) {},
-      ));
+    testWidgets('renders a visible back arrow icon button', (tester) async {
+      await tester.pumpWidget(
+        _harness(initialLocation: '/second', navigateToSecond: (_) {}),
+      );
 
       expect(find.byType(AppBackButton), findsOneWidget);
       expect(find.byType(BackButtonIcon), findsOneWidget);

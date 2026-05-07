@@ -31,29 +31,30 @@ void main() {
   });
 
   testWidgets(
-      'unauthenticated: renders Sign in CTA and does not surface sign-out',
-      (tester) async {
-    when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
-    whenListen(
-      cubit,
-      const Stream<AuthState>.empty(),
-      initialState: const AuthState.unauthenticated(),
-    );
+    'unauthenticated: renders Sign in CTA and does not surface sign-out',
+    (tester) async {
+      when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
+      whenListen(
+        cubit,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.unauthenticated(),
+      );
 
-    await tester.pumpWidget(_wrap(const MenuPage(), cubit));
+      await tester.pumpWidget(_wrap(const MenuPage(), cubit));
 
-    expect(find.text(l10n.commonSignIn), findsOneWidget);
-    expect(find.text(l10n.profileSignOut), findsNothing);
-    // The menu destinations are always visible so users can browse
-    // legal/content surfaces even when logged out.
-    expect(find.widgetWithText(ListTile, l10n.profileMyListings), findsOneWidget);
-    expect(find.widgetWithText(ListTile, l10n.menuAccount), findsOneWidget);
-    expect(find.widgetWithText(ListTile, l10n.profileLegal), findsOneWidget);
-  });
+      expect(find.text(l10n.commonSignIn), findsOneWidget);
+      expect(find.text(l10n.profileSignOut), findsNothing);
+      // The menu destinations are always visible so users can browse
+      // legal/content surfaces even when logged out.
+      expect(find.text(l10n.profileMyListings), findsOneWidget);
+      expect(find.text(l10n.menuAccount), findsOneWidget);
+      expect(find.text(l10n.profileLegal), findsOneWidget);
+    },
+  );
 
-  testWidgets(
-      'authenticated: renders identity header and sign-out action',
-      (tester) async {
+  testWidgets('authenticated: renders identity header and sign-out action', (
+    tester,
+  ) async {
     const user = AuthUser(
       id: 'u1',
       email: 'seller@example.com',
@@ -70,10 +71,8 @@ void main() {
 
     expect(find.text('Ana Popescu'), findsOneWidget);
     expect(find.text('seller@example.com'), findsOneWidget);
-    expect(
-      find.widgetWithText(OutlinedButton, l10n.profileSignOut),
-      findsOneWidget,
-    );
+    expect(find.byKey(const ValueKey('menu_sign_out_action')), findsOneWidget);
+    expect(find.text(l10n.profileSignOut), findsOneWidget);
     expect(find.text(l10n.commonSignIn), findsNothing);
   });
 
@@ -88,9 +87,10 @@ void main() {
     );
 
     await tester.pumpWidget(_wrap(const MenuPage(), cubit));
-    await tester.tap(
-      find.widgetWithText(OutlinedButton, l10n.profileSignOut),
-    );
+    final signOutFinder = find.byKey(const ValueKey('menu_sign_out_action'));
+    await tester.ensureVisible(signOutFinder);
+    await tester.pumpAndSettle();
+    await tester.tap(signOutFinder);
     await tester.pump();
 
     verify(() => cubit.signOut()).called(1);

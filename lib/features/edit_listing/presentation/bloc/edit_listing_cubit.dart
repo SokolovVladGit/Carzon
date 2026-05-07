@@ -107,8 +107,10 @@ class EditListingCubit extends Cubit<EditListingState> {
     }
 
     final baselineSlots = state.initialGallerySlots;
-    final galleryDraftChanged =
-        !listingEditGallerySlotsDeepEqual(baselineSlots, galleryDraft);
+    final galleryDraftChanged = !listingEditGallerySlotsDeepEqual(
+      baselineSlots,
+      galleryDraft,
+    );
     final mayReplaceGallery = state.galleryLoadSucceeded && galleryDraftChanged;
 
     final localsToUpload = galleryDraft
@@ -180,8 +182,10 @@ class EditListingCubit extends Cubit<EditListingState> {
           return;
         }
 
-        final replacePayload =
-            buildReplaceListingGalleryPayload(galleryDraft, newlyUploaded);
+        final replacePayload = buildReplaceListingGalleryPayload(
+          galleryDraft,
+          newlyUploaded,
+        );
         final replaceUrlList = replacePayload.urls;
         final replacePathList = replacePayload.paths;
 
@@ -240,19 +244,15 @@ class EditListingCubit extends Cubit<EditListingState> {
   }
 
   /// Internal for tests — pairs each local draft slot with the next sequential upload.
-  static ({
-    List<String> urls,
-    List<String?> paths,
-  }) buildReplaceListingGalleryPayload(
+  static ({List<String> urls, List<String?> paths})
+  buildReplaceListingGalleryPayload(
     List<EditListingGallerySlot> slots,
     List<UploadedListingImage>? newlyUploaded,
   ) {
     final urls = <String>[];
     final paths = <String?>[];
 
-    final localsCount = slots
-        .whereType<EditListingGalleryLocalSlot>()
-        .length;
+    final localsCount = slots.whereType<EditListingGalleryLocalSlot>().length;
     if (localsCount != ((newlyUploaded == null) ? 0 : newlyUploaded.length)) {
       throw StateError(
         'Local slots ($localsCount) and uploaded blobs '

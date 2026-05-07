@@ -8,10 +8,10 @@ import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/constants/listing_gallery_limits.dart';
 import '../models/create_listing_photo_draft.dart';
 
-/// Hero + thumbnails for the create-listing staging gallery (≤ [kMaxListingPhotos]).
+/// Hero + optional thumbnails for the create-listing staging gallery (≤ [kMaxListingPhotos]).
 ///
-/// Index 0 is rendered in the hero; all photos appear as removable thumbnails below.
-/// Add actions are routed through [onAddPhoto] until the limit is reached.
+/// Index 0 is rendered in the hero; when [photos] is non-empty, thumbnails + add tile appear below.
+/// When empty, the hero alone is the add-photo surface — no duplicate small add tile.
 class CreateListingMediaSection extends StatelessWidget {
   const CreateListingMediaSection({
     super.key,
@@ -20,6 +20,7 @@ class CreateListingMediaSection extends StatelessWidget {
     required this.disabled,
     required this.onAddPhoto,
     required this.onRemovePhotoAt,
+    this.showHeading = true,
   });
 
   /// Staging blobs in display order — first element is cover.
@@ -30,7 +31,12 @@ class CreateListingMediaSection extends StatelessWidget {
   final VoidCallback onAddPhoto;
   final void Function(int index) onRemovePhotoAt;
 
+  /// When false, hides the title + subtitle rows (parent section supplies hierarchy).
+  final bool showHeading;
+
   static const phase3TestKey = ValueKey('create_listing_media_section');
+
+  static const double _heroRadius = 24;
 
   @override
   Widget build(BuildContext context) {
@@ -44,79 +50,180 @@ class CreateListingMediaSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       key: phase3TestKey,
       children: [
-        Text(
-          l10n.createListingMediaTitle,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+        if (showHeading) ...[
+          Text(
+            l10n.createListingMediaTitle,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          l10n.createListingMediaSubtitle,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+          const SizedBox(height: 4),
+          Text(
+            l10n.createListingMediaSubtitle,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
+          const SizedBox(height: 12),
+        ],
         AspectRatio(
           aspectRatio: 16 / 9,
           child: Material(
-            color: theme.colorScheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(16),
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(_heroRadius),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: (heroBytes == null && canMutate) ? onAddPhoto : null,
-              child: heroBytes != null
-                  ? Image.memory(
-                      heroBytes,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    )
-                  : Center(
-                      child: pickingImage
-                          ? SizedBox.square(
-                              dimension: 28,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(_heroRadius),
+              splashColor: theme.colorScheme.onSurface.withValues(alpha: 0.045),
+              highlightColor: theme.colorScheme.onSurface.withValues(
+                alpha: 0.022,
+              ),
+              child: Ink(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(_heroRadius),
+                  border: Border.all(
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: heroBytes != null ? 0.24 : 0.38,
+                    ),
+                    strokeAlign: BorderSide.strokeAlignInside,
+                  ),
+                  gradient: heroBytes == null
+                      ? LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            theme.colorScheme.surface,
+                            Color.alphaBlend(
+                              theme.colorScheme.outlineVariant.withValues(
+                                alpha: 0.035,
                               ),
-                            )
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  CarzonIcons.addPhoto,
-                                  size: 40,
+                              theme.colorScheme.surface,
+                            ),
+                            theme.colorScheme.surfaceContainerLow,
+                          ],
+                          stops: const [0.0, 0.45, 1.0],
+                        )
+                      : null,
+                  color: heroBytes != null
+                      ? theme.colorScheme.surfaceContainerLow
+                      : null,
+                ),
+                child: heroBytes != null
+                    ? SizedBox.expand(
+                        child: Image.memory(heroBytes, fit: BoxFit.cover),
+                      )
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (pickingImage) {
+                            return Center(
+                              child: SizedBox.square(
+                                dimension: 30,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.2,
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
-                                const SizedBox(height: 12),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                  ),
-                                  child: Text(
-                                    l10n.createListingMediaHeroEmptyHint,
-                                    textAlign: TextAlign.center,
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            );
+                          }
+                          final cs = theme.colorScheme;
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.center,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        maxWidth: constraints.maxWidth - 20,
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          DecoratedBox(
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Color.alphaBlend(
+                                                cs.outlineVariant.withValues(
+                                                  alpha: 0.075,
+                                                ),
+                                                cs.surface,
+                                              ),
+                                              border: Border.all(
+                                                color: cs.outlineVariant
+                                                    .withValues(alpha: 0.34),
+                                              ),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(11),
+                                              child: Icon(
+                                                CarzonIcons.addPhoto,
+                                                size: 28,
+                                                color: cs.onSurfaceVariant
+                                                    .withValues(alpha: 0.82),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            l10n.createListingHeroEmptyTitle,
+                                            textAlign: TextAlign.center,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w700,
+                                                  letterSpacing: -0.26,
+                                                  height: 1.18,
+                                                  color: cs.onSurface
+                                                      .withValues(alpha: 0.94),
+                                                ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            l10n.createListingHeroEmptyDetail,
+                                            textAlign: TextAlign.center,
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                                  color: cs.onSurfaceVariant
+                                                      .withValues(alpha: 0.88),
+                                                  height: 1.32,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                    ),
+                          );
+                        },
+                      ),
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 14),
-        _ThumbnailStrip(
-          photos: photos,
-          disabled: disabled,
-          pickingImage: pickingImage,
-          l10n: l10n,
-          onRemovePhotoAt: onRemovePhotoAt,
-          onAddPhoto: onAddPhoto,
-        ),
+        if (photos.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          _ThumbnailStrip(
+            photos: photos,
+            disabled: disabled,
+            pickingImage: pickingImage,
+            l10n: l10n,
+            onRemovePhotoAt: onRemovePhotoAt,
+            onAddPhoto: onAddPhoto,
+          ),
+        ],
       ],
     );
   }
@@ -145,9 +252,7 @@ class _ThumbnailStrip extends StatelessWidget {
     final canMutate = !disabled && !pickingImage;
 
     final canAddMore = photos.length < kMaxListingPhotos;
-    final addLabel = photos.isEmpty
-        ? l10n.createListingAddPhoto
-        : l10n.createListingAddMorePhotos;
+    final addLabel = l10n.createListingAddMorePhotos;
 
     return SizedBox(
       height: 96,
@@ -214,7 +319,7 @@ class _PhotoThumb extends StatelessWidget {
         child: AspectRatio(
           aspectRatio: 16 / 9,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -225,7 +330,9 @@ class _PhotoThumb extends StatelessWidget {
                     top: 6,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surface.withValues(alpha: .9),
+                        color: theme.colorScheme.secondaryContainer.withValues(
+                          alpha: 0.92,
+                        ),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Padding(
@@ -236,7 +343,8 @@ class _PhotoThumb extends StatelessWidget {
                         child: Text(
                           coverBadge,
                           style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.onSecondaryContainer,
                           ),
                         ),
                       ),
@@ -298,16 +406,25 @@ class _AddTile extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: enabled && !busy ? onTap : null,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
+            splashColor: theme.colorScheme.onSurface.withValues(alpha: 0.042),
+            highlightColor: theme.colorScheme.onSurface.withValues(alpha: 0.02),
             child: Ink(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: theme.colorScheme.outline.withValues(alpha: .45),
-                  width: 1.25,
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: enabled ? 0.38 : 0.22,
+                  ),
+                  width: 1,
                   strokeAlign: BorderSide.strokeAlignInside,
                 ),
-                color: theme.colorScheme.surfaceContainerLow,
+                color: Color.alphaBlend(
+                  theme.colorScheme.outlineVariant.withValues(
+                    alpha: enabled ? 0.042 : 0.025,
+                  ),
+                  theme.colorScheme.surface,
+                ),
               ),
               child: busy
                   ? Center(
@@ -315,7 +432,7 @@ class _AddTile extends StatelessWidget {
                         dimension: 22,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: theme.colorScheme.primary,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     )
@@ -325,7 +442,9 @@ class _AddTile extends StatelessWidget {
                         Icon(
                           Icons.add_photo_alternate_outlined,
                           size: 26,
-                          color: theme.colorScheme.onSurfaceVariant,
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.82,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -334,8 +453,9 @@ class _AddTile extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.88),
                           ),
                         ),
                       ],

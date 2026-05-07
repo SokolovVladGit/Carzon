@@ -9,61 +9,52 @@ void main() {
 
   group('allowedStatusActions', () {
     test('active → sold, hide, archive', () {
-      expect(
-        allowedStatusActions(ListingStatus.active),
-        const [
-          MyListingAction.markSold,
-          MyListingAction.hide,
-          MyListingAction.archive,
-        ],
-      );
+      expect(allowedStatusActions(ListingStatus.active), const [
+        MyListingAction.markSold,
+        MyListingAction.hide,
+        MyListingAction.archive,
+      ]);
     });
 
     test('hidden → reactivate, sold, archive', () {
-      expect(
-        allowedStatusActions(ListingStatus.hidden),
-        const [
-          MyListingAction.reactivate,
-          MyListingAction.markSold,
-          MyListingAction.archive,
-        ],
-      );
+      expect(allowedStatusActions(ListingStatus.hidden), const [
+        MyListingAction.reactivate,
+        MyListingAction.markSold,
+        MyListingAction.archive,
+      ]);
     });
 
     test('sold → reactivate, archive', () {
-      expect(
-        allowedStatusActions(ListingStatus.sold),
-        const [MyListingAction.reactivate, MyListingAction.archive],
-      );
+      expect(allowedStatusActions(ListingStatus.sold), const [
+        MyListingAction.reactivate,
+        MyListingAction.archive,
+      ]);
     });
 
     test('archived → reactivate only', () {
-      expect(
-        allowedStatusActions(ListingStatus.archived),
-        const [MyListingAction.reactivate],
-      );
+      expect(allowedStatusActions(ListingStatus.archived), const [
+        MyListingAction.reactivate,
+      ]);
     });
 
     test('edit is never included in the status transition set', () {
       for (final s in ListingStatus.values) {
-        expect(
-          allowedStatusActions(s),
-          isNot(contains(MyListingAction.edit)),
-        );
+        expect(allowedStatusActions(s), isNot(contains(MyListingAction.edit)));
       }
     });
 
     test(
-        'deletePermanently is never included in the status transition set '
-        '(it is a destructive action, handled separately from status updates)',
-        () {
-      for (final s in ListingStatus.values) {
-        expect(
-          allowedStatusActions(s),
-          isNot(contains(MyListingAction.deletePermanently)),
-        );
-      }
-    });
+      'deletePermanently is never included in the status transition set '
+      '(it is a destructive action, handled separately from status updates)',
+      () {
+        for (final s in ListingStatus.values) {
+          expect(
+            allowedStatusActions(s),
+            isNot(contains(MyListingAction.deletePermanently)),
+          );
+        }
+      },
+    );
   });
 
   group('statusTargetFor', () {
@@ -71,22 +62,18 @@ void main() {
       expect(statusTargetFor(MyListingAction.edit), isNull);
     });
 
-    test('deletePermanently returns null because it is not a status change',
-        () {
-      expect(statusTargetFor(MyListingAction.deletePermanently), isNull);
-    });
+    test(
+      'deletePermanently returns null because it is not a status change',
+      () {
+        expect(statusTargetFor(MyListingAction.deletePermanently), isNull);
+      },
+    );
 
     test('maps status actions to their target ListingStatus', () {
-      expect(
-        statusTargetFor(MyListingAction.reactivate),
-        ListingStatus.active,
-      );
+      expect(statusTargetFor(MyListingAction.reactivate), ListingStatus.active);
       expect(statusTargetFor(MyListingAction.markSold), ListingStatus.sold);
       expect(statusTargetFor(MyListingAction.hide), ListingStatus.hidden);
-      expect(
-        statusTargetFor(MyListingAction.archive),
-        ListingStatus.archived,
-      );
+      expect(statusTargetFor(MyListingAction.archive), ListingStatus.archived);
     });
   });
 

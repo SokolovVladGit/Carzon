@@ -49,7 +49,24 @@
   "listingsEmptyTitle": "Объявления не найдены",
   "listingsEmptyBody": "В этом разделе пока нет активных объявлений.",
   "listingsEmptyFilteredBody": "Попробуйте изменить поиск или фильтры.",
+  "listingsEmptyBodyTypeFilterNote": "Объявления без указанного типа кузова не показываются в фильтрах по кузову. Продавец может добавить тип при редактировании объявления.",
   "listingsEmptyResetFilters": "Сбросить фильтры",
+
+  "listingsBodyChipAll": "Все",
+  "listingBodyTypeSedan": "Седан",
+  "listingBodyTypeHatchback": "Хэтчбек",
+  "listingBodyTypeWagon": "Универсал",
+  "listingBodyTypeSuv": "SUV",
+  "listingBodyTypeCoupe": "Купе",
+  "listingBodyTypeConvertible": "Кабриолет",
+  "listingBodyTypeMinivan": "Минивэн",
+  "listingBodyTypePickup": "Пикап",
+  "listingBodyTypeVan": "Фургон",
+  "listingBodyTypeOther": "Другое",
+
+  "listingBodyTypeNotSpecified": "Не указано",
+  "listingBodyTypeSectionTitle": "Тип кузова",
+  "listingBodyTypeSectionSubtitle": "Укажите кузов — иначе объявление не попадёт в фильтры «Седан», «SUV» и т.д. Если не подходит ни один вариант, выберите «Другое».",
 
   "regionTransnistria": "Приднестровье",
   "regionMoldova": "Молдова",
@@ -88,6 +105,7 @@
   "listingFieldType": "Тип",
   "listingFieldCity": "Город",
   "listingFieldRegion": "Регион",
+  "listingFieldBodyType": "Кузов",
   "listingFieldPosted": "Опубликовано",
 
   "contactSellerSection": "Связаться с продавцом",
@@ -103,6 +121,38 @@
   "contactActionFailed": "Не удалось открыть действие.",
   "chatLabel": "Чат",
   "chatNotAvailable": "Чат пока недоступен.",
+  "messagingTitle": "Сообщения",
+  "messagingSignInRequired": "Войдите, чтобы написать продавцу.",
+  "messagingCannotMessageSelf": "Нельзя написать самому себе по своему объявлению.",
+  "messagingUnavailableNoSeller": "Чат для этого объявления недоступен.",
+  "messagingLoadFailed": "Не удалось загрузить переписки.",
+  "messagingSendFailed": "Не удалось отправить сообщение.",
+  "messagingNetworkError": "Проблема с сетью. Проверьте подключение.",
+  "messagingServerError": "Не удалось выполнить действие. Попробуйте ещё раз.",
+  "messagingConversationNotFound": "Переписка не найдена или у вас нет доступа.",
+  "messagingInvalidMessage": "Проверьте текст сообщения.",
+  "messagingEmptyTitle": "Пока нет переписок",
+  "messagingEmptyBody": "Напишите продавцу с экрана объявления — диалог появится здесь.",
+  "messagingNoPreview": "Нет сообщений",
+  "messagingThreadEmptyBody": "Начните переписку: задайте вопрос по объявлению или договоритесь о просмотре.",
+  "messagingThreadTitle": "Чат",
+  "messagingThreadViewListingHint": "Открыть объявление",
+  "messagingComposerHint": "Сообщение…",
+  "messagingSend": "Отправить",
+  "messagingDateToday": "Сегодня",
+  "messagingDateYesterday": "Вчера",
+  "messagingMessageCopied": "Сообщение скопировано",
+  "messagingQuickReplyHint": "Быстрые ответы — нажмите, чтобы вставить в поле ввода",
+  "messagingQuickReplyStillAvailable": "Здравствуйте, объявление актуально?",
+  "messagingQuickReplyWhereToView": "Где можно посмотреть автомобиль?",
+  "messagingQuickReplyNegotiable": "Возможен торг?",
+  "messagingQuickReplyWhenCall": "Когда удобно созвониться?",
+  "messagingListingFallback": "Объявление {shortId}",
+  "@messagingListingFallback": {
+    "placeholders": {
+      "shortId": { "type": "String" }
+    }
+  },
   "phoneNotProvided": "Телефон не указан",
 
   "reportListing": "Пожаловаться на объявление",
@@ -121,6 +171,19 @@
   "publicContactNotice": "Ваш телефон и выбранные способы связи будут видны в активных объявлениях. Указывайте только те контакты, которыми готовы поделиться публично.",
 
   "createListingTitle": "Подать объявление",
+  "createListingComposeHeadline": "Создайте объявление",
+  "createListingComposeSubtitle": "Сильные фото и точные данные помогают быстрее связаться с покупателем.",
+  "createListingSectionPhotosLead": "Фото и заголовок",
+  "createListingSectionPhotosLeadSubtitle": "Первое фото станет обложкой в каталоге — выберите удачный ракурс.",
+  "createListingSectionVehicle": "Об автомобиле",
+  "createListingSectionVehicleSubtitle": "Город, марка, модель и год выпуска.",
+  "createListingSectionDeal": "Сделка и рынок",
+  "createListingSectionDealSubtitle": "Тип сделки и регион размещения.",
+  "createListingSectionPrice": "Цена и пробег",
+  "createListingSectionPriceSubtitle": "Выберите валюту и укажите фактические значения.",
+  "createListingSectionPublish": "Контакты и публикация",
+  "createListingSectionPublishSubtitle": "Проверьте контакты — они появятся в активном объявлении.",
+  "createListingPublishKicker": "Финальный шаг",
   "createListingSignInRequired": "Войдите, чтобы подать объявление.",
   "fieldTitle": "Заголовок",
   "fieldMake": "Марка",
@@ -130,6 +193,8 @@
   "createListingMediaTitle": "Фото объявления",
   "createListingMediaSubtitle": "Первое фото станет главным на карточке.",
   "createListingMediaHeroEmptyHint": "Нажмите, чтобы добавить фото объявления. До девяти снимков — по одному из галереи.",
+  "createListingHeroEmptyTitle": "Добавьте фотографии",
+  "createListingHeroEmptyDetail": "До девяти кадров из галереи. Первое фото станет обложкой в каталоге.",
   "createListingAddPhoto": "Добавить фото",
   "createListingAddMorePhotos": "Ещё фото",
   "createListingMaxPhotos": "Можно не больше {count} фотографий.",
@@ -249,6 +314,46 @@
   "profileLegal": "Условия и конфиденциальность",
   "profileSignOut": "Выйти",
 
+  "profilePublicSellerNameTitle": "Публичное имя продавца",
+  "@profilePublicSellerNameTitle": {},
+  "profilePublicSellerNameDescription": "Это имя будут видеть покупатели в ваших объявлениях и в профиле продавца.",
+  "@profilePublicSellerNameDescription": {},
+  "profilePublicSellerNameFieldLabel": "Имя для покупателей",
+  "@profilePublicSellerNameFieldLabel": {},
+  "profilePublicSellerNameFieldHint": "Например: Анна или «Авто-Плюс Тирасполь»",
+  "@profilePublicSellerNameFieldHint": {},
+  "profilePublicSellerNameSave": "Сохранить",
+  "@profilePublicSellerNameSave": {},
+  "profilePublicSellerNameSaved": "Имя сохранено",
+  "@profilePublicSellerNameSaved": {},
+  "profilePublicSellerNameSaveFailed": "Не удалось сохранить имя. Попробуйте ещё раз.",
+  "@profilePublicSellerNameSaveFailed": {},
+  "profilePublicSellerNameTooLong": "Слишком длинное имя (максимум 80 символов).",
+  "@profilePublicSellerNameTooLong": {},
+  "profilePublicSellerNameLooksLikeEmail": "Укажите имя, а не адрес email.",
+  "@profilePublicSellerNameLooksLikeEmail": {},
+  "profilePublicSellerNameLoadFailed": "Не удалось загрузить настройки имени продавца.",
+  "@profilePublicSellerNameLoadFailed": {},
+
+  "profilePublicSellerAvatarTitle": "Фото продавца",
+  "@profilePublicSellerAvatarTitle": {},
+  "profilePublicSellerAvatarDescription": "Эту фотографию будут видеть покупатели рядом с вашим именем в объявлениях и в профиле продавца.",
+  "@profilePublicSellerAvatarDescription": {},
+  "profilePublicSellerAvatarChangePhoto": "Выбрать фото",
+  "@profilePublicSellerAvatarChangePhoto": {},
+  "profilePublicSellerAvatarRemovePhoto": "Удалить фото",
+  "@profilePublicSellerAvatarRemovePhoto": {},
+  "profilePublicSellerAvatarUpdated": "Фото обновлено",
+  "@profilePublicSellerAvatarUpdated": {},
+  "profilePublicSellerAvatarRemoved": "Фото удалено",
+  "@profilePublicSellerAvatarRemoved": {},
+  "profilePublicSellerAvatarUploadFailed": "Не удалось загрузить фото. Попробуйте ещё раз.",
+  "@profilePublicSellerAvatarUploadFailed": {},
+  "profilePublicSellerAvatarRemoveFailed": "Не удалось удалить фото. Попробуйте ещё раз.",
+  "@profilePublicSellerAvatarRemoveFailed": {},
+  "profilePublicSellerAvatarUnsupportedType": "Поддерживаются только JPEG, PNG или WebP.",
+  "@profilePublicSellerAvatarUnsupportedType": {},
+
   "signInTitle": "Вход",
   "signInSubmit": "Войти",
   "signInError": "Ошибка входа",
@@ -347,5 +452,90 @@
 
   "legalSectionContactUsHeading": "Обратная связь",
   "legalSectionContactUsP1": "Эти условия и уведомление о конфиденциальности могут обновляться по мере развития Carzon. Продолжая пользоваться приложением после обновления, вы принимаете новую версию документа.",
-  "legalSectionContactUsP2": "Вопросы по этому документу и по содержимому платформы можно задать команде Carzon через канал поддержки, указанный на странице приложения в магазине."
+  "legalSectionContactUsP2": "Вопросы по этому документу и по содержимому платформы можно задать команде Carzon через канал поддержки, указанный на странице приложения в магазине.",
+
+  "sellerSectionTitle": "Продавец",
+  "@sellerSectionTitle": {},
+
+  "sellerViewProfile": "Смотреть профиль",
+  "@sellerViewProfile": {},
+
+  "sellerProfileTitle": "Профиль продавца",
+  "@sellerProfileTitle": {},
+
+  "sellerFallbackName": "Продавец",
+  "@sellerFallbackName": {},
+
+  "sellerUnavailableTitle": "Профиль продавца недоступен",
+  "@sellerUnavailableTitle": {},
+
+  "sellerUnavailableMessage": "Этот профиль скрыт или недоступен.",
+  "@sellerUnavailableMessage": {},
+
+  "sellerListingsSectionTitle": "Объявления продавца",
+  "@sellerListingsSectionTitle": {},
+
+  "sellerNoActiveListingsTitle": "Нет активных объявлений",
+  "@sellerNoActiveListingsTitle": {},
+
+  "sellerNoActiveListingsMessage": "У продавца сейчас нет активных объявлений в каталоге.",
+  "@sellerNoActiveListingsMessage": {},
+
+  "sellerMonthGenitiveJanuary": "января",
+  "@sellerMonthGenitiveJanuary": {},
+  "sellerMonthGenitiveFebruary": "февраля",
+  "@sellerMonthGenitiveFebruary": {},
+  "sellerMonthGenitiveMarch": "марта",
+  "@sellerMonthGenitiveMarch": {},
+  "sellerMonthGenitiveApril": "апреля",
+  "@sellerMonthGenitiveApril": {},
+  "sellerMonthGenitiveMay": "мая",
+  "@sellerMonthGenitiveMay": {},
+  "sellerMonthGenitiveJune": "июня",
+  "@sellerMonthGenitiveJune": {},
+  "sellerMonthGenitiveJuly": "июля",
+  "@sellerMonthGenitiveJuly": {},
+  "sellerMonthGenitiveAugust": "августа",
+  "@sellerMonthGenitiveAugust": {},
+  "sellerMonthGenitiveSeptember": "сентября",
+  "@sellerMonthGenitiveSeptember": {},
+  "sellerMonthGenitiveOctober": "октября",
+  "@sellerMonthGenitiveOctober": {},
+  "sellerMonthGenitiveNovember": "ноября",
+  "@sellerMonthGenitiveNovember": {},
+  "sellerMonthGenitiveDecember": "декабря",
+  "@sellerMonthGenitiveDecember": {},
+
+  "sellerMemberSince": "На Carzon с {monthYear}",
+  "@sellerMemberSince": {
+    "placeholders": {
+      "monthYear": {
+        "type": "String"
+      }
+    }
+  },
+
+  "sellerActiveListingsCount": "{count, plural, one{{count} активное объявление} few{{count} активных объявления} many{{count} активных объявлений} other{{count} активных объявлений}}",
+  "@sellerActiveListingsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "sellerTypePrivate": "Частный продавец",
+  "@sellerTypePrivate": {},
+
+  "sellerTypeDealer": "Дилер",
+  "@sellerTypeDealer": {},
+
+  "sellerProfileLoadFailed": "Не удалось загрузить профиль продавца.",
+  "@sellerProfileLoadFailed": {},
+
+  "sellerListingsLoadFailed": "Не удалось загрузить объявления.",
+  "@sellerListingsLoadFailed": {},
+
+  "sellerLoadMore": "Показать ещё",
+  "@sellerLoadMore": {}
 }

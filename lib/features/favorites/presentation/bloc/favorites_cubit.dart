@@ -16,11 +16,11 @@ class FavoritesCubit extends Cubit<FavoritesState> {
     required GetFavoriteListings getFavoriteListings,
     required AddFavorite addFavorite,
     required RemoveFavorite removeFavorite,
-  })  : _getFavoriteIds = getFavoriteIds,
-        _getFavoriteListings = getFavoriteListings,
-        _addFavorite = addFavorite,
-        _removeFavorite = removeFavorite,
-        super(const FavoritesState());
+  }) : _getFavoriteIds = getFavoriteIds,
+       _getFavoriteListings = getFavoriteListings,
+       _addFavorite = addFavorite,
+       _removeFavorite = removeFavorite,
+       super(const FavoritesState());
 
   final GetFavoriteIds _getFavoriteIds;
   final GetFavoriteListings _getFavoriteListings;
@@ -50,15 +50,19 @@ class FavoritesCubit extends Cubit<FavoritesState> {
     emit(state.copyWith(status: FavoritesStatus.loading));
     final result = await _getFavoriteIds();
     result.fold(
-      (_) => emit(state.copyWith(
-        status: FavoritesStatus.failure,
-        lastError: _nextError(FavoritesFailureKind.loadFailed),
-      )),
-      (ids) => emit(state.copyWith(
-        status: FavoritesStatus.ready,
-        ids: ids,
-        clearLastError: true,
-      )),
+      (_) => emit(
+        state.copyWith(
+          status: FavoritesStatus.failure,
+          lastError: _nextError(FavoritesFailureKind.loadFailed),
+        ),
+      ),
+      (ids) => emit(
+        state.copyWith(
+          status: FavoritesStatus.ready,
+          ids: ids,
+          clearLastError: true,
+        ),
+      ),
     );
   }
 
@@ -67,18 +71,22 @@ class FavoritesCubit extends Cubit<FavoritesState> {
     emit(state.copyWith(status: FavoritesStatus.loading));
     final result = await _getFavoriteListings();
     result.fold(
-      (_) => emit(state.copyWith(
-        status: FavoritesStatus.failure,
-        lastError: _nextError(FavoritesFailureKind.loadFailed),
-      )),
+      (_) => emit(
+        state.copyWith(
+          status: FavoritesStatus.failure,
+          lastError: _nextError(FavoritesFailureKind.loadFailed),
+        ),
+      ),
       (listings) {
         final ids = listings.map((l) => l.id).toSet();
-        emit(state.copyWith(
-          status: FavoritesStatus.ready,
-          listings: listings,
-          ids: ids,
-          clearLastError: true,
-        ));
+        emit(
+          state.copyWith(
+            status: FavoritesStatus.ready,
+            listings: listings,
+            ids: ids,
+            clearLastError: true,
+          ),
+        );
       },
     );
   }
@@ -101,11 +109,13 @@ class FavoritesCubit extends Cubit<FavoritesState> {
     final newPending = {...state.pending}..remove(listingId);
 
     result.fold(
-      (_) => emit(state.copyWith(
-        status: FavoritesStatus.ready,
-        pending: newPending,
-        lastError: _nextError(FavoritesFailureKind.toggleFailed),
-      )),
+      (_) => emit(
+        state.copyWith(
+          status: FavoritesStatus.ready,
+          pending: newPending,
+          lastError: _nextError(FavoritesFailureKind.toggleFailed),
+        ),
+      ),
       (_) {
         final newIds = {...state.ids};
         if (wasFavorite) {
@@ -117,13 +127,15 @@ class FavoritesCubit extends Cubit<FavoritesState> {
         final newListings = wasFavorite
             ? state.listings.where((l) => l.id != listingId).toList()
             : state.listings;
-        emit(state.copyWith(
-          status: FavoritesStatus.ready,
-          pending: newPending,
-          ids: newIds,
-          listings: newListings,
-          clearLastError: true,
-        ));
+        emit(
+          state.copyWith(
+            status: FavoritesStatus.ready,
+            pending: newPending,
+            ids: newIds,
+            listings: newListings,
+            clearLastError: true,
+          ),
+        );
       },
     );
   }

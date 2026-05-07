@@ -15,6 +15,7 @@ class ListingModel extends Listing {
     required super.type,
     required super.city,
     required super.marketRegion,
+    super.bodyType,
     required super.createdAt,
     super.status,
     super.coverImageUrl,
@@ -39,6 +40,7 @@ class ListingModel extends Listing {
       type: _parseType(json['type'] as String?),
       city: (json['city'] as String?) ?? '',
       marketRegion: _parseMarketRegion(json['market_region'] as String?),
+      bodyType: _parseBodyType(json['body_type'] as String?),
       createdAt:
           DateTime.tryParse((json['created_at'] as String?) ?? '') ??
           DateTime.now(),
@@ -82,6 +84,36 @@ class ListingModel extends Listing {
   /// Strict parser: any unknown value surfaces as a [ServerException] instead
   /// of being silently mapped to the wrong region. `market_region` is a core
   /// product dimension — a bad value must not pass through.
+  static ListingBodyType? _parseBodyType(String? raw) {
+    if (raw == null) return null;
+    final v = raw.trim();
+    if (v.isEmpty) return null;
+    switch (v) {
+      case 'sedan':
+        return ListingBodyType.sedan;
+      case 'hatchback':
+        return ListingBodyType.hatchback;
+      case 'wagon':
+        return ListingBodyType.wagon;
+      case 'suv':
+        return ListingBodyType.suv;
+      case 'coupe':
+        return ListingBodyType.coupe;
+      case 'convertible':
+        return ListingBodyType.convertible;
+      case 'minivan':
+        return ListingBodyType.minivan;
+      case 'pickup':
+        return ListingBodyType.pickup;
+      case 'van':
+        return ListingBodyType.van;
+      case 'other':
+        return ListingBodyType.other;
+      default:
+        throw ServerException('Unknown body_type value: "$raw".');
+    }
+  }
+
   static MarketRegion _parseMarketRegion(String? raw) {
     switch (raw) {
       case 'transnistria':
@@ -107,6 +139,7 @@ class ListingModel extends Listing {
     'type': type.name,
     'city': city,
     'market_region': marketRegion.name,
+    'body_type': bodyType?.name,
     'created_at': createdAt.toIso8601String(),
     'status': status.name,
     'cover_image_url': coverImageUrl,

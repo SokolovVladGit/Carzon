@@ -46,9 +46,9 @@ class _SignUpPageState extends State<SignUpPage> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     context.read<AuthCubit>().signUp(
-          email: _emailCtrl.text.trim(),
-          password: _passwordCtrl.text,
-        );
+      email: _emailCtrl.text.trim(),
+      password: _passwordCtrl.text,
+    );
   }
 
   String? _validateEmail(AppLocalizations l10n, String? value) {
@@ -87,15 +87,19 @@ class _SignUpPageState extends State<SignUpPage> {
             case AuthStatus.needsEmailConfirmation:
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
-                ..showSnackBar(SnackBar(
-                  content: Text(_authInfoMessage(l10n, state.infoKind)),
-                ));
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(_authInfoMessage(l10n, state.infoKind)),
+                  ),
+                );
             case AuthStatus.error:
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
-                ..showSnackBar(SnackBar(
-                  content: Text(_signUpErrorMessage(l10n, state.errorKind)),
-                ));
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(_signUpErrorMessage(l10n, state.errorKind)),
+                  ),
+                );
             case AuthStatus.unknown:
             case AuthStatus.authenticating:
             case AuthStatus.unauthenticated:
@@ -123,8 +127,9 @@ class _SignUpPageState extends State<SignUpPage> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _passwordCtrl,
-                    decoration:
-                        InputDecoration(labelText: l10n.authFieldPassword),
+                    decoration: InputDecoration(
+                      labelText: l10n.authFieldPassword,
+                    ),
                     obscureText: true,
                     autofillHints: const [AutofillHints.newPassword],
                     enabled: !loading,
@@ -134,7 +139,8 @@ class _SignUpPageState extends State<SignUpPage> {
                   TextFormField(
                     controller: _confirmCtrl,
                     decoration: InputDecoration(
-                        labelText: l10n.authFieldConfirmPassword),
+                      labelText: l10n.authFieldConfirmPassword,
+                    ),
                     obscureText: true,
                     autofillHints: const [AutofillHints.newPassword],
                     enabled: !loading,
@@ -153,14 +159,16 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 12),
                   TextButton(
-                    onPressed:
-                        loading ? null : () => context.go(AppRoutes.signIn),
+                    onPressed: loading
+                        ? null
+                        : () => context.go(AppRoutes.signIn),
                     child: Text(l10n.signUpHaveAccount),
                   ),
                   const SizedBox(height: 4),
                   TextButton(
-                    onPressed:
-                        loading ? null : () => context.go(AppRoutes.legal),
+                    onPressed: loading
+                        ? null
+                        : () => context.go(AppRoutes.legal),
                     child: Text(l10n.legalLink),
                   ),
                 ],

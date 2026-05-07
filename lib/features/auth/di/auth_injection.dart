@@ -50,9 +50,7 @@ void registerAuthFeature(GetIt sl) {
   // factories so each mount gets a fresh instance (matches the way
   // other page cubits are wired elsewhere in the app).
   sl.registerFactory<ForgotPasswordCubit>(
-    () => ForgotPasswordCubit(
-      requestPasswordReset: sl<RequestPasswordReset>(),
-    ),
+    () => ForgotPasswordCubit(requestPasswordReset: sl<RequestPasswordReset>()),
   );
   sl.registerFactory<ResetPasswordCubit>(
     () => ResetPasswordCubit(updatePassword: sl<UpdatePassword>()),

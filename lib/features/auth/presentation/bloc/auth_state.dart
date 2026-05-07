@@ -70,18 +70,15 @@ class AuthState extends Equatable {
   const AuthState.unknown() : this();
   const AuthState.authenticating() : this(status: AuthStatus.authenticating);
   const AuthState.authenticated(AuthUser user)
-      : this(status: AuthStatus.authenticated, user: user);
+    : this(status: AuthStatus.authenticated, user: user);
   const AuthState.unauthenticated() : this(status: AuthStatus.unauthenticated);
   const AuthState.error(AuthErrorKind kind)
-      : this(status: AuthStatus.error, errorKind: kind);
+    : this(status: AuthStatus.error, errorKind: kind);
   const AuthState.needsEmailConfirmation([
     AuthInfoKind kind = AuthInfoKind.signUpConfirmEmail,
-  ]) : this(
-          status: AuthStatus.needsEmailConfirmation,
-          infoKind: kind,
-        );
+  ]) : this(status: AuthStatus.needsEmailConfirmation, infoKind: kind);
   const AuthState.passwordRecovery([AuthUser? user])
-      : this(status: AuthStatus.passwordRecovery, user: user);
+    : this(status: AuthStatus.passwordRecovery, user: user);
 
   @override
   List<Object?> get props => [status, user, errorKind, infoKind];

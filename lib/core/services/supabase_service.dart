@@ -26,9 +26,7 @@ class SupabaseService {
       // internally whenever this flag is true), and the second
       // `getSessionFromUrl` call fails because the one-time PKCE code
       // verifier has already been exchanged.
-      authOptions: const FlutterAuthClientOptions(
-        detectSessionInUri: false,
-      ),
+      authOptions: const FlutterAuthClientOptions(detectSessionInUri: false),
     );
     return SupabaseService(Supabase.instance.client);
   }

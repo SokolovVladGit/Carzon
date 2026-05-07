@@ -1,5 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/core/widgets/app_back_button.dart';
+import 'package:carzon/core/widgets/floating_capsule_nav.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
@@ -98,6 +100,8 @@ void main() {
       await tester.pumpWidget(wrap());
       await tester.pump();
 
+      expect(find.byType(AppBackButton), findsOneWidget);
+      expect(find.byType(FloatingCapsuleNav), findsNothing);
       expect(
         find.byKey(CreateListingMediaSection.phase3TestKey),
         findsOneWidget,
@@ -114,6 +118,11 @@ void main() {
         find.byKey(const ValueKey('create_listing_year_field')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('create_listing_body_type_field')),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.listingBodyTypeSectionSubtitle), findsOneWidget);
       expect(find.byType(PublicContactNotice), findsOneWidget);
       expect(find.text(l10n.publicContactNotice), findsOneWidget);
       expect(find.text(l10n.publishListing), findsWidgets);
@@ -126,6 +135,31 @@ void main() {
       expect(noticeAppearsAbovePhone, isTrue);
 
       await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'empty photo hero: no layout overflow on narrow phone + bumped text scale',
+    (tester) async {
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      await binding.setSurfaceSize(const Size(320, 568));
+      addTearDown(() async {
+        await binding.setSurfaceSize(null);
+      });
+
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(1.34)),
+          child: wrap(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byKey(CreateListingMediaSection.phase3TestKey),
+        findsOneWidget,
+      );
     },
   );
 }

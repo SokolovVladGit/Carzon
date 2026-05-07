@@ -57,29 +57,27 @@ void main() {
 
   void stubAuth(AuthState state) {
     when(() => auth.state).thenReturn(state);
-    whenListen(
-      auth,
-      Stream<AuthState>.value(state),
-      initialState: state,
-    );
+    whenListen(auth, Stream<AuthState>.value(state), initialState: state);
   }
 
   testWidgets(
-      'shows the guarded state with clear copy when no recovery session exists',
-      (tester) async {
-    stubAuth(const AuthState.unauthenticated());
+    'shows the guarded state with clear copy when no recovery session exists',
+    (tester) async {
+      stubAuth(const AuthState.unauthenticated());
 
-    await tester.pumpWidget(_wrap(auth));
+      await tester.pumpWidget(_wrap(auth));
 
-    expect(find.text(l10n.resetPasswordNoSession), findsOneWidget);
-    expect(
-      find.widgetWithText(TextFormField, l10n.resetPasswordNew),
-      findsNothing,
-    );
-  });
+      expect(find.text(l10n.resetPasswordNoSession), findsOneWidget);
+      expect(
+        find.widgetWithText(TextFormField, l10n.resetPasswordNew),
+        findsNothing,
+      );
+    },
+  );
 
-  testWidgets('renders the form when in a password-recovery session',
-      (tester) async {
+  testWidgets('renders the form when in a password-recovery session', (
+    tester,
+  ) async {
     stubAuth(const AuthState.passwordRecovery(user));
 
     await tester.pumpWidget(_wrap(auth));
@@ -98,8 +96,9 @@ void main() {
     );
   });
 
-  testWidgets('rejects mismatched confirmation without calling cubit.submit',
-      (tester) async {
+  testWidgets('rejects mismatched confirmation without calling cubit.submit', (
+    tester,
+  ) async {
     stubAuth(const AuthState.passwordRecovery(user));
 
     await tester.pumpWidget(_wrap(auth));
@@ -118,14 +117,17 @@ void main() {
     await tester.pump();
 
     expect(find.text(l10n.validationPasswordsDoNotMatch), findsOneWidget);
-    verifyNever(() => reset.submit(
-          newPassword: any(named: 'newPassword'),
-          confirmPassword: any(named: 'confirmPassword'),
-        ));
+    verifyNever(
+      () => reset.submit(
+        newPassword: any(named: 'newPassword'),
+        confirmPassword: any(named: 'confirmPassword'),
+      ),
+    );
   });
 
-  testWidgets('rejects a too-short password without calling cubit.submit',
-      (tester) async {
+  testWidgets('rejects a too-short password without calling cubit.submit', (
+    tester,
+  ) async {
     stubAuth(const AuthState.passwordRecovery(user));
 
     await tester.pumpWidget(_wrap(auth));
@@ -144,19 +146,24 @@ void main() {
     await tester.pump();
 
     expect(find.text(l10n.validationPasswordMin), findsOneWidget);
-    verifyNever(() => reset.submit(
-          newPassword: any(named: 'newPassword'),
-          confirmPassword: any(named: 'confirmPassword'),
-        ));
+    verifyNever(
+      () => reset.submit(
+        newPassword: any(named: 'newPassword'),
+        confirmPassword: any(named: 'confirmPassword'),
+      ),
+    );
   });
 
-  testWidgets('valid form: submit delegates to the reset-password cubit',
-      (tester) async {
+  testWidgets('valid form: submit delegates to the reset-password cubit', (
+    tester,
+  ) async {
     stubAuth(const AuthState.passwordRecovery(user));
-    when(() => reset.submit(
-          newPassword: any(named: 'newPassword'),
-          confirmPassword: any(named: 'confirmPassword'),
-        )).thenAnswer((_) async {});
+    when(
+      () => reset.submit(
+        newPassword: any(named: 'newPassword'),
+        confirmPassword: any(named: 'confirmPassword'),
+      ),
+    ).thenAnswer((_) async {});
 
     await tester.pumpWidget(_wrap(auth));
 
@@ -173,9 +180,8 @@ void main() {
     );
     await tester.pump();
 
-    verify(() => reset.submit(
-          newPassword: 'newpass1',
-          confirmPassword: 'newpass1',
-        )).called(1);
+    verify(
+      () => reset.submit(newPassword: 'newpass1', confirmPassword: 'newpass1'),
+    ).called(1);
   });
 }

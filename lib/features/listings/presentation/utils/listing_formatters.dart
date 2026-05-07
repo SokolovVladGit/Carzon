@@ -52,6 +52,31 @@ String formatMarketRegion(AppLocalizations l10n, MarketRegion region) {
   }
 }
 
+String formatListingBodyType(AppLocalizations l10n, ListingBodyType type) {
+  switch (type) {
+    case ListingBodyType.sedan:
+      return l10n.listingBodyTypeSedan;
+    case ListingBodyType.hatchback:
+      return l10n.listingBodyTypeHatchback;
+    case ListingBodyType.wagon:
+      return l10n.listingBodyTypeWagon;
+    case ListingBodyType.suv:
+      return l10n.listingBodyTypeSuv;
+    case ListingBodyType.coupe:
+      return l10n.listingBodyTypeCoupe;
+    case ListingBodyType.convertible:
+      return l10n.listingBodyTypeConvertible;
+    case ListingBodyType.minivan:
+      return l10n.listingBodyTypeMinivan;
+    case ListingBodyType.pickup:
+      return l10n.listingBodyTypePickup;
+    case ListingBodyType.van:
+      return l10n.listingBodyTypeVan;
+    case ListingBodyType.other:
+      return l10n.listingBodyTypeOther;
+  }
+}
+
 String formatStatus(AppLocalizations l10n, ListingStatus status) {
   switch (status) {
     case ListingStatus.active:

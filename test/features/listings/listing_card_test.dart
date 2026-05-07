@@ -47,29 +47,26 @@ void main() {
   final l10n = ruStrings();
 
   group('ListingCard content', () {
-    testWidgets(
-      'renders make/model/year, price, mileage, city, region badge, '
-      'and no type badge when type is sale',
-      (tester) async {
-        await pumpLocalizedWidget(
-          tester,
-          Scaffold(
-            body: SingleChildScrollView(child: ListingCard(listing: _seed())),
-          ),
-        );
+    testWidgets('renders make/model/year, price, mileage, city, region badge, '
+        'and no type badge when type is sale', (tester) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: SingleChildScrollView(child: ListingCard(listing: _seed())),
+        ),
+      );
 
-        expect(find.text('Volkswagen Golf'), findsOneWidget);
-        expect(find.text('€8 900'), findsOneWidget);
-        expect(find.text('120 000 km'), findsOneWidget);
-        expect(find.text('2016'), findsOneWidget);
-        expect(find.text('Tiraspol'), findsOneWidget);
-        expect(find.text(l10n.regionTransnistria), findsOneWidget);
-        // Sale listings intentionally do not surface a "Sale" badge —
-        // sale is the implicit baseline, so the card only badges the
-        // region for a plain sale listing.
-        expect(find.text(l10n.formatTypeSale), findsNothing);
-      },
-    );
+      expect(find.text('Volkswagen Golf'), findsOneWidget);
+      expect(find.text('€8 900'), findsOneWidget);
+      expect(find.text('120 000 km'), findsOneWidget);
+      expect(find.text('2016'), findsOneWidget);
+      expect(find.text('Tiraspol'), findsOneWidget);
+      expect(find.text(l10n.regionTransnistria), findsOneWidget);
+      // Sale listings intentionally do not surface a "Sale" badge —
+      // sale is the implicit baseline, so the card only badges the
+      // region for a plain sale listing.
+      expect(find.text(l10n.formatTypeSale), findsNothing);
+    });
 
     testWidgets(
       'shows the exchange type badge when listing is ListingType.exchange',
@@ -108,10 +105,7 @@ void main() {
         tester,
         Scaffold(
           body: SingleChildScrollView(
-            child: ListingCard(
-              listing: _seed(),
-              onTap: () => tapped += 1,
-            ),
+            child: ListingCard(listing: _seed(), onTap: () => tapped += 1),
           ),
         ),
       );
@@ -120,28 +114,25 @@ void main() {
       expect(tapped, 1);
     });
 
-    testWidgets(
-      'wraps the cover image in a Hero tagged with the listing id',
-      (tester) async {
-        await pumpLocalizedWidget(
-          tester,
-          Scaffold(
-            body: SingleChildScrollView(
-              child: ListingCard(listing: _seed()),
-            ),
-          ),
-        );
+    testWidgets('wraps the cover image in a Hero tagged with the listing id', (
+      tester,
+    ) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: SingleChildScrollView(child: ListingCard(listing: _seed())),
+        ),
+      );
 
-        final heroes = tester.widgetList<Hero>(find.byType(Hero));
-        expect(
-          heroes.any((h) => h.tag == listingCoverHeroTag('l1')),
-          isTrue,
-          reason:
-              'ListingCard cover must be wrapped in a Hero with the '
-              'listing-id-derived tag so feed→details animates the photo.',
-        );
-      },
-    );
+      final heroes = tester.widgetList<Hero>(find.byType(Hero));
+      expect(
+        heroes.any((h) => h.tag == listingCoverHeroTag('l1')),
+        isTrue,
+        reason:
+            'ListingCard cover must be wrapped in a Hero with the '
+            'listing-id-derived tag so feed→details animates the photo.',
+      );
+    });
   });
 
   group('ListingCard variant rhythm', () {
@@ -167,9 +158,7 @@ void main() {
         await pumpLocalizedWidget(
           tester,
           Scaffold(
-            body: SingleChildScrollView(
-              child: ListingCard(listing: _seed()),
-            ),
+            body: SingleChildScrollView(child: ListingCard(listing: _seed())),
           ),
         );
 

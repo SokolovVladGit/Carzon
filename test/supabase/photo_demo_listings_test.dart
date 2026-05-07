@@ -41,7 +41,10 @@ void main() {
         r"'d0000000-0000-4000-8000-0000000000\d{2}'",
         caseSensitive: false,
       );
-      final matches = idPattern.allMatches(sql).map((m) => m.group(0)!).toList();
+      final matches = idPattern
+          .allMatches(sql)
+          .map((m) => m.group(0)!)
+          .toList();
       expect(
         matches.length,
         20,
@@ -115,16 +118,12 @@ void main() {
     test('every row has seller_id = null', () {
       // The seller_id slot sits between status and contact_phone, so
       // the pattern `'active', null,` must appear once per row.
-      final pattern = RegExp(
-        r"'active'\s*,\s*null\s*,",
-        caseSensitive: false,
-      );
+      final pattern = RegExp(r"'active'\s*,\s*null\s*,", caseSensitive: false);
       final count = countMatches(sql, pattern);
       expect(
         count,
         20,
-        reason:
-            'expected 20 rows with seller_id = null, found $count',
+        reason: 'expected 20 rows with seller_id = null, found $count',
       );
       // Defense in depth: must not reference auth.users directly.
       expect(
@@ -138,10 +137,9 @@ void main() {
       // Grab every +XXX-looking literal and require it to match the
       // synthetic photo-demo pattern. This catches accidental real
       // numbers leaking in.
-      final phoneLiterals = RegExp(r"'\+\d[\d\s]+'")
-          .allMatches(sql)
-          .map((m) => m.group(0)!)
-          .toList();
+      final phoneLiterals = RegExp(
+        r"'\+\d[\d\s]+'",
+      ).allMatches(sql).map((m) => m.group(0)!).toList();
       expect(
         phoneLiterals.length,
         20,
@@ -203,15 +201,13 @@ void main() {
     test(
       'every cover URL uses https://content.kareta.md/items/original/...webp',
       () {
-        final urlLiterals = RegExp(r"'https://[^']+'")
-            .allMatches(sql)
-            .map((m) => m.group(0)!)
-            .toList();
+        final urlLiterals = RegExp(
+          r"'https://[^']+'",
+        ).allMatches(sql).map((m) => m.group(0)!).toList();
         expect(
           urlLiterals.length,
           20,
-          reason:
-              'expected 20 cover URL literals, found ${urlLiterals.length}',
+          reason: 'expected 20 cover URL literals, found ${urlLiterals.length}',
         );
         final expectedPattern = RegExp(
           r"^'https://content\.kareta\.md/items/original/[0-9a-f\-]{36}\.webp'$",
@@ -234,10 +230,9 @@ void main() {
         // The provided source list has URL #1 and URL #6 identical, so
         // we expect exactly one duplicate cover in the dataset. The
         // dataset must still contain 20 rows regardless.
-        final urlLiterals = RegExp(r"'https://[^']+'")
-            .allMatches(sql)
-            .map((m) => m.group(0)!)
-            .toList();
+        final urlLiterals = RegExp(
+          r"'https://[^']+'",
+        ).allMatches(sql).map((m) => m.group(0)!).toList();
         expect(urlLiterals.length, 20);
         final unique = urlLiterals.toSet();
         // 20 rows, 19 unique URLs — one intentional duplicate.
@@ -249,8 +244,7 @@ void main() {
         expect(
           unique.length,
           greaterThanOrEqualTo(19),
-          reason:
-              'expected at most one duplicate cover URL in the dataset',
+          reason: 'expected at most one duplicate cover URL in the dataset',
         );
       },
     );
@@ -362,10 +356,7 @@ void main() {
 
       // Must not reference the production-seed `c0000000-...` namespace.
       expect(
-        RegExp(
-          r"'c0000000-0000-4000-8000",
-          caseSensitive: false,
-        ).hasMatch(sql),
+        RegExp(r"'c0000000-0000-4000-8000", caseSensitive: false).hasMatch(sql),
         isFalse,
         reason:
             'cleanup SQL must not touch the production-seed c0000000 '
@@ -433,8 +424,7 @@ void main() {
         expect(
           sqlStatementsLower,
           isNot(contains(token)),
-          reason:
-              'remove_photo_demo_listings.sql must not contain "$token"',
+          reason: 'remove_photo_demo_listings.sql must not contain "$token"',
         );
       }
     });

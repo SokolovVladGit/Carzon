@@ -65,3 +65,4 @@ flutter:
     - .env
     - assets/brands/svg/
     - assets/categories/svg/
+    - assets/bg/bg_chat.jpg

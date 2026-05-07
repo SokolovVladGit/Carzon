@@ -32,8 +32,9 @@ void main() {
     await sl.reset();
   });
 
-  testWidgets('renders email field, submit button, and back navigation',
-      (tester) async {
+  testWidgets('renders email field, submit button, and back navigation', (
+    tester,
+  ) async {
     await pumpLocalizedWidget(tester, const ForgotPasswordPage());
 
     expect(
@@ -44,10 +45,7 @@ void main() {
       find.widgetWithText(FilledButton, l10n.forgotPasswordSubmit),
       findsOneWidget,
     );
-    expect(
-      find.widgetWithText(TextButton, l10n.backToSignIn),
-      findsOneWidget,
-    );
+    expect(find.widgetWithText(TextButton, l10n.backToSignIn), findsOneWidget);
   });
 
   testWidgets('submitting a valid email calls the cubit', (tester) async {
@@ -59,27 +57,31 @@ void main() {
       find.widgetWithText(TextFormField, l10n.authFieldEmail),
       '  seller@example.com  ',
     );
-    await tester
-        .tap(find.widgetWithText(FilledButton, l10n.forgotPasswordSubmit));
+    await tester.tap(
+      find.widgetWithText(FilledButton, l10n.forgotPasswordSubmit),
+    );
     await tester.pump();
 
     verify(() => cubit.submit('  seller@example.com  ')).called(1);
   });
 
-  testWidgets('does not call the cubit when the email is missing',
-      (tester) async {
+  testWidgets('does not call the cubit when the email is missing', (
+    tester,
+  ) async {
     await pumpLocalizedWidget(tester, const ForgotPasswordPage());
 
-    await tester
-        .tap(find.widgetWithText(FilledButton, l10n.forgotPasswordSubmit));
+    await tester.tap(
+      find.widgetWithText(FilledButton, l10n.forgotPasswordSubmit),
+    );
     await tester.pump();
 
     expect(find.text(l10n.validationEmailRequired), findsOneWidget);
     verifyNever(() => cubit.submit(any()));
   });
 
-  testWidgets('success state shows non-enumerating confirmation copy',
-      (tester) async {
+  testWidgets('success state shows non-enumerating confirmation copy', (
+    tester,
+  ) async {
     when(() => cubit.state).thenReturn(const ForgotPasswordState.success());
     whenListen(
       cubit,

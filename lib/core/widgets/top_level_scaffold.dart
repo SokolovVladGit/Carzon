@@ -18,12 +18,7 @@ import 'floating_capsule_nav.dart';
 ///      destination so the bar stays breathable.
 ///
 /// The enum is ordered left-to-right as it appears in the nav.
-enum TopLevelDestination {
-  listings,
-  favorites,
-  createListing,
-  menu,
-}
+enum TopLevelDestination { listings, favorites, createListing, menu }
 
 /// Maps a destination to the canonical route path it represents in the
 /// router. Kept alongside the enum so the mapping cannot drift from

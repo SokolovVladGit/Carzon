@@ -99,13 +99,17 @@ class _FavoriteIconState extends State<_FavoriteIcon>
   // return settles without a second bounce.
   late final Animation<double> _scale = TweenSequence<double>([
     TweenSequenceItem(
-      tween: Tween(begin: 1.0, end: 1.15)
-          .chain(CurveTween(curve: Curves.easeOutBack)),
+      tween: Tween(
+        begin: 1.0,
+        end: 1.15,
+      ).chain(CurveTween(curve: Curves.easeOutBack)),
       weight: 55,
     ),
     TweenSequenceItem(
-      tween: Tween(begin: 1.15, end: 1.0)
-          .chain(CurveTween(curve: Curves.easeIn)),
+      tween: Tween(
+        begin: 1.15,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeIn)),
       weight: 45,
     ),
   ]).animate(_ctrl);
@@ -139,7 +143,10 @@ class _FavoriteIconState extends State<_FavoriteIcon>
   }
 }
 
-String _favoritesErrorMessage(AppLocalizations l10n, FavoritesFailureKind kind) {
+String _favoritesErrorMessage(
+  AppLocalizations l10n,
+  FavoritesFailureKind kind,
+) {
   return switch (kind) {
     FavoritesFailureKind.loadFailed => l10n.favoritesLoadFailed,
     FavoritesFailureKind.toggleFailed => l10n.favoriteToggleFailed,

@@ -237,11 +237,7 @@ class _CoverStack extends StatelessWidget {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     stops: [0.0, 0.55, 1.0],
-    colors: [
-      Color(0x00000000),
-      Color(0x20000000),
-      Color(0x55000000),
-    ],
+    colors: [Color(0x00000000), Color(0x20000000), Color(0x55000000)],
   );
 
   @override
@@ -249,10 +245,7 @@ class _CoverStack extends StatelessWidget {
     final stack = Stack(
       fit: StackFit.passthrough,
       children: [
-        ListingCoverImage(
-          imageUrl: coverImageUrl,
-          heroTag: heroTag,
-        ),
+        ListingCoverImage(imageUrl: coverImageUrl, heroTag: heroTag),
         const Positioned(
           left: 0,
           right: 0,
@@ -264,9 +257,7 @@ class _CoverStack extends StatelessWidget {
           // cleanly into the glass.
           height: 64,
           child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(gradient: _scrim),
-            ),
+            child: DecoratedBox(decoration: BoxDecoration(gradient: _scrim)),
           ),
         ),
       ],
@@ -299,10 +290,7 @@ class _CoverStack extends StatelessWidget {
         // Clamp so long scrolls don't pull the photo off its frame.
         final raw = parallaxSource.value;
         final dy = -(raw * 0.15).clamp(-24.0, 24.0);
-        return Transform.translate(
-          offset: Offset(0, dy),
-          child: child,
-        );
+        return Transform.translate(offset: Offset(0, dy), child: child);
       },
       child: clipped,
     );
@@ -341,17 +329,17 @@ class ListingBadge extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final (Color bg, Color fg) = switch (tone) {
       ListingBadgeTone.neutral => (
-          scheme.onSurface.withValues(alpha: isDark ? 0.10 : 0.06),
-          scheme.onSurface.withValues(alpha: 0.72),
-        ),
+        scheme.onSurface.withValues(alpha: isDark ? 0.10 : 0.06),
+        scheme.onSurface.withValues(alpha: 0.72),
+      ),
       ListingBadgeTone.accent => (
-          scheme.secondaryContainer.withValues(alpha: isDark ? 0.45 : 0.55),
-          scheme.onSecondaryContainer,
-        ),
+        scheme.secondaryContainer.withValues(alpha: isDark ? 0.45 : 0.55),
+        scheme.onSecondaryContainer,
+      ),
       ListingBadgeTone.status => (
-          background ?? scheme.primaryContainer,
-          foreground ?? scheme.onPrimaryContainer,
-        ),
+        background ?? scheme.primaryContainer,
+        foreground ?? scheme.onPrimaryContainer,
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -428,16 +416,17 @@ class _InfoPanel extends StatelessWidget {
     // The featured hero gets +2 px size (26 vs 24) so on a hero
     // tile the price visibly dominates the composition. This is
     // deliberately the strongest typographic element on the card.
-    final priceStyle = (isFeatured
-            ? theme.textTheme.headlineSmall
-            : theme.textTheme.titleLarge)
-        ?.copyWith(
-      fontSize: isFeatured ? 26 : 20,
-      fontWeight: FontWeight.w800,
-      color: scheme.onSurface,
-      letterSpacing: -0.4,
-      height: 1.1,
-    );
+    final priceStyle =
+        (isFeatured
+                ? theme.textTheme.headlineSmall
+                : theme.textTheme.titleLarge)
+            ?.copyWith(
+              fontSize: isFeatured ? 26 : 20,
+              fontWeight: FontWeight.w800,
+              color: scheme.onSurface,
+              letterSpacing: -0.4,
+              height: 1.1,
+            );
     // Title sits one step below the price in the hierarchy: medium
     // weight, slightly muted so the price dominates without the title
     // feeling ghosted.
@@ -518,146 +507,160 @@ class _InfoPanel extends StatelessWidget {
               border: Border.all(color: panelBorderColor, width: 0.5),
             ),
             child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          14,
-          12,
-          trailing != null ? 10 : 14,
-          isFeatured ? 16 : 14,
-        ),
-        // Panel is a 2-column Row:
-        //   * left  — dedicated 48 px brand-icon column, vertically
-        //             centered against the whole content stack so the
-        //             mark reads as a column label rather than a
-        //             decoration attached to the top of the text,
-        //   * a 1 px white-alpha vertical divider that fades toward
-        //             the bottom, stretched to the full content
-        //             height via IntrinsicHeight so the soft fade
-        //             tracks card density,
-        //   * right — the full content stack (price → title → meta →
-        //             badges).
-        //
-        // The trailing slot (favorite toggle / owner menu) lives
-        // outside the IntrinsicHeight box: it must stay vertically
-        // centered against the content column without being stretched
-        // to the column's full height.
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    SizedBox(
-                      width: 48,
-                      child: Center(
-                        child: _BrandIconTile(assetPath: brandIconAsset),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: SizedBox(
-                        height: double.infinity,
-                        child: Center(
-                          child: Container(
-                            width: 1,
-                            // 4 px (was 8) — extends the visible span
-                            // of the divider for a longer, more
-                            // elegant fade while still leaving a small
-                            // breathing gap at the very top / bottom.
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: isDark
-                                    ? [
-                                        Colors.white.withValues(alpha: 0.55),
-                                        Colors.white.withValues(alpha: 0.30),
-                                        Colors.white.withValues(alpha: 0.12),
-                                        Colors.transparent,
-                                      ]
-                                    : [
-                                        scheme.onSurface
-                                            .withValues(alpha: 0.14),
-                                        scheme.onSurface
-                                            .withValues(alpha: 0.09),
-                                        scheme.onSurface
-                                            .withValues(alpha: 0.04),
-                                        Colors.transparent,
-                                      ],
+              padding: EdgeInsets.fromLTRB(
+                14,
+                12,
+                trailing != null ? 10 : 14,
+                isFeatured ? 16 : 14,
+              ),
+              // Panel is a 2-column Row:
+              //   * left  — dedicated 48 px brand-icon column, vertically
+              //             centered against the whole content stack so the
+              //             mark reads as a column label rather than a
+              //             decoration attached to the top of the text,
+              //   * a 1 px white-alpha vertical divider that fades toward
+              //             the bottom, stretched to the full content
+              //             height via IntrinsicHeight so the soft fade
+              //             tracks card density,
+              //   * right — the full content stack (price → title → meta →
+              //             badges).
+              //
+              // The trailing slot (favorite toggle / owner menu) lives
+              // outside the IntrinsicHeight box: it must stay vertically
+              // centered against the content column without being stretched
+              // to the column's full height.
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(
+                            width: 48,
+                            child: Center(
+                              child: _BrandIconTile(assetPath: brandIconAsset),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: SizedBox(
+                              height: double.infinity,
+                              child: Center(
+                                child: Container(
+                                  width: 1,
+                                  // 4 px (was 8) — extends the visible span
+                                  // of the divider for a longer, more
+                                  // elegant fade while still leaving a small
+                                  // breathing gap at the very top / bottom.
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: isDark
+                                          ? [
+                                              Colors.white.withValues(
+                                                alpha: 0.55,
+                                              ),
+                                              Colors.white.withValues(
+                                                alpha: 0.30,
+                                              ),
+                                              Colors.white.withValues(
+                                                alpha: 0.12,
+                                              ),
+                                              Colors.transparent,
+                                            ]
+                                          : [
+                                              scheme.onSurface.withValues(
+                                                alpha: 0.14,
+                                              ),
+                                              scheme.onSurface.withValues(
+                                                alpha: 0.09,
+                                              ),
+                                              scheme.onSurface.withValues(
+                                                alpha: 0.04,
+                                              ),
+                                              Colors.transparent,
+                                            ],
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            priceLabel,
-                            style: priceStyle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            titleLabel,
-                            style: titleStyle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          DefaultTextStyle.merge(
-                            style: metaStyle ?? const TextStyle(),
-                            child: Row(
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Flexible(
-                                  child: Text(
-                                    mileageLabel,
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  priceLabel,
+                                  style: priceStyle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  titleLabel,
+                                  style: titleStyle,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                DefaultTextStyle.merge(
+                                  style: metaStyle ?? const TextStyle(),
+                                  child: Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          mileageLabel,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      _MetaSeparator(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                      Text(yearLabel),
+                                      _MetaSeparator(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                      Flexible(
+                                        child: Text(
+                                          city,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                _MetaSeparator(
-                                    color: scheme.onSurfaceVariant),
-                                Text(yearLabel),
-                                _MetaSeparator(
-                                    color: scheme.onSurfaceVariant),
-                                Flexible(
-                                  child: Text(
-                                    city,
-                                    overflow: TextOverflow.ellipsis,
+                                if (badges.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 4,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    children: badges,
                                   ),
-                                ),
+                                ],
                               ],
                             ),
                           ),
-                          if (badges.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: badges,
-                            ),
-                          ],
                         ],
                       ),
                     ),
+                  ),
+                  if (trailing != null) ...[
+                    const SizedBox(width: 8),
+                    _PanelActionSlot(child: trailing!),
                   ],
-                ),
+                ],
               ),
             ),
-            if (trailing != null) ...[
-              const SizedBox(width: 8),
-              _PanelActionSlot(child: trailing!),
-            ],
-          ],
-        ),
-      ),
           ),
         ),
       ),
@@ -826,21 +829,21 @@ ListingBadge statusListingBadge(
   final scheme = Theme.of(context).colorScheme;
   final (Color bg, Color fg) = switch (status) {
     ListingStatus.active => (
-        scheme.primaryContainer,
-        scheme.onPrimaryContainer,
-      ),
+      scheme.primaryContainer,
+      scheme.onPrimaryContainer,
+    ),
     ListingStatus.hidden => (
-        scheme.tertiaryContainer,
-        scheme.onTertiaryContainer,
-      ),
+      scheme.tertiaryContainer,
+      scheme.onTertiaryContainer,
+    ),
     ListingStatus.sold => (
-        scheme.secondaryContainer,
-        scheme.onSecondaryContainer,
-      ),
+      scheme.secondaryContainer,
+      scheme.onSecondaryContainer,
+    ),
     ListingStatus.archived => (
-        scheme.surfaceContainerHighest,
-        scheme.onSurfaceVariant,
-      ),
+      scheme.surfaceContainerHighest,
+      scheme.onSurfaceVariant,
+    ),
   };
   return ListingBadge(
     label: formatStatus(l10n, status),
@@ -907,9 +910,9 @@ class _OverlapCardRenderBox extends RenderBox
     required double aspectRatio,
     required double overlap,
     required double horizontalMargin,
-  })  : _aspectRatio = aspectRatio,
-        _overlap = overlap,
-        _horizontalMargin = horizontalMargin;
+  }) : _aspectRatio = aspectRatio,
+       _overlap = overlap,
+       _horizontalMargin = horizontalMargin;
 
   double _aspectRatio;
   double get aspectRatio => _aspectRatio;
@@ -967,8 +970,7 @@ class _OverlapCardRenderBox extends RenderBox
     final imageParentData = image.parentData! as _OverlapCardParentData;
     imageParentData.offset = Offset.zero;
     final panelParentData = panel.parentData! as _OverlapCardParentData;
-    panelParentData.offset =
-        Offset(_horizontalMargin, imageHeight - _overlap);
+    panelParentData.offset = Offset(_horizontalMargin, imageHeight - _overlap);
 
     final totalHeight = imageHeight - _overlap + panel.size.height;
     size = constraints.constrain(Size(width, totalHeight));
@@ -983,7 +985,9 @@ class _OverlapCardRenderBox extends RenderBox
     final panel = image == null ? null : childAfter(image);
     return (image?.getMaxIntrinsicWidth(double.infinity) ?? 0)
         .clamp(
-            panel?.getMaxIntrinsicWidth(double.infinity) ?? 0, double.infinity)
+          panel?.getMaxIntrinsicWidth(double.infinity) ?? 0,
+          double.infinity,
+        )
         .toDouble();
   }
 
@@ -1013,12 +1017,14 @@ class _OverlapCardRenderBox extends RenderBox
     final imageHeight = width / _aspectRatio;
     final panel = firstChild == null ? null : childAfter(firstChild!);
     final panelWidth = (width - _horizontalMargin * 2).clamp(0.0, width);
-    final panelSize = panel?.getDryLayout(
+    final panelSize =
+        panel?.getDryLayout(
           BoxConstraints(minWidth: panelWidth, maxWidth: panelWidth),
         ) ??
         Size.zero;
-    return constraints
-        .constrain(Size(width, imageHeight - _overlap + panelSize.height));
+    return constraints.constrain(
+      Size(width, imageHeight - _overlap + panelSize.height),
+    );
   }
 
   @override

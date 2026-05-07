@@ -8,20 +8,20 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/l10n_test_helpers.dart';
 
 Listing _listing({ListingStatus status = ListingStatus.active}) => Listing(
-      id: 'l1',
-      title: 'title',
-      make: 'Make',
-      model: 'Model',
-      year: 2020,
-      priceEur: 10000,
-      mileageKm: 50000,
-      type: ListingType.sale,
-      city: 'Tiraspol',
-      marketRegion: MarketRegion.transnistria,
-      createdAt: DateTime.utc(2026, 1, 1),
-      status: status,
-      sellerId: 's1',
-    );
+  id: 'l1',
+  title: 'title',
+  make: 'Make',
+  model: 'Model',
+  year: 2020,
+  priceEur: 10000,
+  mileageKm: 50000,
+  type: ListingType.sale,
+  city: 'Tiraspol',
+  marketRegion: MarketRegion.transnistria,
+  createdAt: DateTime.utc(2026, 1, 1),
+  status: status,
+  sellerId: 's1',
+);
 
 Widget _tileHost({
   required ValueChanged<MyListingAction> onAction,
@@ -45,41 +45,40 @@ void main() {
 
   group('MyListingTile owner menu — Delete permanently', () {
     testWidgets(
-        'menu exposes the localized delete entry for every listing status',
-        (tester) async {
-      for (final status in ListingStatus.values) {
-        await tester.pumpWidget(_tileHost(
-          onAction: (_) {},
-          status: status,
-        ));
+      'menu exposes the localized delete entry for every listing status',
+      (tester) async {
+        for (final status in ListingStatus.values) {
+          await tester.pumpWidget(_tileHost(onAction: (_) {}, status: status));
+
+          await tester.tap(find.byType(PopupMenuButton<MyListingAction>));
+          await tester.pumpAndSettle();
+
+          expect(
+            find.text(l10n.actionDeletePermanently),
+            findsOneWidget,
+            reason: 'Expected delete entry for status=$status',
+          );
+
+          await tester.tapAt(const Offset(5, 5));
+          await tester.pumpAndSettle();
+        }
+      },
+    );
+
+    testWidgets(
+      'picking the delete entry dispatches the deletePermanently action',
+      (tester) async {
+        MyListingAction? picked;
+        await tester.pumpWidget(_tileHost(onAction: (a) => picked = a));
 
         await tester.tap(find.byType(PopupMenuButton<MyListingAction>));
         await tester.pumpAndSettle();
-
-        expect(
-          find.text(l10n.actionDeletePermanently),
-          findsOneWidget,
-          reason: 'Expected delete entry for status=$status',
-        );
-
-        await tester.tapAt(const Offset(5, 5));
+        await tester.tap(find.text(l10n.actionDeletePermanently));
         await tester.pumpAndSettle();
-      }
-    });
 
-    testWidgets(
-        'picking the delete entry dispatches the deletePermanently action',
-        (tester) async {
-      MyListingAction? picked;
-      await tester.pumpWidget(_tileHost(onAction: (a) => picked = a));
-
-      await tester.tap(find.byType(PopupMenuButton<MyListingAction>));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.actionDeletePermanently));
-      await tester.pumpAndSettle();
-
-      expect(picked, MyListingAction.deletePermanently);
-    });
+        expect(picked, MyListingAction.deletePermanently);
+      },
+    );
   });
 
   group('showDeleteListingDialog', () {
@@ -104,8 +103,9 @@ void main() {
       );
     }
 
-    testWidgets('shows the localized destructive-confirmation copy',
-        (tester) async {
+    testWidgets('shows the localized destructive-confirmation copy', (
+      tester,
+    ) async {
       await tester.pumpWidget(dialogHost((_) {}));
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();

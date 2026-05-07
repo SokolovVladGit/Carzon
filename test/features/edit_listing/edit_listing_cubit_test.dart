@@ -764,6 +764,48 @@ void main() {
         expect(capturedInput.make, 'Zaporozhets');
       },
     );
+
+    test('updateDetailsV2 receives body type when provided', () async {
+      final listing = _seed();
+
+      cubit.emit(
+        EditListingState.ready(
+          listing,
+          listingGalleryImages: const [],
+          galleryLoadSucceeded: true,
+          initialGallerySlots: <EditListingGallerySlot>[],
+        ),
+      );
+
+      when(
+        () => editRepo.updateDetailsV2(any()),
+      ).thenAnswer((_) async => Success(listing));
+
+      final input = EditListingInput(
+        listingId: listing.id,
+        title: listing.title,
+        make: listing.make,
+        model: listing.model,
+        year: listing.year,
+        priceEur: listing.priceEur,
+        mileageKm: listing.mileageKm,
+        type: listing.type,
+        city: listing.city,
+        marketRegion: listing.marketRegion,
+        contactPhone: listing.contactPhone!,
+        telegramUsername: listing.telegramUsername,
+        whatsappEnabled: listing.whatsappEnabled,
+        priceCurrency: listing.priceCurrency,
+        bodyType: ListingBodyType.pickup,
+      );
+
+      await cubit.save(input: input, galleryDraft: <EditListingGallerySlot>[]);
+
+      final captured =
+          verify(() => editRepo.updateDetailsV2(captureAny())).captured.single
+              as EditListingInput;
+      expect(captured.bodyType, ListingBodyType.pickup);
+    });
   });
 
   group('buildReplaceListingGalleryPayload', () {

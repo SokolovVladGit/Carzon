@@ -73,9 +73,13 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
         listener: (context, state) {
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
-            ..showSnackBar(SnackBar(
-              content: Text(_forgotPasswordFailureMessage(l10n, state.failureKind)),
-            ));
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  _forgotPasswordFailureMessage(l10n, state.failureKind),
+                ),
+              ),
+            );
         },
         builder: (context, state) {
           final loading = state.status == ForgotPasswordStatus.submitting;
@@ -95,8 +99,7 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _emailCtrl,
-                    decoration:
-                        InputDecoration(labelText: l10n.authFieldEmail),
+                    decoration: InputDecoration(labelText: l10n.authFieldEmail),
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
                     enabled: !loading,
@@ -115,8 +118,9 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                   ),
                   const SizedBox(height: 12),
                   TextButton(
-                    onPressed:
-                        loading ? null : () => context.go(AppRoutes.signIn),
+                    onPressed: loading
+                        ? null
+                        : () => context.go(AppRoutes.signIn),
                     child: Text(l10n.backToSignIn),
                   ),
                 ],
@@ -146,15 +150,9 @@ class _SuccessView extends StatelessWidget {
           const SizedBox(height: 24),
           const Icon(CarzonIcons.mailCheck, size: 48),
           const SizedBox(height: 16),
-          Text(
-            l10n.forgotPasswordSuccess,
-            textAlign: TextAlign.center,
-          ),
+          Text(l10n.forgotPasswordSuccess, textAlign: TextAlign.center),
           const SizedBox(height: 24),
-          FilledButton(
-            onPressed: onBack,
-            child: Text(l10n.backToSignIn),
-          ),
+          FilledButton(onPressed: onBack, child: Text(l10n.backToSignIn)),
         ],
       ),
     );
@@ -167,7 +165,7 @@ String _forgotPasswordFailureMessage(
 ) {
   return switch (kind) {
     ForgotPasswordFailureKind.emptyEmail => l10n.forgotPasswordEmailEmpty,
-    ForgotPasswordFailureKind.requestFailed || null =>
-      l10n.forgotPasswordFailedRetry,
+    ForgotPasswordFailureKind.requestFailed ||
+    null => l10n.forgotPasswordFailedRetry,
   };
 }

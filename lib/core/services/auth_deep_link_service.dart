@@ -44,16 +44,18 @@ class AuthDeepLinkService {
     required SupabaseAuthUrlHandler authUrlHandler,
     AppLinks? appLinks,
     AppLogger? logger,
-  })  : _authUrlHandler = authUrlHandler,
-        _appLinks = appLinks ?? AppLinks(),
-        _logger = logger ?? AppLogger('AuthDeepLinkService');
+  }) : _authUrlHandler = authUrlHandler,
+       _appLinks = appLinks ?? AppLinks(),
+       _logger = logger ?? AppLogger('AuthDeepLinkService');
 
   /// Convenience constructor used by the real DI wiring.
-  AuthDeepLinkService.forSupabase(SupabaseService supabase, {AppLinks? appLinks})
-      : this(
-          authUrlHandler: _SupabaseAuthUrlHandlerImpl(supabase),
-          appLinks: appLinks,
-        );
+  AuthDeepLinkService.forSupabase(
+    SupabaseService supabase, {
+    AppLinks? appLinks,
+  }) : this(
+         authUrlHandler: _SupabaseAuthUrlHandlerImpl(supabase),
+         appLinks: appLinks,
+       );
 
   final SupabaseAuthUrlHandler _authUrlHandler;
   final AppLinks _appLinks;

@@ -9,12 +9,13 @@ import 'listings_state.dart';
 
 class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
   ListingsBloc({required GetListings getListings})
-      : _getListings = getListings,
-        super(const ListingsState()) {
+    : _getListings = getListings,
+      super(const ListingsState()) {
     on<ListingsRequested>(_onRequested);
     on<ListingsRefreshed>(_onRefreshed);
     on<ListingsNextPageRequested>(_onNextPage);
     on<ListingsRegionFilterChanged>(_onRegionFilterChanged);
+    on<ListingsBodyTypeFilterChanged>(_onBodyTypeFilterChanged);
     on<ListingsSearchChanged>(_onSearchChanged);
     on<ListingsFiltersApplied>(_onFiltersApplied);
     on<ListingsFiltersCleared>(_onFiltersCleared);
@@ -26,12 +27,14 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     ListingsRequested event,
     Emitter<ListingsState> emit,
   ) async {
-    emit(state.copyWith(
-      status: ListingsStatus.loading,
-      page: 0,
-      hasReachedEnd: false,
-      items: const [],
-    ));
+    emit(
+      state.copyWith(
+        status: ListingsStatus.loading,
+        page: 0,
+        hasReachedEnd: false,
+        items: const [],
+      ),
+    );
     await _load(emit, page: 0);
   }
 
@@ -39,11 +42,13 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     ListingsRefreshed event,
     Emitter<ListingsState> emit,
   ) async {
-    emit(state.copyWith(
-      status: ListingsStatus.loading,
-      page: 0,
-      hasReachedEnd: false,
-    ));
+    emit(
+      state.copyWith(
+        status: ListingsStatus.loading,
+        page: 0,
+        hasReachedEnd: false,
+      ),
+    );
     await _load(emit, page: 0, replace: true);
   }
 
@@ -69,13 +74,33 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     Emitter<ListingsState> emit,
   ) async {
     if (event.filter == state.regionFilter) return;
-    emit(state.copyWith(
-      status: ListingsStatus.loading,
-      regionFilter: event.filter,
-      page: 0,
-      hasReachedEnd: false,
-      items: const [],
-    ));
+    emit(
+      state.copyWith(
+        status: ListingsStatus.loading,
+        regionFilter: event.filter,
+        page: 0,
+        hasReachedEnd: false,
+        items: const [],
+      ),
+    );
+    await _load(emit, page: 0, replace: true);
+  }
+
+  Future<void> _onBodyTypeFilterChanged(
+    ListingsBodyTypeFilterChanged event,
+    Emitter<ListingsState> emit,
+  ) async {
+    if (event.bodyType == state.bodyTypeFilter) return;
+    emit(
+      state.copyWith(
+        status: ListingsStatus.loading,
+        bodyTypeFilter: event.bodyType,
+        clearBodyType: event.bodyType == null,
+        page: 0,
+        hasReachedEnd: false,
+        items: const [],
+      ),
+    );
     await _load(emit, page: 0, replace: true);
   }
 
@@ -86,14 +111,16 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     final trimmed = event.search?.trim();
     final normalized = (trimmed == null || trimmed.isEmpty) ? null : trimmed;
     if (normalized == state.search) return;
-    emit(state.copyWith(
-      status: ListingsStatus.loading,
-      page: 0,
-      hasReachedEnd: false,
-      items: const [],
-      search: normalized,
-      clearSearch: normalized == null,
-    ));
+    emit(
+      state.copyWith(
+        status: ListingsStatus.loading,
+        page: 0,
+        hasReachedEnd: false,
+        items: const [],
+        search: normalized,
+        clearSearch: normalized == null,
+      ),
+    );
     await _load(emit, page: 0, replace: true);
   }
 
@@ -104,19 +131,21 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     final make = (event.make == null || event.make!.trim().isEmpty)
         ? null
         : event.make!.trim();
-    emit(state.copyWith(
-      status: ListingsStatus.loading,
-      page: 0,
-      hasReachedEnd: false,
-      items: const [],
-      make: make,
-      minYear: event.minYear,
-      maxYear: event.maxYear,
-      typeFilter: event.typeFilter,
-      clearMake: make == null,
-      clearMinYear: event.minYear == null,
-      clearMaxYear: event.maxYear == null,
-    ));
+    emit(
+      state.copyWith(
+        status: ListingsStatus.loading,
+        page: 0,
+        hasReachedEnd: false,
+        items: const [],
+        make: make,
+        minYear: event.minYear,
+        maxYear: event.maxYear,
+        typeFilter: event.typeFilter,
+        clearMake: make == null,
+        clearMinYear: event.minYear == null,
+        clearMaxYear: event.maxYear == null,
+      ),
+    );
     await _load(emit, page: 0, replace: true);
   }
 
@@ -124,17 +153,20 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     ListingsFiltersCleared event,
     Emitter<ListingsState> emit,
   ) async {
-    emit(state.copyWith(
-      status: ListingsStatus.loading,
-      page: 0,
-      hasReachedEnd: false,
-      items: const [],
-      typeFilter: ListingTypeFilter.any,
-      clearSearch: true,
-      clearMake: true,
-      clearMinYear: true,
-      clearMaxYear: true,
-    ));
+    emit(
+      state.copyWith(
+        status: ListingsStatus.loading,
+        page: 0,
+        hasReachedEnd: false,
+        items: const [],
+        typeFilter: ListingTypeFilter.any,
+        clearSearch: true,
+        clearMake: true,
+        clearMinYear: true,
+        clearMaxYear: true,
+        clearBodyType: true,
+      ),
+    );
     await _load(emit, page: 0, replace: true);
   }
 
@@ -150,6 +182,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
       maxYear: state.maxYear,
       typeIn: state.typeFilter.asListingTypes,
       marketRegion: state.regionFilter.asMarketRegion,
+      bodyType: state.bodyTypeFilter,
       // Public feed is always explicitly active-only, regardless of RLS.
       // This prevents authenticated owners from seeing their own
       // hidden/sold/archived listings in the main feed.
@@ -160,20 +193,24 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
 
     final result = await _getListings(query);
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: ListingsStatus.failure,
-        errorMessage: failure.message,
-      )),
+      (failure) => emit(
+        state.copyWith(
+          status: ListingsStatus.failure,
+          errorMessage: failure.message,
+        ),
+      ),
       (newItems) {
         final merged = (replace || page == 0)
             ? newItems
             : [...state.items, ...newItems];
-        emit(state.copyWith(
-          status: ListingsStatus.success,
-          items: merged,
-          page: page,
-          hasReachedEnd: newItems.length < AppConstants.defaultPageSize,
-        ));
+        emit(
+          state.copyWith(
+            status: ListingsStatus.success,
+            items: merged,
+            page: page,
+            hasReachedEnd: newItems.length < AppConstants.defaultPageSize,
+          ),
+        );
       },
     );
   }

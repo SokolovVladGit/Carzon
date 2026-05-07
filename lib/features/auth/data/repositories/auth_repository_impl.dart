@@ -22,7 +22,9 @@ class AuthRepositoryImpl implements AuthRepository {
       return Success(_remote.currentUser());
     } catch (e, st) {
       _logger.error('getCurrentUser failed', e, st);
-      return const FailureResult(UnknownFailure('Failed to load current user.'));
+      return const FailureResult(
+        UnknownFailure('Failed to load current user.'),
+      );
     }
   }
 
@@ -32,7 +34,10 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
-      final user = await _remote.signInWithPassword(email: email, password: password);
+      final user = await _remote.signInWithPassword(
+        email: email,
+        password: password,
+      );
       return Success(user);
     } on AuthException catch (e) {
       return FailureResult(AuthFailure(e.message));
@@ -50,7 +55,10 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
-      final user = await _remote.signUpWithPassword(email: email, password: password);
+      final user = await _remote.signUpWithPassword(
+        email: email,
+        password: password,
+      );
       return Success(user);
     } on AuthException catch (e) {
       return FailureResult(AuthFailure(e.message));

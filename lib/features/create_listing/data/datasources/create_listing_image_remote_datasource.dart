@@ -103,13 +103,16 @@ class SupabaseCreateListingImageRemoteDataSource
 
     final normalizedType = upload.contentType.toLowerCase().trim();
     final ext = _extByContentType[normalizedType] ?? 'jpg';
-    final storageContentType =
-        _extByContentType.containsKey(normalizedType) ? normalizedType : 'image/jpeg';
+    final storageContentType = _extByContentType.containsKey(normalizedType)
+        ? normalizedType
+        : 'image/jpeg';
 
     final path = _buildObjectPath(sellerId: upload.sellerId, ext: ext);
 
     try {
-      await _supabase.client.storage.from(_bucket).uploadBinary(
+      await _supabase.client.storage
+          .from(_bucket)
+          .uploadBinary(
             path,
             upload.bytes,
             fileOptions: sb.FileOptions(
@@ -122,8 +125,11 @@ class SupabaseCreateListingImageRemoteDataSource
       // RLS rejection surfaces as StorageException with a 4xx status.
       throw ServerException(e.message, cause: e, stackTrace: st);
     } catch (e, st) {
-      throw ServerException('Failed to upload cover image.',
-          cause: e, stackTrace: st);
+      throw ServerException(
+        'Failed to upload cover image.',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 
@@ -163,7 +169,8 @@ class SupabaseCreateListingImageRemoteDataSource
     required String ext,
   }) {
     final now = DateTime.now().toUtc();
-    final ts = '${_pad4(now.year)}${_pad2(now.month)}${_pad2(now.day)}'
+    final ts =
+        '${_pad4(now.year)}${_pad2(now.month)}${_pad2(now.day)}'
         '${_pad2(now.hour)}${_pad2(now.minute)}${_pad2(now.second)}'
         '${_pad3(now.millisecond)}';
     final rand = _randomHex(12);

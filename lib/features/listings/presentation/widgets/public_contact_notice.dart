@@ -18,23 +18,33 @@ class PublicContactNotice extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
-    final fg = theme.colorScheme.onSurfaceVariant;
+    final cs = theme.colorScheme;
+    final br = theme.brightness;
+    final noticeFill = Color.alphaBlend(
+      cs.outlineVariant.withValues(alpha: br == Brightness.light ? 0.07 : 0.12),
+      cs.surface,
+    );
+    final fg = cs.onSurfaceVariant;
     final message = l10n.publicContactNotice;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
+        color: noticeFill,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.26)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(CarzonIcons.info, size: 20, color: fg),
-          const SizedBox(width: 12),
+          Icon(CarzonIcons.info, size: 18, color: fg.withValues(alpha: 0.85)),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: theme.textTheme.bodySmall?.copyWith(color: fg),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: fg.withValues(alpha: 0.88),
+                height: 1.35,
+              ),
             ),
           ),
         ],

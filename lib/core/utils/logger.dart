@@ -15,7 +15,12 @@ class AppLogger {
     _log('ERROR', message, error: error, stackTrace: stackTrace);
   }
 
-  void _log(String level, String message, {Object? error, StackTrace? stackTrace}) {
+  void _log(
+    String level,
+    String message, {
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
     if (!kDebugMode && level == 'DEBUG') return;
     developer.log(
       message,

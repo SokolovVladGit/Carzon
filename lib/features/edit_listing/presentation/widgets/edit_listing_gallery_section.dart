@@ -45,7 +45,8 @@ class EditListingGallerySection extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = context.l10n;
 
-    final canMutateGallery = galleryMutationsEnabled && !submitting && !pickingImage;
+    final canMutateGallery =
+        galleryMutationsEnabled && !submitting && !pickingImage;
 
     Widget? heroChild;
     if (slots.isNotEmpty) {
@@ -90,7 +91,9 @@ class EditListingGallerySection extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap:
-                  (heroChild == null && canMutateGallery && galleryMutationsEnabled)
+                  (heroChild == null &&
+                      canMutateGallery &&
+                      galleryMutationsEnabled)
                   ? onAddPhoto
                   : null,
               child: heroChild != null
@@ -121,8 +124,7 @@ class EditListingGallerySection extends StatelessWidget {
                                     l10n.createListingMediaHeroEmptyHint,
                                     textAlign: TextAlign.center,
                                     style: theme.textTheme.bodyMedium?.copyWith(
-                                      color:
-                                          theme.colorScheme.onSurfaceVariant,
+                                      color: theme.colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ),
@@ -149,8 +151,10 @@ class EditListingGallerySection extends StatelessWidget {
 
   Widget _heroForSlot(ThemeData theme, EditListingGallerySlot slot) {
     return switch (slot) {
-      EditListingGalleryRemoteSlot(:final publicUrl) =>
-        _NetworkThumb(url: publicUrl, theme: theme),
+      EditListingGalleryRemoteSlot(:final publicUrl) => _NetworkThumb(
+        url: publicUrl,
+        theme: theme,
+      ),
       EditListingGalleryLocalSlot(:final upload) => Image.memory(
         upload.bytes,
         fit: BoxFit.cover,
@@ -246,8 +250,10 @@ class _SlotThumb extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget image;
     final content = switch (slot) {
-      EditListingGalleryRemoteSlot(:final publicUrl) =>
-        _NetworkThumb(url: publicUrl, theme: theme),
+      EditListingGalleryRemoteSlot(:final publicUrl) => _NetworkThumb(
+        url: publicUrl,
+        theme: theme,
+      ),
       EditListingGalleryLocalSlot(:final upload) => Image.memory(
         upload.bytes,
         fit: BoxFit.cover,
@@ -275,8 +281,7 @@ class _SlotThumb extends StatelessWidget {
                     top: 6,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color:
-                            theme.colorScheme.surface.withValues(alpha: .9),
+                        color: theme.colorScheme.surface.withValues(alpha: .9),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Padding(
@@ -306,8 +311,9 @@ class _SlotThumb extends StatelessWidget {
                       ),
                       padding: EdgeInsets.zero,
                       style: IconButton.styleFrom(
-                        backgroundColor:
-                            theme.colorScheme.surface.withValues(alpha: .88),
+                        backgroundColor: theme.colorScheme.surface.withValues(
+                          alpha: .88,
+                        ),
                       ),
                       onPressed: enabledControls ? onRemove : null,
                       icon: Icon(CarzonIcons.close, size: 18),
@@ -392,8 +398,7 @@ class _AddTile extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color:
-                      theme.colorScheme.outline.withValues(alpha: .45),
+                  color: theme.colorScheme.outline.withValues(alpha: .45),
                   width: 1.25,
                   strokeAlign: BorderSide.strokeAlignInside,
                 ),

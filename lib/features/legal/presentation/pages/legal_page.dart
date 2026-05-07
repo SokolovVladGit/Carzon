@@ -42,10 +42,7 @@ class _LegalBody extends StatelessWidget {
         const SizedBox(height: 16),
         _LegalSection(
           title: l10n.legalSectionAboutHeading,
-          paragraphs: [
-            l10n.legalSectionAboutP1,
-            l10n.legalSectionAboutP2,
-          ],
+          paragraphs: [l10n.legalSectionAboutP1, l10n.legalSectionAboutP2],
         ),
         _LegalSection(
           title: l10n.legalSectionListingsHeading,
@@ -65,23 +62,15 @@ class _LegalBody extends StatelessWidget {
         ),
         _LegalSection(
           title: l10n.legalSectionPhotosHeading,
-          paragraphs: [
-            l10n.legalSectionPhotosP1,
-            l10n.legalSectionPhotosP2,
-          ],
+          paragraphs: [l10n.legalSectionPhotosP1, l10n.legalSectionPhotosP2],
         ),
         _LegalSection(
           title: l10n.legalSectionAccountHeading,
-          paragraphs: [
-            l10n.legalSectionAccountP1,
-            l10n.legalSectionAccountP2,
-          ],
+          paragraphs: [l10n.legalSectionAccountP1, l10n.legalSectionAccountP2],
         ),
         _LegalSection(
           title: l10n.legalSectionFavoritesHeading,
-          paragraphs: [
-            l10n.legalSectionFavoritesP1,
-          ],
+          paragraphs: [l10n.legalSectionFavoritesP1],
         ),
         _LegalSection(
           title: l10n.legalSectionSafetyHeading,
@@ -116,10 +105,7 @@ class _LegalDisclaimer extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
-        l10n.legalDisclaimer,
-        style: theme.textTheme.bodySmall,
-      ),
+      child: Text(l10n.legalDisclaimer, style: theme.textTheme.bodySmall),
     );
   }
 }

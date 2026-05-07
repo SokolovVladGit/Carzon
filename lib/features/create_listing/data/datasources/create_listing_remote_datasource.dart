@@ -156,6 +156,8 @@ class SupabaseCreateListingRemoteDataSource
         params['p_storage_paths'] = null;
       }
 
+      params['p_body_type'] = input.bodyType?.name;
+
       final dynamic data = await _supabase.client.rpc(_rpcV2, params: params);
 
       Map<String, dynamic>? row;
