@@ -14,8 +14,11 @@ import '../../features/legal/presentation/pages/legal_page.dart';
 import '../../features/listings/presentation/pages/listing_details_page.dart';
 import '../../features/listings/presentation/pages/listings_page.dart';
 import '../../features/menu/presentation/pages/menu_page.dart';
+import '../../features/messaging/presentation/pages/conversation_thread_page.dart';
+import '../../features/messaging/presentation/pages/messages_inbox_page.dart';
 import '../../features/my_listings/presentation/pages/my_listings_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/sellers/presentation/pages/seller_profile_page.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -33,9 +36,16 @@ class AppRoutes {
   static const profile = '/profile';
   static const menu = '/menu';
   static const legal = '/legal';
+  static const messages = '/messages';
+  static const sellerProfile = '/sellers/:sellerId';
 
   static String listingDetailsPath(String id) => '/listings/$id';
   static String editListingPath(String id) => '/listings/$id/edit';
+
+  static String messagesThreadPath(String conversationId) =>
+      '/messages/$conversationId';
+
+  static String sellerProfilePath(String sellerId) => '/sellers/$sellerId';
 }
 
 /// Typed payload passed via `GoRouter` `extra` when navigating to
@@ -65,14 +75,8 @@ class AppRouter {
     return GoRouter(
       initialLocation: AppRoutes.listings,
       routes: [
-        GoRoute(
-          path: AppRoutes.signIn,
-          builder: (_, _) => const SignInPage(),
-        ),
-        GoRoute(
-          path: AppRoutes.signUp,
-          builder: (_, _) => const SignUpPage(),
-        ),
+        GoRoute(path: AppRoutes.signIn, builder: (_, _) => const SignInPage()),
+        GoRoute(path: AppRoutes.signUp, builder: (_, _) => const SignUpPage()),
         GoRoute(
           path: AppRoutes.forgotPassword,
           builder: (_, _) => const ForgotPasswordPage(),
@@ -84,6 +88,11 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.listings,
           builder: (_, _) => const ListingsPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.sellerProfile,
+          builder: (_, state) =>
+              SellerProfilePage(sellerId: state.pathParameters['sellerId']!),
         ),
         GoRoute(
           path: AppRoutes.listingDetails,
@@ -123,14 +132,18 @@ class AppRouter {
           path: AppRoutes.profile,
           builder: (_, _) => const ProfilePage(),
         ),
+        GoRoute(path: AppRoutes.menu, builder: (_, _) => const MenuPage()),
         GoRoute(
-          path: AppRoutes.menu,
-          builder: (_, _) => const MenuPage(),
+          path: AppRoutes.messages,
+          builder: (_, _) => const MessagesInboxPage(),
         ),
         GoRoute(
-          path: AppRoutes.legal,
-          builder: (_, _) => const LegalPage(),
+          path: '/messages/:conversationId',
+          builder: (_, state) => ConversationThreadPage(
+            conversationId: state.pathParameters['conversationId']!,
+          ),
         ),
+        GoRoute(path: AppRoutes.legal, builder: (_, _) => const LegalPage()),
       ],
       errorBuilder: (context, state) => Scaffold(
         body: Center(

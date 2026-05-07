@@ -1,0 +1,381 @@
+import 'package:bloc_test/bloc_test.dart';
+import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/core/utils/result.dart';
+import 'package:carzon/features/auth/domain/entities/auth_user.dart';
+import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
+import 'package:carzon/features/messaging/domain/entities/chat_message.dart';
+import 'package:carzon/features/messaging/domain/entities/conversation.dart';
+import 'package:carzon/features/messaging/domain/repositories/messaging_repository.dart';
+import 'package:carzon/features/messaging/presentation/pages/conversation_thread_page.dart';
+import 'package:carzon/features/messaging/presentation/pages/messages_inbox_page.dart';
+import 'package:carzon/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:mocktail/mocktail.dart';
+
+import '../../helpers/l10n_test_helpers.dart';
+
+class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
+
+class _MockMessagingRepository extends Mock implements MessagingRepository {}
+
+void main() {
+  late _MockAuthCubit authCubit;
+  late _MockMessagingRepository messagingRepo;
+  final l10n = ruStrings();
+
+  const user = AuthUser(id: 'u1', email: 'buyer@test.com');
+
+  setUp(() async {
+    await sl.reset();
+    authCubit = _MockAuthCubit();
+    messagingRepo = _MockMessagingRepository();
+    sl.registerLazySingleton<MessagingRepository>(() => messagingRepo);
+
+    when(() => authCubit.state).thenReturn(const AuthState.authenticated(user));
+    whenListen(
+      authCubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(user),
+    );
+  });
+
+  tearDown(() async {
+    await sl.reset();
+  });
+
+  final t0 = DateTime.utc(2026, 5, 2, 10);
+
+  Conversation sampleConversation({String listingTitle = 'Volkswagen Golf'}) =>
+      Conversation(
+        id: 'conv-1',
+        listingId: 'list-1',
+        buyerId: 'u1',
+        sellerId: 's1',
+        createdAt: t0,
+        updatedAt: t0,
+        lastMessageAt: t0,
+        lastMessagePreview: 'Last',
+        listingTitle: listingTitle,
+      );
+
+  Widget testedInbox(Widget child) {
+    return MaterialApp(
+      locale: const Locale('ru'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: BlocProvider<AuthCubit>.value(value: authCubit, child: child),
+    );
+  }
+
+  testWidgets('inbox empty state renders', (tester) async {
+    when(
+      () => messagingRepo.getConversations(),
+    ).thenAnswer((_) async => const Success<List<Conversation>>([]));
+
+    await tester.pumpWidget(testedInbox(const MessagesInboxPage()));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.messagingEmptyTitle), findsOneWidget);
+    expect(find.text(l10n.messagingEmptyBody), findsOneWidget);
+  });
+
+  testWidgets('inbox pull-to-refresh updates list without full-screen error', (
+    tester,
+  ) async {
+    var hits = 0;
+    final conv = sampleConversation();
+    final conv2 = Conversation(
+      id: 'conv-2',
+      listingId: 'list-2',
+      buyerId: 'u1',
+      sellerId: 's2',
+      createdAt: t0,
+      updatedAt: t0,
+      lastMessagePreview: 'New',
+      listingTitle: 'BMW 3',
+    );
+    when(() => messagingRepo.getConversations()).thenAnswer((_) async {
+      hits++;
+      if (hits == 1) {
+        return Success<List<Conversation>>([conv]);
+      }
+      return Success<List<Conversation>>([conv, conv2]);
+    });
+
+    await tester.pumpWidget(testedInbox(const MessagesInboxPage()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Volkswagen Golf'), findsOneWidget);
+    expect(hits, 1);
+
+    await tester.fling(
+      find.byType(Scrollable).first,
+      const Offset(0, 400),
+      1000,
+    );
+    await tester.pumpAndSettle();
+
+    expect(hits, greaterThanOrEqualTo(2));
+    expect(find.text('BMW 3'), findsOneWidget);
+  });
+
+  testWidgets('inbox conversation tap navigates to thread route', (
+    tester,
+  ) async {
+    final conv = sampleConversation();
+    when(
+      () => messagingRepo.getConversations(),
+    ).thenAnswer((_) async => Success<List<Conversation>>([conv]));
+
+    final router = GoRouter(
+      initialLocation: '/messages',
+      routes: [
+        GoRoute(
+          path: '/messages',
+          builder: (context, state) => BlocProvider<AuthCubit>.value(
+            value: authCubit,
+            child: const MessagesInboxPage(),
+          ),
+        ),
+        GoRoute(
+          path: '/messages/:conversationId',
+          builder: (_, state) => Scaffold(
+            body: Text('thread:${state.pathParameters['conversationId']}'),
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Volkswagen Golf'), findsOneWidget);
+    await tester.tap(find.text('Volkswagen Golf'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('thread:conv-1'), findsOneWidget);
+  });
+
+  testWidgets('thread empty state shows dedicated copy', (tester) async {
+    final conv = sampleConversation();
+    when(
+      () => messagingRepo.getConversation('conv-1'),
+    ).thenAnswer((_) async => Success(conv));
+    when(
+      () => messagingRepo.getMessages('conv-1'),
+    ).thenAnswer((_) async => const Success<List<ChatMessage>>([]));
+
+    await tester.pumpWidget(
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.messagingThreadEmptyBody), findsOneWidget);
+    expect(find.text(l10n.messagingQuickReplyHint), findsOneWidget);
+  });
+
+  testWidgets('thread quick reply inserts text and does not send', (
+    tester,
+  ) async {
+    final conv = sampleConversation();
+    when(
+      () => messagingRepo.getConversation('conv-1'),
+    ).thenAnswer((_) async => Success(conv));
+    when(
+      () => messagingRepo.getMessages('conv-1'),
+    ).thenAnswer((_) async => const Success<List<ChatMessage>>([]));
+
+    await tester.pumpWidget(
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.messagingQuickReplyStillAvailable));
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller?.text, l10n.messagingQuickReplyStillAvailable);
+    verifyNever(() => messagingRepo.sendMessage(any(), any()));
+  });
+
+  testWidgets('thread shows date separator for messages on different days', (
+    tester,
+  ) async {
+    final conv = sampleConversation();
+    when(
+      () => messagingRepo.getConversation('conv-1'),
+    ).thenAnswer((_) async => Success(conv));
+    when(() => messagingRepo.getMessages('conv-1')).thenAnswer(
+      (_) async => Success<List<ChatMessage>>([
+        ChatMessage(
+          id: 'd1',
+          conversationId: 'conv-1',
+          senderId: 's1',
+          body: 'day one',
+          createdAt: DateTime(2025, 5, 1, 12),
+        ),
+        ChatMessage(
+          id: 'd2',
+          conversationId: 'conv-1',
+          senderId: 's1',
+          body: 'day two',
+          createdAt: DateTime(2025, 5, 2, 12),
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+    );
+    await tester.pumpAndSettle();
+
+    final day1 = DateFormat('d MMMM y', 'ru').format(DateTime(2025, 5, 1));
+    final day2 = DateFormat('d MMMM y', 'ru').format(DateTime(2025, 5, 2));
+    expect(find.text(day1), findsOneWidget);
+    expect(find.text(day2), findsOneWidget);
+  });
+
+  testWidgets('thread long-press copies message and shows snackbar', (
+    tester,
+  ) async {
+    final conv = sampleConversation();
+    when(
+      () => messagingRepo.getConversation('conv-1'),
+    ).thenAnswer((_) async => Success(conv));
+    when(() => messagingRepo.getMessages('conv-1')).thenAnswer(
+      (_) async => Success<List<ChatMessage>>([
+        ChatMessage(
+          id: 'm-in',
+          conversationId: 'conv-1',
+          senderId: 's1',
+          body: 'from seller',
+          createdAt: t0,
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.text('from seller'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text(l10n.messagingMessageCopied), findsOneWidget);
+  });
+
+  testWidgets('thread pull-to-refresh calls repository again', (tester) async {
+    final conv = sampleConversation();
+    when(
+      () => messagingRepo.getConversation('conv-1'),
+    ).thenAnswer((_) async => Success(conv));
+    when(() => messagingRepo.getMessages('conv-1')).thenAnswer(
+      (_) async => Success<List<ChatMessage>>([
+        ChatMessage(
+          id: 'm-a',
+          conversationId: 'conv-1',
+          senderId: 's1',
+          body: 'first',
+          createdAt: t0,
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.fling(find.byType(ListView), const Offset(0, 400), 1000);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    verify(() => messagingRepo.getConversation('conv-1')).called(2);
+    verify(() => messagingRepo.getMessages('conv-1')).called(2);
+  });
+
+  testWidgets('thread renders bubbles and composer; send disabled when empty', (
+    tester,
+  ) async {
+    final conv = sampleConversation();
+    when(
+      () => messagingRepo.getConversation('conv-1'),
+    ).thenAnswer((_) async => Success(conv));
+    when(() => messagingRepo.getMessages('conv-1')).thenAnswer(
+      (_) async => Success<List<ChatMessage>>([
+        ChatMessage(
+          id: 'm-in',
+          conversationId: 'conv-1',
+          senderId: 's1',
+          body: 'from seller',
+          createdAt: t0,
+        ),
+        ChatMessage(
+          id: 'm-out',
+          conversationId: 'conv-1',
+          senderId: 'u1',
+          body: 'from buyer',
+          createdAt: t0.add(const Duration(minutes: 1)),
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('from seller'), findsOneWidget);
+    expect(find.text('from buyer'), findsOneWidget);
+
+    final sendButton = find.byType(FilledButton);
+    expect(tester.widget<FilledButton>(sendButton).onPressed, isNull);
+
+    await tester.enterText(find.byType(TextField), '   ');
+    await tester.pump();
+    expect(tester.widget<FilledButton>(sendButton).onPressed, isNull);
+
+    await tester.enterText(find.byType(TextField), 'hello');
+    await tester.pump();
+    expect(tester.widget<FilledButton>(sendButton).onPressed, isNotNull);
+  });
+
+  testWidgets('thread polls conversation on a timer while open', (
+    tester,
+  ) async {
+    final conv = sampleConversation();
+    var convHits = 0;
+    when(() => messagingRepo.getConversation('conv-1')).thenAnswer((_) async {
+      convHits++;
+      return Success(conv);
+    });
+    when(
+      () => messagingRepo.getMessages('conv-1'),
+    ).thenAnswer((_) async => const Success<List<ChatMessage>>([]));
+
+    await tester.pumpWidget(
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(convHits, greaterThanOrEqualTo(1));
+
+    await tester.pump(const Duration(seconds: 16));
+
+    expect(convHits, greaterThanOrEqualTo(2));
+  });
+}

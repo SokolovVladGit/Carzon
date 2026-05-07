@@ -21,9 +21,7 @@ MaterialApp localizedApp({
     locale: const Locale('ru'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    navigatorObservers: [
-      ?navigatorObserver,
-    ],
+    navigatorObservers: [?navigatorObserver],
     home: home,
   );
 }
@@ -32,10 +30,7 @@ MaterialApp localizedApp({
 /// localization setup installed. Wraps [widget] in [localizedApp],
 /// pumps it, and lets the initial frame settle so `AppLocalizations.of`
 /// is available when the test asserts against text.
-Future<void> pumpLocalizedWidget(
-  WidgetTester tester,
-  Widget widget,
-) async {
+Future<void> pumpLocalizedWidget(WidgetTester tester, Widget widget) async {
   await tester.pumpWidget(localizedApp(home: widget));
   await tester.pump();
 }

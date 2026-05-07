@@ -16,20 +16,20 @@ import 'package:mocktail/mocktail.dart';
 class _MockListingsRepository extends Mock implements ListingsRepository {}
 
 Listing _listing(String id, ListingStatus status) => Listing(
-      id: id,
-      title: 't-$id',
-      make: 'Make',
-      model: 'Model',
-      year: 2020,
-      priceEur: 10000,
-      mileageKm: 50000,
-      type: ListingType.sale,
-      city: 'Tiraspol',
-      marketRegion: MarketRegion.transnistria,
-      createdAt: DateTime.utc(2026, 1, 1),
-      status: status,
-      sellerId: 's1',
-    );
+  id: id,
+  title: 't-$id',
+  make: 'Make',
+  model: 'Model',
+  year: 2020,
+  priceEur: 10000,
+  mileageKm: 50000,
+  type: ListingType.sale,
+  city: 'Tiraspol',
+  marketRegion: MarketRegion.transnistria,
+  createdAt: DateTime.utc(2026, 1, 1),
+  status: status,
+  sellerId: 's1',
+);
 
 void main() {
   setUpAll(() {
@@ -46,10 +46,8 @@ void main() {
       _listing('l2', ListingStatus.active),
     ];
 
-    MyListingsState successState(List<Listing> items) => MyListingsState(
-          status: MyListingsStatus.success,
-          items: items,
-        );
+    MyListingsState successState(List<Listing> items) =>
+        MyListingsState(status: MyListingsStatus.success, items: items);
 
     setUp(() {
       repo = _MockListingsRepository();
@@ -65,17 +63,15 @@ void main() {
     blocTest<MyListingsCubit, MyListingsState>(
       'replaces only the target item and clears pending on success',
       setUp: () {
-        when(() => repo.updateStatus('l1', ListingStatus.sold)).thenAnswer(
-          (_) async => Success(_listing('l1', ListingStatus.sold)),
-        );
+        when(
+          () => repo.updateStatus('l1', ListingStatus.sold),
+        ).thenAnswer((_) async => Success(_listing('l1', ListingStatus.sold)));
       },
       build: () => cubit,
       seed: () => successState(seededItems),
       act: (c) => c.updateStatus('l1', ListingStatus.sold),
       expect: () => [
-        successState(seededItems).copyWith(
-          pendingStatusIds: const {'l1'},
-        ),
+        successState(seededItems).copyWith(pendingStatusIds: const {'l1'}),
         successState([
           _listing('l1', ListingStatus.sold),
           _listing('l2', ListingStatus.active),
@@ -88,8 +84,9 @@ void main() {
 
     test('exposes pendingStatusIds while the RPC is in flight', () async {
       final completer = Completer<Result<Listing>>();
-      when(() => repo.updateStatus('l1', ListingStatus.sold))
-          .thenAnswer((_) => completer.future);
+      when(
+        () => repo.updateStatus('l1', ListingStatus.sold),
+      ).thenAnswer((_) => completer.future);
       cubit.emit(successState(seededItems));
 
       final future = cubit.updateStatus('l1', ListingStatus.sold);
@@ -107,8 +104,9 @@ void main() {
 
     test('drops duplicate taps while the same listing is pending', () async {
       final completer = Completer<Result<Listing>>();
-      when(() => repo.updateStatus('l1', ListingStatus.sold))
-          .thenAnswer((_) => completer.future);
+      when(
+        () => repo.updateStatus('l1', ListingStatus.sold),
+      ).thenAnswer((_) => completer.future);
       cubit.emit(successState(seededItems));
 
       final first = cubit.updateStatus('l1', ListingStatus.sold);
@@ -158,9 +156,9 @@ void main() {
     );
 
     test('repeated identical failures emit distinct ActionError ids', () async {
-      when(() => repo.updateStatus('l1', ListingStatus.sold)).thenAnswer(
-        (_) async => const FailureResult(ServerFailure('boom')),
-      );
+      when(
+        () => repo.updateStatus('l1', ListingStatus.sold),
+      ).thenAnswer((_) async => const FailureResult(ServerFailure('boom')));
       cubit.emit(successState(seededItems));
 
       await cubit.updateStatus('l1', ListingStatus.sold);
@@ -181,9 +179,8 @@ void main() {
 
     test('maps invalid-status failures to the invalid-status kind', () async {
       when(() => repo.updateStatus('l1', ListingStatus.sold)).thenAnswer(
-        (_) async => const FailureResult(
-          ServerFailure('invalid listing status: foo'),
-        ),
+        (_) async =>
+            const FailureResult(ServerFailure('invalid listing status: foo')),
       );
       cubit.emit(successState(seededItems));
 
@@ -230,10 +227,8 @@ void main() {
       _listing('l2', ListingStatus.archived),
     ];
 
-    MyListingsState successState(List<Listing> items) => MyListingsState(
-          status: MyListingsStatus.success,
-          items: items,
-        );
+    MyListingsState successState(List<Listing> items) =>
+        MyListingsState(status: MyListingsStatus.success, items: items);
 
     setUp(() {
       repo = _MockListingsRepository();
@@ -249,19 +244,18 @@ void main() {
     blocTest<MyListingsCubit, MyListingsState>(
       'removes the deleted item from state on success',
       setUp: () {
-        when(() => repo.deleteListing('l1'))
-            .thenAnswer((_) async => const Success(null));
+        when(
+          () => repo.deleteListing('l1'),
+        ).thenAnswer((_) async => const Success(null));
       },
       build: () => cubit,
       seed: () => successState(seededItems),
       act: (c) => c.deleteListing('l1'),
       expect: () => [
-        successState(seededItems).copyWith(
-          pendingDeleteIds: const {'l1'},
-        ),
-        successState([_listing('l2', ListingStatus.archived)]).copyWith(
-          pendingDeleteIds: const <String>{},
-        ),
+        successState(seededItems).copyWith(pendingDeleteIds: const {'l1'}),
+        successState([
+          _listing('l2', ListingStatus.archived),
+        ]).copyWith(pendingDeleteIds: const <String>{}),
       ],
       verify: (_) {
         verify(() => repo.deleteListing('l1')).called(1);
@@ -270,8 +264,7 @@ void main() {
 
     test('exposes pendingDeleteIds while the RPC is in flight', () async {
       final completer = Completer<Result<void>>();
-      when(() => repo.deleteListing('l1'))
-          .thenAnswer((_) => completer.future);
+      when(() => repo.deleteListing('l1')).thenAnswer((_) => completer.future);
       cubit.emit(successState(seededItems));
 
       final future = cubit.deleteListing('l1');
@@ -286,22 +279,25 @@ void main() {
       expect(cubit.state.items.map((e) => e.id), ['l2']);
     });
 
-    test('drops duplicate taps while the same listing is being deleted',
-        () async {
-      final completer = Completer<Result<void>>();
-      when(() => repo.deleteListing('l1'))
-          .thenAnswer((_) => completer.future);
-      cubit.emit(successState(seededItems));
+    test(
+      'drops duplicate taps while the same listing is being deleted',
+      () async {
+        final completer = Completer<Result<void>>();
+        when(
+          () => repo.deleteListing('l1'),
+        ).thenAnswer((_) => completer.future);
+        cubit.emit(successState(seededItems));
 
-      final first = cubit.deleteListing('l1');
-      await Future<void>.delayed(Duration.zero);
-      await cubit.deleteListing('l1');
+        final first = cubit.deleteListing('l1');
+        await Future<void>.delayed(Duration.zero);
+        await cubit.deleteListing('l1');
 
-      completer.complete(const Success(null));
-      await first;
+        completer.complete(const Success(null));
+        await first;
 
-      verify(() => repo.deleteListing('l1')).called(1);
-    });
+        verify(() => repo.deleteListing('l1')).called(1);
+      },
+    );
 
     test('is a no-op when listing id is not in the current list', () async {
       cubit.emit(successState(seededItems));
@@ -336,20 +332,22 @@ void main() {
       },
     );
 
-    test('maps unknown delete failures to the generic delete failure kind',
-        () async {
-      when(() => repo.deleteListing('l1')).thenAnswer(
-        (_) async => const FailureResult(UnknownFailure('weird transport')),
-      );
-      cubit.emit(successState(seededItems));
+    test(
+      'maps unknown delete failures to the generic delete failure kind',
+      () async {
+        when(() => repo.deleteListing('l1')).thenAnswer(
+          (_) async => const FailureResult(UnknownFailure('weird transport')),
+        );
+        cubit.emit(successState(seededItems));
 
-      await cubit.deleteListing('l1');
-      expect(
-        cubit.state.lastActionError!.kind,
-        MyListingActionFailureKind.deleteGeneric,
-      );
-      expect(cubit.state.items, seededItems);
-    });
+        await cubit.deleteListing('l1');
+        expect(
+          cubit.state.lastActionError!.kind,
+          MyListingActionFailureKind.deleteGeneric,
+        );
+        expect(cubit.state.items, seededItems);
+      },
+    );
   });
 
   group('MyListingsCubit.load', () {
@@ -381,8 +379,11 @@ void main() {
         expect(captured, hasLength(1));
         final q = captured.single as ListingsQuery;
         expect(q.sellerId, 's1');
-        expect(q.status, isNull,
-            reason: 'My Listings must NOT force status = active');
+        expect(
+          q.status,
+          isNull,
+          reason: 'My Listings must NOT force status = active',
+        );
       },
     );
   });

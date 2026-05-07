@@ -1,66 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-/// UI-only body-style category descriptor used by [CategoryChipsRow].
-///
-/// Kept intentionally decoupled from the domain layer: the listing
-/// entity has no `category` / `bodyType` field yet, so this struct
-/// lives in the presentation layer only. When the backend dimension
-/// is introduced, [id] will map 1:1 onto the future DB enum value.
+/// Body-type chip descriptor for the home feed row ([CategoryChipsRow]).
 @immutable
-class UiCategory {
-  const UiCategory({
+class FeedBodyChipDescriptor {
+  const FeedBodyChipDescriptor({
     required this.id,
     required this.label,
-    required this.assetPath,
+    required this.icon,
+    this.svgAssetPath,
   });
 
   final String id;
   final String label;
+  final IconData icon;
 
-  /// SVG asset path under `assets/categories/svg/`. Resolved via
-  /// [SvgPicture.asset]; missing assets render as an empty tile and
-  /// are logged by `flutter_svg` without crashing the app.
-  final String assetPath;
+  /// When set, rendered with [SvgPicture.asset] instead of [icon].
+  final String? svgAssetPath;
 }
 
-/// Default seed list used by the feed. Hard-coded on purpose: this is
-/// the UI pass only and the set is small and stable. Once a `body_type`
-/// column is added to `listings`, this list should be replaced by a
-/// derived source keyed on that enum.
-const List<UiCategory> defaultUiCategories = [
-  UiCategory(
-    id: 'all',
-    label: 'Все',
-    assetPath: 'assets/categories/svg/all.svg',
-  ),
-  UiCategory(
-    id: 'sedan',
-    label: 'Седан',
-    assetPath: 'assets/categories/svg/sedan.svg',
-  ),
-  UiCategory(
-    id: 'suv',
-    label: 'SUV',
-    assetPath: 'assets/categories/svg/suv.svg',
-  ),
-  UiCategory(
-    id: 'hatch',
-    label: 'Хэтчбек',
-    assetPath: 'assets/categories/svg/hatch.svg',
-  ),
-  UiCategory(
-    id: 'wagon',
-    label: 'Универсал',
-    assetPath: 'assets/categories/svg/wagon.svg',
-  ),
-];
-
-/// Pill-shaped selectable chip: icon on the left, label on the right.
-///
-/// Intentionally does **not** wrap the icon in its own surface — the
-/// icon sits directly on the chip background so the silhouette reads
-/// as a single flat pill, matching the marketplace aesthetic.
+/// Feed body chip: premium monochrome tile with SVG or fallback icon.
 class CategoryChip extends StatelessWidget {
   const CategoryChip({
     super.key,
@@ -68,19 +27,41 @@ class CategoryChip extends StatelessWidget {
     required this.icon,
     required this.isSelected,
     required this.onTap,
+    this.svgAssetPath,
   });
 
   final String label;
 
-  /// Icon widget. Typically an [SvgPicture.asset]; any widget works
-  /// as long as it respects the ambient [IconTheme] color so the
-  /// icon recolors with the chip state.
-  final Widget icon;
-
+  /// Shown when [svgAssetPath] is null or fails to decode.
+  final IconData icon;
   final bool isSelected;
   final VoidCallback onTap;
+  final String? svgAssetPath;
 
-  static const double _iconSize = 20;
+  /// Dominant silhouette for at-a-glance recognition on phones.
+  static const double _iconSize = 29;
+
+  /// Slightly wide for long Cyrillic labels (e.g. «Универсал», «Минивэн»).
+  static const double _chipWidth = 84;
+  static const double _chipHeight = 58;
+  static const double _cornerRadius = 16;
+
+  List<BoxShadow> _lightElevation(ColorScheme scheme) {
+    return [
+      BoxShadow(
+        color: scheme.shadow.withValues(alpha: isSelected ? 0.046 : 0.036),
+        blurRadius: isSelected ? 20 : 17,
+        spreadRadius: 0,
+        offset: Offset(0, isSelected ? 6 : 5),
+      ),
+      BoxShadow(
+        color: scheme.shadow.withValues(alpha: isSelected ? 0.092 : 0.068),
+        blurRadius: isSelected ? 9 : 7,
+        spreadRadius: 0,
+        offset: const Offset(0, 2),
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,64 +69,90 @@ class CategoryChip extends StatelessWidget {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // Pass 1.9 aligns the chip with the brand-tile / search-pill
-    // language used throughout the feed header:
-    //   * inactive chip sits on a close-to-white / lifted dark
-    //     surface with a hairline outline, so it reads as a clean
-    //     control rather than a grey blob;
-    //   * selected chip earns a whisper primary wash + a tinted
-    //     hairline outline. No strong blue fill, no loud pill.
     final Color bg = isSelected
-        ? (isDark
-            ? scheme.primary.withValues(alpha: 0.14)
-            : Color.alphaBlend(
-                scheme.primary.withValues(alpha: 0.05),
-                Colors.white,
-              ))
-        : (isDark ? scheme.surfaceContainerHighest : Colors.white);
-    final Color fg = isSelected
-        ? scheme.primary
-        : scheme.onSurfaceVariant.withValues(alpha: 0.85);
-    final Color borderColor = isSelected
-        ? scheme.primary.withValues(alpha: isDark ? 0.5 : 0.32)
-        : (isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : scheme.outlineVariant.withValues(alpha: 0.45));
+        ? (isDark ? scheme.surfaceContainer : scheme.surfaceContainerLow)
+        : (isDark ? scheme.surfaceContainerLow : scheme.surfaceContainerLowest);
 
-    return Material(
-      color: bg,
-      shape: StadiumBorder(side: BorderSide(color: borderColor)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Semantics(
-          button: true,
-          selected: isSelected,
-          label: label,
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: _iconSize,
-                  height: _iconSize,
-                  child: IconTheme.merge(
-                    data: IconThemeData(color: fg, size: _iconSize),
-                    child: icon,
-                  ),
+    final Color fg = isSelected
+        ? scheme.onSurface.withValues(alpha: isDark ? 0.96 : 0.88)
+        : Color.alphaBlend(
+            scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.88 : 0.82),
+            isDark ? scheme.surfaceContainerLow : scheme.surfaceContainerLowest,
+          );
+
+    final Color borderColor = isSelected
+        ? scheme.onSurface.withValues(alpha: isDark ? 0.32 : 0.24)
+        : scheme.outline.withValues(alpha: isDark ? 0.20 : 0.15);
+
+    final borderWidth = isSelected ? 1.15 : 1.0;
+    final radius = BorderRadius.circular(_cornerRadius);
+
+    final List<BoxShadow> elevationShadow = isDark
+        ? const []
+        : _lightElevation(scheme);
+
+    final inner = ExcludeSemantics(
+      child: SizedBox(
+        width: _chipWidth,
+        height: _chipHeight,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(5, 5, 5, 5),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: _iconSize,
+                height: _iconSize,
+                child: _chipGlyph(
+                  assetPath: svgAssetPath,
+                  fallbackIcon: icon,
+                  fg: fg,
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.w600,
-                    height: 1.0,
-                  ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: fg,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  height: 1.05,
+                  letterSpacing: 0.06,
                 ),
-              ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          boxShadow: elevationShadow,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          clipBehavior: Clip.antiAlias,
+          shape: RoundedRectangleBorder(borderRadius: radius),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: radius,
+            splashColor: scheme.onSurface.withValues(alpha: 0.048),
+            highlightColor: scheme.onSurface.withValues(alpha: 0.026),
+            child: Ink(
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: radius,
+                border: Border.all(color: borderColor, width: borderWidth),
+              ),
+              child: inner,
             ),
           ),
         ),
@@ -154,12 +161,42 @@ class CategoryChip extends StatelessWidget {
   }
 }
 
-/// Horizontal scrollable row of [CategoryChip]s.
-///
-/// The row is purely presentational: it renders whatever list of
-/// [UiCategory] it is given and reports selection changes via
-/// [onSelected]. State ownership stays with the caller (the feed
-/// page) so selection survives header rebuilds.
+/// Faces silhouette leftward like other feed body icons (see `sedan`/`pickup` SVG source).
+bool _mirrorCategorySvgHorizontally(String? assetPath) {
+  if (assetPath == null) return false;
+  return assetPath.endsWith('sedan.svg') || assetPath.endsWith('pickup.svg');
+}
+
+Widget _chipGlyph({
+  required String? assetPath,
+  required IconData fallbackIcon,
+  required Color fg,
+}) {
+  const size = CategoryChip._iconSize;
+  final path = assetPath;
+  final mirror = _mirrorCategorySvgHorizontally(path);
+  Widget glyph;
+  if (path != null) {
+    glyph = SvgPicture.asset(
+      path,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      colorFilter: ColorFilter.mode(fg, BlendMode.srcIn),
+      errorBuilder: (context, error, _) =>
+          Icon(fallbackIcon, color: fg, size: size),
+    );
+  } else {
+    glyph = Icon(fallbackIcon, color: fg, size: size);
+  }
+
+  if (mirror) {
+    return Transform.flip(flipX: true, child: glyph);
+  }
+  return glyph;
+}
+
+/// Horizontal scrollable row of body-type [CategoryChip]s.
 class CategoryChipsRow extends StatelessWidget {
   const CategoryChipsRow({
     super.key,
@@ -168,7 +205,7 @@ class CategoryChipsRow extends StatelessWidget {
     required this.onSelected,
   });
 
-  final List<UiCategory> categories;
+  final List<FeedBodyChipDescriptor> categories;
   final String selectedId;
   final ValueChanged<String> onSelected;
 
@@ -176,61 +213,22 @@ class CategoryChipsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      // The outer feed already provides a 20 px editorial gutter, so
-      // horizontal padding here is 0 to avoid a double-indent; the
-      // wrapping context is responsible for positioning the row.
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      // Matches [_BrandFilterRow] horizontal gutter (20) and vertical air (8).
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           for (var i = 0; i < categories.length; i++) ...[
             if (i > 0) const SizedBox(width: 8),
-            _CategoryChipFromUi(
-              category: categories[i],
+            CategoryChip(
+              label: categories[i].label,
               isSelected: categories[i].id == selectedId,
               onTap: () => onSelected(categories[i].id),
+              icon: categories[i].icon,
+              svgAssetPath: categories[i].svgAssetPath,
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// Adapter that renders a [UiCategory] as a [CategoryChip]. Kept
-/// private because callers work in [UiCategory] terms, not in raw
-/// asset paths.
-class _CategoryChipFromUi extends StatelessWidget {
-  const _CategoryChipFromUi({
-    required this.category,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final UiCategory category;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return CategoryChip(
-      label: category.label,
-      isSelected: isSelected,
-      onTap: onTap,
-      // `colorFilter` is driven by the ambient IconTheme color set
-      // inside `CategoryChip`, so the SVG recolors with the chip
-      // state without the asset needing to be themed.
-      icon: Builder(
-        builder: (context) {
-          final color = IconTheme.of(context).color ??
-              Theme.of(context).colorScheme.onSurfaceVariant;
-          return SvgPicture.asset(
-            category.assetPath,
-            fit: BoxFit.contain,
-            colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
-            placeholderBuilder: (_) => const SizedBox.shrink(),
-          );
-        },
       ),
     );
   }

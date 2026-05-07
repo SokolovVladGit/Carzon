@@ -60,9 +60,9 @@ void main() {
         priceCurrency: ListingCurrency.eur,
       ),
     );
-    registerFallbackValue(
-      <EditListingGallerySlot>[EditListingGalleryRemoteSlot.legacyCover('u')],
-    );
+    registerFallbackValue(<EditListingGallerySlot>[
+      EditListingGalleryRemoteSlot.legacyCover('u'),
+    ]);
   });
 
   setUp(() async {
@@ -79,58 +79,68 @@ void main() {
   final ru = ruStrings();
 
   Widget app() => MaterialApp(
-        locale: const Locale('ru'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: const EditListingPage(listingId: 'l1'),
-      );
+    locale: const Locale('ru'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: const EditListingPage(listingId: 'l1'),
+  );
 
   void stub(EditListingState s) {
     when(() => cubit.state).thenReturn(s);
-    whenListen(
-      cubit,
-      const Stream<EditListingState>.empty(),
-      initialState: s,
-    );
+    whenListen(cubit, const Stream<EditListingState>.empty(), initialState: s);
   }
 
-  testWidgets(
-    'renders gallery section keys, currency selector, brand, year, '
-    'contact notice and save affordance',
-    (tester) async {
-      final listing = _listing(coverUrl: 'https://cdn.example.com/c.jpg');
-      final img = ListingImage(
-        id: 'i0',
-        listingId: 'l1',
-        publicUrl: 'https://cdn.example.com/c.jpg',
-        position: 0,
-        createdAt: DateTime.utc(2026, 5, 1),
-      );
-      final initial = buildInitialEditListingGallerySlots(
-        listing: listing,
-        prefetchedGallery: [img],
+  testWidgets('renders gallery section keys, currency selector, brand, year, '
+      'contact notice and save affordance', (tester) async {
+    final listing = _listing(coverUrl: 'https://cdn.example.com/c.jpg');
+    final img = ListingImage(
+      id: 'i0',
+      listingId: 'l1',
+      publicUrl: 'https://cdn.example.com/c.jpg',
+      position: 0,
+      createdAt: DateTime.utc(2026, 5, 1),
+    );
+    final initial = buildInitialEditListingGallerySlots(
+      listing: listing,
+      prefetchedGallery: [img],
+      galleryLoadSucceeded: true,
+    );
+    stub(
+      EditListingState.ready(
+        listing,
+        listingGalleryImages: [img],
         galleryLoadSucceeded: true,
-      );
-      stub(
-        EditListingState.ready(
-          listing,
-          listingGalleryImages: [img],
-          galleryLoadSucceeded: true,
-          initialGallerySlots: initial,
-        ),
-      );
+        initialGallerySlots: initial,
+      ),
+    );
 
-      await tester.pumpWidget(app());
-      await tester.pump();
+    await tester.pumpWidget(app());
+    await tester.pump();
 
-      expect(find.byKey(EditListingGallerySection.widgetTestKey), findsOneWidget);
-      expect(find.byKey(const ValueKey('edit_listing_currency_selector')), findsOneWidget);
-      expect(find.byKey(const ValueKey('edit_listing_brand_field')), findsOneWidget);
-      expect(find.byKey(const ValueKey('edit_listing_year_field')), findsOneWidget);
-      expect(find.byType(PublicContactNotice), findsOneWidget);
-      expect(find.byKey(const ValueKey('edit_listing_save_button')), findsOneWidget);
-    },
-  );
+    expect(find.byKey(EditListingGallerySection.widgetTestKey), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('edit_listing_currency_selector')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('edit_listing_brand_field')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('edit_listing_year_field')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('edit_listing_body_type_field')),
+      findsOneWidget,
+    );
+    expect(find.text(ru.listingBodyTypeSectionSubtitle), findsOneWidget);
+    expect(find.byType(PublicContactNotice), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('edit_listing_save_button')),
+      findsOneWidget,
+    );
+  });
 
   testWidgets('save delegates to cubit.save with named parameters', (
     tester,
@@ -154,7 +164,9 @@ void main() {
     await tester.pumpWidget(app());
     await tester.pump();
 
-    await tester.ensureVisible(find.byKey(const ValueKey('edit_listing_save_button')));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('edit_listing_save_button')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('edit_listing_save_button')));
     await tester.pump();
@@ -167,7 +179,9 @@ void main() {
     ).called(1);
   });
 
-  testWidgets('failed gallery load shows read-only hint string', (tester) async {
+  testWidgets('failed gallery load shows read-only hint string', (
+    tester,
+  ) async {
     final listing = _listing(coverUrl: 'https://cdn.example.com/c.jpg');
     stub(
       EditListingState.ready(

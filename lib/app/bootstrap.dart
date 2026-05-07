@@ -35,22 +35,27 @@ Future<void> bootstrap() async {
         await dotenv.load(fileName: '.env');
       } catch (e, st) {
         logger.error('Failed to load .env', e, st);
-        runApp(const StartupErrorApp(
-          title: 'Configuration error',
-          message: 'Could not load .env file. '
-              'Copy .env.example to .env and fill in the required values.',
-        ));
+        runApp(
+          const StartupErrorApp(
+            title: 'Configuration error',
+            message:
+                'Could not load .env file. '
+                'Copy .env.example to .env and fill in the required values.',
+          ),
+        );
         return;
       }
 
       final missing = Env.missingKeys();
       if (missing.isNotEmpty) {
         logger.error('Missing required env vars: $missing');
-        runApp(StartupErrorApp(
-          title: 'Configuration error',
-          message: 'Missing required environment variables:',
-          details: missing,
-        ));
+        runApp(
+          StartupErrorApp(
+            title: 'Configuration error',
+            message: 'Missing required environment variables:',
+            details: missing,
+          ),
+        );
         return;
       }
 
@@ -59,12 +64,15 @@ Future<void> bootstrap() async {
         supabase = await SupabaseService.initialize();
       } catch (e, st) {
         logger.error('Supabase initialization failed', e, st);
-        runApp(StartupErrorApp(
-          title: 'Backend unavailable',
-          message: 'Failed to initialize Supabase. '
-              'Verify SUPABASE_URL and SUPABASE_ANON_KEY in .env.',
-          details: [e.toString()],
-        ));
+        runApp(
+          StartupErrorApp(
+            title: 'Backend unavailable',
+            message:
+                'Failed to initialize Supabase. '
+                'Verify SUPABASE_URL and SUPABASE_ANON_KEY in .env.',
+            details: [e.toString()],
+          ),
+        );
         return;
       }
 

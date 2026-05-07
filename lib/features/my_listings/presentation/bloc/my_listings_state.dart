@@ -65,9 +65,9 @@ class MyListingsState extends Equatable {
   const MyListingsState.initial() : this();
   const MyListingsState.loading() : this(status: MyListingsStatus.loading);
   const MyListingsState.success(List<Listing> items)
-      : this(status: MyListingsStatus.success, items: items);
+    : this(status: MyListingsStatus.success, items: items);
   const MyListingsState.failure()
-      : this(status: MyListingsStatus.failure, loadFailure: true);
+    : this(status: MyListingsStatus.failure, loadFailure: true);
 
   MyListingsState copyWith({
     MyListingsStatus? status,
@@ -84,20 +84,21 @@ class MyListingsState extends Equatable {
       loadFailure: loadFailure ?? this.loadFailure,
       pendingStatusIds: pendingStatusIds ?? this.pendingStatusIds,
       pendingDeleteIds: pendingDeleteIds ?? this.pendingDeleteIds,
-      lastActionError:
-          clearLastActionError ? null : (lastActionError ?? this.lastActionError),
+      lastActionError: clearLastActionError
+          ? null
+          : (lastActionError ?? this.lastActionError),
     );
   }
 
   @override
   List<Object?> get props => [
-        status,
-        items,
-        loadFailure,
-        pendingStatusIds,
-        pendingDeleteIds,
-        lastActionError,
-      ];
+    status,
+    items,
+    loadFailure,
+    pendingStatusIds,
+    pendingDeleteIds,
+    lastActionError,
+  ];
 }
 
 /// Value-type wrapper so repeated identical error kinds still trigger

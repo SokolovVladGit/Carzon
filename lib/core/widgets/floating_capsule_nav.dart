@@ -212,10 +212,10 @@ class _CapsuleNavItemState extends State<_CapsuleNavItem> {
     // behind it. Inactive icons stay readable (not ghosted) but
     // clearly secondary, at ~0.55 onSurfaceVariant opacity.
     final activeIconColor = scheme.primary;
-    final inactiveIconColor =
-        scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.62 : 0.55);
-    final iconColor =
-        widget.selected ? activeIconColor : inactiveIconColor;
+    final inactiveIconColor = scheme.onSurfaceVariant.withValues(
+      alpha: isDark ? 0.62 : 0.55,
+    );
+    final iconColor = widget.selected ? activeIconColor : inactiveIconColor;
 
     final pillColor = widget.selected
         ? scheme.primary.withValues(alpha: isDark ? 0.18 : 0.10)

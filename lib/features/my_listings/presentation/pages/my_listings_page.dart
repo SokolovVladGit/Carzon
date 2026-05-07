@@ -25,13 +25,14 @@ class MyListingsPage extends StatelessWidget {
     final l10n = context.l10n;
     return TopLevelScaffold(
       destination: TopLevelDestination.menu,
-      appBar: AppBar(
-        title: Text(l10n.myListingsTitle),
-      ),
+      appBar: AppBar(title: Text(l10n.myListingsTitle)),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
-          if (authState.status != AuthStatus.authenticated || authState.user == null) {
-            return _SignInRequired(onSignIn: () => context.go(AppRoutes.signIn));
+          if (authState.status != AuthStatus.authenticated ||
+              authState.user == null) {
+            return _SignInRequired(
+              onSignIn: () => context.go(AppRoutes.signIn),
+            );
           }
           return BlocProvider(
             create: (_) => sl<MyListingsCubit>()..load(authState.user!.id),
@@ -58,10 +59,7 @@ class _SignInRequired extends StatelessWidget {
           children: [
             const Icon(Icons.directions_car_filled_outlined, size: 48),
             const SizedBox(height: 12),
-            Text(
-              l10n.myListingsSignInRequired,
-              textAlign: TextAlign.center,
-            ),
+            Text(l10n.myListingsSignInRequired, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             FilledButton(onPressed: onSignIn, child: Text(l10n.commonSignIn)),
           ],
@@ -121,7 +119,8 @@ class _MyListingsView extends StatelessWidget {
                   separatorBuilder: (_, _) => const SizedBox(height: 28),
                   itemBuilder: (context, index) {
                     final item = state.items[index];
-                    final pending = state.pendingStatusIds.contains(item.id) ||
+                    final pending =
+                        state.pendingStatusIds.contains(item.id) ||
                         state.pendingDeleteIds.contains(item.id);
                     return MyListingTile(
                       listing: item,

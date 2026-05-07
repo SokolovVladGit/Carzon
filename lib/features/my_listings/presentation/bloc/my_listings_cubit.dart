@@ -15,10 +15,10 @@ class MyListingsCubit extends Cubit<MyListingsState> {
     required GetListings getListings,
     required SetListingStatus setListingStatus,
     required DeleteListing deleteListing,
-  })  : _getListings = getListings,
-        _setListingStatus = setListingStatus,
-        _deleteListing = deleteListing,
-        super(const MyListingsState.initial());
+  }) : _getListings = getListings,
+       _setListingStatus = setListingStatus,
+       _deleteListing = deleteListing,
+       super(const MyListingsState.initial());
 
   final GetListings _getListings;
   final SetListingStatus _setListingStatus;
@@ -46,13 +46,14 @@ class MyListingsCubit extends Cubit<MyListingsState> {
   /// display via snackbar.
   Future<void> updateStatus(String listingId, ListingStatus newStatus) async {
     if (state.pendingStatusIds.contains(listingId)) return;
-    final existing =
-        state.items.any((l) => l.id == listingId && l.status == newStatus);
+    final existing = state.items.any(
+      (l) => l.id == listingId && l.status == newStatus,
+    );
     if (existing) return;
 
-    emit(state.copyWith(
-      pendingStatusIds: {...state.pendingStatusIds, listingId},
-    ));
+    emit(
+      state.copyWith(pendingStatusIds: {...state.pendingStatusIds, listingId}),
+    );
 
     final result = await _setListingStatus(listingId, newStatus);
     final nextPending = {...state.pendingStatusIds}..remove(listingId);
@@ -60,23 +61,24 @@ class MyListingsCubit extends Cubit<MyListingsState> {
     result.fold(
       (failure) {
         _errorSeq += 1;
-        emit(state.copyWith(
-          pendingStatusIds: nextPending,
-          lastActionError: ActionError(
-            id: _errorSeq,
-            kind: _statusFailureKind(failure),
+        emit(
+          state.copyWith(
+            pendingStatusIds: nextPending,
+            lastActionError: ActionError(
+              id: _errorSeq,
+              kind: _statusFailureKind(failure),
+            ),
           ),
-        ));
+        );
       },
       (updated) {
         final updatedItems = [
           for (final item in state.items)
             if (item.id == listingId) updated else item,
         ];
-        emit(state.copyWith(
-          items: updatedItems,
-          pendingStatusIds: nextPending,
-        ));
+        emit(
+          state.copyWith(items: updatedItems, pendingStatusIds: nextPending),
+        );
       },
     );
   }
@@ -90,9 +92,9 @@ class MyListingsCubit extends Cubit<MyListingsState> {
     if (state.pendingDeleteIds.contains(listingId)) return;
     if (!state.items.any((l) => l.id == listingId)) return;
 
-    emit(state.copyWith(
-      pendingDeleteIds: {...state.pendingDeleteIds, listingId},
-    ));
+    emit(
+      state.copyWith(pendingDeleteIds: {...state.pendingDeleteIds, listingId}),
+    );
 
     final result = await _deleteListing(listingId);
     final nextPending = {...state.pendingDeleteIds}..remove(listingId);
@@ -100,23 +102,24 @@ class MyListingsCubit extends Cubit<MyListingsState> {
     result.fold(
       (failure) {
         _errorSeq += 1;
-        emit(state.copyWith(
-          pendingDeleteIds: nextPending,
-          lastActionError: ActionError(
-            id: _errorSeq,
-            kind: _deleteFailureKind(failure),
+        emit(
+          state.copyWith(
+            pendingDeleteIds: nextPending,
+            lastActionError: ActionError(
+              id: _errorSeq,
+              kind: _deleteFailureKind(failure),
+            ),
           ),
-        ));
+        );
       },
       (_) {
         final updatedItems = [
           for (final item in state.items)
             if (item.id != listingId) item,
         ];
-        emit(state.copyWith(
-          items: updatedItems,
-          pendingDeleteIds: nextPending,
-        ));
+        emit(
+          state.copyWith(items: updatedItems, pendingDeleteIds: nextPending),
+        );
       },
     );
   }

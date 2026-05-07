@@ -28,7 +28,9 @@ void main() {
     test('defines the expected RPC signature', () {
       expect(
         sql,
-        contains('create or replace function public.update_listing_cover_image('),
+        contains(
+          'create or replace function public.update_listing_cover_image(',
+        ),
       );
       expect(sql, contains('p_listing_id       uuid'));
       expect(sql, contains('p_cover_image_url  text'));
@@ -37,10 +39,7 @@ void main() {
 
     test('is SECURITY DEFINER with a pinned search_path', () {
       expect(sql.toLowerCase(), contains('security definer'));
-      expect(
-        sql.toLowerCase(),
-        contains('set search_path = public, pg_temp'),
-      );
+      expect(sql.toLowerCase(), contains('set search_path = public, pg_temp'));
     });
 
     test('requires authentication before doing any work', () {
@@ -94,19 +93,24 @@ void main() {
       );
     });
 
-    test('revokes execute from public/anon and grants only to authenticated',
-        () {
+    test('revokes execute from public/anon and grants only to authenticated', () {
       expect(
         sql,
-        contains('revoke all on function public.update_listing_cover_image(uuid, text) from public'),
+        contains(
+          'revoke all on function public.update_listing_cover_image(uuid, text) from public',
+        ),
       );
       expect(
         sql,
-        contains('revoke all on function public.update_listing_cover_image(uuid, text) from anon'),
+        contains(
+          'revoke all on function public.update_listing_cover_image(uuid, text) from anon',
+        ),
       );
       expect(
         sql,
-        contains('grant execute on function public.update_listing_cover_image(uuid, text) to authenticated'),
+        contains(
+          'grant execute on function public.update_listing_cover_image(uuid, text) to authenticated',
+        ),
       );
     });
 

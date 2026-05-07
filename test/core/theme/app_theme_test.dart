@@ -21,7 +21,10 @@ void main() {
     test('light and dark use the same seed-derived primary family', () {
       final light = AppTheme.light();
       final dark = AppTheme.dark();
-      expect(light.colorScheme.primary, isNot(equals(dark.colorScheme.primary)));
+      expect(
+        light.colorScheme.primary,
+        isNot(equals(dark.colorScheme.primary)),
+      );
       expect(light.colorScheme.primary.a, greaterThan(0));
       expect(dark.colorScheme.primary.a, greaterThan(0));
     });

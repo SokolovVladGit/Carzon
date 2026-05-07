@@ -45,8 +45,7 @@ void main() {
       );
     });
 
-    test('accepts URIs carrying Supabase auth tokens in query or fragment',
-        () {
+    test('accepts URIs carrying Supabase auth tokens in query or fragment', () {
       expect(
         AuthDeepLinkService.isAuthCallback(
           Uri.parse('https://example.com/cb?code=xyz'),
@@ -105,17 +104,16 @@ void main() {
     });
 
     test('ignores unrelated URIs without invoking the parser', () async {
-      final handled =
-          await service.handleUri(Uri.parse('https://example.com'));
+      final handled = await service.handleUri(Uri.parse('https://example.com'));
 
       expect(handled, isFalse);
       verifyNever(() => parser.handleAuthUrl(any()));
     });
 
-    test('swallows AuthException from the parser without throwing',
-        () async {
-      when(() => parser.handleAuthUrl(any()))
-          .thenThrow(sb.AuthException('expired'));
+    test('swallows AuthException from the parser without throwing', () async {
+      when(
+        () => parser.handleAuthUrl(any()),
+      ).thenThrow(sb.AuthException('expired'));
 
       await expectLater(
         service.handleUri(Uri.parse('carzon://auth-callback')),
@@ -123,16 +121,17 @@ void main() {
       );
     });
 
-    test('swallows unexpected errors from the parser without throwing',
-        () async {
-      when(() => parser.handleAuthUrl(any()))
-          .thenThrow(StateError('boom'));
+    test(
+      'swallows unexpected errors from the parser without throwing',
+      () async {
+        when(() => parser.handleAuthUrl(any())).thenThrow(StateError('boom'));
 
-      await expectLater(
-        service.handleUri(Uri.parse('carzon://auth-callback')),
-        completion(isTrue),
-      );
-    });
+        await expectLater(
+          service.handleUri(Uri.parse('carzon://auth-callback')),
+          completion(isTrue),
+        );
+      },
+    );
   });
 
   group('AuthDeepLinkService.initialize', () {
@@ -154,35 +153,38 @@ void main() {
       await appLinks.dispose();
     });
 
-    test('forwards runtime stream emissions and ignores unrelated ones',
-        () async {
-      final parser = _MockAuthUrlHandler();
-      when(() => parser.handleAuthUrl(any())).thenAnswer((_) async {});
-      final appLinks = _FakeAppLinks();
-      final service = AuthDeepLinkService(
-        authUrlHandler: parser,
-        appLinks: appLinks,
-      );
+    test(
+      'forwards runtime stream emissions and ignores unrelated ones',
+      () async {
+        final parser = _MockAuthUrlHandler();
+        when(() => parser.handleAuthUrl(any())).thenAnswer((_) async {});
+        final appLinks = _FakeAppLinks();
+        final service = AuthDeepLinkService(
+          authUrlHandler: parser,
+          appLinks: appLinks,
+        );
 
-      await service.initialize();
+        await service.initialize();
 
-      appLinks.emit(Uri.parse('https://unrelated.example'));
-      appLinks.emit(Uri.parse('carzon://auth-callback#access_token=abc'));
+        appLinks.emit(Uri.parse('https://unrelated.example'));
+        appLinks.emit(Uri.parse('carzon://auth-callback#access_token=abc'));
 
-      // Let microtasks drain before asserting.
-      await Future<void>.delayed(Duration.zero);
+        // Let microtasks drain before asserting.
+        await Future<void>.delayed(Duration.zero);
 
-      verify(() => parser.handleAuthUrl(
+        verify(
+          () => parser.handleAuthUrl(
             Uri.parse('carzon://auth-callback#access_token=abc'),
-          )).called(1);
-      verifyNoMoreInteractions(parser);
+          ),
+        ).called(1);
+        verifyNoMoreInteractions(parser);
 
-      await service.dispose();
-      await appLinks.dispose();
-    });
+        await service.dispose();
+        await appLinks.dispose();
+      },
+    );
 
-    test('swallows stream errors without crashing the subscription',
-        () async {
+    test('swallows stream errors without crashing the subscription', () async {
       final parser = _MockAuthUrlHandler();
       when(() => parser.handleAuthUrl(any())).thenAnswer((_) async {});
       final appLinks = _FakeAppLinks();
@@ -198,8 +200,9 @@ void main() {
       appLinks.emit(Uri.parse('carzon://auth-callback'));
       await Future<void>.delayed(Duration.zero);
 
-      verify(() => parser.handleAuthUrl(Uri.parse('carzon://auth-callback')))
-          .called(1);
+      verify(
+        () => parser.handleAuthUrl(Uri.parse('carzon://auth-callback')),
+      ).called(1);
 
       await service.dispose();
       await appLinks.dispose();

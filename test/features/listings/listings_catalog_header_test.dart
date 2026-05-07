@@ -4,6 +4,7 @@ import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
+import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_bloc.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_event.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
@@ -35,9 +36,7 @@ Widget _host({
 }) {
   final router = GoRouter(
     initialLocation: '/',
-    routes: [
-      GoRoute(path: '/', builder: (_, _) => const ListingsPage()),
-    ],
+    routes: [GoRoute(path: '/', builder: (_, _) => const ListingsPage())],
   );
   return MultiBlocProvider(
     providers: [
@@ -62,6 +61,9 @@ void main() {
     registerFallbackValue(const ListingsRequested());
     registerFallbackValue(
       const ListingsRegionFilterChanged(MarketRegionFilter.both),
+    );
+    registerFallbackValue(
+      const ListingsBodyTypeFilterChanged(ListingBodyType.suv),
     );
   });
 
@@ -114,21 +116,18 @@ void main() {
   });
 
   group('Listings feed editorial header', () {
-    testWidgets(
-      'renders the CARZON wordmark as the sole header identity, with '
-      'no large catalog title and no marketing subtitle',
-      (tester) async {
-        await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
-        await tester.pump();
+    testWidgets('renders the CARZON wordmark as the sole header identity, with '
+        'no large catalog title and no marketing subtitle', (tester) async {
+      await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
+      await tester.pump();
 
-        // Pass 1.8 simplifies the editorial header to a centered
-        // CARZON wordmark — the large catalog title was pulling the
-        // page into "generic app" territory and has been removed.
-        expect(find.text('CARZON'), findsOneWidget);
-        expect(find.text(l10n.catalogTitle), findsNothing);
-        expect(find.text(l10n.catalogSubtitle), findsNothing);
-      },
-    );
+      // Pass 1.8 simplifies the editorial header to a centered
+      // CARZON wordmark — the large catalog title was pulling the
+      // page into "generic app" territory and has been removed.
+      expect(find.text('CARZON'), findsOneWidget);
+      expect(find.text(l10n.catalogTitle), findsNothing);
+      expect(find.text(l10n.catalogSubtitle), findsNothing);
+    });
 
     testWidgets('keeps the localized search hint', (tester) async {
       await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
@@ -148,10 +147,7 @@ void main() {
         // "Все" collides with the body-category chip "Все" that now
         // lives on the home surface. The invariant we actually care
         // about is "no region SegmentedButton on the home feed".
-        expect(
-          find.byType(SegmentedButton<MarketRegionFilter>),
-          findsNothing,
-        );
+        expect(find.byType(SegmentedButton<MarketRegionFilter>), findsNothing);
         // The two region-specific labels do not collide with any
         // other UI string, so the strict text check is preserved.
         expect(find.text(l10n.regionTransnistria), findsNothing);
@@ -159,27 +155,39 @@ void main() {
       },
     );
 
-    testWidgets(
-      'filter control is icon-only on the home surface — tooltip + '
-      'semantics still expose it, but no visible "Фильтры" label',
-      (tester) async {
-        await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
-        await tester.pump();
+    testWidgets('filter control is icon-only on the home surface — tooltip + '
+        'semantics still expose it, but no visible "Фильтры" label', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
+      await tester.pump();
 
-        // Pass 1.4 drops the text label to stop the filter button
-        // competing with the editorial headline. The localized label
-        // must only live in a Tooltip (hover/long-press) and in a
-        // Semantics node so a11y/tests can still reach it.
-        expect(find.text(l10n.filtersTitle), findsNothing);
-        expect(
-          find.byTooltip(l10n.listingsFiltersTooltip),
-          findsOneWidget,
-        );
-        expect(
-          find.bySemanticsLabel(l10n.listingsFiltersTooltip),
-          findsWidgets,
-        );
-      },
-    );
+      // Pass 1.4 drops the text label to stop the filter button
+      // competing with the editorial headline. The localized label
+      // must only live in a Tooltip (hover/long-press) and in a
+      // Semantics node so a11y/tests can still reach it.
+      expect(find.text(l10n.filtersTitle), findsNothing);
+      expect(find.byTooltip(l10n.listingsFiltersTooltip), findsOneWidget);
+      expect(find.bySemanticsLabel(l10n.listingsFiltersTooltip), findsWidgets);
+    });
+
+    testWidgets('body type chips show localized labels; tapping SUV dispatches '
+        'ListingsBodyTypeFilterChanged(suv)', (tester) async {
+      await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel(l10n.listingBodyTypeSuv), findsOneWidget);
+      expect(find.text(l10n.listingBodyTypeSuv), findsOneWidget);
+      expect(find.text(l10n.listingsBodyChipAll), findsOneWidget);
+
+      await tester.tap(find.text(l10n.listingBodyTypeSuv));
+      await tester.pump();
+
+      verify(
+        () =>
+            bloc.add(const ListingsBodyTypeFilterChanged(ListingBodyType.suv)),
+      ).called(1);
+    });
   });
 }

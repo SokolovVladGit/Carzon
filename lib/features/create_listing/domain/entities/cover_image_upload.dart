@@ -23,5 +23,10 @@ class CoverImageUpload extends Equatable {
   final String? originalFileName;
 
   @override
-  List<Object?> get props => [sellerId, bytes.length, contentType, originalFileName];
+  List<Object?> get props => [
+    sellerId,
+    bytes.length,
+    contentType,
+    originalFileName,
+  ];
 }

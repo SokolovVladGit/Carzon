@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../domain/entities/listing.dart';
 import 'listings_state.dart';
 
 sealed class ListingsEvent extends Equatable {
@@ -27,6 +28,15 @@ class ListingsRegionFilterChanged extends ListingsEvent {
 
   @override
   List<Object?> get props => [filter];
+}
+
+/// Home feed body-type chip row. `null` clears the filter (show all).
+class ListingsBodyTypeFilterChanged extends ListingsEvent {
+  const ListingsBodyTypeFilterChanged(this.bodyType);
+  final ListingBodyType? bodyType;
+
+  @override
+  List<Object?> get props => [bodyType];
 }
 
 /// Fired when the search text is submitted from the inline search field.

@@ -34,15 +34,17 @@ class SupabaseFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
           .from(_table)
           .select('listing_id')
           .eq('user_id', _uid);
-      return rows
-          .map<String>((r) => r['listing_id'] as String)
-          .toSet();
+      return rows.map<String>((r) => r['listing_id'] as String).toSet();
     } on sb.PostgrestException catch (e, st) {
       throw ServerException(e.message, cause: e, stackTrace: st);
     } on AuthException {
       rethrow;
     } catch (e, st) {
-      throw ServerException('Failed to load favorites', cause: e, stackTrace: st);
+      throw ServerException(
+        'Failed to load favorites',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 
@@ -68,7 +70,11 @@ class SupabaseFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
     } on AuthException {
       rethrow;
     } catch (e, st) {
-      throw ServerException('Failed to load favorite listings', cause: e, stackTrace: st);
+      throw ServerException(
+        'Failed to load favorite listings',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 
@@ -103,7 +109,11 @@ class SupabaseFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
     } on AuthException {
       rethrow;
     } catch (e, st) {
-      throw ServerException('Failed to remove favorite', cause: e, stackTrace: st);
+      throw ServerException(
+        'Failed to remove favorite',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 }

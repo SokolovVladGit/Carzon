@@ -292,11 +292,101 @@ abstract class AppLocalizations {
   /// **'Попробуйте изменить поиск или фильтры.'**
   String get listingsEmptyFilteredBody;
 
+  /// No description provided for @listingsEmptyBodyTypeFilterNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объявления без указанного типа кузова не показываются в фильтрах по кузову. Продавец может добавить тип при редактировании объявления.'**
+  String get listingsEmptyBodyTypeFilterNote;
+
   /// No description provided for @listingsEmptyResetFilters.
   ///
   /// In ru, this message translates to:
   /// **'Сбросить фильтры'**
   String get listingsEmptyResetFilters;
+
+  /// No description provided for @listingsBodyChipAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все'**
+  String get listingsBodyChipAll;
+
+  /// No description provided for @listingBodyTypeSedan.
+  ///
+  /// In ru, this message translates to:
+  /// **'Седан'**
+  String get listingBodyTypeSedan;
+
+  /// No description provided for @listingBodyTypeHatchback.
+  ///
+  /// In ru, this message translates to:
+  /// **'Хэтчбек'**
+  String get listingBodyTypeHatchback;
+
+  /// No description provided for @listingBodyTypeWagon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Универсал'**
+  String get listingBodyTypeWagon;
+
+  /// No description provided for @listingBodyTypeSuv.
+  ///
+  /// In ru, this message translates to:
+  /// **'SUV'**
+  String get listingBodyTypeSuv;
+
+  /// No description provided for @listingBodyTypeCoupe.
+  ///
+  /// In ru, this message translates to:
+  /// **'Купе'**
+  String get listingBodyTypeCoupe;
+
+  /// No description provided for @listingBodyTypeConvertible.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кабриолет'**
+  String get listingBodyTypeConvertible;
+
+  /// No description provided for @listingBodyTypeMinivan.
+  ///
+  /// In ru, this message translates to:
+  /// **'Минивэн'**
+  String get listingBodyTypeMinivan;
+
+  /// No description provided for @listingBodyTypePickup.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пикап'**
+  String get listingBodyTypePickup;
+
+  /// No description provided for @listingBodyTypeVan.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фургон'**
+  String get listingBodyTypeVan;
+
+  /// No description provided for @listingBodyTypeOther.
+  ///
+  /// In ru, this message translates to:
+  /// **'Другое'**
+  String get listingBodyTypeOther;
+
+  /// No description provided for @listingBodyTypeNotSpecified.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не указано'**
+  String get listingBodyTypeNotSpecified;
+
+  /// No description provided for @listingBodyTypeSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип кузова'**
+  String get listingBodyTypeSectionTitle;
+
+  /// No description provided for @listingBodyTypeSectionSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите кузов — иначе объявление не попадёт в фильтры «Седан», «SUV» и т.д. Если не подходит ни один вариант, выберите «Другое».'**
+  String get listingBodyTypeSectionSubtitle;
 
   /// No description provided for @regionTransnistria.
   ///
@@ -478,6 +568,12 @@ abstract class AppLocalizations {
   /// **'Регион'**
   String get listingFieldRegion;
 
+  /// No description provided for @listingFieldBodyType.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кузов'**
+  String get listingFieldBodyType;
+
   /// No description provided for @listingFieldPosted.
   ///
   /// In ru, this message translates to:
@@ -543,6 +639,168 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Чат пока недоступен.'**
   String get chatNotAvailable;
+
+  /// No description provided for @messagingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сообщения'**
+  String get messagingTitle;
+
+  /// No description provided for @messagingSignInRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите, чтобы написать продавцу.'**
+  String get messagingSignInRequired;
+
+  /// No description provided for @messagingCannotMessageSelf.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нельзя написать самому себе по своему объявлению.'**
+  String get messagingCannotMessageSelf;
+
+  /// No description provided for @messagingUnavailableNoSeller.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чат для этого объявления недоступен.'**
+  String get messagingUnavailableNoSeller;
+
+  /// No description provided for @messagingLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить переписки.'**
+  String get messagingLoadFailed;
+
+  /// No description provided for @messagingSendFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось отправить сообщение.'**
+  String get messagingSendFailed;
+
+  /// No description provided for @messagingNetworkError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проблема с сетью. Проверьте подключение.'**
+  String get messagingNetworkError;
+
+  /// No description provided for @messagingServerError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось выполнить действие. Попробуйте ещё раз.'**
+  String get messagingServerError;
+
+  /// No description provided for @messagingConversationNotFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переписка не найдена или у вас нет доступа.'**
+  String get messagingConversationNotFound;
+
+  /// No description provided for @messagingInvalidMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте текст сообщения.'**
+  String get messagingInvalidMessage;
+
+  /// No description provided for @messagingEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока нет переписок'**
+  String get messagingEmptyTitle;
+
+  /// No description provided for @messagingEmptyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напишите продавцу с экрана объявления — диалог появится здесь.'**
+  String get messagingEmptyBody;
+
+  /// No description provided for @messagingNoPreview.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет сообщений'**
+  String get messagingNoPreview;
+
+  /// No description provided for @messagingThreadEmptyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Начните переписку: задайте вопрос по объявлению или договоритесь о просмотре.'**
+  String get messagingThreadEmptyBody;
+
+  /// No description provided for @messagingThreadTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чат'**
+  String get messagingThreadTitle;
+
+  /// No description provided for @messagingThreadViewListingHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть объявление'**
+  String get messagingThreadViewListingHint;
+
+  /// No description provided for @messagingComposerHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сообщение…'**
+  String get messagingComposerHint;
+
+  /// No description provided for @messagingSend.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить'**
+  String get messagingSend;
+
+  /// No description provided for @messagingDateToday.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня'**
+  String get messagingDateToday;
+
+  /// No description provided for @messagingDateYesterday.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вчера'**
+  String get messagingDateYesterday;
+
+  /// No description provided for @messagingMessageCopied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сообщение скопировано'**
+  String get messagingMessageCopied;
+
+  /// No description provided for @messagingQuickReplyHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Быстрые ответы — нажмите, чтобы вставить в поле ввода'**
+  String get messagingQuickReplyHint;
+
+  /// No description provided for @messagingQuickReplyStillAvailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Здравствуйте, объявление актуально?'**
+  String get messagingQuickReplyStillAvailable;
+
+  /// No description provided for @messagingQuickReplyWhereToView.
+  ///
+  /// In ru, this message translates to:
+  /// **'Где можно посмотреть автомобиль?'**
+  String get messagingQuickReplyWhereToView;
+
+  /// No description provided for @messagingQuickReplyNegotiable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Возможен торг?'**
+  String get messagingQuickReplyNegotiable;
+
+  /// No description provided for @messagingQuickReplyWhenCall.
+  ///
+  /// In ru, this message translates to:
+  /// **'Когда удобно созвониться?'**
+  String get messagingQuickReplyWhenCall;
+
+  /// No description provided for @messagingListingFallback.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объявление {shortId}'**
+  String messagingListingFallback(String shortId);
 
   /// No description provided for @phoneNotProvided.
   ///
@@ -622,6 +880,84 @@ abstract class AppLocalizations {
   /// **'Подать объявление'**
   String get createListingTitle;
 
+  /// No description provided for @createListingComposeHeadline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создайте объявление'**
+  String get createListingComposeHeadline;
+
+  /// No description provided for @createListingComposeSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сильные фото и точные данные помогают быстрее связаться с покупателем.'**
+  String get createListingComposeSubtitle;
+
+  /// No description provided for @createListingSectionPhotosLead.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото и заголовок'**
+  String get createListingSectionPhotosLead;
+
+  /// No description provided for @createListingSectionPhotosLeadSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Первое фото станет обложкой в каталоге — выберите удачный ракурс.'**
+  String get createListingSectionPhotosLeadSubtitle;
+
+  /// No description provided for @createListingSectionVehicle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Об автомобиле'**
+  String get createListingSectionVehicle;
+
+  /// No description provided for @createListingSectionVehicleSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Город, марка, модель и год выпуска.'**
+  String get createListingSectionVehicleSubtitle;
+
+  /// No description provided for @createListingSectionDeal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сделка и рынок'**
+  String get createListingSectionDeal;
+
+  /// No description provided for @createListingSectionDealSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип сделки и регион размещения.'**
+  String get createListingSectionDealSubtitle;
+
+  /// No description provided for @createListingSectionPrice.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена и пробег'**
+  String get createListingSectionPrice;
+
+  /// No description provided for @createListingSectionPriceSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите валюту и укажите фактические значения.'**
+  String get createListingSectionPriceSubtitle;
+
+  /// No description provided for @createListingSectionPublish.
+  ///
+  /// In ru, this message translates to:
+  /// **'Контакты и публикация'**
+  String get createListingSectionPublish;
+
+  /// No description provided for @createListingSectionPublishSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте контакты — они появятся в активном объявлении.'**
+  String get createListingSectionPublishSubtitle;
+
+  /// No description provided for @createListingPublishKicker.
+  ///
+  /// In ru, this message translates to:
+  /// **'Финальный шаг'**
+  String get createListingPublishKicker;
+
   /// No description provided for @createListingSignInRequired.
   ///
   /// In ru, this message translates to:
@@ -675,6 +1011,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Нажмите, чтобы добавить фото объявления. До девяти снимков — по одному из галереи.'**
   String get createListingMediaHeroEmptyHint;
+
+  /// No description provided for @createListingHeroEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавьте фотографии'**
+  String get createListingHeroEmptyTitle;
+
+  /// No description provided for @createListingHeroEmptyDetail.
+  ///
+  /// In ru, this message translates to:
+  /// **'До девяти кадров из галереи. Первое фото станет обложкой в каталоге.'**
+  String get createListingHeroEmptyDetail;
 
   /// No description provided for @createListingAddPhoto.
   ///
@@ -1306,6 +1654,120 @@ abstract class AppLocalizations {
   /// **'Выйти'**
   String get profileSignOut;
 
+  /// No description provided for @profilePublicSellerNameTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Публичное имя продавца'**
+  String get profilePublicSellerNameTitle;
+
+  /// No description provided for @profilePublicSellerNameDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это имя будут видеть покупатели в ваших объявлениях и в профиле продавца.'**
+  String get profilePublicSellerNameDescription;
+
+  /// No description provided for @profilePublicSellerNameFieldLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Имя для покупателей'**
+  String get profilePublicSellerNameFieldLabel;
+
+  /// No description provided for @profilePublicSellerNameFieldHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Например: Анна или «Авто-Плюс Тирасполь»'**
+  String get profilePublicSellerNameFieldHint;
+
+  /// No description provided for @profilePublicSellerNameSave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить'**
+  String get profilePublicSellerNameSave;
+
+  /// No description provided for @profilePublicSellerNameSaved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Имя сохранено'**
+  String get profilePublicSellerNameSaved;
+
+  /// No description provided for @profilePublicSellerNameSaveFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сохранить имя. Попробуйте ещё раз.'**
+  String get profilePublicSellerNameSaveFailed;
+
+  /// No description provided for @profilePublicSellerNameTooLong.
+  ///
+  /// In ru, this message translates to:
+  /// **'Слишком длинное имя (максимум 80 символов).'**
+  String get profilePublicSellerNameTooLong;
+
+  /// No description provided for @profilePublicSellerNameLooksLikeEmail.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите имя, а не адрес email.'**
+  String get profilePublicSellerNameLooksLikeEmail;
+
+  /// No description provided for @profilePublicSellerNameLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить настройки имени продавца.'**
+  String get profilePublicSellerNameLoadFailed;
+
+  /// No description provided for @profilePublicSellerAvatarTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото продавца'**
+  String get profilePublicSellerAvatarTitle;
+
+  /// No description provided for @profilePublicSellerAvatarDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эту фотографию будут видеть покупатели рядом с вашим именем в объявлениях и в профиле продавца.'**
+  String get profilePublicSellerAvatarDescription;
+
+  /// No description provided for @profilePublicSellerAvatarChangePhoto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать фото'**
+  String get profilePublicSellerAvatarChangePhoto;
+
+  /// No description provided for @profilePublicSellerAvatarRemovePhoto.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить фото'**
+  String get profilePublicSellerAvatarRemovePhoto;
+
+  /// No description provided for @profilePublicSellerAvatarUpdated.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото обновлено'**
+  String get profilePublicSellerAvatarUpdated;
+
+  /// No description provided for @profilePublicSellerAvatarRemoved.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото удалено'**
+  String get profilePublicSellerAvatarRemoved;
+
+  /// No description provided for @profilePublicSellerAvatarUploadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить фото. Попробуйте ещё раз.'**
+  String get profilePublicSellerAvatarUploadFailed;
+
+  /// No description provided for @profilePublicSellerAvatarRemoveFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось удалить фото. Попробуйте ещё раз.'**
+  String get profilePublicSellerAvatarRemoveFailed;
+
+  /// No description provided for @profilePublicSellerAvatarUnsupportedType.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поддерживаются только JPEG, PNG или WebP.'**
+  String get profilePublicSellerAvatarUnsupportedType;
+
   /// No description provided for @signInTitle.
   ///
   /// In ru, this message translates to:
@@ -1797,6 +2259,174 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Вопросы по этому документу и по содержимому платформы можно задать команде Carzon через канал поддержки, указанный на странице приложения в магазине.'**
   String get legalSectionContactUsP2;
+
+  /// No description provided for @sellerSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продавец'**
+  String get sellerSectionTitle;
+
+  /// No description provided for @sellerViewProfile.
+  ///
+  /// In ru, this message translates to:
+  /// **'Смотреть профиль'**
+  String get sellerViewProfile;
+
+  /// No description provided for @sellerProfileTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Профиль продавца'**
+  String get sellerProfileTitle;
+
+  /// No description provided for @sellerFallbackName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продавец'**
+  String get sellerFallbackName;
+
+  /// No description provided for @sellerUnavailableTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Профиль продавца недоступен'**
+  String get sellerUnavailableTitle;
+
+  /// No description provided for @sellerUnavailableMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Этот профиль скрыт или недоступен.'**
+  String get sellerUnavailableMessage;
+
+  /// No description provided for @sellerListingsSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объявления продавца'**
+  String get sellerListingsSectionTitle;
+
+  /// No description provided for @sellerNoActiveListingsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет активных объявлений'**
+  String get sellerNoActiveListingsTitle;
+
+  /// No description provided for @sellerNoActiveListingsMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'У продавца сейчас нет активных объявлений в каталоге.'**
+  String get sellerNoActiveListingsMessage;
+
+  /// No description provided for @sellerMonthGenitiveJanuary.
+  ///
+  /// In ru, this message translates to:
+  /// **'января'**
+  String get sellerMonthGenitiveJanuary;
+
+  /// No description provided for @sellerMonthGenitiveFebruary.
+  ///
+  /// In ru, this message translates to:
+  /// **'февраля'**
+  String get sellerMonthGenitiveFebruary;
+
+  /// No description provided for @sellerMonthGenitiveMarch.
+  ///
+  /// In ru, this message translates to:
+  /// **'марта'**
+  String get sellerMonthGenitiveMarch;
+
+  /// No description provided for @sellerMonthGenitiveApril.
+  ///
+  /// In ru, this message translates to:
+  /// **'апреля'**
+  String get sellerMonthGenitiveApril;
+
+  /// No description provided for @sellerMonthGenitiveMay.
+  ///
+  /// In ru, this message translates to:
+  /// **'мая'**
+  String get sellerMonthGenitiveMay;
+
+  /// No description provided for @sellerMonthGenitiveJune.
+  ///
+  /// In ru, this message translates to:
+  /// **'июня'**
+  String get sellerMonthGenitiveJune;
+
+  /// No description provided for @sellerMonthGenitiveJuly.
+  ///
+  /// In ru, this message translates to:
+  /// **'июля'**
+  String get sellerMonthGenitiveJuly;
+
+  /// No description provided for @sellerMonthGenitiveAugust.
+  ///
+  /// In ru, this message translates to:
+  /// **'августа'**
+  String get sellerMonthGenitiveAugust;
+
+  /// No description provided for @sellerMonthGenitiveSeptember.
+  ///
+  /// In ru, this message translates to:
+  /// **'сентября'**
+  String get sellerMonthGenitiveSeptember;
+
+  /// No description provided for @sellerMonthGenitiveOctober.
+  ///
+  /// In ru, this message translates to:
+  /// **'октября'**
+  String get sellerMonthGenitiveOctober;
+
+  /// No description provided for @sellerMonthGenitiveNovember.
+  ///
+  /// In ru, this message translates to:
+  /// **'ноября'**
+  String get sellerMonthGenitiveNovember;
+
+  /// No description provided for @sellerMonthGenitiveDecember.
+  ///
+  /// In ru, this message translates to:
+  /// **'декабря'**
+  String get sellerMonthGenitiveDecember;
+
+  /// No description provided for @sellerMemberSince.
+  ///
+  /// In ru, this message translates to:
+  /// **'На Carzon с {monthYear}'**
+  String sellerMemberSince(String monthYear);
+
+  /// No description provided for @sellerActiveListingsCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} активное объявление} few{{count} активных объявления} many{{count} активных объявлений} other{{count} активных объявлений}}'**
+  String sellerActiveListingsCount(int count);
+
+  /// No description provided for @sellerTypePrivate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Частный продавец'**
+  String get sellerTypePrivate;
+
+  /// No description provided for @sellerTypeDealer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дилер'**
+  String get sellerTypeDealer;
+
+  /// No description provided for @sellerProfileLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить профиль продавца.'**
+  String get sellerProfileLoadFailed;
+
+  /// No description provided for @sellerListingsLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить объявления.'**
+  String get sellerListingsLoadFailed;
+
+  /// No description provided for @sellerLoadMore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать ещё'**
+  String get sellerLoadMore;
 }
 
 class _AppLocalizationsDelegate

@@ -16,25 +16,24 @@ Listing _listing({
   String? telegramUsername = 'carzon_demo_01',
   bool whatsappEnabled = true,
   String? sellerId = 's1',
-}) =>
-    Listing(
-      id: id,
-      title: title,
-      make: make,
-      model: model,
-      year: year,
-      priceEur: 8900,
-      mileageKm: 120000,
-      type: ListingType.sale,
-      city: city,
-      marketRegion: region,
-      createdAt: DateTime.utc(2026, 4, 1),
-      status: ListingStatus.active,
-      sellerId: sellerId,
-      contactPhone: contactPhone,
-      telegramUsername: telegramUsername,
-      whatsappEnabled: whatsappEnabled,
-    );
+}) => Listing(
+  id: id,
+  title: title,
+  make: make,
+  model: model,
+  year: year,
+  priceEur: 8900,
+  mileageKm: 120000,
+  type: ListingType.sale,
+  city: city,
+  marketRegion: region,
+  createdAt: DateTime.utc(2026, 4, 1),
+  status: ListingStatus.active,
+  sellerId: sellerId,
+  contactPhone: contactPhone,
+  telegramUsername: telegramUsername,
+  whatsappEnabled: whatsappEnabled,
+);
 
 void main() {
   final l10n = ruStrings();
@@ -72,28 +71,25 @@ void main() {
       );
     });
 
-    test(
-      'subject includes the localized Carzon prefix and listing id, '
-      'percent-encoded',
-      () {
-        final uri = buildReportListingMailto(
-          l10n: l10n,
-          listing: _listing(id: 'abc-123'),
-          recipientEmail: 'reports@carzon.example',
-        );
+    test('subject includes the localized Carzon prefix and listing id, '
+        'percent-encoded', () {
+      final uri = buildReportListingMailto(
+        l10n: l10n,
+        listing: _listing(id: 'abc-123'),
+        recipientEmail: 'reports@carzon.example',
+      );
 
-        expect(uri.queryParameters['subject'], isNotNull);
-        final decodedSubject = uri.queryParameters['subject']!;
-        expect(decodedSubject, contains(l10n.reportSubjectPrefix));
-        expect(decodedSubject, contains('abc-123'));
-        // The raw URI string must encode spaces as %20 (RFC 6068),
-        // not `+`, so the mail client renders a human-readable subject.
-        final rawString = uri.toString();
-        expect(rawString, contains('subject='));
-        expect(rawString, contains('%20'));
-        expect(rawString, isNot(contains('subject=Report+')));
-      },
-    );
+      expect(uri.queryParameters['subject'], isNotNull);
+      final decodedSubject = uri.queryParameters['subject']!;
+      expect(decodedSubject, contains(l10n.reportSubjectPrefix));
+      expect(decodedSubject, contains('abc-123'));
+      // The raw URI string must encode spaces as %20 (RFC 6068),
+      // not `+`, so the mail client renders a human-readable subject.
+      final rawString = uri.toString();
+      expect(rawString, contains('subject='));
+      expect(rawString, contains('%20'));
+      expect(rawString, isNot(contains('subject=Report+')));
+    });
 
     test('body includes listing id, title, make/model/year, city, '
         'localized region and prompt copy', () {
@@ -150,8 +146,8 @@ void main() {
             body.toLowerCase().contains(forbidden.toLowerCase()) ||
                 subject.toLowerCase().contains(forbidden.toLowerCase()) ||
                 raw.toLowerCase().contains(
-                      Uri.encodeComponent(forbidden).toLowerCase(),
-                    ),
+                  Uri.encodeComponent(forbidden).toLowerCase(),
+                ),
             isFalse,
             reason:
                 'report mailto must not leak seller-private value: $forbidden',

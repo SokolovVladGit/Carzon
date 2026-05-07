@@ -16,9 +16,11 @@ class ErrorView extends StatelessWidget {
     // `StartupErrorApp`, which runs before `MaterialApp.router` is
     // mounted).
     final retryLabel =
-        Localizations.of<AppLocalizations>(context, AppLocalizations)
-                ?.commonRetry ??
-            'Повторить';
+        Localizations.of<AppLocalizations>(
+          context,
+          AppLocalizations,
+        )?.commonRetry ??
+        'Повторить';
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),

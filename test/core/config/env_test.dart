@@ -31,45 +31,55 @@ void main() {
 
   group('Env.reportEmail', () {
     test('is null when the env variable is absent', () {
-      dotenv.testLoad(fileInput: '''
+      dotenv.testLoad(
+        fileInput: '''
 SUPABASE_URL=https://example.supabase.co
 SUPABASE_ANON_KEY=anon
-''');
+''',
+      );
       expect(Env.reportEmail, isNull);
     });
 
     test('is null when the env variable is set but empty', () {
-      dotenv.testLoad(fileInput: '''
+      dotenv.testLoad(
+        fileInput: '''
 SUPABASE_URL=https://example.supabase.co
 SUPABASE_ANON_KEY=anon
 CARZON_REPORT_EMAIL=
-''');
+''',
+      );
       expect(Env.reportEmail, isNull);
     });
 
     test('trims whitespace and returns the configured address', () {
-      dotenv.testLoad(fileInput: '''
+      dotenv.testLoad(
+        fileInput: '''
 SUPABASE_URL=https://example.supabase.co
 SUPABASE_ANON_KEY=anon
 CARZON_REPORT_EMAIL=  reports@carzon.example  
-''');
+''',
+      );
       expect(Env.reportEmail, 'reports@carzon.example');
     });
   });
 
   group('Env.missingKeys', () {
     test('does not flag a missing CARZON_REPORT_EMAIL as missing', () {
-      dotenv.testLoad(fileInput: '''
+      dotenv.testLoad(
+        fileInput: '''
 SUPABASE_URL=https://example.supabase.co
 SUPABASE_ANON_KEY=anon
-''');
+''',
+      );
       expect(Env.missingKeys(), isEmpty);
     });
 
     test('flags missing required Supabase keys', () {
-      dotenv.testLoad(fileInput: '''
+      dotenv.testLoad(
+        fileInput: '''
 CARZON_REPORT_EMAIL=reports@example.com
-''');
+''',
+      );
       expect(
         Env.missingKeys(),
         containsAll(<String>['SUPABASE_URL', 'SUPABASE_ANON_KEY']),

@@ -65,15 +65,9 @@ class _NoRecoverySessionView extends StatelessWidget {
           children: [
             const Icon(CarzonIcons.keyReset, size: 48),
             const SizedBox(height: 16),
-            Text(
-              l10n.resetPasswordNoSession,
-              textAlign: TextAlign.center,
-            ),
+            Text(l10n.resetPasswordNoSession, textAlign: TextAlign.center),
             const SizedBox(height: 24),
-            FilledButton(
-              onPressed: onBack,
-              child: Text(l10n.backToSignIn),
-            ),
+            FilledButton(onPressed: onBack, child: Text(l10n.backToSignIn)),
           ],
         ),
       ),
@@ -115,9 +109,9 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     context.read<ResetPasswordCubit>().submit(
-          newPassword: _passwordCtrl.text,
-          confirmPassword: _confirmCtrl.text,
-        );
+      newPassword: _passwordCtrl.text,
+      confirmPassword: _confirmCtrl.text,
+    );
   }
 
   @override
@@ -130,9 +124,9 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
           case ResetPasswordStatus.success:
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
-              ..showSnackBar(SnackBar(
-                content: Text(l10n.resetPasswordSuccess),
-              ));
+              ..showSnackBar(
+                SnackBar(content: Text(l10n.resetPasswordSuccess)),
+              );
             // Clear the latched recovery flag before navigating so the
             // rest of the app resumes normal auth routing.
             context.read<AuthCubit>().clearPasswordRecovery();
@@ -140,11 +134,13 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
           case ResetPasswordStatus.failure:
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()
-              ..showSnackBar(SnackBar(
-                content: Text(
-                  _resetPasswordFailureMessage(l10n, state.failureKind),
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(
+                    _resetPasswordFailureMessage(l10n, state.failureKind),
+                  ),
                 ),
-              ));
+              );
           case ResetPasswordStatus.idle:
           case ResetPasswordStatus.submitting:
             break;
@@ -163,8 +159,7 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordCtrl,
-                  decoration:
-                      InputDecoration(labelText: l10n.resetPasswordNew),
+                  decoration: InputDecoration(labelText: l10n.resetPasswordNew),
                   obscureText: true,
                   autofillHints: const [AutofillHints.newPassword],
                   enabled: !loading,
@@ -174,7 +169,8 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
                 TextFormField(
                   controller: _confirmCtrl,
                   decoration: InputDecoration(
-                      labelText: l10n.resetPasswordConfirmNew),
+                    labelText: l10n.resetPasswordConfirmNew,
+                  ),
                   obscureText: true,
                   autofillHints: const [AutofillHints.newPassword],
                   enabled: !loading,
@@ -209,7 +205,7 @@ String _resetPasswordFailureMessage(
     ResetPasswordFailureKind.passwordTooShort =>
       l10n.resetPasswordValidationMin(kMinPasswordLength),
     ResetPasswordFailureKind.mismatch => l10n.resetPasswordValidationMismatch,
-    ResetPasswordFailureKind.updateFailed || null =>
-      l10n.resetPasswordFailedRetry,
+    ResetPasswordFailureKind.updateFailed ||
+    null => l10n.resetPasswordFailedRetry,
   };
 }

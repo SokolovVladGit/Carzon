@@ -38,8 +38,9 @@ void main() {
     );
   });
 
-  testWidgets('renders a Create account link below the Sign in button',
-      (tester) async {
+  testWidgets('renders a Create account link below the Sign in button', (
+    tester,
+  ) async {
     await tester.pumpWidget(_wrap(cubit));
 
     expect(
@@ -55,10 +56,7 @@ void main() {
   testWidgets('renders a Terms & Privacy link', (tester) async {
     await tester.pumpWidget(_wrap(cubit));
 
-    expect(
-      find.widgetWithText(TextButton, l10n.legalLink),
-      findsOneWidget,
-    );
+    expect(find.widgetWithText(TextButton, l10n.legalLink), findsOneWidget);
   });
 
   testWidgets('renders a Forgot password link', (tester) async {

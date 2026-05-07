@@ -19,8 +19,8 @@ const int kMinPasswordLength = 6;
 /// [ResetPasswordFailureKind.updateFailed].
 class ResetPasswordCubit extends Cubit<ResetPasswordState> {
   ResetPasswordCubit({required UpdatePassword updatePassword})
-      : _updatePassword = updatePassword,
-        super(const ResetPasswordState.idle());
+    : _updatePassword = updatePassword,
+      super(const ResetPasswordState.idle());
 
   final UpdatePassword _updatePassword;
 
@@ -29,30 +29,32 @@ class ResetPasswordCubit extends Cubit<ResetPasswordState> {
     required String confirmPassword,
   }) async {
     if (newPassword.isEmpty) {
-      emit(const ResetPasswordState.failure(
-        ResetPasswordFailureKind.emptyPassword,
-      ));
+      emit(
+        const ResetPasswordState.failure(
+          ResetPasswordFailureKind.emptyPassword,
+        ),
+      );
       return;
     }
     if (newPassword.length < kMinPasswordLength) {
-      emit(const ResetPasswordState.failure(
-        ResetPasswordFailureKind.passwordTooShort,
-      ));
+      emit(
+        const ResetPasswordState.failure(
+          ResetPasswordFailureKind.passwordTooShort,
+        ),
+      );
       return;
     }
     if (newPassword != confirmPassword) {
-      emit(const ResetPasswordState.failure(
-        ResetPasswordFailureKind.mismatch,
-      ));
+      emit(const ResetPasswordState.failure(ResetPasswordFailureKind.mismatch));
       return;
     }
 
     emit(const ResetPasswordState.submitting());
     final result = await _updatePassword(newPassword: newPassword);
     result.fold(
-      (_) => emit(const ResetPasswordState.failure(
-        ResetPasswordFailureKind.updateFailed,
-      )),
+      (_) => emit(
+        const ResetPasswordState.failure(ResetPasswordFailureKind.updateFailed),
+      ),
       (_) => emit(const ResetPasswordState.success()),
     );
   }

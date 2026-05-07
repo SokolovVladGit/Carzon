@@ -43,10 +43,12 @@ class Env {
   /// Returns the list of required keys that are missing or empty.
   /// Use during startup to fail fast with a clear UI instead of crashing later.
   static List<String> missingKeys() {
-    return requiredKeys.where((k) {
-      final v = dotenv.maybeGet(k);
-      return v == null || v.isEmpty;
-    }).toList(growable: false);
+    return requiredKeys
+        .where((k) {
+          final v = dotenv.maybeGet(k);
+          return v == null || v.isEmpty;
+        })
+        .toList(growable: false);
   }
 
   static String _required(String key) {

@@ -219,6 +219,30 @@ void main() {
     );
 
     blocTest<CreateListingCubit, CreateListingState>(
+      'body type propagated into createV2 NewListingInput',
+      setUp: () {
+        when(
+          () => createRepo.createV2(any()),
+        ).thenAnswer((_) async => Success(_listing()));
+      },
+      build: () => cubit,
+      act: (c) => c.submit(
+        listingInput: _input().copyWith(bodyType: ListingBodyType.wagon),
+        orderedPhotos: [],
+      ),
+      expect: () => [
+        const CreateListingState.submitting(),
+        CreateListingState.success(_listing()),
+      ],
+      verify: (_) {
+        final io =
+            verify(() => createRepo.createV2(captureAny())).captured.single
+                as NewListingInput;
+        expect(io.bodyType, ListingBodyType.wagon);
+      },
+    );
+
+    blocTest<CreateListingCubit, CreateListingState>(
       'upload failure ⇒ createV2 not called',
       setUp: () {
         when(

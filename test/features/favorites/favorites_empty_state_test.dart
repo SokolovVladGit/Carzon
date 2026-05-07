@@ -22,8 +22,9 @@ void main() {
   final l10n = ruStrings();
 
   group('FavoritesEmptyState', () {
-    testWidgets('renders localized title, body, and primary action',
-        (tester) async {
+    testWidgets('renders localized title, body, and primary action', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host());
       await tester.pump();
 
@@ -35,8 +36,7 @@ void main() {
       );
     });
 
-    testWidgets('tapping the browse action fires the callback',
-        (tester) async {
+    testWidgets('tapping the browse action fires the callback', (tester) async {
       var fired = 0;
       await tester.pumpWidget(_host(onBrowseListings: () => fired += 1));
       await tester.pump();

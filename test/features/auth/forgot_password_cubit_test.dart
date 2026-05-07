@@ -23,8 +23,9 @@ void main() {
     blocTest<ForgotPasswordCubit, ForgotPasswordState>(
       'emits submitting then success on repository success',
       build: () {
-        when(() => repo.requestPasswordReset(any()))
-            .thenAnswer((_) async => const Success(null));
+        when(
+          () => repo.requestPasswordReset(any()),
+        ).thenAnswer((_) async => const Success(null));
         return ForgotPasswordCubit(requestPasswordReset: useCase);
       },
       act: (c) => c.submit('seller@example.com'),
@@ -33,31 +34,30 @@ void main() {
         ForgotPasswordState.success(),
       ],
       verify: (_) {
-        verify(() => repo.requestPasswordReset('seller@example.com'))
-            .called(1);
+        verify(() => repo.requestPasswordReset('seller@example.com')).called(1);
       },
     );
 
     blocTest<ForgotPasswordCubit, ForgotPasswordState>(
       'trims whitespace before delegating to the repository',
       build: () {
-        when(() => repo.requestPasswordReset(any()))
-            .thenAnswer((_) async => const Success(null));
+        when(
+          () => repo.requestPasswordReset(any()),
+        ).thenAnswer((_) async => const Success(null));
         return ForgotPasswordCubit(requestPasswordReset: useCase);
       },
       act: (c) => c.submit('  seller@example.com  '),
       verify: (_) {
-        verify(() => repo.requestPasswordReset('seller@example.com'))
-            .called(1);
+        verify(() => repo.requestPasswordReset('seller@example.com')).called(1);
       },
     );
 
     blocTest<ForgotPasswordCubit, ForgotPasswordState>(
       'emits submitting then failure with generic copy on repository failure',
       build: () {
-        when(() => repo.requestPasswordReset(any())).thenAnswer(
-          (_) async => const FailureResult(ServerFailure('boom')),
-        );
+        when(
+          () => repo.requestPasswordReset(any()),
+        ).thenAnswer((_) async => const FailureResult(ServerFailure('boom')));
         return ForgotPasswordCubit(requestPasswordReset: useCase);
       },
       act: (c) => c.submit('seller@example.com'),

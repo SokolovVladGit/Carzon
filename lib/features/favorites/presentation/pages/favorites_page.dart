@@ -24,9 +24,7 @@ class FavoritesPage extends StatelessWidget {
     final l10n = context.l10n;
     return TopLevelScaffold(
       destination: TopLevelDestination.favorites,
-      appBar: AppBar(
-        title: Text(l10n.favoritesTitle),
-      ),
+      appBar: AppBar(title: Text(l10n.favoritesTitle)),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
           if (authState.status != AuthStatus.authenticated) {
@@ -56,10 +54,7 @@ class _SignInRequired extends StatelessWidget {
           children: [
             const Icon(CarzonIcons.heartOutline, size: 48),
             const SizedBox(height: 12),
-            Text(
-              l10n.favoritesSignInRequired,
-              textAlign: TextAlign.center,
-            ),
+            Text(l10n.favoritesSignInRequired, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             FilledButton(onPressed: onSignIn, child: Text(l10n.commonSignIn)),
           ],
@@ -103,8 +98,7 @@ class _FavoritesListState extends State<_FavoritesList> {
           case FavoritesStatus.ready:
             if (state.listings.isEmpty) {
               return FavoritesEmptyState(
-                onRefresh: () =>
-                    context.read<FavoritesCubit>().loadListings(),
+                onRefresh: () => context.read<FavoritesCubit>().loadListings(),
                 onBrowseListings: () => context.go(AppRoutes.listings),
               );
             }

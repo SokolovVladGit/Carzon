@@ -12,7 +12,8 @@ class AuthUserModel extends AuthUser {
   });
 
   factory AuthUserModel.fromSupabase(Map<String, dynamic> json) {
-    final metadata = (json['user_metadata'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final metadata =
+        (json['user_metadata'] as Map?)?.cast<String, dynamic>() ?? const {};
     return AuthUserModel(
       id: json['id'] as String,
       email: (json['email'] as String?) ?? '',

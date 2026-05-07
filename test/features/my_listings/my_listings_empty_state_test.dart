@@ -6,9 +6,7 @@ import '../../helpers/l10n_test_helpers.dart';
 
 Widget _host({VoidCallback? onCreate}) {
   return localizedApp(
-    home: Scaffold(
-      body: MyListingsEmptyState(onCreate: onCreate ?? () {}),
-    ),
+    home: Scaffold(body: MyListingsEmptyState(onCreate: onCreate ?? () {})),
   );
 }
 
@@ -16,8 +14,9 @@ void main() {
   final l10n = ruStrings();
 
   group('MyListingsEmptyState', () {
-    testWidgets('renders localized title, body, and primary action',
-        (tester) async {
+    testWidgets('renders localized title, body, and primary action', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host());
       await tester.pump();
 
@@ -29,8 +28,9 @@ void main() {
       );
     });
 
-    testWidgets('tapping the primary action fires the callback',
-        (tester) async {
+    testWidgets('tapping the primary action fires the callback', (
+      tester,
+    ) async {
       var fired = 0;
       await tester.pumpWidget(_host(onCreate: () => fired += 1));
       await tester.pump();

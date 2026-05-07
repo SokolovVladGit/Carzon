@@ -25,8 +25,9 @@ void main() {
     setUp(() {
       repo = _MockRepo();
       when(() => repo.authStateChanges).thenAnswer((_) => const Stream.empty());
-      when(() => repo.passwordRecoveryEvents)
-          .thenAnswer((_) => const Stream<void>.empty());
+      when(
+        () => repo.passwordRecoveryEvents,
+      ).thenAnswer((_) => const Stream<void>.empty());
       cubit = AuthCubit(
         repository: repo,
         getCurrentUser: GetCurrentUser(repo),
@@ -41,10 +42,12 @@ void main() {
     blocTest<AuthCubit, AuthState>(
       'emits authenticated on successful sign in',
       build: () {
-        when(() => repo.signInWithPassword(
-              email: any(named: 'email'),
-              password: any(named: 'password'),
-            )).thenAnswer((_) async => const Success(user));
+        when(
+          () => repo.signInWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenAnswer((_) async => const Success(user));
         return cubit;
       },
       act: (c) => c.signIn(email: 'a@b.c', password: 'secret1'),
@@ -58,10 +61,12 @@ void main() {
       'signUp: emits authenticated when repository returns a user '
       '(session issued)',
       build: () {
-        when(() => repo.signUpWithPassword(
-              email: any(named: 'email'),
-              password: any(named: 'password'),
-            )).thenAnswer((_) async => const Success<AuthUser?>(user));
+        when(
+          () => repo.signUpWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenAnswer((_) async => const Success<AuthUser?>(user));
         return cubit;
       },
       act: (c) => c.signUp(email: 'a@b.c', password: 'secret1'),
@@ -75,10 +80,12 @@ void main() {
       'signUp: emits needsEmailConfirmation when repository returns null '
       '(no session)',
       build: () {
-        when(() => repo.signUpWithPassword(
-              email: any(named: 'email'),
-              password: any(named: 'password'),
-            )).thenAnswer((_) async => const Success<AuthUser?>(null));
+        when(
+          () => repo.signUpWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenAnswer((_) async => const Success<AuthUser?>(null));
         return cubit;
       },
       act: (c) => c.signUp(email: 'a@b.c', password: 'secret1'),
@@ -92,11 +99,15 @@ void main() {
       'signUp: emits error kind on repository failure so the widget '
       'layer can show a localized snackbar',
       build: () {
-        when(() => repo.signUpWithPassword(
-              email: any(named: 'email'),
-              password: any(named: 'password'),
-            )).thenAnswer((_) async =>
-                const FailureResult<AuthUser?>(AuthFailure('already exists')));
+        when(
+          () => repo.signUpWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenAnswer(
+          (_) async =>
+              const FailureResult<AuthUser?>(AuthFailure('already exists')),
+        );
         return cubit;
       },
       act: (c) => c.signUp(email: 'a@b.c', password: 'secret1'),
@@ -119,14 +130,14 @@ void main() {
       repo = _MockRepo();
       authStream = StreamController<AuthUser?>.broadcast();
       recoveryStream = StreamController<void>.broadcast();
-      when(() => repo.authStateChanges)
-          .thenAnswer((_) => authStream.stream);
-      when(() => repo.passwordRecoveryEvents)
-          .thenAnswer((_) => recoveryStream.stream);
-      when(() => repo.getCurrentUser())
-          .thenAnswer((_) async => const Success<AuthUser?>(null));
-      when(() => repo.signOut())
-          .thenAnswer((_) async => const Success(null));
+      when(() => repo.authStateChanges).thenAnswer((_) => authStream.stream);
+      when(
+        () => repo.passwordRecoveryEvents,
+      ).thenAnswer((_) => recoveryStream.stream);
+      when(
+        () => repo.getCurrentUser(),
+      ).thenAnswer((_) async => const Success<AuthUser?>(null));
+      when(() => repo.signOut()).thenAnswer((_) async => const Success(null));
 
       cubit = AuthCubit(
         repository: repo,
@@ -161,25 +172,27 @@ void main() {
       expect(cubit.state.user, user);
     });
 
-    test('clearPasswordRecovery returns to authenticated when a user exists',
-        () async {
-      await cubit.bootstrap();
-      recoveryStream.add(null);
-      await Future<void>.delayed(Duration.zero);
-      authStream.add(user);
-      await Future<void>.delayed(Duration.zero);
+    test(
+      'clearPasswordRecovery returns to authenticated when a user exists',
+      () async {
+        await cubit.bootstrap();
+        recoveryStream.add(null);
+        await Future<void>.delayed(Duration.zero);
+        authStream.add(user);
+        await Future<void>.delayed(Duration.zero);
 
-      cubit.clearPasswordRecovery();
+        cubit.clearPasswordRecovery();
 
-      expect(cubit.state.status, AuthStatus.authenticated);
-      expect(cubit.state.user, user);
+        expect(cubit.state.status, AuthStatus.authenticated);
+        expect(cubit.state.user, user);
 
-      // After clearing, subsequent normal auth events route normally
-      // again (no latch).
-      authStream.add(null);
-      await Future<void>.delayed(Duration.zero);
-      expect(cubit.state.status, AuthStatus.unauthenticated);
-    });
+        // After clearing, subsequent normal auth events route normally
+        // again (no latch).
+        authStream.add(null);
+        await Future<void>.delayed(Duration.zero);
+        expect(cubit.state.status, AuthStatus.unauthenticated);
+      },
+    );
 
     test('signOut exits the recovery latch', () async {
       await cubit.bootstrap();

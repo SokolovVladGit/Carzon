@@ -24,11 +24,11 @@ class ServerFailure extends Failure {
 
   @override
   List<Object?> get props => [
-        message,
-        postgrestCode,
-        diagnosticsDetails,
-        runtimeType,
-      ];
+    message,
+    postgrestCode,
+    diagnosticsDetails,
+    runtimeType,
+  ];
 }
 
 class AuthFailure extends Failure {
@@ -45,4 +45,9 @@ class CacheFailure extends Failure {
 
 class UnknownFailure extends Failure {
   const UnknownFailure(super.message);
+}
+
+/// Unsupported MIME type for seller avatar upload (client-side validation).
+class SellerAvatarUnsupportedFormat extends Failure {
+  const SellerAvatarUnsupportedFormat() : super('');
 }

@@ -7,35 +7,33 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/l10n_test_helpers.dart';
 
 Listing _seed({ListingStatus status = ListingStatus.active}) => Listing(
-      id: 'l1',
-      title: 'BMW 320',
-      make: 'BMW',
-      model: '320',
-      year: 2018,
-      priceEur: 12000,
-      mileageKm: 80000,
-      type: ListingType.sale,
-      city: 'Chișinău',
-      marketRegion: MarketRegion.moldova,
-      createdAt: DateTime.utc(2026, 1, 1),
-      status: status,
-      sellerId: 's1',
-    );
+  id: 'l1',
+  title: 'BMW 320',
+  make: 'BMW',
+  model: '320',
+  year: 2018,
+  priceEur: 12000,
+  mileageKm: 80000,
+  type: ListingType.sale,
+  city: 'Chișinău',
+  marketRegion: MarketRegion.moldova,
+  createdAt: DateTime.utc(2026, 1, 1),
+  status: status,
+  sellerId: 's1',
+);
 
 void main() {
   final l10n = ruStrings();
 
   group('MyListingTile visual contract', () {
-    testWidgets('renders the content of the redesigned ListingCard',
-        (tester) async {
+    testWidgets('renders the content of the redesigned ListingCard', (
+      tester,
+    ) async {
       await pumpLocalizedWidget(
         tester,
         Scaffold(
           body: SingleChildScrollView(
-            child: MyListingTile(
-              listing: _seed(),
-              onAction: (_) {},
-            ),
+            child: MyListingTile(listing: _seed(), onAction: (_) {}),
           ),
         ),
       );
@@ -50,58 +48,57 @@ void main() {
     });
 
     testWidgets(
-        'surfaces the localized status pill for every ListingStatus value',
-        (tester) async {
-      const expected = {
-        ListingStatus.active: 'statusActive',
-        ListingStatus.hidden: 'statusHidden',
-        ListingStatus.sold: 'statusSold',
-        ListingStatus.archived: 'statusArchived',
-      };
-      for (final entry in expected.entries) {
+      'surfaces the localized status pill for every ListingStatus value',
+      (tester) async {
+        const expected = {
+          ListingStatus.active: 'statusActive',
+          ListingStatus.hidden: 'statusHidden',
+          ListingStatus.sold: 'statusSold',
+          ListingStatus.archived: 'statusArchived',
+        };
+        for (final entry in expected.entries) {
+          await pumpLocalizedWidget(
+            tester,
+            Scaffold(
+              body: SingleChildScrollView(
+                child: MyListingTile(
+                  listing: _seed(status: entry.key),
+                  onAction: (_) {},
+                ),
+              ),
+            ),
+          );
+
+          final label = switch (entry.key) {
+            ListingStatus.active => l10n.statusActive,
+            ListingStatus.hidden => l10n.statusHidden,
+            ListingStatus.sold => l10n.statusSold,
+            ListingStatus.archived => l10n.statusArchived,
+          };
+          expect(
+            find.text(label),
+            findsOneWidget,
+            reason: 'expected ${entry.value} badge for status ${entry.key}',
+          );
+        }
+      },
+    );
+
+    testWidgets(
+      'exposes the owner action menu button when onAction is supplied',
+      (tester) async {
         await pumpLocalizedWidget(
           tester,
           Scaffold(
             body: SingleChildScrollView(
-              child: MyListingTile(
-                listing: _seed(status: entry.key),
-                onAction: (_) {},
-              ),
+              child: MyListingTile(listing: _seed(), onAction: (_) {}),
             ),
           ),
         );
 
-        final label = switch (entry.key) {
-          ListingStatus.active => l10n.statusActive,
-          ListingStatus.hidden => l10n.statusHidden,
-          ListingStatus.sold => l10n.statusSold,
-          ListingStatus.archived => l10n.statusArchived,
-        };
-        expect(
-          find.text(label),
-          findsOneWidget,
-          reason: 'expected ${entry.value} badge for status ${entry.key}',
-        );
-      }
-    });
-
-    testWidgets(
-        'exposes the owner action menu button when onAction is supplied',
-        (tester) async {
-      await pumpLocalizedWidget(
-        tester,
-        Scaffold(
-          body: SingleChildScrollView(
-            child: MyListingTile(
-              listing: _seed(),
-              onAction: (_) {},
-            ),
-          ),
-        ),
-      );
-
-      expect(find.byType(PopupMenuButton<MyListingAction>), findsOneWidget);
-    });
+        expect(find.byType(PopupMenuButton<MyListingAction>), findsOneWidget);
+      },
+    );
 
     testWidgets(
       'shows a pending spinner in place of the actions menu when isPending',

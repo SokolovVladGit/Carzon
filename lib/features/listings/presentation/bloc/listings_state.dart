@@ -58,6 +58,7 @@ class ListingsState extends Equatable {
     this.maxYear,
     this.typeFilter = ListingTypeFilter.any,
     this.regionFilter = MarketRegionFilter.transnistria,
+    this.bodyTypeFilter,
     this.errorMessage,
   });
 
@@ -74,6 +75,9 @@ class ListingsState extends Equatable {
   final ListingTypeFilter typeFilter;
   final MarketRegionFilter regionFilter;
 
+  /// Home feed body-style filter. Null means all body types.
+  final ListingBodyType? bodyTypeFilter;
+
   final String? errorMessage;
 
   bool get hasActiveNonRegionFilters =>
@@ -81,7 +85,8 @@ class ListingsState extends Equatable {
       (make != null && make!.isNotEmpty) ||
       minYear != null ||
       maxYear != null ||
-      typeFilter != ListingTypeFilter.any;
+      typeFilter != ListingTypeFilter.any ||
+      bodyTypeFilter != null;
 
   ListingsState copyWith({
     ListingsStatus? status,
@@ -94,11 +99,13 @@ class ListingsState extends Equatable {
     int? maxYear,
     ListingTypeFilter? typeFilter,
     MarketRegionFilter? regionFilter,
+    ListingBodyType? bodyTypeFilter,
     String? errorMessage,
     bool clearSearch = false,
     bool clearMake = false,
     bool clearMinYear = false,
     bool clearMaxYear = false,
+    bool clearBodyType = false,
   }) {
     return ListingsState(
       status: status ?? this.status,
@@ -111,22 +118,26 @@ class ListingsState extends Equatable {
       maxYear: clearMaxYear ? null : (maxYear ?? this.maxYear),
       typeFilter: typeFilter ?? this.typeFilter,
       regionFilter: regionFilter ?? this.regionFilter,
+      bodyTypeFilter: clearBodyType
+          ? null
+          : (bodyTypeFilter ?? this.bodyTypeFilter),
       errorMessage: errorMessage,
     );
   }
 
   @override
   List<Object?> get props => [
-        status,
-        items,
-        page,
-        hasReachedEnd,
-        search,
-        make,
-        minYear,
-        maxYear,
-        typeFilter,
-        regionFilter,
-        errorMessage,
-      ];
+    status,
+    items,
+    page,
+    hasReachedEnd,
+    search,
+    make,
+    minYear,
+    maxYear,
+    typeFilter,
+    regionFilter,
+    bodyTypeFilter,
+    errorMessage,
+  ];
 }

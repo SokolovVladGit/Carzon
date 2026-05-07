@@ -60,6 +60,9 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
       if (query.marketRegion != null) {
         builder = builder.eq('market_region', query.marketRegion!.name);
       }
+      if (query.bodyType != null) {
+        builder = builder.eq('body_type', query.bodyType!.name);
+      }
       // Explicit status filter: callers (e.g. the public feed) must pass
       // `active` so owners do not see their own non-active listings mixed in
       // via the owner-read RLS policy. Left null by My Listings.

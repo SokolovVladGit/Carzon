@@ -12,14 +12,12 @@ void main() {
   testWidgets('LegalPage renders the AppBar title', (tester) async {
     await tester.pumpWidget(wrap());
 
-    expect(
-      find.widgetWithText(AppBar, l10n.legalTitle),
-      findsOneWidget,
-    );
+    expect(find.widgetWithText(AppBar, l10n.legalTitle), findsOneWidget);
   });
 
-  testWidgets('LegalPage renders the required section headings',
-      (tester) async {
+  testWidgets('LegalPage renders the required section headings', (
+    tester,
+  ) async {
     await tester.pumpWidget(wrap());
 
     // Each heading is rendered as a distinct Text widget inside the

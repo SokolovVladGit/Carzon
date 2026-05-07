@@ -43,35 +43,34 @@ void main() {
   });
 
   testWidgets(
-      'shows email, password, confirm password, Create account and Sign in',
-      (tester) async {
-    await tester.pumpWidget(_wrap(cubit));
+    'shows email, password, confirm password, Create account and Sign in',
+    (tester) async {
+      await tester.pumpWidget(_wrap(cubit));
 
-    expect(find.text(l10n.signUpTitle), findsWidgets); // AppBar + button
-    expect(
-      find.widgetWithText(TextFormField, l10n.authFieldEmail),
-      findsOneWidget,
-    );
-    expect(
-      find.widgetWithText(TextFormField, l10n.authFieldPassword),
-      findsOneWidget,
-    );
-    expect(
-      find.widgetWithText(TextFormField, l10n.authFieldConfirmPassword),
-      findsOneWidget,
-    );
-    expect(
-      find.widgetWithText(TextButton, l10n.signUpHaveAccount),
-      findsOneWidget,
-    );
-    expect(
-      find.widgetWithText(TextButton, l10n.legalLink),
-      findsOneWidget,
-    );
-  });
+      expect(find.text(l10n.signUpTitle), findsWidgets); // AppBar + button
+      expect(
+        find.widgetWithText(TextFormField, l10n.authFieldEmail),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(TextFormField, l10n.authFieldPassword),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(TextFormField, l10n.authFieldConfirmPassword),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(TextButton, l10n.signUpHaveAccount),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(TextButton, l10n.legalLink), findsOneWidget);
+    },
+  );
 
-  testWidgets('password mismatch: submit does not call AuthCubit.signUp',
-      (tester) async {
+  testWidgets('password mismatch: submit does not call AuthCubit.signUp', (
+    tester,
+  ) async {
     await tester.pumpWidget(_wrap(cubit));
 
     await tester.enterText(
@@ -91,61 +90,66 @@ void main() {
     await tester.pump();
 
     expect(find.text(l10n.validationPasswordsDoNotMatch), findsOneWidget);
-    verifyNever(() => cubit.signUp(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
-        ));
+    verifyNever(
+      () => cubit.signUp(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      ),
+    );
   });
 
   testWidgets(
-      'valid form: submit calls AuthCubit.signUp with trimmed email + password',
-      (tester) async {
-    when(() => cubit.signUp(
+    'valid form: submit calls AuthCubit.signUp with trimmed email + password',
+    (tester) async {
+      when(
+        () => cubit.signUp(
           email: any(named: 'email'),
           password: any(named: 'password'),
-        )).thenAnswer((_) async {});
+        ),
+      ).thenAnswer((_) async {});
 
-    await tester.pumpWidget(_wrap(cubit));
+      await tester.pumpWidget(_wrap(cubit));
 
-    await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.authFieldEmail),
-      '  seller@example.com  ',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.authFieldPassword),
-      'secret1',
-    );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.authFieldConfirmPassword),
-      'secret1',
-    );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, l10n.authFieldEmail),
+        '  seller@example.com  ',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, l10n.authFieldPassword),
+        'secret1',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, l10n.authFieldConfirmPassword),
+        'secret1',
+      );
 
-    await tester.tap(find.widgetWithText(FilledButton, l10n.signUpSubmit));
-    await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, l10n.signUpSubmit));
+      await tester.pump();
 
-    verify(() => cubit.signUp(
-          email: 'seller@example.com',
-          password: 'secret1',
-        )).called(1);
-  });
+      verify(
+        () => cubit.signUp(email: 'seller@example.com', password: 'secret1'),
+      ).called(1);
+    },
+  );
 
   testWidgets(
-      'needsEmailConfirmation: shows the check-your-email message via SnackBar',
-      (tester) async {
-    when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
-    whenListen(
-      cubit,
-      Stream<AuthState>.fromIterable(const [
-        AuthState.authenticating(),
-        AuthState.needsEmailConfirmation(),
-      ]),
-      initialState: const AuthState.unauthenticated(),
-    );
+    'needsEmailConfirmation: shows the check-your-email message via SnackBar',
+    (tester) async {
+      when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
+      whenListen(
+        cubit,
+        Stream<AuthState>.fromIterable(const [
+          AuthState.authenticating(),
+          AuthState.needsEmailConfirmation(),
+        ]),
+        initialState: const AuthState.unauthenticated(),
+      );
 
-    await tester.pumpWidget(_wrap(cubit));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpWidget(_wrap(cubit));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text(l10n.signUpConfirmEmail), findsOneWidget);
-  });
+      expect(find.text(l10n.signUpConfirmEmail), findsOneWidget);
+    },
+  );
 }

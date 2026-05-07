@@ -5,10 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// Builds a minimal host that renders [FloatingCapsuleNav] as a
 /// bottom nav so the widget is exercised in the same layout shape
 /// it ships in (i.e. as a `Scaffold.bottomNavigationBar`).
-Widget _host({
-  required int selectedIndex,
-  required ValueChanged<int> onTap,
-}) {
+Widget _host({required int selectedIndex, required ValueChanged<int> onTap}) {
   return MaterialApp(
     home: Scaffold(
       body: const SizedBox.expand(),
@@ -80,22 +77,19 @@ void main() {
       },
     );
 
-    testWidgets(
-      'invokes onDestinationSelected with the tapped index, using '
-      'semantics labels as the tap target',
-      (tester) async {
-        var tapped = -1;
-        await tester.pumpWidget(
-          _host(selectedIndex: 0, onTap: (i) => tapped = i),
-        );
+    testWidgets('invokes onDestinationSelected with the tapped index, using '
+        'semantics labels as the tap target', (tester) async {
+      var tapped = -1;
+      await tester.pumpWidget(
+        _host(selectedIndex: 0, onTap: (i) => tapped = i),
+      );
 
-        await tester.tap(find.bySemanticsLabel('Favs'));
-        expect(tapped, 1);
+      await tester.tap(find.bySemanticsLabel('Favs'));
+      expect(tapped, 1);
 
-        await tester.tap(find.bySemanticsLabel('Me'));
-        expect(tapped, 2);
-      },
-    );
+      await tester.tap(find.bySemanticsLabel('Me'));
+      expect(tapped, 2);
+    });
 
     testWidgets('is NOT a Material NavigationBar', (tester) async {
       await tester.pumpWidget(_host(selectedIndex: 0, onTap: (_) {}));
@@ -166,47 +160,42 @@ void main() {
       },
     );
 
-    testWidgets(
-      'renders the emphasized destination with a bigger icon than a '
-      'non-emphasized one',
-      (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: const SizedBox.expand(),
-              bottomNavigationBar: FloatingCapsuleNav(
-                selectedIndex: 0,
-                onDestinationSelected: (_) {},
-                destinations: const [
-                  CapsuleNavDestination(
-                    icon: Icons.directions_car_outlined,
-                    selectedIcon: Icons.directions_car,
-                    label: 'Feed',
-                  ),
-                  CapsuleNavDestination(
-                    icon: Icons.add_circle_outline,
-                    selectedIcon: Icons.add_circle,
-                    label: 'Sell',
-                    isEmphasized: true,
-                  ),
-                ],
-              ),
+    testWidgets('renders the emphasized destination with a bigger icon than a '
+        'non-emphasized one', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: const SizedBox.expand(),
+            bottomNavigationBar: FloatingCapsuleNav(
+              selectedIndex: 0,
+              onDestinationSelected: (_) {},
+              destinations: const [
+                CapsuleNavDestination(
+                  icon: Icons.directions_car_outlined,
+                  selectedIcon: Icons.directions_car,
+                  label: 'Feed',
+                ),
+                CapsuleNavDestination(
+                  icon: Icons.add_circle_outline,
+                  selectedIcon: Icons.add_circle,
+                  label: 'Sell',
+                  isEmphasized: true,
+                ),
+              ],
             ),
           ),
-        );
+        ),
+      );
 
-        final regular = tester.widget<Icon>(
-          find.byIcon(Icons.directions_car),
-        );
-        final emphasized = tester.widget<Icon>(
-          find.byIcon(Icons.add_circle_outline),
-        );
-        expect(
-          (emphasized.size ?? 0) > (regular.size ?? 0),
-          isTrue,
-          reason: 'Emphasized destination should render a larger icon',
-        );
-      },
-    );
+      final regular = tester.widget<Icon>(find.byIcon(Icons.directions_car));
+      final emphasized = tester.widget<Icon>(
+        find.byIcon(Icons.add_circle_outline),
+      );
+      expect(
+        (emphasized.size ?? 0) > (regular.size ?? 0),
+        isTrue,
+        reason: 'Emphasized destination should render a larger icon',
+      );
+    });
   });
 }

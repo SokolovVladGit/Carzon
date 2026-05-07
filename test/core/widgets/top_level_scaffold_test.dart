@@ -97,8 +97,9 @@ void main() {
       },
     );
 
-    testWidgets('selectedIndex reflects the current top-level route',
-        (tester) async {
+    testWidgets('selectedIndex reflects the current top-level route', (
+      tester,
+    ) async {
       for (final (initial, expectedIndex) in const [
         (AppRoutes.listings, 0),
         (AppRoutes.favorites, 1),
@@ -108,8 +109,9 @@ void main() {
         await tester.pumpWidget(_routerHost(initialLocation: initial));
         await tester.pumpAndSettle();
 
-        final nav =
-            tester.widget<FloatingCapsuleNav>(find.byType(FloatingCapsuleNav));
+        final nav = tester.widget<FloatingCapsuleNav>(
+          find.byType(FloatingCapsuleNav),
+        );
         expect(
           nav.selectedIndex,
           expectedIndex,
@@ -118,8 +120,9 @@ void main() {
       }
     });
 
-    testWidgets('tapping a tab navigates to the destination route',
-        (tester) async {
+    testWidgets('tapping a tab navigates to the destination route', (
+      tester,
+    ) async {
       await tester.pumpWidget(_routerHost(initialLocation: AppRoutes.listings));
       await tester.pumpAndSettle();
       expect(find.text('body-listings'), findsOneWidget);
@@ -132,10 +135,15 @@ void main() {
       await tester.tap(find.bySemanticsLabel(l10n.navMenu));
       await tester.pumpAndSettle();
       expect(find.text('body-menu'), findsOneWidget);
+
+      await tester.tap(find.bySemanticsLabel(l10n.navSell));
+      await tester.pumpAndSettle();
+      expect(find.text('body-create'), findsOneWidget);
     });
 
-    testWidgets('tapping the already-selected tab does not re-navigate',
-        (tester) async {
+    testWidgets('tapping the already-selected tab does not re-navigate', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _routerHost(initialLocation: AppRoutes.favorites),
       );

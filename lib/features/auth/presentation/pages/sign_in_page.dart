@@ -31,9 +31,9 @@ class _SignInPageState extends State<SignInPage> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     context.read<AuthCubit>().signIn(
-          email: _emailCtrl.text.trim(),
-          password: _passwordCtrl.text,
-        );
+      email: _emailCtrl.text.trim(),
+      password: _passwordCtrl.text,
+    );
   }
 
   @override
@@ -74,8 +74,9 @@ class _SignInPageState extends State<SignInPage> {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _passwordCtrl,
-                    decoration:
-                        InputDecoration(labelText: l10n.authFieldPassword),
+                    decoration: InputDecoration(
+                      labelText: l10n.authFieldPassword,
+                    ),
                     obscureText: true,
                     validator: (v) => (v == null || v.length < 6)
                         ? l10n.validationPasswordMin
@@ -100,14 +101,16 @@ class _SignInPageState extends State<SignInPage> {
                     child: Text(l10n.signInForgotPassword),
                   ),
                   TextButton(
-                    onPressed:
-                        loading ? null : () => context.go(AppRoutes.signUp),
+                    onPressed: loading
+                        ? null
+                        : () => context.go(AppRoutes.signUp),
                     child: Text(l10n.signInCreateAccount),
                   ),
                   const SizedBox(height: 4),
                   TextButton(
-                    onPressed:
-                        loading ? null : () => context.go(AppRoutes.legal),
+                    onPressed: loading
+                        ? null
+                        : () => context.go(AppRoutes.legal),
                     child: Text(l10n.legalLink),
                   ),
                 ],

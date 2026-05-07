@@ -149,10 +149,7 @@ List<MyListingAction> allowedStatusActions(ListingStatus current) {
         MyListingAction.archive,
       ];
     case ListingStatus.sold:
-      return const [
-        MyListingAction.reactivate,
-        MyListingAction.archive,
-      ];
+      return const [MyListingAction.reactivate, MyListingAction.archive];
     case ListingStatus.archived:
       return const [MyListingAction.reactivate];
   }

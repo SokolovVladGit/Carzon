@@ -120,10 +120,7 @@ class _CoverPlaceholder extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            scheme.surfaceContainerHigh,
-            scheme.surfaceContainerHighest,
-          ],
+          colors: [scheme.surfaceContainerHigh, scheme.surfaceContainerHighest],
         ),
       ),
       child: Center(
@@ -156,10 +153,7 @@ class _CoverLoading extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            scheme.surfaceContainerHigh,
-            scheme.surfaceContainerHighest,
-          ],
+          colors: [scheme.surfaceContainerHigh, scheme.surfaceContainerHighest],
         ),
       ),
     );

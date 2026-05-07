@@ -23,14 +23,13 @@ void main() {
     blocTest<ResetPasswordCubit, ResetPasswordState>(
       'emits submitting then success on repository success',
       build: () {
-        when(() => repo.updatePassword(any()))
-            .thenAnswer((_) async => const Success(null));
+        when(
+          () => repo.updatePassword(any()),
+        ).thenAnswer((_) async => const Success(null));
         return ResetPasswordCubit(updatePassword: useCase);
       },
-      act: (c) => c.submit(
-        newPassword: 'newpass1',
-        confirmPassword: 'newpass1',
-      ),
+      act: (c) =>
+          c.submit(newPassword: 'newpass1', confirmPassword: 'newpass1'),
       expect: () => const [
         ResetPasswordState.submitting(),
         ResetPasswordState.success(),
@@ -48,10 +47,8 @@ void main() {
         );
         return ResetPasswordCubit(updatePassword: useCase);
       },
-      act: (c) => c.submit(
-        newPassword: 'newpass1',
-        confirmPassword: 'newpass1',
-      ),
+      act: (c) =>
+          c.submit(newPassword: 'newpass1', confirmPassword: 'newpass1'),
       expect: () => const [
         ResetPasswordState.submitting(),
         ResetPasswordState.failure(ResetPasswordFailureKind.updateFailed),
@@ -61,10 +58,8 @@ void main() {
     blocTest<ResetPasswordCubit, ResetPasswordState>(
       'rejects mismatched passwords without calling repository',
       build: () => ResetPasswordCubit(updatePassword: useCase),
-      act: (c) => c.submit(
-        newPassword: 'newpass1',
-        confirmPassword: 'different',
-      ),
+      act: (c) =>
+          c.submit(newPassword: 'newpass1', confirmPassword: 'different'),
       expect: () => const [
         ResetPasswordState.failure(ResetPasswordFailureKind.mismatch),
       ],

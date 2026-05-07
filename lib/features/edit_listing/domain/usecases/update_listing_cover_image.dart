@@ -16,9 +16,8 @@ class UpdateListingCoverImage {
   Future<Result<Listing>> call({
     required String listingId,
     required String? coverImageUrl,
-  }) =>
-      _repository.updateCoverImage(
-        listingId: listingId,
-        coverImageUrl: coverImageUrl,
-      );
+  }) => _repository.updateCoverImage(
+    listingId: listingId,
+    coverImageUrl: coverImageUrl,
+  );
 }

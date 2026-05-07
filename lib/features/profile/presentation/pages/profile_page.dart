@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/floating_capsule_nav.dart';
@@ -10,20 +11,14 @@ import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/domain/entities/auth_user.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../sellers/presentation/bloc/public_seller_identity_cubit.dart';
+import '../../../sellers/presentation/widgets/public_seller_name_section.dart';
 
-/// Minimal account screen.
+/// Account hub: session identity, **public seller display name** editing,
+/// shortcuts to listings/favorites/create, legal, sign-out.
 ///
-/// This is intentionally not a "profile" in the social sense — Carzon
-/// has no public seller profile table, no avatar upload, and no
-/// profile editing at this stage. The page's only responsibilities:
-///
-///   * gate on authentication using the existing [AuthCubit];
-///   * surface the current session identity (email / full name);
-///   * offer shortcuts to the authenticated sections of the app
-///     (My Listings, Favorites, Create Listing);
-///   * expose a Sign out action that delegates to [AuthCubit.signOut].
-///
-/// No new cubit, domain model, or data-layer import is introduced.
+/// Public seller name is stored in `seller_profiles.display_name` (buyer-visible)
+/// and does not replace private auth metadata.
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
@@ -32,9 +27,7 @@ class ProfilePage extends StatelessWidget {
     final l10n = context.l10n;
     return TopLevelScaffold(
       destination: TopLevelDestination.menu,
-      appBar: AppBar(
-        title: Text(l10n.profileTitle),
-      ),
+      appBar: AppBar(title: Text(l10n.profileTitle)),
       body: BlocConsumer<AuthCubit, AuthState>(
         listenWhen: (prev, curr) => prev.status != curr.status,
         listener: (context, state) {
@@ -46,19 +39,18 @@ class ProfilePage extends StatelessWidget {
             context.go(AppRoutes.listings);
           } else if (state.status == AuthStatus.error) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(l10n.profileSignOutFailedRetry),
-              ),
+              SnackBar(content: Text(l10n.profileSignOutFailedRetry)),
             );
           }
         },
         builder: (context, state) {
           if (state.status == AuthStatus.authenticated && state.user != null) {
-            return _AccountView(user: state.user!);
+            return BlocProvider(
+              create: (_) => sl<PublicSellerIdentityCubit>()..load(),
+              child: _AccountView(user: state.user!),
+            );
           }
-          return _SignInRequired(
-            onSignIn: () => context.go(AppRoutes.signIn),
-          );
+          return _SignInRequired(onSignIn: () => context.go(AppRoutes.signIn));
         },
       ),
     );
@@ -81,10 +73,7 @@ class _SignInRequired extends StatelessWidget {
           children: [
             const Icon(CarzonIcons.user, size: 48),
             const SizedBox(height: 12),
-            Text(
-              l10n.profileSignInRequired,
-              textAlign: TextAlign.center,
-            ),
+            Text(l10n.profileSignInRequired, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             FilledButton(onPressed: onSignIn, child: Text(l10n.commonSignIn)),
           ],
@@ -103,14 +92,13 @@ class _AccountView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        0,
-        8,
-        0,
-        kFloatingCapsuleNavClearance,
-      ),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, kFloatingCapsuleNavClearance),
       children: [
         _IdentityHeader(user: user),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+          child: PublicSellerNameSection(),
+        ),
         const Divider(height: 1),
         ListTile(
           leading: const Icon(CarzonIcons.myListings),
@@ -141,6 +129,7 @@ class _AccountView extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           child: OutlinedButton.icon(
+            key: const ValueKey('profileSignOutButton'),
             onPressed: () => context.read<AuthCubit>().signOut(),
             icon: const Icon(CarzonIcons.signOut),
             label: Text(l10n.profileSignOut),
