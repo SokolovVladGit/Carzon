@@ -52,6 +52,60 @@ String formatMarketRegion(AppLocalizations l10n, MarketRegion region) {
   }
 }
 
+String formatListingFuelType(AppLocalizations l10n, ListingFuelType type) {
+  switch (type) {
+    case ListingFuelType.petrol:
+      return l10n.listingFuelTypePetrol;
+    case ListingFuelType.diesel:
+      return l10n.listingFuelTypeDiesel;
+    case ListingFuelType.hybrid:
+      return l10n.listingFuelTypeHybrid;
+    case ListingFuelType.electric:
+      return l10n.listingFuelTypeElectric;
+    case ListingFuelType.lpg:
+      return l10n.listingFuelTypeLpg;
+    case ListingFuelType.cng:
+      return l10n.listingFuelTypeCng;
+    case ListingFuelType.other:
+      return l10n.listingFuelTypeOther;
+  }
+}
+
+String formatListingDrivetrain(AppLocalizations l10n, ListingDrivetrain type) {
+  switch (type) {
+    case ListingDrivetrain.fwd:
+      return l10n.listingDrivetrainFwd;
+    case ListingDrivetrain.rwd:
+      return l10n.listingDrivetrainRwd;
+    case ListingDrivetrain.awd:
+      return l10n.listingDrivetrainAwd;
+    case ListingDrivetrain.fourWheel:
+      return l10n.listingDrivetrainFourWheel;
+  }
+}
+
+/// Formats liters for details (stored as liters in `engine_displacement_liters`).
+///
+/// Values >= [kCcDisplacementThreshold] are treated as cubic centimeters for
+/// display (`N см³`).
+const double kCcDisplacementThreshold = 80;
+
+String formatEngineDisplacementForDisplay(AppLocalizations l10n, double? litersOrCc) {
+  if (litersOrCc == null) return '';
+  final v = litersOrCc;
+  if (v >= kCcDisplacementThreshold && v.round() == v) {
+    return '${v.toInt()} см³';
+  }
+  final fixed = v.toStringAsFixed(3);
+  final trimmed = fixed.replaceFirst(RegExp(r'\.?0+$'), '');
+  return '$trimmed ${l10n.listingEngineDisplacementLitersSuffix}';
+}
+
+String formatEnginePowerHpDisplay(AppLocalizations l10n, int? hp) {
+  if (hp == null) return '';
+  return '$hp ${l10n.listingEnginePowerHpSuffix}';
+}
+
 String formatListingBodyType(AppLocalizations l10n, ListingBodyType type) {
   switch (type) {
     case ListingBodyType.sedan:

@@ -2,10 +2,16 @@ import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/app/router/app_router.dart';
+import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
+import 'package:carzon/core/widgets/app_back_button.dart';
+import 'package:carzon/core/widgets/floating_capsule_nav.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
+import 'package:carzon/features/messaging/domain/repositories/messaging_repository.dart';
+import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import 'package:carzon/features/profile/presentation/pages/profile_page.dart';
 import 'package:carzon/features/sellers/data/models/my_seller_profile_model.dart';
 import 'package:carzon/features/sellers/domain/repositories/sellers_repository.dart';
@@ -19,6 +25,7 @@ import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
@@ -27,12 +34,79 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
 class _MockSellersRepository extends Mock implements SellersRepository {}
 
-Widget _wrap(Widget child, AuthCubit cubit) {
-  return MaterialApp(
+class _MockMessagingRepository extends Mock implements MessagingRepository {}
+
+const _menuStubKey = ValueKey<String>('profile_test_menu_route_stub');
+
+const _profileTestMessagesStubKey = ValueKey<String>('profile_test_messages_stub');
+
+GoRouter _profileTestGoRouter({
+  required AuthCubit cubit,
+  required MessagingUnreadSummaryCubit messagingUnread,
+}) {
+  return GoRouter(
+    initialLocation: AppRoutes.profile,
+    routes: [
+      GoRoute(
+        path: AppRoutes.menu,
+        builder: (context, _) => BlocProvider<AuthCubit>.value(
+          value: cubit,
+          child: Scaffold(key: _menuStubKey, body: const SizedBox.expand()),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.profile,
+        builder: (context, _) => MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: cubit),
+            BlocProvider<MessagingUnreadSummaryCubit>.value(
+              value: messagingUnread,
+            ),
+          ],
+          child: const ProfilePage(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.messages,
+        builder: (_, _) => const Scaffold(
+          key: _profileTestMessagesStubKey,
+          body: Text('profile_test_messages_placeholder'),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.listings,
+        builder: (context, _) => BlocProvider<AuthCubit>.value(
+          value: cubit,
+          child: const Scaffold(body: Text('feed')), // coverage for listeners
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.signIn,
+        builder: (context, _) => BlocProvider<AuthCubit>.value(
+          value: cubit,
+          child: const Scaffold(body: Text('sign-in')),
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _profileTestMaterial(GoRouter router) {
+  return MaterialApp.router(
     locale: const Locale('ru'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: BlocProvider<AuthCubit>.value(value: cubit, child: child),
+    routerConfig: router,
+  );
+}
+
+/// [ProfilePage] uses `GoRouterExtension` APIs; tests must host it under GoRouter.
+Widget _profileTestApp({
+  required AuthCubit cubit,
+  required MessagingUnreadSummaryCubit messagingUnread,
+}) {
+  return _profileTestMaterial(
+    _profileTestGoRouter(cubit: cubit, messagingUnread: messagingUnread),
   );
 }
 
@@ -51,6 +125,8 @@ MySellerProfileModel _myProfile({
 void main() {
   late _MockAuthCubit cubit;
   late _MockSellersRepository sellersRepo;
+  late _MockMessagingRepository messagingRepo;
+  late MessagingUnreadSummaryCubit unreadSummaryCubit;
   final l10n = ruStrings();
 
   setUpAll(() {
@@ -60,6 +136,7 @@ void main() {
   setUp(() async {
     cubit = _MockAuthCubit();
     sellersRepo = _MockSellersRepository();
+    messagingRepo = _MockMessagingRepository();
     await sl.reset();
 
     when(
@@ -86,6 +163,10 @@ void main() {
       ),
     ).thenAnswer((_) async => Success(_myProfile(displayName: 'Saved Shop')));
 
+    when(
+      () => messagingRepo.getUnreadConversationCount(),
+    ).thenAnswer((_) async => const Success(0));
+    unreadSummaryCubit = MessagingUnreadSummaryCubit(messagingRepo);
     sl.registerLazySingleton<SellersRepository>(() => sellersRepo);
     sl.registerFactory(() => GetMySellerProfile(sl<SellersRepository>()));
     sl.registerFactory(
@@ -104,66 +185,145 @@ void main() {
   });
 
   tearDown(() async {
+    await unreadSummaryCubit.close();
     await sl.reset();
   });
 
-  testWidgets(
-    'unauthenticated: shows the sign-in prompt and a Sign in button',
-    (tester) async {
-      when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
-      whenListen(
-        cubit,
-        const Stream<AuthState>.empty(),
-        initialState: const AuthState.unauthenticated(),
-      );
-
-      await tester.pumpWidget(_wrap(const ProfilePage(), cubit));
-
-      expect(find.text(l10n.profileSignInRequired), findsOneWidget);
-      expect(
-        find.widgetWithText(FilledButton, l10n.commonSignIn),
-        findsOneWidget,
-      );
-      expect(find.text(l10n.profileSignOut), findsNothing);
-      expect(find.text(l10n.profileMyListings), findsNothing);
-    },
-  );
-
-  testWidgets('authenticated: shows identity, public seller section, actions', (
+  testWidgets('unauthenticated: sign-in prompt, back button, no capsule nav', (
     tester,
   ) async {
-    const user = AuthUser(
-      id: 'u1',
-      email: 'seller@example.com',
-      fullName: 'Ana Popescu',
-    );
-    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+    when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
     whenListen(
       cubit,
       const Stream<AuthState>.empty(),
-      initialState: const AuthState.authenticated(user),
+      initialState: const AuthState.unauthenticated(),
     );
 
-    await tester.pumpWidget(_wrap(const ProfilePage(), cubit));
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
     await tester.pumpAndSettle();
 
-    expect(find.text('Ana Popescu'), findsOneWidget);
-    expect(find.text('seller@example.com'), findsOneWidget);
-    expect(find.text(l10n.profilePublicSellerAvatarTitle), findsOneWidget);
-    expect(find.text(l10n.profilePublicSellerNameTitle), findsOneWidget);
-    expect(find.text('Saved Shop'), findsOneWidget);
+    expect(find.text(l10n.profileSignInRequired), findsOneWidget);
     expect(
-      find.text(l10n.profilePublicSellerAvatarChangePhoto),
+      find.widgetWithText(FilledButton, l10n.commonSignIn),
       findsOneWidget,
     );
+    expect(find.text(l10n.profileSignOut), findsNothing);
+    expect(find.text(l10n.profileMyListings), findsNothing);
 
-    await tester.drag(find.byType(ListView), const Offset(0, -900));
+    expect(find.byType(AppBackButton), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(ProfilePage),
+        matching: find.byType(FloatingCapsuleNav),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('AppBackButton goes to menu when profile is sole stack entry', (
+    tester,
+  ) async {
+    when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.unauthenticated(),
+    );
+
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
     await tester.pumpAndSettle();
 
-    expect(find.byType(ListTile), findsNWidgets(4));
-    expect(find.text(l10n.profileSignOut), findsOneWidget);
-    expect(find.byKey(const ValueKey('profileSignOutButton')), findsOneWidget);
+    expect(find.byType(ProfilePage), findsOneWidget);
+    await tester.tap(find.byType(AppBackButton));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_menuStubKey), findsOneWidget);
   });
+
+  testWidgets(
+    'authenticated: seller identity editing, sign-out; no shortcuts',
+    (tester) async {
+      const user = AuthUser(
+        id: 'u1',
+        email: 'seller@example.com',
+        fullName: 'Ana Popescu',
+      );
+      when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+      whenListen(
+        cubit,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.authenticated(user),
+      );
+
+      await tester.pumpWidget(
+        _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ana Popescu'), findsOneWidget);
+      expect(find.text('seller@example.com'), findsOneWidget);
+      expect(
+        find.text(l10n.profilePublicSellerBuyerPreviewCaption),
+        findsOneWidget,
+      );
+      expect(
+        find.text(l10n.profilePublicSellerProfileSectionTitle),
+        findsOneWidget,
+      );
+      expect(
+        find.text(l10n.profilePublicSellerProfileSectionSubtitle),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.profileSettingsSectionTitle), findsOneWidget);
+      expect(find.text(l10n.profileLanguageTitle), findsOneWidget);
+      expect(find.text(l10n.profileNotificationsTitle), findsOneWidget);
+      expect(find.text(l10n.profileListingAlertsTitle), findsOneWidget);
+      expect(find.text(l10n.commonComingSoon), findsNWidgets(3));
+
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('profile_future_row_language')),
+          matching: find.byType(InkWell),
+        ),
+        findsNothing,
+      );
+
+      expect(find.text('Saved Shop'), findsWidgets);
+      expect(
+        find.text(l10n.profilePublicSellerAvatarChangePhoto),
+        findsOneWidget,
+      );
+
+      expect(find.byType(AppBackButton), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(ProfilePage),
+          matching: find.byType(FloatingCapsuleNav),
+        ),
+        findsNothing,
+      );
+
+      expect(find.text(l10n.profileMyListings), findsNothing);
+      expect(find.text(l10n.profileFavorites), findsNothing);
+      expect(find.text(l10n.profileCreateListing), findsNothing);
+      expect(find.text(l10n.profileLegal), findsNothing);
+
+      expect(
+        find.byKey(const ValueKey('profileSignOutButton')),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.profileSignOut), findsOneWidget);
+
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('profileSignOutButton')),
+      );
+      await tester.pumpAndSettle();
+    },
+  );
 
   testWidgets('authenticated without full name: falls back to showing email', (
     tester,
@@ -176,7 +336,9 @@ void main() {
       initialState: const AuthState.authenticated(user),
     );
 
-    await tester.pumpWidget(_wrap(const ProfilePage(), cubit));
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('seller@example.com'), findsOneWidget);
@@ -191,13 +353,22 @@ void main() {
       initialState: const AuthState.authenticated(user),
     );
 
-    await tester.pumpWidget(_wrap(const ProfilePage(), cubit));
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), '  New Name  ');
-    await tester.tap(
-      find.widgetWithText(FilledButton, l10n.profilePublicSellerNameSave),
+    final savePosts = find.widgetWithText(
+      FilledButton,
+      l10n.profilePublicSellerNameSave,
     );
+    await tester.scrollUntilVisible(
+      savePosts,
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(savePosts);
     await tester.pumpAndSettle();
 
     verify(() => sellersRepo.updateMySellerDisplayName('New Name')).called(1);
@@ -215,7 +386,9 @@ void main() {
         initialState: const AuthState.authenticated(user),
       );
 
-      await tester.pumpWidget(_wrap(const ProfilePage(), cubit));
+      await tester.pumpWidget(
+        _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+      );
       await tester.pumpAndSettle();
 
       final maxPlusOne = List.filled(
@@ -223,9 +396,16 @@ void main() {
         'z',
       ).join();
       await tester.enterText(find.byType(TextField), maxPlusOne);
-      await tester.tap(
-        find.widgetWithText(FilledButton, l10n.profilePublicSellerNameSave),
+      final saveMax = find.widgetWithText(
+        FilledButton,
+        l10n.profilePublicSellerNameSave,
       );
+      await tester.scrollUntilVisible(
+        saveMax,
+        80,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(saveMax);
       await tester.pumpAndSettle();
 
       final atMostMax = List.filled(
@@ -246,13 +426,22 @@ void main() {
       initialState: const AuthState.authenticated(user),
     );
 
-    await tester.pumpWidget(_wrap(const ProfilePage(), cubit));
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), 'buyer@shop.md');
-    await tester.tap(
-      find.widgetWithText(FilledButton, l10n.profilePublicSellerNameSave),
+    final saveVal = find.widgetWithText(
+      FilledButton,
+      l10n.profilePublicSellerNameSave,
     );
+    await tester.scrollUntilVisible(
+      saveVal,
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(saveVal);
     await tester.pumpAndSettle();
 
     verifyNever(() => sellersRepo.updateMySellerDisplayName(any()));
@@ -271,13 +460,22 @@ void main() {
       initialState: const AuthState.authenticated(user),
     );
 
-    await tester.pumpWidget(_wrap(const ProfilePage(), cubit));
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextField), '');
-    await tester.tap(
-      find.widgetWithText(FilledButton, l10n.profilePublicSellerNameSave),
+    final saveClear = find.widgetWithText(
+      FilledButton,
+      l10n.profilePublicSellerNameSave,
     );
+    await tester.scrollUntilVisible(
+      saveClear,
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(saveClear);
     await tester.pumpAndSettle();
 
     verify(() => sellersRepo.updateMySellerDisplayName(null)).called(1);
@@ -293,12 +491,15 @@ void main() {
       initialState: const AuthState.authenticated(user),
     );
 
-    await tester.pumpWidget(_wrap(const ProfilePage(), cubit));
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
     await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(ListView), const Offset(0, -800));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('profileSignOutButton')),
+    );
     await tester.pumpAndSettle();
-
     await tester.tap(find.byKey(const ValueKey('profileSignOutButton')));
     await tester.pump();
 
@@ -317,7 +518,9 @@ void main() {
       initialState: const AuthState.authenticated(user),
     );
 
-    await tester.pumpWidget(_wrap(const ProfilePage(), cubit));
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.profilePublicSellerAvatarRemovePhoto), findsNothing);
@@ -343,12 +546,254 @@ void main() {
       initialState: const AuthState.authenticated(user),
     );
 
-    await tester.pumpWidget(_wrap(const ProfilePage(), cubit));
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
     await tester.pumpAndSettle();
 
+    expect(find.text(l10n.coverChangePhoto), findsOneWidget);
+    expect(find.text(l10n.profilePublicSellerAvatarChangePhoto), findsNothing);
     expect(
       find.text(l10n.profilePublicSellerAvatarRemovePhoto),
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'authenticated: activity section surfaces Messages preview string',
+    (tester) async {
+      const user = AuthUser(id: 'u1', email: 'seller@example.com');
+      when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+      whenListen(
+        cubit,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.authenticated(user),
+      );
+
+      await tester.pumpWidget(
+        _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.profileActivitySectionTitle), findsOneWidget);
+      expect(find.text(l10n.profileMessagesNoUnreadStatus), findsOneWidget);
+      expect(find.text(l10n.profileMessagesUnreadStatus), findsNothing);
+      expect(
+        find.byKey(const ValueKey('profile_messages_unread_count_badge')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'authenticated: Activity Messages row pushes route so stack returns to Account',
+    (tester) async {
+      final router = _profileTestGoRouter(
+        cubit: cubit,
+        messagingUnread: unreadSummaryCubit,
+      );
+      const user = AuthUser(id: 'u1', email: 'seller@example.com');
+      when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+      whenListen(
+        cubit,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.authenticated(user),
+      );
+
+      await tester.pumpWidget(_profileTestMaterial(router));
+      await tester.pumpAndSettle();
+
+      expect(router.canPop(), isFalse);
+
+      final messagesTitle = find.text(l10n.messagingTitle);
+      await tester.scrollUntilVisible(
+        messagesTitle.first,
+        80,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(messagesTitle.first);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(_profileTestMessagesStubKey), findsOneWidget);
+      expect(router.canPop(), isTrue);
+
+      router.pop();
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.profileTitle), findsOneWidget);
+      expect(router.canPop(), isFalse);
+    },
+  );
+
+  testWidgets(
+    'authenticated: Activity Messages trailing shows unread count badge when unread > 0',
+    (tester) async {
+      await unreadSummaryCubit.close();
+      when(
+        () => messagingRepo.getUnreadConversationCount(),
+      ).thenAnswer((_) async => const Success(2));
+      unreadSummaryCubit = MessagingUnreadSummaryCubit(messagingRepo);
+
+      const user = AuthUser(id: 'u1', email: 'seller@example.com');
+      when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+      whenListen(
+        cubit,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.authenticated(user),
+      );
+
+      await tester.pumpWidget(
+        _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+      );
+      await tester.pumpAndSettle();
+
+      final badge = find.byKey(
+        const ValueKey('profile_messages_unread_count_badge'),
+      );
+      expect(badge, findsOneWidget);
+      expect(find.text(l10n.profileMessagesUnreadStatus), findsOneWidget);
+      expect(
+        find.descendant(of: badge, matching: find.text('2')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'authenticated: Activity Messages badge shows 1 for single unread conversation',
+    (tester) async {
+      await unreadSummaryCubit.close();
+      when(
+        () => messagingRepo.getUnreadConversationCount(),
+      ).thenAnswer((_) async => const Success(1));
+      unreadSummaryCubit = MessagingUnreadSummaryCubit(messagingRepo);
+
+      const user = AuthUser(id: 'u1', email: 'seller@example.com');
+      when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+      whenListen(
+        cubit,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.authenticated(user),
+      );
+
+      await tester.pumpWidget(
+        _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+      );
+      await tester.pumpAndSettle();
+
+      final badge = find.byKey(
+        const ValueKey('profile_messages_unread_count_badge'),
+      );
+      expect(
+        find.descendant(of: badge, matching: find.text('1')),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'authenticated: Activity Messages badge shows overflow label when count >= 100',
+    (tester) async {
+      await unreadSummaryCubit.close();
+      when(
+        () => messagingRepo.getUnreadConversationCount(),
+      ).thenAnswer((_) async => const Success(100));
+      unreadSummaryCubit = MessagingUnreadSummaryCubit(messagingRepo);
+
+      const user = AuthUser(id: 'u1', email: 'seller@example.com');
+      when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+      whenListen(
+        cubit,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.authenticated(user),
+      );
+
+      await tester.pumpWidget(
+        _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+      );
+      await tester.pumpAndSettle();
+
+      final badge = find.byKey(
+        const ValueKey('profile_messages_unread_count_badge'),
+      );
+      expect(
+        find.descendant(
+          of: badge,
+          matching: find.text(l10n.profileMessagesUnreadCountOverflow),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'authenticated: Activity Messages omits no-unread subtitle when unread summary RPC fails with no prior count',
+    (tester) async {
+      await unreadSummaryCubit.close();
+      when(
+        () => messagingRepo.getUnreadConversationCount(),
+      ).thenAnswer(
+        (_) async => const FailureResult(NetworkFailure('temporary')),
+      );
+      unreadSummaryCubit = MessagingUnreadSummaryCubit(messagingRepo);
+
+      const user = AuthUser(id: 'u1', email: 'seller@example.com');
+      when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+      whenListen(
+        cubit,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.authenticated(user),
+      );
+
+      await tester.pumpWidget(
+        _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.profileMessagesNoUnreadStatus), findsNothing);
+      expect(find.text(l10n.profileMessagesUnreadStatus), findsNothing);
+      expect(
+        find.byKey(const ValueKey('profile_messages_unread_count_badge')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'private header uses seller_profiles avatar ahead of AuthUser.photo',
+    (tester) async {
+      const sellerUrl = 'https://seller.example/from-profile.png';
+      const user = AuthUser(
+        id: 'u1',
+        email: 'a@b.com',
+        fullName: 'T',
+        avatarUrl: 'https://auth.example/from-auth.jpg',
+      );
+      when(() => sellersRepo.getMySellerProfile()).thenAnswer(
+        (_) async =>
+            Success(_myProfile(displayName: 'Pub', avatarUrl: sellerUrl)),
+      );
+      when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+      whenListen(
+        cubit,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.authenticated(user),
+      );
+
+      await tester.pumpWidget(
+        _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Image &&
+              widget.image is NetworkImage &&
+              (widget.image as NetworkImage).url == sellerUrl,
+        ),
+        findsWidgets,
+      );
+    },
+  );
 }

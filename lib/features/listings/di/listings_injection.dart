@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 
 import '../../../core/services/supabase_service.dart';
+import '../../messaging/domain/usecases/get_or_create_conversation.dart';
 import '../data/datasources/listings_remote_datasource.dart';
 import '../data/repositories/listings_repository_impl.dart';
 import '../domain/repositories/listings_repository.dart';
@@ -31,6 +32,7 @@ void registerListingsFeature(GetIt sl) {
     () => ListingDetailsCubit(
       getListingById: sl<GetListingById>(),
       getListingImages: sl<GetListingImages>(),
+      getOrCreateConversation: sl<GetOrCreateConversation>(),
     ),
   );
 }

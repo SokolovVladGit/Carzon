@@ -33,6 +33,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonRequired => 'Обязательно';
 
   @override
+  String get commonComingSoon => 'Скоро';
+
+  @override
   String routeNotFound(String uri) {
     return 'Страница не найдена: $uri';
   }
@@ -259,6 +262,108 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingFieldPosted => 'Опубликовано';
+
+  @override
+  String get listingFuelType => 'Топливо';
+
+  @override
+  String get listingEngineDisplacement => 'Объём двигателя';
+
+  @override
+  String get listingEnginePower => 'Мощность';
+
+  @override
+  String get listingDrivetrain => 'Привод';
+
+  @override
+  String get listingRegistration => 'Регистрация';
+
+  @override
+  String get listingDescription => 'Описание';
+
+  @override
+  String get listingEngineDisplacementHint => 'Литры, напр. 2.0';
+
+  @override
+  String get listingEnginePowerHint => 'Мощность в л.с.';
+
+  @override
+  String get listingRegistrationHint => 'Где оформлена регистрация';
+
+  @override
+  String get listingEngineDisplacementLitersSuffix => 'л';
+
+  @override
+  String get listingEnginePowerHpSuffix => 'л.с.';
+
+  @override
+  String get listingFuelTypePetrol => 'Бензин';
+
+  @override
+  String get listingFuelTypeDiesel => 'Дизель';
+
+  @override
+  String get listingFuelTypeHybrid => 'Гибрид';
+
+  @override
+  String get listingFuelTypeElectric => 'Электро';
+
+  @override
+  String get listingFuelTypeLpg => 'Газ (LPG)';
+
+  @override
+  String get listingFuelTypeCng => 'Метан (CNG)';
+
+  @override
+  String get listingFuelTypeOther => 'Другое';
+
+  @override
+  String get listingDrivetrainFwd => 'Передний';
+
+  @override
+  String get listingDrivetrainRwd => 'Задний';
+
+  @override
+  String get listingDrivetrainAwd => 'Полный (AWD)';
+
+  @override
+  String get listingDrivetrainFourWheel => '4×4';
+
+  @override
+  String get listingDetailsDescriptionSection => 'Описание';
+
+  @override
+  String get createListingSectionSpecsSubtitle =>
+      'Технические данные необязательны, но помогают покупателю.';
+
+  @override
+  String get createListingSectionDescription => 'Описание';
+
+  @override
+  String get createListingSectionDescriptionSubtitle =>
+      'Состояние, комплектация, недостатки, сервис, торг.';
+
+  @override
+  String get createListingDescriptionLabel => 'Текст объявления';
+
+  @override
+  String get createListingDescriptionHint =>
+      'Расскажите о машине своими словами…';
+
+  @override
+  String get editListingDescriptionLabel => 'Описание объявления';
+
+  @override
+  String get validationEngineDisplacementPositive =>
+      'Укажите объём больше нуля (литры).';
+
+  @override
+  String get validationEnginePowerPositive =>
+      'Укажите мощность больше нуля (л.с.).';
+
+  @override
+  String get validationRegistrationTooLong =>
+      'Слишком длинное поле регистрации (макс. 200 символов).';
 
   @override
   String get contactSellerSection => 'Связаться с продавцом';
@@ -854,6 +959,56 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileSignOut => 'Выйти';
+
+  @override
+  String get accountAvatarOpenProfileTooltip => 'Аккаунт и настройки';
+
+  @override
+  String get profileActivitySectionTitle => 'Активность';
+
+  @override
+  String get profileMessagesUnreadStatus => 'Есть непрочитанные сообщения';
+
+  @override
+  String get profileMessagesNoUnreadStatus => 'Новых сообщений нет';
+
+  @override
+  String get profileMessagesUnreadCountOverflow => '99+';
+
+  @override
+  String get profilePublicSellerProfileSectionTitle =>
+      'Публичный профиль продавца';
+
+  @override
+  String get profilePublicSellerProfileSectionSubtitle =>
+      'Покупатели видят это в ваших объявлениях и на странице продавца.';
+
+  @override
+  String get profilePublicSellerBuyerPreviewCaption =>
+      'Так вас видят покупатели';
+
+  @override
+  String get profileSettingsSectionTitle => 'Настройки';
+
+  @override
+  String get profileLanguageTitle => 'Язык приложения';
+
+  @override
+  String get profileLanguageCurrentRussian => 'Русский';
+
+  @override
+  String get profileNotificationsTitle => 'Уведомления';
+
+  @override
+  String get profileNotificationsSubtitle =>
+      'Здесь появятся настройки push и сообщений.';
+
+  @override
+  String get profileListingAlertsTitle => 'Оповещения по фильтру';
+
+  @override
+  String get profileListingAlertsSubtitle =>
+      'Подписки на сохранённые фильтры и новые объявления.';
 
   @override
   String get profilePublicSellerNameTitle => 'Публичное имя продавца';

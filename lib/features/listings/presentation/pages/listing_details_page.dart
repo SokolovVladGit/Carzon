@@ -19,7 +19,6 @@ import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../favorites/presentation/widgets/favorite_toggle_button.dart';
-import '../../../messaging/domain/repositories/messaging_repository.dart';
 import '../../../messaging/presentation/utils/messaging_failure_mapper.dart';
 import '../../../messaging/presentation/utils/messaging_user_messages.dart';
 import '../../domain/entities/listing.dart';
@@ -36,6 +35,13 @@ import '../../../sellers/presentation/widgets/seller_trust_section.dart';
 /// `EditListingImagePicker` typedef on the edit-listing page so widget
 /// tests can intercept `launchUrl` without owning a global abstraction.
 typedef ListingDetailsUriLauncher = Future<bool> Function(Uri uri);
+
+String? _nonEmptyTrimmedDescription(Listing listing) {
+  final raw = listing.description;
+  if (raw == null) return null;
+  final t = raw.trim();
+  return t.isEmpty ? null : t;
+}
 
 Future<bool> _launchExternalUri(Uri uri) =>
     launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -976,6 +982,10 @@ class _BelowHeroContent extends StatelessWidget {
       children: [
         const SizedBox(height: 24),
         _DetailsList(listing: listing),
+        if (_nonEmptyTrimmedDescription(listing) case final desc?) ...[
+          const SizedBox(height: 28),
+          _ListingDescriptionBlock(text: desc),
+        ],
         const SizedBox(height: 24),
         if (listing.sellerId != null &&
             listing.sellerId!.trim().isNotEmpty) ...[
@@ -996,6 +1006,39 @@ class _BelowHeroContent extends StatelessWidget {
             launcher: uriLauncher ?? _launchExternalUri,
           ),
         ],
+      ],
+    );
+  }
+}
+
+/// Free-text seller description (shown only when non-empty).
+class _ListingDescriptionBlock extends StatelessWidget {
+  const _ListingDescriptionBlock({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.listingDetailsDescriptionSection,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.1,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          text,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            height: 1.45,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.92),
+          ),
+        ),
       ],
     );
   }
@@ -1025,10 +1068,34 @@ class _DetailsList extends StatelessWidget {
           formatListingBodyType(l10n, listing.bodyType!),
         ),
       _DetailsRowData(l10n.listingFieldCity, listing.city),
-      _DetailsRowData(
-        l10n.listingFieldRegion,
-        formatMarketRegion(l10n, listing.marketRegion),
-      ),
+      if (listing.fuelType != null)
+        _DetailsRowData(
+          l10n.listingFuelType,
+          formatListingFuelType(l10n, listing.fuelType!),
+        ),
+      if (listing.engineDisplacementLiters != null)
+        _DetailsRowData(
+          l10n.listingEngineDisplacement,
+          formatEngineDisplacementForDisplay(
+            l10n,
+            listing.engineDisplacementLiters,
+          ),
+        ),
+      if (listing.enginePowerHp != null)
+        _DetailsRowData(
+          l10n.listingEnginePower,
+          formatEnginePowerHpDisplay(l10n, listing.enginePowerHp),
+        ),
+      if (listing.drivetrain != null)
+        _DetailsRowData(
+          l10n.listingDrivetrain,
+          formatListingDrivetrain(l10n, listing.drivetrain!),
+        ),
+      if (listing.registration != null && listing.registration!.trim().isNotEmpty)
+        _DetailsRowData(
+          l10n.listingRegistration,
+          listing.registration!.trim(),
+        ),
       _DetailsRowData(l10n.listingFieldPosted, formatDate(listing.createdAt)),
     ];
 
@@ -1312,9 +1379,9 @@ class _ContactBottomBarState extends State<_ContactBottomBar> {
 
     setState(() => _openingChat = true);
     try {
-      final result = await sl<MessagingRepository>().getOrCreateConversation(
-        listing.id,
-      );
+      final result = await context
+          .read<ListingDetailsCubit>()
+          .startConversationForListing(listing.id);
       if (!context.mounted) return;
       switch (result) {
         case FailureResult(:final failure):

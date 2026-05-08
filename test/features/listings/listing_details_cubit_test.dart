@@ -7,12 +7,16 @@ import 'package:carzon/features/listings/domain/usecases/get_listing_by_id.dart'
 import 'package:carzon/features/listings/domain/usecases/get_listing_images.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
+import 'package:carzon/features/messaging/domain/usecases/get_or_create_conversation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockGetListingById extends Mock implements GetListingById {}
 
 class _MockGetListingImages extends Mock implements GetListingImages {}
+
+class _MockGetOrCreateConversation extends Mock
+    implements GetOrCreateConversation {}
 
 Listing _listing({String? cover}) => Listing(
   id: 'l1',
@@ -32,14 +36,17 @@ Listing _listing({String? cover}) => Listing(
 void main() {
   late _MockGetListingById getById;
   late _MockGetListingImages getImages;
+  late _MockGetOrCreateConversation getOrCreateConversation;
 
   setUpAll(() => registerFallbackValue(''));
 
   setUp(() {
     getById = _MockGetListingById();
     getImages = _MockGetListingImages();
+    getOrCreateConversation = _MockGetOrCreateConversation();
     reset(getById);
     reset(getImages);
+    reset(getOrCreateConversation);
   });
 
   blocTest<ListingDetailsCubit, ListingDetailsState>(
@@ -69,6 +76,7 @@ void main() {
     build: () => ListingDetailsCubit(
       getListingById: getById,
       getListingImages: getImages,
+      getOrCreateConversation: getOrCreateConversation,
     ),
     act: (c) => c.load('l1'),
     expect: () => [
@@ -80,6 +88,7 @@ void main() {
     ],
     verify: (_) {
       verify(() => getImages('l1')).called(1);
+      verifyNever(() => getOrCreateConversation(any()));
     },
   );
 
@@ -95,6 +104,7 @@ void main() {
     build: () => ListingDetailsCubit(
       getListingById: getById,
       getListingImages: getImages,
+      getOrCreateConversation: getOrCreateConversation,
     ),
     act: (c) => c.load('l1'),
     expect: () => [
@@ -106,6 +116,7 @@ void main() {
     ],
     verify: (_) {
       verify(() => getImages('l1')).called(1);
+      verifyNever(() => getOrCreateConversation(any()));
     },
   );
 
@@ -119,6 +130,7 @@ void main() {
     build: () => ListingDetailsCubit(
       getListingById: getById,
       getListingImages: getImages,
+      getOrCreateConversation: getOrCreateConversation,
     ),
     act: (c) => c.load('l1'),
     expect: () => [
@@ -127,6 +139,22 @@ void main() {
     ],
     verify: (_) {
       verifyNever(() => getImages(any()));
+      verifyNever(() => getOrCreateConversation(any()));
     },
   );
+
+  test('startConversationForListing delegates to messaging use case', () async {
+    when(() => getOrCreateConversation('l1')).thenAnswer(
+      (_) async => const Success('conv-z'),
+    );
+    final cubit = ListingDetailsCubit(
+      getListingById: getById,
+      getListingImages: getImages,
+      getOrCreateConversation: getOrCreateConversation,
+    );
+    final r = await cubit.startConversationForListing('l1');
+    expect(r, const Success<String>('conv-z'));
+    verify(() => getOrCreateConversation('l1')).called(1);
+    await cubit.close();
+  });
 }

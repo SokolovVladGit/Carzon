@@ -84,4 +84,30 @@ class MessagingRepositoryImpl implements MessagingRepository {
       return const FailureResult(UnknownFailure('Failed to send message.'));
     }
   }
+
+  @override
+  Future<Result<bool>> markConversationRead(String conversationId) async {
+    try {
+      await _remote.markConversationReadRpc(conversationId);
+      return const Success(true);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('markConversationRead unknown error', e, st);
+      return const FailureResult(UnknownFailure('Failed to sync read receipt.'));
+    }
+  }
+
+  @override
+  Future<Result<int>> getUnreadConversationCount() async {
+    try {
+      final n = await _remote.fetchUnreadConversationCountRpc();
+      return Success(n);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('getUnreadConversationCount unknown error', e, st);
+      return const FailureResult(UnknownFailure('Failed to load unread count.'));
+    }
+  }
 }

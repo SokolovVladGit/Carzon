@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,11 +18,15 @@ import '../../../../shared/ui/carzon_icons.dart';
 import '../bloc/listings_bloc.dart';
 import '../bloc/listings_event.dart';
 import '../bloc/listings_state.dart';
-import '../utils/feed_home_body_chips.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
+import '../../../sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import '../widgets/category_chip.dart';
+import '../widgets/feed_home_account_avatar_button.dart';
 import '../widgets/listing_card.dart';
 import '../widgets/listing_tile.dart';
 import '../widgets/listings_feed_empty_state.dart';
+import '../utils/feed_home_body_chips.dart';
 
 class ListingsPage extends StatelessWidget {
   const ListingsPage({super.key});
@@ -56,6 +62,12 @@ class _ListingsViewState extends State<_ListingsView> {
   void initState() {
     super.initState();
     _scrollCtrl.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = context.read<AuthCubit>().state;
+      unawaited(context.read<SelfSellerVisualCubit>().prime(auth));
+      unawaited(context.read<MessagingUnreadSummaryCubit>().sync(auth));
+    });
   }
 
   @override
@@ -512,33 +524,42 @@ class _FeedHeaderLayer extends StatelessWidget {
 /// letter-spaced, onSurface with moderate opacity) so it reads as
 /// identity, not as a loud title. It carries no tagline, no large
 /// heading, and no trailing controls.
+/// The wordmark stays centered; mirrored leading width keeps the masthead
+/// balanced with the trailing account control.
 class _CatalogHeader extends StatelessWidget {
   const _CatalogHeader();
+
+  static const double _mastheadSideSlot =
+      FeedHomeAccountAvatarButton.avatarDiameter + 8;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final wordmark = Text(
+      'CARZON',
+      textAlign: TextAlign.center,
+      style: theme.textTheme.titleSmall?.copyWith(
+        color: scheme.onSurface.withValues(alpha: 0.82),
+        fontWeight: FontWeight.w700,
+        letterSpacing: 4.0,
+        height: 1.0,
+      ),
+    );
     return Padding(
-      // Sits at the top of the header layer directly under the
-      // status bar inset. 16 top / 10 bottom keeps the wordmark
-      // floating on its own line without pushing the controls too
-      // far down — the surrounding layer adds the rest of the air.
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-      child: Center(
-        child: Text(
-          'CARZON',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.titleSmall?.copyWith(
-            color: scheme.onSurface.withValues(alpha: 0.82),
-            fontWeight: FontWeight.w700,
-            // 4.0 is the sweet spot: loose enough to read as a
-            // magazine masthead, tight enough that the six glyphs
-            // still read as a single word on narrow devices.
-            letterSpacing: 4.0,
-            height: 1.0,
+      padding: const EdgeInsets.fromLTRB(20, 16, 14, 10),
+      child: Row(
+        children: [
+          const SizedBox(width: _mastheadSideSlot),
+          Expanded(child: Center(child: wordmark)),
+          const SizedBox(
+            width: _mastheadSideSlot,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FeedHomeAccountAvatarButton(),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

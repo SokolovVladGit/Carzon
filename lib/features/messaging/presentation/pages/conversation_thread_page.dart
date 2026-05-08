@@ -18,6 +18,7 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../domain/repositories/messaging_repository.dart';
 import '../bloc/conversation_thread_cubit.dart';
 import '../bloc/conversation_thread_state.dart';
+import '../bloc/messaging_unread_summary_cubit.dart';
 import '../utils/messaging_user_messages.dart';
 import '../utils/thread_date_label.dart';
 import '../utils/thread_list_entries.dart';
@@ -177,6 +178,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           create: (_) => ConversationThreadCubit(
             repository: sl<MessagingRepository>(),
             conversationId: widget.conversationId,
+            onReadReceiptSynced: () async {
+              await sl<MessagingUnreadSummaryCubit>().sync(sl<AuthCubit>().state);
+            },
           )..load(),
           child: Builder(
             builder: (nestedContext) {

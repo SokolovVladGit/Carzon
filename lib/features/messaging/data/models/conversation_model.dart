@@ -17,6 +17,7 @@ class ConversationModel extends Conversation {
     super.listingCoverImageUrl,
     super.listingPriceAmount,
     super.listingPriceCurrencyDb,
+    super.hasUnread,
   });
 
   factory ConversationModel.fromJson(Map<String, dynamic> json) {
@@ -44,6 +45,9 @@ class ConversationModel extends Conversation {
       priceCurrencyDb = (pc != null && pc.trim().isNotEmpty) ? pc.trim() : null;
     }
 
+    final rawUnread = json['has_unread'];
+    final unread = rawUnread == true || rawUnread == 1;
+
     return ConversationModel(
       id: json['id'] as String,
       listingId: json['listing_id'] as String,
@@ -66,6 +70,7 @@ class ConversationModel extends Conversation {
       listingCoverImageUrl: cover,
       listingPriceAmount: price,
       listingPriceCurrencyDb: priceCurrencyDb,
+      hasUnread: unread,
     );
   }
 }

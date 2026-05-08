@@ -25,6 +25,12 @@ class NewListingInput extends Equatable {
     this.whatsappEnabled = false,
     this.coverImageUrl,
     this.uploadedGallery,
+    this.fuelType,
+    this.engineDisplacementLiters,
+    this.enginePowerHp,
+    this.drivetrain,
+    this.registration,
+    this.description,
   });
 
   final String sellerId;
@@ -59,6 +65,13 @@ class NewListingInput extends Equatable {
   /// Ordered staging metadata for `create_listing_v2` (URLs + optional paths).
   final List<UploadedListingImage>? uploadedGallery;
 
+  final ListingFuelType? fuelType;
+  final double? engineDisplacementLiters;
+  final int? enginePowerHp;
+  final ListingDrivetrain? drivetrain;
+  final String? registration;
+  final String? description;
+
   NewListingInput copyWith({
     String? coverImageUrl,
     String? contactPhone,
@@ -67,6 +80,12 @@ class NewListingInput extends Equatable {
     ListingCurrency? priceCurrency,
     List<UploadedListingImage>? uploadedGallery,
     ListingBodyType? bodyType,
+    ListingFuelType? fuelType,
+    double? engineDisplacementLiters,
+    int? enginePowerHp,
+    ListingDrivetrain? drivetrain,
+    String? registration,
+    String? description,
   }) => NewListingInput(
     sellerId: sellerId,
     title: title,
@@ -85,6 +104,13 @@ class NewListingInput extends Equatable {
     whatsappEnabled: whatsappEnabled ?? this.whatsappEnabled,
     coverImageUrl: coverImageUrl ?? this.coverImageUrl,
     uploadedGallery: uploadedGallery ?? this.uploadedGallery,
+    fuelType: fuelType ?? this.fuelType,
+    engineDisplacementLiters:
+        engineDisplacementLiters ?? this.engineDisplacementLiters,
+    enginePowerHp: enginePowerHp ?? this.enginePowerHp,
+    drivetrain: drivetrain ?? this.drivetrain,
+    registration: registration ?? this.registration,
+    description: description ?? this.description,
   );
 
   @override
@@ -101,6 +127,12 @@ class NewListingInput extends Equatable {
     city,
     marketRegion,
     bodyType,
+    fuelType,
+    engineDisplacementLiters,
+    enginePowerHp,
+    drivetrain,
+    registration,
+    description,
     contactPhone,
     telegramUsername,
     whatsappEnabled,

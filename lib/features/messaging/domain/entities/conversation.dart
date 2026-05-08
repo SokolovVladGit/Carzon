@@ -18,6 +18,7 @@ class Conversation extends Equatable {
     this.listingCoverImageUrl,
     this.listingPriceAmount,
     this.listingPriceCurrencyDb,
+    this.hasUnread = false,
   });
 
   final String id;
@@ -44,6 +45,10 @@ class Conversation extends Equatable {
   /// Raw DB `price_currency` (`eur` | `usd`) for display formatting.
   final String? listingPriceCurrencyDb;
 
+  /// True when the current user has inbound messages after their read cursor
+  /// (see `list_inbox_conversations`; single-conversation loads omit this).
+  final bool hasUnread;
+
   @override
   List<Object?> get props => [
     id,
@@ -61,5 +66,6 @@ class Conversation extends Equatable {
     listingCoverImageUrl,
     listingPriceAmount,
     listingPriceCurrencyDb,
+    hasUnread,
   ];
 }

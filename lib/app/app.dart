@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -7,6 +9,8 @@ import '../l10n/app_localizations.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/auth/presentation/bloc/auth_state.dart';
 import '../features/favorites/presentation/bloc/favorites_cubit.dart';
+import '../features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
+import '../features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import 'di/injection.dart';
 import 'router/app_router.dart';
 
@@ -25,6 +29,12 @@ class CarzonApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthCubit>.value(value: sl<AuthCubit>()),
         BlocProvider<FavoritesCubit>.value(value: sl<FavoritesCubit>()),
+        BlocProvider<SelfSellerVisualCubit>.value(
+          value: sl<SelfSellerVisualCubit>(),
+        ),
+        BlocProvider<MessagingUnreadSummaryCubit>.value(
+          value: sl<MessagingUnreadSummaryCubit>(),
+        ),
       ],
       child: MultiBlocListener(
         listeners: [
@@ -32,6 +42,17 @@ class CarzonApp extends StatelessWidget {
             listenWhen: (prev, curr) => prev.user?.id != curr.user?.id,
             listener: (context, state) {
               context.read<FavoritesCubit>().syncWithAuth(state.user);
+            },
+          ),
+          BlocListener<AuthCubit, AuthState>(
+            listenWhen: (prev, curr) =>
+                prev.user?.id != curr.user?.id ||
+                prev.status != curr.status,
+            listener: (context, state) {
+              unawaited(context.read<SelfSellerVisualCubit>().prime(state));
+              unawaited(
+                context.read<MessagingUnreadSummaryCubit>().sync(state),
+              );
             },
           ),
           BlocListener<AuthCubit, AuthState>(

@@ -16,9 +16,11 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../listings/domain/catalog/listing_brands.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
+import '../../../listings/domain/constants/listing_text_limits.dart';
 import '../../../listings/domain/validation/listing_valid_years.dart';
 import '../../../listings/presentation/utils/contact_format.dart';
 import '../../../listings/presentation/utils/listing_formatters.dart';
+import '../../../listings/presentation/widgets/listing_vehicle_spec_pickers.dart';
 import '../../../listings/presentation/widgets/public_contact_notice.dart';
 import '../../domain/constants/listing_gallery_limits.dart';
 import '../../domain/entities/cover_image_upload.dart';
@@ -211,6 +213,13 @@ class _CreateListingFormState extends State<_CreateListingForm> {
 
   ListingBodyType? _bodyType;
 
+  ListingFuelType? _fuelType;
+  ListingDrivetrain? _drivetrain;
+  final _engineDisplacement = TextEditingController();
+  final _enginePower = TextEditingController();
+  final _registration = TextEditingController();
+  final _description = TextEditingController();
+
   ListingCurrency _priceCurrency = ListingCurrency.eur;
   String? _selectedBrandCatalogValue;
 
@@ -231,6 +240,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       _city,
       _phone,
       _telegram,
+      _engineDisplacement,
+      _enginePower,
+      _registration,
+      _description,
     ]) {
       c.dispose();
     }
@@ -357,6 +370,28 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     setState(() => _bodyType = picked.value);
   }
 
+  Future<void> _openFuelTypeSheet() async {
+    final l10n = context.l10n;
+    final picked = await showListingFuelTypePickerSheet(
+      context: context,
+      l10n: l10n,
+      selected: _fuelType,
+    );
+    if (!mounted) return;
+    setState(() => _fuelType = picked);
+  }
+
+  Future<void> _openDrivetrainSheet() async {
+    final l10n = context.l10n;
+    final picked = await showListingDrivetrainPickerSheet(
+      context: context,
+      l10n: l10n,
+      selected: _drivetrain,
+    );
+    if (!mounted) return;
+    setState(() => _drivetrain = picked);
+  }
+
   void _submit() {
     FocusScope.of(context).unfocus();
     final formValid = _formKey.currentState?.validate() ?? false;
@@ -375,6 +410,16 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       city: _city.text.trim(),
       marketRegion: _marketRegion,
       bodyType: _bodyType,
+      fuelType: _fuelType,
+      engineDisplacementLiters: _engineDisplacementFromField(),
+      enginePowerHp: _enginePowerFromField(),
+      drivetrain: _drivetrain,
+      registration: _registration.text.trim().isEmpty
+          ? null
+          : _registration.text.trim(),
+      description: _description.text.trim().isEmpty
+          ? null
+          : _description.text.trim(),
       contactPhone: _phone.text.trim(),
       telegramUsername: normalizeTelegramUsername(_telegram.text),
       whatsappEnabled: _whatsappEnabled,
@@ -411,6 +456,42 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     final n = int.tryParse(v.trim());
     if (n == null || n < 0) return l10n.validationNonNegative;
     return null;
+  }
+
+  String? _validateOptionalDisplacement(AppLocalizations l10n, String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    final n = num.tryParse(v.trim().replaceAll(',', '.'));
+    if (n == null || n <= 0) {
+      return l10n.validationEngineDisplacementPositive;
+    }
+    return null;
+  }
+
+  String? _validateOptionalPower(AppLocalizations l10n, String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    final n = int.tryParse(v.trim());
+    if (n == null || n <= 0) return l10n.validationEnginePowerPositive;
+    return null;
+  }
+
+  String? _validateOptionalRegistration(AppLocalizations l10n, String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    if (v.trim().length > kListingRegistrationMaxLength) {
+      return l10n.validationRegistrationTooLong;
+    }
+    return null;
+  }
+
+  double? _engineDisplacementFromField() {
+    final t = _engineDisplacement.text.trim();
+    if (t.isEmpty) return null;
+    return num.tryParse(t.replaceAll(',', '.'))?.toDouble();
+  }
+
+  int? _enginePowerFromField() {
+    final t = _enginePower.text.trim();
+    if (t.isEmpty) return null;
+    return int.tryParse(t);
   }
 
   @override
@@ -734,7 +815,111 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 22),
+                      Text(
+                        l10n.createListingSectionSpecsSubtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.35,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      CreateListingFieldLabel(l10n.listingFuelType),
+                      const SizedBox(height: 8),
+                      ListingVehicleSpecPickerRow(
+                        valueText: _fuelType == null
+                            ? l10n.listingBodyTypeNotSpecified
+                            : formatListingFuelType(l10n, _fuelType!),
+                        enabled: !submitting,
+                        onTap:
+                            submitting ? null : () => _openFuelTypeSheet(),
+                        fieldKey: const ValueKey('create_listing_fuel_field'),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _engineDisplacement,
+                        decoration: _createListingFieldDecoration(
+                          theme,
+                          labelText: l10n.listingEngineDisplacement,
+                          hintText: l10n.listingEngineDisplacementHint,
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        validator: (v) =>
+                            _validateOptionalDisplacement(l10n, v),
+                        enabled: !submitting,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _enginePower,
+                        decoration: _createListingFieldDecoration(
+                          theme,
+                          labelText: l10n.listingEnginePower,
+                          hintText: l10n.listingEnginePowerHint,
+                        ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        validator: (v) => _validateOptionalPower(l10n, v),
+                        enabled: !submitting,
+                      ),
+                      const SizedBox(height: 16),
+                      CreateListingFieldLabel(l10n.listingDrivetrain),
+                      const SizedBox(height: 8),
+                      ListingVehicleSpecPickerRow(
+                        valueText: _drivetrain == null
+                            ? l10n.listingBodyTypeNotSpecified
+                            : formatListingDrivetrain(l10n, _drivetrain!),
+                        enabled: !submitting,
+                        onTap:
+                            submitting ? null : () => _openDrivetrainSheet(),
+                        fieldKey:
+                            const ValueKey('create_listing_drivetrain_field'),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _registration,
+                        decoration: _createListingFieldDecoration(
+                          theme,
+                          labelText: l10n.listingRegistration,
+                          hintText: l10n.listingRegistrationHint,
+                        ),
+                        maxLength: kListingRegistrationMaxLength,
+                        maxLines: 1,
+                        buildCounter: (
+                          context, {
+                          required currentLength,
+                          required isFocused,
+                          maxLength,
+                        }) =>
+                            null,
+                        validator: (v) =>
+                            _validateOptionalRegistration(l10n, v),
+                        enabled: !submitting,
+                      ),
                     ],
+                  ),
+                ),
+
+                const SizedBox(height: 26),
+
+                CreateListingPremiumSection(
+                  tone: CreateListingSectionTone.identity,
+                  title: l10n.createListingSectionDescription,
+                  subtitle: l10n.createListingSectionDescriptionSubtitle,
+                  child: TextFormField(
+                    controller: _description,
+                    minLines: 4,
+                    maxLines: 12,
+                    maxLength: kListingDescriptionMaxLength,
+                    decoration: _createListingFieldDecoration(
+                      theme,
+                      labelText: l10n.createListingDescriptionLabel,
+                      hintText: l10n.createListingDescriptionHint,
+                    ),
+                    enabled: !submitting,
                   ),
                 ),
 

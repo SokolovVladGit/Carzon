@@ -16,6 +16,7 @@ import '../../../create_listing/domain/constants/listing_gallery_limits.dart';
 import '../../../create_listing/domain/entities/cover_image_upload.dart';
 import '../../../create_listing/presentation/widgets/create_listing_compose_layout.dart';
 import '../../../listings/domain/catalog/listing_brands.dart';
+import '../../../listings/domain/constants/listing_text_limits.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../../listings/domain/entities/listing_image.dart';
@@ -198,6 +199,13 @@ class _EditListingFormState extends State<_EditListingForm> {
   late ListingType _type;
   late MarketRegion _marketRegion;
   ListingBodyType? _bodyType;
+  ListingFuelType? _fuelType;
+  ListingDrivetrain? _drivetrain;
+  late final TextEditingController _engineDisplacement;
+  late final TextEditingController _enginePower;
+  late final TextEditingController _registration;
+  late final TextEditingController _description;
+
   late bool _whatsappEnabled;
   late ListingCurrency _priceCurrency;
 
@@ -211,6 +219,13 @@ class _EditListingFormState extends State<_EditListingForm> {
     if (value is int) return value.toString();
     if (value == value.toInt()) return value.toInt().toString();
     return value.toString();
+  }
+
+  String _displacementFieldText(double liters) {
+    if (liters == liters.roundToDouble()) {
+      return liters.toInt().toString();
+    }
+    return liters.toString();
   }
 
   @override
@@ -228,6 +243,20 @@ class _EditListingFormState extends State<_EditListingForm> {
     _type = l.type;
     _marketRegion = l.marketRegion;
     _bodyType = l.bodyType;
+    _fuelType = l.fuelType;
+    _drivetrain = l.drivetrain;
+    _engineDisplacement = TextEditingController(
+      text: l.engineDisplacementLiters == null
+          ? ''
+          : _displacementFieldText(
+              l.engineDisplacementLiters!,
+            ),
+    );
+    _enginePower = TextEditingController(
+      text: l.enginePowerHp == null ? '' : '${l.enginePowerHp}',
+    );
+    _registration = TextEditingController(text: l.registration ?? '');
+    _description = TextEditingController(text: l.description ?? '');
     _whatsappEnabled = l.whatsappEnabled;
     _priceCurrency = l.priceCurrency;
 
@@ -263,6 +292,10 @@ class _EditListingFormState extends State<_EditListingForm> {
       _city,
       _phone,
       _telegram,
+      _engineDisplacement,
+      _enginePower,
+      _registration,
+      _description,
     ]) {
       c.dispose();
     }
@@ -388,6 +421,42 @@ class _EditListingFormState extends State<_EditListingForm> {
     return null;
   }
 
+  String? _validateOptionalDisplacement(AppLocalizations l10n, String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    final n = num.tryParse(v.trim().replaceAll(',', '.'));
+    if (n == null || n <= 0) {
+      return l10n.validationEngineDisplacementPositive;
+    }
+    return null;
+  }
+
+  String? _validateOptionalPower(AppLocalizations l10n, String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    final n = int.tryParse(v.trim());
+    if (n == null || n <= 0) return l10n.validationEnginePowerPositive;
+    return null;
+  }
+
+  String? _validateOptionalRegistration(AppLocalizations l10n, String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    if (v.trim().length > kListingRegistrationMaxLength) {
+      return l10n.validationRegistrationTooLong;
+    }
+    return null;
+  }
+
+  double? _engineDisplacementFromField() {
+    final t = _engineDisplacement.text.trim();
+    if (t.isEmpty) return null;
+    return num.tryParse(t.replaceAll(',', '.'))?.toDouble();
+  }
+
+  int? _enginePowerFromField() {
+    final t = _enginePower.text.trim();
+    if (t.isEmpty) return null;
+    return int.tryParse(t);
+  }
+
   void _submit() {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
@@ -405,6 +474,14 @@ class _EditListingFormState extends State<_EditListingForm> {
       city: _city.text.trim(),
       marketRegion: _marketRegion,
       bodyType: _bodyType,
+      fuelType: _fuelType,
+      engineDisplacementLiters: _engineDisplacementFromField(),
+      enginePowerHp: _enginePowerFromField(),
+      drivetrain: _drivetrain,
+      registration:
+          _registration.text.trim().isEmpty ? null : _registration.text.trim(),
+      description:
+          _description.text.trim().isEmpty ? null : _description.text.trim(),
       contactPhone: _phone.text.trim(),
       telegramUsername: normalizeTelegramUsername(_telegram.text),
       whatsappEnabled: _whatsappEnabled,
@@ -778,6 +855,140 @@ class _EditListingFormState extends State<_EditListingForm> {
                           : (v) => setState(() => _bodyType = v),
                     ),
                   ),
+                  const SizedBox(height: 14),
+                  Text(
+                    l10n.createListingSectionSpecsSubtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<ListingFuelType?>(
+                    initialValue: _fuelType,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.listingFuelType,
+                    ),
+                    items: [
+                      DropdownMenuItem<ListingFuelType?>(
+                        value: null,
+                        child: Text(l10n.listingBodyTypeNotSpecified),
+                      ),
+                      ...ListingFuelType.values.map(
+                        (e) => DropdownMenuItem<ListingFuelType?>(
+                          value: e,
+                          child: Text(formatListingFuelType(l10n, e)),
+                        ),
+                      ),
+                    ],
+                    onChanged: submitting
+                        ? null
+                        : (v) => setState(() => _fuelType = v),
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _engineDisplacement,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.listingEngineDisplacement,
+                      hintText: l10n.listingEngineDisplacementHint,
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (v) => _validateOptionalDisplacement(l10n, v),
+                    enabled: !submitting,
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _enginePower,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.listingEnginePower,
+                      hintText: l10n.listingEnginePowerHint,
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    validator: (v) => _validateOptionalPower(l10n, v),
+                    enabled: !submitting,
+                  ),
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<ListingDrivetrain?>(
+                    initialValue: _drivetrain,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.listingDrivetrain,
+                    ),
+                    items: [
+                      DropdownMenuItem<ListingDrivetrain?>(
+                        value: null,
+                        child: Text(l10n.listingBodyTypeNotSpecified),
+                      ),
+                      ...ListingDrivetrain.values.map(
+                        (e) => DropdownMenuItem<ListingDrivetrain?>(
+                          value: e,
+                          child: Text(formatListingDrivetrain(l10n, e)),
+                        ),
+                      ),
+                    ],
+                    onChanged: submitting
+                        ? null
+                        : (v) => setState(() => _drivetrain = v),
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _registration,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.listingRegistration,
+                      hintText: l10n.listingRegistrationHint,
+                    ),
+                    maxLength: kListingRegistrationMaxLength,
+                    buildCounter: (
+                      context, {
+                      required currentLength,
+                      required isFocused,
+                      maxLength,
+                    }) =>
+                        null,
+                    validator: (v) => _validateOptionalRegistration(l10n, v),
+                    enabled: !submitting,
+                  ),
                 ],
               ),
             ),
@@ -850,6 +1061,39 @@ class _EditListingFormState extends State<_EditListingForm> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (v) => _validateMileage(l10n, v),
+                    enabled: !submitting,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _elevatedSheet(
+              context,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _mutedSectionLabel(
+                    context,
+                    l10n.listingDetailsDescriptionSection,
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _description,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.editListingDescriptionLabel,
+                      alignLabelWithHint: true,
+                      hintText: l10n.createListingDescriptionHint,
+                    ),
+                    minLines: 4,
+                    maxLines: 10,
+                    maxLength: kListingDescriptionMaxLength,
                     enabled: !submitting,
                   ),
                 ],

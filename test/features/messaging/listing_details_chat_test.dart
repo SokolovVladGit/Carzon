@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
@@ -10,7 +13,6 @@ import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
 import 'package:carzon/features/listings/presentation/pages/listing_details_page.dart';
-import 'package:carzon/features/messaging/domain/repositories/messaging_repository.dart';
 import 'package:carzon/features/sellers/domain/usecases/get_seller_public_profile.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -30,13 +32,10 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 class _MockFavoritesCubit extends MockCubit<FavoritesState>
     implements FavoritesCubit {}
 
-class _MockMessagingRepository extends Mock implements MessagingRepository {}
-
 void main() {
   late _MockDetailsCubit detailsCubit;
   late _MockAuthCubit authCubit;
   late _MockFavoritesCubit favoritesCubit;
-  late _MockMessagingRepository messagingRepo;
   late MockGetSellerPublicProfile sellerProfileUseCase;
   final l10n = ruStrings();
 
@@ -49,11 +48,13 @@ void main() {
     detailsCubit = _MockDetailsCubit();
     authCubit = _MockAuthCubit();
     favoritesCubit = _MockFavoritesCubit();
-    messagingRepo = _MockMessagingRepository();
     sellerProfileUseCase = MockGetSellerPublicProfile();
     stubSellerPublicProfileHidden(sellerProfileUseCase);
 
     when(() => detailsCubit.load(any())).thenAnswer((_) async {});
+    when(
+      () => detailsCubit.startConversationForListing(any()),
+    ).thenThrow(StateError('unstubbed startConversationForListing'));
 
     when(() => favoritesCubit.state).thenReturn(const FavoritesState());
     whenListen(
@@ -63,7 +64,6 @@ void main() {
     );
 
     sl.registerFactory<ListingDetailsCubit>(() => detailsCubit);
-    sl.registerLazySingleton<MessagingRepository>(() => messagingRepo);
     sl.registerFactory<GetSellerPublicProfile>(() => sellerProfileUseCase);
   });
 
@@ -145,7 +145,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.text(l10n.messagingSignInRequired), findsOneWidget);
-    verifyNever(() => messagingRepo.getOrCreateConversation(any()));
+    verifyNever(() => detailsCubit.startConversationForListing(any()));
   });
 
   testWidgets('chat tap when seller_id is null shows unavailable snackbar', (
@@ -172,7 +172,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.messagingUnavailableNoSeller), findsOneWidget);
-    verifyNever(() => messagingRepo.getOrCreateConversation(any()));
+    verifyNever(() => detailsCubit.startConversationForListing(any()));
   });
 
   testWidgets('chat tap on own listing shows self-message snackbar', (
@@ -199,11 +199,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.messagingCannotMessageSelf), findsOneWidget);
-    verifyNever(() => messagingRepo.getOrCreateConversation(any()));
+    verifyNever(() => detailsCubit.startConversationForListing(any()));
   });
 
   testWidgets(
-    'authenticated buyer opens conversation via RPC and navigates to thread',
+    'authenticated buyer opens conversation via cubit and navigates to thread',
     (tester) async {
       stubAuth(
         const AuthState.authenticated(
@@ -212,7 +212,7 @@ void main() {
       );
       stubListing(listingWithSeller(sellerId: 'seller-99'));
       when(
-        () => messagingRepo.getOrCreateConversation('l1'),
+        () => detailsCubit.startConversationForListing('l1'),
       ).thenAnswer((_) async => const Success<String>('conv-uuid-1'));
 
       final router = GoRouter(
@@ -237,8 +237,79 @@ void main() {
       await tester.tap(find.text(l10n.chatLabel));
       await tester.pumpAndSettle();
 
-      verify(() => messagingRepo.getOrCreateConversation('l1')).called(1);
+      verify(() => detailsCubit.startConversationForListing('l1')).called(1);
       expect(find.text('thread:conv-uuid-1'), findsOneWidget);
+    },
+  );
+
+  testWidgets('chat tap on RPC failure shows localized snackbar', (
+    tester,
+  ) async {
+    stubAuth(
+      const AuthState.authenticated(
+        AuthUser(id: 'buyer-1', email: 'b@x.com'),
+      ),
+    );
+    stubListing(listingWithSeller(sellerId: 'seller-99'));
+    when(() => detailsCubit.startConversationForListing('l1')).thenAnswer(
+      (_) async => FailureResult(NetworkFailure('bad')),
+    );
+
+    final router = GoRouter(
+      initialLocation: '/listings/l1',
+      routes: [
+        GoRoute(
+          path: '/listings/:id',
+          builder: (_, state) =>
+              ListingDetailsPage(id: state.pathParameters['id']!),
+        ),
+      ],
+    );
+    await pumpDetails(tester, router);
+
+    await tester.tap(find.text(l10n.chatLabel));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.messagingNetworkError), findsOneWidget);
+    verify(() => detailsCubit.startConversationForListing('l1')).called(1);
+  });
+
+  testWidgets(
+    'chat pill ignores second tap while first get/create is in flight',
+    (tester) async {
+      stubAuth(
+        const AuthState.authenticated(
+          AuthUser(id: 'buyer-1', email: 'b@x.com'),
+        ),
+      );
+      stubListing(listingWithSeller(sellerId: 'seller-99'));
+
+      final completer = Completer<Result<String>>();
+      when(() => detailsCubit.startConversationForListing('l1')).thenAnswer(
+        (_) => completer.future,
+      );
+
+      final router = GoRouter(
+        initialLocation: '/listings/l1',
+        routes: [
+          GoRoute(
+            path: '/listings/:id',
+            builder: (_, state) =>
+                ListingDetailsPage(id: state.pathParameters['id']!),
+          ),
+        ],
+      );
+      await pumpDetails(tester, router);
+
+      await tester.tap(find.text(l10n.chatLabel));
+      await tester.pump();
+      await tester.tap(find.text(l10n.chatLabel));
+      await tester.pump();
+
+      verify(() => detailsCubit.startConversationForListing('l1')).called(1);
+
+      completer.complete(const Success('c1'));
+      await tester.pumpAndSettle();
     },
   );
 }

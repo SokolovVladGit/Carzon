@@ -1,5 +1,9 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/app/router/app_router.dart';
+import 'package:carzon/core/errors/failures.dart';
+import 'package:carzon/core/utils/result.dart';
+import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
@@ -16,6 +20,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
+import 'package:carzon/features/messaging/domain/repositories/messaging_repository.dart';
+import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
+import 'package:carzon/features/sellers/data/models/my_seller_profile_model.dart';
+import 'package:carzon/features/sellers/domain/repositories/sellers_repository.dart';
+import 'package:carzon/features/sellers/domain/usecases/get_my_seller_profile.dart';
+import 'package:carzon/features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
+
 import '../../helpers/l10n_test_helpers.dart';
 
 class _MockListingsBloc extends MockBloc<ListingsEvent, ListingsState>
@@ -26,6 +37,21 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 class _MockFavoritesCubit extends MockCubit<FavoritesState>
     implements FavoritesCubit {}
 
+class _MockSellersRepository extends Mock implements SellersRepository {}
+
+class _MockMessagingRepository extends Mock implements MessagingRepository {}
+
+MySellerProfileModel _stubSellerSelf({
+  String? displayName,
+  String? avatarUrl,
+}) => MySellerProfileModel(
+  displayName: displayName,
+  avatarUrl: avatarUrl,
+  avatarPath: null,
+  memberSince: DateTime.utc(2026, 4, 1),
+  publicVisibility: true,
+);
+
 /// Builds a host that mounts [ListingsPage] behind a GoRouter with the
 /// same top-level route path as the production router so the shared
 /// bottom nav is free to render.
@@ -33,15 +59,27 @@ Widget _host({
   required ListingsBloc bloc,
   required AuthCubit auth,
   required FavoritesCubit favorites,
+  required SellersRepository sellersRepo,
+  required MessagingRepository messagingRepo,
 }) {
   final router = GoRouter(
     initialLocation: '/',
-    routes: [GoRoute(path: '/', builder: (_, _) => const ListingsPage())],
+    routes: [
+      GoRoute(path: '/', builder: (_, _) => const ListingsPage()),
+      GoRoute(
+        path: AppRoutes.profile,
+        builder: (_, _) => Scaffold(body: Text(ruStrings().profileTitle)),
+      ),
+    ],
   );
   return MultiBlocProvider(
     providers: [
       BlocProvider<AuthCubit>.value(value: auth),
       BlocProvider<FavoritesCubit>.value(value: favorites),
+      BlocProvider(
+        create: (_) => SelfSellerVisualCubit(GetMySellerProfile(sellersRepo)),
+      ),
+      BlocProvider(create: (_) => MessagingUnreadSummaryCubit(messagingRepo)),
     ],
     child: MaterialApp.router(
       locale: const Locale('ru'),
@@ -50,10 +88,6 @@ Widget _host({
       routerConfig: router,
     ),
   );
-  // The unused parameter `bloc` is consumed via sl registration below.
-  // We return the widget tree here so the sl factory wires it in.
-  // ignore: dead_code
-  // (kept for future extension)
 }
 
 void main() {
@@ -65,11 +99,14 @@ void main() {
     registerFallbackValue(
       const ListingsBodyTypeFilterChanged(ListingBodyType.suv),
     );
+    registerFallbackValue('');
   });
 
   late _MockListingsBloc bloc;
   late _MockAuthCubit auth;
   late _MockFavoritesCubit favs;
+  late _MockSellersRepository sellersRepo;
+  late _MockMessagingRepository messagingRepo;
   final l10n = ruStrings();
 
   setUp(() async {
@@ -77,6 +114,18 @@ void main() {
     bloc = _MockListingsBloc();
     auth = _MockAuthCubit();
     favs = _MockFavoritesCubit();
+    sellersRepo = _MockSellersRepository();
+    messagingRepo = _MockMessagingRepository();
+
+    when(
+      () => sellersRepo.getSellerPublicProfile(any()),
+    ).thenAnswer((_) async => const Success(null));
+    when(
+      () => sellersRepo.getMySellerProfile(),
+    ).thenAnswer((_) async => Success(_stubSellerSelf(displayName: 'S')));
+    when(
+      () => messagingRepo.getUnreadConversationCount(),
+    ).thenAnswer((_) async => const Success(0));
 
     when(() => bloc.state).thenReturn(
       const ListingsState(
@@ -118,7 +167,15 @@ void main() {
   group('Listings feed editorial header', () {
     testWidgets('renders the CARZON wordmark as the sole header identity, with '
         'no large catalog title and no marketing subtitle', (tester) async {
-      await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
+      await tester.pumpWidget(
+        _host(
+          bloc: bloc,
+          auth: auth,
+          favorites: favs,
+          sellersRepo: sellersRepo,
+          messagingRepo: messagingRepo,
+        ),
+      );
       await tester.pump();
 
       // Pass 1.8 simplifies the editorial header to a centered
@@ -130,7 +187,15 @@ void main() {
     });
 
     testWidgets('keeps the localized search hint', (tester) async {
-      await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
+      await tester.pumpWidget(
+        _host(
+          bloc: bloc,
+          auth: auth,
+          favorites: favs,
+          sellersRepo: sellersRepo,
+          messagingRepo: messagingRepo,
+        ),
+      );
       await tester.pump();
 
       expect(find.text(l10n.listingsSearchHint), findsOneWidget);
@@ -140,7 +205,15 @@ void main() {
       'does NOT render region chips on the home surface — region lives '
       'in the filters sheet in Pass 1.3',
       (tester) async {
-        await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
         await tester.pump();
 
         // Assert on the widget type, not raw text: the region label
@@ -159,7 +232,15 @@ void main() {
         'semantics still expose it, but no visible "Фильтры" label', (
       tester,
     ) async {
-      await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
+      await tester.pumpWidget(
+        _host(
+          bloc: bloc,
+          auth: auth,
+          favorites: favs,
+          sellersRepo: sellersRepo,
+          messagingRepo: messagingRepo,
+        ),
+      );
       await tester.pump();
 
       // Pass 1.4 drops the text label to stop the filter button
@@ -173,7 +254,15 @@ void main() {
 
     testWidgets('body type chips show localized labels; tapping SUV dispatches '
         'ListingsBodyTypeFilterChanged(suv)', (tester) async {
-      await tester.pumpWidget(_host(bloc: bloc, auth: auth, favorites: favs));
+      await tester.pumpWidget(
+        _host(
+          bloc: bloc,
+          auth: auth,
+          favorites: favs,
+          sellersRepo: sellersRepo,
+          messagingRepo: messagingRepo,
+        ),
+      );
       await tester.pump();
       await tester.pumpAndSettle();
 
@@ -189,5 +278,123 @@ void main() {
             bloc.add(const ListingsBodyTypeFilterChanged(ListingBodyType.suv)),
       ).called(1);
     });
+
+    testWidgets('masthead includes account avatar control key', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          bloc: bloc,
+          auth: auth,
+          favorites: favs,
+          sellersRepo: sellersRepo,
+          messagingRepo: messagingRepo,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('feed_home_account_avatar_button')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('tapping account avatar navigates toward profile route', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          bloc: bloc,
+          auth: auth,
+          favorites: favs,
+          sellersRepo: sellersRepo,
+          messagingRepo: messagingRepo,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('feed_home_account_avatar_button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.profileTitle), findsOneWidget);
+    });
+
+    testWidgets(
+      'masthead unread badge avoids showing message count digits',
+      (tester) async {
+        when(() => messagingRepo.getUnreadConversationCount()).thenAnswer(
+          (_) async => const Success(14),
+        );
+        when(() => auth.state).thenReturn(
+          const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+        whenListen(
+          auth,
+          const Stream<AuthState>.empty(),
+          initialState: const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey('feed_home_unread_indicator_dot')),
+          findsOneWidget,
+        );
+        expect(find.text('14'), findsNothing);
+        expect(find.text('1'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'masthead unread dot is hidden when unread summary RPC fails with no prior count',
+      (tester) async {
+        when(() => messagingRepo.getUnreadConversationCount()).thenAnswer(
+          (_) async => const FailureResult(NetworkFailure('temporary')),
+        );
+        when(() => auth.state).thenReturn(
+          const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+        whenListen(
+          auth,
+          const Stream<AuthState>.empty(),
+          initialState: const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey('feed_home_unread_indicator_dot')),
+          findsNothing,
+        );
+      },
+    );
   });
 }

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../listings/data/models/listing_model.dart';
+import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../domain/entities/edit_listing_input.dart';
 
@@ -20,6 +21,12 @@ ListingModel _parseListingMutationRpcResponse(
     throw ServerException('Unexpected response from $rpcNameForError RPC.');
   }
   return ListingModel.fromJson(row);
+}
+
+String? _nullableTrimListingField(String? value) {
+  if (value == null) return null;
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
 }
 
 /// Only this class talks to Supabase for edit-listing.
@@ -117,7 +124,15 @@ class SupabaseEditListingRemoteDataSource
   @override
   Future<ListingModel> updateDetailsV2(EditListingInput input) {
     final params = _detailsParams(input, currency: true)
-      ..['p_body_type'] = input.bodyType?.name;
+      ..['p_body_type'] = input.bodyType?.name
+      ..['p_fuel_type'] = input.fuelType?.name
+      ..['p_engine_displacement_liters'] = input.engineDisplacementLiters
+      ..['p_engine_power_hp'] = input.enginePowerHp
+      ..['p_drivetrain'] = input.drivetrain == null
+          ? null
+          : listingDrivetrainToDbValue(input.drivetrain!)
+      ..['p_registration'] = _nullableTrimListingField(input.registration)
+      ..['p_description'] = _nullableTrimListingField(input.description);
     return _rpcListingRow(_supabase.client.rpc(_rpcV2, params: params), _rpcV2);
   }
 
