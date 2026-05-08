@@ -28,6 +28,12 @@ class EditListingInput extends Equatable {
     this.telegramUsername,
     this.whatsappEnabled = false,
     this.priceCurrency = ListingCurrency.eur,
+    this.fuelType,
+    this.engineDisplacementLiters,
+    this.enginePowerHp,
+    this.drivetrain,
+    this.registration,
+    this.description,
   });
 
   final String listingId;
@@ -57,6 +63,13 @@ class EditListingInput extends Equatable {
   /// Seller opt-in to receive WhatsApp messages on [contactPhone].
   final bool whatsappEnabled;
 
+  final ListingFuelType? fuelType;
+  final double? engineDisplacementLiters;
+  final int? enginePowerHp;
+  final ListingDrivetrain? drivetrain;
+  final String? registration;
+  final String? description;
+
   @override
   List<Object?> get props => [
     listingId,
@@ -71,6 +84,12 @@ class EditListingInput extends Equatable {
     city,
     marketRegion,
     bodyType,
+    fuelType,
+    engineDisplacementLiters,
+    enginePowerHp,
+    drivetrain,
+    registration,
+    description,
     contactPhone,
     telegramUsername,
     whatsappEnabled,

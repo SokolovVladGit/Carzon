@@ -142,6 +142,12 @@ abstract class AppLocalizations {
   /// **'Обязательно'**
   String get commonRequired;
 
+  /// No description provided for @commonComingSoon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скоро'**
+  String get commonComingSoon;
+
   /// No description provided for @routeNotFound.
   ///
   /// In ru, this message translates to:
@@ -579,6 +585,198 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Опубликовано'**
   String get listingFieldPosted;
+
+  /// No description provided for @listingFuelType.
+  ///
+  /// In ru, this message translates to:
+  /// **'Топливо'**
+  String get listingFuelType;
+
+  /// No description provided for @listingEngineDisplacement.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объём двигателя'**
+  String get listingEngineDisplacement;
+
+  /// No description provided for @listingEnginePower.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мощность'**
+  String get listingEnginePower;
+
+  /// No description provided for @listingDrivetrain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Привод'**
+  String get listingDrivetrain;
+
+  /// No description provided for @listingRegistration.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регистрация'**
+  String get listingRegistration;
+
+  /// No description provided for @listingDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описание'**
+  String get listingDescription;
+
+  /// No description provided for @listingEngineDisplacementHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Литры, напр. 2.0'**
+  String get listingEngineDisplacementHint;
+
+  /// No description provided for @listingEnginePowerHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мощность в л.с.'**
+  String get listingEnginePowerHint;
+
+  /// No description provided for @listingRegistrationHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Где оформлена регистрация'**
+  String get listingRegistrationHint;
+
+  /// No description provided for @listingEngineDisplacementLitersSuffix.
+  ///
+  /// In ru, this message translates to:
+  /// **'л'**
+  String get listingEngineDisplacementLitersSuffix;
+
+  /// No description provided for @listingEnginePowerHpSuffix.
+  ///
+  /// In ru, this message translates to:
+  /// **'л.с.'**
+  String get listingEnginePowerHpSuffix;
+
+  /// No description provided for @listingFuelTypePetrol.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бензин'**
+  String get listingFuelTypePetrol;
+
+  /// No description provided for @listingFuelTypeDiesel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дизель'**
+  String get listingFuelTypeDiesel;
+
+  /// No description provided for @listingFuelTypeHybrid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Гибрид'**
+  String get listingFuelTypeHybrid;
+
+  /// No description provided for @listingFuelTypeElectric.
+  ///
+  /// In ru, this message translates to:
+  /// **'Электро'**
+  String get listingFuelTypeElectric;
+
+  /// No description provided for @listingFuelTypeLpg.
+  ///
+  /// In ru, this message translates to:
+  /// **'Газ (LPG)'**
+  String get listingFuelTypeLpg;
+
+  /// No description provided for @listingFuelTypeCng.
+  ///
+  /// In ru, this message translates to:
+  /// **'Метан (CNG)'**
+  String get listingFuelTypeCng;
+
+  /// No description provided for @listingFuelTypeOther.
+  ///
+  /// In ru, this message translates to:
+  /// **'Другое'**
+  String get listingFuelTypeOther;
+
+  /// No description provided for @listingDrivetrainFwd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Передний'**
+  String get listingDrivetrainFwd;
+
+  /// No description provided for @listingDrivetrainRwd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задний'**
+  String get listingDrivetrainRwd;
+
+  /// No description provided for @listingDrivetrainAwd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полный (AWD)'**
+  String get listingDrivetrainAwd;
+
+  /// No description provided for @listingDrivetrainFourWheel.
+  ///
+  /// In ru, this message translates to:
+  /// **'4×4'**
+  String get listingDrivetrainFourWheel;
+
+  /// No description provided for @listingDetailsDescriptionSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описание'**
+  String get listingDetailsDescriptionSection;
+
+  /// No description provided for @createListingSectionSpecsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Технические данные необязательны, но помогают покупателю.'**
+  String get createListingSectionSpecsSubtitle;
+
+  /// No description provided for @createListingSectionDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описание'**
+  String get createListingSectionDescription;
+
+  /// No description provided for @createListingSectionDescriptionSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Состояние, комплектация, недостатки, сервис, торг.'**
+  String get createListingSectionDescriptionSubtitle;
+
+  /// No description provided for @createListingDescriptionLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текст объявления'**
+  String get createListingDescriptionLabel;
+
+  /// No description provided for @createListingDescriptionHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Расскажите о машине своими словами…'**
+  String get createListingDescriptionHint;
+
+  /// No description provided for @editListingDescriptionLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описание объявления'**
+  String get editListingDescriptionLabel;
+
+  /// No description provided for @validationEngineDisplacementPositive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите объём больше нуля (литры).'**
+  String get validationEngineDisplacementPositive;
+
+  /// No description provided for @validationEnginePowerPositive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите мощность больше нуля (л.с.).'**
+  String get validationEnginePowerPositive;
+
+  /// No description provided for @validationRegistrationTooLong.
+  ///
+  /// In ru, this message translates to:
+  /// **'Слишком длинное поле регистрации (макс. 200 символов).'**
+  String get validationRegistrationTooLong;
 
   /// No description provided for @contactSellerSection.
   ///
@@ -1653,6 +1851,96 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Выйти'**
   String get profileSignOut;
+
+  /// No description provided for @accountAvatarOpenProfileTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт и настройки'**
+  String get accountAvatarOpenProfileTooltip;
+
+  /// No description provided for @profileActivitySectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активность'**
+  String get profileActivitySectionTitle;
+
+  /// No description provided for @profileMessagesUnreadStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'Есть непрочитанные сообщения'**
+  String get profileMessagesUnreadStatus;
+
+  /// No description provided for @profileMessagesNoUnreadStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новых сообщений нет'**
+  String get profileMessagesNoUnreadStatus;
+
+  /// No description provided for @profileMessagesUnreadCountOverflow.
+  ///
+  /// In ru, this message translates to:
+  /// **'99+'**
+  String get profileMessagesUnreadCountOverflow;
+
+  /// No description provided for @profilePublicSellerProfileSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Публичный профиль продавца'**
+  String get profilePublicSellerProfileSectionTitle;
+
+  /// No description provided for @profilePublicSellerProfileSectionSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Покупатели видят это в ваших объявлениях и на странице продавца.'**
+  String get profilePublicSellerProfileSectionSubtitle;
+
+  /// No description provided for @profilePublicSellerBuyerPreviewCaption.
+  ///
+  /// In ru, this message translates to:
+  /// **'Так вас видят покупатели'**
+  String get profilePublicSellerBuyerPreviewCaption;
+
+  /// No description provided for @profileSettingsSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки'**
+  String get profileSettingsSectionTitle;
+
+  /// No description provided for @profileLanguageTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Язык приложения'**
+  String get profileLanguageTitle;
+
+  /// No description provided for @profileLanguageCurrentRussian.
+  ///
+  /// In ru, this message translates to:
+  /// **'Русский'**
+  String get profileLanguageCurrentRussian;
+
+  /// No description provided for @profileNotificationsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления'**
+  String get profileNotificationsTitle;
+
+  /// No description provided for @profileNotificationsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Здесь появятся настройки push и сообщений.'**
+  String get profileNotificationsSubtitle;
+
+  /// No description provided for @profileListingAlertsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оповещения по фильтру'**
+  String get profileListingAlertsTitle;
+
+  /// No description provided for @profileListingAlertsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подписки на сохранённые фильтры и новые объявления.'**
+  String get profileListingAlertsSubtitle;
 
   /// No description provided for @profilePublicSellerNameTitle.
   ///

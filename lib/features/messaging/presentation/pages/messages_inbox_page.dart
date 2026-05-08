@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +14,7 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../bloc/messaging_unread_summary_cubit.dart';
 import '../../domain/repositories/messaging_repository.dart';
 import '../bloc/messages_inbox_cubit.dart';
 import '../bloc/messages_inbox_state.dart';
@@ -47,7 +50,18 @@ class MessagesInboxPage extends StatelessWidget {
         return BlocProvider(
           create: (_) =>
               MessagesInboxCubit(sl<MessagingRepository>())..refresh(),
-          child: const _MessagesInboxView(),
+          child: PopScope(
+            onPopInvokedWithResult: (didPop, _) {
+              if (didPop) {
+                unawaited(
+                  sl<MessagingUnreadSummaryCubit>().sync(
+                    sl<AuthCubit>().state,
+                  ),
+                );
+              }
+            },
+            child: const _MessagesInboxView(),
+          ),
         );
       },
     );
@@ -192,7 +206,29 @@ class _MessagesInboxView extends StatelessWidget {
                         ? timeFormat.format(c.lastMessageAt!.toLocal())
                         : null;
                     final theme = Theme.of(context);
-                    final onVar = theme.colorScheme.onSurfaceVariant;
+                    final scheme = theme.colorScheme;
+                    final onVar = scheme.onSurfaceVariant;
+                    final unread = c.hasUnread;
+                    final titleStyle = theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: unread ? FontWeight.w700 : FontWeight.w500,
+                      height: 1.25,
+                      color: scheme.onSurface,
+                      letterSpacing: unread ? -0.1 : -0.2,
+                    );
+                    final previewStyle = theme.textTheme.bodyMedium?.copyWith(
+                      color: unread
+                          ? scheme.onSurface.withValues(alpha: 0.88)
+                          : onVar,
+                      fontWeight: unread ? FontWeight.w500 : FontWeight.w400,
+                      height: 1.3,
+                    );
+                    final timeStyle = theme.textTheme.labelSmall?.copyWith(
+                      color: unread
+                          ? scheme.onSurface.withValues(alpha: 0.78)
+                          : onVar.withValues(alpha: 0.85),
+                      fontWeight: unread ? FontWeight.w600 : FontWeight.w500,
+                      letterSpacing: 0.1,
+                    );
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -202,11 +238,7 @@ class _MessagesInboxView extends StatelessWidget {
                         title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          height: 1.25,
-                          color: theme.colorScheme.onSurface,
-                        ),
+                        style: titleStyle,
                       ),
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 4),
@@ -214,24 +246,22 @@ class _MessagesInboxView extends StatelessWidget {
                           preview,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: onVar,
-                            height: 1.3,
-                          ),
+                          style: previewStyle,
                         ),
                       ),
-                      trailing: time != null
-                          ? Text(
-                              time,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: onVar.withValues(alpha: 0.85),
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 0.1,
-                              ),
-                            )
-                          : null,
-                      onTap: () =>
-                          context.push(AppRoutes.messagesThreadPath(c.id)),
+                      trailing: _InboxRowTrailing(
+                        showUnreadDot: unread,
+                        conversationId: c.id,
+                        timeText: time,
+                        timeStyle: timeStyle,
+                      ),
+                      onTap: () async {
+                        await context.push<void>(
+                          AppRoutes.messagesThreadPath(c.id),
+                        );
+                        if (!context.mounted) return;
+                        await context.read<MessagesInboxCubit>().silentRefresh();
+                      },
                     );
                   },
                 ),
@@ -240,5 +270,60 @@ class _MessagesInboxView extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+/// Trailing inbox cell: optional unread dot plus timestamp.
+class _InboxRowTrailing extends StatelessWidget {
+  const _InboxRowTrailing({
+    required this.showUnreadDot,
+    required this.conversationId,
+    required this.timeText,
+    required this.timeStyle,
+  });
+
+  final bool showUnreadDot;
+  final String conversationId;
+  final String? timeText;
+  final TextStyle? timeStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    Widget? dot;
+    if (showUnreadDot) {
+      dot = Padding(
+        padding: const EdgeInsets.only(right: 10),
+        child: ExcludeSemantics(
+          child: SizedBox(
+            key: ValueKey<String>('messages_inbox_unread_dot_$conversationId'),
+            width: 9,
+            height: 9,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: scheme.error,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final trimmedTime = timeText?.trim();
+
+    if (trimmedTime != null && trimmedTime.isNotEmpty) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (dot != null) dot,
+          Text(trimmedTime, style: timeStyle, textAlign: TextAlign.right),
+        ],
+      );
+    }
+    if (dot != null) return dot;
+    return const SizedBox.shrink();
   }
 }

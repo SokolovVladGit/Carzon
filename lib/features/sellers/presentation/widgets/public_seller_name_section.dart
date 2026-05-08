@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/my_seller_profile.dart';
 import '../../domain/seller_display_name_constraints.dart';
 import '../bloc/public_seller_identity_cubit.dart';
@@ -10,9 +11,18 @@ import '../bloc/public_seller_identity_state.dart';
 import '../utils/public_seller_display_name_validation.dart';
 import '../utils/seller_initial_labels.dart';
 
-/// Account-screen editor for buyer-visible seller identity: **photo** + display name.
+/// Account-screen editor for buyer-visible seller identity: photo + display name.
+///
+/// When [embeddedInSection] is true, the widget omits outer card chrome so a
+/// parent section card can wrap it without nested borders/shadows.
 class PublicSellerNameSection extends StatefulWidget {
-  const PublicSellerNameSection({super.key});
+  const PublicSellerNameSection({
+    super.key,
+    this.embeddedInSection = false,
+  });
+
+  /// Omit inner card/decoration — for use inside Profile account grouped card only.
+  final bool embeddedInSection;
 
   @override
   State<PublicSellerNameSection> createState() =>
@@ -78,6 +88,17 @@ class _PublicSellerNameSectionState extends State<PublicSellerNameSection> {
     if (u != null && u.isNotEmpty) return true;
     final path = p.avatarPath?.trim();
     return path != null && path.isNotEmpty;
+  }
+
+  String _previewBuyerLabel(
+    PublicSellerIdentityState state,
+    AppLocalizations l10n,
+  ) {
+    final t = _controller.text.trim();
+    if (t.isNotEmpty) return t;
+    final p = state.profile?.displayName?.trim();
+    if (p != null && p.isNotEmpty) return p;
+    return l10n.sellerFallbackName;
   }
 
   @override
@@ -170,57 +191,145 @@ class _PublicSellerNameSectionState extends State<PublicSellerNameSection> {
       child: BlocBuilder<PublicSellerIdentityCubit, PublicSellerIdentityState>(
         builder: (context, state) {
           if (state.initialLoading) {
-            return DecoratedBox(
-              decoration: BoxDecoration(
-                color: cardFill,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: scheme.outline.withValues(alpha: isDark ? 0.26 : 0.17),
-                ),
-                boxShadow: shadow,
-              ),
-              child: const SizedBox(
-                height: 120,
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              ),
+            return _LoadingBlock(
+              embedded: widget.embeddedInSection,
+              cardFill: cardFill,
+              scheme: scheme,
+              isDark: isDark,
+              shadow: shadow,
             );
           }
 
           if (state.loadFailed) {
-            return DecoratedBox(
-              decoration: BoxDecoration(
-                color: cardFill,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: scheme.outline.withValues(alpha: isDark ? 0.26 : 0.17),
-                ),
-                boxShadow: shadow,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      l10n.profilePublicSellerNameLoadFailed,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton.tonal(
-                      onPressed: () =>
-                          context.read<PublicSellerIdentityCubit>().load(),
-                      child: Text(l10n.commonRetry),
-                    ),
-                  ],
-                ),
-              ),
+            return _ErrorBlock(
+              embedded: widget.embeddedInSection,
+              theme: theme,
+              scheme: scheme,
+              cardFill: cardFill,
+              isDark: isDark,
+              shadow: shadow,
+              l10n: l10n,
             );
           }
 
           final busyIdentity = state.avatarBusy || state.saving;
           final hasAvatar = _hasAvatarVisual(state);
+
+          if (widget.embeddedInSection) {
+            final pickLabel = hasAvatar
+                ? l10n.coverChangePhoto
+                : l10n.profilePublicSellerAvatarChangePhoto;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _AvatarPreview(
+                      profile: state.profile,
+                      diameter: 72,
+                      busy: state.avatarBusy || _pickingImage,
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _previewBuyerLabel(state, l10n),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.08,
+                              height: 1.22,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            l10n.profilePublicSellerBuyerPreviewCaption,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant.withValues(
+                                alpha: 0.88,
+                              ),
+                              height: 1.32,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: busyIdentity || _pickingImage
+                            ? null
+                            : () => _pickAvatar(context),
+                        child: Text(pickLabel),
+                      ),
+                    ),
+                    if (hasAvatar) ...[
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: busyIdentity
+                            ? null
+                            : () => context
+                                .read<PublicSellerIdentityCubit>()
+                                .removeAvatar(),
+                        child: Text(l10n.profilePublicSellerAvatarRemovePhoto),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: scheme.outline.withValues(
+                    alpha: isDark ? 0.14 : 0.11,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _controller,
+                  maxLength: SellerDisplayNameConstraints.maxLength,
+                  maxLines: 1,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(
+                    labelText: l10n.profilePublicSellerNameFieldLabel,
+                    hintText: l10n.profilePublicSellerNameFieldHint,
+                    filled: true,
+                    counterText: '',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onSubmitted: (_) => _trySave(context),
+                ),
+                const SizedBox(height: 14),
+                FilledButton(
+                  onPressed: state.saving || state.avatarBusy
+                      ? null
+                      : () => _trySave(context),
+                  child: state.saving
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: scheme.onPrimary,
+                          ),
+                        )
+                      : Text(l10n.profilePublicSellerNameSave),
+                ),
+              ],
+            );
+          }
 
           return DecoratedBox(
             decoration: BoxDecoration(
@@ -279,8 +388,8 @@ class _PublicSellerNameSectionState extends State<PublicSellerNameSection> {
                                 onPressed: busyIdentity
                                     ? null
                                     : () => context
-                                          .read<PublicSellerIdentityCubit>()
-                                          .removeAvatar(),
+                                        .read<PublicSellerIdentityCubit>()
+                                        .removeAvatar(),
                                 child: Text(
                                   l10n.profilePublicSellerAvatarRemovePhoto,
                                 ),
@@ -357,6 +466,110 @@ class _PublicSellerNameSectionState extends State<PublicSellerNameSection> {
       return;
     }
     context.read<PublicSellerIdentityCubit>().save(_controller.text);
+  }
+}
+
+class _LoadingBlock extends StatelessWidget {
+  const _LoadingBlock({
+    required this.embedded,
+    required this.cardFill,
+    required this.scheme,
+    required this.isDark,
+    required this.shadow,
+  });
+
+  final bool embedded;
+  final Color cardFill;
+  final ColorScheme scheme;
+  final bool isDark;
+  final List<BoxShadow> shadow;
+
+  @override
+  Widget build(BuildContext context) {
+    if (embedded) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 28),
+        child: Center(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: cardFill,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: scheme.outline.withValues(alpha: isDark ? 0.26 : 0.17),
+        ),
+        boxShadow: shadow,
+      ),
+      child: const SizedBox(
+        height: 120,
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      ),
+    );
+  }
+}
+
+class _ErrorBlock extends StatelessWidget {
+  const _ErrorBlock({
+    required this.embedded,
+    required this.theme,
+    required this.scheme,
+    required this.cardFill,
+    required this.isDark,
+    required this.shadow,
+    required this.l10n,
+  });
+
+  final bool embedded;
+  final ThemeData theme;
+  final ColorScheme scheme;
+  final Color cardFill;
+  final bool isDark;
+  final List<BoxShadow> shadow;
+  final AppLocalizations l10n;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.profilePublicSellerNameLoadFailed,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 12),
+        FilledButton.tonal(
+          onPressed: () => context.read<PublicSellerIdentityCubit>().load(),
+          child: Text(l10n.commonRetry),
+        ),
+      ],
+    );
+
+    if (embedded) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: content,
+      );
+    }
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: cardFill,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: scheme.outline.withValues(alpha: isDark ? 0.26 : 0.17),
+        ),
+        boxShadow: shadow,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: content,
+      ),
+    );
   }
 }
 

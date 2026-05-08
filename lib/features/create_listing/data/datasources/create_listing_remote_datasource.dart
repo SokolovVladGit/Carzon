@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../listings/data/models/listing_model.dart';
+import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../domain/constants/listing_gallery_limits.dart';
 import '../../domain/entities/new_listing_input.dart';
@@ -11,6 +12,12 @@ import '../../domain/entities/new_listing_input.dart';
 abstract interface class CreateListingRemoteDataSource {
   Future<ListingModel> insert(NewListingInput input);
   Future<ListingModel> insertV2(NewListingInput input);
+}
+
+String? _nullableTrim(String? value) {
+  if (value == null) return null;
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
 }
 
 String? _clipPostgresDiagnosticDetail(Object? details, String? hint) {
@@ -157,6 +164,15 @@ class SupabaseCreateListingRemoteDataSource
       }
 
       params['p_body_type'] = input.bodyType?.name;
+      params['p_fuel_type'] = input.fuelType?.name;
+      params['p_engine_displacement_liters'] =
+          input.engineDisplacementLiters;
+      params['p_engine_power_hp'] = input.enginePowerHp;
+      params['p_drivetrain'] = input.drivetrain == null
+          ? null
+          : listingDrivetrainToDbValue(input.drivetrain!);
+      params['p_registration'] = _nullableTrim(input.registration);
+      params['p_description'] = _nullableTrim(input.description);
 
       final dynamic data = await _supabase.client.rpc(_rpcV2, params: params);
 

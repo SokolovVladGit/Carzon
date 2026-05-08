@@ -8,6 +8,8 @@ one-command check or a manual dashboard/device step.
 This document is the source of truth for release prep. If something
 is missing here, the release is not ready.
 
+**Supabase ↔ client alignment:** Before staging/prod cuts, also follow [`docs/RELEASE.md`](RELEASE.md) for migration apply order, RPC/backend parity with the app binary, storage bucket verification (`listing-images`, `seller-avatars`), and suggested read-only SQL/RPC smoke checks in the Supabase SQL Editor.
+
 ## A. Code verification
 
 - [ ] `flutter analyze` reports no issues.

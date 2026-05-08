@@ -16,6 +16,12 @@ class ListingModel extends Listing {
     required super.city,
     required super.marketRegion,
     super.bodyType,
+    super.fuelType,
+    super.engineDisplacementLiters,
+    super.enginePowerHp,
+    super.drivetrain,
+    super.registration,
+    super.description,
     required super.createdAt,
     super.status,
     super.coverImageUrl,
@@ -41,6 +47,13 @@ class ListingModel extends Listing {
       city: (json['city'] as String?) ?? '',
       marketRegion: _parseMarketRegion(json['market_region'] as String?),
       bodyType: _parseBodyType(json['body_type'] as String?),
+      fuelType: listingFuelTypeFromDb(json['fuel_type'] as String?),
+      engineDisplacementLiters:
+          (json['engine_displacement_liters'] as num?)?.toDouble(),
+      enginePowerHp: (json['engine_power_hp'] as num?)?.toInt(),
+      drivetrain: listingDrivetrainFromDb(json['drivetrain'] as String?),
+      registration: _nonEmptyString(json['registration'] as String?),
+      description: _nonEmptyString(json['description'] as String?),
       createdAt:
           DateTime.tryParse((json['created_at'] as String?) ?? '') ??
           DateTime.now(),
@@ -64,6 +77,12 @@ class ListingModel extends Listing {
       default:
         return ListingType.sale;
     }
+  }
+
+  static String? _nonEmptyString(String? raw) {
+    if (raw == null) return null;
+    final t = raw.trim();
+    return t.isEmpty ? null : t;
   }
 
   static ListingStatus _parseStatus(String? raw) {
@@ -140,6 +159,12 @@ class ListingModel extends Listing {
     'city': city,
     'market_region': marketRegion.name,
     'body_type': bodyType?.name,
+    'fuel_type': fuelType?.name,
+    'engine_displacement_liters': engineDisplacementLiters,
+    'engine_power_hp': enginePowerHp,
+    'drivetrain': drivetrain == null ? null : listingDrivetrainToDbValue(drivetrain!),
+    'registration': registration,
+    'description': description,
     'created_at': createdAt.toIso8601String(),
     'status': status.name,
     'cover_image_url': coverImageUrl,

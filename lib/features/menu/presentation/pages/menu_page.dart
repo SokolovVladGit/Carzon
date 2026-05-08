@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,6 +13,9 @@ import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/domain/entities/auth_user.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
+import '../../../sellers/presentation/bloc/self_seller_visual_cubit.dart';
+import '../../../sellers/presentation/widgets/account_private_avatar.dart';
 
 enum _MenuFooterVariant { neutral, accent }
 
@@ -33,10 +38,26 @@ enum _MenuFooterVariant { neutral, accent }
 ///   * always offer the Legal entry (available regardless of auth),
 ///   * expose Sign in when signed out, Sign out when signed in.
 ///
-/// No new cubit, domain model or data-layer import is introduced —
-/// [AuthCubit.signOut] is reused, same as [ProfilePage].
-class MenuPage extends StatelessWidget {
+/// No new cubit beyond what the app tree already provides — [AuthCubit]
+/// and hub-scoped cubits are reused, same as [ProfilePage].
+class MenuPage extends StatefulWidget {
   const MenuPage({super.key});
+
+  @override
+  State<MenuPage> createState() => _MenuPageState();
+}
+
+class _MenuPageState extends State<MenuPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = context.read<AuthCubit>().state;
+      unawaited(context.read<SelfSellerVisualCubit>().prime(auth));
+      unawaited(context.read<MessagingUnreadSummaryCubit>().sync(auth));
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +124,7 @@ class MenuPage extends StatelessWidget {
                     _PremiumMenuRow(
                       icon: CarzonIcons.user,
                       title: l10n.menuAccount,
-                      onTap: () => context.go(AppRoutes.profile),
+                      onTap: () => context.push(AppRoutes.profile),
                     ),
                     _PremiumMenuRow(
                       icon: CarzonIcons.heartOutline,
@@ -510,7 +531,17 @@ class _MenuIdentityCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                _MenuAvatar(user: user, diameter: avatarD),
+                BlocBuilder<SelfSellerVisualCubit, SelfSellerVisualState>(
+                  builder: (context, vis) {
+                    return AccountPrivateAvatarCircle(
+                      diameter: avatarD,
+                      authUser: user,
+                      sellerProfilesAvatarUrl: vis.sellerAvatarUrl,
+                      sellerDisplayNameForInitialsFallback:
+                          vis.sellerDisplayName,
+                    );
+                  },
+                ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -648,53 +679,5 @@ class _MenuFooterAuthAction extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _MenuAvatar extends StatelessWidget {
-  const _MenuAvatar({required this.user, required this.diameter});
-
-  final AuthUser user;
-  final double diameter;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final url = user.avatarUrl?.trim();
-
-    Widget placeholder() {
-      return Container(
-        width: diameter,
-        height: diameter,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: scheme.surfaceContainerHigh,
-          border: Border.all(color: scheme.outline.withValues(alpha: 0.14)),
-        ),
-        alignment: Alignment.center,
-        child: Icon(
-          CarzonIcons.user,
-          size: diameter * 0.42,
-          color: scheme.onSurfaceVariant.withValues(alpha: 0.75),
-        ),
-      );
-    }
-
-    if (url != null && url.isNotEmpty) {
-      return ClipOval(
-        child: Image.network(
-          url,
-          width: diameter,
-          height: diameter,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => placeholder(),
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return placeholder();
-          },
-        ),
-      );
-    }
-    return placeholder();
   }
 }

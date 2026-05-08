@@ -45,6 +45,9 @@ void main() {
 
   setUp(() {
     repository = _MockMessagingRepository();
+    when(
+      () => repository.markConversationRead(any()),
+    ).thenAnswer((_) async => const Success(true));
   });
 
   setUpAll(() {
@@ -77,6 +80,27 @@ void main() {
             .having((s) => s.status, 'status', ConversationThreadStatus.success)
             .having((s) => s.messages, 'messages', [message]),
       ],
+    );
+
+    blocTest<ConversationThreadCubit, ConversationThreadState>(
+      'load success marks conversation read',
+      build: () {
+        when(
+          () => repository.getConversation('c1'),
+        ).thenAnswer((_) async => Success(conversation));
+        when(
+          () => repository.getMessages('c1'),
+        ).thenAnswer((_) async => Success<List<ChatMessage>>([message]));
+        return ConversationThreadCubit(
+          repository: repository,
+          conversationId: 'c1',
+        );
+      },
+      act: (c) => c.load(),
+      wait: const Duration(milliseconds: 50),
+      verify: (_) {
+        verify(() => repository.markConversationRead('c1')).called(1);
+      },
     );
 
     blocTest<ConversationThreadCubit, ConversationThreadState>(

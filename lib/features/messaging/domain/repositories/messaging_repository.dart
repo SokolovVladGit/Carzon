@@ -16,6 +16,12 @@ abstract class MessagingRepository {
   /// Chronological messages for a thread.
   Future<Result<List<ChatMessage>>> getMessages(String conversationId);
 
-  /// RPC `send_message` — returns new message id.
+  /// Sends a participant message ([body] already validated upstream).
   Future<Result<String>> sendMessage(String conversationId, String body);
+
+  /// Participant marks the thread read (RPC-only).
+  Future<Result<bool>> markConversationRead(String conversationId);
+
+  /// Distinct participant conversations having inbound unread messages since last_read.
+  Future<Result<int>> getUnreadConversationCount();
 }

@@ -15,6 +15,10 @@ abstract interface class MessagingRemoteDataSource {
   Future<List<ChatMessageModel>> fetchMessages(String conversationId);
 
   Future<String> sendMessage(String conversationId, String body);
+
+  Future<void> markConversationReadRpc(String conversationId);
+
+  Future<int> fetchUnreadConversationCountRpc();
 }
 
 class SupabaseMessagingRemoteDataSource implements MessagingRemoteDataSource {
@@ -61,11 +65,13 @@ class SupabaseMessagingRemoteDataSource implements MessagingRemoteDataSource {
   @override
   Future<List<ConversationModel>> fetchConversations() async {
     try {
-      final rows = await _supabase.client
-          .from('conversations')
-          .select(_convSelect)
-          .order('updated_at', ascending: false);
-      return rows
+      final dynamic raw =
+          await _supabase.client.rpc('list_inbox_conversations');
+      if (raw == null) return const [];
+      if (raw is! List<dynamic>) {
+        throw ServerException('Unexpected inbox response');
+      }
+      return raw
           .map<ConversationModel>(
             (row) => ConversationModel.fromJson(
               Map<String, dynamic>.from(row as Map),
@@ -147,6 +153,47 @@ class SupabaseMessagingRemoteDataSource implements MessagingRemoteDataSource {
     } catch (e, st) {
       if (e is ServerException) rethrow;
       throw ServerException('Failed to send message', cause: e, stackTrace: st);
+    }
+  }
+
+  @override
+  Future<void> markConversationReadRpc(String conversationId) async {
+    try {
+      await _supabase.client.rpc(
+        'mark_conversation_read',
+        params: {'p_conversation_id': conversationId},
+      );
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is ServerException) rethrow;
+      throw ServerException(
+        'Failed to update read state',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<int> fetchUnreadConversationCountRpc() async {
+    try {
+      final dynamic raw = await _supabase.client.rpc(
+        'get_unread_conversation_count',
+      );
+      if (raw == null) return 0;
+      if (raw is int) return raw;
+      if (raw is num) return raw.round();
+      throw ServerException('Unexpected unread count response');
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is ServerException) rethrow;
+      throw ServerException(
+        'Failed to load unread counts',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 }

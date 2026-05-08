@@ -27,6 +27,12 @@ enum ListingBodyType {
   other,
 }
 
+/// Stored as `listings.fuel_type` (CHECK-constrained nullable text).
+enum ListingFuelType { petrol, diesel, hybrid, electric, lpg, cng, other }
+
+/// Stored as `listings.drivetrain`; `fourWheel` ↔ DB `four_wheel`.
+enum ListingDrivetrain { fwd, rwd, awd, fourWheel }
+
 class Listing extends Equatable {
   const Listing({
     required this.id,
@@ -41,6 +47,12 @@ class Listing extends Equatable {
     required this.city,
     required this.marketRegion,
     this.bodyType,
+    this.fuelType,
+    this.engineDisplacementLiters,
+    this.enginePowerHp,
+    this.drivetrain,
+    this.registration,
+    this.description,
     required this.createdAt,
     this.status = ListingStatus.active,
     this.coverImageUrl,
@@ -66,6 +78,22 @@ class Listing extends Equatable {
 
   /// Optional body style; legacy listings may omit this field.
   final ListingBodyType? bodyType;
+
+  final ListingFuelType? fuelType;
+
+  /// Engine size in liters (mirrors `engine_displacement_liters`).
+  final double? engineDisplacementLiters;
+
+  /// Metric horsepower (`engine_power_hp` / л.с.).
+  final int? enginePowerHp;
+
+  final ListingDrivetrain? drivetrain;
+
+  /// Where the car is registered (distinct from marketplace [marketRegion]).
+  final String? registration;
+
+  /// Seller-authored description text.
+  final String? description;
 
   final DateTime createdAt;
   final ListingStatus status;
@@ -101,6 +129,12 @@ class Listing extends Equatable {
     city,
     marketRegion,
     bodyType,
+    fuelType,
+    engineDisplacementLiters,
+    enginePowerHp,
+    drivetrain,
+    registration,
+    description,
     createdAt,
     status,
     coverImageUrl,
@@ -109,4 +143,33 @@ class Listing extends Equatable {
     telegramUsername,
     whatsappEnabled,
   ];
+}
+
+/// DB value for [ListingDrivetrain.fourWheel] (`four_wheel`).
+const String kListingFourWheelDbValue = 'four_wheel';
+
+String listingDrivetrainToDbValue(ListingDrivetrain value) {
+  if (value == ListingDrivetrain.fourWheel) return kListingFourWheelDbValue;
+  return value.name;
+}
+
+ListingDrivetrain? listingDrivetrainFromDb(String? raw) {
+  if (raw == null) return null;
+  final v = raw.trim().toLowerCase();
+  if (v.isEmpty) return null;
+  if (v == kListingFourWheelDbValue) return ListingDrivetrain.fourWheel;
+  for (final e in ListingDrivetrain.values) {
+    if (e != ListingDrivetrain.fourWheel && e.name == v) return e;
+  }
+  return null;
+}
+
+ListingFuelType? listingFuelTypeFromDb(String? raw) {
+  if (raw == null) return null;
+  final v = raw.trim().toLowerCase();
+  if (v.isEmpty) return null;
+  for (final e in ListingFuelType.values) {
+    if (e.name == v) return e;
+  }
+  return null;
 }

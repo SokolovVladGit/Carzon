@@ -65,9 +65,10 @@ class TopLevelScaffold extends StatelessWidget {
 
   /// Which top-level tab this page represents. Drives the selected
   /// index of the floating capsule nav. Sub-surfaces accessed from
-  /// the Menu tab (My Listings, Profile) pass
+  /// the Menu tab (e.g. My Listings) may pass
   /// [TopLevelDestination.menu] so the Menu tab stays highlighted
-  /// while the user is drilled in.
+  /// while the user is drilled in. Secondary routes (e.g. Account on
+  /// `/profile`) use a plain [Scaffold] without this widget.
   final TopLevelDestination destination;
 
   /// Page body, rendered inside the scaffold.

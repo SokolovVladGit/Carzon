@@ -7,6 +7,7 @@ import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/messaging/domain/entities/chat_message.dart';
 import 'package:carzon/features/messaging/domain/entities/conversation.dart';
 import 'package:carzon/features/messaging/domain/repositories/messaging_repository.dart';
+import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import 'package:carzon/features/messaging/presentation/pages/conversation_thread_page.dart';
 import 'package:carzon/features/messaging/presentation/pages/messages_inbox_page.dart';
 import 'package:carzon/l10n/app_localizations.dart';
@@ -30,11 +31,25 @@ void main() {
 
   const user = AuthUser(id: 'u1', email: 'buyer@test.com');
 
+  setUpAll(() {
+    registerFallbackValue('');
+  });
+
   setUp(() async {
     await sl.reset();
     authCubit = _MockAuthCubit();
     messagingRepo = _MockMessagingRepository();
     sl.registerLazySingleton<MessagingRepository>(() => messagingRepo);
+    sl.registerLazySingleton<MessagingUnreadSummaryCubit>(
+      () => MessagingUnreadSummaryCubit(sl<MessagingRepository>()),
+    );
+
+    when(
+      () => messagingRepo.markConversationRead(any()),
+    ).thenAnswer((_) async => const Success(true));
+    when(
+      () => messagingRepo.getUnreadConversationCount(),
+    ).thenAnswer((_) async => const Success(0));
 
     when(() => authCubit.state).thenReturn(const AuthState.authenticated(user));
     whenListen(
@@ -50,7 +65,10 @@ void main() {
 
   final t0 = DateTime.utc(2026, 5, 2, 10);
 
-  Conversation sampleConversation({String listingTitle = 'Volkswagen Golf'}) =>
+  Conversation sampleConversation({
+    String listingTitle = 'Volkswagen Golf',
+    bool hasUnread = false,
+  }) =>
       Conversation(
         id: 'conv-1',
         listingId: 'list-1',
@@ -61,6 +79,7 @@ void main() {
         lastMessageAt: t0,
         lastMessagePreview: 'Last',
         listingTitle: listingTitle,
+        hasUnread: hasUnread,
       );
 
   Widget testedInbox(Widget child) {
@@ -377,5 +396,201 @@ void main() {
     await tester.pump(const Duration(seconds: 16));
 
     expect(convHits, greaterThanOrEqualTo(2));
+  });
+
+  group('Inbox unread visibility', () {
+    testWidgets(
+      'unread conversation shows dot marker and bold listing title',
+      (tester) async {
+        final conv = sampleConversation(hasUnread: true);
+        when(
+          () => messagingRepo.getConversations(),
+        ).thenAnswer((_) async => Success<List<Conversation>>([conv]));
+
+        await tester.pumpWidget(testedInbox(const MessagesInboxPage()));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-1')),
+          findsOneWidget,
+        );
+        final title = tester.widget<Text>(
+          find.byWidgetPredicate(
+            (w) => w is Text && w.data == 'Volkswagen Golf',
+          ),
+        );
+        expect(title.style?.fontWeight, FontWeight.w700);
+      },
+    );
+
+    testWidgets('read conversation hides unread dot and lowers title weight', (
+      tester,
+    ) async {
+      final conv = sampleConversation(hasUnread: false);
+      when(
+        () => messagingRepo.getConversations(),
+      ).thenAnswer((_) async => Success<List<Conversation>>([conv]));
+
+      await tester.pumpWidget(testedInbox(const MessagesInboxPage()));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-1')),
+        findsNothing,
+      );
+      final title = tester.widget<Text>(
+        find.byWidgetPredicate(
+          (w) => w is Text && w.data == 'Volkswagen Golf',
+        ),
+      );
+      expect(title.style?.fontWeight, FontWeight.w500);
+    });
+
+    testWidgets('mixed list shows unread dot only on unread thread', (
+      tester,
+    ) async {
+      final read = Conversation(
+        id: 'conv-read',
+        listingId: 'list-r',
+        buyerId: 'u1',
+        sellerId: 's1',
+        createdAt: t0,
+        updatedAt: t0,
+        lastMessageAt: t0,
+        lastMessagePreview: 'Older',
+        listingTitle: 'Quiet Car',
+        hasUnread: false,
+      );
+      final unread = Conversation(
+        id: 'conv-unread',
+        listingId: 'list-u',
+        buyerId: 'u1',
+        sellerId: 's2',
+        createdAt: t0,
+        updatedAt: t0,
+        lastMessageAt: t0,
+        lastMessagePreview: 'New',
+        listingTitle: 'Hot Lead',
+        hasUnread: true,
+      );
+      when(() => messagingRepo.getConversations()).thenAnswer(
+        (_) async => Success<List<Conversation>>([unread, read]),
+      );
+
+      await tester.pumpWidget(testedInbox(const MessagesInboxPage()));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-unread')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-read')),
+        findsNothing,
+      );
+
+      final unreadTitle = tester.widget<Text>(
+        find.byWidgetPredicate((w) => w is Text && w.data == 'Hot Lead'),
+      );
+      final readTitle = tester.widget<Text>(
+        find.byWidgetPredicate((w) => w is Text && w.data == 'Quiet Car'),
+      );
+      expect(
+        unreadTitle.style!.fontWeight!.index,
+        greaterThan(readTitle.style!.fontWeight!.index),
+      );
+
+      final unreadPreview = tester.widget<Text>(
+        find.byWidgetPredicate((w) => w is Text && w.data == 'New'),
+      );
+      final readPreview = tester.widget<Text>(
+        find.byWidgetPredicate((w) => w is Text && w.data == 'Older'),
+      );
+      expect(unreadPreview.style?.fontWeight, FontWeight.w500);
+      expect(readPreview.style?.fontWeight, FontWeight.w400);
+      expect(unreadPreview.style?.color, isNot(equals(readPreview.style?.color)));
+    });
+
+    testWidgets('returning from thread triggers silent refresh and clears unread row', (
+      tester,
+    ) async {
+      var convFetchPass = 0;
+      when(() => messagingRepo.getConversations()).thenAnswer((_) async {
+        convFetchPass++;
+        if (convFetchPass == 1) {
+          return Success<List<Conversation>>([
+            sampleConversation(hasUnread: true),
+          ]);
+        }
+        return Success<List<Conversation>>([
+          sampleConversation(hasUnread: false),
+        ]);
+      });
+
+      final conv = sampleConversation(hasUnread: false);
+      when(() => messagingRepo.getConversation('conv-1')).thenAnswer(
+        (_) async => Success(conv),
+      );
+      when(
+        () => messagingRepo.getMessages('conv-1'),
+      ).thenAnswer((_) async => const Success<List<ChatMessage>>([]));
+
+      final router = GoRouter(
+        initialLocation: '/messages',
+        routes: [
+          GoRoute(
+            path: '/messages',
+            builder: (context, state) => BlocProvider<AuthCubit>.value(
+              value: authCubit,
+              child: const MessagesInboxPage(),
+            ),
+          ),
+          GoRoute(
+            path: '/messages/:conversationId',
+            builder: (_, state) => BlocProvider<AuthCubit>.value(
+              value: authCubit,
+              child: ConversationThreadPage(
+                conversationId: state.pathParameters['conversationId']!,
+              ),
+            ),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp.router(
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-1')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Volkswagen Golf'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ConversationThreadPage), findsOneWidget);
+
+      await tester.tap(find.byType(IconButton).first);
+      await tester.pumpAndSettle();
+
+      expect(convFetchPass, greaterThanOrEqualTo(2));
+      expect(
+        find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-1')),
+        findsNothing,
+      );
+      final title = tester.widget<Text>(
+        find.byWidgetPredicate(
+          (w) => w is Text && w.data == 'Volkswagen Golf',
+        ),
+      );
+      expect(title.style?.fontWeight, FontWeight.w500);
+    });
   });
 }
