@@ -160,8 +160,21 @@ Ship with these clearly communicated, not hidden:
 - No vehicle inspection, history report, or authenticity guarantee.
 - No admin moderation dashboard yet. Reports arrive via the
   `CARZON_REPORT_EMAIL` inbox and are triaged manually.
-- No in-app chat. Buyer-seller contact is phone / Telegram /
-  WhatsApp, launched externally.
+- **Messaging (implemented MVP):** In-app **text** messaging with
+  **inbox** and **conversation thread**. **Unread** state is backed by
+  **`user_conversation_state`** and RPCs **`mark_conversation_read`**,
+  **`get_unread_conversation_count`**, and **`list_inbox_conversations`**;
+  the UI shows unread on **inbox rows**, **Profile → Activity →
+  Messages**, and the **listings masthead avatar** (dot). **Mark-read**
+  runs when appropriate on the thread; there is no separate
+  delivery/read-receipt UI beyond unread indicators. The client **polls**
+  for thread updates (timer-based), **not** Supabase **Realtime**.
+- **Messaging (deferred):** **Push notifications**, **message
+  attachments**, Realtime subscriptions, and richer delivery/read-receipt
+  UX beyond the unread foundation above.
+- Buyer-seller contact **also** includes **phone / Telegram / WhatsApp**
+  from listing details, launched **externally** (alongside in-app chat
+  when the listing has a seller and the viewer is not the seller).
 - Active listings and their cover images are publicly readable by
   design (public feed + public `listing-images` bucket).
 - Seller contact details are publicly readable on active listings
@@ -169,5 +182,11 @@ Ship with these clearly communicated, not hidden:
   does not attempt strong anti-scraping.
 - Deep links use the `carzon://` custom scheme only; no domain
   verification via Universal Links / App Links yet.
-- No reports table, admin tools, dealer profiles, or multi-image
-  galleries. Each is a known future feature, not a blocker.
+- **Listing photos (MVP):** **Multi-photo** listings are implemented —
+  **create** and **edit** support gallery upload/replacement; **listing
+  details** displays multiple images. Files use the **`listing-images`**
+  bucket (parity with `docs/RELEASE.md`). **Deferred:** advanced media
+  (e.g. video, 360°) and non-essential gallery polish beyond this — not
+  launch blockers.
+- No reports table, admin tools, or dealer profiles. Each is a known
+  future feature, not a blocker.

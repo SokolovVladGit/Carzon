@@ -16,6 +16,7 @@ import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../shared/brands/brand_icon_resolver.dart';
 import '../../../../shared/ui/carzon_icons.dart';
+import '../../../../shared/ui/whatsapp_contact_icon.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../favorites/presentation/widgets/favorite_toggle_button.dart';
@@ -1215,7 +1216,7 @@ class _SecondaryContactLinks extends StatelessWidget {
         TextButton.icon(
           onPressed: () =>
               _launch(context, Uri.parse('https://wa.me/$waDigits')),
-          icon: const Icon(CarzonIcons.chat),
+          icon: const WhatsappContactIcon(size: 20),
           label: Text(l10n.contactWhatsapp),
         ),
     ];

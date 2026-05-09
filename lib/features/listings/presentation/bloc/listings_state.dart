@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/listing.dart';
+import '../../domain/entities/listing_currency.dart';
+import '../../domain/entities/listing_sort_option.dart';
 
 enum ListingsStatus { initial, loading, loadingMore, success, failure }
 
@@ -54,11 +56,18 @@ class ListingsState extends Equatable {
     this.hasReachedEnd = false,
     this.search,
     this.make,
+    this.model,
     this.minYear,
     this.maxYear,
+    this.minPrice,
+    this.maxPrice,
+    this.maxMileage,
+    this.city,
     this.typeFilter = ListingTypeFilter.any,
     this.regionFilter = MarketRegionFilter.transnistria,
     this.bodyTypeFilter,
+    this.sortOption = ListingSortOption.newestFirst,
+    this.priceCurrencyFilter = ListingPriceCurrencyFilter.any,
     this.errorMessage,
   });
 
@@ -70,23 +79,48 @@ class ListingsState extends Equatable {
   // Filter fields. `null` / `any` / `both` means "no filter for this field".
   final String? search;
   final String? make;
+  final String? model;
   final int? minYear;
   final int? maxYear;
+  final num? minPrice;
+  final num? maxPrice;
+  final int? maxMileage;
+  final String? city;
   final ListingTypeFilter typeFilter;
   final MarketRegionFilter regionFilter;
 
   /// Home feed body-style filter. Null means all body types.
   final ListingBodyType? bodyTypeFilter;
 
+  /// Optional constraint on `listings.price_currency`. [any] does not filter
+  /// by currency; amount bounds still use `price_eur` only.
+  final ListingPriceCurrencyFilter priceCurrencyFilter;
+
+  /// Feed ordering (public active listings only).
+  final ListingSortOption sortOption;
+
   final String? errorMessage;
 
   bool get hasActiveNonRegionFilters =>
       (search != null && search!.isNotEmpty) ||
       (make != null && make!.isNotEmpty) ||
+      (model != null && model!.isNotEmpty) ||
       minYear != null ||
       maxYear != null ||
+      minPrice != null ||
+      maxPrice != null ||
+      maxMileage != null ||
+      (city != null && city!.isNotEmpty) ||
       typeFilter != ListingTypeFilter.any ||
-      bodyTypeFilter != null;
+      bodyTypeFilter != null ||
+      sortOption != ListingSortOption.newestFirst ||
+      priceCurrencyFilter != ListingPriceCurrencyFilter.any;
+
+  /// Includes the region picker: the default feed is Transnistria-only; Moldova
+  /// or "all regions" counts as an active choice for empty states and chrome.
+  bool get hasActiveDiscoveryConstraints =>
+      hasActiveNonRegionFilters ||
+      regionFilter != MarketRegionFilter.transnistria;
 
   ListingsState copyWith({
     ListingsStatus? status,
@@ -95,17 +129,31 @@ class ListingsState extends Equatable {
     bool? hasReachedEnd,
     String? search,
     String? make,
+    String? model,
     int? minYear,
     int? maxYear,
+    num? minPrice,
+    num? maxPrice,
+    int? maxMileage,
+    String? city,
     ListingTypeFilter? typeFilter,
     MarketRegionFilter? regionFilter,
     ListingBodyType? bodyTypeFilter,
+    ListingSortOption? sortOption,
+    ListingPriceCurrencyFilter? priceCurrencyFilter,
     String? errorMessage,
     bool clearSearch = false,
     bool clearMake = false,
+    bool clearModel = false,
     bool clearMinYear = false,
     bool clearMaxYear = false,
+    bool clearMinPrice = false,
+    bool clearMaxPrice = false,
+    bool clearMaxMileage = false,
+    bool clearCity = false,
     bool clearBodyType = false,
+    bool clearSort = false,
+    bool clearPriceCurrencyFilter = false,
   }) {
     return ListingsState(
       status: status ?? this.status,
@@ -114,13 +162,24 @@ class ListingsState extends Equatable {
       hasReachedEnd: hasReachedEnd ?? this.hasReachedEnd,
       search: clearSearch ? null : (search ?? this.search),
       make: clearMake ? null : (make ?? this.make),
+      model: clearModel ? null : (model ?? this.model),
       minYear: clearMinYear ? null : (minYear ?? this.minYear),
       maxYear: clearMaxYear ? null : (maxYear ?? this.maxYear),
+      minPrice: clearMinPrice ? null : (minPrice ?? this.minPrice),
+      maxPrice: clearMaxPrice ? null : (maxPrice ?? this.maxPrice),
+      maxMileage: clearMaxMileage ? null : (maxMileage ?? this.maxMileage),
+      city: clearCity ? null : (city ?? this.city),
       typeFilter: typeFilter ?? this.typeFilter,
       regionFilter: regionFilter ?? this.regionFilter,
       bodyTypeFilter: clearBodyType
           ? null
           : (bodyTypeFilter ?? this.bodyTypeFilter),
+      sortOption: clearSort
+          ? ListingSortOption.newestFirst
+          : (sortOption ?? this.sortOption),
+      priceCurrencyFilter: clearPriceCurrencyFilter
+          ? ListingPriceCurrencyFilter.any
+          : (priceCurrencyFilter ?? this.priceCurrencyFilter),
       errorMessage: errorMessage,
     );
   }
@@ -133,11 +192,18 @@ class ListingsState extends Equatable {
     hasReachedEnd,
     search,
     make,
+    model,
     minYear,
     maxYear,
+    minPrice,
+    maxPrice,
+    maxMileage,
+    city,
     typeFilter,
     regionFilter,
     bodyTypeFilter,
+    priceCurrencyFilter,
+    sortOption,
     errorMessage,
   ];
 }

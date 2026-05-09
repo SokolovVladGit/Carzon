@@ -2,6 +2,9 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
+import '../../../../core/utils/logger.dart';
+import '../../domain/entities/listing_currency.dart';
+import '../../domain/entities/listing_sort_option.dart';
 import '../../domain/repositories/listings_repository.dart';
 import '../models/listing_image_model.dart';
 import '../models/listing_model.dart';
@@ -28,6 +31,8 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
   SupabaseListingsRemoteDataSource(this._supabase);
 
   final SupabaseService _supabase;
+  final AppLogger _logger = AppLogger('SupabaseListingsRemoteDataSource');
+
   static const String _table = 'listings';
   static const String _imagesTable = 'listing_images';
 
@@ -37,9 +42,14 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
       final from = query.page * query.pageSize;
       final to = from + query.pageSize - 1;
 
-      var builder = _supabase.client.from(_table).select();
+      // Keep filter operations on [PostgrestFilterBuilder] only. `.order()` and
+      // further transforms return [PostgrestTransformBuilder]; reassigning that
+      // into a variable inferred as the filter type throws at runtime:
+      // PostgrestTransformBuilder is not a subtype of PostgrestFilterBuilder.
+      sb.PostgrestFilterBuilder<sb.PostgrestList> filterQuery =
+          _supabase.client.from(_table).select();
       if (query.search != null && query.search!.trim().isNotEmpty) {
-        builder = builder.ilike('title', '%${query.search!.trim()}%');
+        filterQuery = filterQuery.ilike('title', '%${query.search!.trim()}%');
       }
       // `make` is defensively trimmed here as well so any caller that forgets
       // to normalize (or leading/trailing spaces that slip through the UI)
@@ -49,50 +59,172 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
       if (query.make != null) {
         final trimmedMake = query.make!.trim();
         if (trimmedMake.isNotEmpty) {
-          builder = builder.ilike('make', '%$trimmedMake%');
+          filterQuery = filterQuery.ilike('make', '%$trimmedMake%');
         }
       }
-      if (query.minYear != null) builder = builder.gte('year', query.minYear!);
-      if (query.maxYear != null) builder = builder.lte('year', query.maxYear!);
+      if (query.minYear != null) {
+        filterQuery = filterQuery.gte('year', query.minYear!);
+      }
+      if (query.maxYear != null) {
+        filterQuery = filterQuery.lte('year', query.maxYear!);
+      }
       if (query.sellerId != null && query.sellerId!.isNotEmpty) {
-        builder = builder.eq('seller_id', query.sellerId!);
+        filterQuery = filterQuery.eq('seller_id', query.sellerId!);
       }
       if (query.marketRegion != null) {
-        builder = builder.eq('market_region', query.marketRegion!.name);
+        filterQuery = filterQuery.eq('market_region', query.marketRegion!.name);
       }
       if (query.bodyType != null) {
-        builder = builder.eq('body_type', query.bodyType!.name);
+        filterQuery = filterQuery.eq('body_type', query.bodyType!.name);
       }
       // Explicit status filter: callers (e.g. the public feed) must pass
       // `active` so owners do not see their own non-active listings mixed in
       // via the owner-read RLS policy. Left null by My Listings.
       if (query.status != null) {
-        builder = builder.eq('status', query.status!.name);
+        filterQuery = filterQuery.eq('status', query.status!.name);
       }
       // Semantic listing-type filter. The caller is responsible for deciding
       // which DB values belong to each UX option (e.g. "Sale" ⇒ sale + both).
       if (query.typeIn != null && query.typeIn!.isNotEmpty) {
-        builder = builder.inFilter(
+        filterQuery = filterQuery.inFilter(
           'type',
           query.typeIn!.map((t) => t.name).toList(growable: false),
         );
       }
 
-      final rows = await builder
-          .order('created_at', ascending: false)
-          .range(from, to);
+      if (query.model != null) {
+        final trimmedModel = query.model!.trim();
+        if (trimmedModel.isNotEmpty) {
+          filterQuery = filterQuery.ilike('model', '%$trimmedModel%');
+        }
+      }
+      if (query.city != null) {
+        final trimmedCity = query.city!.trim();
+        if (trimmedCity.isNotEmpty) {
+          filterQuery = filterQuery.ilike('city', '%$trimmedCity%');
+        }
+      }
+      if (query.minPrice != null) {
+        filterQuery = filterQuery.gte('price_eur', query.minPrice!);
+      }
+      if (query.maxPrice != null) {
+        filterQuery = filterQuery.lte('price_eur', query.maxPrice!);
+      }
+      if (query.maxMileage != null) {
+        filterQuery = filterQuery.lte('mileage_km', query.maxMileage!);
+      }
+      if (query.priceCurrency != null) {
+        filterQuery = filterQuery.eq(
+          'price_currency',
+          listingCurrencyToDbString(query.priceCurrency!),
+        );
+      }
 
-      return rows
-          .map<ListingModel>((row) => ListingModel.fromJson(row))
-          .toList(growable: false);
+      final sb.PostgrestTransformBuilder<sb.PostgrestList> orderedQuery =
+          _applySort(filterQuery, query.sort);
+      final rows = await orderedQuery.range(from, to);
+
+      return _mapRowsToModels(rows);
     } on sb.PostgrestException catch (e, st) {
       throw ServerException(e.message, cause: e, stackTrace: st);
+    } on ServerException {
+      rethrow;
     } catch (e, st) {
+      _logger.error(
+        'Listings fetch failed before/after PostgREST (non-ServerException): '
+        '${e.runtimeType}',
+        e,
+        st,
+      );
       throw ServerException(
         'Failed to fetch listings',
         cause: e,
         stackTrace: st,
       );
+    }
+  }
+
+  /// Converts each wire row to [ListingModel], logging safe context on failures.
+  List<ListingModel> _mapRowsToModels(List<dynamic> rows) {
+    final out = <ListingModel>[];
+    for (final raw in rows) {
+      Map<String, dynamic> json;
+      try {
+        json = _listingRowToJsonMap(raw);
+      } catch (e, st) {
+        _logger.error(
+          'Listing row is not a JSON object map (${e.runtimeType})',
+          e,
+          st,
+        );
+        rethrow;
+      }
+      try {
+        out.add(ListingModel.fromJson(json));
+      } on ServerException catch (e) {
+        final idHint = _safeListingIdForLog(json);
+        _logger.warn(
+          'Listing row mapping ServerException${idHint != null ? ' (id=$idHint)' : ''}: '
+          '${e.message}',
+        );
+        rethrow;
+      } catch (e, st) {
+        final idHint = _safeListingIdForLog(json);
+        _logger.error(
+          'Listing row map failed${idHint != null ? ' (listing id: $idHint)' : ''}: '
+          '${e.runtimeType}',
+          e,
+          st,
+        );
+        rethrow;
+      }
+    }
+    return out;
+  }
+
+  static Map<String, dynamic> _listingRowToJsonMap(dynamic raw) {
+    if (raw is Map<String, dynamic>) return raw;
+    if (raw is Map) return Map<String, dynamic>.from(raw);
+    throw StateError('Expected Map row, got ${raw.runtimeType}');
+  }
+
+  static String? _safeListingIdForLog(Map<String, dynamic> json) {
+    try {
+      final id = json['id'];
+      if (id is String) {
+        final t = id.trim();
+        if (t.isNotEmpty) return t;
+      } else if (id != null) {
+        final s = id.toString().trim();
+        if (s.isNotEmpty) return s;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Single-column ordering per option (matches pre-Stage-1 feed behavior).
+  /// Avoid chaining extra `order()` keys so default queries stay compatible
+  /// with all hosted PostgREST builds and row sets.
+  ///
+  /// Must return [sb.PostgrestTransformBuilder] — `.order()` does not return
+  /// a filter builder (see [fetch]).
+  static sb.PostgrestTransformBuilder<sb.PostgrestList> _applySort(
+    sb.PostgrestFilterBuilder<sb.PostgrestList> filterQuery,
+    ListingSortOption sort,
+  ) {
+    switch (sort) {
+      case ListingSortOption.newestFirst:
+        return filterQuery.order('created_at', ascending: false);
+      case ListingSortOption.priceLowToHigh:
+        return filterQuery.order('price_eur', ascending: true);
+      case ListingSortOption.priceHighToLow:
+        return filterQuery.order('price_eur', ascending: false);
+      case ListingSortOption.newestYearFirst:
+        return filterQuery
+            .order('year', ascending: false)
+            .order('created_at', ascending: false);
+      case ListingSortOption.lowestMileageFirst:
+        return filterQuery.order('mileage_km', ascending: true);
     }
   }
 
@@ -104,7 +236,7 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
           .select()
           .eq('id', id)
           .single();
-      return ListingModel.fromJson(row);
+      return ListingModel.fromJson(_listingRowToJsonMap(row));
     } on sb.PostgrestException catch (e, st) {
       throw ServerException(e.message, cause: e, stackTrace: st);
     } catch (e, st) {

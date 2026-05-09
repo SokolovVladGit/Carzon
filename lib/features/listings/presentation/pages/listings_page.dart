@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +14,7 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../../shared/brands/brand_icon_resolver.dart';
 import '../../../../shared/ui/carzon_icons.dart';
+import '../../data/local/last_applied_listing_discovery_repository.dart';
 import '../bloc/listings_bloc.dart';
 import '../bloc/listings_event.dart';
 import '../bloc/listings_state.dart';
@@ -27,17 +27,92 @@ import '../widgets/listing_card.dart';
 import '../widgets/listing_tile.dart';
 import '../widgets/listings_feed_empty_state.dart';
 import '../utils/feed_home_body_chips.dart';
+import '../widgets/filters/listings_filter_apply_result.dart';
+import '../widgets/filters/listings_filter_form.dart';
+import '../widgets/filters/listings_filter_host.dart';
+import '../utils/discovery_feed_chip_labels.dart';
+
+bool _listingsFilterChromeChanged(ListingsState p, ListingsState q) {
+  return p.search != q.search ||
+      p.make != q.make ||
+      p.model != q.model ||
+      p.minYear != q.minYear ||
+      p.maxYear != q.maxYear ||
+      p.minPrice != q.minPrice ||
+      p.maxPrice != q.maxPrice ||
+      p.maxMileage != q.maxMileage ||
+      p.city != q.city ||
+      p.typeFilter != q.typeFilter ||
+      p.regionFilter != q.regionFilter ||
+      p.bodyTypeFilter != q.bodyTypeFilter ||
+      p.sortOption != q.sortOption ||
+      p.priceCurrencyFilter != q.priceCurrencyFilter ||
+      p.hasActiveDiscoveryConstraints != q.hasActiveDiscoveryConstraints;
+}
 
 class ListingsPage extends StatelessWidget {
-  const ListingsPage({super.key});
+  const ListingsPage({super.key, this.feedLaunch});
+
+  final ListingsFeedLaunch? feedLaunch;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<ListingsBloc>()..add(const ListingsRequested()),
-      child: const _ListingsView(),
+      create: (_) => sl<ListingsBloc>(),
+      child: _ListingsDiscoveryBootstrap(
+        feedLaunch: feedLaunch,
+        child: const _ListingsView(),
+      ),
     );
   }
+}
+
+class _ListingsDiscoveryBootstrap extends StatefulWidget {
+  const _ListingsDiscoveryBootstrap({
+    required this.feedLaunch,
+    required this.child,
+  });
+
+  final ListingsFeedLaunch? feedLaunch;
+  final Widget child;
+
+  @override
+  State<_ListingsDiscoveryBootstrap> createState() =>
+      _ListingsDiscoveryBootstrapState();
+}
+
+class _ListingsDiscoveryBootstrapState extends State<_ListingsDiscoveryBootstrap> {
+  bool _seeded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_seed());
+    });
+  }
+
+  Future<void> _seed() async {
+    if (!mounted || _seeded) return;
+    _seeded = true;
+    final bloc = context.read<ListingsBloc>();
+    if (widget.feedLaunch != null) {
+      bloc.add(
+        ListingsHydratedFromDiscovery(widget.feedLaunch!.snapshot),
+      );
+      return;
+    }
+    final local = await sl<LastAppliedListingDiscoveryRepository>().load();
+    if (!mounted) return;
+    if (local != null) {
+      bloc.add(ListingsHydratedFromDiscovery(local));
+    } else {
+      bloc.add(const ListingsRequested());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class _ListingsView extends StatefulWidget {
@@ -92,37 +167,47 @@ class _ListingsViewState extends State<_ListingsView> {
   Future<void> _openFiltersSheet(BuildContext context) async {
     final bloc = context.read<ListingsBloc>();
     final current = bloc.state;
-    final result = await showModalBottomSheet<_FiltersResult>(
+    final result = await showModalBottomSheet<ListingsFilterApplyResult?>(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) => _FiltersBottomSheet(
-        initialMake: current.make,
-        initialMinYear: current.minYear,
-        initialMaxYear: current.maxYear,
-        initialType: current.typeFilter,
-        initialRegion: current.regionFilter,
-      ),
+      useSafeArea: false,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final h = MediaQuery.sizeOf(sheetContext).height;
+        return SizedBox(
+          height: h,
+          child: ListingsFilterHost(
+            seed: ListingsFilterFormSeed.fromListingsState(current),
+            onDismiss: () => Navigator.of(sheetContext).pop(),
+            onApply: (r) => Navigator.of(sheetContext).pop(r),
+            onBrowseFeedReset: () {
+              _searchCtrl.clear();
+              bloc.add(const ListingsFiltersCleared());
+            },
+          ),
+        );
+      },
     );
     if (result == null) return;
     if (result.cleared) {
       _searchCtrl.clear();
       bloc.add(const ListingsFiltersCleared());
     } else {
-      // Region is surfaced separately so the existing bloc contract
-      // (ListingsFiltersApplied covers make/year/type only) stays
-      // untouched. Dispatch only when the value actually changed to
-      // avoid a redundant refetch.
-      final region = result.region;
-      if (region != null && region != current.regionFilter) {
-        bloc.add(ListingsRegionFilterChanged(region));
-      }
       bloc.add(
         ListingsFiltersApplied(
           make: result.make,
+          model: result.model,
           minYear: result.minYear,
           maxYear: result.maxYear,
+          minPrice: result.minPrice,
+          maxPrice: result.maxPrice,
+          maxMileage: result.maxMileage,
+          city: result.city,
           typeFilter: result.typeFilter,
+          sort: result.sort,
+          regionFilter: result.region ?? MarketRegionFilter.transnistria,
+          bodyType: result.bodyType,
+          priceCurrencyFilter: result.priceCurrencyFilter,
         ),
       );
     }
@@ -187,7 +272,7 @@ class _ListingsViewState extends State<_ListingsView> {
                     case ListingsStatus.loadingMore:
                       if (state.items.isEmpty) {
                         return ListingsFeedEmptyState(
-                          hasFilters: state.hasActiveNonRegionFilters,
+                          hasFilters: state.hasActiveDiscoveryConstraints,
                           includeBodyFilterEmptyHint:
                               state.bodyTypeFilter != null,
                           onResetFilters: () {
@@ -332,9 +417,18 @@ class _ListingsViewState extends State<_ListingsView> {
     bloc.add(
       ListingsFiltersApplied(
         make: brand,
+        model: s.model,
         minYear: s.minYear,
         maxYear: s.maxYear,
+        minPrice: s.minPrice,
+        maxPrice: s.maxPrice,
+        maxMileage: s.maxMileage,
+        city: s.city,
         typeFilter: s.typeFilter,
+        sort: s.sortOption,
+        regionFilter: s.regionFilter,
+        bodyType: s.bodyTypeFilter,
+        priceCurrencyFilter: s.priceCurrencyFilter,
       ),
     );
   }
@@ -499,6 +593,15 @@ class _FeedHeaderLayer extends StatelessWidget {
                   );
                 },
               );
+            },
+          ),
+          BlocBuilder<ListingsBloc, ListingsState>(
+            buildWhen: _listingsFilterChromeChanged,
+            builder: (context, listState) {
+              if (!listState.hasActiveDiscoveryConstraints) {
+                return const SizedBox.shrink();
+              }
+              return _ActiveDiscoverySummaryStrip(state: listState);
             },
           ),
           // Tight bottom air inside the layer — the chip row's
@@ -684,29 +787,33 @@ class _SearchAndFilterBar extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           BlocBuilder<ListingsBloc, ListingsState>(
-            buildWhen: (prev, curr) =>
-                prev.hasActiveNonRegionFilters !=
-                curr.hasActiveNonRegionFilters,
+            buildWhen: (prev, curr) {
+              final pa = listingsDiscoveryActiveFilterGroupCount(prev) > 0;
+              final qa = listingsDiscoveryActiveFilterGroupCount(curr) > 0;
+              return pa != qa;
+            },
             builder: (context, state) {
-              final active = state.hasActiveNonRegionFilters;
-              // Icon-only utility control: same height as the search
-              // pill, same close-to-white fill, same hairline border
-              // and shadow family. This locks the filter button into
-              // the brand-tile language directly below it rather than
-              // reading as a separate form element. Active state
-              // earns a whisper primary tint plus the accent dot.
+              final active = listingsDiscoveryActiveFilterGroupCount(state) > 0;
+              // Align with search pill: inactive reads as crisp white/light;
+              // active uses clearer primary tint + icon + small check badge.
               final restingBg = isDark
                   ? scheme.surfaceContainerHighest
                   : Colors.white;
               final bg = active
-                  ? scheme.primary.withValues(alpha: isDark ? 0.14 : 0.07)
+                  ? Color.alphaBlend(
+                      scheme.primary.withValues(
+                        alpha: isDark ? 0.26 : 0.14,
+                      ),
+                      restingBg,
+                    )
                   : restingBg;
               final fg = active
                   ? scheme.primary
-                  : scheme.onSurfaceVariant.withValues(alpha: 0.85);
+                  : scheme.onSurfaceVariant.withValues(alpha: 0.88);
               final border = active
-                  ? scheme.primary.withValues(alpha: isDark ? 0.5 : 0.35)
+                  ? scheme.primary.withValues(alpha: isDark ? 0.52 : 0.40)
                   : pillBorder;
+              final badgeOutline = restingBg;
               return Container(
                 height: barHeight,
                 width: barHeight,
@@ -718,7 +825,7 @@ class _SearchAndFilterBar extends StatelessWidget {
                   color: bg,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(filterRadius),
-                    side: BorderSide(color: border),
+                    side: BorderSide(color: border, width: active ? 1.25 : 1),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Tooltip(
@@ -730,22 +837,40 @@ class _SearchAndFilterBar extends StatelessWidget {
                         label: l10n.listingsFiltersTooltip,
                         child: Stack(
                           alignment: Alignment.center,
+                          clipBehavior: Clip.none,
                           children: [
-                            // Active state is already communicated by
-                            // the tint + dot below; use a single icon
-                            // variant so the silhouette stays stable
-                            // across toggles.
                             Icon(CarzonIcons.filter, size: 20, color: fg),
                             if (active)
                               Positioned(
-                                top: 12,
-                                right: 12,
-                                child: Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: scheme.primary,
-                                    shape: BoxShape.circle,
+                                top: 5,
+                                right: 5,
+                                child: IgnorePointer(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      color: scheme.primary,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: badgeOutline,
+                                        width: 1.25,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: scheme.shadow.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                          blurRadius: 3,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(4),
+                                      child: Icon(
+                                        Icons.check,
+                                        size: 10,
+                                        color: scheme.onPrimary,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -985,307 +1110,59 @@ class _BrandTile extends StatelessWidget {
   }
 }
 
-/// Result tuple returned by [_FiltersBottomSheet]. Either a set of
-/// applied values, or a "clear all" signal.
-///
-/// Region was promoted into the sheet in Pass 1.3 (the home no longer
-/// shows region chips), so callers dispatch a region change when the
-/// returned [region] differs from the current bloc state.
-class _FiltersResult {
-  const _FiltersResult.apply({
-    required this.make,
-    required this.minYear,
-    required this.maxYear,
-    required this.typeFilter,
-    required this.region,
-  }) : cleared = false;
 
-  const _FiltersResult.clear()
-    : cleared = true,
-      make = null,
-      minYear = null,
-      maxYear = null,
-      typeFilter = ListingTypeFilter.any,
-      region = null;
+class _ActiveDiscoverySummaryStrip extends StatelessWidget {
+  const _ActiveDiscoverySummaryStrip({required this.state});
 
-  final bool cleared;
-  final String? make;
-  final int? minYear;
-  final int? maxYear;
-  final ListingTypeFilter typeFilter;
-  // Null when [cleared] is true — the bloc preserves the current
-  // region on "clear filters" (see [ListingsFiltersCleared] contract).
-  final MarketRegionFilter? region;
-}
-
-class _FiltersBottomSheet extends StatefulWidget {
-  const _FiltersBottomSheet({
-    required this.initialMake,
-    required this.initialMinYear,
-    required this.initialMaxYear,
-    required this.initialType,
-    required this.initialRegion,
-  });
-
-  final String? initialMake;
-  final int? initialMinYear;
-  final int? initialMaxYear;
-  final ListingTypeFilter initialType;
-  final MarketRegionFilter initialRegion;
-
-  @override
-  State<_FiltersBottomSheet> createState() => _FiltersBottomSheetState();
-}
-
-class _FiltersBottomSheetState extends State<_FiltersBottomSheet> {
-  late final TextEditingController _make;
-  late final TextEditingController _minYear;
-  late final TextEditingController _maxYear;
-  late ListingTypeFilter _type;
-  late MarketRegionFilter _region;
-  // Per-field error strings. Attached to the relevant `TextField` via
-  // `InputDecoration.errorText` so the user can see which value is wrong
-  // without scanning a generic message elsewhere in the sheet.
-  String? _minYearError;
-  String? _maxYearError;
-
-  @override
-  void initState() {
-    super.initState();
-    _make = TextEditingController(text: widget.initialMake ?? '');
-    _minYear = TextEditingController(
-      text: widget.initialMinYear?.toString() ?? '',
-    );
-    _maxYear = TextEditingController(
-      text: widget.initialMaxYear?.toString() ?? '',
-    );
-    _type = widget.initialType;
-    _region = widget.initialRegion;
-  }
-
-  @override
-  void dispose() {
-    _make.dispose();
-    _minYear.dispose();
-    _maxYear.dispose();
-    super.dispose();
-  }
-
-  int? _parseYear(String raw) {
-    final t = raw.trim();
-    if (t.isEmpty) return null;
-    return int.tryParse(t);
-  }
-
-  void _apply() {
-    final l10n = context.l10n;
-    final make = _make.text.trim();
-    final minYear = _parseYear(_minYear.text);
-    final maxYear = _parseYear(_maxYear.text);
-
-    String? minErr;
-    String? maxErr;
-    // Numeric errors are defensive — `FilteringTextInputFormatter.digitsOnly`
-    // already blocks non-digits, but a paste or programmatic change could
-    // still slip through.
-    if (_minYear.text.trim().isNotEmpty && minYear == null) {
-      minErr = l10n.filterMustBeNumber;
-    }
-    if (_maxYear.text.trim().isNotEmpty && maxYear == null) {
-      maxErr = l10n.filterMustBeNumber;
-    }
-    if (minErr == null &&
-        maxErr == null &&
-        minYear != null &&
-        maxYear != null &&
-        minYear > maxYear) {
-      // Show the range error on both fields so the user understands the
-      // constraint affects the pair, not a single value.
-      minErr = l10n.filterMustBeMaxYear;
-      maxErr = l10n.filterMustBeMinYear;
-    }
-
-    if (minErr != null || maxErr != null) {
-      setState(() {
-        _minYearError = minErr;
-        _maxYearError = maxErr;
-      });
-      return;
-    }
-
-    Navigator.of(context).pop(
-      _FiltersResult.apply(
-        make: make.isEmpty ? null : make,
-        minYear: minYear,
-        maxYear: maxYear,
-        typeFilter: _type,
-        region: _region,
-      ),
-    );
-  }
-
-  void _clear() {
-    Navigator.of(context).pop(const _FiltersResult.clear());
-  }
+  final ListingsState state;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 8,
-        bottom: 16 + bottomInset,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.filtersTitle,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _make,
-              textCapitalization: TextCapitalization.words,
-              decoration: InputDecoration(
-                labelText: l10n.filterMake,
-                hintText: l10n.filterMakeHint,
-                border: const OutlineInputBorder(),
-                isDense: true,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _minYear,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (_) {
-                      if (_minYearError != null || _maxYearError != null) {
-                        setState(() {
-                          _minYearError = null;
-                          _maxYearError = null;
-                        });
-                      }
-                    },
-                    decoration: InputDecoration(
-                      labelText: l10n.filterMinYear,
-                      border: const OutlineInputBorder(),
-                      isDense: true,
-                      errorText: _minYearError,
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final chips = listingsDiscoveryChipLabels(state, l10n);
+    if (chips.isEmpty) return const SizedBox.shrink();
+    return Semantics(
+      container: true,
+      label: l10n.filtersTitle,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final label in chips)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest.withValues(
+                        alpha: 0.45,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: scheme.outlineVariant.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      child: Text(
+                        label,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: scheme.onSurface.withValues(alpha: 0.88),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _maxYear,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (_) {
-                      if (_minYearError != null || _maxYearError != null) {
-                        setState(() {
-                          _minYearError = null;
-                          _maxYearError = null;
-                        });
-                      }
-                    },
-                    decoration: InputDecoration(
-                      labelText: l10n.filterMaxYear,
-                      border: const OutlineInputBorder(),
-                      isDense: true,
-                      errorText: _maxYearError,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                l10n.regionFilterLabel,
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-            ),
-            const SizedBox(height: 6),
-            SegmentedButton<MarketRegionFilter>(
-              segments: [
-                ButtonSegment(
-                  value: MarketRegionFilter.transnistria,
-                  label: Text(l10n.regionTransnistria),
-                ),
-                ButtonSegment(
-                  value: MarketRegionFilter.moldova,
-                  label: Text(l10n.regionMoldova),
-                ),
-                ButtonSegment(
-                  value: MarketRegionFilter.both,
-                  label: Text(l10n.regionBoth),
-                ),
-              ],
-              selected: {_region},
-              onSelectionChanged: (selected) {
-                if (selected.isEmpty) return;
-                setState(() => _region = selected.first);
-              },
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                l10n.filterType,
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-            ),
-            const SizedBox(height: 6),
-            SegmentedButton<ListingTypeFilter>(
-              segments: [
-                ButtonSegment(
-                  value: ListingTypeFilter.any,
-                  label: Text(l10n.typeAny),
-                ),
-                ButtonSegment(
-                  value: ListingTypeFilter.sale,
-                  label: Text(l10n.typeSale),
-                ),
-                ButtonSegment(
-                  value: ListingTypeFilter.exchange,
-                  label: Text(l10n.typeExchange),
-                ),
-              ],
-              selected: {_type},
-              onSelectionChanged: (selected) {
-                if (selected.isEmpty) return;
-                setState(() => _type = selected.first);
-              },
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _clear,
-                    child: Text(l10n.filterClear),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: _apply,
-                    child: Text(l10n.filterApply),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

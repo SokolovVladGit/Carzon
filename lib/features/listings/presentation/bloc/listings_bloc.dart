@@ -1,16 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/utils/result.dart';
+import '../../data/local/last_applied_listing_discovery_repository.dart';
 import '../../domain/entities/listing.dart';
-import '../../domain/repositories/listings_repository.dart';
+import '../../domain/entities/listing_discovery_criteria.dart';
+import '../../domain/listing_discovery_state_sync.dart';
 import '../../domain/usecases/get_listings.dart';
 import 'listings_event.dart';
 import 'listings_state.dart';
 
 class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
-  ListingsBloc({required GetListings getListings})
-    : _getListings = getListings,
-      super(const ListingsState()) {
+  ListingsBloc({
+    required GetListings getListings,
+    required LastAppliedListingDiscoveryRepository lastAppliedDiscovery,
+  }) : _getListings = getListings,
+       _lastAppliedDiscovery = lastAppliedDiscovery,
+       super(const ListingsState()) {
     on<ListingsRequested>(_onRequested);
     on<ListingsRefreshed>(_onRefreshed);
     on<ListingsNextPageRequested>(_onNextPage);
@@ -19,9 +27,26 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     on<ListingsSearchChanged>(_onSearchChanged);
     on<ListingsFiltersApplied>(_onFiltersApplied);
     on<ListingsFiltersCleared>(_onFiltersCleared);
+    on<ListingsHydratedFromDiscovery>(_onHydratedFromDiscovery);
   }
 
   final GetListings _getListings;
+  final LastAppliedListingDiscoveryRepository _lastAppliedDiscovery;
+
+  Future<void> _onHydratedFromDiscovery(
+    ListingsHydratedFromDiscovery event,
+    Emitter<ListingsState> emit,
+  ) async {
+    final next = listingsStateFromDiscoveryCriteria(event.criteria)
+        .copyWith(
+          status: ListingsStatus.loading,
+          page: 0,
+          hasReachedEnd: false,
+          items: const [],
+        );
+    emit(next);
+    await _loadWithState(next, emit, page: 0, replace: true);
+  }
 
   Future<void> _onRequested(
     ListingsRequested event,
@@ -56,10 +81,6 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     ListingsNextPageRequested event,
     Emitter<ListingsState> emit,
   ) async {
-    // Guard against both `loadingMore` (another page already in flight) and
-    // `loading` (a page-0 reload from a filter/region/search change that has
-    // not completed yet). Without the `loading` guard, a fast scroll during
-    // a filter change can issue a concurrent page-1 fetch off an empty list.
     if (state.hasReachedEnd ||
         state.status == ListingsStatus.loading ||
         state.status == ListingsStatus.loadingMore) {
@@ -131,6 +152,12 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     final make = (event.make == null || event.make!.trim().isEmpty)
         ? null
         : event.make!.trim();
+    final model = (event.model == null || event.model!.trim().isEmpty)
+        ? null
+        : event.model!.trim();
+    final city = (event.city == null || event.city!.trim().isEmpty)
+        ? null
+        : event.city!.trim();
     emit(
       state.copyWith(
         status: ListingsStatus.loading,
@@ -138,12 +165,27 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         hasReachedEnd: false,
         items: const [],
         make: make,
+        model: model,
         minYear: event.minYear,
         maxYear: event.maxYear,
+        minPrice: event.minPrice,
+        maxPrice: event.maxPrice,
+        maxMileage: event.maxMileage,
+        city: city,
         typeFilter: event.typeFilter,
+        sortOption: event.sort,
+        regionFilter: event.regionFilter,
+        bodyTypeFilter: event.bodyType,
+        priceCurrencyFilter: event.priceCurrencyFilter,
         clearMake: make == null,
+        clearModel: model == null,
         clearMinYear: event.minYear == null,
         clearMaxYear: event.maxYear == null,
+        clearMinPrice: event.minPrice == null,
+        clearMaxPrice: event.maxPrice == null,
+        clearMaxMileage: event.maxMileage == null,
+        clearCity: city == null,
+        clearBodyType: event.bodyType == null,
       ),
     );
     await _load(emit, page: 0, replace: true);
@@ -160,11 +202,19 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         hasReachedEnd: false,
         items: const [],
         typeFilter: ListingTypeFilter.any,
+        regionFilter: MarketRegionFilter.transnistria,
         clearSearch: true,
         clearMake: true,
+        clearModel: true,
         clearMinYear: true,
         clearMaxYear: true,
+        clearMinPrice: true,
+        clearMaxPrice: true,
+        clearMaxMileage: true,
+        clearCity: true,
         clearBodyType: true,
+        clearSort: true,
+        clearPriceCurrencyFilter: true,
       ),
     );
     await _load(emit, page: 0, replace: true);
@@ -175,43 +225,60 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     required int page,
     bool replace = false,
   }) async {
-    final query = ListingsQuery(
-      search: state.search,
-      make: state.make,
-      minYear: state.minYear,
-      maxYear: state.maxYear,
-      typeIn: state.typeFilter.asListingTypes,
-      marketRegion: state.regionFilter.asMarketRegion,
-      bodyType: state.bodyTypeFilter,
-      // Public feed is always explicitly active-only, regardless of RLS.
-      // This prevents authenticated owners from seeing their own
-      // hidden/sold/archived listings in the main feed.
-      status: ListingStatus.active,
+    await _loadWithState(state, emit, page: page, replace: replace);
+  }
+
+  Future<void> _loadWithState(
+    ListingsState source,
+    Emitter<ListingsState> emit, {
+    required int page,
+    required bool replace,
+  }) async {
+    final query = ListingDiscoveryCriteria(
+      search: source.search,
+      make: source.make,
+      model: source.model,
+      minYear: source.minYear,
+      maxYear: source.maxYear,
+      minPrice: source.minPrice,
+      maxPrice: source.maxPrice,
+      maxMileage: source.maxMileage,
+      city: source.city,
+      marketRegion: source.regionFilter.asMarketRegion,
+      bodyType: source.bodyTypeFilter,
+      typeIn: source.typeFilter.asListingTypes,
+      sort: source.sortOption,
+      priceCurrencyFilter: source.priceCurrencyFilter,
+    ).toListingsQuery(
       page: page,
       pageSize: AppConstants.defaultPageSize,
+      status: ListingStatus.active,
     );
 
     final result = await _getListings(query);
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          status: ListingsStatus.failure,
-          errorMessage: failure.message,
-        ),
-      ),
-      (newItems) {
-        final merged = (replace || page == 0)
-            ? newItems
-            : [...state.items, ...newItems];
+    switch (result) {
+      case FailureResult(:final failure):
         emit(
-          state.copyWith(
-            status: ListingsStatus.success,
-            items: merged,
-            page: page,
-            hasReachedEnd: newItems.length < AppConstants.defaultPageSize,
+          source.copyWith(
+            status: ListingsStatus.failure,
+            errorMessage: failure.message,
           ),
         );
-      },
-    );
+      case Success(:final value):
+        final newItems = value;
+        final merged = (replace || page == 0)
+            ? newItems
+            : [...source.items, ...newItems];
+        final nextState = source.copyWith(
+          status: ListingsStatus.success,
+          items: merged,
+          page: page,
+          hasReachedEnd: newItems.length < AppConstants.defaultPageSize,
+          errorMessage: null,
+        );
+        emit(nextState);
+        final snapshot = listingDiscoveryCriteriaFromListingsState(nextState);
+        unawaited(_lastAppliedDiscovery.persistIfNeeded(snapshot));
+    }
   }
 }

@@ -258,6 +258,11 @@ class _AccountViewState extends State<_AccountView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
+              _ProfileListingAlertsPreferenceRow(
+                theme: theme,
+                scheme: scheme,
+              ),
+              _MutedDivider(scheme: scheme, isDark: isDark),
               IgnorePointer(
                 ignoring: true,
                 child: _FutureSettingsRow(
@@ -277,19 +282,6 @@ class _AccountViewState extends State<_AccountView> {
                   key: const ValueKey('profile_future_row_notifications'),
                   title: l10n.profileNotificationsTitle,
                   subtitle: l10n.profileNotificationsSubtitle,
-                  badgeLabel: l10n.commonComingSoon,
-                  scheme: scheme,
-                  isDark: isDark,
-                  dimmed: true,
-                ),
-              ),
-              _MutedDivider(scheme: scheme, isDark: isDark),
-              IgnorePointer(
-                ignoring: true,
-                child: _FutureSettingsRow(
-                  key: const ValueKey('profile_future_row_listing_alerts'),
-                  title: l10n.profileListingAlertsTitle,
-                  subtitle: l10n.profileListingAlertsSubtitle,
                   badgeLabel: l10n.commonComingSoon,
                   scheme: scheme,
                   isDark: isDark,
@@ -678,6 +670,93 @@ class _ComingSoonBadge extends StatelessWidget {
             color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ProfileListingAlertsPreferenceRow extends StatefulWidget {
+  const _ProfileListingAlertsPreferenceRow({
+    required this.theme,
+    required this.scheme,
+  });
+
+  final ThemeData theme;
+  final ColorScheme scheme;
+
+  @override
+  State<_ProfileListingAlertsPreferenceRow> createState() =>
+      _ProfileListingAlertsPreferenceRowState();
+}
+
+class _ProfileListingAlertsPreferenceRowState
+    extends State<_ProfileListingAlertsPreferenceRow> {
+  bool _visualAlertsOn = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = widget.theme;
+    final scheme = widget.scheme;
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 10, top: 6, bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: const ValueKey<String>('profile_filter_alert_row'),
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => context.push(AppRoutes.filterAlert),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        CarzonIcons.notificationsOutline,
+                        size: 22,
+                        color: scheme.primary.withValues(alpha: 0.92),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.profileListingAlertsTitle,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.06,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              l10n.filterAlertProfileRowSubtitle,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant.withValues(
+                                  alpha: 0.76,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Switch.adaptive(
+            key: const ValueKey<String>('profile_filter_alert_switch'),
+            value: _visualAlertsOn,
+            onChanged: (v) => setState(() => _visualAlertsOn = v),
+          ),
+        ],
       ),
     );
   }

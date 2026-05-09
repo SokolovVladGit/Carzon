@@ -58,6 +58,12 @@ Rough **dependency chain** (each step maps to migrations in-repo; filenames use 
     - **`20260520120000_list_inbox_conversations_rpc.sql`**
 13. **Listing specs + description** (`fuel_type`, `engine_*`, `drivetrain`, `registration`, `description`; extended **`create_listing_v2`** / **`update_listing_details_v2`** signatures).  
     - **`20260521120000_listing_specs_description.sql`**
+14. **Filter-alert settings foundation** (**no notification delivery**, no push/realtime/background jobs yet): **`filter_alert_settings`** — one row per user (`user_id` PK), nullable JSONB **`criteria`**, **`notifications_enabled`** default false for future infra. Client uses this only from Account → «Оповещения по фильтру».  
+    - **`20260523120000_filter_alert_settings.sql`**
+
+Local **last-applied listing filters** persist on-device (`ListingDiscoveryCriteria` JSON); previewing an alert filter in the listings feed uses **`ListingsFeedLaunch`** so **explicit snapshot > local persisted > default feed**.
+
+Repo **static SQL tests** validate migration text only — they **do not** enforce hosted RLS/parity.
 
 **Recently critical filenames (explicit)**
 
@@ -67,6 +73,7 @@ Rough **dependency chain** (each step maps to migrations in-repo; filenames use 
 - `20260518100000_user_conversation_state.sql`
 - `20260520120000_list_inbox_conversations_rpc.sql`
 - `20260521120000_listing_specs_description.sql`
+- `20260523120000_filter_alert_settings.sql`
 
 **Important**
 

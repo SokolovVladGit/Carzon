@@ -36,6 +36,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get commonComingSoon => 'Скоро';
 
   @override
+  String get commonKilometersShort => 'км';
+
+  @override
   String routeNotFound(String uri) {
     return 'Страница не найдена: $uri';
   }
@@ -178,6 +181,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get filtersTitle => 'Фильтры';
 
   @override
+  String get filtersDismissTooltip => 'Закрыть фильтры';
+
+  @override
+  String get filtersHeaderEyebrow => 'CARZON · ПОИСК';
+
+  @override
+  String get filtersSubtitle => 'Подберите параметры поиска';
+
+  @override
   String get filterMake => 'Марка';
 
   @override
@@ -192,10 +204,26 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get filterMinYear => 'Мин. год';
+  String get filterMinYear => 'Год от';
 
   @override
-  String get filterMaxYear => 'Макс. год';
+  String get filterMaxYear => 'Год до';
+
+  @override
+  String get filterYearRangeInverted =>
+      'Год «от» не может быть больше года «до».';
+
+  @override
+  String get filterYearManufactureSection => 'Год выпуска';
+
+  @override
+  String get filterYearFromShort => 'От';
+
+  @override
+  String get filterYearToShort => 'До';
+
+  @override
+  String get filterYearAny => 'Любой';
 
   @override
   String get filterMustBeNumber => 'Нужно число.';
@@ -226,6 +254,135 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get filterApply => 'Применить';
+
+  @override
+  String get filterShowCars => 'Показать авто';
+
+  @override
+  String filterSummaryPriceUpTo(String amount) {
+    return 'до $amount';
+  }
+
+  @override
+  String filterSummaryPriceFrom(String amount) {
+    return 'от $amount';
+  }
+
+  @override
+  String filterSummaryPriceRangePlain(String min, String max) {
+    return '$min–$max';
+  }
+
+  @override
+  String filterSummaryPriceRangeWithSymbol(
+    String symbol,
+    String min,
+    String max,
+  ) {
+    return '$symbol$min–$symbol$max';
+  }
+
+  @override
+  String filterSummaryMileageUpTo(String amount) {
+    return 'до $amount км';
+  }
+
+  @override
+  String get filterSummaryAllListingsInRegionPm =>
+      'Все объявления в Приднестровье';
+
+  @override
+  String get filterModel => 'Модель';
+
+  @override
+  String get filterModelHint => 'напр. Golf';
+
+  @override
+  String get filterPriceFrom => 'Цена от';
+
+  @override
+  String get filterPriceTo => 'Цена до';
+
+  @override
+  String get filterPriceBudgetHint => 'Укажите бюджет и валюту объявления.';
+
+  @override
+  String get filterPriceCurrencyLabel => 'Валюта объявления';
+
+  @override
+  String get filterPriceCurrencyAny => 'Любая';
+
+  @override
+  String get filterPriceCurrencyUsd => '\$';
+
+  @override
+  String get filterPriceCurrencyEur => '€';
+
+  @override
+  String get filterPriceChipPrefix => 'Цена';
+
+  @override
+  String get filterPriceCurrencyActiveUsd => 'Валюта: \$';
+
+  @override
+  String get filterPriceCurrencyActiveEur => 'Валюта: €';
+
+  @override
+  String get filterMaxMileage => 'Пробег до (км)';
+
+  @override
+  String get filterCity => 'Город';
+
+  @override
+  String get filterCityHint => 'напр. Тирасполь';
+
+  @override
+  String get filterSortLabel => 'Сортировка';
+
+  @override
+  String get filterSortNewestFirst => 'Сначала новые';
+
+  @override
+  String get filterSortPriceLowHigh => 'Цена: по возрастанию';
+
+  @override
+  String get filterSortPriceHighLow => 'Цена: по убыванию';
+
+  @override
+  String get filterSortNewestYear => 'Сначала новый год';
+
+  @override
+  String get filterSortLowestMileage => 'Сначала меньший пробег';
+
+  @override
+  String get filterMustBeMaxPrice => 'Должно быть ≤ максимальной цены.';
+
+  @override
+  String get filterMustBeMinPrice => 'Должно быть ≥ минимальной цены.';
+
+  @override
+  String get filtersSummaryDefaultTitle => 'Настройте подбор автомобиля';
+
+  @override
+  String get filtersSummaryDefaultHints => 'Марка · бюджет · кузов · регион';
+
+  @override
+  String get filtersSectionMakeModel => 'Марка и модель';
+
+  @override
+  String get filtersSectionBudget => 'Бюджет';
+
+  @override
+  String get filtersSectionYearMileageCaption => 'Год и пробег';
+
+  @override
+  String get filtersSectionVehicle => 'Автомобиль';
+
+  @override
+  String get filtersSectionLocation => 'Локация';
+
+  @override
+  String get filtersSectionBodyAndDeal => 'Кузов и сделка';
 
   @override
   String get listingDetailsTitle => 'Объявление';
@@ -583,6 +740,12 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get fieldTitle => 'Заголовок';
+
+  @override
+  String get fieldTitleOptional => 'Заголовок (необязательно)';
+
+  @override
+  String get listingTitleFallbackDefault => 'Объявление о продаже автомобиля';
 
   @override
   String get fieldMake => 'Марка';
@@ -1008,7 +1171,50 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileListingAlertsSubtitle =>
-      'Подписки на сохранённые фильтры и новые объявления.';
+      'Один фильтр для будущих уведомлений по новым авто.';
+
+  @override
+  String get filterAlertEditorEyebrow => 'CARZON · ОПОВЕЩЕНИЯ';
+
+  @override
+  String get filterAlertEditorTitle => 'Фильтр оповещений';
+
+  @override
+  String get filterAlertEditorSubtitle => 'Выберите параметры авто';
+
+  @override
+  String get filterAlertSaveFilterAction => 'Сохранить фильтр';
+
+  @override
+  String get filterAlertProfileRowSubtitle =>
+      'Настройте фильтр — позже здесь можно будет включить уведомления.';
+
+  @override
+  String get filterAlertSavedSuccess => 'Фильтр сохранён';
+
+  @override
+  String get filterAlertUpdatedSuccess => 'Фильтр обновлён';
+
+  @override
+  String get filterAlertSaveFailed => 'Не удалось сохранить фильтр';
+
+  @override
+  String get filterAlertLoadFailed => 'Не удалось загрузить настройки.';
+
+  @override
+  String get filterAlertSignInRequired =>
+      'Войдите, чтобы настроить фильтр для оповещений.';
+
+  @override
+  String get filterAlertApplyBlockedValidation =>
+      'Исправьте ошибки в фильтре, затем сохраните снова.';
+
+  @override
+  String get filterAlertResetPersistedSuccess =>
+      'Фильтр для оповещений сброшен';
+
+  @override
+  String get filterAlertResetFailed => 'Не удалось сбросить фильтр оповещений';
 
   @override
   String get profilePublicSellerNameTitle => 'Публичное имя продавца';

@@ -10,6 +10,8 @@ import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/noop_last_applied_listing_discovery_repository.dart';
+
 class _MockListingsRepository extends Mock implements ListingsRepository {}
 
 Listing _item(String id) => Listing(
@@ -45,7 +47,10 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => const Success([]));
     },
-    build: () => ListingsBloc(getListings: GetListings(repo)),
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
     act: (b) => b.add(const ListingsBodyTypeFilterChanged(ListingBodyType.suv)),
     expect: () => [
       isA<ListingsState>()
@@ -76,7 +81,10 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => const Success([]));
     },
-    build: () => ListingsBloc(getListings: GetListings(repo)),
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
     act: (b) => b.add(const ListingsRequested()),
     verify: (_) {
       final q =
@@ -97,7 +105,10 @@ void main() {
       return Success([_item('p1-0')]);
     });
 
-    final bloc = ListingsBloc(getListings: GetListings(repo));
+    final bloc = ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    );
 
     bloc.add(const ListingsBodyTypeFilterChanged(ListingBodyType.suv));
     await bloc.stream.firstWhere(
@@ -133,7 +144,10 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => const Success([]));
     },
-    build: () => ListingsBloc(getListings: GetListings(repo)),
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
     act: (b) => b
       ..add(const ListingsBodyTypeFilterChanged(ListingBodyType.sedan))
       ..add(const ListingsFiltersCleared()),
