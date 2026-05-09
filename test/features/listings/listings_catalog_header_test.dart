@@ -8,6 +8,7 @@ import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
+import 'package:carzon/features/listings/data/local/last_applied_listing_discovery_repository.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_bloc.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_event.dart';
@@ -28,6 +29,7 @@ import 'package:carzon/features/sellers/domain/usecases/get_my_seller_profile.da
 import 'package:carzon/features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
+import '../../helpers/noop_last_applied_listing_discovery_repository.dart';
 
 class _MockListingsBloc extends MockBloc<ListingsEvent, ListingsState>
     implements ListingsBloc {}
@@ -157,6 +159,9 @@ void main() {
       initialState: const FavoritesState(),
     );
 
+    sl.registerLazySingleton<LastAppliedListingDiscoveryRepository>(
+      () => const NoopLastAppliedListingDiscoveryRepository(),
+    );
     sl.registerFactory<ListingsBloc>(() => bloc);
   });
 
@@ -251,6 +256,69 @@ void main() {
       expect(find.byTooltip(l10n.listingsFiltersTooltip), findsOneWidget);
       expect(find.bySemanticsLabel(l10n.listingsFiltersTooltip), findsWidgets);
     });
+
+    testWidgets(
+      'filter button inactive shows no numeric badge nor check atop filter icon',
+      (tester) async {
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final filterScope = find.byTooltip(l10n.listingsFiltersTooltip);
+        expect(
+          find.descendant(of: filterScope, matching: find.byIcon(Icons.check)),
+          findsNothing,
+        );
+        expect(
+          find.descendant(of: filterScope, matching: find.text('1')),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'filter button active shows check badge and chips; filter scope has no digits',
+      (tester) async {
+        const withMake = ListingsState(
+          status: ListingsStatus.success,
+          items: [],
+          hasReachedEnd: true,
+          make: 'Dacia',
+        );
+        when(() => bloc.state).thenReturn(withMake);
+        whenListen(
+          bloc,
+          const Stream<ListingsState>.empty(),
+          initialState: withMake,
+        );
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final filterScope = find.byTooltip(l10n.listingsFiltersTooltip);
+        expect(
+          find.descendant(of: filterScope, matching: find.byIcon(Icons.check)),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: filterScope, matching: find.text('1')),
+          findsNothing,
+        );
+        expect(find.textContaining('Dacia'), findsWidgets);
+      },
+    );
 
     testWidgets('body type chips show localized labels; tapping SUV dispatches '
         'ListingsBodyTypeFilterChanged(suv)', (tester) async {

@@ -20,9 +20,12 @@ import '../../../listings/domain/constants/listing_text_limits.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../../listings/domain/entities/listing_image.dart';
+import '../../../listings/domain/listing_submit_title.dart';
 import '../../../listings/domain/validation/listing_valid_years.dart';
 import '../../../listings/presentation/utils/contact_format.dart';
 import '../../../listings/presentation/utils/listing_formatters.dart';
+import '../../../listings/presentation/widgets/listing_brand_pick_sheet.dart';
+import '../../../listings/presentation/widgets/listing_year_pick_sheet.dart';
 import '../../../listings/presentation/widgets/public_contact_notice.dart';
 import '../../domain/entities/edit_listing_input.dart';
 import '../bloc/edit_listing_cubit.dart';
@@ -32,12 +35,6 @@ import '../utils/edit_listing_gallery_initializer.dart';
 import '../widgets/edit_listing_gallery_section.dart';
 
 final String _kListingBrandCatalogOther = kListingBrandCatalog.last;
-
-String _localizedBrandCatalogLabel(AppLocalizations l10n, String catalogValue) {
-  return catalogValue == _kListingBrandCatalogOther
-      ? l10n.createListingBrandOther
-      : catalogValue;
-}
 
 /// Maps cubit failure kind to localized user-facing text.
 String _failureMessage(AppLocalizations l10n, EditListingFailureKind? kind) {
@@ -314,19 +311,7 @@ class _EditListingFormState extends State<_EditListingForm> {
 
   Future<void> _openBrandSheet() async {
     final l10n = context.l10n;
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
-          ),
-          child: _BrandCatalogPickSheet(appL10n: l10n),
-        );
-      },
-    );
+    final picked = await showListingBrandPickSheet(context: context, l10n: l10n);
 
     if (!mounted || picked == null) return;
 
@@ -462,9 +447,16 @@ class _EditListingFormState extends State<_EditListingForm> {
     if (!_formKey.currentState!.validate()) return;
 
     final year = _yearFieldKey.currentState!.value!;
+    final l10n = context.l10n;
     final input = EditListingInput(
       listingId: widget.listing.id,
-      title: _title.text.trim(),
+      title: resolvedListingTitleForSubmit(
+        trimmedUserTitle: _title.text.trim(),
+        make: _effectiveMakeForSubmit(),
+        model: _model.text.trim(),
+        year: year,
+        l10n: l10n,
+      ),
       make: _effectiveMakeForSubmit(),
       model: _model.text.trim(),
       year: year,
@@ -532,7 +524,7 @@ class _EditListingFormState extends State<_EditListingForm> {
 
     final brandDisplay = _selectedBrandCatalogValue == null
         ? l10n.createListingChooseBrand
-        : _localizedBrandCatalogLabel(l10n, _selectedBrandCatalogValue!);
+        : localizedListingBrandCatalogLabel(l10n, _selectedBrandCatalogValue!);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
@@ -565,7 +557,7 @@ class _EditListingFormState extends State<_EditListingForm> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _mutedSectionLabel(context, l10n.fieldTitle),
+                  _mutedSectionLabel(context, l10n.fieldTitleOptional),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _title,
@@ -583,7 +575,7 @@ class _EditListingFormState extends State<_EditListingForm> {
                       ),
                     ),
                     textInputAction: TextInputAction.next,
-                    validator: (v) => _required(l10n, v),
+                    validator: (_) => null,
                     enabled: !submitting,
                   ),
                 ],
@@ -713,12 +705,10 @@ class _EditListingFormState extends State<_EditListingForm> {
                         onTap: submitting
                             ? null
                             : () async {
-                                final picked = await showModalBottomSheet<int>(
+                                final picked = await showListingYearPickSheet(
                                   context: context,
-                                  showDragHandle: true,
-                                  builder: (sheetCtx) => SafeArea(
-                                    child: _YearPickSheet(appL10n: l10n),
-                                  ),
+                                  l10n: l10n,
+                                  selectedYear: yr,
                                 );
                                 if (!context.mounted) return;
                                 if (picked != null) {
@@ -1182,165 +1172,6 @@ class _EditListingFormState extends State<_EditListingForm> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _BrandCatalogPickSheet extends StatefulWidget {
-  const _BrandCatalogPickSheet({required this.appL10n});
-
-  final AppLocalizations appL10n;
-
-  @override
-  State<_BrandCatalogPickSheet> createState() => _BrandCatalogPickSheetState();
-}
-
-class _BrandCatalogPickSheetState extends State<_BrandCatalogPickSheet> {
-  final TextEditingController _query = TextEditingController();
-
-  @override
-  void dispose() {
-    _query.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = widget.appL10n;
-    final q = _query.text.trim().toLowerCase();
-
-    final filtered = kListingBrandCatalog
-        .where((b) {
-          final label = _localizedBrandCatalogLabel(l10n, b);
-          return q.isEmpty || label.toLowerCase().contains(q);
-        })
-        .toList(growable: false);
-
-    return AnimatedPadding(
-      duration: Duration.zero,
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * .72,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 6, 8, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.createListingChooseBrand,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: l10n.commonCancel,
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: TextField(
-                controller: _query,
-                onChanged: (_) => setState(() {}),
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  hintText: l10n.createListingSearchBrandsHint,
-                  filled: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.only(bottom: 24),
-                itemCount: filtered.length,
-                separatorBuilder: (context, index) => Divider(
-                  height: 1,
-                  thickness: .5,
-                  indent: 16,
-                  endIndent: 16,
-                ),
-                itemBuilder: (context, index) {
-                  final brandEnglish = filtered[index];
-                  final label = _localizedBrandCatalogLabel(l10n, brandEnglish);
-                  return ListTile(
-                    title: Text(label),
-                    onTap: () => Navigator.pop(context, brandEnglish),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _YearPickSheet extends StatelessWidget {
-  const _YearPickSheet({required this.appL10n});
-
-  final AppLocalizations appL10n;
-
-  @override
-  Widget build(BuildContext context) {
-    final years = listingYearsOrderedNewestFirst();
-    final newest = years.first;
-    final theme = Theme.of(context);
-    final listHeight = MediaQuery.sizeOf(context).height * .5;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  appL10n.createListingChooseYear,
-                  style: theme.textTheme.titleMedium,
-                ),
-              ),
-              IconButton(
-                tooltip: appL10n.commonDone,
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: Icon(Icons.done_rounded),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(
-          height: listHeight,
-          child: ListView.builder(
-            padding: const EdgeInsets.only(bottom: 28),
-            itemCount: years.length,
-            itemBuilder: (_, i) {
-              final yr = years[i];
-              return ListTile(
-                title: Text('$yr'),
-                trailing: yr == newest
-                    ? Text(
-                        '•',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: theme.colorScheme.primary,
-                        ),
-                      )
-                    : null,
-                onTap: () => Navigator.pop(context, yr),
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }

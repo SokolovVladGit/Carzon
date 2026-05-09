@@ -25,7 +25,7 @@ class CarzonIcons {
   static const IconData navCreateFilled = LucideIcons.plusCircle;
   static const IconData navMyListings = LucideIcons.listChecks;
   static const IconData navProfile = LucideIcons.user;
-  static const IconData navMenu = LucideIcons.slidersHorizontal;
+  static const IconData navMenu = LucideIcons.menu;
 
   // ---- Feed / search ----
   static const IconData search = LucideIcons.search;
@@ -56,6 +56,8 @@ class CarzonIcons {
   static const IconData copy = LucideIcons.copy;
   static const IconData send = LucideIcons.send;
 
+  /// WhatsApp brand mark: see `WhatsappContactIcon` + `assets/contact/whatsapp.svg` (no Lucide glyph).
+
   // ---- Report / info / errors ----
   static const IconData report = LucideIcons.flag;
   static const IconData info = LucideIcons.info;
@@ -69,6 +71,9 @@ class CarzonIcons {
   static const IconData signOut = LucideIcons.logOut;
   static const IconData user = LucideIcons.user;
   static const IconData privacy = LucideIcons.lock;
+
+  /// Bell outline for informational “alert” chrome (delivery not implemented MVP).
+  static const IconData notificationsOutline = LucideIcons.bell;
 
   // ---- My listings / edit / create ----
   static const IconData myListings = LucideIcons.listChecks;

@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 
 import '../../../core/services/supabase_service.dart';
 import '../../messaging/domain/usecases/get_or_create_conversation.dart';
+import '../data/local/last_applied_listing_discovery_repository.dart';
 import '../data/datasources/listings_remote_datasource.dart';
 import '../data/repositories/listings_repository_impl.dart';
 import '../domain/repositories/listings_repository.dart';
@@ -25,8 +26,14 @@ void registerListingsFeature(GetIt sl) {
   sl.registerFactory(() => GetListingImages(sl<ListingsRepository>()));
   sl.registerFactory(() => SetListingStatus(sl<ListingsRepository>()));
   sl.registerFactory(() => DeleteListing(sl<ListingsRepository>()));
+  sl.registerLazySingleton<LastAppliedListingDiscoveryRepository>(
+    () => SharedPreferencesLastAppliedListingDiscoveryRepository(),
+  );
   sl.registerFactory<ListingsBloc>(
-    () => ListingsBloc(getListings: sl<GetListings>()),
+    () => ListingsBloc(
+      getListings: sl<GetListings>(),
+      lastAppliedDiscovery: sl<LastAppliedListingDiscoveryRepository>(),
+    ),
   );
   sl.registerFactory<ListingDetailsCubit>(
     () => ListingDetailsCubit(

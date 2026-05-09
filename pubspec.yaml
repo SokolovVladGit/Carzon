@@ -39,6 +39,9 @@ dependencies:
   # Configuration
   flutter_dotenv: ^5.2.1
 
+  # Local persisted listing discovery defaults
+  shared_preferences: ^2.5.4
+
   # Media (MVP: single cover image picker for create-listing)
   image_picker: ^1.1.2
 
@@ -65,4 +68,5 @@ flutter:
     - .env
     - assets/brands/svg/
     - assets/categories/svg/
+    - assets/contact/whatsapp.svg
     - assets/bg/bg_chat.jpg

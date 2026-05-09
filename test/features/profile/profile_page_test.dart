@@ -22,6 +22,7 @@ import 'package:carzon/features/sellers/domain/usecases/update_my_seller_display
 import 'package:carzon/features/sellers/domain/usecases/upload_seller_avatar.dart';
 import 'package:carzon/features/sellers/presentation/bloc/public_seller_identity_cubit.dart';
 import 'package:carzon/l10n/app_localizations.dart';
+import 'package:carzon/shared/ui/carzon_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,6 +40,8 @@ class _MockMessagingRepository extends Mock implements MessagingRepository {}
 const _menuStubKey = ValueKey<String>('profile_test_menu_route_stub');
 
 const _profileTestMessagesStubKey = ValueKey<String>('profile_test_messages_stub');
+
+const _profileTestFilterAlertStubKey = ValueKey<String>('profile_test_filter_alert_stub');
 
 GoRouter _profileTestGoRouter({
   required AuthCubit cubit,
@@ -71,6 +74,13 @@ GoRouter _profileTestGoRouter({
         builder: (_, _) => const Scaffold(
           key: _profileTestMessagesStubKey,
           body: Text('profile_test_messages_placeholder'),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.filterAlert,
+        builder: (_, _) => const Scaffold(
+          key: _profileTestFilterAlertStubKey,
+          body: Text('profile_test_filter_alert_placeholder'),
         ),
       ),
       GoRoute(
@@ -282,7 +292,24 @@ void main() {
       expect(find.text(l10n.profileLanguageTitle), findsOneWidget);
       expect(find.text(l10n.profileNotificationsTitle), findsOneWidget);
       expect(find.text(l10n.profileListingAlertsTitle), findsOneWidget);
-      expect(find.text(l10n.commonComingSoon), findsNWidgets(3));
+      expect(find.text(l10n.filterAlertProfileRowSubtitle), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('profile_filter_alert_row')),
+        findsOneWidget,
+      );
+      final filterSwitch =
+          find.byKey(const ValueKey<String>('profile_filter_alert_switch'));
+      expect(filterSwitch, findsOneWidget);
+      expect(tester.widget<Switch>(filterSwitch).onChanged, isNotNull);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey<String>('profile_filter_alert_row')),
+          matching: find.byIcon(CarzonIcons.chevronRight),
+        ),
+        findsNothing,
+      );
+
+      expect(find.text(l10n.commonComingSoon), findsNWidgets(2));
 
       expect(
         find.descendant(
@@ -322,6 +349,73 @@ void main() {
         find.byKey(const ValueKey('profileSignOutButton')),
       );
       await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('authenticated: filter alert row opens /filter-alert', (
+    tester,
+  ) async {
+    const user = AuthUser(
+      id: 'u1',
+      email: 'seller@example.com',
+      fullName: 'Ana Popescu',
+    );
+    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(user),
+    );
+
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
+    await tester.pumpAndSettle();
+
+    final row = find.byKey(const ValueKey<String>('profile_filter_alert_row'));
+    await tester.scrollUntilVisible(
+      row,
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_profileTestFilterAlertStubKey), findsOneWidget);
+  });
+
+  testWidgets(
+    'authenticated: filter alert Switch toggles locally without navigating',
+    (tester) async {
+      const user = AuthUser(
+        id: 'u1',
+        email: 'seller@example.com',
+        fullName: 'Ana Popescu',
+      );
+      when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+      whenListen(
+        cubit,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.authenticated(user),
+      );
+
+      await tester.pumpWidget(
+        _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+      );
+      await tester.pumpAndSettle();
+
+      final sw =
+          find.byKey(const ValueKey<String>('profile_filter_alert_switch'));
+      await tester.scrollUntilVisible(
+        sw,
+        80,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(tester.widget<Switch>(sw).value, isFalse);
+      await tester.tap(sw);
+      await tester.pumpAndSettle();
+      expect(tester.widget<Switch>(sw).value, isTrue);
+      expect(find.byKey(_profileTestFilterAlertStubKey), findsNothing);
     },
   );
 

@@ -10,8 +10,10 @@ import '../../features/auth/presentation/pages/sign_up_page.dart';
 import '../../features/create_listing/presentation/pages/create_listing_page.dart';
 import '../../features/edit_listing/presentation/pages/edit_listing_page.dart';
 import '../../features/favorites/presentation/pages/favorites_page.dart';
+import '../../features/filter_alerts/presentation/pages/filter_alert_settings_page.dart';
 import '../../features/legal/presentation/pages/legal_page.dart';
 import '../../features/listings/presentation/pages/listing_details_page.dart';
+import '../../features/listings/domain/entities/listing_discovery_criteria.dart';
 import '../../features/listings/presentation/pages/listings_page.dart';
 import '../../features/menu/presentation/pages/menu_page.dart';
 import '../../features/messaging/presentation/pages/conversation_thread_page.dart';
@@ -37,6 +39,7 @@ class AppRoutes {
   static const menu = '/menu';
   static const legal = '/legal';
   static const messages = '/messages';
+  static const filterAlert = '/filter-alert';
   static const sellerProfile = '/sellers/:sellerId';
 
   static String listingDetailsPath(String id) => '/listings/$id';
@@ -68,6 +71,14 @@ class ListingDetailsExtra {
   final String? coverImageUrl;
 }
 
+/// Pass with [AppRoutes.listings] `extra` when opening feed with predefined
+/// discovery (e.g. filter-alert preview).
+class ListingsFeedLaunch {
+  const ListingsFeedLaunch({required this.snapshot});
+
+  final ListingDiscoveryCriteria snapshot;
+}
+
 class AppRouter {
   AppRouter._();
 
@@ -87,7 +98,11 @@ class AppRouter {
         ),
         GoRoute(
           path: AppRoutes.listings,
-          builder: (_, _) => const ListingsPage(),
+          builder: (_, state) {
+            final extra = state.extra;
+            final launch = extra is ListingsFeedLaunch ? extra : null;
+            return ListingsPage(feedLaunch: launch);
+          },
         ),
         GoRoute(
           path: AppRoutes.sellerProfile,
@@ -131,6 +146,10 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.profile,
           builder: (_, _) => const ProfilePage(),
+        ),
+        GoRoute(
+          path: AppRoutes.filterAlert,
+          builder: (_, _) => const FilterAlertSettingsPage(),
         ),
         GoRoute(path: AppRoutes.menu, builder: (_, _) => const MenuPage()),
         GoRoute(

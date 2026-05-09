@@ -1,6 +1,9 @@
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/listing.dart';
+import '../../domain/entities/listing_discovery_criteria.dart';
+import '../../domain/entities/listing_currency.dart';
+import '../../domain/entities/listing_sort_option.dart';
 import 'listings_state.dart';
 
 sealed class ListingsEvent extends Equatable {
@@ -49,29 +52,75 @@ class ListingsSearchChanged extends ListingsEvent {
   List<Object?> get props => [search];
 }
 
-/// Fired when the user applies the filters bottom sheet. Replaces the
-/// make / year range / type filters at once. Search and region are left
-/// untouched — they are controlled outside the sheet.
+/// Fired when the user applies the filters bottom sheet and replaces non-search
+/// dimensions at once.
+///
+/// **Browse:** Applying the baseline (vanilla sheet) emits
+/// [ListingsFilterApplyResult.clear] from the form so callers clear search +
+/// persisted last-applied snapshot like [ListingsFiltersCleared].
+///
+/// Inline search stays unchanged when non-vanilla constraints are applied.
 class ListingsFiltersApplied extends ListingsEvent {
   const ListingsFiltersApplied({
     required this.make,
+    required this.model,
     required this.minYear,
     required this.maxYear,
+    required this.minPrice,
+    required this.maxPrice,
+    required this.maxMileage,
+    required this.city,
     required this.typeFilter,
+    required this.sort,
+    required this.regionFilter,
+    required this.bodyType,
+    required this.priceCurrencyFilter,
   });
 
   final String? make;
+  final String? model;
   final int? minYear;
   final int? maxYear;
+  final num? minPrice;
+  final num? maxPrice;
+  final int? maxMileage;
+  final String? city;
   final ListingTypeFilter typeFilter;
+  final ListingSortOption sort;
+  final MarketRegionFilter regionFilter;
+  final ListingBodyType? bodyType;
+  final ListingPriceCurrencyFilter priceCurrencyFilter;
 
   @override
-  List<Object?> get props => [make, minYear, maxYear, typeFilter];
+  List<Object?> get props => [
+    make,
+    model,
+    minYear,
+    maxYear,
+    minPrice,
+    maxPrice,
+    maxMileage,
+    city,
+    typeFilter,
+    sort,
+    regionFilter,
+    bodyType,
+    priceCurrencyFilter,
+  ];
 }
 
-/// Fired when the user clears all filters. Resets search, make, minYear,
-/// maxYear, and typeFilter. Keeps the selected region — region is a
-/// first-class marketplace dimension and stays intentional.
+/// Clears every user-facing discovery dimension (including region and inline
+/// search) back to the default catalog experience.
 class ListingsFiltersCleared extends ListingsEvent {
   const ListingsFiltersCleared();
+}
+
+/// Applies a full discovery snapshot before fetch (cold restore from local
+/// last-applied criteria or equivalent hydration).
+class ListingsHydratedFromDiscovery extends ListingsEvent {
+  const ListingsHydratedFromDiscovery(this.criteria);
+  final ListingDiscoveryCriteria criteria;
+
+  @override
+  List<Object?> get props => [criteria];
 }

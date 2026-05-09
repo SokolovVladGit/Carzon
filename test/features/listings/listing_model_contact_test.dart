@@ -56,6 +56,19 @@ void main() {
       expect(m.whatsappEnabled, false);
     });
 
+    test('parses whatsapp_enabled from 1 and string true', () {
+      expect(
+        ListingModel.fromJson(baseJson()..['whatsapp_enabled'] = 1).whatsappEnabled,
+        true,
+      );
+      expect(
+        ListingModel.fromJson(
+          baseJson()..['whatsapp_enabled'] = 'true',
+        ).whatsappEnabled,
+        true,
+      );
+    });
+
     test('nulls round-trip cleanly', () {
       final json = baseJson()
         ..addAll({

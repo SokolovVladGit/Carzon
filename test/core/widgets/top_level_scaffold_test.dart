@@ -5,6 +5,9 @@ import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+
+import 'package:carzon/shared/ui/carzon_icons.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
 
@@ -94,6 +97,15 @@ void main() {
         // they live under Menu.
         expect(find.bySemanticsLabel(l10n.navMyListings), findsNothing);
         expect(find.bySemanticsLabel(l10n.navProfile), findsNothing);
+      },
+    );
+
+    test(
+      'CarzonIcons.navMenu avoids slidersHorizontal used by catalog filters',
+      () {
+        expect(CarzonIcons.filter, LucideIcons.slidersHorizontal);
+        expect(CarzonIcons.navMenu, isNot(LucideIcons.slidersHorizontal));
+        expect(CarzonIcons.navMenu, isNot(CarzonIcons.filter));
       },
     );
 

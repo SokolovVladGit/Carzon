@@ -148,6 +148,12 @@ abstract class AppLocalizations {
   /// **'Скоро'**
   String get commonComingSoon;
 
+  /// No description provided for @commonKilometersShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'км'**
+  String get commonKilometersShort;
+
   /// No description provided for @routeNotFound.
   ///
   /// In ru, this message translates to:
@@ -418,6 +424,24 @@ abstract class AppLocalizations {
   /// **'Фильтры'**
   String get filtersTitle;
 
+  /// No description provided for @filtersDismissTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закрыть фильтры'**
+  String get filtersDismissTooltip;
+
+  /// No description provided for @filtersHeaderEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'CARZON · ПОИСК'**
+  String get filtersHeaderEyebrow;
+
+  /// No description provided for @filtersSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подберите параметры поиска'**
+  String get filtersSubtitle;
+
   /// No description provided for @filterMake.
   ///
   /// In ru, this message translates to:
@@ -445,14 +469,44 @@ abstract class AppLocalizations {
   /// No description provided for @filterMinYear.
   ///
   /// In ru, this message translates to:
-  /// **'Мин. год'**
+  /// **'Год от'**
   String get filterMinYear;
 
   /// No description provided for @filterMaxYear.
   ///
   /// In ru, this message translates to:
-  /// **'Макс. год'**
+  /// **'Год до'**
   String get filterMaxYear;
+
+  /// No description provided for @filterYearRangeInverted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Год «от» не может быть больше года «до».'**
+  String get filterYearRangeInverted;
+
+  /// No description provided for @filterYearManufactureSection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Год выпуска'**
+  String get filterYearManufactureSection;
+
+  /// No description provided for @filterYearFromShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'От'**
+  String get filterYearFromShort;
+
+  /// No description provided for @filterYearToShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'До'**
+  String get filterYearToShort;
+
+  /// No description provided for @filterYearAny.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любой'**
+  String get filterYearAny;
 
   /// No description provided for @filterMustBeNumber.
   ///
@@ -513,6 +567,238 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Применить'**
   String get filterApply;
+
+  /// No description provided for @filterShowCars.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать авто'**
+  String get filterShowCars;
+
+  /// No description provided for @filterSummaryPriceUpTo.
+  ///
+  /// In ru, this message translates to:
+  /// **'до {amount}'**
+  String filterSummaryPriceUpTo(String amount);
+
+  /// No description provided for @filterSummaryPriceFrom.
+  ///
+  /// In ru, this message translates to:
+  /// **'от {amount}'**
+  String filterSummaryPriceFrom(String amount);
+
+  /// No description provided for @filterSummaryPriceRangePlain.
+  ///
+  /// In ru, this message translates to:
+  /// **'{min}–{max}'**
+  String filterSummaryPriceRangePlain(String min, String max);
+
+  /// No description provided for @filterSummaryPriceRangeWithSymbol.
+  ///
+  /// In ru, this message translates to:
+  /// **'{symbol}{min}–{symbol}{max}'**
+  String filterSummaryPriceRangeWithSymbol(
+    String symbol,
+    String min,
+    String max,
+  );
+
+  /// No description provided for @filterSummaryMileageUpTo.
+  ///
+  /// In ru, this message translates to:
+  /// **'до {amount} км'**
+  String filterSummaryMileageUpTo(String amount);
+
+  /// No description provided for @filterSummaryAllListingsInRegionPm.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все объявления в Приднестровье'**
+  String get filterSummaryAllListingsInRegionPm;
+
+  /// No description provided for @filterModel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Модель'**
+  String get filterModel;
+
+  /// No description provided for @filterModelHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'напр. Golf'**
+  String get filterModelHint;
+
+  /// No description provided for @filterPriceFrom.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена от'**
+  String get filterPriceFrom;
+
+  /// No description provided for @filterPriceTo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена до'**
+  String get filterPriceTo;
+
+  /// No description provided for @filterPriceBudgetHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите бюджет и валюту объявления.'**
+  String get filterPriceBudgetHint;
+
+  /// No description provided for @filterPriceCurrencyLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Валюта объявления'**
+  String get filterPriceCurrencyLabel;
+
+  /// No description provided for @filterPriceCurrencyAny.
+  ///
+  /// In ru, this message translates to:
+  /// **'Любая'**
+  String get filterPriceCurrencyAny;
+
+  /// No description provided for @filterPriceCurrencyUsd.
+  ///
+  /// In ru, this message translates to:
+  /// **'\$'**
+  String get filterPriceCurrencyUsd;
+
+  /// No description provided for @filterPriceCurrencyEur.
+  ///
+  /// In ru, this message translates to:
+  /// **'€'**
+  String get filterPriceCurrencyEur;
+
+  /// No description provided for @filterPriceChipPrefix.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена'**
+  String get filterPriceChipPrefix;
+
+  /// No description provided for @filterPriceCurrencyActiveUsd.
+  ///
+  /// In ru, this message translates to:
+  /// **'Валюта: \$'**
+  String get filterPriceCurrencyActiveUsd;
+
+  /// No description provided for @filterPriceCurrencyActiveEur.
+  ///
+  /// In ru, this message translates to:
+  /// **'Валюта: €'**
+  String get filterPriceCurrencyActiveEur;
+
+  /// No description provided for @filterMaxMileage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пробег до (км)'**
+  String get filterMaxMileage;
+
+  /// No description provided for @filterCity.
+  ///
+  /// In ru, this message translates to:
+  /// **'Город'**
+  String get filterCity;
+
+  /// No description provided for @filterCityHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'напр. Тирасполь'**
+  String get filterCityHint;
+
+  /// No description provided for @filterSortLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сортировка'**
+  String get filterSortLabel;
+
+  /// No description provided for @filterSortNewestFirst.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала новые'**
+  String get filterSortNewestFirst;
+
+  /// No description provided for @filterSortPriceLowHigh.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена: по возрастанию'**
+  String get filterSortPriceLowHigh;
+
+  /// No description provided for @filterSortPriceHighLow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена: по убыванию'**
+  String get filterSortPriceHighLow;
+
+  /// No description provided for @filterSortNewestYear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала новый год'**
+  String get filterSortNewestYear;
+
+  /// No description provided for @filterSortLowestMileage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала меньший пробег'**
+  String get filterSortLowestMileage;
+
+  /// No description provided for @filterMustBeMaxPrice.
+  ///
+  /// In ru, this message translates to:
+  /// **'Должно быть ≤ максимальной цены.'**
+  String get filterMustBeMaxPrice;
+
+  /// No description provided for @filterMustBeMinPrice.
+  ///
+  /// In ru, this message translates to:
+  /// **'Должно быть ≥ минимальной цены.'**
+  String get filterMustBeMinPrice;
+
+  /// No description provided for @filtersSummaryDefaultTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройте подбор автомобиля'**
+  String get filtersSummaryDefaultTitle;
+
+  /// No description provided for @filtersSummaryDefaultHints.
+  ///
+  /// In ru, this message translates to:
+  /// **'Марка · бюджет · кузов · регион'**
+  String get filtersSummaryDefaultHints;
+
+  /// No description provided for @filtersSectionMakeModel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Марка и модель'**
+  String get filtersSectionMakeModel;
+
+  /// No description provided for @filtersSectionBudget.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бюджет'**
+  String get filtersSectionBudget;
+
+  /// No description provided for @filtersSectionYearMileageCaption.
+  ///
+  /// In ru, this message translates to:
+  /// **'Год и пробег'**
+  String get filtersSectionYearMileageCaption;
+
+  /// No description provided for @filtersSectionVehicle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Автомобиль'**
+  String get filtersSectionVehicle;
+
+  /// No description provided for @filtersSectionLocation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Локация'**
+  String get filtersSectionLocation;
+
+  /// No description provided for @filtersSectionBodyAndDeal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кузов и сделка'**
+  String get filtersSectionBodyAndDeal;
 
   /// No description provided for @listingDetailsTitle.
   ///
@@ -1167,6 +1453,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Заголовок'**
   String get fieldTitle;
+
+  /// No description provided for @fieldTitleOptional.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заголовок (необязательно)'**
+  String get fieldTitleOptional;
+
+  /// No description provided for @listingTitleFallbackDefault.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объявление о продаже автомобиля'**
+  String get listingTitleFallbackDefault;
 
   /// No description provided for @fieldMake.
   ///
@@ -1939,8 +2237,86 @@ abstract class AppLocalizations {
   /// No description provided for @profileListingAlertsSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Подписки на сохранённые фильтры и новые объявления.'**
+  /// **'Один фильтр для будущих уведомлений по новым авто.'**
   String get profileListingAlertsSubtitle;
+
+  /// No description provided for @filterAlertEditorEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'CARZON · ОПОВЕЩЕНИЯ'**
+  String get filterAlertEditorEyebrow;
+
+  /// No description provided for @filterAlertEditorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фильтр оповещений'**
+  String get filterAlertEditorTitle;
+
+  /// No description provided for @filterAlertEditorSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите параметры авто'**
+  String get filterAlertEditorSubtitle;
+
+  /// No description provided for @filterAlertSaveFilterAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить фильтр'**
+  String get filterAlertSaveFilterAction;
+
+  /// No description provided for @filterAlertProfileRowSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройте фильтр — позже здесь можно будет включить уведомления.'**
+  String get filterAlertProfileRowSubtitle;
+
+  /// No description provided for @filterAlertSavedSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фильтр сохранён'**
+  String get filterAlertSavedSuccess;
+
+  /// No description provided for @filterAlertUpdatedSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фильтр обновлён'**
+  String get filterAlertUpdatedSuccess;
+
+  /// No description provided for @filterAlertSaveFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сохранить фильтр'**
+  String get filterAlertSaveFailed;
+
+  /// No description provided for @filterAlertLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить настройки.'**
+  String get filterAlertLoadFailed;
+
+  /// No description provided for @filterAlertSignInRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите, чтобы настроить фильтр для оповещений.'**
+  String get filterAlertSignInRequired;
+
+  /// No description provided for @filterAlertApplyBlockedValidation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Исправьте ошибки в фильтре, затем сохраните снова.'**
+  String get filterAlertApplyBlockedValidation;
+
+  /// No description provided for @filterAlertResetPersistedSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фильтр для оповещений сброшен'**
+  String get filterAlertResetPersistedSuccess;
+
+  /// No description provided for @filterAlertResetFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сбросить фильтр оповещений'**
+  String get filterAlertResetFailed;
 
   /// No description provided for @profilePublicSellerNameTitle.
   ///

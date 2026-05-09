@@ -1,4 +1,3 @@
-import 'package:carzon/core/errors/exceptions.dart';
 import 'package:carzon/features/listings/data/models/listing_model.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,11 +31,14 @@ void main() {
       }
     });
 
-    test('throws on unknown non-null body_type', () {
-      expect(
-        () => ListingModel.fromJson(baseJson()..['body_type'] = 'limousine'),
-        throwsA(isA<ServerException>()),
-      );
+    test('normalizes body_type casing from database text', () {
+      final m = ListingModel.fromJson(baseJson()..['body_type'] = 'SUV');
+      expect(m.bodyType, ListingBodyType.suv);
+    });
+
+    test('unknown non-null body_type maps to null (feed-safe)', () {
+      final m = ListingModel.fromJson(baseJson()..['body_type'] = 'limousine');
+      expect(m.bodyType, isNull);
     });
 
     test('toJson uses null body_type when unspecified', () {

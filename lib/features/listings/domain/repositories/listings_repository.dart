@@ -1,26 +1,54 @@
 import '../../../../core/utils/result.dart';
 import '../entities/listing.dart';
+import '../entities/listing_currency.dart';
 import '../entities/listing_image.dart';
+import '../entities/listing_sort_option.dart';
 
 class ListingsQuery {
   const ListingsQuery({
     this.search,
     this.make,
+    this.model,
     this.minYear,
     this.maxYear,
+    this.minPrice,
+    this.maxPrice,
+    this.priceCurrency,
+    this.maxMileage,
+    this.city,
     this.sellerId,
     this.marketRegion,
     this.bodyType,
     this.status,
     this.typeIn,
+    this.sort = ListingSortOption.newestFirst,
     this.page = 0,
     this.pageSize = 20,
   });
 
   final String? search;
   final String? make;
+
+  /// Case-insensitive partial match on `listings.model`.
+  final String? model;
   final int? minYear;
   final int? maxYear;
+
+  /// Inclusive lower bound on `price_eur`.
+  final num? minPrice;
+
+  /// Inclusive upper bound on `price_eur`.
+  final num? maxPrice;
+
+  /// When set, restricts rows to this `listings.price_currency` (`eur`|`usd`).
+  /// Amount bounds above still apply to `price_eur` only (no FX conversion).
+  final ListingCurrency? priceCurrency;
+
+  /// Inclusive upper bound on `mileage_km` (listings at or below this mileage).
+  final int? maxMileage;
+
+  /// Case-insensitive partial match on `listings.city`.
+  final String? city;
 
   /// When set, returns listings owned by this seller only (RLS still
   /// applies — non-owner callers cannot bypass visibility).
@@ -45,6 +73,9 @@ class ListingsQuery {
   /// filters: "Sale" ⇒ {sale, both}, "Exchange" ⇒ {exchange, both}. When
   /// null, no type filter is applied.
   final List<ListingType>? typeIn;
+
+  /// Ordering before range pagination.
+  final ListingSortOption sort;
 
   final int page;
   final int pageSize;

@@ -6,6 +6,7 @@ import '../../features/auth/di/auth_injection.dart';
 import '../../features/create_listing/di/create_listing_injection.dart';
 import '../../features/edit_listing/di/edit_listing_injection.dart';
 import '../../features/favorites/di/favorites_injection.dart';
+import '../../features/filter_alerts/di/filter_alerts_injection.dart';
 import '../../features/legal/di/legal_injection.dart';
 import '../../features/listings/di/listings_injection.dart';
 import '../../features/messaging/di/messaging_injection.dart';
@@ -35,6 +36,7 @@ Future<void> configureDependencies(SupabaseService supabaseService) async {
   registerSellersFeature(sl);
   registerMessagingFeature(sl);
   registerProfileFeature(sl);
+  registerFilterAlertsFeature(sl);
   registerFavoritesFeature(sl);
   registerCreateListingFeature(sl);
   registerMyListingsFeature(sl);

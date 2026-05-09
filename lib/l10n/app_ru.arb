@@ -14,6 +14,8 @@
   "commonComingSoon": "Скоро",
   "@commonComingSoon": {},
 
+  "commonKilometersShort": "км",
+
   "routeNotFound": "Страница не найдена: {uri}",
   "@routeNotFound": {
     "placeholders": {
@@ -75,6 +77,10 @@
   "regionBoth": "Все",
 
   "filtersTitle": "Фильтры",
+  "filtersDismissTooltip": "Закрыть фильтры",
+  "filtersHeaderEyebrow": "CARZON · ПОИСК",
+  "filtersSubtitle": "Подберите параметры поиска",
+  "@filtersSubtitle": {},
   "filterMake": "Марка",
   "filterMakeHint": "напр. Volkswagen",
   "brandFilterAllSemantics": "Все марки",
@@ -84,8 +90,15 @@
       "brand": { "type": "String" }
     }
   },
-  "filterMinYear": "Мин. год",
-  "filterMaxYear": "Макс. год",
+  "filterMinYear": "Год от",
+  "filterMaxYear": "Год до",
+  "filterYearRangeInverted": "Год «от» не может быть больше года «до».",
+  "@filterYearRangeInverted": {},
+  "filterYearManufactureSection": "Год выпуска",
+  "@filterYearManufactureSection": {},
+  "filterYearFromShort": "От",
+  "filterYearToShort": "До",
+  "filterYearAny": "Любой",
   "filterMustBeNumber": "Нужно число.",
   "filterMustBeMaxYear": "Должно быть ≤ максимального года.",
   "filterMustBeMinYear": "Должно быть ≥ минимального года.",
@@ -96,6 +109,76 @@
   "typeBoth": "Продажа или обмен",
   "filterClear": "Сбросить",
   "filterApply": "Применить",
+  "filterShowCars": "Показать авто",
+
+  "filterSummaryPriceUpTo": "до {amount}",
+  "@filterSummaryPriceUpTo": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "filterSummaryPriceFrom": "от {amount}",
+  "@filterSummaryPriceFrom": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "filterSummaryPriceRangePlain": "{min}–{max}",
+  "@filterSummaryPriceRangePlain": {
+    "placeholders": {
+      "min": { "type": "String" },
+      "max": { "type": "String" }
+    }
+  },
+  "filterSummaryPriceRangeWithSymbol": "{symbol}{min}–{symbol}{max}",
+  "@filterSummaryPriceRangeWithSymbol": {
+    "placeholders": {
+      "symbol": { "type": "String" },
+      "min": { "type": "String" },
+      "max": { "type": "String" }
+    }
+  },
+  "filterSummaryMileageUpTo": "до {amount} км",
+  "@filterSummaryMileageUpTo": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "filterSummaryAllListingsInRegionPm": "Все объявления в Приднестровье",
+
+  "filterModel": "Модель",
+  "filterModelHint": "напр. Golf",
+  "filterPriceFrom": "Цена от",
+  "filterPriceTo": "Цена до",
+  "filterPriceBudgetHint": "Укажите бюджет и валюту объявления.",
+  "filterPriceCurrencyLabel": "Валюта объявления",
+  "filterPriceCurrencyAny": "Любая",
+  "filterPriceCurrencyUsd": "$",
+  "filterPriceCurrencyEur": "€",
+  "filterPriceChipPrefix": "Цена",
+  "filterPriceCurrencyActiveUsd": "Валюта: $",
+  "filterPriceCurrencyActiveEur": "Валюта: €",
+  "filterMaxMileage": "Пробег до (км)",
+  "filterCity": "Город",
+  "filterCityHint": "напр. Тирасполь",
+  "filterSortLabel": "Сортировка",
+  "filterSortNewestFirst": "Сначала новые",
+  "filterSortPriceLowHigh": "Цена: по возрастанию",
+  "filterSortPriceHighLow": "Цена: по убыванию",
+  "filterSortNewestYear": "Сначала новый год",
+  "filterSortLowestMileage": "Сначала меньший пробег",
+  "filterMustBeMaxPrice": "Должно быть ≤ максимальной цены.",
+  "filterMustBeMinPrice": "Должно быть ≥ минимальной цены.",
+
+  "filtersSummaryDefaultTitle": "Настройте подбор автомобиля",
+  "filtersSummaryDefaultHints": "Марка · бюджет · кузов · регион",
+
+  "filtersSectionMakeModel": "Марка и модель",
+  "filtersSectionBudget": "Бюджет",
+  "filtersSectionYearMileageCaption": "Год и пробег",
+  "filtersSectionVehicle": "Автомобиль",
+  "filtersSectionLocation": "Локация",
+  "filtersSectionBodyAndDeal": "Кузов и сделка",
 
   "listingDetailsTitle": "Объявление",
   "listingDetailsLoadFailed": "Не удалось загрузить объявление.",
@@ -225,6 +308,8 @@
   "createListingPublishKicker": "Финальный шаг",
   "createListingSignInRequired": "Войдите, чтобы подать объявление.",
   "fieldTitle": "Заголовок",
+  "fieldTitleOptional": "Заголовок (необязательно)",
+  "listingTitleFallbackDefault": "Объявление о продаже автомобиля",
   "fieldMake": "Марка",
   "fieldModel": "Модель",
   "fieldYear": "Год",
@@ -377,8 +462,34 @@
   "@profileNotificationsSubtitle": {},
   "profileListingAlertsTitle": "Оповещения по фильтру",
   "@profileListingAlertsTitle": {},
-  "profileListingAlertsSubtitle": "Подписки на сохранённые фильтры и новые объявления.",
+  "profileListingAlertsSubtitle": "Один фильтр для будущих уведомлений по новым авто.",
   "@profileListingAlertsSubtitle": {},
+  "filterAlertEditorEyebrow": "CARZON · ОПОВЕЩЕНИЯ",
+  "@filterAlertEditorEyebrow": {},
+  "filterAlertEditorTitle": "Фильтр оповещений",
+  "@filterAlertEditorTitle": {},
+  "filterAlertEditorSubtitle": "Выберите параметры авто",
+  "@filterAlertEditorSubtitle": {},
+  "filterAlertSaveFilterAction": "Сохранить фильтр",
+  "@filterAlertSaveFilterAction": {},
+  "filterAlertProfileRowSubtitle": "Настройте фильтр — позже здесь можно будет включить уведомления.",
+  "@filterAlertProfileRowSubtitle": {},
+  "filterAlertSavedSuccess": "Фильтр сохранён",
+  "@filterAlertSavedSuccess": {},
+  "filterAlertUpdatedSuccess": "Фильтр обновлён",
+  "@filterAlertUpdatedSuccess": {},
+  "filterAlertSaveFailed": "Не удалось сохранить фильтр",
+  "@filterAlertSaveFailed": {},
+  "filterAlertLoadFailed": "Не удалось загрузить настройки.",
+  "@filterAlertLoadFailed": {},
+  "filterAlertSignInRequired": "Войдите, чтобы настроить фильтр для оповещений.",
+  "@filterAlertSignInRequired": {},
+  "filterAlertApplyBlockedValidation": "Исправьте ошибки в фильтре, затем сохраните снова.",
+  "@filterAlertApplyBlockedValidation": {},
+  "filterAlertResetPersistedSuccess": "Фильтр для оповещений сброшен",
+  "@filterAlertResetPersistedSuccess": {},
+  "filterAlertResetFailed": "Не удалось сбросить фильтр оповещений",
+  "@filterAlertResetFailed": {},
 
   "profilePublicSellerNameTitle": "Публичное имя продавца",
   "@profilePublicSellerNameTitle": {},
