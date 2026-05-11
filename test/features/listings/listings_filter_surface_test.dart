@@ -40,9 +40,41 @@ void main() {
     expect(find.text(l10n.filtersSectionLocation), findsOneWidget);
     expect(find.text(l10n.filterShowCars), findsOneWidget);
     expect(find.text(l10n.filtersSectionVehicle), findsOneWidget);
-    expect(find.byKey(const ValueKey<String>('listings_filter_make_pick_trigger')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('listings_filter_make_pick_trigger')),
+      findsOneWidget,
+    );
     expect(find.byType(ListingsFilterSummaryStrip), findsOneWidget);
   });
+
+  testWidgets(
+    'ListingsFilterHost has no layout exceptions on compact viewport',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: ListingsFilterHost(
+            seed: ListingsFilterFormSeed.fromListingsState(
+              const ListingsState(),
+            ),
+            onDismiss: () {},
+            onApply: (_) {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('currency filter defaults to Any / Любая', (tester) async {
     final l10n = ruStrings();
     await tester.pumpWidget(
@@ -89,9 +121,7 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
-          body: ListView(
-            children: [ListingsFilterForm(seed: seed)],
-          ),
+          body: ListView(children: [ListingsFilterForm(seed: seed)]),
         ),
       ),
     );
@@ -189,8 +219,9 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           home: ListingsFilterHost(
             mode: ListingsFilterHostMode.alertSetup,
-            seed:
-                ListingsFilterFormSeed.fromListingsState(const ListingsState()),
+            seed: ListingsFilterFormSeed.fromListingsState(
+              const ListingsState(),
+            ),
             onDismiss: () {},
             onApply: (_) {},
           ),
@@ -222,8 +253,7 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: ListingsFilterHost(
           mode: ListingsFilterHostMode.alertSetup,
-          seed:
-              ListingsFilterFormSeed.fromListingsState(const ListingsState()),
+          seed: ListingsFilterFormSeed.fromListingsState(const ListingsState()),
           onDismiss: () {},
           onApply: (r) => received = r,
         ),
@@ -292,10 +322,7 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: ListingsFilterHost(
           seed: ListingsFilterFormSeed.fromListingsState(
-            const ListingsState(
-              minYear: 2024,
-              maxYear: 1998,
-            ),
+            const ListingsState(minYear: 2024, maxYear: 1998),
           ),
           onDismiss: () {},
           onApply: (r) => received = r,
@@ -327,7 +354,9 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: ListingsFilterHost(
-            seed: ListingsFilterFormSeed.fromListingsState(const ListingsState()),
+            seed: ListingsFilterFormSeed.fromListingsState(
+              const ListingsState(),
+            ),
             onDismiss: () {},
             onApply: (_) {},
           ),
@@ -404,7 +433,9 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           home: ListingsFilterHost(
             mode: ListingsFilterHostMode.alertSetup,
-            seed: ListingsFilterFormSeed.fromListingsState(const ListingsState()),
+            seed: ListingsFilterFormSeed.fromListingsState(
+              const ListingsState(),
+            ),
             onDismiss: () {},
             onApply: (_) {},
           ),
@@ -455,8 +486,9 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           home: ListingsFilterHost(
             mode: ListingsFilterHostMode.alertSetup,
-            seed:
-                ListingsFilterFormSeed.fromListingsState(const ListingsState()),
+            seed: ListingsFilterFormSeed.fromListingsState(
+              const ListingsState(),
+            ),
             onDismiss: () {},
             onApply: (_) {},
             onBrowseFeedReset: () => browseCalls++,
@@ -475,31 +507,29 @@ void main() {
     },
   );
 
-  testWidgets(
-    'alertSetup filter reset does not invoke onBrowseFeedReset',
-    (tester) async {
-      final l10n = ruStrings();
-      var calls = 0;
-      await tester.pumpWidget(
-        MaterialApp(
-          locale: const Locale('ru'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: ListingsFilterHost(
-            mode: ListingsFilterHostMode.alertSetup,
-            seed:
-                ListingsFilterFormSeed.fromListingsState(const ListingsState()),
-            onDismiss: () {},
-            onApply: (_) {},
-            onBrowseFeedReset: () => calls++,
-          ),
+  testWidgets('alertSetup filter reset does not invoke onBrowseFeedReset', (
+    tester,
+  ) async {
+    final l10n = ruStrings();
+    var calls = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: ListingsFilterHost(
+          mode: ListingsFilterHostMode.alertSetup,
+          seed: ListingsFilterFormSeed.fromListingsState(const ListingsState()),
+          onDismiss: () {},
+          onApply: (_) {},
+          onBrowseFeedReset: () => calls++,
         ),
-      );
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text(l10n.filterClear));
-      await tester.tap(find.text(l10n.filterClear));
-      await tester.pump();
-      expect(calls, 0);
-    },
-  );
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text(l10n.filterClear));
+    await tester.tap(find.text(l10n.filterClear));
+    await tester.pump();
+    expect(calls, 0);
+  });
 }

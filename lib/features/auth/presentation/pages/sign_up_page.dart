@@ -109,69 +109,74 @@ class _SignUpPageState extends State<SignUpPage> {
         },
         builder: (context, state) {
           final loading = state.status == AuthStatus.authenticating;
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _emailCtrl,
-                    decoration: InputDecoration(labelText: l10n.authFieldEmail),
-                    keyboardType: TextInputType.emailAddress,
-                    autofillHints: const [AutofillHints.email],
-                    enabled: !loading,
-                    validator: (v) => _validateEmail(l10n, v),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _passwordCtrl,
-                    decoration: InputDecoration(
-                      labelText: l10n.authFieldPassword,
+          return SafeArea(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextFormField(
+                      controller: _emailCtrl,
+                      decoration: InputDecoration(
+                        labelText: l10n.authFieldEmail,
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.email],
+                      enabled: !loading,
+                      validator: (v) => _validateEmail(l10n, v),
                     ),
-                    obscureText: true,
-                    autofillHints: const [AutofillHints.newPassword],
-                    enabled: !loading,
-                    validator: (v) => _validatePassword(l10n, v),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _confirmCtrl,
-                    decoration: InputDecoration(
-                      labelText: l10n.authFieldConfirmPassword,
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _passwordCtrl,
+                      decoration: InputDecoration(
+                        labelText: l10n.authFieldPassword,
+                      ),
+                      obscureText: true,
+                      autofillHints: const [AutofillHints.newPassword],
+                      enabled: !loading,
+                      validator: (v) => _validatePassword(l10n, v),
                     ),
-                    obscureText: true,
-                    autofillHints: const [AutofillHints.newPassword],
-                    enabled: !loading,
-                    validator: (v) => _validateConfirm(l10n, v),
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: loading ? null : _submit,
-                    child: loading
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l10n.signUpSubmit),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: loading
-                        ? null
-                        : () => context.go(AppRoutes.signIn),
-                    child: Text(l10n.signUpHaveAccount),
-                  ),
-                  const SizedBox(height: 4),
-                  TextButton(
-                    onPressed: loading
-                        ? null
-                        : () => context.go(AppRoutes.legal),
-                    child: Text(l10n.legalLink),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _confirmCtrl,
+                      decoration: InputDecoration(
+                        labelText: l10n.authFieldConfirmPassword,
+                      ),
+                      obscureText: true,
+                      autofillHints: const [AutofillHints.newPassword],
+                      enabled: !loading,
+                      validator: (v) => _validateConfirm(l10n, v),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: loading ? null : _submit,
+                      child: loading
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(l10n.signUpSubmit),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: loading
+                          ? null
+                          : () => context.go(AppRoutes.signIn),
+                      child: Text(l10n.signUpHaveAccount),
+                    ),
+                    const SizedBox(height: 4),
+                    TextButton(
+                      onPressed: loading
+                          ? null
+                          : () => context.go(AppRoutes.legal),
+                      child: Text(l10n.legalLink),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -189,7 +194,11 @@ String _authInfoMessage(AppLocalizations l10n, AuthInfoKind? kind) {
 
 String _signUpErrorMessage(AppLocalizations l10n, AuthErrorKind? kind) {
   return switch (kind) {
-    AuthErrorKind.signUpFailed || null => l10n.signUpFailedRetry,
+    null => l10n.signUpFailedRetry,
+    AuthErrorKind.signUpEmailTaken => l10n.userErrorEmailAlreadyRegistered,
+    AuthErrorKind.signUpWeakPassword => l10n.userErrorWeakPassword,
+    AuthErrorKind.networkConnectivity => l10n.userErrorNetworkCheckConnection,
+    AuthErrorKind.signUpFailed => l10n.signUpFailedRetry,
     AuthErrorKind.signInInvalidCredentials => l10n.signInInvalidCredentials,
     AuthErrorKind.signInFailed => l10n.signInFailedRetry,
     AuthErrorKind.signOutFailed => l10n.signOutFailedRetry,

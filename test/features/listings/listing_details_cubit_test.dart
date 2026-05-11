@@ -93,6 +93,54 @@ void main() {
   );
 
   blocTest<ListingDetailsCubit, ListingDetailsState>(
+    'initialCoverImageUrl prepended before ordered gallery URLs',
+    setUp: () {
+      final listing = _listing(cover: 'https://cdn/cover-only.jpg');
+      when(() => getById('l1')).thenAnswer((_) async => Success(listing));
+      when(() => getImages('l1')).thenAnswer(
+        (_) async => Success([
+          ListingImage(
+            id: 'i2',
+            listingId: 'l1',
+            publicUrl: 'https://cdn/b.jpg',
+            position: 2,
+            createdAt: DateTime.utc(2026, 1, 4),
+          ),
+          ListingImage(
+            id: 'i0',
+            listingId: 'l1',
+            publicUrl: 'https://cdn/a.jpg',
+            position: 0,
+            createdAt: DateTime.utc(2026, 1, 2),
+          ),
+        ]),
+      );
+    },
+    build: () => ListingDetailsCubit(
+      getListingById: getById,
+      getListingImages: getImages,
+      getOrCreateConversation: getOrCreateConversation,
+    ),
+    act: (c) =>
+        c.load('l1', initialCoverImageUrl: 'https://cdn/cover-only.jpg'),
+    expect: () => [
+      const ListingDetailsState.loading(),
+      ListingDetailsState.success(
+        _listing(cover: 'https://cdn/cover-only.jpg'),
+        heroImageUrls: const [
+          'https://cdn/cover-only.jpg',
+          'https://cdn/a.jpg',
+          'https://cdn/b.jpg',
+        ],
+      ),
+    ],
+    verify: (_) {
+      verify(() => getImages('l1')).called(1);
+      verifyNever(() => getOrCreateConversation(any()));
+    },
+  );
+
+  blocTest<ListingDetailsCubit, ListingDetailsState>(
     'gallery RPC failure ⇒ success + cover fallback (no thrown error)',
     setUp: () {
       final listing = _listing(cover: 'https://cdn/fallback.jpg');
@@ -135,7 +183,7 @@ void main() {
     act: (c) => c.load('l1'),
     expect: () => [
       const ListingDetailsState.loading(),
-      ListingDetailsState.failure('offline'),
+      ListingDetailsState.failure(const NetworkFailure('offline')),
     ],
     verify: (_) {
       verifyNever(() => getImages(any()));
@@ -144,9 +192,9 @@ void main() {
   );
 
   test('startConversationForListing delegates to messaging use case', () async {
-    when(() => getOrCreateConversation('l1')).thenAnswer(
-      (_) async => const Success('conv-z'),
-    );
+    when(
+      () => getOrCreateConversation('l1'),
+    ).thenAnswer((_) async => const Success('conv-z'));
     final cubit = ListingDetailsCubit(
       getListingById: getById,
       getListingImages: getImages,

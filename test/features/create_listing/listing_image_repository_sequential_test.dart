@@ -62,11 +62,64 @@ void main() {
 
     test('stops on first upload failure', () async {
       final ds = _MockDs();
+      when(
+        () => ds.deleteByPublicUrl(
+          publicUrl: any(named: 'publicUrl'),
+          sellerId: any(named: 'sellerId'),
+        ),
+      ).thenAnswer((_) async {});
       when(() => ds.uploadCover(any())).thenThrow(ServerException('x'));
       final repo = ListingImageRepositoryImpl(ds);
       final r = await repo.uploadSequential([_upload(), _upload()]);
       expect(r, isA<FailureResult<List<UploadedListingImage>>>());
       verify(() => ds.uploadCover(any())).called(1);
+      verifyNever(
+        () => ds.deleteByPublicUrl(
+          publicUrl: any(named: 'publicUrl'),
+          sellerId: any(named: 'sellerId'),
+        ),
+      );
+    });
+
+    test('after partial success deletes earlier uploads best-effort when a '
+        'later upload fails', () async {
+      final ds = _MockDs();
+      when(
+        () => ds.deleteByPublicUrl(
+          publicUrl: any(named: 'publicUrl'),
+          sellerId: any(named: 'sellerId'),
+        ),
+      ).thenAnswer((_) async {});
+      final uKeep = CoverImageUpload(
+        sellerId: 's',
+        bytes: Uint8List.fromList([9]),
+        contentType: 'image/jpeg',
+      );
+      final uFail = CoverImageUpload(
+        sellerId: 's',
+        bytes: Uint8List.fromList([8]),
+        contentType: 'image/jpeg',
+      );
+      when(() => ds.uploadCover(any())).thenAnswer((inv) async {
+        final u = inv.positionalArguments.first as CoverImageUpload;
+        if (u.bytes.isNotEmpty && u.bytes.first == 9) {
+          return 'https://proj.supabase.co/storage/v1/object/public/'
+              'listing-images/listings/s/a.jpg';
+        }
+        throw ServerException('nope');
+      });
+      final repo = ListingImageRepositoryImpl(ds);
+      final r = await repo.uploadSequential([uKeep, uFail]);
+      expect(r, isA<FailureResult<List<UploadedListingImage>>>());
+      verify(() => ds.uploadCover(any())).called(2);
+      verify(
+        () => ds.deleteByPublicUrl(
+          publicUrl:
+              'https://proj.supabase.co/storage/v1/object/public/'
+              'listing-images/listings/s/a.jpg',
+          sellerId: 's',
+        ),
+      ).called(1);
     });
   });
 

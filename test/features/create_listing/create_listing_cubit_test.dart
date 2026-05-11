@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
@@ -305,6 +306,43 @@ void main() {
         ).called(1);
       },
     );
+
+    test('second synchronous submit during upload awaits is ignored '
+        '(single upload + single create)', () async {
+      final gate = Completer<void>();
+      final staged = [
+        const UploadedListingImage(publicUrl: 'https://cdn/a.jpg'),
+      ];
+      when(() => imageRepo.uploadSequential(any())).thenAnswer((_) async {
+        await gate.future;
+        return Success(staged);
+      });
+      when(
+        () => createRepo.createV2(any()),
+      ).thenAnswer((_) async => Success(_listing()));
+
+      final c = cubit;
+      expect(c.state.status, CreateListingStatus.idle);
+
+      final first = c.submit(
+        listingInput: _input(),
+        orderedPhotos: [_upload()],
+      );
+      await Future<void>.value();
+      expect(c.state.status, CreateListingStatus.submitting);
+
+      final secondFuture = c.submit(
+        listingInput: _input(),
+        orderedPhotos: [_upload()],
+      );
+      gate.complete();
+
+      await first;
+      await secondFuture;
+
+      verify(() => imageRepo.uploadSequential(any())).called(1);
+      verify(() => createRepo.createV2(any())).called(1);
+    });
 
     blocTest<CreateListingCubit, CreateListingState>(
       'no-cover createV2 failure never touches batch delete.',

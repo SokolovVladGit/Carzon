@@ -60,6 +60,8 @@ Rough **dependency chain** (each step maps to migrations in-repo; filenames use 
     - **`20260521120000_listing_specs_description.sql`**
 14. **Filter-alert settings foundation** (**no notification delivery**, no push/realtime/background jobs yet): **`filter_alert_settings`** — one row per user (`user_id` PK), nullable JSONB **`criteria`**, **`notifications_enabled`** default false for future infra. Client uses this only from Account → «Оповещения по фильтру».  
     - **`20260523120000_filter_alert_settings.sql`**
+15. **`listings.updated_at`** — column + backfill + `NOT NULL` default `now()` + **`listings_set_updated_at`** trigger (`public.set_listings_updated_at()`). Ensures new environments match hosted parity (older chains lacked this column).  
+    - **`20260524120000_listings_updated_at.sql`**
 
 Local **last-applied listing filters** persist on-device (`ListingDiscoveryCriteria` JSON); previewing an alert filter in the listings feed uses **`ListingsFeedLaunch`** so **explicit snapshot > local persisted > default feed**.
 
@@ -74,6 +76,7 @@ Repo **static SQL tests** validate migration text only — they **do not** enfor
 - `20260520120000_list_inbox_conversations_rpc.sql`
 - `20260521120000_listing_specs_description.sql`
 - `20260523120000_filter_alert_settings.sql`
+- `20260524120000_listings_updated_at.sql`
 
 **Important**
 
@@ -137,13 +140,16 @@ Confirm each exists (`Database → Extensions / Functions` or SQL below), **`EXE
 
 ### Auth
 
+- [ ] Auth dashboard (**URL Configuration**): **`carzon://auth-callback`** is listed under **Redirect URLs** (password reset + email confirmation must open the app).
+- [ ] Auth dashboard: **Site URL** is **not** the default **`http://localhost:3000`** (or other dev placeholder) before any **production / public-facing** rollout — use a **real HTTPS** marketing or fallback site so email links degrade safely if the custom scheme fails.
 - [ ] Sign up
 - [ ] Sign in / sign out
-- [ ] Password recovery (if **`SUPABASE_PASSWORD_RESET_REDIRECT_URL`** + Auth redirect URLs configured)
+- [ ] Password recovery ( **`SUPABASE_PASSWORD_RESET_REDIRECT_URL`** + dashboard redirect URLs aligned with **`carzon://auth-callback`** )
 
 ### Listings
 
 - [ ] Browse feed
+- [ ] Open **listing details** → back navigation; immersive **fullscreen gallery** (swipe between photos, pinch-zoom, dismiss/close).
 - [ ] Create listing **with specs**: fuel, displacement, power, drivetrain, registration, multi-line description
 - [ ] Open details → verify specs + separate **«Описание»** when non-empty
 - [ ] Edit same fields; save via existing edit flow (RPC path)
@@ -152,8 +158,13 @@ Confirm each exists (`Database → Extensions / Functions` or SQL below), **`EXE
 
 ### Favorites
 
-- [ ] Favorite and unfavorite
+- [ ] Favorite and unfavorite (**feed / card / details**); confirm **animated/premium toggle** UX (no default loading spinner replacing the chip on happy paths).
 - [ ] Confirm rows are scoped to signed-in user (no cross-user visibility via app)
+
+### Filters & alert (Stage 1)
+
+- [ ] **Browse** filters: apply, reset, on-device persistence of last-applied criteria.
+- [ ] **Filter alert** (**one criteria per user** via `filter_alert_settings`; **no** saved-searches / multi-saved-filters UI): save and reset; **`notifications_enabled`** remains **false** at the API until real notification delivery exists (Flutter writes keep it **false**).
 
 ### Seller profile / avatar
 
@@ -164,6 +175,7 @@ Confirm each exists (`Database → Extensions / Functions` or SQL below), **`EXE
 
 ### Messaging / unread (**two accounts**)
 
+- [ ] Threads use **polling** (timer-based) MVP updates — **not** Supabase Realtime subscriptions and **no** push notifications.
 - [ ] Buyer starts chat from **active** listing (seller ≠ buyer)
 - [ ] Seller sees thread; unread row styling in inbox if applicable
 - [ ] Masthead avatar **dot** (if unread count known &gt; 0); Profile Activity **numeric badge** when &gt; 0
@@ -176,6 +188,7 @@ Confirm each exists (`Database → Extensions / Functions` or SQL below), **`EXE
 - [ ] Menu: **bottom nav** remains
 - [ ] Create listing / thread: no bottom nav where expected
 - [ ] Quick **dark mode** pass
+- [ ] **Small phone + keyboard**: create/edit listings, browse **filters**, auth forms, messaging composer, listing details bottom actions — no overflow hiding primary buttons; sticky footers usable.
 
 ---
 
@@ -228,6 +241,7 @@ FROM information_schema.columns
 WHERE table_schema = 'public'
   AND table_name = 'listings'
   AND column_name IN (
+    'updated_at',
     'fuel_type',
     'engine_displacement_liters',
     'engine_power_hp',
@@ -251,9 +265,30 @@ WHERE schemaname = 'public'
     'conversations',
     'messages',
     'user_conversation_state',
-    'seller_profiles'
+    'seller_profiles',
+    'filter_alert_settings'
   )
 ORDER BY tablename;
+```
+
+**`filter_alert_settings` columns & notification default**
+
+```sql
+SELECT column_name, data_type, column_default, is_nullable
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'filter_alert_settings'
+ORDER BY ordinal_position;
+```
+
+**`filter_alert_settings` RLS policies (spot-check names)**
+
+```sql
+SELECT policyname, cmd, roles
+FROM pg_policies
+WHERE schemaname = 'public'
+  AND tablename = 'filter_alert_settings'
+ORDER BY policyname;
 ```
 
 ---
@@ -288,6 +323,8 @@ ORDER BY tablename;
 - **No message attachments** (no reuse of listing/avatar buckets for chat media).
 - **No** in-app moderation / admin console in this codebase scope.
 - **No** functioning seller ratings/reviews UI wired to persisted reviews (trust fields may exist as placeholders).
+- Listing **gallery uploads** (`create`/`edit`): **best-effort** Storage cleanup on some failure paths — **not** a transactional guarantee with Postgres RPCs.
+- **User-visible errors:** the client should surface **localized** copy (failure kinds / `l10n`); operators should validate common failure flows do **not** show raw PostgREST codes, RPC names, or bucket paths.
 - **`listing-images`** and **`seller-avatars`** are **public-readable by design**; URLs may be scraped.
 - Repo **tests** hitting static SQL fragments **≠** migrated Supabase project.
 
@@ -298,8 +335,9 @@ ORDER BY tablename;
 - [ ] Staging/production Supabase has **every** migration from `supabase/migrations/` applied **in order**
 - [ ] Buckets **`listing-images`** and **`seller-avatars`** exist with expected policies
 - [ ] §5 RPC/function list verified (existence + `authenticated`/`anon` grants per migration intent)
-- [ ] Listing columns for **specs + description** present on **`public.listings`**
+- [ ] Listing columns for **specs + description** and **`updated_at`** present on **`public.listings`** (see §7 column spot-check)
 - [ ] Messaging tables **`user_conversation_state`**, **`conversations`**, **`messages`** + unread/inbox RPCs present
 - [ ] Flutter `.env` contains **only** `SUPABASE_URL`, **`SUPABASE_ANON_KEY`**, optional client-safe overrides — **no service role key**
+- [ ] Auth → **Redirect URLs** include **`carzon://auth-callback`**; Auth **Site URL** is a **real HTTPS** fallback (see [`mvp_release_checklist.md`](mvp_release_checklist.md) §C — **never** rely on **`localhost`** for production/public rollout)
 - [ ] §6 staging QA passed for the build about to ship
 - [ ] Rollback/mitigation understood (§9); team knows who applies emergency DB fixes

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/presentation/localized_user_failure_message.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/loading_view.dart';
@@ -81,7 +82,8 @@ class _ListingsDiscoveryBootstrap extends StatefulWidget {
       _ListingsDiscoveryBootstrapState();
 }
 
-class _ListingsDiscoveryBootstrapState extends State<_ListingsDiscoveryBootstrap> {
+class _ListingsDiscoveryBootstrapState
+    extends State<_ListingsDiscoveryBootstrap> {
   bool _seeded = false;
 
   @override
@@ -97,9 +99,7 @@ class _ListingsDiscoveryBootstrapState extends State<_ListingsDiscoveryBootstrap
     _seeded = true;
     final bloc = context.read<ListingsBloc>();
     if (widget.feedLaunch != null) {
-      bloc.add(
-        ListingsHydratedFromDiscovery(widget.feedLaunch!.snapshot),
-      );
+      bloc.add(ListingsHydratedFromDiscovery(widget.feedLaunch!.snapshot));
       return;
     }
     final local = await sl<LastAppliedListingDiscoveryRepository>().load();
@@ -260,10 +260,16 @@ class _ListingsViewState extends State<_ListingsView> {
                     case ListingsStatus.loading:
                       return const LoadingView();
                     case ListingsStatus.failure:
+                      final l10n = context.l10n;
+                      final msg = state.loadFailure != null
+                          ? localizedUserFailureMessage(
+                              l10n,
+                              state.loadFailure!,
+                              surface: LocalizedFailureSurface.listingsFeed,
+                            )
+                          : l10n.listingsLoadFailed;
                       return ErrorView(
-                        message:
-                            state.errorMessage ??
-                            context.l10n.listingsLoadFailed,
+                        message: msg,
                         onRetry: () => context.read<ListingsBloc>().add(
                           const ListingsRefreshed(),
                         ),
@@ -381,6 +387,12 @@ class _ListingsViewState extends State<_ListingsView> {
                                   AppRoutes.listingDetailsPath(item.id),
                                   extra: ListingDetailsExtra(
                                     coverImageUrl: item.coverImageUrl,
+                                    coverHeroFlightTopRadius:
+                                        ListingCard.coverHeroFlightTopRadius(
+                                          isFeatured
+                                              ? ListingCardVariant.featured
+                                              : ListingCardVariant.regular,
+                                        ),
                                   ),
                                 ),
                               ),
@@ -801,9 +813,7 @@ class _SearchAndFilterBar extends StatelessWidget {
                   : Colors.white;
               final bg = active
                   ? Color.alphaBlend(
-                      scheme.primary.withValues(
-                        alpha: isDark ? 0.26 : 0.14,
-                      ),
+                      scheme.primary.withValues(alpha: isDark ? 0.26 : 0.14),
                       restingBg,
                     )
                   : restingBg;
@@ -1109,7 +1119,6 @@ class _BrandTile extends StatelessWidget {
     );
   }
 }
-
 
 class _ActiveDiscoverySummaryStrip extends StatelessWidget {
   const _ActiveDiscoverySummaryStrip({required this.state});

@@ -56,64 +56,69 @@ class _SignInPageState extends State<SignInPage> {
         },
         builder: (context, state) {
           final loading = state.status == AuthStatus.authenticating;
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _emailCtrl,
-                    decoration: InputDecoration(labelText: l10n.authFieldEmail),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? l10n.validationEmailRequired
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _passwordCtrl,
-                    decoration: InputDecoration(
-                      labelText: l10n.authFieldPassword,
+          return SafeArea(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextFormField(
+                      controller: _emailCtrl,
+                      decoration: InputDecoration(
+                        labelText: l10n.authFieldEmail,
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? l10n.validationEmailRequired
+                          : null,
                     ),
-                    obscureText: true,
-                    validator: (v) => (v == null || v.length < 6)
-                        ? l10n.validationPasswordMin
-                        : null,
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: loading ? null : _submit,
-                    child: loading
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l10n.signInSubmit),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: loading
-                        ? null
-                        : () => context.go(AppRoutes.forgotPassword),
-                    child: Text(l10n.signInForgotPassword),
-                  ),
-                  TextButton(
-                    onPressed: loading
-                        ? null
-                        : () => context.go(AppRoutes.signUp),
-                    child: Text(l10n.signInCreateAccount),
-                  ),
-                  const SizedBox(height: 4),
-                  TextButton(
-                    onPressed: loading
-                        ? null
-                        : () => context.go(AppRoutes.legal),
-                    child: Text(l10n.legalLink),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _passwordCtrl,
+                      decoration: InputDecoration(
+                        labelText: l10n.authFieldPassword,
+                      ),
+                      obscureText: true,
+                      validator: (v) => (v == null || v.length < 6)
+                          ? l10n.validationPasswordMin
+                          : null,
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: loading ? null : _submit,
+                      child: loading
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(l10n.signInSubmit),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: loading
+                          ? null
+                          : () => context.go(AppRoutes.forgotPassword),
+                      child: Text(l10n.signInForgotPassword),
+                    ),
+                    TextButton(
+                      onPressed: loading
+                          ? null
+                          : () => context.go(AppRoutes.signUp),
+                      child: Text(l10n.signInCreateAccount),
+                    ),
+                    const SizedBox(height: 4),
+                    TextButton(
+                      onPressed: loading
+                          ? null
+                          : () => context.go(AppRoutes.legal),
+                      child: Text(l10n.legalLink),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -127,9 +132,13 @@ class _SignInPageState extends State<SignInPage> {
 /// library level so shared auth flows can reuse it.
 String _authErrorMessage(AppLocalizations l10n, AuthErrorKind? kind) {
   return switch (kind) {
+    null => l10n.signInFailedRetry,
     AuthErrorKind.signInInvalidCredentials => l10n.signInInvalidCredentials,
-    AuthErrorKind.signInFailed || null => l10n.signInFailedRetry,
+    AuthErrorKind.networkConnectivity => l10n.userErrorNetworkCheckConnection,
+    AuthErrorKind.signInFailed => l10n.signInFailedRetry,
     AuthErrorKind.signUpFailed => l10n.signUpFailedRetry,
+    AuthErrorKind.signUpEmailTaken => l10n.userErrorEmailAlreadyRegistered,
+    AuthErrorKind.signUpWeakPassword => l10n.userErrorWeakPassword,
     AuthErrorKind.signOutFailed => l10n.signOutFailedRetry,
   };
 }

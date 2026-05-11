@@ -148,46 +148,51 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
       },
       builder: (context, state) {
         final loading = state.status == ResetPasswordStatus.submitting;
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(l10n.resetPasswordIntro),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordCtrl,
-                  decoration: InputDecoration(labelText: l10n.resetPasswordNew),
-                  obscureText: true,
-                  autofillHints: const [AutofillHints.newPassword],
-                  enabled: !loading,
-                  validator: (v) => _validatePassword(l10n, v),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _confirmCtrl,
-                  decoration: InputDecoration(
-                    labelText: l10n.resetPasswordConfirmNew,
+        return SafeArea(
+          child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(l10n.resetPasswordIntro),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordCtrl,
+                    decoration: InputDecoration(
+                      labelText: l10n.resetPasswordNew,
+                    ),
+                    obscureText: true,
+                    autofillHints: const [AutofillHints.newPassword],
+                    enabled: !loading,
+                    validator: (v) => _validatePassword(l10n, v),
                   ),
-                  obscureText: true,
-                  autofillHints: const [AutofillHints.newPassword],
-                  enabled: !loading,
-                  validator: (v) => _validateConfirm(l10n, v),
-                ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: loading ? null : _submit,
-                  child: loading
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l10n.resetPasswordSubmit),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _confirmCtrl,
+                    decoration: InputDecoration(
+                      labelText: l10n.resetPasswordConfirmNew,
+                    ),
+                    obscureText: true,
+                    autofillHints: const [AutofillHints.newPassword],
+                    enabled: !loading,
+                    validator: (v) => _validateConfirm(l10n, v),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: loading ? null : _submit,
+                    child: loading
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(l10n.resetPasswordSubmit),
+                  ),
+                ],
+              ),
             ),
           ),
         );

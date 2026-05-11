@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -245,9 +247,7 @@ class _EditListingFormState extends State<_EditListingForm> {
     _engineDisplacement = TextEditingController(
       text: l.engineDisplacementLiters == null
           ? ''
-          : _displacementFieldText(
-              l.engineDisplacementLiters!,
-            ),
+          : _displacementFieldText(l.engineDisplacementLiters!),
     );
     _enginePower = TextEditingController(
       text: l.enginePowerHp == null ? '' : '${l.enginePowerHp}',
@@ -311,7 +311,10 @@ class _EditListingFormState extends State<_EditListingForm> {
 
   Future<void> _openBrandSheet() async {
     final l10n = context.l10n;
-    final picked = await showListingBrandPickSheet(context: context, l10n: l10n);
+    final picked = await showListingBrandPickSheet(
+      context: context,
+      l10n: l10n,
+    );
 
     if (!mounted || picked == null) return;
 
@@ -470,10 +473,12 @@ class _EditListingFormState extends State<_EditListingForm> {
       engineDisplacementLiters: _engineDisplacementFromField(),
       enginePowerHp: _enginePowerFromField(),
       drivetrain: _drivetrain,
-      registration:
-          _registration.text.trim().isEmpty ? null : _registration.text.trim(),
-      description:
-          _description.text.trim().isEmpty ? null : _description.text.trim(),
+      registration: _registration.text.trim().isEmpty
+          ? null
+          : _registration.text.trim(),
+      description: _description.text.trim().isEmpty
+          ? null
+          : _description.text.trim(),
       contactPhone: _phone.text.trim(),
       telegramUsername: normalizeTelegramUsername(_telegram.text),
       whatsappEnabled: _whatsappEnabled,
@@ -526,12 +531,17 @@ class _EditListingFormState extends State<_EditListingForm> {
         ? l10n.createListingChooseBrand
         : localizedListingBrandCatalogLabel(l10n, _selectedBrandCatalogValue!);
 
+    final bottomInset = math.max(
+      MediaQuery.paddingOf(context).bottom,
+      kFloatingCapsuleNavClearance,
+    );
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: EdgeInsets.fromLTRB(
         16,
         14,
         16,
-        kFloatingCapsuleNavClearance,
+        bottomInset + MediaQuery.viewInsetsOf(context).bottom,
       ),
       child: Form(
         key: _formKey,
@@ -641,6 +651,8 @@ class _EditListingFormState extends State<_EditListingForm> {
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             child: Text(
                               brandDisplay,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodyLarge,
                             ),
                           ),
@@ -918,9 +930,7 @@ class _EditListingFormState extends State<_EditListingForm> {
                       hintText: l10n.listingEnginePowerHint,
                     ),
                     keyboardType: TextInputType.number,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (v) => _validateOptionalPower(l10n, v),
                     enabled: !submitting,
                   ),
@@ -969,13 +979,13 @@ class _EditListingFormState extends State<_EditListingForm> {
                       hintText: l10n.listingRegistrationHint,
                     ),
                     maxLength: kListingRegistrationMaxLength,
-                    buildCounter: (
-                      context, {
-                      required currentLength,
-                      required isFocused,
-                      maxLength,
-                    }) =>
-                        null,
+                    buildCounter:
+                        (
+                          context, {
+                          required currentLength,
+                          required isFocused,
+                          maxLength,
+                        }) => null,
                     validator: (v) => _validateOptionalRegistration(l10n, v),
                     enabled: !submitting,
                   ),

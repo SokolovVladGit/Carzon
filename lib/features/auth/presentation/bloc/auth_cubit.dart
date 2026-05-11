@@ -97,20 +97,20 @@ class AuthCubit extends Cubit<AuthState> {
   ///     will be established later via the confirmation deep-link, at
   ///     which point the same `onAuthStateChange` stream emits
   ///     authenticated.
-  ///   * Failure → [AuthState.error] with [AuthErrorKind.signUpFailed].
+  ///   * Failure → [AuthState.error] with a mapped [AuthErrorKind]
+  ///     (network, duplicate email heuristic, generic, …).
   Future<void> signUp({required String email, required String password}) async {
     emit(const AuthState.authenticating());
     final result = await _signUpWithPassword(email: email, password: password);
-    result.fold(
-      (_) => emit(const AuthState.error(AuthErrorKind.signUpFailed)),
-      (user) {
-        if (user == null) {
-          emit(const AuthState.needsEmailConfirmation());
-        } else {
-          emit(AuthState.authenticated(user));
-        }
-      },
-    );
+    result.fold((failure) => emit(AuthState.error(_signUpErrorKind(failure))), (
+      user,
+    ) {
+      if (user == null) {
+        emit(const AuthState.needsEmailConfirmation());
+      } else {
+        emit(AuthState.authenticated(user));
+      }
+    });
   }
 
   Future<void> signOut() async {
@@ -147,6 +147,9 @@ class AuthCubit extends Cubit<AuthState> {
   /// substring-based because [Failure] does not carry a structured
   /// error code.
   static AuthErrorKind _signInErrorKind(Failure failure) {
+    if (failure is NetworkFailure) {
+      return AuthErrorKind.networkConnectivity;
+    }
     final raw = failure.message.toLowerCase();
     if (raw.contains('invalid login') ||
         raw.contains('invalid credentials') ||
@@ -155,6 +158,30 @@ class AuthCubit extends Cubit<AuthState> {
       return AuthErrorKind.signInInvalidCredentials;
     }
     return AuthErrorKind.signInFailed;
+  }
+
+  static AuthErrorKind _signUpErrorKind(Failure failure) {
+    if (failure is NetworkFailure) {
+      return AuthErrorKind.networkConnectivity;
+    }
+    if (failure is AuthFailure) {
+      final raw = failure.message.toLowerCase();
+      if (raw.contains('already registered') ||
+          raw.contains('already been registered') ||
+          raw.contains('user already exists') ||
+          raw.contains('duplicate key') ||
+          raw.contains('already exists') ||
+          raw.contains('email address is already')) {
+        return AuthErrorKind.signUpEmailTaken;
+      }
+      if (raw.contains('password') &&
+          (raw.contains('weak') ||
+              raw.contains('strength') ||
+              raw.contains('too short'))) {
+        return AuthErrorKind.signUpWeakPassword;
+      }
+    }
+    return AuthErrorKind.signUpFailed;
   }
 
   @override

@@ -812,6 +812,48 @@ abstract class AppLocalizations {
   /// **'Не удалось загрузить объявление.'**
   String get listingDetailsLoadFailed;
 
+  /// No description provided for @userErrorNetworkCheckConnection.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте подключение к интернету и попробуйте ещё раз.'**
+  String get userErrorNetworkCheckConnection;
+
+  /// No description provided for @userErrorGenericTryAgain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что-то пошло не так. Попробуйте ещё раз.'**
+  String get userErrorGenericTryAgain;
+
+  /// No description provided for @userErrorEmailAlreadyRegistered.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт с таким email уже существует.'**
+  String get userErrorEmailAlreadyRegistered;
+
+  /// No description provided for @userErrorWeakPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль слишком простой. Попробуйте более надёжный пароль.'**
+  String get userErrorWeakPassword;
+
+  /// No description provided for @userErrorInsufficientPermission.
+  ///
+  /// In ru, this message translates to:
+  /// **'Недостаточно прав для этого действия.'**
+  String get userErrorInsufficientPermission;
+
+  /// No description provided for @listingUnavailableOrDeleted.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объявление недоступно или было удалено.'**
+  String get listingUnavailableOrDeleted;
+
+  /// No description provided for @userErrorUploadPhotoTryAgain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить фото. Попробуйте ещё раз.'**
+  String get userErrorUploadPhotoTryAgain;
+
   /// No description provided for @listingDetailsSpecs.
   ///
   /// In ru, this message translates to:
@@ -1157,13 +1199,13 @@ abstract class AppLocalizations {
   /// No description provided for @messagingSendFailed.
   ///
   /// In ru, this message translates to:
-  /// **'Не удалось отправить сообщение.'**
+  /// **'Не удалось отправить сообщение. Попробуйте ещё раз.'**
   String get messagingSendFailed;
 
   /// No description provided for @messagingNetworkError.
   ///
   /// In ru, this message translates to:
-  /// **'Проблема с сетью. Проверьте подключение.'**
+  /// **'Проверьте подключение к интернету и попробуйте ещё раз.'**
   String get messagingNetworkError;
 
   /// No description provided for @messagingServerError.
@@ -1751,8 +1793,8 @@ abstract class AppLocalizations {
   /// No description provided for @imageLoadFailed.
   ///
   /// In ru, this message translates to:
-  /// **'Не удалось загрузить изображение: {error}'**
-  String imageLoadFailed(String error);
+  /// **'Не удалось загрузить изображение. Попробуйте ещё раз.'**
+  String get imageLoadFailed;
 
   /// No description provided for @coverUploadFailedRetry.
   ///

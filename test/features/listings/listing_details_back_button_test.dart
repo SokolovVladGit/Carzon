@@ -61,7 +61,12 @@ void main() {
     sellerProfileUseCase = MockGetSellerPublicProfile();
     stubSellerPublicProfileHidden(sellerProfileUseCase);
 
-    when(() => detailsCubit.load(any())).thenAnswer((_) async {});
+    when(
+      () => detailsCubit.load(
+        any(),
+        initialCoverImageUrl: any(named: 'initialCoverImageUrl'),
+      ),
+    ).thenAnswer((_) async {});
     when(
       () => detailsCubit.state,
     ).thenReturn(ListingDetailsState.success(_seed()));
@@ -284,13 +289,21 @@ void main() {
     );
 
     testWidgets(
-      'after load completes the listing\'s own cover URL takes over and the '
-      'initial route-extra URL is no longer used',
+      'after load completes route-extra cover remains first image when cubit '
+      'hero URLs preserve initial slot',
       (tester) async {
-        // Default setUp state is `success(_seed())`; _seed() has no
-        // coverImageUrl set, so the ListingCoverImage should receive
-        // null even when an initial URL was passed via route extra.
         const seededCover = 'https://cdn.example.com/stale-cover.jpg';
+        final success = ListingDetailsState.success(
+          _seed(),
+          heroImageUrls: const [seededCover],
+        );
+        when(() => detailsCubit.state).thenReturn(success);
+        whenListen(
+          detailsCubit,
+          const Stream<ListingDetailsState>.empty(),
+          initialState: success,
+        );
+
         await tester.pumpWidget(
           wrapWithRouter(
             initialLocation: '/listings/l1',
@@ -304,11 +317,10 @@ void main() {
         );
         expect(
           cover.imageUrl,
-          isNull,
+          seededCover,
           reason:
-              'Once the cubit resolves, the loaded listing.coverImageUrl '
-              '(null in this fixture) must take precedence over the seeded '
-              'initial URL.',
+              'Production cubit merges route-extra cover first in heroImageUrls; '
+              'the visible Hero slot must keep that URL.',
         );
       },
     );

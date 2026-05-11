@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/errors/failures.dart';
 import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_currency.dart';
 import '../../domain/entities/listing_sort_option.dart';
@@ -68,7 +69,7 @@ class ListingsState extends Equatable {
     this.bodyTypeFilter,
     this.sortOption = ListingSortOption.newestFirst,
     this.priceCurrencyFilter = ListingPriceCurrencyFilter.any,
-    this.errorMessage,
+    this.loadFailure,
   });
 
   final ListingsStatus status;
@@ -99,7 +100,7 @@ class ListingsState extends Equatable {
   /// Feed ordering (public active listings only).
   final ListingSortOption sortOption;
 
-  final String? errorMessage;
+  final Failure? loadFailure;
 
   bool get hasActiveNonRegionFilters =>
       (search != null && search!.isNotEmpty) ||
@@ -141,7 +142,7 @@ class ListingsState extends Equatable {
     ListingBodyType? bodyTypeFilter,
     ListingSortOption? sortOption,
     ListingPriceCurrencyFilter? priceCurrencyFilter,
-    String? errorMessage,
+    Failure? loadFailure,
     bool clearSearch = false,
     bool clearMake = false,
     bool clearModel = false,
@@ -154,6 +155,7 @@ class ListingsState extends Equatable {
     bool clearBodyType = false,
     bool clearSort = false,
     bool clearPriceCurrencyFilter = false,
+    bool clearLoadFailure = false,
   }) {
     return ListingsState(
       status: status ?? this.status,
@@ -180,7 +182,7 @@ class ListingsState extends Equatable {
       priceCurrencyFilter: clearPriceCurrencyFilter
           ? ListingPriceCurrencyFilter.any
           : (priceCurrencyFilter ?? this.priceCurrencyFilter),
-      errorMessage: errorMessage,
+      loadFailure: clearLoadFailure ? null : (loadFailure ?? this.loadFailure),
     );
   }
 
@@ -204,6 +206,6 @@ class ListingsState extends Equatable {
     bodyTypeFilter,
     priceCurrencyFilter,
     sortOption,
-    errorMessage,
+    loadFailure,
   ];
 }

@@ -51,18 +51,24 @@ migrations.
       `carzon://auth-callback`. Without this, password-reset and
       email-confirmation links will not open the app.
 - [ ] **Auth → URL Configuration → Site URL**: set to the
-      production/staging web URL so confirmation and reset emails
-      carry a sane fallback when native deep links fail.
+      production/staging web URL (**HTTPS**) so confirmation and reset emails
+      carry a sane fallback when native deep links fail. **`http://localhost:3000`**
+      default is **acceptable for dev only** — **never** leave it as-is for production
+      or broad public testers.
 - [ ] **Auth → Email Templates**: sanity-check the sign-up
       confirmation and password-reset templates for wording and for
       the correct action link placeholder.
 - [ ] **Database → Migrations**: confirm all
       `supabase/migrations/*.sql` files from this repo are applied
-      and no extra ad-hoc migrations exist in the project.
-- [ ] **Storage → Buckets**: confirm the `listing-images` bucket
-      exists after migrations. Its public read is intentional for
-      MVP (cover images are served by `Image.network`). Writes are
-      scoped per-owner by the storage policies — do not widen them.
+      and no extra ad-hoc migrations exist in the project. Spot-check
+      that **`public.listings.updated_at`** exists (added by
+      `20260524120000_listings_updated_at.sql`) so parity checks do not
+      regress on fresh databases.
+- [ ] **Storage → Buckets**: confirm **`listing-images`** and
+      **`seller-avatars`** exist after migrations (both created by
+      migrations). Public read is intentional for MVP listing photos
+      and seller avatars (`Image.network`). Writes are scoped per-owner
+      by storage policies — do not widen them.
 - [ ] **API → Project Settings**: confirm the anon key in the
       dashboard matches the value in `.env`.
 
@@ -134,6 +140,22 @@ Run on a real device against the release project before each build.
 - [ ] Report listing: visible only when `CARZON_REPORT_EMAIL` is
       set; tapping opens the mail app with a pre-filled report.
 - [ ] Legal page reachable from Sign In, Sign Up, and Profile.
+- [ ] Messaging: **two accounts**, send/receive, unread indicators; reminder that
+      the MVP client uses **polling** (not Supabase Realtime) and ships **without**
+      push notifications.
+- [ ] Listing **details fullscreen gallery**: swipe between images, pinch-zoom,
+      dismiss/close; then back navigation.
+- [ ] Filter **alert** (single saved criteria via `filter_alert_settings`): save /
+      reset; confirm **profile “alert notifications” UX is local/visual only** —
+      backend **`notifications_enabled`** stays **false** until real notifications exist.
+- [ ] Slow network / **upload failure paths** during create/edit (multi-image):
+      spinner or disabled submit remains clear; **localized** messaging only (no raw
+      PostgREST codes, RPC names, or bucket identifiers).
+- [ ] Compact phone + keyboard: listings **filters**, create/edit footer, auth flows,
+      messaging composer, listing details footer — layouts remain usable (~320 × 568
+      logical class smoke).
+- [ ] Quick **dark mode** pass on feed, details (including fullscreen gallery), filters,
+      profile, messaging.
 
 ## G. Store / build readiness
 

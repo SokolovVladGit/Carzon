@@ -63,12 +63,19 @@ class AppRoutes {
 /// notification) arrive without `extra`, and the details page must keep
 /// working — it falls back to the placeholder until the cubit resolves.
 class ListingDetailsExtra {
-  const ListingDetailsExtra({this.coverImageUrl});
+  const ListingDetailsExtra({
+    this.coverImageUrl,
+    this.coverHeroFlightTopRadius,
+  });
 
   /// Cover image URL already known by the caller. Null if the source
   /// listing has no cover photo, or if the route was opened via a deep
   /// link where the cover URL was not available.
   final String? coverImageUrl;
+
+  /// Matches [ListingCard] cover top corner radius for Hero shuttle math.
+  /// Null ⇒ default (regular card / deep links).
+  final double? coverHeroFlightTopRadius;
 }
 
 /// Pass with [AppRoutes.listings] `extra` when opening feed with predefined
@@ -119,10 +126,14 @@ class AppRouter {
             final initialCoverImageUrl = extra is ListingDetailsExtra
                 ? extra.coverImageUrl
                 : null;
+            final coverHeroFlightTopRadius = extra is ListingDetailsExtra
+                ? extra.coverHeroFlightTopRadius
+                : null;
             return ListingDetailsPage(
               id: state.pathParameters['id']!,
               reportEmail: Env.reportEmail,
               initialCoverImageUrl: initialCoverImageUrl,
+              coverHeroFlightTopRadius: coverHeroFlightTopRadius,
             );
           },
         ),

@@ -316,7 +316,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
 
   Future<void> _openBrandSheet() async {
     final l10n = context.l10n;
-    final picked = await showListingBrandPickSheet(context: context, l10n: l10n);
+    final picked = await showListingBrandPickSheet(
+      context: context,
+      l10n: l10n,
+    );
 
     if (!mounted || picked == null) return;
 
@@ -521,9 +524,13 @@ class _CreateListingFormState extends State<_CreateListingForm> {
 
         final brandDisplay = _selectedBrandCatalogValue == null
             ? l10n.createListingChooseBrand
-            : localizedListingBrandCatalogLabel(l10n, _selectedBrandCatalogValue!);
+            : localizedListingBrandCatalogLabel(
+                l10n,
+                _selectedBrandCatalogValue!,
+              );
 
         return SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(
             16,
             12,
@@ -532,7 +539,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                   MediaQuery.paddingOf(context).bottom,
                   _kCreateListingScrollBottomInsetFloor,
                 ) +
-                _kCreateListingScrollBottomExtra,
+                _kCreateListingScrollBottomExtra +
+                MediaQuery.viewInsetsOf(context).bottom,
           ),
           child: Form(
             key: _formKey,
@@ -625,6 +633,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                 ),
                                 child: Text(
                                   brandDisplay,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.bodyLarge,
                                 ),
                               ),
@@ -679,10 +689,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                 : () async {
                                     final picked =
                                         await showListingYearPickSheet(
-                                      context: context,
-                                      l10n: l10n,
-                                      selectedYear: yr,
-                                    );
+                                          context: context,
+                                          l10n: l10n,
+                                          selectedYear: yr,
+                                        );
                                     if (!context.mounted) return;
                                     if (picked != null) {
                                       fieldState.didChange(picked);
@@ -818,8 +828,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                             ? l10n.listingBodyTypeNotSpecified
                             : formatListingFuelType(l10n, _fuelType!),
                         enabled: !submitting,
-                        onTap:
-                            submitting ? null : () => _openFuelTypeSheet(),
+                        onTap: submitting ? null : () => _openFuelTypeSheet(),
                         fieldKey: const ValueKey('create_listing_fuel_field'),
                       ),
                       const SizedBox(height: 16),
@@ -860,10 +869,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                             ? l10n.listingBodyTypeNotSpecified
                             : formatListingDrivetrain(l10n, _drivetrain!),
                         enabled: !submitting,
-                        onTap:
-                            submitting ? null : () => _openDrivetrainSheet(),
-                        fieldKey:
-                            const ValueKey('create_listing_drivetrain_field'),
+                        onTap: submitting ? null : () => _openDrivetrainSheet(),
+                        fieldKey: const ValueKey(
+                          'create_listing_drivetrain_field',
+                        ),
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -875,13 +884,13 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         ),
                         maxLength: kListingRegistrationMaxLength,
                         maxLines: 1,
-                        buildCounter: (
-                          context, {
-                          required currentLength,
-                          required isFocused,
-                          maxLength,
-                        }) =>
-                            null,
+                        buildCounter:
+                            (
+                              context, {
+                              required currentLength,
+                              required isFocused,
+                              maxLength,
+                            }) => null,
                         validator: (v) =>
                             _validateOptionalRegistration(l10n, v),
                         enabled: !submitting,

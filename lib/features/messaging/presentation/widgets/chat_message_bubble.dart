@@ -66,6 +66,7 @@ class ChatMessageBubble extends StatelessWidget {
                   children: [
                     Text(
                       message.body,
+                      softWrap: true,
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: fg,
                         height: 1.4,

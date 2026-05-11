@@ -88,42 +88,47 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
             return _SuccessView(onBack: () => context.go(AppRoutes.signIn));
           }
 
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(l10n.forgotPasswordIntro),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emailCtrl,
-                    decoration: InputDecoration(labelText: l10n.authFieldEmail),
-                    keyboardType: TextInputType.emailAddress,
-                    autofillHints: const [AutofillHints.email],
-                    enabled: !loading,
-                    validator: (v) => _validateEmail(l10n, v),
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: loading ? null : _submit,
-                    child: loading
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l10n.forgotPasswordSubmit),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: loading
-                        ? null
-                        : () => context.go(AppRoutes.signIn),
-                    child: Text(l10n.backToSignIn),
-                  ),
-                ],
+          return SafeArea(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(l10n.forgotPasswordIntro),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _emailCtrl,
+                      decoration: InputDecoration(
+                        labelText: l10n.authFieldEmail,
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      autofillHints: const [AutofillHints.email],
+                      enabled: !loading,
+                      validator: (v) => _validateEmail(l10n, v),
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: loading ? null : _submit,
+                      child: loading
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(l10n.forgotPasswordSubmit),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: loading
+                          ? null
+                          : () => context.go(AppRoutes.signIn),
+                      child: Text(l10n.backToSignIn),
+                    ),
+                  ],
+                ),
               ),
             ),
           );

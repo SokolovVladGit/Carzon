@@ -99,14 +99,18 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final isAlert = widget.mode == ListingsFilterHostMode.alertSetup;
-    final headerEyebrow =
-        isAlert ? l10n.filterAlertEditorEyebrow : l10n.filtersHeaderEyebrow;
-    final headerTitle =
-        isAlert ? l10n.filterAlertEditorTitle : l10n.filtersTitle;
-    final headerSubtitle =
-        isAlert ? l10n.filterAlertEditorSubtitle : l10n.filtersSubtitle;
-    final applyLabel =
-        isAlert ? l10n.filterAlertSaveFilterAction : l10n.filterShowCars;
+    final headerEyebrow = isAlert
+        ? l10n.filterAlertEditorEyebrow
+        : l10n.filtersHeaderEyebrow;
+    final headerTitle = isAlert
+        ? l10n.filterAlertEditorTitle
+        : l10n.filtersTitle;
+    final headerSubtitle = isAlert
+        ? l10n.filterAlertEditorSubtitle
+        : l10n.filtersSubtitle;
+    final applyLabel = isAlert
+        ? l10n.filterAlertSaveFilterAction
+        : l10n.filterShowCars;
     final scheme = theme.colorScheme;
     final viewPadding = MediaQuery.viewPaddingOf(context);
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
@@ -172,22 +176,23 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                                 message: l10n.filtersDismissTooltip,
                                 child: Material(
                                   color: Color.alphaBlend(
-                                    scheme.surfaceContainerHigh
-                                        .withValues(alpha: 0.5),
+                                    scheme.surfaceContainerHigh.withValues(
+                                      alpha: 0.5,
+                                    ),
                                     scheme.surface.withValues(alpha: 0.12),
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                     side: BorderSide(
-                                      color: scheme.outlineVariant
-                                          .withValues(alpha: 0.24),
+                                      color: scheme.outlineVariant.withValues(
+                                        alpha: 0.24,
+                                      ),
                                     ),
                                   ),
                                   clipBehavior: Clip.antiAlias,
                                   child: InkWell(
                                     onTap: widget.onDismiss,
-                                    customBorder:
-                                        const RoundedRectangleBorder(
+                                    customBorder: const RoundedRectangleBorder(
                                       borderRadius: BorderRadius.all(
                                         Radius.circular(14),
                                       ),
@@ -199,8 +204,9 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                                         child: Icon(
                                           Icons.arrow_back_ios_new_rounded,
                                           size: 18,
-                                          color: scheme.onSurface
-                                              .withValues(alpha: 0.8),
+                                          color: scheme.onSurface.withValues(
+                                            alpha: 0.8,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -219,18 +225,21 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.labelSmall?.copyWith(
+                                style:
+                                    theme.textTheme.labelSmall?.copyWith(
                                       letterSpacing: 2.4,
                                       fontWeight: FontWeight.w600,
                                       height: 1.2,
-                                      color: scheme.onSurface
-                                          .withValues(alpha: 0.42),
+                                      color: scheme.onSurface.withValues(
+                                        alpha: 0.42,
+                                      ),
                                     ) ??
                                     theme.textTheme.bodySmall?.copyWith(
                                       letterSpacing: 2.0,
                                       fontWeight: FontWeight.w600,
-                                      color: scheme.onSurface
-                                          .withValues(alpha: 0.42),
+                                      color: scheme.onSurface.withValues(
+                                        alpha: 0.42,
+                                      ),
                                     ),
                               ),
                               const SizedBox(height: 6),
@@ -239,12 +248,14 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.titleLarge?.copyWith(
+                                style:
+                                    theme.textTheme.titleLarge?.copyWith(
                                       fontWeight: FontWeight.w600,
                                       letterSpacing: -0.2,
                                       height: 1.15,
-                                      color: scheme.onSurface
-                                          .withValues(alpha: 0.96),
+                                      color: scheme.onSurface.withValues(
+                                        alpha: 0.96,
+                                      ),
                                     ) ??
                                     theme.textTheme.headlineSmall?.copyWith(
                                       fontWeight: FontWeight.w600,
@@ -322,12 +333,7 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                   ],
                 ),
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    22,
-                    20,
-                    22,
-                    footerBottomPad,
-                  ),
+                  padding: EdgeInsets.fromLTRB(22, 20, 22, footerBottomPad),
                   child: Row(
                     children: [
                       Expanded(
@@ -355,6 +361,9 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                           ),
                           child: Text(
                             l10n.filterClear,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                             style: theme.textTheme.labelLarge?.copyWith(
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.2,
@@ -377,6 +386,9 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                           ),
                           child: Text(
                             applyLabel,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                             style: theme.textTheme.labelLarge?.copyWith(
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.15,

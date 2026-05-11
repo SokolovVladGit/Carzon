@@ -50,11 +50,18 @@ class ListingImageRepositoryImpl implements ListingImageRepository {
       _logger.debug('uploadSequential rejected: too many uploads');
       return const FailureResult(UnknownFailure('Too many images.'));
     }
+    final sellerIdForCleanup = uploads.first.sellerId;
     final out = <UploadedListingImage>[];
     for (final upload in uploads) {
       final step = await uploadCover(upload);
       switch (step) {
         case FailureResult(:final failure):
+          if (out.isNotEmpty && sellerIdForCleanup.isNotEmpty) {
+            await deleteUploadedBatchBestEffort(
+              images: out,
+              sellerId: sellerIdForCleanup,
+            );
+          }
           return FailureResult(failure);
         case Success(:final value):
           final storagePath =
