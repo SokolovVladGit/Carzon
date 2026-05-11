@@ -11,6 +11,7 @@ import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../listings/presentation/widgets/listing_card.dart';
 import '../../../listings/presentation/widgets/listing_tile.dart';
 import '../bloc/favorites_cubit.dart';
 import '../bloc/favorites_state.dart';
@@ -121,6 +122,10 @@ class _FavoritesListState extends State<_FavoritesList> {
                       AppRoutes.listingDetailsPath(item.id),
                       extra: ListingDetailsExtra(
                         coverImageUrl: item.coverImageUrl,
+                        coverHeroFlightTopRadius:
+                            ListingCard.coverHeroFlightTopRadius(
+                              ListingCardVariant.regular,
+                            ),
                       ),
                     ),
                   );

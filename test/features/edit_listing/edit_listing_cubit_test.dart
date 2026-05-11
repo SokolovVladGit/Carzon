@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
@@ -627,6 +628,7 @@ void main() {
           cubit.state.failureKind,
           EditListingFailureKind.galleryReplaceFailed,
         );
+        expect(cubit.state.status, EditListingStatus.failure);
       },
     );
 
@@ -710,6 +712,61 @@ void main() {
         );
       },
     );
+
+    test('second synchronous save during upload awaits is ignored '
+        '(single upload batch)', () async {
+      final listing = _seed();
+      cubit.emit(
+        EditListingState.ready(
+          listing,
+          listingGalleryImages: const [],
+          galleryLoadSucceeded: true,
+          initialGallerySlots: <EditListingGallerySlot>[],
+        ),
+      );
+
+      final gate = Completer<void>();
+      when(() => imageRepo.uploadSequential(any())).thenAnswer((_) async {
+        await gate.future;
+        return const Success([
+          UploadedListingImage(publicUrl: 'https://cdn/n.jpg'),
+        ]);
+      });
+      when(
+        () => editRepo.updateDetailsV2(any()),
+      ).thenAnswer((_) async => Success(listing));
+      when(
+        () => editRepo.replaceListingImages(
+          listingId: any(named: 'listingId'),
+          imagePublicUrls: any(named: 'imagePublicUrls'),
+          storagePaths: any(named: 'storagePaths'),
+        ),
+      ).thenAnswer((_) async => Success(listing));
+
+      final draft = <EditListingGallerySlot>[
+        EditListingGalleryLocalSlot(upload: _upload()),
+      ];
+
+      final first = cubit.save(input: _input(listing), galleryDraft: draft);
+      await Future<void>.value();
+      expect(cubit.state.status, EditListingStatus.submitting);
+
+      final dup = cubit.save(input: _input(listing), galleryDraft: draft);
+      gate.complete();
+
+      await first;
+      await dup;
+
+      verify(() => imageRepo.uploadSequential(any())).called(1);
+      verify(() => editRepo.updateDetailsV2(any())).called(1);
+      verify(
+        () => editRepo.replaceListingImages(
+          listingId: 'l1',
+          imagePublicUrls: ['https://cdn/n.jpg'],
+          storagePaths: any(named: 'storagePaths'),
+        ),
+      ).called(1);
+    });
 
     test(
       'updateDetailsV2 receives USD currency and custom detail fields',

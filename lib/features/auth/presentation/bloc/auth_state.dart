@@ -40,7 +40,16 @@ enum AuthErrorKind {
   /// Sign-in failed for any other reason (network, server, etc.).
   signInFailed,
 
-  /// Sign-up failed (email already in use, rate limit, etc.).
+  /// Transient connectivity — prefer a neutral network-focused copy.
+  networkConnectivity,
+
+  /// Sign-up: email already registered (best-effort match on Failure text).
+  signUpEmailTaken,
+
+  /// Sign-up: password rejected as too weak — map from provider wording.
+  signUpWeakPassword,
+
+  /// Sign-up failed for any other reason (rate limit, server, etc.).
   signUpFailed,
 
   /// Sign-out failed (usually transient network error).

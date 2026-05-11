@@ -391,6 +391,34 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingDetailsLoadFailed => 'Не удалось загрузить объявление.';
 
   @override
+  String get userErrorNetworkCheckConnection =>
+      'Проверьте подключение к интернету и попробуйте ещё раз.';
+
+  @override
+  String get userErrorGenericTryAgain =>
+      'Что-то пошло не так. Попробуйте ещё раз.';
+
+  @override
+  String get userErrorEmailAlreadyRegistered =>
+      'Аккаунт с таким email уже существует.';
+
+  @override
+  String get userErrorWeakPassword =>
+      'Пароль слишком простой. Попробуйте более надёжный пароль.';
+
+  @override
+  String get userErrorInsufficientPermission =>
+      'Недостаточно прав для этого действия.';
+
+  @override
+  String get listingUnavailableOrDeleted =>
+      'Объявление недоступно или было удалено.';
+
+  @override
+  String get userErrorUploadPhotoTryAgain =>
+      'Не удалось загрузить фото. Попробуйте ещё раз.';
+
+  @override
   String get listingDetailsSpecs => 'Характеристики';
 
   @override
@@ -573,11 +601,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get messagingLoadFailed => 'Не удалось загрузить переписки.';
 
   @override
-  String get messagingSendFailed => 'Не удалось отправить сообщение.';
+  String get messagingSendFailed =>
+      'Не удалось отправить сообщение. Попробуйте ещё раз.';
 
   @override
   String get messagingNetworkError =>
-      'Проблема с сетью. Проверьте подключение.';
+      'Проверьте подключение к интернету и попробуйте ещё раз.';
 
   @override
   String get messagingServerError =>
@@ -897,9 +926,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingCreateFailed => 'Не удалось создать объявление.';
 
   @override
-  String imageLoadFailed(String error) {
-    return 'Не удалось загрузить изображение: $error';
-  }
+  String get imageLoadFailed =>
+      'Не удалось загрузить изображение. Попробуйте ещё раз.';
 
   @override
   String get coverUploadFailedRetry =>

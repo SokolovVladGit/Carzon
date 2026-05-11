@@ -179,7 +179,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
             repository: sl<MessagingRepository>(),
             conversationId: widget.conversationId,
             onReadReceiptSynced: () async {
-              await sl<MessagingUnreadSummaryCubit>().sync(sl<AuthCubit>().state);
+              await sl<MessagingUnreadSummaryCubit>().sync(
+                sl<AuthCubit>().state,
+              );
             },
           )..load(),
           child: Builder(
@@ -221,7 +223,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              messagingFailureMessage(context.l10n, k),
+                              messagingFailureMessage(
+                                context.l10n,
+                                k,
+                                isSendAction: false,
+                              ),
                             ),
                           ),
                         );
@@ -239,7 +245,13 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                         if (k == null) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(messagingFailureMessage(l10n, k)),
+                            content: Text(
+                              messagingFailureMessage(
+                                l10n,
+                                k,
+                                isSendAction: true,
+                              ),
+                            ),
                           ),
                         );
                       },
@@ -630,11 +642,11 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                 SafeArea(
                   top: false,
                   child: Padding(
-                    padding: EdgeInsets.only(
+                    padding: const EdgeInsets.only(
                       left: 12,
                       right: 4,
                       top: 8,
-                      bottom: 8 + MediaQuery.viewInsetsOf(context).bottom,
+                      bottom: 8,
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,

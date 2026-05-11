@@ -162,4 +162,28 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'gallery upload failure shows localized snackbar, not raw backend text',
+    (tester) async {
+      whenListen(
+        createCubit,
+        Stream<CreateListingState>.fromIterable(const [
+          CreateListingState.submitting(),
+          CreateListingState.failure(CreateListingFailureKind.upload),
+        ]),
+        initialState: const CreateListingState.idle(),
+      );
+
+      await tester.pumpWidget(wrap());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text(l10n.createListingPhotosUploadFailed), findsOneWidget);
+      expect(find.textContaining('PGRST'), findsNothing);
+      expect(find.textContaining('PostgREST'), findsNothing);
+      expect(find.textContaining('listing-images'), findsNothing);
+      expect(find.text('rls'), findsNothing);
+    },
+  );
 }

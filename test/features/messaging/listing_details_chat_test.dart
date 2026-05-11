@@ -246,14 +246,12 @@ void main() {
     tester,
   ) async {
     stubAuth(
-      const AuthState.authenticated(
-        AuthUser(id: 'buyer-1', email: 'b@x.com'),
-      ),
+      const AuthState.authenticated(AuthUser(id: 'buyer-1', email: 'b@x.com')),
     );
     stubListing(listingWithSeller(sellerId: 'seller-99'));
-    when(() => detailsCubit.startConversationForListing('l1')).thenAnswer(
-      (_) async => FailureResult(NetworkFailure('bad')),
-    );
+    when(
+      () => detailsCubit.startConversationForListing('l1'),
+    ).thenAnswer((_) async => FailureResult(NetworkFailure('bad')));
 
     final router = GoRouter(
       initialLocation: '/listings/l1',
@@ -270,7 +268,8 @@ void main() {
     await tester.tap(find.text(l10n.chatLabel));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.messagingNetworkError), findsOneWidget);
+    expect(find.text(l10n.userErrorNetworkCheckConnection), findsOneWidget);
+    expect(find.textContaining('bad'), findsNothing);
     verify(() => detailsCubit.startConversationForListing('l1')).called(1);
   });
 
@@ -285,9 +284,9 @@ void main() {
       stubListing(listingWithSeller(sellerId: 'seller-99'));
 
       final completer = Completer<Result<String>>();
-      when(() => detailsCubit.startConversationForListing('l1')).thenAnswer(
-        (_) => completer.future,
-      );
+      when(
+        () => detailsCubit.startConversationForListing('l1'),
+      ).thenAnswer((_) => completer.future);
 
       final router = GoRouter(
         initialLocation: '/listings/l1',

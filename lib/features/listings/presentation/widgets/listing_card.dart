@@ -91,6 +91,10 @@ class ListingCard extends StatefulWidget {
   /// notch tighter than the image so it visually layers on top of
   /// the photo.
   static double _imageRadiusFor(bool featured) => featured ? 16 : 20;
+
+  /// Top radius of the cover image clip — matches Hero shuttle interpolation.
+  static double coverHeroFlightTopRadius(ListingCardVariant variant) =>
+      _imageRadiusFor(variant == ListingCardVariant.featured);
   static double _panelRadiusFor(bool featured) => featured ? 14 : 18;
 
   /// How far the info panel pushes up into the image's bottom edge.
@@ -245,7 +249,11 @@ class _CoverStack extends StatelessWidget {
     final stack = Stack(
       fit: StackFit.passthrough,
       children: [
-        ListingCoverImage(imageUrl: coverImageUrl, heroTag: heroTag),
+        ListingCoverImage(
+          imageUrl: coverImageUrl,
+          heroTag: heroTag,
+          heroFlightSourceTopRadius: imageRadius,
+        ),
         const Positioned(
           left: 0,
           right: 0,

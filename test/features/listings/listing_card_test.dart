@@ -244,4 +244,17 @@ void main() {
       },
     );
   });
+
+  group('ListingCard.hero shuttle radius', () {
+    test('matches regular vs featured cover top radii', () {
+      expect(
+        ListingCard.coverHeroFlightTopRadius(ListingCardVariant.regular),
+        20,
+      );
+      expect(
+        ListingCard.coverHeroFlightTopRadius(ListingCardVariant.featured),
+        16,
+      );
+    });
+  });
 }

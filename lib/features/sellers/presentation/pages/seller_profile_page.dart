@@ -9,6 +9,7 @@ import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
+import '../../../listings/presentation/widgets/listing_card.dart';
 import '../../../listings/presentation/widgets/listing_tile.dart';
 import '../bloc/seller_profile_cubit.dart';
 import '../bloc/seller_profile_state.dart';
@@ -206,6 +207,10 @@ class _SellerProfileView extends StatelessWidget {
                             AppRoutes.listingDetailsPath(listing.id),
                             extra: ListingDetailsExtra(
                               coverImageUrl: listing.coverImageUrl,
+                              coverHeroFlightTopRadius:
+                                  ListingCard.coverHeroFlightTopRadius(
+                                    ListingCardVariant.regular,
+                                  ),
                             ),
                           ),
                         );

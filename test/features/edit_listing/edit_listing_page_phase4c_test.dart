@@ -142,6 +142,29 @@ void main() {
     );
   });
 
+  testWidgets('save button is disabled while submitting (shows progress)', (
+    tester,
+  ) async {
+    final listing = _listing(coverUrl: 'https://cdn.example.com/c.jpg');
+    stub(
+      EditListingState.submitting(
+        listing,
+        listingGalleryImages: const [],
+        galleryLoadSucceeded: true,
+        initialGallerySlots: <EditListingGallerySlot>[],
+      ),
+    );
+
+    await tester.pumpWidget(app());
+    await tester.pump();
+
+    final fb = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('edit_listing_save_button')),
+    );
+    expect(fb.onPressed, isNull);
+    expect(find.byType(CircularProgressIndicator), findsWidgets);
+  });
+
   testWidgets('save delegates to cubit.save with named parameters', (
     tester,
   ) async {

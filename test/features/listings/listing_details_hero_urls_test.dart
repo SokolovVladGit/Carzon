@@ -29,6 +29,35 @@ ListingImage _img({required int position, required String url}) => ListingImage(
 );
 
 void main() {
+  group('mergePreferredFirstHeroUrl', () {
+    test('null preferred leaves order unchanged', () {
+      expect(mergePreferredFirstHeroUrl(null, ['https://cdn/a.jpg']), [
+        'https://cdn/a.jpg',
+      ]);
+    });
+
+    test(
+      'prepends preferred and removes duplicates already in resolved list',
+      () {
+        expect(
+          mergePreferredFirstHeroUrl('https://cdn/cover.jpg', [
+            'https://cdn/a.jpg',
+            'https://cdn/cover.jpg',
+            'https://cdn/b.jpg',
+          ]),
+          ['https://cdn/cover.jpg', 'https://cdn/a.jpg', 'https://cdn/b.jpg'],
+        );
+      },
+    );
+
+    test('resolved list only repeats preferred — single element output', () {
+      expect(
+        mergePreferredFirstHeroUrl('https://cdn/x.jpg', ['https://cdn/x.jpg']),
+        ['https://cdn/x.jpg'],
+      );
+    });
+  });
+
   group('listingDetailsHeroImageUrls', () {
     test(
       'uses ordered gallery URLs only — does not append cover duplicates',
@@ -40,6 +69,42 @@ void main() {
             _img(position: 1, url: 'https://cdn/b.jpg'),
             _img(position: 0, url: 'https://cdn/a.jpg'),
           ]),
+        );
+        expect(urls, ['https://cdn/a.jpg', 'https://cdn/b.jpg']);
+      },
+    );
+
+    test(
+      'preferredFirstUrl stays first when gallery resolves to different URLs',
+      () {
+        final listing = _baseListing(cover: 'https://cdn/cover-only.jpg');
+        final urls = listingDetailsHeroImageUrls(
+          listing: listing,
+          imagesResult: Success([
+            _img(position: 1, url: 'https://cdn/b.jpg'),
+            _img(position: 0, url: 'https://cdn/a.jpg'),
+          ]),
+          preferredFirstUrl: 'https://cdn/cover-only.jpg',
+        );
+        expect(urls, [
+          'https://cdn/cover-only.jpg',
+          'https://cdn/a.jpg',
+          'https://cdn/b.jpg',
+        ]);
+      },
+    );
+
+    test(
+      'preferredFirstUrl dedupes when it equals first gallery row string',
+      () {
+        final listing = _baseListing(cover: 'https://cdn/a.jpg');
+        final urls = listingDetailsHeroImageUrls(
+          listing: listing,
+          imagesResult: Success([
+            _img(position: 0, url: 'https://cdn/a.jpg'),
+            _img(position: 1, url: 'https://cdn/b.jpg'),
+          ]),
+          preferredFirstUrl: 'https://cdn/a.jpg',
         );
         expect(urls, ['https://cdn/a.jpg', 'https://cdn/b.jpg']);
       },

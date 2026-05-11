@@ -22,12 +22,12 @@ class ListingDetailsCubit extends Cubit<ListingDetailsState> {
   final GetListingImages _getListingImages;
   final GetOrCreateConversation _getOrCreateConversation;
 
-  Future<void> load(String id) async {
+  Future<void> load(String id, {String? initialCoverImageUrl}) async {
     emit(const ListingDetailsState.loading());
     final listingRes = await _getListingById(id);
     switch (listingRes) {
       case FailureResult(:final failure):
-        emit(ListingDetailsState.failure(failure.message));
+        emit(ListingDetailsState.failure(failure));
         return;
       case Success(:final value):
         final listing = value;
@@ -35,6 +35,7 @@ class ListingDetailsCubit extends Cubit<ListingDetailsState> {
         final urls = listingDetailsHeroImageUrls(
           listing: listing,
           imagesResult: imagesRes,
+          preferredFirstUrl: initialCoverImageUrl,
         );
         emit(ListingDetailsState.success(listing, heroImageUrls: urls));
     }

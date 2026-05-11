@@ -1,10 +1,161 @@
 import '../../domain/entities/listing.dart';
 
-/// Normalizes free-text lines for semantic comparison (subtitle vs vehicle line).
-String normalizeListingHeaderLine(String raw) =>
-    raw.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
+/// Normalizes text for deterministic header comparisons:
+/// lowercase, trimmed, punctuation → spaces, hyphen-like dashes → spaces,
+/// internal whitespace collapsed.
+String normalizeListingHeaderForComparison(String raw) {
+  var s = raw.toLowerCase().trim();
+  if (s.isEmpty) return '';
+  // Hyphens commonly differ between structured fields vs seller title typing.
+  s = s.replaceAll(RegExp(r'[-–—]'), ' ');
+  // Other light punctuation clusters become word separators.
+  s = s.replaceAll(RegExp(r'''[,.;:!?·•'"`\\/]+'''), ' ');
+  s = s.replaceAll(RegExp(r'\s+'), ' ');
+  return s.trim();
+}
 
-/// How the listing details heading presents make/model vs custom title (tagline).
+/// Stable make + model headline as used before the subtitle rule.
+String listingDetailsVehicleIdentityLine(String makeRaw, String modelRaw) {
+  String squeezeSpaces(String v) => v.replaceAll(RegExp(r'\s+'), ' ').trim();
+  final make = makeRaw.trim();
+  final model = modelRaw.trim();
+  if (make.isEmpty && model.isEmpty) return '';
+  if (make.isEmpty) return squeezeSpaces(model);
+  if (model.isEmpty) return squeezeSpaces(make);
+  return squeezeSpaces('$make $model');
+}
+
+String _squeezeTitle(String raw) => raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+/// True when `c` separates the listing year digits from preceding text (comma,
+/// dot, middot, spaces, slashes, hyphen-style dashes), not alphanumeric glue.
+bool _isStructuralYearSeparatorBeforeListingYear(String char) =>
+    RegExp(r'''^[,\s;:!?.·\-–—/]+$''').hasMatch(char);
+
+/// Removes a trailing `[separators?]listingYear` suffix only when a separator
+/// boundary exists immediately before the year ([char] glue like `coupe2023`
+/// yields null). Returns peeled prefix trimmed of trailing separator run.
+String? peelRawTitleTrailingListingYearIfSeparated(
+  String squeezedTitle,
+  int year,
+) {
+  final trimmed = squeezedTitle.trim();
+  final yStr = year.toString();
+  if (!trimmed.endsWith(yStr)) return null;
+
+  final yearStart = trimmed.length - yStr.length;
+  if (yearStart > 0 &&
+      !_isStructuralYearSeparatorBeforeListingYear(trimmed[yearStart - 1])) {
+    return null;
+  }
+
+  var prefix = trimmed.substring(0, yearStart);
+  prefix = prefix.replaceAll(RegExp(r'''[,;:!?.·\-–—/\s]+$'''), '').trim();
+  return prefix;
+}
+
+/// If [squeezedTitle] is structured make/model plus listing year only, returns
+/// canonical [vehicleLine]; otherwise returns null (caller keeps custom title).
+String? listingStructuredDisplayTitleTrimYearIfRedundant({
+  required String squeezedTitle,
+  required int listingYear,
+  required String vehicleLine,
+}) {
+  if (vehicleLine.isEmpty) return null;
+
+  final peeled = peelRawTitleTrailingListingYearIfSeparated(
+    squeezedTitle,
+    listingYear,
+  );
+  if (peeled == null || peeled.isEmpty) return null;
+
+  final peelNorm = normalizeListingHeaderForComparison(peeled);
+  final idNorm = normalizeListingHeaderForComparison(vehicleLine);
+  if (peelNorm == idNorm && peelNorm.isNotEmpty) return vehicleLine;
+
+  return null;
+}
+
+/// Primary headline shown in listing details: strips redundant trailing year when
+/// the stored title equals structured identity plus that year only.
+String listingDetailsDisplayPrimaryTitle(Listing listing) {
+  final squeezed = _squeezeTitle(listing.title);
+  final vehicleLine = listingDetailsVehicleIdentityLine(
+    listing.make,
+    listing.model,
+  );
+
+  final canonical = listingStructuredDisplayTitleTrimYearIfRedundant(
+    squeezedTitle: squeezed,
+    listingYear: listing.year,
+    vehicleLine: vehicleLine,
+  );
+  return canonical ?? squeezed;
+}
+
+/// True when showing a structured subtitle would only echo make/model/year
+/// the user already reads in the primary title (year also appears in chips).
+bool listingDetailsTitleAlreadyEmbedsStructuredIdentity({
+  required String rawTitle,
+  required String vehicleLine,
+  required int year,
+}) {
+  if (vehicleLine.isEmpty) return true;
+
+  final idNorm = normalizeListingHeaderForComparison(vehicleLine);
+  if (idNorm.isEmpty) return true;
+
+  final titleNorm = normalizeListingHeaderForComparison(rawTitle);
+  if (titleNorm.isEmpty) return false;
+
+  if (titleNorm == idNorm) return true;
+
+  final trimmedOfYear = _stripNormalizedTrailingListingYear(
+    titleNorm,
+    year.toString(),
+  );
+  if (trimmedOfYear.isNotEmpty && trimmedOfYear == idNorm) return true;
+
+  if (titleNorm.contains(idNorm)) return true;
+
+  return false;
+}
+
+String _stripNormalizedTrailingListingYear(String normalizedTitle, String y) {
+  if (!normalizedTitle.endsWith(y)) return normalizedTitle;
+  var prefix = normalizedTitle
+      .substring(0, normalizedTitle.length - y.length)
+      .trim();
+  // Drop trailing commas / middots / filler left after stripping the year.
+  prefix = prefix
+      .replaceAll(RegExp(r'''[,·\s]+$'''), ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  return prefix;
+}
+
+String? listingDetailsStructuredHeaderTagline(Listing listing) {
+  final rawTitle = listing.title.trim();
+  if (rawTitle.isEmpty) return null;
+
+  final vehicleLine = listingDetailsVehicleIdentityLine(
+    listing.make,
+    listing.model,
+  );
+  if (vehicleLine.isEmpty) return null;
+
+  if (listingDetailsTitleAlreadyEmbedsStructuredIdentity(
+    rawTitle: listing.title,
+    vehicleLine: vehicleLine,
+    year: listing.year,
+  )) {
+    return null;
+  }
+
+  return '$vehicleLine · ${listing.year}';
+}
+
+/// Listing details panel header: seller title whenever set; optional structured line.
 class ListingDetailsHeaderDisplay {
   const ListingDetailsHeaderDisplay({required this.primaryLine, this.tagline});
 
@@ -12,33 +163,21 @@ class ListingDetailsHeaderDisplay {
   final String? tagline;
 
   factory ListingDetailsHeaderDisplay.fromListing(Listing listing) {
-    final rawTitle = listing.title.trim();
-    final make = listing.make.trim();
-    final model = listing.model.trim();
+    final vehicleLine = listingDetailsVehicleIdentityLine(
+      listing.make,
+      listing.model,
+    );
+    final raw = listing.title.trim();
 
-    String squeezeSpaces(String v) => v.replaceAll(RegExp(r'\s+'), ' ').trim();
+    final primaryLine = raw.isNotEmpty
+        ? listingDetailsDisplayPrimaryTitle(listing)
+        : vehicleLine;
 
-    final vehicleLine = make.isEmpty && model.isEmpty
-        ? rawTitle
-        : make.isEmpty
-        ? squeezeSpaces(model)
-        : model.isEmpty
-        ? squeezeSpaces(make)
-        : squeezeSpaces('$make $model');
+    final tagline = listingDetailsStructuredHeaderTagline(listing);
 
-    final primary = vehicleLine.isNotEmpty ? vehicleLine : rawTitle;
-
-    if (rawTitle.isEmpty) {
-      return ListingDetailsHeaderDisplay(primaryLine: primary);
-    }
-
-    final primNorm = normalizeListingHeaderLine(primary);
-    final titleNorm = normalizeListingHeaderLine(rawTitle);
-
-    if (titleNorm == primNorm || titleNorm.isEmpty) {
-      return ListingDetailsHeaderDisplay(primaryLine: primary);
-    }
-
-    return ListingDetailsHeaderDisplay(primaryLine: primary, tagline: rawTitle);
+    return ListingDetailsHeaderDisplay(
+      primaryLine: primaryLine,
+      tagline: tagline,
+    );
   }
 }

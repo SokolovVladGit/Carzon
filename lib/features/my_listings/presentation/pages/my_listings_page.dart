@@ -12,6 +12,7 @@ import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../listings/presentation/widgets/listing_card.dart';
 import '../bloc/my_listings_cubit.dart';
 import '../bloc/my_listings_state.dart';
 import '../widgets/my_listing_tile.dart';
@@ -131,6 +132,10 @@ class _MyListingsView extends StatelessWidget {
                         AppRoutes.listingDetailsPath(item.id),
                         extra: ListingDetailsExtra(
                           coverImageUrl: item.coverImageUrl,
+                          coverHeroFlightTopRadius:
+                              ListingCard.coverHeroFlightTopRadius(
+                                ListingCardVariant.regular,
+                              ),
                         ),
                       ),
                     );

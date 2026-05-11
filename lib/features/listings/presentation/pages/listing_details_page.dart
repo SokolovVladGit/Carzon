@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/presentation/localized_user_failure_message.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/error_view.dart';
@@ -30,6 +31,7 @@ import '../utils/listing_formatters.dart';
 import '../utils/listing_details_header_titles.dart';
 import '../utils/report_listing_mailto.dart';
 import '../widgets/listing_cover_image.dart';
+import '../widgets/listing_details_fullscreen_gallery.dart';
 import '../../../sellers/presentation/widgets/seller_trust_section.dart';
 
 /// Minimal launcher seam local to this page — mirrors the
@@ -68,6 +70,7 @@ class ListingDetailsPage extends StatelessWidget {
     this.reportEmail,
     this.uriLauncher,
     this.initialCoverImageUrl,
+    this.coverHeroFlightTopRadius,
   });
 
   final String id;
@@ -86,15 +89,21 @@ class ListingDetailsPage extends StatelessWidget {
   /// URLs come exclusively from [`ListingDetailsState.heroImageUrls`].
   final String? initialCoverImageUrl;
 
+  /// Feed card cover top radius for Hero shuttle (null ⇒ regular card default).
+  final double? coverHeroFlightTopRadius;
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<ListingDetailsCubit>()..load(id),
+      create: (_) =>
+          sl<ListingDetailsCubit>()
+            ..load(id, initialCoverImageUrl: initialCoverImageUrl),
       child: _ListingDetailsView(
         id: id,
         reportEmail: reportEmail,
         uriLauncher: uriLauncher,
         initialCoverImageUrl: initialCoverImageUrl,
+        heroFlightSourceTopRadius: coverHeroFlightTopRadius ?? 20,
       ),
     );
   }
@@ -106,12 +115,14 @@ class _ListingDetailsView extends StatefulWidget {
     required this.reportEmail,
     required this.uriLauncher,
     required this.initialCoverImageUrl,
+    required this.heroFlightSourceTopRadius,
   });
 
   final String id;
   final String? reportEmail;
   final ListingDetailsUriLauncher? uriLauncher;
   final String? initialCoverImageUrl;
+  final double heroFlightSourceTopRadius;
 
   @override
   State<_ListingDetailsView> createState() => _ListingDetailsViewState();
@@ -160,7 +171,7 @@ class _ListingDetailsViewState extends State<_ListingDetailsView> {
         });
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         body: SingleChildScrollView(
           padding: EdgeInsets.zero,
           child: Column(
@@ -180,6 +191,8 @@ class _ListingDetailsViewState extends State<_ListingDetailsView> {
                     child: _ListingHeroCarousel(
                       listingId: widget.id,
                       urls: carouselUrls,
+                      heroFlightSourceTopRadius:
+                          widget.heroFlightSourceTopRadius,
                       onPageChanged: (i) =>
                           setState(() => _carouselPageIndex = i),
                     ),
@@ -193,12 +206,20 @@ class _ListingDetailsViewState extends State<_ListingDetailsView> {
                     case ListingDetailsStatus.loading:
                       return const _LoadingBelowHero();
                     case ListingDetailsStatus.failure:
+                      final l10n = context.l10n;
+                      final msg = state.loadFailure != null
+                          ? localizedUserFailureMessage(
+                              l10n,
+                              state.loadFailure!,
+                              surface: LocalizedFailureSurface.listingDetails,
+                            )
+                          : l10n.listingDetailsLoadFailed;
                       return _FailureBelowHero(
-                        message:
-                            state.errorMessage ??
-                            context.l10n.listingDetailsLoadFailed,
-                        onRetry: () =>
-                            context.read<ListingDetailsCubit>().load(widget.id),
+                        message: msg,
+                        onRetry: () => context.read<ListingDetailsCubit>().load(
+                          widget.id,
+                          initialCoverImageUrl: widget.initialCoverImageUrl,
+                        ),
                       );
                     case ListingDetailsStatus.success:
                       final heroUrls = _effectiveHeroUrls(state);
@@ -249,11 +270,9 @@ bool _urlsListEquiv(List<String> a, List<String> b) {
 // --------------------------------------------------------------------
 //
 // These widgets render only the content that sits UNDER the hero
-// image. The hero itself is mounted once, higher up in the tree
-// (see `_ListingDetailsView.build`) so the shared `Hero` widget and
-// its `Image.network` child stay identical across state transitions —
-// which is what keeps the forward Hero flight from glitching when
-// the Cubit flips from `loading` to `success` mid-transition.
+// image. The hero carousel stays structurally stable (see
+// `_ListingHeroCarousel`): first-slot URL aligns loading→success when the feed
+// supplies route-extra cover; Gallery merges preserve that ordering via the cubit.
 
 class _SuccessBelowHero extends StatelessWidget {
   const _SuccessBelowHero({
@@ -278,12 +297,12 @@ class _SuccessBelowHero extends StatelessWidget {
     // hero's bottom edge. Children keep their natural layout; this is
     // a paint-time offset only.
     final Widget indicator;
-    if (carouselPhotoCount <= 0) {
+    if (carouselPhotoCount <= 1) {
       indicator = const SizedBox.shrink();
     } else {
-      indicator = _ListingPagerIndicator(
-        current: carouselPageZeroBased.clamp(0, carouselPhotoCount - 1) + 1,
-        total: carouselPhotoCount,
+      indicator = _ListingGalleryIndicator(
+        currentIndex: carouselPageZeroBased.clamp(0, carouselPhotoCount - 1),
+        imageCount: carouselPhotoCount,
       );
     }
 
@@ -346,17 +365,19 @@ class _FailureBelowHero extends StatelessWidget {
 Iterable<Widget>? _spreadOptionalTrailing(Widget? w) =>
     w == null ? null : <Widget>[w];
 
-/// Full-bleed hero: single image, swipe carousel, or placeholder.
-/// Exactly one slide carries the listing `Hero` tag for feed→details transit.
+/// Full-bleed hero: stable `PageView` whenever URLs exist (including exactly one).
+/// Placeholder only when empty. Index 0 carries the sole listing-cover `Hero`.
 class _ListingHeroCarousel extends StatefulWidget {
   const _ListingHeroCarousel({
     required this.listingId,
     required this.urls,
+    required this.heroFlightSourceTopRadius,
     required this.onPageChanged,
   });
 
   final String listingId;
   final List<String> urls;
+  final double heroFlightSourceTopRadius;
   final ValueChanged<int> onPageChanged;
 
   @override
@@ -370,11 +391,25 @@ class _ListingHeroCarouselState extends State<_ListingHeroCarousel> {
   @override
   void didUpdateWidget(covariant _ListingHeroCarousel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!_urlsListEquiv(widget.urls, oldWidget.urls)) {
+    if (oldWidget.listingId != widget.listingId) {
       _pageController.dispose();
       _pageController = PageController(initialPage: 0);
       _pageIndexVisual = 0;
+      return;
     }
+    if (_urlsListEquiv(widget.urls, oldWidget.urls)) return;
+    final len = widget.urls.length;
+    if (len == 0) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!_pageController.hasClients) return;
+      final maxIndex = len - 1;
+      final raw = (_pageController.page ?? _pageIndexVisual.toDouble()).round();
+      if (raw > maxIndex || raw < 0) {
+        _pageController.jumpToPage(0);
+        setState(() => _pageIndexVisual = 0);
+      }
+    });
   }
 
   @override
@@ -409,48 +444,55 @@ class _ListingHeroCarouselState extends State<_ListingHeroCarousel> {
   Widget build(BuildContext context) {
     final urls = widget.urls;
     final tag = listingCoverHeroTag(widget.listingId);
+    final rHero = widget.heroFlightSourceTopRadius;
 
     if (urls.isEmpty) {
       return _heroStack(
-        backdrop: ListingCoverImage(imageUrl: null, heroTag: tag),
-      );
-    }
-    if (urls.length == 1) {
-      return _heroStack(
-        backdrop: ListingCoverImage(imageUrl: urls.first, heroTag: tag),
+        backdrop: ListingCoverImage(
+          imageUrl: null,
+          heroTag: tag,
+          heroFlightSourceTopRadius: rHero,
+        ),
       );
     }
 
-    final pageDots = Positioned(
-      left: 0,
-      right: 0,
-      bottom: 14,
-      child: IgnorePointer(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(urls.length, (i) {
-            final active = i == _pageIndexVisual.clamp(0, urls.length - 1);
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: active ? 7 : 5,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: active ? 0.95 : 0.35),
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: active ? 0.35 : 0.22),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
+    final pageDots = urls.length > 1
+        ? Positioned(
+            left: 0,
+            right: 0,
+            bottom: 14,
+            child: IgnorePointer(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(urls.length, (i) {
+                  final active =
+                      i == _pageIndexVisual.clamp(0, urls.length - 1);
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: active ? 7 : 5,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(
+                        alpha: active ? 0.95 : 0.35,
+                      ),
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: active ? 0.35 : 0.22,
+                          ),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
               ),
-            );
-          }),
-        ),
-      ),
-    );
+            ),
+          )
+        : null;
 
     return _heroStack(
       pageDots: pageDots,
@@ -462,9 +504,23 @@ class _ListingHeroCarouselState extends State<_ListingHeroCarousel> {
           widget.onPageChanged(i);
         },
         itemBuilder: (context, i) {
-          return ListingCoverImage(
-            imageUrl: urls[i],
-            heroTag: i == 0 ? tag : null,
+          final pageHeroTag = i == 0
+              ? tag
+              : listingDetailsGalleryHeroTag(widget.listingId, i);
+          return GestureDetector(
+            onTap: () => openListingDetailsFullscreenGallery(
+              context,
+              listingId: widget.listingId,
+              urls: urls,
+              initialIndex: i,
+              heroFlightSourceTopRadius: rHero,
+            ),
+            behavior: HitTestBehavior.opaque,
+            child: ListingCoverImage(
+              imageUrl: urls[i],
+              heroTag: pageHeroTag,
+              heroFlightSourceTopRadius: rHero,
+            ),
           );
         },
       ),
@@ -529,13 +585,13 @@ class _HeroTopControls extends StatelessWidget {
 ///
 /// Visual recipe:
 ///   * 40×40 rounded square, radius 12,
-///   * translucent white fill (~72%) so the icon reads over any
-///     photo without looking like a pasted-on chip,
+///   * light mode: translucent white fill (~72%) and hairline white border
+///     so the icon reads over any photo without looking pasted-on,
+///   * dark mode: frosted `surface` fill + `outline` border (no harsh white tile),
 ///   * backdrop blur behind the fill so the photo is softened,
 ///     which is the detail that makes it feel like glass,
-///   * hairline white inner border + low-opacity elevation shadow
-///     for a subtle lift,
-///   * dark (`onSurface`) icon theme at 20 px.
+///   * low-opacity elevation shadow for a subtle lift,
+///   * `onSurface` icon theme at 20 px.
 ///
 /// Forwards all pointer events to the hosted [child], so the
 /// `AppBackButton` / `FavoriteToggleButton` logic (pop, fallback,
@@ -553,8 +609,19 @@ class _HeroGlassTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final iconColor = scheme.onSurface;
+    final isDark = theme.brightness == Brightness.dark;
+    final fillColor = isDark
+        ? scheme.surface.withValues(alpha: 0.62)
+        : Colors.white.withValues(alpha: 0.72);
+    final borderColor = isDark
+        ? scheme.outline.withValues(alpha: 0.38)
+        : Colors.white.withValues(alpha: 0.55);
+    final shadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.45)
+        : Colors.black.withValues(alpha: 0.18);
 
     return SizedBox(
       width: _size,
@@ -564,7 +631,7 @@ class _HeroGlassTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(_radius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
+              color: shadowColor,
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -576,12 +643,9 @@ class _HeroGlassTile extends StatelessWidget {
             filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: fillColor,
                 borderRadius: BorderRadius.circular(_radius),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.55),
-                  width: 0.5,
-                ),
+                border: Border.all(color: borderColor, width: 0.5),
               ),
               alignment: Alignment.center,
               child: IconTheme.merge(
@@ -610,7 +674,7 @@ class _HeroGlassTile extends StatelessWidget {
 // Listing content panel (header + body, under the hero)
 // --------------------------------------------------------------------
 
-/// Rounded-top white panel that hosts the entire scrollable body
+/// Rounded-top surface panel that hosts the entire scrollable body
 /// under the hero section. The corner radius is the visual seam
 /// between the photo and the page body. [header] sits flush against
 /// the top edge (no outer horizontal gutter) so the pager indicator
@@ -624,10 +688,11 @@ class _ListingContentPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -648,15 +713,16 @@ class _ListingContentPanel extends StatelessWidget {
   }
 }
 
-/// New listing header that lives at the top of the white content
+/// New listing header that lives at the top of the content
 /// panel (not over the photo). Shows:
 ///   1. The pager indicator (hidden when no photos exist),
 ///   2. The brand mark,
-///   3. Primary vehicle identity (`make` + `model`) with optional subtitle
-///      from the seller's listing title when it differs semantically,
-///   4. Region + type badges,
-///   5. Secondary meta row (year • mileage • city),
-///   6. Price in the primary accent colour.
+///   3. Primary line: seller listing title (squeezed) when set, else make+model,
+///   4. Optional structured subtitle: `make model · year` when the title lacks
+///      that identity (redundant identity+year lines are omitted),
+///   5. Region + type badges,
+///   6. Secondary meta row (year • mileage • city),
+///   7. Price in the primary accent colour.
 class _ListingHeader extends StatelessWidget {
   const _ListingHeader({required this.listing, required this.indicator});
 
@@ -711,16 +777,16 @@ class _ListingHeader extends StatelessWidget {
           _FeatureCards(
             items: [
               _FeatureItemData(
-                icon: CarzonIcons.calendar,
+                icon: Icons.calendar_month_outlined,
                 value: listing.year.toString(),
               ),
               _FeatureItemData(
-                icon: CarzonIcons.gauge,
+                icon: Icons.speed_outlined,
                 value: formatKm(listing.mileageKm),
               ),
               if (listing.city.isNotEmpty)
                 _FeatureItemData(
-                  icon: CarzonIcons.location,
+                  icon: Icons.place_outlined,
                   value: listing.city,
                 ),
             ],
@@ -742,6 +808,10 @@ class _ListingHeader extends StatelessWidget {
     );
   }
 }
+
+/// Summary chip icon: outlined Material icons, quiet relative to value text.
+const double _summaryChipIconSize = 16;
+const double _summaryChipIconAlpha = 0.64;
 
 /// "At a glance" feature cards placed between the badges and the
 /// price. Each data point (year, mileage, city) gets its own
@@ -785,15 +855,16 @@ class _FeatureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final shadowAlpha = theme.brightness == Brightness.dark ? 0.38 : 0.045;
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: scheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(13),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.045),
+            color: scheme.shadow.withValues(alpha: shadowAlpha),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -805,8 +876,8 @@ class _FeatureCard extends StatelessWidget {
         children: [
           Icon(
             data.icon,
-            size: 16,
-            color: scheme.primary.withValues(alpha: 0.78),
+            size: _summaryChipIconSize,
+            color: scheme.primary.withValues(alpha: _summaryChipIconAlpha),
           ),
           const SizedBox(width: 6),
           Flexible(
@@ -828,30 +899,67 @@ class _FeatureCard extends StatelessWidget {
   }
 }
 
-/// Pager affordance: `current / total` when the listing has carousel photos.
-class _ListingPagerIndicator extends StatelessWidget {
-  const _ListingPagerIndicator({required this.current, required this.total});
+/// Dots under the hero overlay already echo page position; above the panel
+/// use a calmer pill/dot row on the light/dark details surface.
+class _ListingGalleryIndicator extends StatelessWidget {
+  const _ListingGalleryIndicator({
+    required this.currentIndex,
+    required this.imageCount,
+  });
 
-  final int current;
-  final int total;
+  final int currentIndex;
+  final int imageCount;
+
+  static const Duration _animDuration = Duration(milliseconds: 220);
+  static const Curve _animCurve = Curves.easeOutCubic;
+  static const double _dotSize = 5.5;
+  static const double _pillWidth = 18;
+  static const double _trackHeight = 5.5;
+  static const double _gap = 5;
 
   @override
   Widget build(BuildContext context) {
+    if (imageCount <= 1) return const SizedBox.shrink();
+
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1.5),
-      decoration: BoxDecoration(
-        color: scheme.onSurface.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        '$current / $total',
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: scheme.onSurface.withValues(alpha: 0.55),
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.4,
-          fontSize: 10.5,
+    final isDark = theme.brightness == Brightness.dark;
+    final safeIndex = currentIndex.clamp(0, imageCount - 1);
+
+    final inactive = scheme.outlineVariant.withValues(
+      alpha: isDark ? 0.5 : 0.38,
+    );
+    final active = scheme.primary.withValues(alpha: isDark ? 0.92 : 0.88);
+
+    final track = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(imageCount, (i) {
+        final on = i == safeIndex;
+        return AnimatedContainer(
+          duration: _animDuration,
+          curve: _animCurve,
+          margin: const EdgeInsets.symmetric(horizontal: _gap / 2),
+          height: _trackHeight,
+          width: on ? _pillWidth : _dotSize,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            color: on ? active : inactive,
+          ),
+        );
+      }),
+    );
+
+    return Semantics(
+      label: '${safeIndex + 1} of $imageCount',
+      child: SizedBox(
+        width: double.infinity,
+        child: Align(
+          alignment: Alignment.center,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.center,
+            child: track,
+          ),
         ),
       ),
     );
@@ -1045,8 +1153,7 @@ class _ListingDescriptionBlock extends StatelessWidget {
   }
 }
 
-/// Flat details list. No card background, subtle dividers, muted
-/// labels, medium-weight values.
+/// Flat details list. Rows use editorial label/value layout; empty values omitted.
 class _DetailsList extends StatelessWidget {
   const _DetailsList({required this.listing});
 
@@ -1057,9 +1164,13 @@ class _DetailsList extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = context.l10n;
 
+    bool hasValue(String v) => v.trim().isNotEmpty;
+
     final rows = <_DetailsRowData>[
-      _DetailsRowData(l10n.listingFieldMake, listing.make),
-      _DetailsRowData(l10n.listingFieldModel, listing.model),
+      if (hasValue(listing.make))
+        _DetailsRowData(l10n.listingFieldMake, listing.make.trim()),
+      if (hasValue(listing.model))
+        _DetailsRowData(l10n.listingFieldModel, listing.model.trim()),
       _DetailsRowData(l10n.listingFieldYear, listing.year.toString()),
       _DetailsRowData(l10n.listingFieldMileage, formatKm(listing.mileageKm)),
       _DetailsRowData(l10n.listingFieldType, formatType(l10n, listing.type)),
@@ -1068,7 +1179,8 @@ class _DetailsList extends StatelessWidget {
           l10n.listingFieldBodyType,
           formatListingBodyType(l10n, listing.bodyType!),
         ),
-      _DetailsRowData(l10n.listingFieldCity, listing.city),
+      if (hasValue(listing.city))
+        _DetailsRowData(l10n.listingFieldCity, listing.city.trim()),
       if (listing.fuelType != null)
         _DetailsRowData(
           l10n.listingFuelType,
@@ -1092,11 +1204,9 @@ class _DetailsList extends StatelessWidget {
           l10n.listingDrivetrain,
           formatListingDrivetrain(l10n, listing.drivetrain!),
         ),
-      if (listing.registration != null && listing.registration!.trim().isNotEmpty)
-        _DetailsRowData(
-          l10n.listingRegistration,
-          listing.registration!.trim(),
-        ),
+      if (listing.registration != null &&
+          listing.registration!.trim().isNotEmpty)
+        _DetailsRowData(l10n.listingRegistration, listing.registration!.trim()),
       _DetailsRowData(l10n.listingFieldPosted, formatDate(listing.createdAt)),
     ];
 
@@ -1111,7 +1221,11 @@ class _DetailsList extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        for (var i = 0; i < rows.length; i++) _DetailsRow(data: rows[i]),
+        for (var i = 0; i < rows.length; i++)
+          _ListingSpecRow(
+            data: rows[i],
+            showBottomDivider: i < rows.length - 1,
+          ),
       ],
     );
   }
@@ -1123,50 +1237,65 @@ class _DetailsRowData {
   final String value;
 }
 
-/// Flat two-column details row. No divider — the only visual rhythm
-/// is vertical padding between rows, which keeps the section feeling
-/// like prose rather than a settings table.
-class _DetailsRow extends StatelessWidget {
-  const _DetailsRow({required this.data});
+/// Two-column spec row: muted label left, strong value right; optional
+/// full-width row divider only (no label/value connector).
+class _ListingSpecRow extends StatelessWidget {
+  const _ListingSpecRow({required this.data, required this.showBottomDivider});
 
   final _DetailsRowData data;
+  final bool showBottomDivider;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 4,
-            child: Text(
-              data.label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.55),
-                fontWeight: FontWeight.w400,
-                letterSpacing: 0.1,
-                height: 1.3,
+    final isDark = theme.brightness == Brightness.dark;
+    final dividerAlpha = isDark ? 0.26 : 0.16;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 46,
+                child: Text(
+                  data.label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.78),
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.06,
+                    height: 1.38,
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 6,
-            child: Text(
-              data.value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurface.withValues(alpha: 0.9),
-                fontWeight: FontWeight.w500,
-                height: 1.3,
+              const SizedBox(width: 14),
+              Expanded(
+                flex: 54,
+                child: Text(
+                  data.value,
+                  textAlign: TextAlign.right,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurface.withValues(alpha: 0.95),
+                    fontWeight: FontWeight.w600,
+                    height: 1.38,
+                  ),
+                ),
               ),
-              textAlign: TextAlign.right,
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+        if (showBottomDivider)
+          Divider(
+            height: 1,
+            thickness: 0.5,
+            color: scheme.outlineVariant.withValues(alpha: dividerAlpha),
+          ),
+      ],
     );
   }
 }
@@ -1388,7 +1517,11 @@ class _ContactBottomBarState extends State<_ContactBottomBar> {
         case FailureResult(:final failure):
           final kind = messagingFailureKindFrom(failure);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(messagingFailureMessage(l10n, kind))),
+            SnackBar(
+              content: Text(
+                messagingFailureMessage(l10n, kind, isSendAction: true),
+              ),
+            ),
           );
         case Success(:final value):
           await context.push(AppRoutes.messagesThreadPath(value));

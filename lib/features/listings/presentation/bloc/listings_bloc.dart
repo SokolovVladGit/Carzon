@@ -37,13 +37,13 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     ListingsHydratedFromDiscovery event,
     Emitter<ListingsState> emit,
   ) async {
-    final next = listingsStateFromDiscoveryCriteria(event.criteria)
-        .copyWith(
-          status: ListingsStatus.loading,
-          page: 0,
-          hasReachedEnd: false,
-          items: const [],
-        );
+    final next = listingsStateFromDiscoveryCriteria(event.criteria).copyWith(
+      status: ListingsStatus.loading,
+      page: 0,
+      hasReachedEnd: false,
+      items: const [],
+      clearLoadFailure: true,
+    );
     emit(next);
     await _loadWithState(next, emit, page: 0, replace: true);
   }
@@ -58,6 +58,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         page: 0,
         hasReachedEnd: false,
         items: const [],
+        clearLoadFailure: true,
       ),
     );
     await _load(emit, page: 0);
@@ -72,6 +73,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         status: ListingsStatus.loading,
         page: 0,
         hasReachedEnd: false,
+        clearLoadFailure: true,
       ),
     );
     await _load(emit, page: 0, replace: true);
@@ -102,6 +104,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         page: 0,
         hasReachedEnd: false,
         items: const [],
+        clearLoadFailure: true,
       ),
     );
     await _load(emit, page: 0, replace: true);
@@ -120,6 +123,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         page: 0,
         hasReachedEnd: false,
         items: const [],
+        clearLoadFailure: true,
       ),
     );
     await _load(emit, page: 0, replace: true);
@@ -140,6 +144,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         items: const [],
         search: normalized,
         clearSearch: normalized == null,
+        clearLoadFailure: true,
       ),
     );
     await _load(emit, page: 0, replace: true);
@@ -186,6 +191,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         clearMaxMileage: event.maxMileage == null,
         clearCity: city == null,
         clearBodyType: event.bodyType == null,
+        clearLoadFailure: true,
       ),
     );
     await _load(emit, page: 0, replace: true);
@@ -215,6 +221,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         clearBodyType: true,
         clearSort: true,
         clearPriceCurrencyFilter: true,
+        clearLoadFailure: true,
       ),
     );
     await _load(emit, page: 0, replace: true);
@@ -234,35 +241,33 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     required int page,
     required bool replace,
   }) async {
-    final query = ListingDiscoveryCriteria(
-      search: source.search,
-      make: source.make,
-      model: source.model,
-      minYear: source.minYear,
-      maxYear: source.maxYear,
-      minPrice: source.minPrice,
-      maxPrice: source.maxPrice,
-      maxMileage: source.maxMileage,
-      city: source.city,
-      marketRegion: source.regionFilter.asMarketRegion,
-      bodyType: source.bodyTypeFilter,
-      typeIn: source.typeFilter.asListingTypes,
-      sort: source.sortOption,
-      priceCurrencyFilter: source.priceCurrencyFilter,
-    ).toListingsQuery(
-      page: page,
-      pageSize: AppConstants.defaultPageSize,
-      status: ListingStatus.active,
-    );
+    final query =
+        ListingDiscoveryCriteria(
+          search: source.search,
+          make: source.make,
+          model: source.model,
+          minYear: source.minYear,
+          maxYear: source.maxYear,
+          minPrice: source.minPrice,
+          maxPrice: source.maxPrice,
+          maxMileage: source.maxMileage,
+          city: source.city,
+          marketRegion: source.regionFilter.asMarketRegion,
+          bodyType: source.bodyTypeFilter,
+          typeIn: source.typeFilter.asListingTypes,
+          sort: source.sortOption,
+          priceCurrencyFilter: source.priceCurrencyFilter,
+        ).toListingsQuery(
+          page: page,
+          pageSize: AppConstants.defaultPageSize,
+          status: ListingStatus.active,
+        );
 
     final result = await _getListings(query);
     switch (result) {
       case FailureResult(:final failure):
         emit(
-          source.copyWith(
-            status: ListingsStatus.failure,
-            errorMessage: failure.message,
-          ),
+          source.copyWith(status: ListingsStatus.failure, loadFailure: failure),
         );
       case Success(:final value):
         final newItems = value;
@@ -274,7 +279,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
           items: merged,
           page: page,
           hasReachedEnd: newItems.length < AppConstants.defaultPageSize,
-          errorMessage: null,
+          clearLoadFailure: true,
         );
         emit(nextState);
         final snapshot = listingDiscoveryCriteriaFromListingsState(nextState);

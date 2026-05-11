@@ -58,6 +58,27 @@ void main() {
     );
 
     blocTest<AuthCubit, AuthState>(
+      'signIn: network Failure maps to networkConnectivity',
+      build: () {
+        when(
+          () => repo.signInWithPassword(
+            email: any(named: 'email'),
+            password: any(named: 'password'),
+          ),
+        ).thenAnswer(
+          (_) async =>
+              const FailureResult<AuthUser>(NetworkFailure('no route')),
+        );
+        return cubit;
+      },
+      act: (c) => c.signIn(email: 'a@b.c', password: 'secret1'),
+      expect: () => const [
+        AuthState.authenticating(),
+        AuthState.error(AuthErrorKind.networkConnectivity),
+      ],
+    );
+
+    blocTest<AuthCubit, AuthState>(
       'signUp: emits authenticated when repository returns a user '
       '(session issued)',
       build: () {
@@ -113,7 +134,7 @@ void main() {
       act: (c) => c.signUp(email: 'a@b.c', password: 'secret1'),
       expect: () => const [
         AuthState.authenticating(),
-        AuthState.error(AuthErrorKind.signUpFailed),
+        AuthState.error(AuthErrorKind.signUpEmailTaken),
       ],
     );
   });
