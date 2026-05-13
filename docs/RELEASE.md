@@ -16,13 +16,66 @@ Ship the matching client **only after** the backend for that environment exposes
 | `SUPABASE_ANON_KEY` | Yes | Public anon key (client-safe). |
 | `SUPABASE_PASSWORD_RESET_REDIRECT_URL` | No | Deep-link target for recovery emails (e.g. custom scheme); if unset, Supabase uses project Site URL. |
 | `CARZON_REPORT_EMAIL` | No | If unset, in-app listing report mailto is hidden. |
+| `PUSH_NOTIFICATIONS_ENABLED` | No | Default **off**. Enables **Phase 2** Firebase client + **`register_push_token`**. **Phase 3A (messages):** live FCM from Carzon additionally requires migration **`20260528120000_...`**, deployed Edge Function **`process-message-notifications`**, FCM secrets, and worker scheduling — see §2b. **Does not** enable filter-alert push. |
 
 **Security**
 
 - **`service_role` keys must never** appear in Flutter env, Dart code, or committed `.env`.
-- `.env` is loaded as part of client configuration; bundle **only** client-safe values (URL + anon key + optional redirects/report email).
+- `.env` is loaded as part of client configuration; bundle **only** client-safe values (URL + anon key + optional redirects/report email + optional push flag).
 
-See also: `lib/core/config/env.dart` (`Env.requiredKeys`).
+See also: `lib/core/config/env.dart` (`Env.requiredKeys`). Optional push flag: `Env.pushNotificationsEnabled`.
+
+---
+
+## 2a. Notifications Phase 2 — Firebase / FCM **client** (no delivery)
+
+**Shipped in app code (not automatic end-to-end push):**
+
+- Dependencies: **`firebase_core`**, **`firebase_messaging`** (see `pubspec.yaml`).
+- Env: **`PUSH_NOTIFICATIONS_ENABLED`** (default **false**); see `.env.example`.
+- Services: **`PushNotificationRegistrationService`**, **`FirebasePushMessagingClient`**, **`PushAuthGate`** — **no** direct `SupabaseClient` calls except via **`NotificationsRepository`** RPCs.
+- Bootstrap: starts FCM listener when the flag is on; **does not** show the OS permission dialog on cold start; syncs token when the user is signed in and permission was already **authorized** or **provisional** (iOS).
+- Sign-out: **`SignOut`** pre-hook calls **`deactivate_my_push_tokens`** while the session is still valid, then best-effort **`deleteToken`** on the client.
+
+**Still not implemented (after Phase 3A for messages):**
+
+- **Filter-alert** FCM / matching / dedup.
+- **Notification tap** routing, foreground display (`flutter_local_notifications` deferred).
+
+**External setup before real device token registration**
+
+1. Apply Supabase migrations in order through **`20260527120000_notification_preferences_and_push_tokens.sql`** (and the two grant/revoke migrations before it — see §3).
+2. Create a **Firebase** project; enable **Cloud Messaging**; add apps for Android / iOS.
+3. **Android:** download **`google-services.json`** into **`android/app/`** (do not commit placeholders). The Gradle plugin **`com.google.gms.google-services`** is applied **only** when this file **exists**, so builds without Firebase still succeed.
+4. **iOS:** add **`GoogleService-Info.plist`** via Xcode ; enable **Push Notifications** capability and APNs (development/prod) per Apple + Firebase docs — not verified by CI.
+5. Set **`PUSH_NOTIFICATIONS_ENABLED=true`** in `.env` for dev builds that should register tokens.
+
+**Manual SQL reminder:** Token RPCs require **`authenticated`** — confirm `register_push_token` / `deactivate_my_push_tokens` exist on the target project (§5).
+
+---
+
+## 2b. Notifications Phase 3A — **message** push (queue + Edge Function)
+
+**Scope:** inbound **chat** notifications only (`event_type = message_created`). **No** filter-alert matching or sends. Payload is **generic** (Russian title/body + FCM **data** keys: `type`, `conversation_id`, `message_id`, `listing_id` as strings); **no** full message body, **no** email.
+
+**Database (migration `20260528120000_message_notification_delivery_pipeline.sql`):**
+
+- Tables **`public.notification_delivery_events`**, **`public.notification_delivery_attempts`** — **RLS on**, **no** `GRANT` to **`anon` / `authenticated`** (internal; **`service_role`** / Edge only).
+- **`enqueue_message_notification_event`**: `AFTER INSERT` on **`public.messages`**; resolves recipient as the **other** participant (buyer ↔ seller); **`ON CONFLICT DO NOTHING`** dedupes per message/recipient.
+- **`claim_notification_events_for_processing(integer)`**: atomically claims **`pending`** rows with **`FOR UPDATE SKIP LOCKED`** — **`GRANT EXECUTE … TO service_role`** only.
+
+**Edge Function:** `supabase/functions/process-message-notifications/index.ts`
+
+- **Supabase JWT:** This function is **not** called with a user JWT. Repo **`supabase/config.toml`** sets **`[functions.process-message-notifications] verify_jwt = false`** so the Edge runtime does not require **`Authorization: Bearer …`** before your code runs. **Security** remains **`x-carzon-internal-secret`** (must match **`CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`**). If deploy does not pick up config, use **`supabase functions deploy process-message-notifications --no-verify-jwt`**.
+- **Invoke:** `POST` with header **`x-carzon-internal-secret`** equal to secret **`CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`** (set in the function’s environment). No **`Authorization`** JWT header is required when **`verify_jwt`** is off for this function. Returns **401** if the internal secret is missing or wrong; **503** if FCM env not configured (does **not** drain the queue in that case).
+- **Secrets (never commit):**
+  - **`SUPABASE_URL`**, **`SUPABASE_SERVICE_ROLE_KEY`**
+  - **`CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`**
+  - **FCM:** either **`FCM_SERVICE_ACCOUNT_JSON`** (full service account JSON), **or** **`FCM_PROJECT_ID`** + **`FCM_CLIENT_EMAIL`** + **`FCM_PRIVATE_KEY`** (PEM newlines often escaped as `\n` in the dashboard).
+- **Processing:** claims batch (default 25); for each event checks **`notification_preferences`** (**`global_enabled`** and **`messages_enabled`** both true); loads active **`user_push_tokens`**; sends FCM HTTP v1 per token; inserts **`notification_delivery_attempts`** rows; **deactivates** tokens on likely permanent FCM errors; marks event **`sent`**, **`skipped`**, **`failed`**, or requeues **`pending`** with **`next_attempt_at`** backoff (cap **8** attempts via **`MAX_SEND_ATTEMPTS`** in code).
+- **Operations:** the function does **not** run on a schedule by itself — use **Supabase cron**, an external scheduler, or manual `curl` against the deployed function URL with the secret header.
+
+**Flutter:** optional constants **`MessageNotificationPushDataKeys`** (`lib/features/messaging/domain/message_notification_push_constants.dart`) for future tap handling — **no** UI claims, no filter-alert wiring.
 
 ---
 
@@ -62,10 +115,18 @@ Rough **dependency chain** (each step maps to migrations in-repo; filenames use 
     - **`20260523120000_filter_alert_settings.sql`**
 15. **`listings.updated_at`** — column + backfill + `NOT NULL` default `now()` + **`listings_set_updated_at`** trigger (`public.set_listings_updated_at()`). Ensures new environments match hosted parity (older chains lacked this column).  
     - **`20260524120000_listings_updated_at.sql`**
+16. **Explicit Data API / PostgREST `GRANT`s** — idempotent table + `GRANT EXECUTE` on Flutter-called RPCs so **fresh Supabase projects** keep working as Supabase tightens default privileges on new `public` objects (**RLS remains separate** and mandatory).  
+    - **`20260525120000_explicit_data_api_grants.sql`**
+17. **Revoke `EXECUTE` on internal trigger helpers** — e.g. `touch_conversation_from_message()` must not be PostgREST-callable; triggers still run under definer/owner context.  
+    - **`20260526120000_revoke_internal_trigger_function_execute.sql`**
+18. **Notifications Phase 1 (schema only)** — `notification_preferences` + `user_push_tokens` + RPCs (`get_my_notification_preferences`, `update_my_notification_preferences`, `register_push_token`, `deactivate_push_token`, `deactivate_my_push_tokens`). **Phase 2 (Flutter):** optional FCM token registration when **`PUSH_NOTIFICATIONS_ENABLED`** and Firebase platform config exist. Preference defaults in DB remain **false** until product enables them.  
+    - **`20260527120000_notification_preferences_and_push_tokens.sql`**
+19. **Notifications Phase 3A (message push — DB queue)** — **`notification_delivery_events`** + **`notification_delivery_attempts`**, enqueue trigger on **`messages`**, **`claim_notification_events_for_processing`** ( **`service_role` only**). **Does not** send FCM from Postgres; Edge Function **`process-message-notifications`** required for delivery. **Filter alerts not included.**  
+    - **`20260528120000_message_notification_delivery_pipeline.sql`**
 
 Local **last-applied listing filters** persist on-device (`ListingDiscoveryCriteria` JSON); previewing an alert filter in the listings feed uses **`ListingsFeedLaunch`** so **explicit snapshot > local persisted > default feed**.
 
-Repo **static SQL tests** validate migration text only — they **do not** enforce hosted RLS/parity.
+**Policy (Supabase Data API exposure):** Every migration that introduces a **`public`** table or a PostgREST-reachable function must include matching **`GRANT`** / **`GRANT EXECUTE`** for the intended roles in that migration or in a clearly paired follow-up migration (see `test/supabase/explicit_data_api_grants_migration_test.dart`). Missing **`GRANT`** fails before RLS is evaluated. **Trigger/maintenance helpers** must not keep **`EXECUTE`** for **`anon` / `authenticated`** if the Flutter app does not call them as RPCs — use a forward-only **`REVOKE`** (see `20260526120000_revoke_internal_trigger_function_execute.sql`). **`service_role`** is not used in Flutter; do not ship the service key in the client. Repo **static SQL tests** do **not** connect to Postgres or prove hosted grants/RLS — verify the target Supabase project after migrations are applied.
 
 **Recently critical filenames (explicit)**
 
@@ -77,6 +138,10 @@ Repo **static SQL tests** validate migration text only — they **do not** enfor
 - `20260521120000_listing_specs_description.sql`
 - `20260523120000_filter_alert_settings.sql`
 - `20260524120000_listings_updated_at.sql`
+- `20260525120000_explicit_data_api_grants.sql`
+- `20260526120000_revoke_internal_trigger_function_execute.sql`
+- `20260527120000_notification_preferences_and_push_tokens.sql`
+- `20260528120000_message_notification_delivery_pipeline.sql`
 
 **Important**
 
@@ -118,6 +183,15 @@ Confirm each exists (`Database → Extensions / Functions` or SQL below), **`EXE
 - [ ] `mark_conversation_read`
 - [ ] `get_unread_conversation_count`
 - [ ] `list_inbox_conversations`
+
+### Notifications (Phase 1 — preferences / tokens; Phase 3A — internal queue)
+
+- [ ] `get_my_notification_preferences`
+- [ ] `update_my_notification_preferences` — **authenticated**; does **not** send push.
+- [ ] `register_push_token` — **authenticated**; used by Flutter FCM client (Phase 2+).
+- [ ] `deactivate_push_token`
+- [ ] `deactivate_my_push_tokens`
+- [ ] **Internal (not PostgREST for anon/authenticated):** tables **`notification_delivery_events`**, **`notification_delivery_attempts`**; RPC **`claim_notification_events_for_processing`** — **`service_role` / Edge only** (after **`20260528120000_message_notification_delivery_pipeline.sql`**).
 
 ### Seller (public vs self)
 
@@ -175,7 +249,7 @@ Confirm each exists (`Database → Extensions / Functions` or SQL below), **`EXE
 
 ### Messaging / unread (**two accounts**)
 
-- [ ] Threads use **polling** (timer-based) MVP updates — **not** Supabase Realtime subscriptions and **no** push notifications.
+- [ ] Threads use **polling** (timer-based) MVP updates — **not** Supabase Realtime. **Optional (Phase 3A):** **message** FCM only when Edge + FCM + prefs/tokens + scheduling are configured — **not** filter alerts.
 - [ ] Buyer starts chat from **active** listing (seller ≠ buyer)
 - [ ] Seller sees thread; unread row styling in inbox if applicable
 - [ ] Masthead avatar **dot** (if unread count known &gt; 0); Profile Activity **numeric badge** when &gt; 0
@@ -219,6 +293,11 @@ WHERE n.nspname = 'public'
     'get_my_seller_profile',
     'update_my_seller_display_name',
     'update_my_seller_avatar',
+    'get_my_notification_preferences',
+    'update_my_notification_preferences',
+    'register_push_token',
+    'deactivate_push_token',
+    'deactivate_my_push_tokens',
     'clear_my_seller_avatar'
   )
 ORDER BY p.proname;
@@ -266,7 +345,9 @@ WHERE schemaname = 'public'
     'messages',
     'user_conversation_state',
     'seller_profiles',
-    'filter_alert_settings'
+    'filter_alert_settings',
+    'notification_preferences',
+    'user_push_tokens'
   )
 ORDER BY tablename;
 ```
@@ -319,7 +400,8 @@ ORDER BY policyname;
 ## 10. Known MVP limitations
 
 - Messaging has **no Realtime channel** wired in the MVP client (`Timer`-based polling in thread where implemented).
-- **No push notifications.**
+- **Message push (Phase 3A):** optional **FCM** for **inbound chat** when Flutter Phase 2 + hosted migration **`20260528120000_...`**, deployed Edge **`process-message-notifications`**, secrets, and scheduling are in place — **generic** notification text only (**no** body in payload). **Filter-alert / saved-search push** not implemented. Without Edge deploy, behavior matches **no push**.
+- **Phase 1 DB:** `notification_preferences`, `user_push_tokens`, and RPCs; **Phase 3A DB:** internal queue tables (not client-accessible).
 - **No message attachments** (no reuse of listing/avatar buckets for chat media).
 - **No** in-app moderation / admin console in this codebase scope.
 - **No** functioning seller ratings/reviews UI wired to persisted reviews (trust fields may exist as placeholders).
@@ -336,7 +418,7 @@ ORDER BY policyname;
 - [ ] Buckets **`listing-images`** and **`seller-avatars`** exist with expected policies
 - [ ] §5 RPC/function list verified (existence + `authenticated`/`anon` grants per migration intent)
 - [ ] Listing columns for **specs + description** and **`updated_at`** present on **`public.listings`** (see §7 column spot-check)
-- [ ] Messaging tables **`user_conversation_state`**, **`conversations`**, **`messages`** + unread/inbox RPCs present
+- [ ] **Notifications:** Phase 1 tables **`notification_preferences`**, **`user_push_tokens`**; Phase 3A internal **`notification_delivery_events`**, **`notification_delivery_attempts`** after **`20260528120000_message_notification_delivery_pipeline.sql`**. **Live message push** additionally requires deployed Edge **`process-message-notifications`** + FCM secrets + ops scheduling — verify RPCs from §5; **filter-alert delivery still absent**
 - [ ] Flutter `.env` contains **only** `SUPABASE_URL`, **`SUPABASE_ANON_KEY`**, optional client-safe overrides — **no service role key**
 - [ ] Auth → **Redirect URLs** include **`carzon://auth-callback`**; Auth **Site URL** is a **real HTTPS** fallback (see [`mvp_release_checklist.md`](mvp_release_checklist.md) §C — **never** rely on **`localhost`** for production/public rollout)
 - [ ] §6 staging QA passed for the build about to ship

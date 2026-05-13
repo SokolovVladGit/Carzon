@@ -40,6 +40,28 @@ class Env {
     return value.trim();
   }
 
+  /// Client-side Firebase Cloud Messaging bootstrap (Phase 2).
+  ///
+  /// Default **false** when unset or empty. Only `1`, `true`, `yes`, and
+  /// `on` (case-insensitive) enable the client path.
+  ///
+  /// Enabling this does **not** mean server-side push delivery exists; it
+  /// only allows token registration when Firebase platform config, OS
+  /// permission, and an authenticated session are present.
+  static bool get pushNotificationsEnabled {
+    final raw = dotenv.maybeGet('PUSH_NOTIFICATIONS_ENABLED');
+    if (raw == null || raw.trim().isEmpty) return false;
+    switch (raw.trim().toLowerCase()) {
+      case '1':
+      case 'true':
+      case 'yes':
+      case 'on':
+        return true;
+      default:
+        return false;
+    }
+  }
+
   /// Returns the list of required keys that are missing or empty.
   /// Use during startup to fail fast with a clear UI instead of crashing later.
   static List<String> missingKeys() {

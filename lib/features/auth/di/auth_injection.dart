@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 
 import '../../../core/services/supabase_service.dart';
+import '../../notifications/services/push_notification_registration_service.dart';
 import '../data/datasources/auth_remote_datasource.dart';
 import '../data/repositories/auth_repository_impl.dart';
 import '../domain/repositories/auth_repository.dart';
@@ -29,7 +30,14 @@ void registerAuthFeature(GetIt sl) {
   sl.registerFactory(() => GetCurrentUser(sl<AuthRepository>()));
   sl.registerFactory(() => SignInWithPassword(sl<AuthRepository>()));
   sl.registerFactory(() => SignUpWithPassword(sl<AuthRepository>()));
-  sl.registerFactory(() => SignOut(sl<AuthRepository>()));
+  sl.registerFactory(
+    () => SignOut(
+      sl<AuthRepository>(),
+      preSignOutHooks: <Future<void> Function()>[
+        () => sl<PushNotificationRegistrationService>().beforeSignOut(),
+      ],
+    ),
+  );
   sl.registerFactory(() => RequestPasswordReset(sl<AuthRepository>()));
   sl.registerFactory(() => UpdatePassword(sl<AuthRepository>()));
 

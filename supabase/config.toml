@@ -1,0 +1,7 @@
+# Supabase CLI configuration.
+# Full local-development options: https://supabase.com/docs/guides/cli/config
+
+# Invoked by cron or manual server calls using x-carzon-internal-secret only (no user JWT).
+# Supabase Edge JWT verification is disabled for this function only; the handler still requires x-carzon-internal-secret.
+[functions.process-message-notifications]
+verify_jwt = false

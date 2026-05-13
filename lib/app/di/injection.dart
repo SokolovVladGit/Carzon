@@ -11,6 +11,7 @@ import '../../features/legal/di/legal_injection.dart';
 import '../../features/listings/di/listings_injection.dart';
 import '../../features/messaging/di/messaging_injection.dart';
 import '../../features/my_listings/di/my_listings_injection.dart';
+import '../../features/notifications/di/notifications_injection.dart';
 import '../../features/profile/di/profile_injection.dart';
 import '../../features/sellers/di/sellers_injection.dart';
 
@@ -31,6 +32,8 @@ Future<void> configureDependencies(SupabaseService supabaseService) async {
   );
 
   // Feature registrations (order matters only if a feature depends on another).
+  // Notifications before auth so `SignOut` pre-hooks can resolve push services.
+  registerNotificationsFeature(sl);
   registerAuthFeature(sl);
   registerListingsFeature(sl);
   registerSellersFeature(sl);

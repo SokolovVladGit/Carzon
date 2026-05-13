@@ -53,6 +53,8 @@ dependencies:
   # `make` values to assets under `assets/brands/svg/`.
   flutter_svg: ^2.0.7
   lucide_icons: ^0.257.0
+  firebase_core: ^4.8.0
+  firebase_messaging: ^16.2.1
 
 dev_dependencies:
   flutter_test:

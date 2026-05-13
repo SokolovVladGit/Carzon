@@ -10,6 +10,7 @@ import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/auth/presentation/bloc/auth_state.dart';
 import '../features/favorites/presentation/bloc/favorites_cubit.dart';
 import '../features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
+import '../features/notifications/services/push_notification_registration_service.dart';
 import '../features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import 'di/injection.dart';
 import 'router/app_router.dart';
@@ -42,6 +43,16 @@ class CarzonApp extends StatelessWidget {
             listenWhen: (prev, curr) => prev.user?.id != curr.user?.id,
             listener: (context, state) {
               context.read<FavoritesCubit>().syncWithAuth(state.user);
+            },
+          ),
+          BlocListener<AuthCubit, AuthState>(
+            listenWhen: (prev, curr) =>
+                prev.user?.id != curr.user?.id && curr.user != null,
+            listener: (_, _) {
+              unawaited(
+                sl<PushNotificationRegistrationService>()
+                    .syncTokenWithBackendIfEligible(),
+              );
             },
           ),
           BlocListener<AuthCubit, AuthState>(
