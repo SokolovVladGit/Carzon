@@ -10,6 +10,7 @@ import '../core/utils/logger.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/favorites/presentation/bloc/favorites_cubit.dart';
 import '../features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
+import '../features/notifications/services/push_notification_registration_service.dart';
 import '../features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import 'app.dart';
 import 'di/injection.dart';
@@ -90,6 +91,8 @@ Future<void> bootstrap() async {
 
       await sl<SelfSellerVisualCubit>().prime(auth.state);
       await sl<MessagingUnreadSummaryCubit>().sync(auth.state);
+
+      await sl<PushNotificationRegistrationService>().start();
 
       // Start auth deep-link observer AFTER `AuthCubit.bootstrap()` so
       // the recovery-events subscription is already attached when

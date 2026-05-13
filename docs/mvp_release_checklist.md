@@ -37,6 +37,7 @@ the populated `.env`.
   in-app "Report listing" mailto action on listing details. When
   absent, the Report action is hidden. Never use the
   `reports@example.com` placeholder in production.
+- `PUSH_NOTIFICATIONS_ENABLED` — optional, default **off** when unset. When enabled, the Flutter client may register **FCM** tokens (Phase 2). **Phase 3A:** **message** push delivery additionally requires the **`20260528120000_message_notification_delivery_pipeline.sql`** migration, deployed Edge Function **`process-message-notifications`**, FCM secrets on the function, and **ops scheduling** (cron/webhook) to invoke the worker — see [RELEASE.md](RELEASE.md). **Filter-alert push is not implemented.**
 
 ## C. Supabase dashboard setup
 
@@ -44,8 +45,8 @@ Work through the Supabase dashboard for the release project (staging
 or production). Apply migrations via the normal workflow —
 `supabase db push` or the SQL editor, in chronological order from
 `supabase/migrations/`. Do **not** manually edit RLS policies or
-grants in the dashboard; all schema/security changes belong in
-migrations.
+PostgreSQL grants in the dashboard; all schema/security changes belong in
+migrations (Supabase Data API / PostgREST requires explicit **`GRANT`** on new **`public`** objects; **RLS** is still required separately — see `20260525120000_explicit_data_api_grants.sql` and `test/supabase/explicit_data_api_grants_migration_test.dart`).
 
 - [ ] **Auth → URL Configuration → Redirect URLs**: add
       `carzon://auth-callback`. Without this, password-reset and
@@ -63,7 +64,16 @@ migrations.
       and no extra ad-hoc migrations exist in the project. Spot-check
       that **`public.listings.updated_at`** exists (added by
       `20260524120000_listings_updated_at.sql`) so parity checks do not
-      regress on fresh databases.
+      regress on fresh databases, and that the chain includes
+      **`20260525120000_explicit_data_api_grants.sql`** and
+      **`20260526120000_revoke_internal_trigger_function_execute.sql`**
+      (explicit table/RPC **`GRANT`**s plus **`REVOKE`** of trigger-only helpers
+      from client roles on fresh projects), and
+      **`20260527120000_notification_preferences_and_push_tokens.sql`**
+      (**Notifications Phase 1** — preference/token schema + RPCs only).
+      **`20260528120000_message_notification_delivery_pipeline.sql`**
+      (**Notifications Phase 3A** — internal message notification queue + enqueue
+      trigger; Edge **`process-message-notifications`** + secrets required for live FCM).
 - [ ] **Storage → Buckets**: confirm **`listing-images`** and
       **`seller-avatars`** exist after migrations (both created by
       migrations). Public read is intentional for MVP listing photos
@@ -71,6 +81,17 @@ migrations.
       by storage policies — do not widen them.
 - [ ] **API → Project Settings**: confirm the anon key in the
       dashboard matches the value in `.env`.
+- [ ] **Edge Functions (optional — message push only):** deploy
+      **`process-message-notifications`** from `supabase/functions/`, configure
+      secrets documented in [RELEASE.md](RELEASE.md) (**`CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`**,
+      **`FCM_*`**, service role), and set up **scheduled** or manual invocation so
+      the queue drains. **`supabase/config.toml`** must include **`verify_jwt = false`**
+      for this function only (cron/manual calls use **`x-carzon-internal-secret`**, not a user JWT).
+      If the gateway still returns **`UNAUTHORIZED_NO_AUTH_HEADER`**, redeploy with
+      **`supabase functions deploy process-message-notifications --no-verify-jwt`**.
+      Without this, chat **does not** produce FCM notifications
+      even when the Flutter client registers tokens. **Filter-alert push is not
+      in scope for Phase 3A.**
 
 ## D. Local / demo data
 
@@ -191,9 +212,13 @@ Ship with these clearly communicated, not hidden:
   runs when appropriate on the thread; there is no separate
   delivery/read-receipt UI beyond unread indicators. The client **polls**
   for thread updates (timer-based), **not** Supabase **Realtime**.
-- **Messaging (deferred):** **Push notifications**, **message
-  attachments**, Realtime subscriptions, and richer delivery/read-receipt
-  UX beyond the unread foundation above.
+- **Messaging (push / attachments / realtime):** **Message attachments**,
+  Realtime subscriptions, and richer delivery/read-receipt UX beyond the unread
+  foundation above remain **deferred**. **Phase 2:** optional **client** FCM +
+  **`register_push_token`**. **Phase 3A (messages only):** when migration +
+  Edge **`process-message-notifications`** + FCM secrets + scheduling are in
+  place, **inbound chat** can trigger **generic** FCM notifications (no message
+  body in payload); **filter-alert notifications are not implemented.**
 - Buyer-seller contact **also** includes **phone / Telegram / WhatsApp**
   from listing details, launched **externally** (alongside in-app chat
   when the listing has a seller and the viewer is not the seller).

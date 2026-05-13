@@ -36,7 +36,9 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 - [x] Seller **public profile**, avatar, trust-light surfaces
 - [x] Browse **filters**, **local last-applied** filter persistence
 - [x] **Single** filter-alert foundation (`filter_alert_settings`; one row per user)
-- [x] Profile alert row with **local-only** notification switch (no backend delivery)
+- [x] **Notifications Phase 1 (Stage 1.5 prep):** DB tables **`notification_preferences`** + **`user_push_tokens`**, SECURITY DEFINER RPCs for reads/writes, Flutter **`lib/features/notifications`** repository (RPC-only) registered in DI — **no FCM**, **no Edge send**, **no UI wired**; profile filter row / `filter_alert_settings.notifications_enabled` behavior **unchanged** (still not real delivery).
+- [x] **Notifications Phase 2 (client prep only):** `firebase_core` + `firebase_messaging` dependencies, **`PUSH_NOTIFICATIONS_ENABLED`** env gate (default off), **`PushNotificationRegistrationService`** + **`FirebasePushMessagingClient`** (RPC calls **only** via **`NotificationsRepository`**), bootstrap/auth **sync** without startup permission prompts, **pre-sign-out** **`deactivate_my_push_tokens`** while session is still valid — **no** server send path, **no** Edge Functions, **no** in-app notification UI, **no** claim that delivery is live.
+- [x] **Notifications Phase 3A (message push — backend only):** internal queue **`notification_delivery_events`** + attempt log **`notification_delivery_attempts`**, **`AFTER INSERT` on `messages`** enqueue (`message_created`, minimal JSON payload **without** message body), Edge Function **`process-message-notifications`** (FCM HTTP v1, Russian generic title/body, prefs **`global_enabled` + `messages_enabled`**, **`service_role`-only** claim RPC). **Filter-alert notifications not implemented.** Delivery is **off** until migration + Edge deploy + FCM secrets + **scheduled/ops** invocation.
 - [x] Release docs: [RELEASE.md](RELEASE.md), [mvp_release_checklist.md](mvp_release_checklist.md)
 
 ---
@@ -50,8 +52,8 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 - **Layout / listing details** — small-phone + keyboard + sticky-footer hardening on high-traffic surfaces; fullscreen details gallery (**swipe / pinch-zoom / dismiss**).
 - **Create/edit gallery uploads** — best-effort **partial-batch** Storage cleanup when a later photo fails mid-sequence; RPC failure-after-upload cleanup unchanged.
 - **User-facing errors** — continued emphasis on **`l10n` / failure-kind** surfaces rather than raw wire text.
-
----
+- **Explicit Postgres `GRANT`s for Data API** — forward-only migration **`20260525120000_explicit_data_api_grants.sql`** plus static guard **`test/supabase/explicit_data_api_grants_migration_test.dart`** so new `public` tables/functions stay reachable under tightened Supabase defaults (**RLS unchanged; not proven on hosted DB by static tests alone**).
+- **Notifications Phase 3A (message delivery pipeline)** — migration **`20260528120000_message_notification_delivery_pipeline.sql`**, Edge Function **`supabase/functions/process-message-notifications`**, static tests **`test/supabase/message_notification_pipeline_migration_test.dart`**; internal queue tables **not** granted to anon/authenticated (see **`explicit_data_api_grants_migration_test`** exceptions). **Filter alerts unchanged.**
 
 ## 5. Current release blockers / remaining before launch
 
@@ -78,7 +80,8 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 
 ## 6. Known limitations accepted for MVP
 
-- No **real push** notifications
+- No **filter-alert notification delivery** (matching/dedup/defer).
+- **Message push (Phase 3A):** possible only after hosted migration **`20260528120000_...`**, deployed **`process-message-notifications`** Edge Function, FCM secrets, **`PUSH_NOTIFICATIONS_ENABLED`** + device setup, and **ops scheduling** of the worker; generic/minimal payload (**no** full message body).
 - No **real filter-alert delivery** (criteria stored; matching/delivery deferred)
 - No **Realtime** messaging subscriptions
 - No **chat attachments** (do not reuse public listing/avatar buckets)
@@ -98,7 +101,7 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 *(Future — only after Foundation stable and product decision.)*
 
 - Real filter-alert **backend matching** + delivery strategy
-- Push notification strategy
+- Push beyond **message** notifications (**Phase 3B+:** filter alerts, richer routing, foreground display, etc.)
 - Stronger seller tools, richer **exchange** flow
 - Honest trust signals (without fake badges)
 - Compare cars — **only if** simple and justified
@@ -131,6 +134,7 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 - Flutter must **not** write **`notifications_enabled = true`** until backend matching + push exists (today writes keep it **false**).
 - Public seller profile must **not** expose private email.
 - Future private chat media → **dedicated** private bucket — **not** `listing-images` / `seller-avatars`.
+- **Supabase Data API / PostgREST:** any new **`public`** table or client-called function added in a migration must ship explicit **`GRANT`** / **`GRANT EXECUTE`** (same migration or paired grants migration). **`GRANT`** gates object access; **RLS** gates rows — both are required. Internal trigger helpers must not retain unnecessary **`EXECUTE`** for **`anon` / `authenticated`** — document exemptions in **`test/supabase/explicit_data_api_grants_migration_test.dart`**. **`service_role`** is not bundled in Flutter.
 
 ---
 

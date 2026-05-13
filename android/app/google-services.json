@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "68189143516",
+    "project_id": "carzon-b8583",
+    "storage_bucket": "carzon-b8583.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:68189143516:android:6767c93141add768af4f19",
+        "android_client_info": {
+          "package_name": "com.example.carzon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpn2azpK1FJn4N7cO2AkmTF2yeM67-fUk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

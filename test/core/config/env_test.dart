@@ -16,6 +16,42 @@ void main() {
     dotenv.testLoad(fileInput: '');
   });
 
+  group('Env.pushNotificationsEnabled', () {
+    test('is false when unset', () {
+      dotenv.testLoad(
+        fileInput: '''
+SUPABASE_URL=https://example.supabase.co
+SUPABASE_ANON_KEY=anon
+''',
+      );
+      expect(Env.pushNotificationsEnabled, isFalse);
+    });
+
+    test('accepts true, 1, yes, on case-insensitively', () {
+      for (final v in <String>['true', 'TRUE', '1', 'Yes', 'ON']) {
+        dotenv.testLoad(
+          fileInput: '''
+SUPABASE_URL=https://example.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=$v
+''',
+        );
+        expect(Env.pushNotificationsEnabled, isTrue, reason: v);
+      }
+    });
+
+    test('is false for any other string', () {
+      dotenv.testLoad(
+        fileInput: '''
+SUPABASE_URL=https://example.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=maybe
+''',
+      );
+      expect(Env.pushNotificationsEnabled, isFalse);
+    });
+  });
+
   group('Env.requiredKeys', () {
     test('contains Supabase URL and anon key, and nothing else', () {
       expect(

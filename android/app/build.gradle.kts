@@ -42,3 +42,10 @@ android {
 flutter {
     source = "../.."
 }
+
+// FlutterFire: only wire Google Services when a real `google-services.json`
+// is present under `android/app/`. Without it, Android builds stay green until
+// Firebase is configured (do not commit placeholder JSON).
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
