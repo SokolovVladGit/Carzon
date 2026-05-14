@@ -2,6 +2,11 @@
 # Full local-development options: https://supabase.com/docs/guides/cli/config
 
 # Invoked by cron or manual server calls using x-carzon-internal-secret only (no user JWT).
-# Supabase Edge JWT verification is disabled for this function only; the handler still requires x-carzon-internal-secret.
+# Automatic invoke (Phase 3E): pg_cron + pg_net + Vault — see migration
+# `20260529120000_schedule_process_message_notifications_cron.sql` and docs/ops_message_notifications.md
+# Phase 4A filter alerts: migration `20260601120000_filter_alert_notifications_queue_and_cron.sql`
 [functions.process-message-notifications]
+verify_jwt = false
+
+[functions.process-filter-alert-notifications]
 verify_jwt = false

@@ -8,6 +8,12 @@ class SaveFilterAlertCriteria {
 
   final FilterAlertsRepository _repository;
 
-  Future<Result<FilterAlertSettings>> call(ListingDiscoveryCriteria criteria) =>
-      _repository.saveCriteria(criteria);
+  Future<Result<FilterAlertSettings>> call(
+    ListingDiscoveryCriteria criteria, {
+    required bool notificationsEnabled,
+  }) =>
+      _repository.saveCriteria(
+        criteria,
+        notificationsEnabled: notificationsEnabled,
+      );
 }

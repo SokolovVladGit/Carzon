@@ -11,7 +11,7 @@ import 'push_messaging_permission_status.dart';
 /// Coordinates FCM token lifecycle with [NotificationsRepository] (RPC-only).
 ///
 /// Does not request OS permission on startup; does not show UI; does not
-/// handle notification taps or display notifications.
+/// handle notification taps (see [MessagePushTapHandler]) or display notifications.
 class PushNotificationRegistrationService {
   PushNotificationRegistrationService({
     required PushMessagingClient messagingClient,
@@ -79,8 +79,57 @@ class PushNotificationRegistrationService {
   }
 
   /// Explicit OS permission request (user-driven flows only).
-  Future<PushMessagingPermissionStatus> requestOsNotificationPermission() {
-    return _messagingClient.requestPermission();
+  Future<PushMessagingPermissionStatus> requestOsNotificationPermission() async {
+    try {
+      if (!Env.pushNotificationsEnabled) {
+        return PushMessagingPermissionStatus.notDetermined;
+      }
+      if (!await _ensureFirebaseReady()) {
+        return PushMessagingPermissionStatus.notDetermined;
+      }
+      return _messagingClient.requestPermission();
+    } catch (e, st) {
+      _logger.error('requestOsNotificationPermission failed', e, st);
+      return PushMessagingPermissionStatus.notDetermined;
+    }
+  }
+
+  /// Current OS notification permission (no prompt).
+  Future<PushMessagingPermissionStatus>
+  readOsNotificationPermissionStatus() async {
+    try {
+      if (!Env.pushNotificationsEnabled) {
+        return PushMessagingPermissionStatus.notDetermined;
+      }
+      if (!await _ensureFirebaseReady()) {
+        return PushMessagingPermissionStatus.notDetermined;
+      }
+      return _messagingClient.getPermissionStatus();
+    } catch (e, st) {
+      _logger.error('readOsNotificationPermissionStatus failed', e, st);
+      return PushMessagingPermissionStatus.notDetermined;
+    }
+  }
+
+  /// Deactivates server tokens and deletes the local FCM token (settings off).
+  Future<void> revokeDevicePushRegistration() async {
+    try {
+      if (!Env.pushNotificationsEnabled) {
+        return;
+      }
+      if (_authGate.hasAuthenticatedUser) {
+        await _notificationsRepository.deactivateMyPushTokens();
+      }
+    } catch (e, st) {
+      _logger.error('revokeDevicePushRegistration deactivate failed', e, st);
+    }
+    try {
+      if (_firebaseReady) {
+        await _messagingClient.deleteFcmToken();
+      }
+    } catch (e, st) {
+      _logger.error('revokeDevicePushRegistration deleteToken failed', e, st);
+    }
   }
 
   /// Called while the session is still valid, before clearing auth state.

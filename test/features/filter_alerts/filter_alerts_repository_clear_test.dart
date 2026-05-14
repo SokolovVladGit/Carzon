@@ -40,6 +40,11 @@ void main() {
     expect(v.notificationsEnabled, isFalse);
 
     verify(() => remote.upsertClearsCriteria()).called(1);
-    verifyNever(() => remote.upsertCriteria(any()));
+    verifyNever(
+      () => remote.upsertCriteria(
+        any(),
+        notificationsEnabled: any(named: 'notificationsEnabled'),
+      ),
+    );
   });
 }

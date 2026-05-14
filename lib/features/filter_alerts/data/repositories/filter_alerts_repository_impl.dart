@@ -31,10 +31,14 @@ class FilterAlertsRepositoryImpl implements FilterAlertsRepository {
 
   @override
   Future<Result<FilterAlertSettings>> saveCriteria(
-    ListingDiscoveryCriteria criteria,
-  ) async {
+    ListingDiscoveryCriteria criteria, {
+    required bool notificationsEnabled,
+  }) async {
     try {
-      final row = await _remote.upsertCriteria(criteria);
+      final row = await _remote.upsertCriteria(
+        criteria,
+        notificationsEnabled: notificationsEnabled,
+      );
       return Success(row);
     } on ServerException catch (e) {
       return FailureResult(ServerFailure(e.message));
@@ -54,6 +58,21 @@ class FilterAlertsRepositoryImpl implements FilterAlertsRepository {
     } catch (e, st) {
       _logger.error('clearPersistedCriteria failed', e, st);
       return const FailureResult(UnknownFailure('Failed to clear filter.'));
+    }
+  }
+
+  @override
+  Future<Result<FilterAlertSettings>> setNotificationsEnabled(bool enabled) async {
+    try {
+      final row = await _remote.setNotificationsEnabled(enabled);
+      return Success(row);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('setNotificationsEnabled failed', e, st);
+      return const FailureResult(
+        UnknownFailure('Failed to update filter notifications.'),
+      );
     }
   }
 }

@@ -61,6 +61,108 @@ void main() {
     });
   });
 
+  group('20260601120000_filter_alert_notifications_queue_and_cron.sql (Phase 4A)', () {
+    late String sql;
+    late String lower;
+
+    setUpAll(() {
+      final f = File(
+        'supabase/migrations/20260601120000_filter_alert_notifications_queue_and_cron.sql',
+      );
+      expect(f.existsSync(), isTrue, reason: 'Phase 4A filter alert migration exists');
+      sql = f.readAsStringSync();
+      lower = sql.toLowerCase();
+    });
+
+    test('extends event_type for filter_alert_listing_match', () {
+      expect(lower, contains('filter_alert_listing_match'));
+      expect(lower, contains('notification_delivery_events_event_type'));
+    });
+
+    test('filter alert dedup partial unique index exists', () {
+      expect(lower, contains('notification_delivery_events_filter_alert_dedup_idx'));
+    });
+
+    test('message claim path only selects message_created', () {
+      expect(lower, contains('claim_notification_events_for_processing'));
+      // Two conditions: filter claim uses filter_alert; message claim must scope to message_created.
+      expect(lower, contains("ne.event_type = 'message_created'"));
+      expect(lower, contains("ne.event_type = 'filter_alert_listing_match'"));
+    });
+
+    test('enqueue and trigger paths do not reference HTTP or FCM', () {
+      final enq = lower.indexOf(
+        'create or replace function public.enqueue_filter_alert_notification_events_for_listing',
+      );
+      expect(enq, greaterThan(-1));
+      final trig = lower.indexOf(
+        'create or replace function public.trigger_enqueue_filter_alert_notifications',
+        enq,
+      );
+      expect(trig, greaterThan(enq));
+      final enqueueFn = lower.substring(enq, trig);
+      expect(enqueueFn, isNot(contains('http://')));
+      expect(enqueueFn, isNot(contains('https://')));
+
+      final claim = lower.indexOf(
+        'create or replace function public.claim_notification_events_for_processing',
+        trig,
+      );
+      expect(claim, greaterThan(trig));
+      final triggerFn = lower.substring(trig, claim);
+      expect(triggerFn, isNot(contains('http://')));
+      expect(triggerFn, isNot(contains('https://')));
+    });
+
+    test('revokes listing matcher and enqueue from anon/authenticated', () {
+      expect(lower, contains('listing_matches_saved_discovery_criteria'));
+      expect(lower, contains('revoke all on function public.listing_matches_saved_discovery_criteria'));
+      expect(lower, contains('enqueue_filter_alert_notification_events_for_listing'));
+      expect(lower, contains('revoke all on function public.enqueue_filter_alert_notification_events_for_listing'));
+    });
+
+    test('listing triggers for insert and status transition', () {
+      expect(lower, contains('listings_enqueue_filter_alert_notifications_ins'));
+      expect(lower, contains('listings_enqueue_filter_alert_notifications_upd'));
+      expect(lower, contains('after insert on public.listings'));
+      expect(lower, contains('after update of status on public.listings'));
+      expect(lower, contains('trigger_enqueue_filter_alert_notifications'));
+    });
+
+    test('owner exclusion and active gating appear in enqueue selector', () {
+      expect(lower, contains('is distinct from r.seller_id'));
+      expect(lower, contains("r.status is distinct from 'active'"));
+    });
+
+    test('claim_filter_alert_notification_events_for_processing granted to service_role only', () {
+      expect(lower, contains('claim_filter_alert_notification_events_for_processing'));
+      expect(lower, contains('grant execute on function public.claim_filter_alert_notification_events_for_processing'));
+      expect(lower, contains('to service_role'));
+    });
+
+    test(
+      'listing_matches_saved_discovery_criteria: typeIn uses EXISTS + jsonb_array_elements_text alias, '
+      'not invalid PL/pgSQL FOR row loop',
+      () {
+        final start = lower.indexOf(
+          'create or replace function public.listing_matches_saved_discovery_criteria',
+        );
+        expect(start, greaterThan(-1));
+        final end = lower.indexOf(
+          'comment on function public.listing_matches_saved_discovery_criteria',
+          start,
+        );
+        expect(end, greaterThan(start));
+        final fn = lower.substring(start, end);
+        expect(fn, isNot(contains('for v_elem_text in')));
+        expect(fn, isNot(contains('select value from jsonb_array_elements_text')));
+        expect(fn, contains('jsonb_array_elements_text'));
+        expect(fn, contains('exists'));
+        expect(fn, contains('as elem(value)'));
+      },
+    );
+  });
+
   group('supabase/functions/process-message-notifications/index.ts', () {
     late String ts;
 

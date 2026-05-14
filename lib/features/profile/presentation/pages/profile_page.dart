@@ -276,17 +276,9 @@ class _AccountViewState extends State<_AccountView> {
                 ),
               ),
               _MutedDivider(scheme: scheme, isDark: isDark),
-              IgnorePointer(
-                ignoring: true,
-                child: _FutureSettingsRow(
-                  key: const ValueKey('profile_future_row_notifications'),
-                  title: l10n.profileNotificationsTitle,
-                  subtitle: l10n.profileNotificationsSubtitle,
-                  badgeLabel: l10n.commonComingSoon,
-                  scheme: scheme,
-                  isDark: isDark,
-                  dimmed: true,
-                ),
+              _ProfileNotificationSettingsRow(
+                theme: theme,
+                scheme: scheme,
               ),
             ],
           ),
@@ -675,7 +667,76 @@ class _ComingSoonBadge extends StatelessWidget {
   }
 }
 
-class _ProfileListingAlertsPreferenceRow extends StatefulWidget {
+class _ProfileNotificationSettingsRow extends StatelessWidget {
+  const _ProfileNotificationSettingsRow({
+    required this.theme,
+    required this.scheme,
+  });
+
+  final ThemeData theme;
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 10, top: 6, bottom: 6),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: const ValueKey<String>('profile_notification_settings_row'),
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => context.push(AppRoutes.notificationSettings),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  CarzonIcons.notificationsOutline,
+                  size: 22,
+                  color: scheme.primary.withValues(alpha: 0.92),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.profileNotificationsTitle,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.06,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.profileNotificationsSubtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: 0.82,
+                          ),
+                          height: 1.32,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  CarzonIcons.chevronRight,
+                  size: 19,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileListingAlertsPreferenceRow extends StatelessWidget {
   const _ProfileListingAlertsPreferenceRow({
     required this.theme,
     required this.scheme,
@@ -685,78 +746,60 @@ class _ProfileListingAlertsPreferenceRow extends StatefulWidget {
   final ColorScheme scheme;
 
   @override
-  State<_ProfileListingAlertsPreferenceRow> createState() =>
-      _ProfileListingAlertsPreferenceRowState();
-}
-
-class _ProfileListingAlertsPreferenceRowState
-    extends State<_ProfileListingAlertsPreferenceRow> {
-  bool _visualAlertsOn = false;
-
-  @override
   Widget build(BuildContext context) {
-    final theme = widget.theme;
-    final scheme = widget.scheme;
     final l10n = context.l10n;
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 10, top: 6, bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                key: const ValueKey<String>('profile_filter_alert_row'),
-                borderRadius: BorderRadius.circular(12),
-                onTap: () => context.push(AppRoutes.filterAlert),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
-                  child: Row(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: const ValueKey<String>('profile_filter_alert_row'),
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => context.push(AppRoutes.filterAlert),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  CarzonIcons.notificationsOutline,
+                  size: 22,
+                  color: scheme.primary.withValues(alpha: 0.92),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        CarzonIcons.notificationsOutline,
-                        size: 22,
-                        color: scheme.primary.withValues(alpha: 0.92),
+                      Text(
+                        l10n.profileListingAlertsTitle,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.06,
+                        ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.profileListingAlertsTitle,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.06,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              l10n.filterAlertProfileRowSubtitle,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant.withValues(
-                                  alpha: 0.76,
-                                ),
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.filterAlertProfileRowSubtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: 0.82,
+                          ),
+                          height: 1.32,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
+                Icon(
+                  CarzonIcons.chevronRight,
+                  size: 19,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
+                ),
+              ],
             ),
           ),
-          Switch.adaptive(
-            key: const ValueKey<String>('profile_filter_alert_switch'),
-            value: _visualAlertsOn,
-            onChanged: (v) => setState(() => _visualAlertsOn = v),
-          ),
-        ],
+        ),
       ),
     );
   }

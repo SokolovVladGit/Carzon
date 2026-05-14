@@ -6,8 +6,11 @@ abstract interface class FilterAlertsRepository {
   Future<Result<FilterAlertSettings?>> loadMine();
 
   Future<Result<FilterAlertSettings>> saveCriteria(
-    ListingDiscoveryCriteria criteria,
-  );
+    ListingDiscoveryCriteria criteria, {
+    required bool notificationsEnabled,
+  });
 
   Future<Result<FilterAlertSettings>> clearPersistedCriteria();
+
+  Future<Result<FilterAlertSettings>> setNotificationsEnabled(bool enabled);
 }

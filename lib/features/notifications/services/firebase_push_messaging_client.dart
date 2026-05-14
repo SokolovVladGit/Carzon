@@ -8,24 +8,50 @@ import 'push_messaging_client.dart';
 import 'push_messaging_permission_status.dart';
 
 /// [PushMessagingClient] backed by Firebase Cloud Messaging.
+///
+/// Does not call [FirebaseMessaging.instance] until [initializeFirebase]
+/// has completed successfully (or a [FirebaseMessaging] instance was injected
+/// for tests).
 class FirebasePushMessagingClient implements PushMessagingClient {
   FirebasePushMessagingClient({
     FirebaseMessaging? messaging,
     AppLogger? logger,
-  }) : _messaging = messaging ?? FirebaseMessaging.instance,
+  }) : _messagingInjected = messaging,
        _logger = logger ?? AppLogger('FirebasePushMessagingClient');
 
-  final FirebaseMessaging _messaging;
+  final FirebaseMessaging? _messagingInjected;
+  FirebaseMessaging? _messagingResolved;
   final AppLogger _logger;
+
+  FirebaseMessaging get _messaging {
+    final injected = _messagingInjected;
+    if (injected != null) {
+      return injected;
+    }
+    final resolved = _messagingResolved;
+    if (resolved == null) {
+      throw StateError(
+        'FirebasePushMessagingClient: call initializeFirebase() before '
+        'using Firebase Cloud Messaging.',
+      );
+    }
+    return resolved;
+  }
 
   @override
   Future<bool> initializeFirebase() async {
     try {
+      if (_messagingInjected != null) {
+        _messagingResolved = _messagingInjected;
+        return true;
+      }
       if (Firebase.apps.isEmpty) {
         await Firebase.initializeApp();
       }
+      _messagingResolved = FirebaseMessaging.instance;
       return true;
     } catch (e, st) {
+      _messagingResolved = null;
       _logger.error('Firebase.initializeApp failed', e, st);
       return false;
     }

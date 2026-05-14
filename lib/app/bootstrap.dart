@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/config/env.dart';
 import '../core/services/auth_deep_link_service.dart';
@@ -14,16 +16,19 @@ import '../features/notifications/services/push_notification_registration_servic
 import '../features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import 'app.dart';
 import 'di/injection.dart';
+import 'router/app_router.dart';
 import 'startup_error_app.dart';
 
 /// App entry point. Strict order:
 ///   1. Bind Flutter
 ///   2. Load .env
 ///   3. Validate required env (fail fast → config error screen)
-///   4. Initialize Supabase (fail fast → config error screen)
-///   5. Configure DI
-///   6. Restore auth session before first frame
-///   7. Mount widget tree
+///   4. When push is enabled, await [Firebase.initializeApp] (non-fatal if it
+///      fails — FCM registration retries later)
+///   5. Initialize Supabase (fail fast → config error screen)
+///   6. Configure DI
+///   7. Restore auth session before first frame
+///   8. Mount widget tree
 ///
 /// If any startup step fails, [StartupErrorApp] is shown instead of
 /// crashing with an unclear error.
@@ -62,6 +67,18 @@ Future<void> bootstrap() async {
         return;
       }
 
+      if (Env.pushNotificationsEnabled) {
+        try {
+          if (Firebase.apps.isEmpty) {
+            await Firebase.initializeApp();
+          }
+        } catch (e) {
+          logger.warn(
+            'Firebase.initializeApp failed at bootstrap; push may be unavailable until fixed: $e',
+          );
+        }
+      }
+
       final SupabaseService supabase;
       try {
         supabase = await SupabaseService.initialize();
@@ -80,6 +97,7 @@ Future<void> bootstrap() async {
       }
 
       await configureDependencies(supabase);
+      sl.registerSingleton<GoRouter>(AppRouter.build());
 
       // Restore auth session before mounting the widget tree so that
       // the first frame already reflects the correct authenticated state.
@@ -100,7 +118,7 @@ Future<void> bootstrap() async {
       // initial cold-start URL.
       await sl<AuthDeepLinkService>().initialize();
 
-      runApp(CarzonApp());
+      runApp(const CarzonApp());
     },
     (error, stackTrace) {
       logger.error('Uncaught zone error', error, stackTrace);

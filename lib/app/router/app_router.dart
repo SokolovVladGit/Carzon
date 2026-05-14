@@ -19,6 +19,7 @@ import '../../features/menu/presentation/pages/menu_page.dart';
 import '../../features/messaging/presentation/pages/conversation_thread_page.dart';
 import '../../features/messaging/presentation/pages/messages_inbox_page.dart';
 import '../../features/my_listings/presentation/pages/my_listings_page.dart';
+import '../../features/notifications/presentation/pages/notification_settings_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/sellers/presentation/pages/seller_profile_page.dart';
 
@@ -39,6 +40,7 @@ class AppRoutes {
   static const menu = '/menu';
   static const legal = '/legal';
   static const messages = '/messages';
+  static const notificationSettings = '/notification-settings';
   static const filterAlert = '/filter-alert';
   static const sellerProfile = '/sellers/:sellerId';
 
@@ -157,6 +159,10 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.profile,
           builder: (_, _) => const ProfilePage(),
+        ),
+        GoRoute(
+          path: AppRoutes.notificationSettings,
+          builder: (_, _) => const NotificationSettingsPage(),
         ),
         GoRoute(
           path: AppRoutes.filterAlert,

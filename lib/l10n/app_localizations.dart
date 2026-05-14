@@ -2267,8 +2267,128 @@ abstract class AppLocalizations {
   /// No description provided for @profileNotificationsSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Здесь появятся настройки push и сообщений.'**
+  /// **'Push, сообщения и статус доставки (тестирование).'**
   String get profileNotificationsSubtitle;
+
+  /// No description provided for @notificationSettingsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления'**
+  String get notificationSettingsTitle;
+
+  /// No description provided for @notificationSettingsSignInRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите, чтобы настроить уведомления.'**
+  String get notificationSettingsSignInRequired;
+
+  /// No description provided for @notificationSettingsLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить настройки уведомлений.'**
+  String get notificationSettingsLoadFailed;
+
+  /// No description provided for @notificationSettingsSaveFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сохранить. Попробуйте ещё раз.'**
+  String get notificationSettingsSaveFailed;
+
+  /// No description provided for @notificationSettingsOsPermissionDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разрешение уведомлений не получено. Включите его в настройках системы, если нужны push.'**
+  String get notificationSettingsOsPermissionDenied;
+
+  /// No description provided for @notificationSettingsPushUnavailableInBuild.
+  ///
+  /// In ru, this message translates to:
+  /// **'Push в этой сборке недоступен (PUSH_NOTIFICATIONS_ENABLED).'**
+  String get notificationSettingsPushUnavailableInBuild;
+
+  /// No description provided for @notificationSettingsPushBuildDisabledBanner.
+  ///
+  /// In ru, this message translates to:
+  /// **'В этой сборке push-уведомления выключены на уровне конфигурации. Переключатели ниже недоступны.'**
+  String get notificationSettingsPushBuildDisabledBanner;
+
+  /// No description provided for @notificationSettingsGlobalTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления в приложении'**
+  String get notificationSettingsGlobalTitle;
+
+  /// No description provided for @notificationSettingsGlobalSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Общий переключатель. При включении система может запросить разрешение на уведомления.'**
+  String get notificationSettingsGlobalSubtitle;
+
+  /// No description provided for @notificationSettingsMessagesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сообщения'**
+  String get notificationSettingsMessagesTitle;
+
+  /// No description provided for @notificationSettingsMessagesSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Push о новых сообщениях в чатах (когда доставка будет доступна).'**
+  String get notificationSettingsMessagesSubtitle;
+
+  /// No description provided for @notificationSettingsMessagesNeedsGlobal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала включите «Уведомления в приложении».'**
+  String get notificationSettingsMessagesNeedsGlobal;
+
+  /// No description provided for @notificationSettingsFilterAlertsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оповещения по фильтру'**
+  String get notificationSettingsFilterAlertsTitle;
+
+  /// No description provided for @notificationSettingsFilterAlertsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разрешите уведомления, чтобы получать push при новых объявлениях по сохранённому фильтру. Доставка на устройстве всё ещё проверяется.'**
+  String get notificationSettingsFilterAlertsSubtitle;
+
+  /// No description provided for @notificationSettingsFilterAlertsNeedsGlobal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала включите «Уведомления в приложении».'**
+  String get notificationSettingsFilterAlertsNeedsGlobal;
+
+  /// No description provided for @notificationSettingsDeliveryDisclaimer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Функция реализована на сервере и в приложении; финальная доставка на устройство всё ещё проверяется.'**
+  String get notificationSettingsDeliveryDisclaimer;
+
+  /// No description provided for @notificationSettingsOsStatusAuthorized.
+  ///
+  /// In ru, this message translates to:
+  /// **'Система: уведомления разрешены.'**
+  String get notificationSettingsOsStatusAuthorized;
+
+  /// No description provided for @notificationSettingsOsStatusProvisional.
+  ///
+  /// In ru, this message translates to:
+  /// **'Система: временные (provisional) уведомления.'**
+  String get notificationSettingsOsStatusProvisional;
+
+  /// No description provided for @notificationSettingsOsStatusDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Система: уведомления отклонены.'**
+  String get notificationSettingsOsStatusDenied;
+
+  /// No description provided for @notificationSettingsOsStatusNotDetermined.
+  ///
+  /// In ru, this message translates to:
+  /// **'Система: разрешение ещё не запрашивалось или неизвестно.'**
+  String get notificationSettingsOsStatusNotDetermined;
 
   /// No description provided for @profileListingAlertsTitle.
   ///
@@ -2309,7 +2429,7 @@ abstract class AppLocalizations {
   /// No description provided for @filterAlertProfileRowSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Настройте фильтр — позже здесь можно будет включить уведомления.'**
+  /// **'Настройте фильтр и включите оповещения на экране редактора.'**
   String get filterAlertProfileRowSubtitle;
 
   /// No description provided for @filterAlertSavedSuccess.
@@ -2357,8 +2477,32 @@ abstract class AppLocalizations {
   /// No description provided for @filterAlertResetFailed.
   ///
   /// In ru, this message translates to:
-  /// **'Не удалось сбросить фильтр оповещений'**
+  /// **'Не удалось сбросить фильтр для оповещений.'**
   String get filterAlertResetFailed;
+
+  /// No description provided for @filterAlertNotificationsToggleTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления о новых объявлениях'**
+  String get filterAlertNotificationsToggleTitle;
+
+  /// No description provided for @filterAlertNotificationsToggleSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'По сохранённому фильтру. Доставка на устройство всё ещё проверяется.'**
+  String get filterAlertNotificationsToggleSubtitle;
+
+  /// No description provided for @filterAlertNotificationsNeedsSavedFilter.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала сохраните фильтр кнопкой ниже.'**
+  String get filterAlertNotificationsNeedsSavedFilter;
+
+  /// No description provided for @filterAlertNotificationsPushDisabled.
+  ///
+  /// In ru, this message translates to:
+  /// **'В этой сборке push недоступен (PUSH_NOTIFICATIONS_ENABLED).'**
+  String get filterAlertNotificationsPushDisabled;
 
   /// No description provided for @profilePublicSellerNameTitle.
   ///

@@ -148,6 +148,19 @@ PUSH_NOTIFICATIONS_ENABLED=false
     );
   });
 
+  test('requestOsNotificationPermission is a no-op when push disabled', () async {
+    dotenv.testLoad(
+      fileInput: '''
+SUPABASE_URL=https://example.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=false
+''',
+    );
+    final status = await sut.requestOsNotificationPermission();
+    expect(status, PushMessagingPermissionStatus.notDetermined);
+    expect(client.permissionRequestCalls, 0);
+  });
+
   test('sync skips registration when not authenticated', () async {
     authGate.signedIn = false;
     await sut.syncTokenWithBackendIfEligible();

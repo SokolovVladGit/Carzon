@@ -43,6 +43,9 @@ const _profileTestMessagesStubKey = ValueKey<String>('profile_test_messages_stub
 
 const _profileTestFilterAlertStubKey = ValueKey<String>('profile_test_filter_alert_stub');
 
+const _profileTestNotificationSettingsStubKey =
+    ValueKey<String>('profile_test_notification_settings_stub');
+
 GoRouter _profileTestGoRouter({
   required AuthCubit cubit,
   required MessagingUnreadSummaryCubit messagingUnread,
@@ -81,6 +84,13 @@ GoRouter _profileTestGoRouter({
         builder: (_, _) => const Scaffold(
           key: _profileTestFilterAlertStubKey,
           body: Text('profile_test_filter_alert_placeholder'),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.notificationSettings,
+        builder: (_, _) => const Scaffold(
+          key: _profileTestNotificationSettingsStubKey,
+          body: Text('profile_test_notification_settings_placeholder'),
         ),
       ),
       GoRoute(
@@ -297,19 +307,8 @@ void main() {
         find.byKey(const ValueKey<String>('profile_filter_alert_row')),
         findsOneWidget,
       );
-      final filterSwitch =
-          find.byKey(const ValueKey<String>('profile_filter_alert_switch'));
-      expect(filterSwitch, findsOneWidget);
-      expect(tester.widget<Switch>(filterSwitch).onChanged, isNotNull);
-      expect(
-        find.descendant(
-          of: find.byKey(const ValueKey<String>('profile_filter_alert_row')),
-          matching: find.byIcon(CarzonIcons.chevronRight),
-        ),
-        findsNothing,
-      );
 
-      expect(find.text(l10n.commonComingSoon), findsNWidgets(2));
+      expect(find.text(l10n.commonComingSoon), findsOneWidget);
 
       expect(
         find.descendant(
@@ -352,6 +351,39 @@ void main() {
     },
   );
 
+  testWidgets('authenticated: notification settings row opens /notification-settings', (
+    tester,
+  ) async {
+    const user = AuthUser(
+      id: 'u1',
+      email: 'seller@example.com',
+      fullName: 'Ana Popescu',
+    );
+    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(user),
+    );
+
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
+    await tester.pumpAndSettle();
+
+    final row =
+        find.byKey(const ValueKey<String>('profile_notification_settings_row'));
+    await tester.scrollUntilVisible(
+      row,
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_profileTestNotificationSettingsStubKey), findsOneWidget);
+  });
+
   testWidgets('authenticated: filter alert row opens /filter-alert', (
     tester,
   ) async {
@@ -385,7 +417,7 @@ void main() {
   });
 
   testWidgets(
-    'authenticated: filter alert Switch toggles locally without navigating',
+    'authenticated: filter alert row is a single navigation target (chevron)',
     (tester) async {
       const user = AuthUser(
         id: 'u1',
@@ -404,18 +436,21 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final sw =
-          find.byKey(const ValueKey<String>('profile_filter_alert_switch'));
+      final row =
+          find.byKey(const ValueKey<String>('profile_filter_alert_row'));
       await tester.scrollUntilVisible(
-        sw,
+        row,
         80,
         scrollable: find.byType(Scrollable).first,
       );
-      expect(tester.widget<Switch>(sw).value, isFalse);
-      await tester.tap(sw);
-      await tester.pumpAndSettle();
-      expect(tester.widget<Switch>(sw).value, isTrue);
-      expect(find.byKey(_profileTestFilterAlertStubKey), findsNothing);
+      expect(
+        find.descendant(
+          of: row,
+          matching: find.byIcon(CarzonIcons.chevronRight),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(Switch), findsNothing);
     },
   );
 

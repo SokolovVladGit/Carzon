@@ -36,9 +36,11 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 - [x] Seller **public profile**, avatar, trust-light surfaces
 - [x] Browse **filters**, **local last-applied** filter persistence
 - [x] **Single** filter-alert foundation (`filter_alert_settings`; one row per user)
-- [x] **Notifications Phase 1 (Stage 1.5 prep):** DB tables **`notification_preferences`** + **`user_push_tokens`**, SECURITY DEFINER RPCs for reads/writes, Flutter **`lib/features/notifications`** repository (RPC-only) registered in DI — **no FCM**, **no Edge send**, **no UI wired**; profile filter row / `filter_alert_settings.notifications_enabled` behavior **unchanged** (still not real delivery).
-- [x] **Notifications Phase 2 (client prep only):** `firebase_core` + `firebase_messaging` dependencies, **`PUSH_NOTIFICATIONS_ENABLED`** env gate (default off), **`PushNotificationRegistrationService`** + **`FirebasePushMessagingClient`** (RPC calls **only** via **`NotificationsRepository`**), bootstrap/auth **sync** without startup permission prompts, **pre-sign-out** **`deactivate_my_push_tokens`** while session is still valid — **no** server send path, **no** Edge Functions, **no** in-app notification UI, **no** claim that delivery is live.
-- [x] **Notifications Phase 3A (message push — backend only):** internal queue **`notification_delivery_events`** + attempt log **`notification_delivery_attempts`**, **`AFTER INSERT` on `messages`** enqueue (`message_created`, minimal JSON payload **without** message body), Edge Function **`process-message-notifications`** (FCM HTTP v1, Russian generic title/body, prefs **`global_enabled` + `messages_enabled`**, **`service_role`-only** claim RPC). **Filter-alert notifications not implemented.** Delivery is **off** until migration + Edge deploy + FCM secrets + **scheduled/ops** invocation.
+- [x] **Notifications Phase 1:** DB **`notification_preferences`** + **`user_push_tokens`**, SECURITY DEFINER RPCs, Flutter **`NotificationsRepository`** (RPC-only).
+- [x] **Notifications Phase 2 (FCM client prep):** `firebase_core` + `firebase_messaging`, **`PUSH_NOTIFICATIONS_ENABLED`** (default off), **`PushNotificationRegistrationService`** + **`FirebasePushMessagingClient`** (via **`NotificationsRepository`** RPCs only), **no OS permission on cold start**, pre-sign-out token deactivation — **end-to-end delivery** requires Phase 3A/3E + 4A + ops (see below).
+- [x] **Notifications Phase 3A + 3E (message push):** queue + **`process-message-notifications`**, pg_cron + Vault — see **RELEASE.md** / **ops_message_notifications.md**. Real-device smoke pending.
+- [x] **Notifications Phase 4A (filter alert backend):** matching, enqueue, dedup, **`process-filter-alert-notifications`**, second cron + Vault — migration **`20260601120000_...`**. Real-device smoke pending.
+- [x] **Notifications Phase 4B (filter alert client):** filter editor + notification settings toggles, explicit OS permission, `notifications_enabled` persistence, tap + foreground generic copy — real-device smoke pending.
 - [x] Release docs: [RELEASE.md](RELEASE.md), [mvp_release_checklist.md](mvp_release_checklist.md)
 
 ---
@@ -53,7 +55,7 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 - **Create/edit gallery uploads** — best-effort **partial-batch** Storage cleanup when a later photo fails mid-sequence; RPC failure-after-upload cleanup unchanged.
 - **User-facing errors** — continued emphasis on **`l10n` / failure-kind** surfaces rather than raw wire text.
 - **Explicit Postgres `GRANT`s for Data API** — forward-only migration **`20260525120000_explicit_data_api_grants.sql`** plus static guard **`test/supabase/explicit_data_api_grants_migration_test.dart`** so new `public` tables/functions stay reachable under tightened Supabase defaults (**RLS unchanged; not proven on hosted DB by static tests alone**).
-- **Notifications Phase 3A (message delivery pipeline)** — migration **`20260528120000_message_notification_delivery_pipeline.sql`**, Edge Function **`supabase/functions/process-message-notifications`**, static tests **`test/supabase/message_notification_pipeline_migration_test.dart`**; internal queue tables **not** granted to anon/authenticated (see **`explicit_data_api_grants_migration_test`** exceptions). **Filter alerts unchanged.**
+- **Notifications Phase 3A (message delivery pipeline)** — migration **`20260528120000_...`**, Edge **`process-message-notifications`**, static tests; internal queue tables **not** granted to anon/authenticated. **Phase 4A** adds filter-alert enqueue/claim + second worker ( **`20260601120000_...`** ).
 
 ## 5. Current release blockers / remaining before launch
 
@@ -69,8 +71,7 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
   - Favorites
   - Messaging start / thread / unread
   - Filter apply / reset / persistence
-  - Filter alert save / reset
-  - Profile alert switch remains **local-only** (no expectation of push)
+- **Filter alert save / reset**; **filter-alert notification toggles** (explicit permission); hosted queue smoke optional via SQL (**`ops_message_notifications.md`**).
 - [ ] Dark mode quick pass (beyond listing details if needed)
 - [ ] Small phone / keyboard / sticky footer QA
 - [ ] Image upload failure / slow network QA
@@ -80,9 +81,7 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 
 ## 6. Known limitations accepted for MVP
 
-- No **filter-alert notification delivery** (matching/dedup/defer).
-- **Message push (Phase 3A):** possible only after hosted migration **`20260528120000_...`**, deployed **`process-message-notifications`** Edge Function, FCM secrets, **`PUSH_NOTIFICATIONS_ENABLED`** + device setup, and **ops scheduling** of the worker; generic/minimal payload (**no** full message body).
-- No **real filter-alert delivery** (criteria stored; matching/delivery deferred)
+- **Message + filter-alert push:** real-device FCM/APNs smoke (permission, background/quit/foreground, tap routes, generic copy only) after **`PUSH_NOTIFICATIONS_ENABLED=true`** and both Edge workers + schedules live — see **RELEASE.md** / **ops_message_notifications.md**. **Not** declared production-live until smoke passes.
 - No **Realtime** messaging subscriptions
 - No **chat attachments** (do not reuse public listing/avatar buckets)
 - No payments / escrow
