@@ -10,10 +10,13 @@ abstract interface class FilterAlertsRemoteDataSource {
   Future<FilterAlertSettingsModel?> fetchMine();
 
   Future<FilterAlertSettingsModel> upsertCriteria(
-    ListingDiscoveryCriteria criteria,
-  );
+    ListingDiscoveryCriteria criteria, {
+    required bool notificationsEnabled,
+  });
 
   Future<FilterAlertSettingsModel> upsertClearsCriteria();
+
+  Future<FilterAlertSettingsModel> setNotificationsEnabled(bool enabled);
 }
 
 class SupabaseFilterAlertsRemoteDataSource implements FilterAlertsRemoteDataSource {
@@ -56,8 +59,9 @@ class SupabaseFilterAlertsRemoteDataSource implements FilterAlertsRemoteDataSour
 
   @override
   Future<FilterAlertSettingsModel> upsertCriteria(
-    ListingDiscoveryCriteria criteria,
-  ) async {
+    ListingDiscoveryCriteria criteria, {
+    required bool notificationsEnabled,
+  }) async {
     try {
       final uid = _supabase.client.auth.currentUser?.id;
       if (uid == null || uid.isEmpty) {
@@ -70,7 +74,7 @@ class SupabaseFilterAlertsRemoteDataSource implements FilterAlertsRemoteDataSour
                 {
                   'user_id': uid,
                   'criteria': listingDiscoveryCriteriaToJson(criteria),
-                  'notifications_enabled': false,
+                  'notifications_enabled': notificationsEnabled,
                 },
                 onConflict: 'user_id',
               )
@@ -103,8 +107,6 @@ class SupabaseFilterAlertsRemoteDataSource implements FilterAlertsRemoteDataSour
         throw ServerException('Not authenticated');
       }
 
-      // Prefer UPDATE so explicit JSON null reliably clears `criteria` for an
-      // existing row (some clients omit null keys on upsert-heavy payloads).
       final afterUpdate =
           await _supabase.client
               .from(_table)
@@ -148,6 +150,60 @@ class SupabaseFilterAlertsRemoteDataSource implements FilterAlertsRemoteDataSour
       if (e is ServerException) rethrow;
       throw ServerException(
         'Failed to clear filter alert criteria',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<FilterAlertSettingsModel> setNotificationsEnabled(bool enabled) async {
+    try {
+      final uid = _supabase.client.auth.currentUser?.id;
+      if (uid == null || uid.isEmpty) {
+        throw ServerException('Not authenticated');
+      }
+
+      final afterUpdate =
+          await _supabase.client
+              .from(_table)
+              .update({'notifications_enabled': enabled})
+              .eq('user_id', uid)
+              .select(_cols)
+              .maybeSingle();
+
+      if (afterUpdate != null) {
+        return FilterAlertSettingsModel.fromSupabase(
+          Map<String, dynamic>.from(afterUpdate),
+        );
+      }
+
+      final inserted =
+          await _supabase.client
+              .from(_table)
+              .upsert(
+                <String, dynamic>{
+                  'user_id': uid,
+                  'criteria': null,
+                  'notifications_enabled': enabled,
+                },
+                onConflict: 'user_id',
+              )
+              .select(_cols)
+              .maybeSingle();
+
+      if (inserted == null) {
+        throw ServerException('Filter alert notifications toggle returned no row.');
+      }
+      return FilterAlertSettingsModel.fromSupabase(
+        Map<String, dynamic>.from(inserted),
+      );
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is ServerException) rethrow;
+      throw ServerException(
+        'Failed to update filter alert notifications toggle',
         cause: e,
         stackTrace: st,
       );

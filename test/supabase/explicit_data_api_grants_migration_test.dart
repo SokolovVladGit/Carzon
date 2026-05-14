@@ -38,6 +38,15 @@ void main() {
     'touch_notification_delivery_events_updated_at',
     'enqueue_message_notification_event',
     'claim_notification_events_for_processing',
+    // Phase 4A filter alerts (SQL match + enqueue + Edge claim + pg_cron worker only).
+    'listing_matches_saved_discovery_criteria',
+    'enqueue_filter_alert_notification_events_for_listing',
+    'trigger_enqueue_filter_alert_notifications',
+    'claim_filter_alert_notification_events_for_processing',
+    // Phase 3E: pg_cron-only worker; REVOKE from anon/authenticated in scheduler migration.
+    'carzon_invoke_process_message_notifications_worker',
+    // Phase 4A: pg_cron-only worker; REVOKE from anon/authenticated in 20260601 migration.
+    'carzon_invoke_process_filter_alert_notifications_worker',
   };
 
   /// Internal `public` tables with RLS that must **not** receive `GRANT` to

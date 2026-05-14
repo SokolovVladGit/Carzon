@@ -10,13 +10,20 @@ import 'package:carzon/features/filter_alerts/domain/repositories/filter_alerts_
 import 'package:carzon/features/filter_alerts/domain/usecases/clear_filter_alert_criteria.dart';
 import 'package:carzon/features/filter_alerts/domain/usecases/get_filter_alert_settings.dart';
 import 'package:carzon/features/filter_alerts/domain/usecases/save_filter_alert_criteria.dart';
+import 'package:carzon/features/filter_alerts/domain/usecases/set_filter_alert_notifications_enabled.dart';
 import 'package:carzon/features/filter_alerts/presentation/cubit/filter_alert_settings_cubit.dart';
+import 'package:carzon/features/notifications/domain/entities/notification_preferences.dart';
+import 'package:carzon/features/notifications/domain/entities/push_token_platform.dart';
+import 'package:carzon/features/notifications/domain/repositories/notifications_repository.dart';
+import 'package:carzon/features/notifications/services/push_messaging_permission_status.dart';
+import 'package:carzon/features/notifications/services/push_notification_registration_service.dart';
 import 'package:carzon/features/filter_alerts/presentation/pages/filter_alert_settings_page.dart';
 import 'package:carzon/features/listings/data/local/last_applied_listing_discovery_repository.dart';
 import 'package:carzon/features/listings/domain/entities/listing_discovery_criteria.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -29,23 +36,58 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 class _MockFilterAlertsRepository extends Mock
     implements FilterAlertsRepository {}
 
-void _registerSlWithRepository(FilterAlertsRepository repo) {
+class _MockNotificationsRepository extends Mock
+    implements NotificationsRepository {}
+
+class _MockPushRegistration extends Mock
+    implements PushNotificationRegistrationService {}
+
+NotificationPreferences _defaultNotificationPreferences() {
+  return NotificationPreferences(
+    userId: 'u1',
+    globalEnabled: false,
+    messagesEnabled: false,
+    filterAlertsEnabled: false,
+    createdAt: DateTime.utc(2026, 1, 1),
+    updatedAt: DateTime.utc(2026, 1, 2),
+  );
+}
+
+void _registerSlWithRepository({
+  required FilterAlertsRepository repo,
+  required NotificationsRepository notificationsRepository,
+  required PushNotificationRegistrationService pushRegistration,
+}) {
   sl.registerLazySingleton<LastAppliedListingDiscoveryRepository>(
     () => const NoopLastAppliedListingDiscoveryRepository(),
   );
   sl.registerLazySingleton<FilterAlertsRepository>(() => repo);
+  sl.registerLazySingleton<NotificationsRepository>(
+    () => notificationsRepository,
+  );
+  sl.registerLazySingleton<PushNotificationRegistrationService>(
+    () => pushRegistration,
+  );
   sl.registerFactory(
     () => GetFilterAlertSettings(sl<FilterAlertsRepository>()),
   );
   sl.registerFactory(
     () => SaveFilterAlertCriteria(sl<FilterAlertsRepository>()),
   );
-  sl.registerFactory(() => ClearFilterAlertCriteria(sl<FilterAlertsRepository>()));
+  sl.registerFactory(
+    () => ClearFilterAlertCriteria(sl<FilterAlertsRepository>()),
+  );
+  sl.registerFactory(
+    () => SetFilterAlertNotificationsEnabled(sl<FilterAlertsRepository>()),
+  );
   sl.registerFactory(
     () => FilterAlertSettingsCubit(
       getSettings: sl<GetFilterAlertSettings>(),
       saveCriteria: sl<SaveFilterAlertCriteria>(),
       clearCriteria: sl<ClearFilterAlertCriteria>(),
+      setNotificationsEnabled: sl<SetFilterAlertNotificationsEnabled>(),
+      notificationsRepository: sl<NotificationsRepository>(),
+      pushRegistration: sl<PushNotificationRegistrationService>(),
     ),
   );
 }
@@ -83,10 +125,56 @@ Widget _wrappedPage(_MockAuthCubit auth) {
 void main() {
   late _MockAuthCubit auth;
   late _MockFilterAlertsRepository repo;
+  late _MockNotificationsRepository notificationsRepo;
+  late _MockPushRegistration pushRegistration;
 
   setUp(() {
     auth = _MockAuthCubit();
     repo = _MockFilterAlertsRepository();
+    notificationsRepo = _MockNotificationsRepository();
+    pushRegistration = _MockPushRegistration();
+    dotenv.testLoad(
+      fileInput: '''
+SUPABASE_URL=https://example.supabase.co
+SUPABASE_ANON_KEY=anon
+''',
+    );
+    registerFallbackValue(PushTokenPlatform.android);
+    when(() => notificationsRepo.getMyPreferences()).thenAnswer(
+      (_) async => Success(_defaultNotificationPreferences()),
+    );
+    when(
+      () => notificationsRepo.updateMyPreferences(
+        globalEnabled: any(named: 'globalEnabled'),
+        messagesEnabled: any(named: 'messagesEnabled'),
+        filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+      ),
+    ).thenAnswer((invocation) async {
+      final global =
+          invocation.namedArguments[#globalEnabled] as bool;
+      final messages =
+          invocation.namedArguments[#messagesEnabled] as bool;
+      final filterAlerts =
+          invocation.namedArguments[#filterAlertsEnabled] as bool;
+      return Success(
+        NotificationPreferences(
+          userId: 'u1',
+          globalEnabled: global,
+          messagesEnabled: messages,
+          filterAlertsEnabled: filterAlerts,
+          createdAt: DateTime.utc(2026, 1, 1),
+          updatedAt: DateTime.utc(2026, 1, 2),
+        ),
+      );
+    });
+    when(
+      () => pushRegistration.requestOsNotificationPermission(),
+    ).thenAnswer(
+      (_) async => PushMessagingPermissionStatus.denied,
+    );
+    when(
+      () => pushRegistration.syncTokenWithBackendIfEligible(),
+    ).thenAnswer((_) async {});
   });
 
   setUpAll(() {
@@ -110,7 +198,11 @@ void main() {
     );
 
     await sl.reset();
-    _registerSlWithRepository(repo);
+    _registerSlWithRepository(
+      repo: repo,
+      notificationsRepository: notificationsRepo,
+      pushRegistration: pushRegistration,
+    );
 
     final l10n = ruStrings();
     await tester.pumpWidget(_wrappedPage(auth));
@@ -122,10 +214,12 @@ void main() {
     expect(find.text(l10n.filterAlertSaveFilterAction), findsOneWidget);
 
     verify(() => repo.loadMine()).called(1);
-    verifyNever(() => repo.saveCriteria(any()));
+    verifyNever(() => repo.saveCriteria(any(), notificationsEnabled: any(named: 'notificationsEnabled')));
   });
 
-  testWidgets('does not show removed intermediate-page copy', (tester) async {
+  testWidgets('notification toggle strip is visible; push off keeps switch idle', (
+    tester,
+  ) async {
     const user = AuthUser(id: 'u1', email: 'a@b.com');
     when(() => repo.loadMine()).thenAnswer((_) async => const Success(null));
     when(() => auth.state).thenReturn(const AuthState.authenticated(user));
@@ -136,7 +230,11 @@ void main() {
     );
 
     await sl.reset();
-    _registerSlWithRepository(repo);
+    _registerSlWithRepository(
+      repo: repo,
+      notificationsRepository: notificationsRepo,
+      pushRegistration: pushRegistration,
+    );
 
     final l10n = ruStrings();
 
@@ -145,7 +243,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.filterAlertEditorSubtitle), findsOneWidget);
-    expect(find.byType(Switch), findsNothing);
+    expect(find.text(l10n.filterAlertNotificationsToggleTitle), findsOneWidget);
+    expect(find.text(l10n.filterAlertNotificationsPushDisabled), findsOneWidget);
+    final tileFinder = find.ancestor(
+      of: find.text(l10n.filterAlertNotificationsToggleTitle),
+      matching: find.byType(SwitchListTile),
+    );
+    expect(tileFinder, findsOneWidget);
+    expect(tester.widget<SwitchListTile>(tileFinder).onChanged, isNull);
   });
 
   testWidgets('criteria from backend seeds editor make field', (tester) async {
@@ -166,7 +271,11 @@ void main() {
     );
 
     await sl.reset();
-    _registerSlWithRepository(repo);
+    _registerSlWithRepository(
+      repo: repo,
+      notificationsRepository: notificationsRepo,
+      pushRegistration: pushRegistration,
+    );
 
     await tester.pumpWidget(_wrappedPage(auth));
     await tester.tap(find.text('open_alert_editor_test'));
@@ -195,7 +304,11 @@ void main() {
     );
 
     await sl.reset();
-    _registerSlWithRepository(repo);
+    _registerSlWithRepository(
+      repo: repo,
+      notificationsRepository: notificationsRepo,
+      pushRegistration: pushRegistration,
+    );
 
     final l10n = ruStrings();
 
@@ -232,7 +345,11 @@ void main() {
     );
 
     await sl.reset();
-    _registerSlWithRepository(repo);
+    _registerSlWithRepository(
+      repo: repo,
+      notificationsRepository: notificationsRepo,
+      pushRegistration: pushRegistration,
+    );
 
     final l10n = ruStrings();
 
@@ -245,7 +362,7 @@ void main() {
     expect(find.textContaining('filter_alert'), findsNothing);
 
     verify(() => repo.loadMine()).called(1);
-    verifyNever(() => repo.saveCriteria(any()));
+    verifyNever(() => repo.saveCriteria(any(), notificationsEnabled: any(named: 'notificationsEnabled')));
   });
 
   testWidgets('save failure snackbar shows safe localized message only', (
@@ -253,7 +370,7 @@ void main() {
   ) async {
     const user = AuthUser(id: 'u1', email: 'a@b.com');
     when(() => repo.loadMine()).thenAnswer((_) async => const Success(null));
-    when(() => repo.saveCriteria(any())).thenAnswer(
+    when(() => repo.saveCriteria(any(), notificationsEnabled: any(named: 'notificationsEnabled'))).thenAnswer(
       (_) async => FailureResult(
         ServerFailure(r'{"code":"PGRST403","detail":"jwt expired"}'),
       ),
@@ -266,7 +383,11 @@ void main() {
     );
 
     await sl.reset();
-    _registerSlWithRepository(repo);
+    _registerSlWithRepository(
+      repo: repo,
+      notificationsRepository: notificationsRepo,
+      pushRegistration: pushRegistration,
+    );
 
     final l10n = ruStrings();
 
@@ -279,7 +400,7 @@ void main() {
     await tester.tap(find.text(l10n.filterAlertSaveFilterAction));
     await tester.pumpAndSettle();
 
-    verify(() => repo.saveCriteria(any())).called(1);
+    verify(() => repo.saveCriteria(any(), notificationsEnabled: any(named: 'notificationsEnabled'))).called(1);
     expect(find.text(l10n.filterAlertSaveFailed), findsOneWidget);
     expect(find.textContaining('PGRST'), findsNothing);
   });
@@ -303,7 +424,7 @@ void main() {
         ),
       );
     });
-    when(() => repo.saveCriteria(any())).thenAnswer((invocation) async {
+    when(() => repo.saveCriteria(any(), notificationsEnabled: any(named: 'notificationsEnabled'))).thenAnswer((invocation) async {
       storedCriteria =
           invocation.positionalArguments.first as ListingDiscoveryCriteria;
       final c = storedCriteria!;
@@ -325,7 +446,11 @@ void main() {
     );
 
     await sl.reset();
-    _registerSlWithRepository(repo);
+    _registerSlWithRepository(
+      repo: repo,
+      notificationsRepository: notificationsRepo,
+      pushRegistration: pushRegistration,
+    );
 
     final l10n = ruStrings();
 
@@ -338,7 +463,7 @@ void main() {
     await tester.tap(find.text(l10n.filterAlertSaveFilterAction));
     await tester.pumpAndSettle();
 
-    verify(() => repo.saveCriteria(any())).called(1);
+    verify(() => repo.saveCriteria(any(), notificationsEnabled: any(named: 'notificationsEnabled'))).called(1);
     expect(storedCriteria?.make, 'Toyota');
     expect(find.text('open_alert_editor_test'), findsOneWidget);
 
@@ -360,7 +485,11 @@ void main() {
     );
 
     await sl.reset();
-    _registerSlWithRepository(repo);
+    _registerSlWithRepository(
+      repo: repo,
+      notificationsRepository: notificationsRepo,
+      pushRegistration: pushRegistration,
+    );
 
     await tester.pumpWidget(_wrappedPage(auth));
     await tester.tap(find.text('open_alert_editor_test'));
@@ -369,7 +498,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
     await tester.pumpAndSettle();
 
-    verifyNever(() => repo.saveCriteria(any()));
+    verifyNever(() => repo.saveCriteria(any(), notificationsEnabled: any(named: 'notificationsEnabled')));
   });
 
   testWidgets(
@@ -411,7 +540,11 @@ void main() {
       );
 
       await sl.reset();
-      _registerSlWithRepository(repo);
+      _registerSlWithRepository(
+        repo: repo,
+        notificationsRepository: notificationsRepo,
+        pushRegistration: pushRegistration,
+      );
 
       final l10n = ruStrings();
 
@@ -437,7 +570,7 @@ void main() {
       await tester.pumpAndSettle();
 
       verify(() => repo.clearPersistedCriteria()).called(2);
-      verifyNever(() => repo.saveCriteria(any()));
+      verifyNever(() => repo.saveCriteria(any(), notificationsEnabled: any(named: 'notificationsEnabled')));
 
       await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
       await tester.pumpAndSettle();
@@ -485,7 +618,11 @@ void main() {
       );
 
       await sl.reset();
-      _registerSlWithRepository(repo);
+      _registerSlWithRepository(
+        repo: repo,
+        notificationsRepository: notificationsRepo,
+        pushRegistration: pushRegistration,
+      );
 
       final l10n = ruStrings();
 
@@ -503,7 +640,7 @@ void main() {
       await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
       await tester.pumpAndSettle();
 
-      verifyNever(() => repo.saveCriteria(any()));
+      verifyNever(() => repo.saveCriteria(any(), notificationsEnabled: any(named: 'notificationsEnabled')));
 
       expect(find.text('open_alert_editor_test'), findsOneWidget);
 
@@ -537,7 +674,11 @@ void main() {
     );
 
     await sl.reset();
-    _registerSlWithRepository(repo);
+    _registerSlWithRepository(
+      repo: repo,
+      notificationsRepository: notificationsRepo,
+      pushRegistration: pushRegistration,
+    );
 
     final l10n = ruStrings();
 

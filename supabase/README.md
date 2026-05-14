@@ -4,6 +4,8 @@ SQL contracts for the Carzon backend.
 
 ## Layout
 - `migrations/` — ordered, append-only SQL migrations (timestamp-prefixed).
+- `config.toml` — includes `verify_jwt = false` for **`process-message-notifications`** only.
+- `../docs/ops_message_notifications.md` — runbook for Phase 3E Vault + cron worker.
 - `seed.sql` — synthetic local/demo data for Carzon. Safe to re-run.
 - `demo/` — temporary UI-development-only data kept strictly
   separate from the production seed flow. See
@@ -13,6 +15,7 @@ SQL contracts for the Carzon backend.
 1. Open the Supabase Dashboard → SQL Editor for the project.
 2. Run the files in `migrations/` in chronological order.
 3. (Optional, local/dev only) Run `seed.sql` to insert the demo listings.
+4. If the chain includes **`20260529120000_schedule_process_message_notifications_cron.sql`**, create the two **Vault** secrets documented in **[`../docs/ops_message_notifications.md`](../docs/ops_message_notifications.md)** so pg_cron can invoke **`process-message-notifications`** (nothing sensitive belongs in git).
 
 ## Apply via Supabase CLI (when connected)
 ```bash

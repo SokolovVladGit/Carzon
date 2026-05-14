@@ -1192,7 +1192,83 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileNotificationsSubtitle =>
-      'Здесь появятся настройки push и сообщений.';
+      'Push, сообщения и статус доставки (тестирование).';
+
+  @override
+  String get notificationSettingsTitle => 'Уведомления';
+
+  @override
+  String get notificationSettingsSignInRequired =>
+      'Войдите, чтобы настроить уведомления.';
+
+  @override
+  String get notificationSettingsLoadFailed =>
+      'Не удалось загрузить настройки уведомлений.';
+
+  @override
+  String get notificationSettingsSaveFailed =>
+      'Не удалось сохранить. Попробуйте ещё раз.';
+
+  @override
+  String get notificationSettingsOsPermissionDenied =>
+      'Разрешение уведомлений не получено. Включите его в настройках системы, если нужны push.';
+
+  @override
+  String get notificationSettingsPushUnavailableInBuild =>
+      'Push в этой сборке недоступен (PUSH_NOTIFICATIONS_ENABLED).';
+
+  @override
+  String get notificationSettingsPushBuildDisabledBanner =>
+      'В этой сборке push-уведомления выключены на уровне конфигурации. Переключатели ниже недоступны.';
+
+  @override
+  String get notificationSettingsGlobalTitle => 'Уведомления в приложении';
+
+  @override
+  String get notificationSettingsGlobalSubtitle =>
+      'Общий переключатель. При включении система может запросить разрешение на уведомления.';
+
+  @override
+  String get notificationSettingsMessagesTitle => 'Сообщения';
+
+  @override
+  String get notificationSettingsMessagesSubtitle =>
+      'Push о новых сообщениях в чатах (когда доставка будет доступна).';
+
+  @override
+  String get notificationSettingsMessagesNeedsGlobal =>
+      'Сначала включите «Уведомления в приложении».';
+
+  @override
+  String get notificationSettingsFilterAlertsTitle => 'Оповещения по фильтру';
+
+  @override
+  String get notificationSettingsFilterAlertsSubtitle =>
+      'Разрешите уведомления, чтобы получать push при новых объявлениях по сохранённому фильтру. Доставка на устройстве всё ещё проверяется.';
+
+  @override
+  String get notificationSettingsFilterAlertsNeedsGlobal =>
+      'Сначала включите «Уведомления в приложении».';
+
+  @override
+  String get notificationSettingsDeliveryDisclaimer =>
+      'Функция реализована на сервере и в приложении; финальная доставка на устройство всё ещё проверяется.';
+
+  @override
+  String get notificationSettingsOsStatusAuthorized =>
+      'Система: уведомления разрешены.';
+
+  @override
+  String get notificationSettingsOsStatusProvisional =>
+      'Система: временные (provisional) уведомления.';
+
+  @override
+  String get notificationSettingsOsStatusDenied =>
+      'Система: уведомления отклонены.';
+
+  @override
+  String get notificationSettingsOsStatusNotDetermined =>
+      'Система: разрешение ещё не запрашивалось или неизвестно.';
 
   @override
   String get profileListingAlertsTitle => 'Оповещения по фильтру';
@@ -1215,7 +1291,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get filterAlertProfileRowSubtitle =>
-      'Настройте фильтр — позже здесь можно будет включить уведомления.';
+      'Настройте фильтр и включите оповещения на экране редактора.';
 
   @override
   String get filterAlertSavedSuccess => 'Фильтр сохранён';
@@ -1242,7 +1318,24 @@ class AppLocalizationsRu extends AppLocalizations {
       'Фильтр для оповещений сброшен';
 
   @override
-  String get filterAlertResetFailed => 'Не удалось сбросить фильтр оповещений';
+  String get filterAlertResetFailed =>
+      'Не удалось сбросить фильтр для оповещений.';
+
+  @override
+  String get filterAlertNotificationsToggleTitle =>
+      'Уведомления о новых объявлениях';
+
+  @override
+  String get filterAlertNotificationsToggleSubtitle =>
+      'По сохранённому фильтру. Доставка на устройство всё ещё проверяется.';
+
+  @override
+  String get filterAlertNotificationsNeedsSavedFilter =>
+      'Сначала сохраните фильтр кнопкой ниже.';
+
+  @override
+  String get filterAlertNotificationsPushDisabled =>
+      'В этой сборке push недоступен (PUSH_NOTIFICATIONS_ENABLED).';
 
   @override
   String get profilePublicSellerNameTitle => 'Публичное имя продавца';

@@ -16,7 +16,7 @@ Ship the matching client **only after** the backend for that environment exposes
 | `SUPABASE_ANON_KEY` | Yes | Public anon key (client-safe). |
 | `SUPABASE_PASSWORD_RESET_REDIRECT_URL` | No | Deep-link target for recovery emails (e.g. custom scheme); if unset, Supabase uses project Site URL. |
 | `CARZON_REPORT_EMAIL` | No | If unset, in-app listing report mailto is hidden. |
-| `PUSH_NOTIFICATIONS_ENABLED` | No | Default **off**. Enables **Phase 2** Firebase client + **`register_push_token`**. **Phase 3A (messages):** live FCM from Carzon additionally requires migration **`20260528120000_...`**, deployed Edge Function **`process-message-notifications`**, FCM secrets, and worker scheduling — see §2b. **Does not** enable filter-alert push. |
+| `PUSH_NOTIFICATIONS_ENABLED` | No | Default **off**. Enables **Phase 2** Firebase client bootstrap + **`register_push_token`**. **Live push** still requires hosted pipelines: **messages** — migration **`20260528120000_...`**, Edge **`process-message-notifications`**, FCM secrets, **`20260529120000_...`** cron/Vault (§2b). **Filter alerts** — **`20260601120000_...`**, Edge **`process-filter-alert-notifications`**, same FCM setup, second cron/Vault (see **`ops_message_notifications.md`**). |
 
 **Security**
 
@@ -37,10 +37,12 @@ See also: `lib/core/config/env.dart` (`Env.requiredKeys`). Optional push flag: `
 - Bootstrap: starts FCM listener when the flag is on; **does not** show the OS permission dialog on cold start; syncs token when the user is signed in and permission was already **authorized** or **provisional** (iOS).
 - Sign-out: **`SignOut`** pre-hook calls **`deactivate_my_push_tokens`** while the session is still valid, then best-effort **`deleteToken`** on the client.
 
-**Still not implemented (after Phase 3A for messages):**
+**Implemented in repo (staging/prod parity required for live delivery):**
 
-- **Filter-alert** FCM / matching / dedup.
-- **Notification tap** routing, foreground display (`flutter_local_notifications` deferred).
+- **Messages:** Phase 3A/3E queue, Edge worker, prefs **`global_enabled` + `messages_enabled`**, Flutter tap + foreground generic copy, notification settings — **real-device smoke pending** (§2b, **`ops_message_notifications.md`**).
+- **Filter alerts:** Phase 4A backend (match/enqueue/dedup, separate claim RPC, Edge **`process-filter-alert-notifications`**, cron/Vault) and **Phase 4B** Flutter (filter + notification settings switches, permission on explicit action, tap to listing detail, foreground generic copy) — **real-device smoke pending**.
+
+**Correct product status:** *Message and filter alert notifications are implemented and hosted schedulers are verified; real-device FCM/APNs smoke is pending before declaring notifications live.*
 
 **External setup before real device token registration**
 
@@ -68,14 +70,15 @@ See also: `lib/core/config/env.dart` (`Env.requiredKeys`). Optional push flag: `
 
 - **Supabase JWT:** This function is **not** called with a user JWT. Repo **`supabase/config.toml`** sets **`[functions.process-message-notifications] verify_jwt = false`** so the Edge runtime does not require **`Authorization: Bearer …`** before your code runs. **Security** remains **`x-carzon-internal-secret`** (must match **`CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`**). If deploy does not pick up config, use **`supabase functions deploy process-message-notifications --no-verify-jwt`**.
 - **Invoke:** `POST` with header **`x-carzon-internal-secret`** equal to secret **`CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`** (set in the function’s environment). No **`Authorization`** JWT header is required when **`verify_jwt`** is off for this function. Returns **401** if the internal secret is missing or wrong; **503** if FCM env not configured (does **not** drain the queue in that case).
-- **Secrets (never commit):**
+- **Secrets (never commit):** set in the Edge Function dashboard / deploy env — **not** in Vault:
   - **`SUPABASE_URL`**, **`SUPABASE_SERVICE_ROLE_KEY`**
   - **`CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`**
   - **FCM:** either **`FCM_SERVICE_ACCOUNT_JSON`** (full service account JSON), **or** **`FCM_PROJECT_ID`** + **`FCM_CLIENT_EMAIL`** + **`FCM_PRIVATE_KEY`** (PEM newlines often escaped as `\n` in the dashboard).
+- **Phase 3E (pg_cron):** additional secrets live in **Supabase Vault** (see **`ops_message_notifications.md`**) — **`carzon_process_message_notifications_url`** and **`carzon_process_message_notifications_secret`**. These are **not** Edge env vars; copy the **same** internal secret string into Vault as required there.
 - **Processing:** claims batch (default 25); for each event checks **`notification_preferences`** (**`global_enabled`** and **`messages_enabled`** both true); loads active **`user_push_tokens`**; sends FCM HTTP v1 per token; inserts **`notification_delivery_attempts`** rows; **deactivates** tokens on likely permanent FCM errors; marks event **`sent`**, **`skipped`**, **`failed`**, or requeues **`pending`** with **`next_attempt_at`** backoff (cap **8** attempts via **`MAX_SEND_ATTEMPTS`** in code).
-- **Operations:** the function does **not** run on a schedule by itself — use **Supabase cron**, an external scheduler, or manual `curl` against the deployed function URL with the secret header.
+- **Operations:** recurring invoke is configured in migration **`20260529120000_schedule_process_message_notifications_cron.sql`** using **pg_cron** + **pg_net** + **Supabase Vault** (URL and **`x-carzon-internal-secret`** value — **never** committed). See **[`ops_message_notifications.md`](ops_message_notifications.md)** for Vault setup, disabling the schedule, manual **`curl`**, and queue inspection. Manual **`curl`** remains supported for debugging.
 
-**Flutter:** optional constants **`MessageNotificationPushDataKeys`** (`lib/features/messaging/domain/message_notification_push_constants.dart`) for future tap handling — **no** UI claims, no filter-alert wiring.
+**Flutter:** optional **`MessageNotificationPushDataKeys`** (`lib/features/messaging/domain/message_notification_push_constants.dart`). **Filter-alert** data keys and tap routing: **`FilterAlertNotificationTapPayload`** / **`AppRoutes.listingDetailsPath`** (see `lib/features/notifications/services/`).
 
 ---
 
@@ -123,6 +126,8 @@ Rough **dependency chain** (each step maps to migrations in-repo; filenames use 
     - **`20260527120000_notification_preferences_and_push_tokens.sql`**
 19. **Notifications Phase 3A (message push — DB queue)** — **`notification_delivery_events`** + **`notification_delivery_attempts`**, enqueue trigger on **`messages`**, **`claim_notification_events_for_processing`** ( **`service_role` only**). **Does not** send FCM from Postgres; Edge Function **`process-message-notifications`** required for delivery. **Filter alerts not included.**  
     - **`20260528120000_message_notification_delivery_pipeline.sql`**
+20. **Notifications Phase 3E (scheduled Edge invoke)** — **`pg_cron`** job each minute calls **`pg_net`** `POST` to **`process-message-notifications`**, with URL and **`x-carzon-internal-secret`** read from **Supabase Vault** (ops must create secrets; nothing sensitive in SQL).  
+    - **`20260529120000_schedule_process_message_notifications_cron.sql`** — runbook **`ops_message_notifications.md`**.
 
 Local **last-applied listing filters** persist on-device (`ListingDiscoveryCriteria` JSON); previewing an alert filter in the listings feed uses **`ListingsFeedLaunch`** so **explicit snapshot > local persisted > default feed**.
 
@@ -142,6 +147,7 @@ Local **last-applied listing filters** persist on-device (`ListingDiscoveryCrite
 - `20260526120000_revoke_internal_trigger_function_execute.sql`
 - `20260527120000_notification_preferences_and_push_tokens.sql`
 - `20260528120000_message_notification_delivery_pipeline.sql`
+- `20260529120000_schedule_process_message_notifications_cron.sql`
 
 **Important**
 

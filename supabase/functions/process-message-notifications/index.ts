@@ -206,6 +206,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return jsonResponse(503, { error: "fcm_oauth_failed" });
     }
 
+    // DB migration Phase 4A scopes this RPC to `message_created` only (filter
+    // alerts use a separate claim + Edge Function).
     const { data: claimed, error: claimError } = await supabase.rpc(
       "claim_notification_events_for_processing",
       { p_limit: DEFAULT_BATCH },

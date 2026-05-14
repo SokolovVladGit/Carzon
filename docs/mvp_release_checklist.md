@@ -37,7 +37,7 @@ the populated `.env`.
   in-app "Report listing" mailto action on listing details. When
   absent, the Report action is hidden. Never use the
   `reports@example.com` placeholder in production.
-- `PUSH_NOTIFICATIONS_ENABLED` — optional, default **off** when unset. When enabled, the Flutter client may register **FCM** tokens (Phase 2). **Phase 3A:** **message** push delivery additionally requires the **`20260528120000_message_notification_delivery_pipeline.sql`** migration, deployed Edge Function **`process-message-notifications`**, FCM secrets on the function, and **ops scheduling** (cron/webhook) to invoke the worker — see [RELEASE.md](RELEASE.md). **Filter-alert push is not implemented.**
+- `PUSH_NOTIFICATIONS_ENABLED` — optional, default **off** when unset. When enabled, the Flutter client may register **FCM** tokens (Phase 2). **Phase 3A+3E (messages):** live message push additionally requires **`20260528120000_message_notification_delivery_pipeline.sql`**, **`20260529120000_schedule_process_message_notifications_cron.sql`**, Edge **`process-message-notifications`**, FCM + Vault — see [RELEASE.md](RELEASE.md) and [ops_message_notifications.md](ops_message_notifications.md). **Phase 4A+4B (filter alerts):** matching/queue + Edge **`process-filter-alert-notifications`** + cron/Vault (`20260601120000_filter_alert_notifications_queue_and_cron.sql`) and Flutter switches/permission/taps — same docs. **Message and filter alert notifications are implemented and hosted schedulers are verified; real-device FCM/APNs smoke is pending before declaring notifications live.**
 
 ## C. Supabase dashboard setup
 
@@ -74,6 +74,10 @@ migrations (Supabase Data API / PostgREST requires explicit **`GRANT`** on new *
       **`20260528120000_message_notification_delivery_pipeline.sql`**
       (**Notifications Phase 3A** — internal message notification queue + enqueue
       trigger; Edge **`process-message-notifications`** + secrets required for live FCM).
+      **`20260529120000_schedule_process_message_notifications_cron.sql`**
+      (**Phase 3E** — minute cron + Vault-backed invoke; create Vault URL + secret after apply — [ops_message_notifications.md](ops_message_notifications.md)).
+      **`20260601120000_filter_alert_notifications_queue_and_cron.sql`**
+      (**Phase 4A** — filter-alert enqueue/claim + second cron + Vault for **`process-filter-alert-notifications`** — [ops_message_notifications.md](ops_message_notifications.md)).
 - [ ] **Storage → Buckets**: confirm **`listing-images`** and
       **`seller-avatars`** exist after migrations (both created by
       migrations). Public read is intentional for MVP listing photos
@@ -81,17 +85,16 @@ migrations (Supabase Data API / PostgREST requires explicit **`GRANT`** on new *
       by storage policies — do not widen them.
 - [ ] **API → Project Settings**: confirm the anon key in the
       dashboard matches the value in `.env`.
-- [ ] **Edge Functions (optional — message push only):** deploy
-      **`process-message-notifications`** from `supabase/functions/`, configure
-      secrets documented in [RELEASE.md](RELEASE.md) (**`CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`**,
-      **`FCM_*`**, service role), and set up **scheduled** or manual invocation so
-      the queue drains. **`supabase/config.toml`** must include **`verify_jwt = false`**
-      for this function only (cron/manual calls use **`x-carzon-internal-secret`**, not a user JWT).
-      If the gateway still returns **`UNAUTHORIZED_NO_AUTH_HEADER`**, redeploy with
-      **`supabase functions deploy process-message-notifications --no-verify-jwt`**.
-      Without this, chat **does not** produce FCM notifications
-      even when the Flutter client registers tokens. **Filter-alert push is not
-      in scope for Phase 3A.**
+- [ ] **Edge Functions (message + filter alert push):** deploy
+      **`process-message-notifications`** and **`process-filter-alert-notifications`**
+      from `supabase/functions/`, each with secrets documented in [RELEASE.md](RELEASE.md)
+      and [ops_message_notifications.md](ops_message_notifications.md) (internal secrets
+      **`CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`** /  **`CARZON_PROCESS_FILTER_ALERT_NOTIFICATIONS_SECRET`**,
+      **`FCM_*`**, service role). **`supabase/config.toml`** sets **`verify_jwt = false`**
+      **only** for these two workers (cron/manual use **`x-carzon-internal-secret`**, not a user JWT).
+      If the gateway returns **`UNAUTHORIZED_NO_AUTH_HEADER`**, redeploy with
+      **`--no-verify-jwt`**. Without workers + schedules, queues do not drain.
+      **Do not** mark notifications production-complete until real-device FCM/APNs smoke passes.
 
 ## D. Local / demo data
 

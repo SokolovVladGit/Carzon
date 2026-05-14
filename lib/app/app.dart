@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import '../core/config/env.dart';
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_theme.dart';
 import '../l10n/app_localizations.dart';
@@ -10,15 +12,31 @@ import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/auth/presentation/bloc/auth_state.dart';
 import '../features/favorites/presentation/bloc/favorites_cubit.dart';
 import '../features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
+import '../features/notifications/services/message_foreground_notification_presenter.dart';
+import '../features/notifications/services/message_push_tap_handler.dart';
 import '../features/notifications/services/push_notification_registration_service.dart';
 import '../features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import 'di/injection.dart';
 import 'router/app_router.dart';
 
-class CarzonApp extends StatelessWidget {
-  CarzonApp({super.key});
+class CarzonApp extends StatefulWidget {
+  const CarzonApp({super.key});
 
-  final _router = AppRouter.build();
+  @override
+  State<CarzonApp> createState() => _CarzonAppState();
+}
+
+class _CarzonAppState extends State<CarzonApp> {
+  @override
+  void initState() {
+    super.initState();
+    if (Env.pushNotificationsEnabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(sl<MessagePushTapHandler>().start());
+        unawaited(sl<MessageForegroundNotificationPresenter>().start());
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +92,7 @@ class CarzonApp extends StatelessWidget {
             listenWhen: (prev, curr) =>
                 prev.status != curr.status &&
                 curr.status == AuthStatus.passwordRecovery,
-            listener: (_, _) => _router.go(AppRoutes.resetPassword),
+            listener: (_, _) => sl<GoRouter>().go(AppRoutes.resetPassword),
           ),
         ],
         child: MaterialApp.router(
@@ -89,7 +107,7 @@ class CarzonApp extends StatelessWidget {
           locale: const Locale('ru'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          routerConfig: _router,
+          routerConfig: sl<GoRouter>(),
           debugShowCheckedModeBanner: false,
         ),
       ),
