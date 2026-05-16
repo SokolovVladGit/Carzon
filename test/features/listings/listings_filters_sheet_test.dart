@@ -7,6 +7,7 @@ import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
 import 'package:carzon/features/listings/data/local/last_applied_listing_discovery_repository.dart';
+import 'package:carzon/features/listings/domain/entities/buyer_listing_vin_report_source_result.dart';
 import 'package:carzon/features/listings/domain/repositories/listings_repository.dart';
 import 'package:carzon/features/listings/domain/usecases/get_listings.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_bloc.dart';
@@ -111,6 +112,9 @@ void main() {
     when(
       () => listingsRepo.getListings(any()),
     ).thenAnswer((_) async => const Success([]));
+    when(() => listingsRepo.fetchBuyerVinReportSources(any())).thenAnswer(
+      (_) async => const Success(BuyerListingVinReportLookupResult()),
+    );
 
     when(() => auth.state).thenReturn(const AuthState.unauthenticated());
     whenListen(

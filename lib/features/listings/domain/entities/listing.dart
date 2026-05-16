@@ -33,6 +33,12 @@ enum ListingFuelType { petrol, diesel, hybrid, electric, lpg, cng, other }
 /// Stored as `listings.drivetrain`; `fourWheel` ↔ DB `four_wheel`.
 enum ListingDrivetrain { fwd, rwd, awd, fourWheel }
 
+/// Public-only VIN hint from `listings.vin_status` (Phase 1).
+enum ListingVinStatus {
+  notProvided,
+  formatValid,
+}
+
 class Listing extends Equatable {
   const Listing({
     required this.id,
@@ -60,6 +66,7 @@ class Listing extends Equatable {
     this.contactPhone,
     this.telegramUsername,
     this.whatsappEnabled = false,
+    this.vinStatus = ListingVinStatus.notProvided,
   });
 
   final String id;
@@ -112,6 +119,9 @@ class Listing extends Equatable {
   /// separate WhatsApp number is stored.
   final bool whatsappEnabled;
 
+  /// Public column only — never contains full VIN text.
+  final ListingVinStatus vinStatus;
+
   /// Semantic alias until the backing column outgrows its historical name.
   num get priceAmount => priceEur;
 
@@ -142,6 +152,7 @@ class Listing extends Equatable {
     contactPhone,
     telegramUsername,
     whatsappEnabled,
+    vinStatus,
   ];
 }
 
@@ -173,3 +184,22 @@ ListingFuelType? listingFuelTypeFromDb(String? raw) {
   }
   return null;
 }
+
+ListingVinStatus listingVinStatusFromDb(dynamic raw) {
+  final key = raw?.toString().trim().toLowerCase();
+  switch (key) {
+    case 'format_valid':
+      return ListingVinStatus.formatValid;
+    case 'not_provided':
+    case '':
+    case null:
+      return ListingVinStatus.notProvided;
+    default:
+      return ListingVinStatus.notProvided;
+  }
+}
+
+String listingVinStatusToDb(ListingVinStatus status) => switch (status) {
+  ListingVinStatus.notProvided => 'not_provided',
+  ListingVinStatus.formatValid => 'format_valid',
+};

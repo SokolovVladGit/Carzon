@@ -18,6 +18,18 @@ enum CreateListingFailureKind {
   /// Transport / reachability failures.
   serviceUnavailable,
 
+  /// Server rejected syntactic VIN (`invalid vin` / related wire hints).
+  invalidVin,
+
+  /// PostgREST schema cache / missing RPC signature / undefined function.
+  rpcSchemaNotReady,
+
+  /// Explicit permission / privilege denial on the RPC path.
+  permissionDenied,
+
+  /// PostgreSQL `CHECK` constraint failure on persisted listing rows.
+  checkConstraintViolation,
+
   /// Server rejected input (validation/business-rule style messages).
   validationRejected,
 

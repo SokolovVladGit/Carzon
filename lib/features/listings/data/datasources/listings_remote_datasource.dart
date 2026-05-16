@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/utils/logger.dart';
+import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
 import '../../domain/entities/listing_currency.dart';
 import '../../domain/entities/listing_sort_option.dart';
 import '../../domain/repositories/listings_repository.dart';
@@ -25,6 +26,11 @@ abstract interface class ListingsRemoteDataSource {
   /// on success; throws [ServerException] on any failure (not
   /// authenticated, not found, not owned, transport).
   Future<void> deleteListing(String id);
+
+  /// Calls `get_listing_vin_report_for_buyer` (Phase 2J; buyer-safe summaries).
+  Future<BuyerListingVinReportLookupResult> fetchBuyerListingVinReportSources(
+    String listingId,
+  );
 }
 
 class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
@@ -35,6 +41,7 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
 
   static const String _table = 'listings';
   static const String _imagesTable = 'listing_images';
+  static const String _rpcBuyerVinReport = 'get_listing_vin_report_for_buyer';
 
   @override
   Future<List<ListingModel>> fetch(ListingsQuery query) async {
@@ -306,6 +313,32 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
         cause: e,
         stackTrace: st,
       );
+    }
+  }
+
+  @override
+  Future<BuyerListingVinReportLookupResult> fetchBuyerListingVinReportSources(
+    String listingId,
+  ) async {
+    try {
+      final dynamic data = await _supabase.client.rpc(
+        _rpcBuyerVinReport,
+        params: <String, dynamic>{'p_listing_id': listingId},
+      );
+      final rows = <BuyerListingVinReportSourceResult>[];
+      if (data is List) {
+        for (final item in data) {
+          if (item is! Map) continue;
+          final row = Map<String, dynamic>.from(item);
+          final parsed = BuyerListingVinReportSourceResult.tryParse(row);
+          if (parsed != null) rows.add(parsed);
+        }
+      }
+      return BuyerListingVinReportLookupResult(results: rows);
+    } on sb.PostgrestException {
+      return const BuyerListingVinReportLookupResult(fetchFailed: true);
+    } catch (_) {
+      return const BuyerListingVinReportLookupResult(fetchFailed: true);
     }
   }
 

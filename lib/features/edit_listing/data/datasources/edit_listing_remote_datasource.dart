@@ -6,6 +6,9 @@ import '../../../listings/data/models/listing_model.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../domain/entities/edit_listing_input.dart';
+import '../../domain/entities/owner_listing_vin_lookup_result.dart';
+import '../../domain/entities/owner_listing_vin_report_status.dart';
+import '../../domain/entities/owner_listing_vin_source_result.dart';
 
 ListingModel _parseListingMutationRpcResponse(
   dynamic data,
@@ -51,6 +54,18 @@ abstract interface class EditListingRemoteDataSource {
     required String listingId,
     required String? coverImageUrl,
   });
+
+  /// Calls `get_my_listing_vehicle_identity` (owner-only).
+  Future<OwnerListingVinLookupResult> fetchOwnerListingVin(String listingId);
+
+  /// Calls `get_my_listing_vin_report_status` (owner-only).
+  Future<OwnerListingVinReportLookupResult> fetchOwnerListingVinReportStatus(
+    String listingId,
+  );
+
+  /// Calls `get_my_listing_vin_source_results` (owner-only).
+  Future<OwnerListingVinSourceResultsLookupResult>
+  fetchOwnerListingVinSourceResults(String listingId);
 }
 
 class SupabaseEditListingRemoteDataSource
@@ -133,7 +148,106 @@ class SupabaseEditListingRemoteDataSource
           : listingDrivetrainToDbValue(input.drivetrain!)
       ..['p_registration'] = _nullableTrimListingField(input.registration)
       ..['p_description'] = _nullableTrimListingField(input.description);
+    if (input.submitVinParameterToRpc) {
+      params['p_vin'] = input.vinParameter;
+    }
     return _rpcListingRow(_supabase.client.rpc(_rpcV2, params: params), _rpcV2);
+  }
+
+  static const String _rpcVinIdentity = 'get_my_listing_vehicle_identity';
+  static const String _rpcVinReportStatus = 'get_my_listing_vin_report_status';
+  static const String _rpcVinSourceResults =
+      'get_my_listing_vin_source_results';
+
+  @override
+  Future<OwnerListingVinLookupResult> fetchOwnerListingVin(
+    String listingId,
+  ) async {
+    try {
+      final dynamic data = await _supabase.client.rpc(
+        _rpcVinIdentity,
+        params: <String, dynamic>{'p_listing_id': listingId},
+      );
+
+      Map<String, dynamic>? row;
+      if (data is List && data.isNotEmpty && data.first is Map) {
+        row = Map<String, dynamic>.from(data.first as Map);
+      } else if (data is Map<String, dynamic>) {
+        row = data;
+      }
+      if (row == null) {
+        return const OwnerListingVinLookupResult(fetchFailed: true);
+      }
+
+      final rawVin = row['vin_normalized'];
+      String? normalized;
+      if (rawVin is String && rawVin.trim().isNotEmpty) {
+        normalized = rawVin.trim();
+      }
+      return OwnerListingVinLookupResult(normalizedVin: normalized);
+    } on sb.PostgrestException {
+      return const OwnerListingVinLookupResult(fetchFailed: true);
+    } catch (_) {
+      return const OwnerListingVinLookupResult(fetchFailed: true);
+    }
+  }
+
+  @override
+  Future<OwnerListingVinReportLookupResult> fetchOwnerListingVinReportStatus(
+    String listingId,
+  ) async {
+    try {
+      final dynamic data = await _supabase.client.rpc(
+        _rpcVinReportStatus,
+        params: <String, dynamic>{'p_listing_id': listingId},
+      );
+
+      Map<String, dynamic>? row;
+      if (data is List && data.isNotEmpty && data.first is Map) {
+        row = Map<String, dynamic>.from(data.first as Map);
+      } else if (data is Map<String, dynamic>) {
+        row = data;
+      }
+      if (row == null) {
+        return const OwnerListingVinReportLookupResult(fetchFailed: true);
+      }
+
+      final parsed = OwnerListingVinReportStatus.tryParse(row);
+      if (parsed == null) {
+        return const OwnerListingVinReportLookupResult(fetchFailed: true);
+      }
+      return OwnerListingVinReportLookupResult(status: parsed);
+    } on sb.PostgrestException {
+      return const OwnerListingVinReportLookupResult(fetchFailed: true);
+    } catch (_) {
+      return const OwnerListingVinReportLookupResult(fetchFailed: true);
+    }
+  }
+
+  @override
+  Future<OwnerListingVinSourceResultsLookupResult>
+  fetchOwnerListingVinSourceResults(String listingId) async {
+    try {
+      final dynamic data = await _supabase.client.rpc(
+        _rpcVinSourceResults,
+        params: <String, dynamic>{'p_listing_id': listingId},
+      );
+
+      final rows = <OwnerListingVinSourceResult>[];
+      if (data is List) {
+        for (final item in data) {
+          if (item is! Map) continue;
+          final row = Map<String, dynamic>.from(item);
+          final parsed = OwnerListingVinSourceResult.tryParse(row);
+          if (parsed != null) rows.add(parsed);
+        }
+      }
+      return OwnerListingVinSourceResultsLookupResult(results: rows);
+    } on sb.PostgrestException {
+      return const OwnerListingVinSourceResultsLookupResult(fetchFailed: true);
+    } catch (_) {
+      return const OwnerListingVinSourceResultsLookupResult(fetchFailed: true);
+    }
   }
 
   @override

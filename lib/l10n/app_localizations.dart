@@ -1826,6 +1826,30 @@ abstract class AppLocalizations {
   /// **'Сервис временно недоступен. Попробуйте позже.'**
   String get listingCreateServiceUnavailable;
 
+  /// No description provided for @listingCreateVinInvalidServer.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN-код некорректен. Проверьте 17 символов или оставьте поле пустым.'**
+  String get listingCreateVinInvalidServer;
+
+  /// No description provided for @listingCreateRpcNotReady.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сервер ещё не готов принять новые данные объявления. Попробуйте позже или обновите приложение.'**
+  String get listingCreateRpcNotReady;
+
+  /// No description provided for @listingCreatePermissionDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет прав для создания объявления. Войдите в аккаунт ещё раз.'**
+  String get listingCreatePermissionDenied;
+
+  /// No description provided for @listingCreateCheckConstraint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Некоторые данные объявления имеют некорректный формат. Проверьте поля и попробуйте снова.'**
+  String get listingCreateCheckConstraint;
+
   /// No description provided for @editListingTitle.
   ///
   /// In ru, this message translates to:
@@ -3277,6 +3301,378 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Показать ещё'**
   String get sellerLoadMore;
+
+  /// No description provided for @listingVinFieldLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN-код'**
+  String get listingVinFieldLabel;
+
+  /// No description provided for @listingVinFieldHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Необязательно. Полный VIN не будет показан публично.'**
+  String get listingVinFieldHelper;
+
+  /// No description provided for @validationVinInvalid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите корректный VIN из 17 символов или оставьте поле пустым.'**
+  String get validationVinInvalid;
+
+  /// No description provided for @listingVinBadgeIndicated.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN указан'**
+  String get listingVinBadgeIndicated;
+
+  /// No description provided for @listingVinTrustSheetTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверка по VIN'**
+  String get listingVinTrustSheetTitle;
+
+  /// No description provided for @listingVinTrustSheetIntro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продавец добавил VIN-код к объявлению. Полный VIN не показывается публично.'**
+  String get listingVinTrustSheetIntro;
+
+  /// No description provided for @listingVinTrustSheetSectionVinProvidedLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN указан'**
+  String get listingVinTrustSheetSectionVinProvidedLabel;
+
+  /// No description provided for @listingVinTrustSheetSectionVinProvidedBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN добавлен продавцом.'**
+  String get listingVinTrustSheetSectionVinProvidedBody;
+
+  /// No description provided for @listingVinTrustSheetSectionFormatLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Формат VIN'**
+  String get listingVinTrustSheetSectionFormatLabel;
+
+  /// No description provided for @listingVinTrustSheetSectionFormatBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Формат VIN выглядит корректно: 17 символов без недопустимых букв.'**
+  String get listingVinTrustSheetSectionFormatBody;
+
+  /// No description provided for @listingVinTrustSheetSectionPrivacyLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Конфиденциальность'**
+  String get listingVinTrustSheetSectionPrivacyLabel;
+
+  /// No description provided for @listingVinTrustSheetSectionPrivacyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полный VIN доступен только продавцу и не отображается публично в объявлении.'**
+  String get listingVinTrustSheetSectionPrivacyBody;
+
+  /// No description provided for @listingVinTrustSheetFutureTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что появится позже'**
+  String get listingVinTrustSheetFutureTitle;
+
+  /// No description provided for @listingVinTrustSheetFutureItemVehicleData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные автомобиля по VIN'**
+  String get listingVinTrustSheetFutureItemVehicleData;
+
+  /// No description provided for @listingVinTrustSheetFutureItemDamageHistory.
+  ///
+  /// In ru, this message translates to:
+  /// **'История повреждений'**
+  String get listingVinTrustSheetFutureItemDamageHistory;
+
+  /// No description provided for @listingVinTrustSheetFutureItemRegistrationInsurance.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регистрационные и страховые проверки'**
+  String get listingVinTrustSheetFutureItemRegistrationInsurance;
+
+  /// No description provided for @listingVinTrustSheetFutureItemListingCompare.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сравнение данных VIN с объявлением'**
+  String get listingVinTrustSheetFutureItemListingCompare;
+
+  /// No description provided for @listingVinTrustSheetFooterNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас это базовая проверка формата. Расширенная проверка по официальным и партнёрским источникам будет добавлена позже.'**
+  String get listingVinTrustSheetFooterNote;
+
+  /// No description provided for @listingVinTrustSheetGotIt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Понятно'**
+  String get listingVinTrustSheetGotIt;
+
+  /// No description provided for @listingBuyerVinReportTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отчёт по VIN'**
+  String get listingBuyerVinReportTitle;
+
+  /// No description provided for @listingBuyerVinReportLoading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Загрузка отчёта…'**
+  String get listingBuyerVinReportLoading;
+
+  /// No description provided for @listingBuyerVinReportLoadError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить отчёт. Попробуйте позже.'**
+  String get listingBuyerVinReportLoadError;
+
+  /// No description provided for @listingBuyerVinReportVinAddedBySeller.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN добавлен продавцом.'**
+  String get listingBuyerVinReportVinAddedBySeller;
+
+  /// No description provided for @listingBuyerVinReportFullVinPrivate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полный VIN не показывается публично.'**
+  String get listingBuyerVinReportFullVinPrivate;
+
+  /// No description provided for @listingBuyerVinReportPublicDataUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Публичные данные по VIN пока недоступны.'**
+  String get listingBuyerVinReportPublicDataUnavailable;
+
+  /// No description provided for @listingBuyerVinReportFormatOnlyExplanation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас отображается только факт, что продавец указал VIN и его формат выглядит корректно.'**
+  String get listingBuyerVinReportFormatOnlyExplanation;
+
+  /// No description provided for @listingBuyerVinReportSourcesSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные из источников'**
+  String get listingBuyerVinReportSourcesSectionTitle;
+
+  /// No description provided for @listingBuyerVinReportSourceHeading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник'**
+  String get listingBuyerVinReportSourceHeading;
+
+  /// No description provided for @listingBuyerVinReportUpdatedLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дата обновления'**
+  String get listingBuyerVinReportUpdatedLabel;
+
+  /// No description provided for @listingBuyerVinReportLimitationsHeading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ограничения'**
+  String get listingBuyerVinReportLimitationsHeading;
+
+  /// No description provided for @listingBuyerVinReportClose.
+  ///
+  /// In ru, this message translates to:
+  /// **'Понятно'**
+  String get listingBuyerVinReportClose;
+
+  /// No description provided for @listingBuyerVinReportBasicDecodeCatalogLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас показана только базовая расшифровка VIN по открытому каталогу NHTSA vPIC.'**
+  String get listingBuyerVinReportBasicDecodeCatalogLine;
+
+  /// No description provided for @listingBuyerVinReportBasicDecodeNotOfficialLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это не официальная проверка регистрации, владельца, истории ДТП, страховки или пробега.'**
+  String get listingBuyerVinReportBasicDecodeNotOfficialLine;
+
+  /// No description provided for @listingBuyerVinReportNhtsaCatalogSourceLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник: открытый каталог NHTSA vPIC.'**
+  String get listingBuyerVinReportNhtsaCatalogSourceLine;
+
+  /// No description provided for @listingBuyerVinReportNotVerifiedSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что этот отчёт пока не проверяет'**
+  String get listingBuyerVinReportNotVerifiedSectionTitle;
+
+  /// No description provided for @listingBuyerVinReportLimitationRegistrationMdPmr.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регистрацию автомобиля в Молдове или ПМР'**
+  String get listingBuyerVinReportLimitationRegistrationMdPmr;
+
+  /// No description provided for @listingBuyerVinReportLimitationOwner.
+  ///
+  /// In ru, this message translates to:
+  /// **'Владельца автомобиля'**
+  String get listingBuyerVinReportLimitationOwner;
+
+  /// No description provided for @listingBuyerVinReportLimitationAccidentHistory.
+  ///
+  /// In ru, this message translates to:
+  /// **'Историю ДТП и повреждений'**
+  String get listingBuyerVinReportLimitationAccidentHistory;
+
+  /// No description provided for @listingBuyerVinReportLimitationInsurance.
+  ///
+  /// In ru, this message translates to:
+  /// **'Страховку'**
+  String get listingBuyerVinReportLimitationInsurance;
+
+  /// No description provided for @listingBuyerVinReportLimitationMileage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пробег'**
+  String get listingBuyerVinReportLimitationMileage;
+
+  /// No description provided for @listingBuyerVinReportLimitationLegalEncumbrances.
+  ///
+  /// In ru, this message translates to:
+  /// **'Юридические ограничения'**
+  String get listingBuyerVinReportLimitationLegalEncumbrances;
+
+  /// No description provided for @listingBuyerVinReportLimitationUnknownFallback.
+  ///
+  /// In ru, this message translates to:
+  /// **'Некоторые проверки пока недоступны.'**
+  String get listingBuyerVinReportLimitationUnknownFallback;
+
+  /// No description provided for @listingBuyerVinReportCompareHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные по VIN можно сравнить с объявлением.'**
+  String get listingBuyerVinReportCompareHint;
+
+  /// No description provided for @listingBuyerVinReportCompareMatch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Базовые данные по VIN совпадают с объявлением.'**
+  String get listingBuyerVinReportCompareMatch;
+
+  /// No description provided for @listingBuyerVinReportCompareMismatch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Есть расхождения между данными по VIN и объявлением. Проверьте документы и автомобиль перед покупкой.'**
+  String get listingBuyerVinReportCompareMismatch;
+
+  /// No description provided for @listingBuyerVinReportDecodedEngineLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Двигатель'**
+  String get listingBuyerVinReportDecodedEngineLabel;
+
+  /// No description provided for @listingBuyerVinReportDecodedTransmissionLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Трансмиссия'**
+  String get listingBuyerVinReportDecodedTransmissionLabel;
+
+  /// No description provided for @editListingVinReportSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статус VIN'**
+  String get editListingVinReportSectionTitle;
+
+  /// No description provided for @editListingVinReportNoVinBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN не указан. После сохранения VIN здесь появится статус обработки.'**
+  String get editListingVinReportNoVinBody;
+
+  /// No description provided for @editListingVinReportPendingBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN добавлен. Проверка базовой информации выполняется.'**
+  String get editListingVinReportPendingBody;
+
+  /// No description provided for @editListingVinReportDecodedBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Базовая информация по VIN обработана.'**
+  String get editListingVinReportDecodedBody;
+
+  /// No description provided for @editListingVinReportFailedBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось обработать базовую информацию по VIN. VIN всё равно сохранён.'**
+  String get editListingVinReportFailedBody;
+
+  /// No description provided for @editListingVinReportUnavailableBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN сохранён. Расширенный статус пока недоступен.'**
+  String get editListingVinReportUnavailableBody;
+
+  /// No description provided for @editListingVinReportLimitationNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это не официальная проверка регистрации, владельца, истории ДТП, страховки или пробега.'**
+  String get editListingVinReportLimitationNote;
+
+  /// No description provided for @editListingVinReportPrivacyNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Полный VIN не показывается публично.'**
+  String get editListingVinReportPrivacyNote;
+
+  /// No description provided for @editListingVinReportBasicInfoHeading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Базовая информация'**
+  String get editListingVinReportBasicInfoHeading;
+
+  /// No description provided for @editListingVinReportDecodedMakeLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Марка'**
+  String get editListingVinReportDecodedMakeLabel;
+
+  /// No description provided for @editListingVinReportDecodedModelLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Модель'**
+  String get editListingVinReportDecodedModelLabel;
+
+  /// No description provided for @editListingVinReportDecodedYearLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Год'**
+  String get editListingVinReportDecodedYearLabel;
+
+  /// No description provided for @editListingVinReportDecodedBodyLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кузов'**
+  String get editListingVinReportDecodedBodyLabel;
+
+  /// No description provided for @editListingVinReportDecodedFuelLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Топливо'**
+  String get editListingVinReportDecodedFuelLabel;
+
+  /// No description provided for @editListingVinReportSourceLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник: базовая расшифровка NHTSA vPIC.'**
+  String get editListingVinReportSourceLine;
 }
 
 class _AppLocalizationsDelegate

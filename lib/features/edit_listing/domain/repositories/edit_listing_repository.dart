@@ -1,6 +1,9 @@
 import '../../../../core/utils/result.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../entities/edit_listing_input.dart';
+import '../entities/owner_listing_vin_lookup_result.dart';
+import '../entities/owner_listing_vin_report_status.dart';
+import '../entities/owner_listing_vin_source_result.dart';
 
 /// Narrow repository for owner-only listing edits. Backed by the
 /// `update_listing_details` (+ v2 currency) RPCs in the data layer.
@@ -32,4 +35,16 @@ abstract interface class EditListingRepository {
     required String listingId,
     required String? coverImageUrl,
   });
+
+  /// Owner-only normalized VIN via `get_my_listing_vehicle_identity`.
+  Future<Result<OwnerListingVinLookupResult>> fetchOwnerVin(String listingId);
+
+  /// Owner-only processing/decode status via `get_my_listing_vin_report_status`.
+  Future<Result<OwnerListingVinReportLookupResult>> fetchOwnerVinReportStatus(
+    String listingId,
+  );
+
+  /// Owner-only sanitized source rows via `get_my_listing_vin_source_results`.
+  Future<Result<OwnerListingVinSourceResultsLookupResult>>
+  fetchOwnerVinSourceResults(String listingId);
 }

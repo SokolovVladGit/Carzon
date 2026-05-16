@@ -31,6 +31,7 @@ class NewListingInput extends Equatable {
     this.drivetrain,
     this.registration,
     this.description,
+    this.vin,
   });
 
   final String sellerId;
@@ -72,6 +73,9 @@ class NewListingInput extends Equatable {
   final String? registration;
   final String? description;
 
+  /// Normalized 17-char VIN when provided; null when omitted on create.
+  final String? vin;
+
   NewListingInput copyWith({
     String? coverImageUrl,
     String? contactPhone,
@@ -86,6 +90,7 @@ class NewListingInput extends Equatable {
     ListingDrivetrain? drivetrain,
     String? registration,
     String? description,
+    String? vin,
   }) => NewListingInput(
     sellerId: sellerId,
     title: title,
@@ -111,6 +116,7 @@ class NewListingInput extends Equatable {
     drivetrain: drivetrain ?? this.drivetrain,
     registration: registration ?? this.registration,
     description: description ?? this.description,
+    vin: vin ?? this.vin,
   );
 
   @override
@@ -133,6 +139,7 @@ class NewListingInput extends Equatable {
     drivetrain,
     registration,
     description,
+    vin,
     contactPhone,
     telegramUsername,
     whatsappEnabled,

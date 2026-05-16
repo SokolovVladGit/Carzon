@@ -110,6 +110,32 @@ void main() {
       expect(cap.priceCurrency, ListingCurrency.usd);
       expect(cap.uploadedGallery?.length, 1);
       expect(cap.uploadedGallery?.first.storagePath, 'listings/seller/x.jpg');
+      expect(cap.vin, isNull);
+    });
+
+    test('forwards optional vin on input to remote.insertV2', () async {
+      final remote = _MockRemote();
+      final repo = CreateListingRepositoryImpl(remote);
+      final input = NewListingInput(
+        sellerId: 'seller',
+        title: 't',
+        make: 'm',
+        model: 'm',
+        year: 2020,
+        priceEur: 100,
+        mileageKm: 1,
+        type: ListingType.sale,
+        city: 'c',
+        marketRegion: MarketRegion.moldova,
+        contactPhone: '+373 690 00001',
+        vin: '1HGBH41JXMN109186',
+      );
+      when(() => remote.insertV2(any())).thenAnswer((_) async => _row());
+      await repo.createV2(input);
+      final cap =
+          verify(() => remote.insertV2(captureAny())).captured.single
+              as NewListingInput;
+      expect(cap.vin, '1HGBH41JXMN109186');
     });
   });
 }

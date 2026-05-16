@@ -79,15 +79,18 @@ void main() {
     test('verify_jwt is false for internal cron Edge function sections', () {
       expect(raw, contains('[functions.process-message-notifications]'));
       expect(raw, contains('[functions.process-filter-alert-notifications]'));
+      expect(raw, contains('[functions.process-vin-decode-jobs]'));
       final lines = raw.split('\n').where((l) => l.trim() == 'verify_jwt = false').length;
-      expect(lines >= 2, isTrue);
+      expect(lines >= 3, isTrue);
     });
 
-    test('docs reference Phase 3E and Phase 4A migrations or ops runbook', () {
+    test('docs reference Phase 3E, Phase 4A, VIN scheduler migrations or ops runbooks', () {
       expect(
         raw.contains('20260529120000') ||
             raw.contains('20260601120000') ||
-            raw.contains('ops_message_notifications'),
+            raw.contains('20260621120000') ||
+            raw.contains('ops_message_notifications') ||
+            raw.contains('ops_vin_decode_jobs'),
         isTrue,
       );
     });

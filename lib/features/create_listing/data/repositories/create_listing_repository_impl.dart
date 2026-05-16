@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/log_redaction.dart';
@@ -8,6 +10,7 @@ import '../../domain/constants/listing_gallery_limits.dart';
 import '../../domain/entities/new_listing_input.dart';
 import '../../domain/repositories/create_listing_repository.dart';
 import '../datasources/create_listing_remote_datasource.dart';
+import '../utils/create_listing_rpc_debug_log.dart';
 
 class CreateListingRepositoryImpl implements CreateListingRepository {
   CreateListingRepositoryImpl(this._remote)
@@ -53,11 +56,17 @@ class CreateListingRepositoryImpl implements CreateListingRepository {
       final listing = await _remote.insertV2(input);
       return Success(listing);
     } on ServerException catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+          '[CreateListing][repository:createV2] mapped ServerFailure '
+          'code=${e.postgrestCode ?? '-'}',
+        );
+      }
       _logger.debug(
         'create_listing_v2 server error '
         'code=${e.postgrestCode ?? '-'} '
-        'details=${redactLikelyDigitsInLogs(e.diagnosticsDetails ?? '-')} '
-        'message=${redactLikelyDigitsInLogs(e.message)}',
+        'details=${redactLikelyDigitsInLogs(CreateListingRpcDebugLog.sanitizeWireText(e.diagnosticsDetails ?? '-'))} '
+        'message=${redactLikelyDigitsInLogs(CreateListingRpcDebugLog.sanitizeWireText(e.message))}',
       );
       return FailureResult(
         ServerFailure(

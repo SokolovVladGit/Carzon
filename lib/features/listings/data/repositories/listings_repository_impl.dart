@@ -2,6 +2,7 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/utils/result.dart';
+import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
 import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_image.dart';
 import '../../domain/repositories/listings_repository.dart';
@@ -79,6 +80,23 @@ class ListingsRepositoryImpl implements ListingsRepository {
       _logger.error('getListingImages unknown error', e, st);
       return const FailureResult(
         UnknownFailure('Failed to load listing images.'),
+      );
+    }
+  }
+
+  @override
+  Future<Result<BuyerListingVinReportLookupResult>> fetchBuyerVinReportSources(
+    String listingId,
+  ) async {
+    try {
+      final r = await _remote.fetchBuyerListingVinReportSources(listingId);
+      return Success(r);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('fetchBuyerVinReportSources unknown error', e, st);
+      return const Success(
+        BuyerListingVinReportLookupResult(fetchFailed: true),
       );
     }
   }

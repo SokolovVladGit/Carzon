@@ -1,6 +1,8 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
 import 'package:carzon/features/edit_listing/domain/entities/edit_listing_input.dart';
+import 'package:carzon/features/edit_listing/domain/entities/owner_listing_vin_report_status.dart';
+import 'package:carzon/features/edit_listing/domain/entities/owner_listing_vin_source_result.dart';
 import 'package:carzon/features/edit_listing/presentation/bloc/edit_listing_cubit.dart';
 import 'package:carzon/features/edit_listing/presentation/bloc/edit_listing_state.dart';
 import 'package:carzon/features/edit_listing/presentation/models/edit_listing_gallery_slot.dart';
@@ -21,7 +23,10 @@ import '../../helpers/l10n_test_helpers.dart';
 class _MockEditCubit extends MockCubit<EditListingState>
     implements EditListingCubit {}
 
-Listing _listing({String? coverUrl}) => Listing(
+Listing _listing({
+  String? coverUrl,
+  ListingVinStatus vinStatus = ListingVinStatus.notProvided,
+}) => Listing(
   id: 'l1',
   title: 'VW Golf',
   make: 'Volkswagen',
@@ -38,6 +43,7 @@ Listing _listing({String? coverUrl}) => Listing(
   sellerId: 's1',
   contactPhone: '+373 690 00001',
   coverImageUrl: coverUrl,
+  vinStatus: vinStatus,
 );
 
 void main() {
@@ -141,6 +147,154 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('owner VIN status block shows conservative copy (no forbidden claims)', (
+    tester,
+  ) async {
+    final listing = _listing(vinStatus: ListingVinStatus.formatValid);
+    final initial = buildInitialEditListingGallerySlots(
+      listing: listing,
+      prefetchedGallery: const [],
+      galleryLoadSucceeded: true,
+    );
+    stub(
+      EditListingState.ready(
+        listing,
+        listingGalleryImages: const [],
+        galleryLoadSucceeded: true,
+        initialGallerySlots: initial,
+        ownerVinReportStatus: OwnerListingVinReportStatus(
+          listingId: listing.id,
+          publicVinStatusRaw: 'format_valid',
+          processingStatusRaw: 'succeeded',
+          decodeStatusRaw: 'decoded',
+          decodedMake: 'HONDA',
+          decodedModel: 'Civic',
+          decodedYear: 2019,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(app());
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey('edit_listing_owner_vin_report_section')),
+      findsOneWidget,
+    );
+    expect(find.text(ru.editListingVinReportSectionTitle), findsOneWidget);
+    expect(find.text(ru.editListingVinReportDecodedBody), findsOneWidget);
+    expect(find.text(ru.editListingVinReportBasicInfoHeading), findsOneWidget);
+    final sectionFinder = find.byKey(
+      const ValueKey('edit_listing_owner_vin_report_section'),
+    );
+    expect(
+      find.descendant(
+        of: sectionFinder,
+        matching: find.text(ru.editListingVinReportDecodedMakeLabel),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sectionFinder, matching: find.text('HONDA')),
+      findsOneWidget,
+    );
+    expect(find.text(ru.editListingVinReportSourceLine), findsOneWidget);
+    for (final phrase in [
+      'VIN проверен',
+      'официально подтверждён',
+      'история проверена',
+      'проверено по базе',
+      'без ДТП',
+      'чистая история',
+    ]) {
+      expect(find.textContaining(phrase), findsNothing);
+    }
+  });
+
+  testWidgets(
+    'owner basic info uses NHTSA source normalized_summary when legacy decoded '
+    'snapshot is empty',
+    (tester) async {
+      final listing = _listing(vinStatus: ListingVinStatus.formatValid);
+      final initial = buildInitialEditListingGallerySlots(
+        listing: listing,
+        prefetchedGallery: const [],
+        galleryLoadSucceeded: true,
+      );
+      stub(
+        EditListingState.ready(
+          listing,
+          listingGalleryImages: const [],
+          galleryLoadSucceeded: true,
+          initialGallerySlots: initial,
+          ownerVinReportStatus: OwnerListingVinReportStatus(
+            listingId: listing.id,
+            publicVinStatusRaw: 'format_valid',
+            processingStatusRaw: 'succeeded',
+            decodeStatusRaw: 'decoded',
+          ),
+          ownerVinSourceResults: [
+            const OwnerListingVinSourceResult(
+              sourceId: 'nhtsa_vpic',
+              statusRaw: 'succeeded',
+              normalizedSummary: {
+                'make': 'NISSAN',
+                'model': 'Leaf',
+                'year': 2021,
+              },
+            ),
+          ],
+        ),
+      );
+
+      await tester.pumpWidget(app());
+      await tester.pump();
+
+      final sectionFinder = find.byKey(
+        const ValueKey('edit_listing_owner_vin_report_section'),
+      );
+      expect(find.text(ru.editListingVinReportBasicInfoHeading), findsOneWidget);
+      expect(
+        find.descendant(of: sectionFinder, matching: find.text('NISSAN')),
+        findsOneWidget,
+      );
+      expect(find.text(ru.editListingVinReportSourceLine), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'owner VIN block omits decoded summary when decode succeeded but fields empty',
+    (tester) async {
+      final listing = _listing(vinStatus: ListingVinStatus.formatValid);
+      final initial = buildInitialEditListingGallerySlots(
+        listing: listing,
+        prefetchedGallery: const [],
+        galleryLoadSucceeded: true,
+      );
+      stub(
+        EditListingState.ready(
+          listing,
+          listingGalleryImages: const [],
+          galleryLoadSucceeded: true,
+          initialGallerySlots: initial,
+          ownerVinReportStatus: OwnerListingVinReportStatus(
+            listingId: listing.id,
+            publicVinStatusRaw: 'format_valid',
+            processingStatusRaw: 'succeeded',
+            decodeStatusRaw: 'decoded',
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(app());
+      await tester.pump();
+
+      expect(find.text(ru.editListingVinReportDecodedBody), findsOneWidget);
+      expect(find.text(ru.editListingVinReportBasicInfoHeading), findsNothing);
+      expect(find.text(ru.editListingVinReportSourceLine), findsNothing);
+    },
+  );
 
   testWidgets('save button is disabled while submitting (shows progress)', (
     tester,

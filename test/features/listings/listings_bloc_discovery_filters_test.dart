@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/listings/data/local/last_applied_listing_discovery_repository.dart';
+import 'package:carzon/features/listings/domain/entities/buyer_listing_vin_report_source_result.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:carzon/features/listings/domain/entities/listing_discovery_criteria.dart';
@@ -41,6 +42,9 @@ void main() {
   setUp(() {
     repo = _MockListingsRepository();
     lastAppliedRecorder = null;
+    when(() => repo.fetchBuyerVinReportSources(any())).thenAnswer(
+      (_) async => const Success(BuyerListingVinReportLookupResult()),
+    );
   });
 
   blocTest<ListingsBloc, ListingsState>(

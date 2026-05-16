@@ -34,6 +34,8 @@ class EditListingInput extends Equatable {
     this.drivetrain,
     this.registration,
     this.description,
+    this.submitVinParameterToRpc = false,
+    this.vinParameter,
   });
 
   final String listingId;
@@ -70,6 +72,13 @@ class EditListingInput extends Equatable {
   final String? registration;
   final String? description;
 
+  /// When true, sends [vinParameter] as trailing `p_vin` (use `''` to clear).
+  /// When false, omits `p_vin` so the server preserves existing identity state.
+  final bool submitVinParameterToRpc;
+
+  /// Only interpreted when [submitVinParameterToRpc] is true.
+  final String? vinParameter;
+
   @override
   List<Object?> get props => [
     listingId,
@@ -90,6 +99,8 @@ class EditListingInput extends Equatable {
     drivetrain,
     registration,
     description,
+    submitVinParameterToRpc,
+    vinParameter,
     contactPhone,
     telegramUsername,
     whatsappEnabled,

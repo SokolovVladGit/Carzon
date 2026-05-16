@@ -30,7 +30,9 @@ import '../utils/contact_format.dart';
 import '../utils/listing_formatters.dart';
 import '../utils/listing_details_header_titles.dart';
 import '../utils/report_listing_mailto.dart';
+import '../widgets/listing_card.dart';
 import '../widgets/listing_cover_image.dart';
+import '../widgets/buyer_vin_report_sheet.dart';
 import '../widgets/listing_details_fullscreen_gallery.dart';
 import '../../../sellers/presentation/widgets/seller_trust_section.dart';
 
@@ -1221,6 +1223,47 @@ class _DetailsList extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
+        if (listing.vinStatus == ListingVinStatus.formatValid) ...[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Semantics(
+              button: true,
+              label: l10n.listingBuyerVinReportTitle,
+              child: InkWell(
+                key: const ValueKey('listing_vin_trust_badge_tap'),
+                borderRadius: BorderRadius.circular(999),
+                onTap: () => showBuyerVinReportSheet(
+                  context,
+                  listingId: listing.id,
+                  listingMake: listing.make,
+                  listingModel: listing.model,
+                  listingYear: listing.year,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListingBadge(
+                        label: l10n.listingVinBadgeIndicated,
+                        tone: ListingBadgeTone.neutral,
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 15,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.55,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         for (var i = 0; i < rows.length; i++)
           _ListingSpecRow(
             data: rows[i],

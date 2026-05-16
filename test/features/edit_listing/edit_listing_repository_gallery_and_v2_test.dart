@@ -70,6 +70,46 @@ void main() {
       );
       verify(() => remote.updateDetailsV2(any())).called(1);
     });
+
+    test('forwards EditListingInput vin clear flags to remote', () async {
+      when(() => remote.updateDetailsV2(any())).thenAnswer((_) async => _row());
+
+      await repo.updateDetailsV2(
+        EditListingInput(
+          listingId: _row().id,
+          title: 'x',
+          make: 'm',
+          model: 'm',
+          year: 2020,
+          priceEur: 1,
+          mileageKm: 1,
+          type: ListingType.sale,
+          city: 'c',
+          marketRegion: MarketRegion.moldova,
+          contactPhone: '+373 690 00001',
+          priceCurrency: ListingCurrency.eur,
+          submitVinParameterToRpc: true,
+          vinParameter: '',
+        ),
+      );
+
+      final cap =
+          verify(() => remote.updateDetailsV2(captureAny())).captured.single
+              as EditListingInput;
+      expect(cap.submitVinParameterToRpc, isTrue);
+      expect(cap.vinParameter, '');
+    });
+
+    test('forwards preserve-VIN omission (submitVinParameterToRpc false)', () async {
+      when(() => remote.updateDetailsV2(any())).thenAnswer((_) async => _row());
+
+      await repo.updateDetailsV2(_minimalInput());
+
+      final cap =
+          verify(() => remote.updateDetailsV2(captureAny())).captured.single
+              as EditListingInput;
+      expect(cap.submitVinParameterToRpc, isFalse);
+    });
   });
 
   group('replaceListingImages', () {
