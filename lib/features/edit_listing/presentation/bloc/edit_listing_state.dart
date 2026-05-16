@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../domain/entities/owner_listing_vin_report_status.dart';
+import '../../domain/entities/owner_listing_vin_source_result.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_image.dart';
 import '../models/edit_listing_gallery_slot.dart';
@@ -17,8 +19,7 @@ enum EditListingStatus { initial, loading, ready, submitting, success, failure }
 
 /// Discriminates why the current [EditListingState] is in
 /// [EditListingStatus.failure]. The presentation layer maps this into
-/// a localized message — the cubit itself never builds user-facing
-/// text.
+/// localized copy — the cubit itself never builds user-facing text.
 enum EditListingFailureKind {
   /// The initial load could not fetch the listing.
   load,
@@ -55,31 +56,38 @@ class EditListingState extends Equatable {
     this.listingGalleryImages = const <ListingImage>[],
     this.galleryLoadSucceeded = false,
     this.initialGallerySlots = const <EditListingGallerySlot>[],
+    this.ownerVinNormalizedForEdit,
+    this.ownerVinLookupFailed = false,
+    this.ownerVinReportStatus,
+    this.ownerVinReportLookupFailed = false,
+    this.ownerVinSourceResults = const [],
+    this.ownerVinSourceResultsLookupFailed = false,
   });
 
   final EditListingStatus status;
-
-  /// The listing we are editing. Populated by [load] when the fetch
-  /// succeeds and replaced on save success. Null while loading or
-  /// if the initial load failed.
   final Listing? listing;
-
-  /// Cached gallery rows ordered by backend `position` (preload).
   final List<ListingImage> listingGalleryImages;
-
-  /// Whether [GetListingImages] succeeded (including an empty list).
-  /// When false, the edit flow must avoid `replace_listing_images`.
   final bool galleryLoadSucceeded;
-
-  /// Immutable snapshot of editable gallery slots captured on load;
-  /// compared against the current draft to decide whether replacing
-  /// images is required.
   final List<EditListingGallerySlot> initialGallerySlots;
-
-  /// Reason for the current failure state, when [status] is
-  /// [EditListingStatus.failure]. Presentation maps this to
-  /// localized copy.
   final EditListingFailureKind? failureKind;
+
+  /// Normalized VIN from owner RPC when present; used only to seed the field.
+  final String? ownerVinNormalizedForEdit;
+
+  /// When true, preserve semantics apply if the user leaves the field unchanged.
+  final bool ownerVinLookupFailed;
+
+  /// Owner-only decode/processing snapshot from `get_my_listing_vin_report_status`.
+  final OwnerListingVinReportStatus? ownerVinReportStatus;
+
+  /// Non-fatal: VIN report RPC failed; editing must still work.
+  final bool ownerVinReportLookupFailed;
+
+  /// Owner-only rows from `get_my_listing_vin_source_results` (sanitized).
+  final List<OwnerListingVinSourceResult> ownerVinSourceResults;
+
+  /// Non-fatal: source-results RPC failed.
+  final bool ownerVinSourceResultsLookupFailed;
 
   const EditListingState.initial() : this();
 
@@ -95,12 +103,25 @@ class EditListingState extends Equatable {
     bool galleryLoadSucceeded = true,
     List<EditListingGallerySlot> initialGallerySlots =
         const <EditListingGallerySlot>[],
+    String? ownerVinNormalizedForEdit,
+    bool ownerVinLookupFailed = false,
+    OwnerListingVinReportStatus? ownerVinReportStatus,
+    bool ownerVinReportLookupFailed = false,
+    List<OwnerListingVinSourceResult> ownerVinSourceResults =
+        const <OwnerListingVinSourceResult>[],
+    bool ownerVinSourceResultsLookupFailed = false,
   }) : this(
          status: EditListingStatus.ready,
          listing: listing,
          listingGalleryImages: listingGalleryImages,
          galleryLoadSucceeded: galleryLoadSucceeded,
          initialGallerySlots: initialGallerySlots,
+         ownerVinNormalizedForEdit: ownerVinNormalizedForEdit,
+         ownerVinLookupFailed: ownerVinLookupFailed,
+         ownerVinReportStatus: ownerVinReportStatus,
+         ownerVinReportLookupFailed: ownerVinReportLookupFailed,
+         ownerVinSourceResults: ownerVinSourceResults,
+         ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
        );
 
   const EditListingState.submitting(
@@ -109,12 +130,25 @@ class EditListingState extends Equatable {
     bool galleryLoadSucceeded = true,
     List<EditListingGallerySlot> initialGallerySlots =
         const <EditListingGallerySlot>[],
+    String? ownerVinNormalizedForEdit,
+    bool ownerVinLookupFailed = false,
+    OwnerListingVinReportStatus? ownerVinReportStatus,
+    bool ownerVinReportLookupFailed = false,
+    List<OwnerListingVinSourceResult> ownerVinSourceResults =
+        const <OwnerListingVinSourceResult>[],
+    bool ownerVinSourceResultsLookupFailed = false,
   }) : this(
          status: EditListingStatus.submitting,
          listing: listing,
          listingGalleryImages: listingGalleryImages,
          galleryLoadSucceeded: galleryLoadSucceeded,
          initialGallerySlots: initialGallerySlots,
+         ownerVinNormalizedForEdit: ownerVinNormalizedForEdit,
+         ownerVinLookupFailed: ownerVinLookupFailed,
+         ownerVinReportStatus: ownerVinReportStatus,
+         ownerVinReportLookupFailed: ownerVinReportLookupFailed,
+         ownerVinSourceResults: ownerVinSourceResults,
+         ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
        );
 
   const EditListingState.success(
@@ -123,12 +157,25 @@ class EditListingState extends Equatable {
     bool galleryLoadSucceeded = true,
     List<EditListingGallerySlot> initialGallerySlots =
         const <EditListingGallerySlot>[],
+    String? ownerVinNormalizedForEdit,
+    bool ownerVinLookupFailed = false,
+    OwnerListingVinReportStatus? ownerVinReportStatus,
+    bool ownerVinReportLookupFailed = false,
+    List<OwnerListingVinSourceResult> ownerVinSourceResults =
+        const <OwnerListingVinSourceResult>[],
+    bool ownerVinSourceResultsLookupFailed = false,
   }) : this(
          status: EditListingStatus.success,
          listing: listing,
          listingGalleryImages: listingGalleryImages,
          galleryLoadSucceeded: galleryLoadSucceeded,
          initialGallerySlots: initialGallerySlots,
+         ownerVinNormalizedForEdit: ownerVinNormalizedForEdit,
+         ownerVinLookupFailed: ownerVinLookupFailed,
+         ownerVinReportStatus: ownerVinReportStatus,
+         ownerVinReportLookupFailed: ownerVinReportLookupFailed,
+         ownerVinSourceResults: ownerVinSourceResults,
+         ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
        );
 
   const EditListingState.loadFailure()
@@ -147,6 +194,13 @@ class EditListingState extends Equatable {
     bool galleryLoadSucceeded = true,
     List<EditListingGallerySlot> initialGallerySlots =
         const <EditListingGallerySlot>[],
+    String? ownerVinNormalizedForEdit,
+    bool ownerVinLookupFailed = false,
+    OwnerListingVinReportStatus? ownerVinReportStatus,
+    bool ownerVinReportLookupFailed = false,
+    List<OwnerListingVinSourceResult> ownerVinSourceResults =
+        const <OwnerListingVinSourceResult>[],
+    bool ownerVinSourceResultsLookupFailed = false,
   }) : this(
          status: EditListingStatus.failure,
          listing: listing,
@@ -154,6 +208,12 @@ class EditListingState extends Equatable {
          listingGalleryImages: listingGalleryImages,
          galleryLoadSucceeded: galleryLoadSucceeded,
          initialGallerySlots: initialGallerySlots,
+         ownerVinNormalizedForEdit: ownerVinNormalizedForEdit,
+         ownerVinLookupFailed: ownerVinLookupFailed,
+         ownerVinReportStatus: ownerVinReportStatus,
+         ownerVinReportLookupFailed: ownerVinReportLookupFailed,
+         ownerVinSourceResults: ownerVinSourceResults,
+         ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
        );
 
   EditListingState copyWith({
@@ -164,6 +224,12 @@ class EditListingState extends Equatable {
     List<EditListingGallerySlot>? initialGallerySlots,
     EditListingFailureKind? failureKind,
     bool clearFailureKind = false,
+    String? ownerVinNormalizedForEdit,
+    bool? ownerVinLookupFailed,
+    OwnerListingVinReportStatus? ownerVinReportStatus,
+    bool? ownerVinReportLookupFailed,
+    List<OwnerListingVinSourceResult>? ownerVinSourceResults,
+    bool? ownerVinSourceResultsLookupFailed,
   }) {
     return EditListingState(
       status: status ?? this.status,
@@ -172,6 +238,19 @@ class EditListingState extends Equatable {
       galleryLoadSucceeded: galleryLoadSucceeded ?? this.galleryLoadSucceeded,
       initialGallerySlots: initialGallerySlots ?? this.initialGallerySlots,
       failureKind: clearFailureKind ? null : (failureKind ?? this.failureKind),
+      ownerVinNormalizedForEdit:
+          ownerVinNormalizedForEdit ?? this.ownerVinNormalizedForEdit,
+      ownerVinLookupFailed:
+          ownerVinLookupFailed ?? this.ownerVinLookupFailed,
+      ownerVinReportStatus:
+          ownerVinReportStatus ?? this.ownerVinReportStatus,
+      ownerVinReportLookupFailed:
+          ownerVinReportLookupFailed ?? this.ownerVinReportLookupFailed,
+      ownerVinSourceResults:
+          ownerVinSourceResults ?? this.ownerVinSourceResults,
+      ownerVinSourceResultsLookupFailed:
+          ownerVinSourceResultsLookupFailed ??
+          this.ownerVinSourceResultsLookupFailed,
     );
   }
 
@@ -183,5 +262,11 @@ class EditListingState extends Equatable {
     galleryLoadSucceeded,
     initialGallerySlots,
     failureKind,
+    ownerVinNormalizedForEdit,
+    ownerVinLookupFailed,
+    ownerVinReportStatus,
+    ownerVinReportLookupFailed,
+    ownerVinSourceResults,
+    ownerVinSourceResultsLookupFailed,
   ];
 }

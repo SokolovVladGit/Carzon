@@ -6,6 +6,7 @@ SQL contracts for the Carzon backend.
 - `migrations/` — ordered, append-only SQL migrations (timestamp-prefixed).
 - `config.toml` — includes `verify_jwt = false` for **`process-message-notifications`** only.
 - `../docs/ops_message_notifications.md` — runbook for Phase 3E Vault + cron worker.
+- `../docs/ops_vin_decode_jobs.md` — Vault + pg_cron for **`process-vin-decode-jobs`** (Phase 2C scheduler).
 - `seed.sql` — synthetic local/demo data for Carzon. Safe to re-run.
 - `demo/` — temporary UI-development-only data kept strictly
   separate from the production seed flow. See
@@ -16,6 +17,7 @@ SQL contracts for the Carzon backend.
 2. Run the files in `migrations/` in chronological order.
 3. (Optional, local/dev only) Run `seed.sql` to insert the demo listings.
 4. If the chain includes **`20260529120000_schedule_process_message_notifications_cron.sql`**, create the two **Vault** secrets documented in **[`../docs/ops_message_notifications.md`](../docs/ops_message_notifications.md)** so pg_cron can invoke **`process-message-notifications`** (nothing sensitive belongs in git).
+5. If the chain includes **`20260621120000_schedule_process_vin_decode_jobs_cron.sql`**, create the two **Vault** secrets documented in **[`../docs/ops_vin_decode_jobs.md`](../docs/ops_vin_decode_jobs.md)** so pg_cron can invoke **`process-vin-decode-jobs`** every 5 minutes (optional until hosted decode automation is desired).
 
 ## Apply via Supabase CLI (when connected)
 ```bash

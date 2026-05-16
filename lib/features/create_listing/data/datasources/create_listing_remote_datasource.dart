@@ -2,6 +2,8 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
+import '../utils/create_listing_rpc_debug_log.dart';
+import '../utils/create_listing_v2_vin_params.dart';
 import '../../../listings/data/models/listing_model.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
@@ -100,6 +102,7 @@ class SupabaseCreateListingRemoteDataSource
 
   @override
   Future<ListingModel> insertV2(NewListingInput input) async {
+    Map<String, dynamic>? rpcParamsSent;
     try {
       final telegram = input.telegramUsername?.trim();
       final normalizedTelegram = (telegram == null || telegram.isEmpty)
@@ -173,7 +176,9 @@ class SupabaseCreateListingRemoteDataSource
           : listingDrivetrainToDbValue(input.drivetrain!);
       params['p_registration'] = _nullableTrim(input.registration);
       params['p_description'] = _nullableTrim(input.description);
+      applyOptionalVinToCreateListingV2Params(params, input.vin);
 
+      rpcParamsSent = params;
       final dynamic data = await _supabase.client.rpc(_rpcV2, params: params);
 
       Map<String, dynamic>? row;
@@ -190,6 +195,17 @@ class SupabaseCreateListingRemoteDataSource
 
       return ListingModel.fromJson(row);
     } on sb.PostgrestException catch (e, st) {
+      final sortedKeys =
+          (rpcParamsSent?.keys ?? const Iterable<String>.empty())
+              .map((k) => k.toString())
+              .toList()
+            ..sort();
+      CreateListingRpcDebugLog.logCreateListingV2RpcFailure(
+        exception: e,
+        sortedParamKeys: sortedKeys,
+        vinProvided: input.vin != null && input.vin!.trim().isNotEmpty,
+        vinLength: input.vin?.length,
+      );
       throw ServerException(
         e.message,
         cause: e,

@@ -98,5 +98,22 @@ void main() {
       );
       expect(m.fuelType, isNull);
     });
+
+    test('missing vin_status maps to notProvided', () {
+      final m = ListingModel.fromJson(Map<String, dynamic>.from(baseJson()));
+      expect(m.vinStatus, ListingVinStatus.notProvided);
+    });
+
+    test('null vin_status maps to notProvided', () {
+      final m = ListingModel.fromJson(baseJson()..['vin_status'] = null);
+      expect(m.vinStatus, ListingVinStatus.notProvided);
+    });
+
+    test('format_valid vin_status parses', () {
+      final m = ListingModel.fromJson(
+        baseJson()..['vin_status'] = 'format_valid',
+      );
+      expect(m.vinStatus, ListingVinStatus.formatValid);
+    });
   });
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
+import 'package:carzon/features/listings/domain/entities/buyer_listing_vin_report_source_result.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/repositories/listings_repository.dart';
 import 'package:carzon/features/listings/domain/usecases/delete_listing.dart';
@@ -51,6 +52,9 @@ void main() {
 
     setUp(() {
       repo = _MockListingsRepository();
+      when(() => repo.fetchBuyerVinReportSources(any())).thenAnswer(
+        (_) async => const Success(BuyerListingVinReportLookupResult()),
+      );
       cubit = MyListingsCubit(
         getListings: GetListings(repo),
         setListingStatus: SetListingStatus(repo),
@@ -232,6 +236,9 @@ void main() {
 
     setUp(() {
       repo = _MockListingsRepository();
+      when(() => repo.fetchBuyerVinReportSources(any())).thenAnswer(
+        (_) async => const Success(BuyerListingVinReportLookupResult()),
+      );
       cubit = MyListingsCubit(
         getListings: GetListings(repo),
         setListingStatus: SetListingStatus(repo),
@@ -356,6 +363,9 @@ void main() {
 
     setUp(() {
       repo = _MockListingsRepository();
+      when(() => repo.fetchBuyerVinReportSources(any())).thenAnswer(
+        (_) async => const Success(BuyerListingVinReportLookupResult()),
+      );
       cubit = MyListingsCubit(
         getListings: GetListings(repo),
         setListingStatus: SetListingStatus(repo),

@@ -950,6 +950,22 @@ class AppLocalizationsRu extends AppLocalizations {
       'Сервис временно недоступен. Попробуйте позже.';
 
   @override
+  String get listingCreateVinInvalidServer =>
+      'VIN-код некорректен. Проверьте 17 символов или оставьте поле пустым.';
+
+  @override
+  String get listingCreateRpcNotReady =>
+      'Сервер ещё не готов принять новые данные объявления. Попробуйте позже или обновите приложение.';
+
+  @override
+  String get listingCreatePermissionDenied =>
+      'Нет прав для создания объявления. Войдите в аккаунт ещё раз.';
+
+  @override
+  String get listingCreateCheckConstraint =>
+      'Некоторые данные объявления имеют некорректный формат. Проверьте поля и попробуйте снова.';
+
+  @override
   String get editListingTitle => 'Редактировать объявление';
 
   @override
@@ -1778,4 +1794,224 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sellerLoadMore => 'Показать ещё';
+
+  @override
+  String get listingVinFieldLabel => 'VIN-код';
+
+  @override
+  String get listingVinFieldHelper =>
+      'Необязательно. Полный VIN не будет показан публично.';
+
+  @override
+  String get validationVinInvalid =>
+      'Введите корректный VIN из 17 символов или оставьте поле пустым.';
+
+  @override
+  String get listingVinBadgeIndicated => 'VIN указан';
+
+  @override
+  String get listingVinTrustSheetTitle => 'Проверка по VIN';
+
+  @override
+  String get listingVinTrustSheetIntro =>
+      'Продавец добавил VIN-код к объявлению. Полный VIN не показывается публично.';
+
+  @override
+  String get listingVinTrustSheetSectionVinProvidedLabel => 'VIN указан';
+
+  @override
+  String get listingVinTrustSheetSectionVinProvidedBody =>
+      'VIN добавлен продавцом.';
+
+  @override
+  String get listingVinTrustSheetSectionFormatLabel => 'Формат VIN';
+
+  @override
+  String get listingVinTrustSheetSectionFormatBody =>
+      'Формат VIN выглядит корректно: 17 символов без недопустимых букв.';
+
+  @override
+  String get listingVinTrustSheetSectionPrivacyLabel => 'Конфиденциальность';
+
+  @override
+  String get listingVinTrustSheetSectionPrivacyBody =>
+      'Полный VIN доступен только продавцу и не отображается публично в объявлении.';
+
+  @override
+  String get listingVinTrustSheetFutureTitle => 'Что появится позже';
+
+  @override
+  String get listingVinTrustSheetFutureItemVehicleData =>
+      'Данные автомобиля по VIN';
+
+  @override
+  String get listingVinTrustSheetFutureItemDamageHistory =>
+      'История повреждений';
+
+  @override
+  String get listingVinTrustSheetFutureItemRegistrationInsurance =>
+      'Регистрационные и страховые проверки';
+
+  @override
+  String get listingVinTrustSheetFutureItemListingCompare =>
+      'Сравнение данных VIN с объявлением';
+
+  @override
+  String get listingVinTrustSheetFooterNote =>
+      'Сейчас это базовая проверка формата. Расширенная проверка по официальным и партнёрским источникам будет добавлена позже.';
+
+  @override
+  String get listingVinTrustSheetGotIt => 'Понятно';
+
+  @override
+  String get listingBuyerVinReportTitle => 'Отчёт по VIN';
+
+  @override
+  String get listingBuyerVinReportLoading => 'Загрузка отчёта…';
+
+  @override
+  String get listingBuyerVinReportLoadError =>
+      'Не удалось загрузить отчёт. Попробуйте позже.';
+
+  @override
+  String get listingBuyerVinReportVinAddedBySeller => 'VIN добавлен продавцом.';
+
+  @override
+  String get listingBuyerVinReportFullVinPrivate =>
+      'Полный VIN не показывается публично.';
+
+  @override
+  String get listingBuyerVinReportPublicDataUnavailable =>
+      'Публичные данные по VIN пока недоступны.';
+
+  @override
+  String get listingBuyerVinReportFormatOnlyExplanation =>
+      'Сейчас отображается только факт, что продавец указал VIN и его формат выглядит корректно.';
+
+  @override
+  String get listingBuyerVinReportSourcesSectionTitle => 'Данные из источников';
+
+  @override
+  String get listingBuyerVinReportSourceHeading => 'Источник';
+
+  @override
+  String get listingBuyerVinReportUpdatedLabel => 'Дата обновления';
+
+  @override
+  String get listingBuyerVinReportLimitationsHeading => 'Ограничения';
+
+  @override
+  String get listingBuyerVinReportClose => 'Понятно';
+
+  @override
+  String get listingBuyerVinReportBasicDecodeCatalogLine =>
+      'Сейчас показана только базовая расшифровка VIN по открытому каталогу NHTSA vPIC.';
+
+  @override
+  String get listingBuyerVinReportBasicDecodeNotOfficialLine =>
+      'Это не официальная проверка регистрации, владельца, истории ДТП, страховки или пробега.';
+
+  @override
+  String get listingBuyerVinReportNhtsaCatalogSourceLine =>
+      'Источник: открытый каталог NHTSA vPIC.';
+
+  @override
+  String get listingBuyerVinReportNotVerifiedSectionTitle =>
+      'Что этот отчёт пока не проверяет';
+
+  @override
+  String get listingBuyerVinReportLimitationRegistrationMdPmr =>
+      'Регистрацию автомобиля в Молдове или ПМР';
+
+  @override
+  String get listingBuyerVinReportLimitationOwner => 'Владельца автомобиля';
+
+  @override
+  String get listingBuyerVinReportLimitationAccidentHistory =>
+      'Историю ДТП и повреждений';
+
+  @override
+  String get listingBuyerVinReportLimitationInsurance => 'Страховку';
+
+  @override
+  String get listingBuyerVinReportLimitationMileage => 'Пробег';
+
+  @override
+  String get listingBuyerVinReportLimitationLegalEncumbrances =>
+      'Юридические ограничения';
+
+  @override
+  String get listingBuyerVinReportLimitationUnknownFallback =>
+      'Некоторые проверки пока недоступны.';
+
+  @override
+  String get listingBuyerVinReportCompareHint =>
+      'Данные по VIN можно сравнить с объявлением.';
+
+  @override
+  String get listingBuyerVinReportCompareMatch =>
+      'Базовые данные по VIN совпадают с объявлением.';
+
+  @override
+  String get listingBuyerVinReportCompareMismatch =>
+      'Есть расхождения между данными по VIN и объявлением. Проверьте документы и автомобиль перед покупкой.';
+
+  @override
+  String get listingBuyerVinReportDecodedEngineLabel => 'Двигатель';
+
+  @override
+  String get listingBuyerVinReportDecodedTransmissionLabel => 'Трансмиссия';
+
+  @override
+  String get editListingVinReportSectionTitle => 'Статус VIN';
+
+  @override
+  String get editListingVinReportNoVinBody =>
+      'VIN не указан. После сохранения VIN здесь появится статус обработки.';
+
+  @override
+  String get editListingVinReportPendingBody =>
+      'VIN добавлен. Проверка базовой информации выполняется.';
+
+  @override
+  String get editListingVinReportDecodedBody =>
+      'Базовая информация по VIN обработана.';
+
+  @override
+  String get editListingVinReportFailedBody =>
+      'Не удалось обработать базовую информацию по VIN. VIN всё равно сохранён.';
+
+  @override
+  String get editListingVinReportUnavailableBody =>
+      'VIN сохранён. Расширенный статус пока недоступен.';
+
+  @override
+  String get editListingVinReportLimitationNote =>
+      'Это не официальная проверка регистрации, владельца, истории ДТП, страховки или пробега.';
+
+  @override
+  String get editListingVinReportPrivacyNote =>
+      'Полный VIN не показывается публично.';
+
+  @override
+  String get editListingVinReportBasicInfoHeading => 'Базовая информация';
+
+  @override
+  String get editListingVinReportDecodedMakeLabel => 'Марка';
+
+  @override
+  String get editListingVinReportDecodedModelLabel => 'Модель';
+
+  @override
+  String get editListingVinReportDecodedYearLabel => 'Год';
+
+  @override
+  String get editListingVinReportDecodedBodyLabel => 'Кузов';
+
+  @override
+  String get editListingVinReportDecodedFuelLabel => 'Топливо';
+
+  @override
+  String get editListingVinReportSourceLine =>
+      'Источник: базовая расшифровка NHTSA vPIC.';
 }

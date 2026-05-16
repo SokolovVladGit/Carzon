@@ -19,6 +19,7 @@ import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../../listings/domain/constants/listing_text_limits.dart';
 import '../../../listings/domain/listing_submit_title.dart';
+import '../../../listings/domain/validation/listing_vin.dart';
 import '../../../listings/presentation/utils/contact_format.dart';
 import '../../../listings/presentation/utils/listing_formatters.dart';
 import '../../../listings/presentation/widgets/listing_vehicle_spec_pickers.dart';
@@ -214,6 +215,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   final _engineDisplacement = TextEditingController();
   final _enginePower = TextEditingController();
   final _registration = TextEditingController();
+  final _vin = TextEditingController();
   final _description = TextEditingController();
 
   ListingCurrency _priceCurrency = ListingCurrency.eur;
@@ -239,6 +241,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       _engineDisplacement,
       _enginePower,
       _registration,
+      _vin,
       _description,
     ]) {
       c.dispose();
@@ -414,6 +417,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       description: _description.text.trim().isEmpty
           ? null
           : _description.text.trim(),
+      vin: ListingVin.normalizedOrNullForCreate(_vin.text),
       contactPhone: _phone.text.trim(),
       telegramUsername: normalizeTelegramUsername(_telegram.text),
       whatsappEnabled: _whatsappEnabled,
@@ -468,6 +472,12 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     return null;
   }
 
+  String? _validateOptionalVin(AppLocalizations l10n, String? v) {
+    if (ListingVin.isBlankInput(v)) return null;
+    if (!ListingVin.isOptionalInputValid(v)) return l10n.validationVinInvalid;
+    return null;
+  }
+
   String? _validateOptionalRegistration(AppLocalizations l10n, String? v) {
     if (v == null || v.trim().isEmpty) return null;
     if (v.trim().length > kListingRegistrationMaxLength) {
@@ -508,6 +518,14 @@ class _CreateListingFormState extends State<_CreateListingForm> {
               l10n.listingCreateSessionExpired,
             CreateListingFailureKind.serviceUnavailable =>
               l10n.listingCreateServiceUnavailable,
+            CreateListingFailureKind.invalidVin =>
+              l10n.listingCreateVinInvalidServer,
+            CreateListingFailureKind.rpcSchemaNotReady =>
+              l10n.listingCreateRpcNotReady,
+            CreateListingFailureKind.permissionDenied =>
+              l10n.listingCreatePermissionDenied,
+            CreateListingFailureKind.checkConstraintViolation =>
+              l10n.listingCreateCheckConstraint,
             CreateListingFailureKind.validationRejected =>
               l10n.checkDetailsAndRetry,
             CreateListingFailureKind.genericCreate =>
@@ -893,6 +911,29 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                             }) => null,
                         validator: (v) =>
                             _validateOptionalRegistration(l10n, v),
+                        enabled: !submitting,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _vin,
+                        decoration: _createListingFieldDecoration(
+                          theme,
+                          labelText: l10n.listingVinFieldLabel,
+                          hintText: null,
+                        ).copyWith(
+                          helperText: l10n.listingVinFieldHelper,
+                          helperMaxLines: 3,
+                        ),
+                        textCapitalization: TextCapitalization.characters,
+                        maxLength: 32,
+                        buildCounter:
+                            (
+                              context, {
+                              required currentLength,
+                              required isFocused,
+                              maxLength,
+                            }) => null,
+                        validator: (v) => _validateOptionalVin(l10n, v),
                         enabled: !submitting,
                       ),
                     ],

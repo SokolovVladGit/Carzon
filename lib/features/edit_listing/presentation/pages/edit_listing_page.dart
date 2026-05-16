@@ -24,12 +24,17 @@ import '../../../listings/domain/entities/listing_currency.dart';
 import '../../../listings/domain/entities/listing_image.dart';
 import '../../../listings/domain/listing_submit_title.dart';
 import '../../../listings/domain/validation/listing_valid_years.dart';
+import '../../../listings/domain/validation/listing_vin.dart';
 import '../../../listings/presentation/utils/contact_format.dart';
 import '../../../listings/presentation/utils/listing_formatters.dart';
 import '../../../listings/presentation/widgets/listing_brand_pick_sheet.dart';
 import '../../../listings/presentation/widgets/listing_year_pick_sheet.dart';
 import '../../../listings/presentation/widgets/public_contact_notice.dart';
 import '../../domain/entities/edit_listing_input.dart';
+import '../../domain/utils/edit_listing_vin_rpc_submission.dart';
+import '../../domain/entities/owner_listing_vin_report_status.dart';
+import '../../domain/entities/owner_listing_vin_source_result.dart';
+import '../utils/edit_listing_owner_vin_report_ui.dart';
 import '../bloc/edit_listing_cubit.dart';
 import '../bloc/edit_listing_state.dart';
 import '../models/edit_listing_gallery_slot.dart';
@@ -134,6 +139,13 @@ class _EditListingView extends StatelessWidget {
                 galleryLoadSucceeded: state.galleryLoadSucceeded,
                 submitting: false,
                 imagePicker: imagePicker,
+                ownerVinNormalizedForEdit: state.ownerVinNormalizedForEdit,
+                ownerVinLookupFailed: state.ownerVinLookupFailed,
+                ownerVinReportStatus: state.ownerVinReportStatus,
+                ownerVinReportLookupFailed: state.ownerVinReportLookupFailed,
+                ownerVinSourceResults: state.ownerVinSourceResults,
+                ownerVinSourceResultsLookupFailed:
+                    state.ownerVinSourceResultsLookupFailed,
               );
             case EditListingStatus.ready:
               return _EditListingForm(
@@ -142,6 +154,13 @@ class _EditListingView extends StatelessWidget {
                 galleryLoadSucceeded: state.galleryLoadSucceeded,
                 submitting: false,
                 imagePicker: imagePicker,
+                ownerVinNormalizedForEdit: state.ownerVinNormalizedForEdit,
+                ownerVinLookupFailed: state.ownerVinLookupFailed,
+                ownerVinReportStatus: state.ownerVinReportStatus,
+                ownerVinReportLookupFailed: state.ownerVinReportLookupFailed,
+                ownerVinSourceResults: state.ownerVinSourceResults,
+                ownerVinSourceResultsLookupFailed:
+                    state.ownerVinSourceResultsLookupFailed,
               );
             case EditListingStatus.submitting:
               return _EditListingForm(
@@ -150,6 +169,13 @@ class _EditListingView extends StatelessWidget {
                 galleryLoadSucceeded: state.galleryLoadSucceeded,
                 submitting: true,
                 imagePicker: imagePicker,
+                ownerVinNormalizedForEdit: state.ownerVinNormalizedForEdit,
+                ownerVinLookupFailed: state.ownerVinLookupFailed,
+                ownerVinReportStatus: state.ownerVinReportStatus,
+                ownerVinReportLookupFailed: state.ownerVinReportLookupFailed,
+                ownerVinSourceResults: state.ownerVinSourceResults,
+                ownerVinSourceResultsLookupFailed:
+                    state.ownerVinSourceResultsLookupFailed,
               );
             case EditListingStatus.success:
               return const LoadingView();
@@ -167,6 +193,12 @@ class _EditListingForm extends StatefulWidget {
     required this.galleryLoadSucceeded,
     required this.submitting,
     this.imagePicker,
+    required this.ownerVinNormalizedForEdit,
+    required this.ownerVinLookupFailed,
+    required this.ownerVinReportStatus,
+    required this.ownerVinReportLookupFailed,
+    required this.ownerVinSourceResults,
+    required this.ownerVinSourceResultsLookupFailed,
   });
 
   final Listing listing;
@@ -174,6 +206,20 @@ class _EditListingForm extends StatefulWidget {
   final bool galleryLoadSucceeded;
   final bool submitting;
   final EditListingImagePicker? imagePicker;
+
+  /// Owner-private normalized VIN from RPC when lookup succeeds.
+  final String? ownerVinNormalizedForEdit;
+
+  /// When true, omit/clear VIN submissions must stay conservative on save.
+  final bool ownerVinLookupFailed;
+
+  final OwnerListingVinReportStatus? ownerVinReportStatus;
+
+  final bool ownerVinReportLookupFailed;
+
+  final List<OwnerListingVinSourceResult> ownerVinSourceResults;
+
+  final bool ownerVinSourceResultsLookupFailed;
 
   @override
   State<_EditListingForm> createState() => _EditListingFormState();
@@ -203,6 +249,7 @@ class _EditListingFormState extends State<_EditListingForm> {
   late final TextEditingController _engineDisplacement;
   late final TextEditingController _enginePower;
   late final TextEditingController _registration;
+  late final TextEditingController _vin;
   late final TextEditingController _description;
 
   late bool _whatsappEnabled;
@@ -253,6 +300,7 @@ class _EditListingFormState extends State<_EditListingForm> {
       text: l.enginePowerHp == null ? '' : '${l.enginePowerHp}',
     );
     _registration = TextEditingController(text: l.registration ?? '');
+    _vin = TextEditingController(text: widget.ownerVinNormalizedForEdit ?? '');
     _description = TextEditingController(text: l.description ?? '');
     _whatsappEnabled = l.whatsappEnabled;
     _priceCurrency = l.priceCurrency;
@@ -292,6 +340,7 @@ class _EditListingFormState extends State<_EditListingForm> {
       _engineDisplacement,
       _enginePower,
       _registration,
+      _vin,
       _description,
     ]) {
       c.dispose();
@@ -445,12 +494,23 @@ class _EditListingFormState extends State<_EditListingForm> {
     return int.tryParse(t);
   }
 
+  String? _validateOptionalVin(AppLocalizations l10n, String? v) {
+    if (ListingVin.isBlankInput(v)) return null;
+    if (!ListingVin.isOptionalInputValid(v)) return l10n.validationVinInvalid;
+    return null;
+  }
+
   void _submit() {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
     final year = _yearFieldKey.currentState!.value!;
     final l10n = context.l10n;
+    final vinDecision = resolveEditListingVinRpcSubmission(
+      rawVinFieldText: _vin.text,
+      ownerVinNormalizedForEdit: widget.ownerVinNormalizedForEdit,
+      ownerVinLookupFailed: widget.ownerVinLookupFailed,
+    );
     final input = EditListingInput(
       listingId: widget.listing.id,
       title: resolvedListingTitleForSubmit(
@@ -483,6 +543,8 @@ class _EditListingFormState extends State<_EditListingForm> {
       telegramUsername: normalizeTelegramUsername(_telegram.text),
       whatsappEnabled: _whatsappEnabled,
       priceCurrency: _priceCurrency,
+      submitVinParameterToRpc: vinDecision.submitVinParameterToRpc,
+      vinParameter: vinDecision.vinParameter,
     );
 
     context.read<EditListingCubit>().save(
@@ -989,6 +1051,43 @@ class _EditListingFormState extends State<_EditListingForm> {
                     validator: (v) => _validateOptionalRegistration(l10n, v),
                     enabled: !submitting,
                   ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _vin,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.listingVinFieldLabel,
+                      helperText: l10n.listingVinFieldHelper,
+                      helperMaxLines: 3,
+                    ),
+                    textCapitalization: TextCapitalization.characters,
+                    maxLength: 32,
+                    buildCounter:
+                        (
+                          context, {
+                          required currentLength,
+                          required isFocused,
+                          maxLength,
+                        }) => null,
+                    validator: (v) => _validateOptionalVin(l10n, v),
+                    enabled: !submitting,
+                  ),
+                  const SizedBox(height: 10),
+                  _EditListingOwnerVinStatusSection(
+                    listingVinStatus: widget.listing.vinStatus,
+                    ownerVinReportStatus: widget.ownerVinReportStatus,
+                    ownerVinReportLookupFailed:
+                        widget.ownerVinReportLookupFailed,
+                    ownerVinSourceResults: widget.ownerVinSourceResults,
+                    ownerVinSourceResultsLookupFailed:
+                        widget.ownerVinSourceResultsLookupFailed,
+                  ),
                 ],
               ),
             ),
@@ -1184,4 +1283,163 @@ class _EditListingFormState extends State<_EditListingForm> {
       ),
     );
   }
+}
+
+class _EditListingOwnerVinStatusSection extends StatelessWidget {
+  const _EditListingOwnerVinStatusSection({
+    required this.listingVinStatus,
+    required this.ownerVinReportStatus,
+    required this.ownerVinReportLookupFailed,
+    required this.ownerVinSourceResults,
+    required this.ownerVinSourceResultsLookupFailed,
+  });
+
+  final ListingVinStatus listingVinStatus;
+  final OwnerListingVinReportStatus? ownerVinReportStatus;
+  final bool ownerVinReportLookupFailed;
+  final List<OwnerListingVinSourceResult> ownerVinSourceResults;
+  final bool ownerVinSourceResultsLookupFailed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final kind = resolveEditListingOwnerVinReportUiKind(
+      listingPublicVinStatus: listingVinStatus,
+      reportFetchFailed: ownerVinReportLookupFailed,
+      report: ownerVinReportStatus,
+    );
+    final primary = editListingOwnerVinReportPrimaryLine(l10n, kind);
+    final basic = resolveOwnerVinBasicDecodeFields(
+      report: ownerVinReportStatus,
+      sourceResults: ownerVinSourceResults,
+      sourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
+    );
+
+    return DecoratedBox(
+      key: const ValueKey('edit_listing_owner_vin_report_section'),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.35,
+        ),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.editListingVinReportSectionTitle,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              primary,
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
+            ),
+            if (basic != null && basic.hasAny) ...[
+              const SizedBox(height: 14),
+              Text(
+                l10n.editListingVinReportBasicInfoHeading,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (basic.make != null && basic.make!.trim().isNotEmpty)
+                _ownerVinDecodeSummaryFieldRow(
+                  theme,
+                  l10n.editListingVinReportDecodedMakeLabel,
+                  basic.make!.trim(),
+                ),
+              if (basic.model != null && basic.model!.trim().isNotEmpty)
+                _ownerVinDecodeSummaryFieldRow(
+                  theme,
+                  l10n.editListingVinReportDecodedModelLabel,
+                  basic.model!.trim(),
+                ),
+              if (basic.year != null)
+                _ownerVinDecodeSummaryFieldRow(
+                  theme,
+                  l10n.editListingVinReportDecodedYearLabel,
+                  '${basic.year}',
+                ),
+              if (basic.bodyType != null && basic.bodyType!.trim().isNotEmpty)
+                _ownerVinDecodeSummaryFieldRow(
+                  theme,
+                  l10n.editListingVinReportDecodedBodyLabel,
+                  basic.bodyType!.trim(),
+                ),
+              if (basic.fuelType != null && basic.fuelType!.trim().isNotEmpty)
+                _ownerVinDecodeSummaryFieldRow(
+                  theme,
+                  l10n.editListingVinReportDecodedFuelLabel,
+                  basic.fuelType!.trim(),
+                ),
+              const SizedBox(height: 10),
+              Text(
+                l10n.editListingVinReportSourceLine,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.35,
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            Text(
+              l10n.editListingVinReportLimitationNote,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              l10n.editListingVinReportPrivacyNote,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.35,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Widget _ownerVinDecodeSummaryFieldRow(
+  ThemeData theme,
+  String label,
+  String value,
+) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
+          ),
+        ),
+      ],
+    ),
+  );
 }

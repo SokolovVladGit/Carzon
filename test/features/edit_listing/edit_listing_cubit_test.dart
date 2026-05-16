@@ -10,6 +10,12 @@ import 'package:carzon/features/create_listing/domain/entities/uploaded_listing_
 import 'package:carzon/features/create_listing/domain/usecases/delete_uploaded_listing_images_best_effort.dart';
 import 'package:carzon/features/create_listing/domain/usecases/upload_listing_images_sequential.dart';
 import 'package:carzon/features/edit_listing/domain/entities/edit_listing_input.dart';
+import 'package:carzon/features/edit_listing/domain/entities/owner_listing_vin_lookup_result.dart';
+import 'package:carzon/features/edit_listing/domain/entities/owner_listing_vin_report_status.dart';
+import 'package:carzon/features/edit_listing/domain/entities/owner_listing_vin_source_result.dart';
+import 'package:carzon/features/edit_listing/domain/usecases/get_owner_listing_vin_for_edit.dart';
+import 'package:carzon/features/edit_listing/domain/usecases/get_owner_listing_vin_report_status_for_edit.dart';
+import 'package:carzon/features/edit_listing/domain/usecases/get_owner_listing_vin_source_results_for_edit.dart';
 import 'package:carzon/features/edit_listing/domain/repositories/edit_listing_repository.dart';
 import 'package:carzon/features/edit_listing/domain/usecases/replace_listing_images.dart';
 import 'package:carzon/features/edit_listing/domain/usecases/update_listing_details_v2.dart';
@@ -17,6 +23,7 @@ import 'package:carzon/features/edit_listing/presentation/bloc/edit_listing_cubi
 import 'package:carzon/features/edit_listing/presentation/bloc/edit_listing_state.dart';
 import 'package:carzon/features/edit_listing/presentation/models/edit_listing_gallery_slot.dart';
 import 'package:carzon/features/edit_listing/presentation/utils/edit_listing_gallery_initializer.dart';
+import 'package:carzon/features/listings/domain/entities/buyer_listing_vin_report_source_result.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:carzon/features/listings/domain/entities/listing_image.dart';
@@ -55,10 +62,11 @@ Listing _seed({
   status: ListingStatus.active,
   sellerId: 's1',
   contactPhone: '+373 690 00001',
-  telegramUsername: null,
-  whatsappEnabled: false,
-  coverImageUrl: coverImageUrl,
-);
+    telegramUsername: null,
+    whatsappEnabled: false,
+    coverImageUrl: coverImageUrl,
+    vinStatus: ListingVinStatus.notProvided,
+  );
 
 ListingImage _img(
   String id,
@@ -109,6 +117,11 @@ void main() {
   EditListingCubit build() => EditListingCubit(
     getListingById: GetListingById(listingsRepo),
     getListingImages: GetListingImages(listingsRepo),
+    getOwnerListingVinForEdit: GetOwnerListingVinForEdit(editRepo),
+    getOwnerListingVinReportStatusForEdit:
+        GetOwnerListingVinReportStatusForEdit(editRepo),
+    getOwnerListingVinSourceResultsForEdit:
+        GetOwnerListingVinSourceResultsForEdit(editRepo),
     updateListingDetailsV2: UpdateListingDetailsV2(editRepo),
     replaceListingImages: ReplaceListingImages(editRepo),
     uploadListingImagesSequential: uploadSeq,
@@ -158,6 +171,22 @@ void main() {
     when(
       () => listingsRepo.getListingImages(any()),
     ).thenAnswer((_) async => const Success(<ListingImage>[]));
+
+    when(() => listingsRepo.fetchBuyerVinReportSources(any())).thenAnswer(
+      (_) async => const Success(BuyerListingVinReportLookupResult()),
+    );
+
+    when(() => editRepo.fetchOwnerVin(any())).thenAnswer(
+      (_) async => const Success(OwnerListingVinLookupResult()),
+    );
+
+    when(() => editRepo.fetchOwnerVinReportStatus(any())).thenAnswer(
+      (_) async => const Success(OwnerListingVinReportLookupResult()),
+    );
+
+    when(() => editRepo.fetchOwnerVinSourceResults(any())).thenAnswer(
+      (_) async => const Success(OwnerListingVinSourceResultsLookupResult()),
+    );
 
     when(
       () => imageRepo.deleteByPublicUrl(
@@ -313,6 +342,152 @@ void main() {
             listingGalleryImages: const <ListingImage>[],
             galleryLoadSucceeded: false,
             initialGallerySlots: const <EditListingGallerySlot>[],
+          ),
+        ];
+      },
+    );
+
+    blocTest<EditListingCubit, EditListingState>(
+      'ready with ownerVinReportLookupFailed when VIN report RPC yields fetchFailed',
+      setUp: () {
+        when(
+          () => listingsRepo.getById('l1'),
+        ).thenAnswer((_) async => Success(_seed()));
+        when(() => editRepo.fetchOwnerVinReportStatus('l1')).thenAnswer(
+          (_) async =>
+              const Success(OwnerListingVinReportLookupResult(fetchFailed: true)),
+        );
+      },
+      build: () => cubit,
+      act: (c) => c.load('l1'),
+      expect: () {
+        final listing = _seed();
+        final initial = buildInitialEditListingGallerySlots(
+          listing: listing,
+          prefetchedGallery: const <ListingImage>[],
+          galleryLoadSucceeded: true,
+        );
+        return [
+          const EditListingState.loading(),
+          EditListingState.ready(
+            listing,
+            listingGalleryImages: const <ListingImage>[],
+            galleryLoadSucceeded: true,
+            initialGallerySlots: initial,
+            ownerVinReportLookupFailed: true,
+          ),
+        ];
+      },
+    );
+
+    blocTest<EditListingCubit, EditListingState>(
+      'ready with ownerVinReportLookupFailed when VIN report usecase returns failure',
+      setUp: () {
+        when(
+          () => listingsRepo.getById('l1'),
+        ).thenAnswer((_) async => Success(_seed()));
+        when(() => editRepo.fetchOwnerVinReportStatus('l1')).thenAnswer(
+          (_) async => const FailureResult(ServerFailure('report rpc')),
+        );
+      },
+      build: () => cubit,
+      act: (c) => c.load('l1'),
+      expect: () {
+        final listing = _seed();
+        final initial = buildInitialEditListingGallerySlots(
+          listing: listing,
+          prefetchedGallery: const <ListingImage>[],
+          galleryLoadSucceeded: true,
+        );
+        return [
+          const EditListingState.loading(),
+          EditListingState.ready(
+            listing,
+            listingGalleryImages: const <ListingImage>[],
+            galleryLoadSucceeded: true,
+            initialGallerySlots: initial,
+            ownerVinReportLookupFailed: true,
+          ),
+        ];
+      },
+    );
+
+    blocTest<EditListingCubit, EditListingState>(
+      'ready with ownerVinSourceResultsLookupFailed when source-results repo fails',
+      setUp: () {
+        when(
+          () => listingsRepo.getById('l1'),
+        ).thenAnswer((_) async => Success(_seed()));
+        when(() => editRepo.fetchOwnerVinSourceResults('l1')).thenAnswer(
+          (_) async =>
+              const FailureResult(ServerFailure('source results rpc')),
+        );
+      },
+      build: () => cubit,
+      act: (c) => c.load('l1'),
+      expect: () {
+        final listing = _seed();
+        final initial = buildInitialEditListingGallerySlots(
+          listing: listing,
+          prefetchedGallery: const <ListingImage>[],
+          galleryLoadSucceeded: true,
+        );
+        return [
+          const EditListingState.loading(),
+          EditListingState.ready(
+            listing,
+            listingGalleryImages: const <ListingImage>[],
+            galleryLoadSucceeded: true,
+            initialGallerySlots: initial,
+            ownerVinSourceResultsLookupFailed: true,
+          ),
+        ];
+      },
+    );
+
+    blocTest<EditListingCubit, EditListingState>(
+      'ready carries NHTSA source rows when repo succeeds',
+      setUp: () {
+        when(
+          () => listingsRepo.getById('l1'),
+        ).thenAnswer((_) async => Success(_seed()));
+        when(() => editRepo.fetchOwnerVinSourceResults('l1')).thenAnswer(
+          (_) async => Success(
+            OwnerListingVinSourceResultsLookupResult(
+              results: [
+                OwnerListingVinSourceResult(
+                  sourceId: 'nhtsa_vpic',
+                  statusRaw: 'succeeded',
+                  normalizedSummary: const {'make': 'Subaru'},
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      build: () => cubit,
+      act: (c) => c.load('l1'),
+      expect: () {
+        final listing = _seed();
+        final initial = buildInitialEditListingGallerySlots(
+          listing: listing,
+          prefetchedGallery: const <ListingImage>[],
+          galleryLoadSucceeded: true,
+        );
+        return [
+          const EditListingState.loading(),
+          EditListingState.ready(
+            listing,
+            listingGalleryImages: const <ListingImage>[],
+            galleryLoadSucceeded: true,
+            initialGallerySlots: initial,
+            ownerVinSourceResults: [
+              OwnerListingVinSourceResult(
+                sourceId: 'nhtsa_vpic',
+                statusRaw: 'succeeded',
+                normalizedSummary: const {'make': 'Subaru'},
+              ),
+            ],
           ),
         ];
       },
@@ -891,6 +1066,7 @@ extension _ListingTestCopy on Listing {
     ListingCurrency? priceCurrency,
     String? make,
     int? year,
+    ListingVinStatus? vinStatus,
   }) => Listing(
     id: id,
     title: title,
@@ -910,5 +1086,6 @@ extension _ListingTestCopy on Listing {
     contactPhone: contactPhone,
     telegramUsername: telegramUsername,
     whatsappEnabled: whatsappEnabled,
+    vinStatus: vinStatus ?? this.vinStatus,
   );
 }

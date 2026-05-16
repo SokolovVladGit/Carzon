@@ -47,6 +47,24 @@ void main() {
     'carzon_invoke_process_message_notifications_worker',
     // Phase 4A: pg_cron-only worker; REVOKE from anon/authenticated in 20260601 migration.
     'carzon_invoke_process_filter_alert_notifications_worker',
+    // VIN Phase 2C scheduler: pg_cron-only worker; REVOKE from anon/authenticated.
+    'carzon_invoke_process_vin_decode_jobs_worker',
+    // Phase 1 VIN: SECURITY DEFINER listing RPCs only; revoked from clients in migration.
+    'carzon_normalize_vin_input',
+    'carzon_normalized_vin_syntax_ok',
+    // VIN hash helper (pgcrypto); revoked from clients — RPC-only use.
+    'carzon_sha256_hex_utf8',
+    // Phase 2A VIN processing foundation (trigger + enqueue helper only).
+    'carzon_enqueue_vin_decode_from_identity',
+    'carzon_after_listing_vehicle_identity_vin_hash_change',
+    'carzon_after_listing_vehicle_identity_deleted',
+    // Phase 2B VIN decode worker RPCs (service_role / Edge only).
+    'claim_vin_decode_jobs_for_processing',
+    'complete_vin_decode_job_success',
+    'complete_vin_decode_job_failure',
+    // Phase 2C VIN provider plumbing (service_role / Edge only).
+    'get_vin_for_decode_job',
+    'requeue_vin_decode_job_for_listing',
   };
 
   /// Internal `public` tables with RLS that must **not** receive `GRANT` to
@@ -54,6 +72,14 @@ void main() {
   const internalTablesWithoutDataApiGrant = <String>{
     'notification_delivery_events',
     'notification_delivery_attempts',
+    // Owner-private VIN storage; RPC-only access (revoked from anon/authenticated).
+    'listing_vehicle_identity',
+    // Phase 2A internal VIN queue/cache/snapshot (service_role / workers only).
+    'vin_processing_jobs',
+    'vin_decode_cache',
+    'listing_vin_report_snapshot',
+    // Phase 2E: per-source normalized outcomes (service_role / workers only).
+    'listing_vin_source_results',
   };
 
   /// `public` tables created by this repo: must match migrations exactly.
@@ -72,6 +98,11 @@ void main() {
     'user_push_tokens',
     'notification_delivery_events',
     'notification_delivery_attempts',
+    'listing_vehicle_identity',
+    'vin_processing_jobs',
+    'vin_decode_cache',
+    'listing_vin_report_snapshot',
+    'listing_vin_source_results',
   };
 
   setUpAll(() {

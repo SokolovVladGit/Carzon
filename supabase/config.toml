@@ -10,3 +10,9 @@ verify_jwt = false
 
 [functions.process-filter-alert-notifications]
 verify_jwt = false
+
+# Phase 2B VIN decode worker (internal secret only; no user JWT).
+# Automatic invoke (Phase 2C scheduler): pg_cron + pg_net + Vault — migration
+# `20260621120000_schedule_process_vin_decode_jobs_cron.sql` and docs/ops_vin_decode_jobs.md
+[functions.process-vin-decode-jobs]
+verify_jwt = false

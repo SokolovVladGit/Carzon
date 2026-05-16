@@ -12,6 +12,11 @@ import '../../../listings/domain/entities/listing_image.dart';
 import '../../../listings/domain/usecases/get_listing_by_id.dart';
 import '../../../listings/domain/usecases/get_listing_images.dart';
 import '../../domain/entities/edit_listing_input.dart';
+import '../../domain/entities/owner_listing_vin_report_status.dart';
+import '../../domain/entities/owner_listing_vin_source_result.dart';
+import '../../domain/usecases/get_owner_listing_vin_for_edit.dart';
+import '../../domain/usecases/get_owner_listing_vin_report_status_for_edit.dart';
+import '../../domain/usecases/get_owner_listing_vin_source_results_for_edit.dart';
 import '../../domain/usecases/replace_listing_images.dart';
 import '../../domain/usecases/update_listing_details_v2.dart';
 import '../models/edit_listing_gallery_slot.dart';
@@ -26,6 +31,11 @@ class EditListingCubit extends Cubit<EditListingState> {
   EditListingCubit({
     required GetListingById getListingById,
     required GetListingImages getListingImages,
+    required GetOwnerListingVinForEdit getOwnerListingVinForEdit,
+    required GetOwnerListingVinReportStatusForEdit
+    getOwnerListingVinReportStatusForEdit,
+    required GetOwnerListingVinSourceResultsForEdit
+    getOwnerListingVinSourceResultsForEdit,
     required UpdateListingDetailsV2 updateListingDetailsV2,
     required ReplaceListingImages replaceListingImages,
     required UploadListingImagesSequential uploadListingImagesSequential,
@@ -34,6 +44,11 @@ class EditListingCubit extends Cubit<EditListingState> {
     required ListingImageRepository listingImageRepository,
   }) : _getListingById = getListingById,
        _getListingImages = getListingImages,
+       _getOwnerListingVinForEdit = getOwnerListingVinForEdit,
+       _getOwnerListingVinReportStatusForEdit =
+           getOwnerListingVinReportStatusForEdit,
+       _getOwnerListingVinSourceResultsForEdit =
+           getOwnerListingVinSourceResultsForEdit,
        _updateListingDetailsV2 = updateListingDetailsV2,
        _replaceListingImages = replaceListingImages,
        _uploadSequential = uploadListingImagesSequential,
@@ -43,6 +58,11 @@ class EditListingCubit extends Cubit<EditListingState> {
 
   final GetListingById _getListingById;
   final GetListingImages _getListingImages;
+  final GetOwnerListingVinForEdit _getOwnerListingVinForEdit;
+  final GetOwnerListingVinReportStatusForEdit
+  _getOwnerListingVinReportStatusForEdit;
+  final GetOwnerListingVinSourceResultsForEdit
+  _getOwnerListingVinSourceResultsForEdit;
   final UpdateListingDetailsV2 _updateListingDetailsV2;
   final ReplaceListingImages _replaceListingImages;
   final UploadListingImagesSequential _uploadSequential;
@@ -74,12 +94,55 @@ class EditListingCubit extends Cubit<EditListingState> {
           galleryLoadSucceeded: galleryLoadSucceeded,
         );
 
+        final vinFuture = _getOwnerListingVinForEdit(id);
+        final reportFuture = _getOwnerListingVinReportStatusForEdit(id);
+        final sourceFuture = _getOwnerListingVinSourceResultsForEdit(id);
+
+        String? ownerVinNorm;
+        var ownerVinFail = false;
+        switch (await vinFuture) {
+          case Success(:final value):
+            ownerVinNorm = value.normalizedVin;
+            ownerVinFail = value.fetchFailed;
+          case FailureResult():
+            ownerVinFail = true;
+        }
+
+        final reportOut = await reportFuture;
+        final sourceOut = await sourceFuture;
+
+        OwnerListingVinReportStatus? reportStatus;
+        var reportFail = false;
+        switch (reportOut) {
+          case Success(:final value):
+            reportFail = value.fetchFailed;
+            reportStatus = value.status;
+          case FailureResult():
+            reportFail = true;
+        }
+
+        var sourceFail = false;
+        var sourceRows = const <OwnerListingVinSourceResult>[];
+        switch (sourceOut) {
+          case Success(:final value):
+            sourceFail = value.fetchFailed;
+            sourceRows = value.results;
+          case FailureResult():
+            sourceFail = true;
+        }
+
         emit(
           EditListingState.ready(
             listing,
             listingGalleryImages: galleryImages,
             galleryLoadSucceeded: galleryLoadSucceeded,
             initialGallerySlots: initialSlots,
+            ownerVinNormalizedForEdit: ownerVinNorm,
+            ownerVinLookupFailed: ownerVinFail,
+            ownerVinReportStatus: reportStatus,
+            ownerVinReportLookupFailed: reportFail,
+            ownerVinSourceResults: sourceRows,
+            ownerVinSourceResultsLookupFailed: sourceFail,
           ),
         );
     }
@@ -93,6 +156,14 @@ class EditListingCubit extends Cubit<EditListingState> {
     if (mountedListing == null) return;
     if (state.status == EditListingStatus.submitting) return;
 
+    final ownerVinNormalizedForEdit = state.ownerVinNormalizedForEdit;
+    final ownerVinLookupFailed = state.ownerVinLookupFailed;
+    final ownerVinReportStatus = state.ownerVinReportStatus;
+    final ownerVinReportLookupFailed = state.ownerVinReportLookupFailed;
+    final ownerVinSourceResults = state.ownerVinSourceResults;
+    final ownerVinSourceResultsLookupFailed =
+        state.ownerVinSourceResultsLookupFailed;
+
     if (galleryDraft.length > kMaxListingPhotos) {
       emit(
         EditListingState.saveFailure(
@@ -101,6 +172,12 @@ class EditListingCubit extends Cubit<EditListingState> {
           listingGalleryImages: state.listingGalleryImages,
           galleryLoadSucceeded: state.galleryLoadSucceeded,
           initialGallerySlots: state.initialGallerySlots,
+          ownerVinNormalizedForEdit: ownerVinNormalizedForEdit,
+          ownerVinLookupFailed: ownerVinLookupFailed,
+          ownerVinReportStatus: ownerVinReportStatus,
+          ownerVinReportLookupFailed: ownerVinReportLookupFailed,
+          ownerVinSourceResults: ownerVinSourceResults,
+          ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
         ),
       );
       return;
@@ -124,6 +201,12 @@ class EditListingCubit extends Cubit<EditListingState> {
         listingGalleryImages: state.listingGalleryImages,
         galleryLoadSucceeded: state.galleryLoadSucceeded,
         initialGallerySlots: state.initialGallerySlots,
+        ownerVinNormalizedForEdit: ownerVinNormalizedForEdit,
+        ownerVinLookupFailed: ownerVinLookupFailed,
+        ownerVinReportStatus: ownerVinReportStatus,
+        ownerVinReportLookupFailed: ownerVinReportLookupFailed,
+        ownerVinSourceResults: ownerVinSourceResults,
+        ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
       ).copyWith(clearFailureKind: true),
     );
 
@@ -142,6 +225,12 @@ class EditListingCubit extends Cubit<EditListingState> {
             listingGalleryImages: state.listingGalleryImages,
             galleryLoadSucceeded: state.galleryLoadSucceeded,
             initialGallerySlots: state.initialGallerySlots,
+            ownerVinNormalizedForEdit: ownerVinNormalizedForEdit,
+            ownerVinLookupFailed: ownerVinLookupFailed,
+            ownerVinReportStatus: ownerVinReportStatus,
+            ownerVinReportLookupFailed: ownerVinReportLookupFailed,
+            ownerVinSourceResults: ownerVinSourceResults,
+            ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
           ),
         );
         return;
@@ -165,6 +254,12 @@ class EditListingCubit extends Cubit<EditListingState> {
             listingGalleryImages: state.listingGalleryImages,
             galleryLoadSucceeded: state.galleryLoadSucceeded,
             initialGallerySlots: state.initialGallerySlots,
+            ownerVinNormalizedForEdit: ownerVinNormalizedForEdit,
+            ownerVinLookupFailed: ownerVinLookupFailed,
+            ownerVinReportStatus: ownerVinReportStatus,
+            ownerVinReportLookupFailed: ownerVinReportLookupFailed,
+            ownerVinSourceResults: ownerVinSourceResults,
+            ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
           ),
         );
       case Success(:final value):
@@ -177,6 +272,13 @@ class EditListingCubit extends Cubit<EditListingState> {
               listingGalleryImages: state.listingGalleryImages,
               galleryLoadSucceeded: state.galleryLoadSucceeded,
               initialGallerySlots: state.initialGallerySlots,
+              ownerVinNormalizedForEdit: ownerVinNormalizedForEdit,
+              ownerVinLookupFailed: ownerVinLookupFailed,
+              ownerVinReportStatus: ownerVinReportStatus,
+              ownerVinReportLookupFailed: ownerVinReportLookupFailed,
+              ownerVinSourceResults: ownerVinSourceResults,
+              ownerVinSourceResultsLookupFailed:
+                  ownerVinSourceResultsLookupFailed,
             ),
           );
           return;
@@ -211,6 +313,13 @@ class EditListingCubit extends Cubit<EditListingState> {
               listingGalleryImages: state.listingGalleryImages,
               galleryLoadSucceeded: state.galleryLoadSucceeded,
               initialGallerySlots: state.initialGallerySlots,
+              ownerVinNormalizedForEdit: ownerVinNormalizedForEdit,
+              ownerVinLookupFailed: ownerVinLookupFailed,
+              ownerVinReportStatus: ownerVinReportStatus,
+              ownerVinReportLookupFailed: ownerVinReportLookupFailed,
+              ownerVinSourceResults: ownerVinSourceResults,
+              ownerVinSourceResultsLookupFailed:
+                  ownerVinSourceResultsLookupFailed,
             ),
           );
           return;
@@ -238,6 +347,12 @@ class EditListingCubit extends Cubit<EditListingState> {
             listingGalleryImages: state.listingGalleryImages,
             galleryLoadSucceeded: state.galleryLoadSucceeded,
             initialGallerySlots: state.initialGallerySlots,
+            ownerVinNormalizedForEdit: ownerVinNormalizedForEdit,
+            ownerVinLookupFailed: ownerVinLookupFailed,
+            ownerVinReportStatus: ownerVinReportStatus,
+            ownerVinReportLookupFailed: ownerVinReportLookupFailed,
+            ownerVinSourceResults: ownerVinSourceResults,
+            ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
           ),
         );
     }

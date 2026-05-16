@@ -157,6 +157,7 @@ class ListingModel extends Listing {
     super.contactPhone,
     super.telegramUsername,
     super.whatsappEnabled,
+    super.vinStatus,
   });
 
   factory ListingModel.fromJson(Map<String, dynamic> json) {
@@ -194,6 +195,7 @@ class ListingModel extends Listing {
       contactPhone: _nonEmptyTrimmedOptional(json['contact_phone']),
       telegramUsername: _nonEmptyTrimmedOptional(json['telegram_username']),
       whatsappEnabled: _boolFromDynamic(json['whatsapp_enabled']),
+      vinStatus: listingVinStatusFromDb(json['vin_status']),
     );
   }
 
@@ -304,5 +306,6 @@ class ListingModel extends Listing {
     'contact_phone': contactPhone,
     'telegram_username': telegramUsername,
     'whatsapp_enabled': whatsappEnabled,
+    'vin_status': listingVinStatusToDb(vinStatus),
   };
 }

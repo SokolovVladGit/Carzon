@@ -1,4 +1,5 @@
 import '../../../../core/utils/result.dart';
+import '../entities/buyer_listing_vin_report_source_result.dart';
 import '../entities/listing.dart';
 import '../entities/listing_currency.dart';
 import '../entities/listing_image.dart';
@@ -102,4 +103,9 @@ abstract interface class ListingsRepository {
   /// Ordered gallery rows (`listing_images`). Read-only; INSERT/UPDATE/DELETE
   /// stay RPC-only in later phases.
   Future<Result<List<ListingImage>>> getListingImages(String listingId);
+
+  /// Buyer-safe `public_summary` source rows via `get_listing_vin_report_for_buyer`.
+  Future<Result<BuyerListingVinReportLookupResult>> fetchBuyerVinReportSources(
+    String listingId,
+  );
 }
