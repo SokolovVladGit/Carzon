@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../core/utils/logger.dart';
 import 'push_messaging_client.dart';
@@ -79,10 +80,42 @@ class FirebasePushMessagingClient implements PushMessagingClient {
     }
   }
 
+  /// True on iOS/macOS where FCM depends on APNs being registered first.
+  static bool _needsApnsPrecheck() {
+    if (kIsWeb) {
+      return false;
+    }
+    return defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
+  }
+
+  /// Resolves the FCM registration token, or `null` if unavailable.
+  ///
+  /// On iOS/macOS, waits for an APNs token before calling [FirebaseMessaging.getToken]
+  /// and maps `apns-token-not-set` to `null` without treating it as a hard failure.
   @override
   Future<String?> getFcmToken() async {
     try {
+      if (FirebasePushMessagingClient._needsApnsPrecheck()) {
+        final apns = await _messaging.getAPNSToken();
+        if (apns == null || apns.isEmpty) {
+          _logger.debug(
+            'APNs token not available yet; skipping FCM getToken until '
+            'Apple registration completes.',
+          );
+          return null;
+        }
+      }
       return await _messaging.getToken();
+    } on FirebaseException catch (e, st) {
+      if (e.code == 'apns-token-not-set') {
+        _logger.warn(
+          'FCM token not ready (APNs not registered yet): ${e.message ?? e.code}',
+        );
+        return null;
+      }
+      _logger.error('getToken failed', e, st);
+      return null;
     } catch (e, st) {
       _logger.error('getToken failed', e, st);
       return null;

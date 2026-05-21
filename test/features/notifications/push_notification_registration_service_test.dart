@@ -204,6 +204,23 @@ PUSH_NOTIFICATIONS_ENABLED=false
     );
   });
 
+  test(
+    'sync skips backend upsert when FCM token is null (e.g. APNs not ready)',
+    () async {
+      client.token = null;
+      await sut.syncTokenWithBackendIfEligible();
+      verifyNever(
+        () => repo.registerPushToken(
+          token: any(named: 'token'),
+          platform: any(named: 'platform'),
+          appVersion: any(named: 'appVersion'),
+          deviceId: any(named: 'deviceId'),
+          locale: any(named: 'locale'),
+        ),
+      );
+    },
+  );
+
   test('sync registers when push enabled, signed in, permission ok, token set', () async {
     await sut.syncTokenWithBackendIfEligible();
     verify(

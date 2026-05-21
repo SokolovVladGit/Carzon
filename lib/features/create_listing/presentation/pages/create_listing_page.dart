@@ -46,59 +46,6 @@ class _BodyTypeSelection {
   final ListingBodyType? value;
 }
 
-InputDecoration _createListingFieldDecoration(
-  ThemeData theme, {
-  String? labelText,
-  String? hintText,
-}) {
-  final cs = theme.colorScheme;
-  final br = theme.brightness;
-  final radius = BorderRadius.circular(16);
-  final fillBase = br == Brightness.light
-      ? cs.surface
-      : cs.surfaceContainerLowest;
-  final subtleFill = Color.alphaBlend(
-    cs.outlineVariant.withValues(alpha: br == Brightness.light ? 0.055 : 0.10),
-    fillBase,
-  );
-  final focusBorderColor = cs.onSurface.withValues(
-    alpha: br == Brightness.light ? 0.34 : 0.42,
-  );
-  return InputDecoration(
-    labelText: labelText,
-    hintText: hintText,
-    floatingLabelBehavior: labelText != null
-        ? FloatingLabelBehavior.auto
-        : FloatingLabelBehavior.never,
-    labelStyle: TextStyle(
-      color: cs.onSurfaceVariant.withValues(alpha: 0.94),
-      fontWeight: FontWeight.w500,
-    ),
-    hintStyle: TextStyle(color: cs.onSurfaceVariant.withValues(alpha: 0.74)),
-    border: OutlineInputBorder(borderRadius: radius),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: radius,
-      borderSide: BorderSide(
-        color: cs.outlineVariant.withValues(
-          alpha: br == Brightness.light ? 0.36 : 0.40,
-        ),
-      ),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: radius,
-      borderSide: BorderSide(color: focusBorderColor, width: 1.12),
-    ),
-    errorBorder: OutlineInputBorder(borderRadius: radius),
-    focusedErrorBorder: OutlineInputBorder(
-      borderRadius: radius,
-      borderSide: BorderSide(color: cs.error, width: 1.22),
-    ),
-    filled: true,
-    fillColor: subtleFill,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-  );
-}
-
 /// English catalog sentinel — persisted in `make` when the seller picks «Other» without text.
 final String _kListingBrandCatalogOther = kListingBrandCatalog.last; // "Other"
 
@@ -121,9 +68,19 @@ class _CreateListingView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: createListingCanvasColor(theme),
       appBar: AppBar(
-        title: Text(l10n.createListingTitle),
+        backgroundColor: createListingCanvasColor(theme),
+        title: Text(
+          l10n.createListingTitle,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.32,
+            height: 1.12,
+          ),
+        ),
         leading: const AppBackButton(fallback: AppRoutes.listings),
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
@@ -566,9 +523,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                CreateListingComposeIntro(l10n: l10n),
-                const SizedBox(height: 8),
+                CreateListingComposeHero(l10n: l10n),
+                const SizedBox(height: 20),
                 CreateListingPremiumSection(
+                  stepIndex: 1,
                   tone: CreateListingSectionTone.hero,
                   title: l10n.createListingSectionPhotosLead,
                   subtitle: l10n.createListingSectionPhotosLeadSubtitle,
@@ -583,12 +541,12 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         onRemovePhotoAt: _removePhotoAt,
                         showHeading: false,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 26),
                       CreateListingFieldLabel(l10n.fieldTitleOptional),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       TextFormField(
                         controller: _title,
-                        decoration: _createListingFieldDecoration(theme),
+                        decoration: createListingFieldDecoration(theme),
                         textInputAction: TextInputAction.next,
                         validator: (_) => null,
                         enabled: !submitting,
@@ -597,9 +555,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                   ),
                 ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 30),
 
                 CreateListingPremiumSection(
+                  stepIndex: 2,
                   tone: CreateListingSectionTone.identity,
                   title: l10n.createListingSectionVehicle,
                   subtitle: l10n.createListingSectionVehicleSubtitle,
@@ -607,15 +566,15 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       CreateListingFieldLabel(l10n.fieldCity),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       TextFormField(
                         controller: _city,
-                        decoration: _createListingFieldDecoration(theme),
+                        decoration: createListingFieldDecoration(theme),
                         textInputAction: TextInputAction.next,
                         validator: (v) => _required(l10n, v),
                         enabled: !submitting,
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 22),
                       FormField<String?>(
                         key: _brandFieldKey,
                         validator: (_) {
@@ -625,7 +584,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         },
                         builder: (fieldState) {
                           return InkWell(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             key: const ValueKey('create_listing_brand_field'),
                             splashColor: theme.colorScheme.onSurface.withValues(
                               alpha: 0.04,
@@ -641,7 +600,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                     );
                                   },
                             child: InputDecorator(
-                              decoration: _createListingFieldDecoration(
+                              decoration: createListingFieldDecoration(
                                 theme,
                                 labelText: l10n.createListingBrandLabel,
                               ).copyWith(errorText: fieldState.errorText),
@@ -665,7 +624,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         const SizedBox(height: 14),
                         TextFormField(
                           controller: _customBrand,
-                          decoration: _createListingFieldDecoration(
+                          decoration: createListingFieldDecoration(
                             theme,
                             hintText: l10n.createListingCustomBrandHint,
                           ),
@@ -674,10 +633,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         ),
                       ],
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 22),
                       TextFormField(
                         controller: _model,
-                        decoration: _createListingFieldDecoration(
+                        decoration: createListingFieldDecoration(
                           theme,
                           labelText: l10n.fieldModel,
                         ),
@@ -686,7 +645,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         enabled: !submitting,
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 22),
                       FormField<int?>(
                         key: _yearFieldKey,
                         initialValue: null,
@@ -695,7 +654,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         builder: (fieldState) {
                           final yr = fieldState.value;
                           return InkWell(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             key: const ValueKey('create_listing_year_field'),
                             splashColor: theme.colorScheme.onSurface.withValues(
                               alpha: 0.04,
@@ -718,7 +677,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                     }
                                   },
                             child: InputDecorator(
-                              decoration: _createListingFieldDecoration(
+                              decoration: createListingFieldDecoration(
                                 theme,
                                 labelText: l10n.createListingYearLabel,
                               ).copyWith(errorText: fieldState.errorText),
@@ -737,22 +696,18 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                           );
                         },
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 22),
                       CreateListingFieldLabel(l10n.listingBodyTypeSectionTitle),
                       const SizedBox(height: 6),
-                      Text(
+                      CreateListingHelperText(
                         l10n.listingBodyTypeSectionSubtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.35,
-                        ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       Material(
                         color: Colors.transparent,
                         child: InkWell(
                           key: const ValueKey('create_listing_body_type_field'),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(14),
                           splashColor: theme.colorScheme.onSurface.withValues(
                             alpha: 0.038,
                           ),
@@ -761,7 +716,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                           onTap: submitting ? null : _openBodyTypeSheet,
                           child: Ink(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(14),
                               border: Border.all(
                                 color: theme.colorScheme.outlineVariant
                                     .withValues(
@@ -830,15 +785,11 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 22),
-                      Text(
+                      const SizedBox(height: 24),
+                      CreateListingHelperText(
                         l10n.createListingSectionSpecsSubtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          height: 1.35,
-                        ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       CreateListingFieldLabel(l10n.listingFuelType),
                       const SizedBox(height: 8),
                       ListingVehicleSpecPickerRow(
@@ -852,7 +803,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _engineDisplacement,
-                        decoration: _createListingFieldDecoration(
+                        decoration: createListingFieldDecoration(
                           theme,
                           labelText: l10n.listingEngineDisplacement,
                           hintText: l10n.listingEngineDisplacementHint,
@@ -867,7 +818,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _enginePower,
-                        decoration: _createListingFieldDecoration(
+                        decoration: createListingFieldDecoration(
                           theme,
                           labelText: l10n.listingEnginePower,
                           hintText: l10n.listingEnginePowerHint,
@@ -895,7 +846,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _registration,
-                        decoration: _createListingFieldDecoration(
+                        decoration: createListingFieldDecoration(
                           theme,
                           labelText: l10n.listingRegistration,
                           hintText: l10n.listingRegistrationHint,
@@ -916,13 +867,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _vin,
-                        decoration: _createListingFieldDecoration(
+                        decoration: createListingFieldDecoration(
                           theme,
                           labelText: l10n.listingVinFieldLabel,
-                          hintText: null,
-                        ).copyWith(
                           helperText: l10n.listingVinFieldHelper,
-                          helperMaxLines: 3,
                         ),
                         textCapitalization: TextCapitalization.characters,
                         maxLength: 32,
@@ -940,9 +888,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                   ),
                 ),
 
-                const SizedBox(height: 26),
+                const SizedBox(height: 30),
 
                 CreateListingPremiumSection(
+                  stepIndex: 3,
                   tone: CreateListingSectionTone.identity,
                   title: l10n.createListingSectionDescription,
                   subtitle: l10n.createListingSectionDescriptionSubtitle,
@@ -951,7 +900,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                     minLines: 4,
                     maxLines: 12,
                     maxLength: kListingDescriptionMaxLength,
-                    decoration: _createListingFieldDecoration(
+                    decoration: createListingFieldDecoration(
                       theme,
                       labelText: l10n.createListingDescriptionLabel,
                       hintText: l10n.createListingDescriptionHint,
@@ -960,9 +909,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                   ),
                 ),
 
-                const SizedBox(height: 26),
+                const SizedBox(height: 30),
 
                 CreateListingPremiumSection(
+                  stepIndex: 4,
                   tone: CreateListingSectionTone.placement,
                   title: l10n.createListingSectionDeal,
                   subtitle: l10n.createListingSectionDealSubtitle,
@@ -992,23 +942,17 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                   ),
                 ),
 
-                const SizedBox(height: 26),
+                const SizedBox(height: 30),
 
                 CreateListingPremiumSection(
+                  stepIndex: 5,
                   tone: CreateListingSectionTone.metrics,
                   title: l10n.createListingSectionPrice,
                   subtitle: l10n.createListingSectionPriceSubtitle,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        l10n.createListingCurrency,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.1,
-                        ),
-                      ),
+                      CreateListingFieldLabel(l10n.createListingCurrency),
                       const SizedBox(height: 10),
                       _PremiumListingCurrencyBar(
                         key: const ValueKey('create_listing_currency_selector'),
@@ -1022,7 +966,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                       const SizedBox(height: 20),
                       TextFormField(
                         controller: _price,
-                        decoration: _createListingFieldDecoration(
+                        decoration: createListingFieldDecoration(
                           theme,
                           labelText: l10n.createListingPriceAmount,
                           hintText:
@@ -1037,7 +981,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                       const SizedBox(height: 20),
                       TextFormField(
                         controller: _mileage,
-                        decoration: _createListingFieldDecoration(
+                        decoration: createListingFieldDecoration(
                           theme,
                           labelText: l10n.fieldMileageKm,
                         ),
@@ -1052,9 +996,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                   ),
                 ),
 
-                const SizedBox(height: 28),
+                const SizedBox(height: 30),
 
                 CreateListingPremiumSection(
+                  stepIndex: 6,
                   tone: CreateListingSectionTone.finale,
                   kicker: l10n.createListingPublishKicker,
                   title: l10n.createListingSectionPublish,
@@ -1066,7 +1011,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                       const SizedBox(height: 18),
                       TextFormField(
                         controller: _phone,
-                        decoration: _createListingFieldDecoration(
+                        decoration: createListingFieldDecoration(
                           theme,
                           labelText: l10n.fieldPhone,
                           hintText: l10n.fieldPhoneHint,
@@ -1078,7 +1023,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _telegram,
-                        decoration: _createListingFieldDecoration(
+                        decoration: createListingFieldDecoration(
                           theme,
                           labelText: l10n.fieldTelegram,
                           hintText: l10n.fieldTelegramHint,

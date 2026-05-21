@@ -34,6 +34,39 @@ void main() {
       expect(f.year, 2019);
     });
 
+    test('maps expanded NHTSA summary fields for owner display', () {
+      final report = OwnerListingVinReportStatus(
+        listingId: 'l1',
+        publicVinStatusRaw: 'format_valid',
+        processingStatusRaw: 'succeeded',
+        decodeStatusRaw: 'decoded',
+      );
+      final sources = [
+        OwnerListingVinSourceResult(
+          sourceId: 'nhtsa_vpic',
+          statusRaw: 'succeeded',
+          normalizedSummary: const {
+            'make': 'BMW',
+            'engine': '2.0L',
+            'transmission': 'Automatic',
+            'trim': 'M Sport',
+            'drive_type': 'AWD',
+            'manufacturer': 'BMW AG',
+          },
+        ),
+      ];
+      final f = resolveOwnerVinBasicDecodeFields(
+        report: report,
+        sourceResults: sources,
+        sourceResultsLookupFailed: false,
+      );
+      expect(f?.engine, '2.0L');
+      expect(f?.transmission, 'Automatic');
+      expect(f?.trim, 'M Sport');
+      expect(f?.driveType, 'AWD');
+      expect(f?.manufacturer, 'BMW AG');
+    });
+
     test('falls back to legacy snapshot when source results empty', () {
       final report = OwnerListingVinReportStatus(
         listingId: 'l1',

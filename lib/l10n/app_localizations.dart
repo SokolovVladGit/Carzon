@@ -286,6 +286,66 @@ abstract class AppLocalizations {
   /// **'Фильтры'**
   String get listingsFiltersTooltip;
 
+  /// No description provided for @catalogBrowseFilterBellTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оповещения по этому фильтру'**
+  String get catalogBrowseFilterBellTooltip;
+
+  /// No description provided for @catalogBrowseFilterBellFilterChipSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активны оповещения по сохранённому фильтру, совпадающему с текущими условиями поиска'**
+  String get catalogBrowseFilterBellFilterChipSemantics;
+
+  /// No description provided for @catalogBrowseFilterBellTooBroad.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточните фильтр (поиск, марка, параметры или регион), затем сохраните оповещение — базовый каталог без условий слишком широкий.'**
+  String get catalogBrowseFilterBellTooBroad;
+
+  /// No description provided for @catalogBrowseFilterAlertTooBroadInlineTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточните фильтр, чтобы сохранить оповещение.'**
+  String get catalogBrowseFilterAlertTooBroadInlineTitle;
+
+  /// No description provided for @catalogBrowseFilterAlertTooBroadInlineBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Базовый каталог без условий слишком широкий.'**
+  String get catalogBrowseFilterAlertTooBroadInlineBody;
+
+  /// No description provided for @catalogBrowseFilterBellEnabledSnack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оповещения по этому фильтру включены.'**
+  String get catalogBrowseFilterBellEnabledSnack;
+
+  /// No description provided for @catalogBrowseFilterBellDisabledSnack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оповещения по фильтру выключены.'**
+  String get catalogBrowseFilterBellDisabledSnack;
+
+  /// Tooltip + a11y label for the in-sheet bell when the current draft matches a saved alert row but delivery is not fully enabled. Concise, product-friendly copy that hints at tap-to-remove (toggle-off) semantics. Replaces the previous technical 'push disabled in this build' inline banner — the bell colour + tooltip are now the only saved/off surface.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оповещение сохранено. Нажмите, чтобы удалить.'**
+  String get catalogBrowseFilterBellSavedDeliveryUnavailableTooltip;
+
+  /// Tooltip + a11y label for the in-sheet bell when no saved alert matches the current draft. Tap creates/saves the alert (and, where push is enabled, attempts to enable delivery).
+  ///
+  /// In ru, this message translates to:
+  /// **'Включить оповещения по этому фильтру.'**
+  String get catalogBrowseFilterBellInactiveTooltip;
+
+  /// Tooltip + a11y label for the in-sheet bell when delivery is fully enabled for the matching saved alert. Tap clears the saved alert (which also disables delivery on the row).
+  ///
+  /// In ru, this message translates to:
+  /// **'Оповещения включены. Нажмите, чтобы выключить.'**
+  String get catalogBrowseFilterBellActiveTooltip;
+
   /// No description provided for @listingsEmptyTitle.
   ///
   /// In ru, this message translates to:
@@ -397,7 +457,7 @@ abstract class AppLocalizations {
   /// No description provided for @listingBodyTypeSectionSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Укажите кузов — иначе объявление не попадёт в фильтры «Седан», «SUV» и т.д. Если не подходит ни один вариант, выберите «Другое».'**
+  /// **'Для фильтров по типу кузова. Если не подходит — «Другое».'**
   String get listingBodyTypeSectionSubtitle;
 
   /// No description provided for @regionTransnistria.
@@ -1055,7 +1115,7 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSectionSpecsSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Технические данные необязательны, но помогают покупателю.'**
+  /// **'По желанию — помогают в поиске и фильтрах.'**
   String get createListingSectionSpecsSubtitle;
 
   /// No description provided for @createListingSectionDescription.
@@ -1067,7 +1127,7 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSectionDescriptionSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Состояние, комплектация, недостатки, сервис, торг.'**
+  /// **'Состояние, комплектация, сервис — своими словами.'**
   String get createListingSectionDescriptionSubtitle;
 
   /// No description provided for @createListingDescriptionLabel.
@@ -1406,6 +1466,12 @@ abstract class AppLocalizations {
   /// **'Подать объявление'**
   String get createListingTitle;
 
+  /// No description provided for @createListingComposeEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новое объявление · Carzon'**
+  String get createListingComposeEyebrow;
+
   /// No description provided for @createListingComposeHeadline.
   ///
   /// In ru, this message translates to:
@@ -1415,7 +1481,7 @@ abstract class AppLocalizations {
   /// No description provided for @createListingComposeSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Сильные фото и точные данные помогают быстрее связаться с покупателем.'**
+  /// **'Подготовьте карточку автомобиля: фото, характеристики и аккуратные контакты — чтобы покупатель сразу увидел главное.'**
   String get createListingComposeSubtitle;
 
   /// No description provided for @createListingSectionPhotosLead.
@@ -1427,7 +1493,7 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSectionPhotosLeadSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Первое фото станет обложкой в каталоге — выберите удачный ракурс.'**
+  /// **'Обложка каталога и необязательный заголовок.'**
   String get createListingSectionPhotosLeadSubtitle;
 
   /// No description provided for @createListingSectionVehicle.
@@ -1439,7 +1505,7 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSectionVehicleSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Город, марка, модель и год выпуска.'**
+  /// **'Город, марка, модель, год и характеристики.'**
   String get createListingSectionVehicleSubtitle;
 
   /// No description provided for @createListingSectionDeal.
@@ -1451,7 +1517,7 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSectionDealSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Тип сделки и регион размещения.'**
+  /// **'Тип сделки и регион показа.'**
   String get createListingSectionDealSubtitle;
 
   /// No description provided for @createListingSectionPrice.
@@ -1463,7 +1529,7 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSectionPriceSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Выберите валюту и укажите фактические значения.'**
+  /// **'Валюта и фактические цифры.'**
   String get createListingSectionPriceSubtitle;
 
   /// No description provided for @createListingSectionPublish.
@@ -1475,7 +1541,7 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSectionPublishSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Проверьте контакты — они появятся в активном объявлении.'**
+  /// **'Контакты будут видны в активном объявлении.'**
   String get createListingSectionPublishSubtitle;
 
   /// No description provided for @createListingPublishKicker.
@@ -1550,16 +1616,22 @@ abstract class AppLocalizations {
   /// **'Нажмите, чтобы добавить фото объявления. До девяти снимков — по одному из галереи.'**
   String get createListingMediaHeroEmptyHint;
 
+  /// No description provided for @createListingMediaCoverHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обложка каталога'**
+  String get createListingMediaCoverHint;
+
   /// No description provided for @createListingHeroEmptyTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Добавьте фотографии'**
+  /// **'Добавьте фотографии автомобиля'**
   String get createListingHeroEmptyTitle;
 
   /// No description provided for @createListingHeroEmptyDetail.
   ///
   /// In ru, this message translates to:
-  /// **'До девяти кадров из галереи. Первое фото станет обложкой в каталоге.'**
+  /// **'До девяти снимков из галереи. Начните с удачного ракурса.'**
   String get createListingHeroEmptyDetail;
 
   /// No description provided for @createListingAddPhoto.
@@ -2453,7 +2525,7 @@ abstract class AppLocalizations {
   /// No description provided for @filterAlertProfileRowSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Настройте фильтр и включите оповещения на экране редактора.'**
+  /// **'Просмотрите сохранённый фильтр и управляйте доставкой оповещений.'**
   String get filterAlertProfileRowSubtitle;
 
   /// No description provided for @filterAlertSavedSuccess.
@@ -2527,6 +2599,114 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'В этой сборке push недоступен (PUSH_NOTIFICATIONS_ENABLED).'**
   String get filterAlertNotificationsPushDisabled;
+
+  /// No description provided for @filterAlertManagementHeaderEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'CARZON · ОПОВЕЩЕНИЯ'**
+  String get filterAlertManagementHeaderEyebrow;
+
+  /// No description provided for @filterAlertManagementSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Управляйте сохранённым фильтром и доставкой оповещений. Уведомления настраиваются в фильтрах каталога.'**
+  String get filterAlertManagementSubtitle;
+
+  /// No description provided for @filterAlertManagementDeliveryOnLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доставка оповещений включена'**
+  String get filterAlertManagementDeliveryOnLabel;
+
+  /// No description provided for @filterAlertManagementDeliveryOffLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доставка оповещений выключена'**
+  String get filterAlertManagementDeliveryOffLabel;
+
+  /// No description provided for @filterAlertManagementCriteriaSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Параметры фильтра'**
+  String get filterAlertManagementCriteriaSectionTitle;
+
+  /// No description provided for @filterAlertManagementEditAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить в каталоге'**
+  String get filterAlertManagementEditAction;
+
+  /// No description provided for @filterAlertManagementDisableAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выключить оповещения'**
+  String get filterAlertManagementDisableAction;
+
+  /// No description provided for @filterAlertManagementClearAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить сохранённый фильтр'**
+  String get filterAlertManagementClearAction;
+
+  /// No description provided for @filterAlertManagementClearConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить сохранённый фильтр?'**
+  String get filterAlertManagementClearConfirmTitle;
+
+  /// No description provided for @filterAlertManagementClearConfirmBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Параметры фильтра будут стёрты. Доставка push также выключится. Действие можно повторить из каталога.'**
+  String get filterAlertManagementClearConfirmBody;
+
+  /// No description provided for @filterAlertManagementClearConfirmCta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить'**
+  String get filterAlertManagementClearConfirmCta;
+
+  /// No description provided for @filterAlertManagementEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранённого оповещения пока нет'**
+  String get filterAlertManagementEmptyTitle;
+
+  /// No description provided for @filterAlertManagementEmptyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создавайте оповещения в фильтрах каталога: задайте параметры поиска и нажмите колокольчик.'**
+  String get filterAlertManagementEmptyBody;
+
+  /// No description provided for @filterAlertManagementGoToCatalog.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перейти в каталог'**
+  String get filterAlertManagementGoToCatalog;
+
+  /// No description provided for @filterAlertManagementDeliveryDisabledSnack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оповещения по фильтру выключены.'**
+  String get filterAlertManagementDeliveryDisabledSnack;
+
+  /// No description provided for @filterAlertManagementClearedSnack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранённый фильтр удалён.'**
+  String get filterAlertManagementClearedSnack;
+
+  /// No description provided for @filterAlertSummarySearchLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск'**
+  String get filterAlertSummarySearchLabel;
+
+  /// No description provided for @filterAlertSummaryMileageLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пробег'**
+  String get filterAlertSummaryMileageLabel;
 
   /// No description provided for @profilePublicSellerNameTitle.
   ///
@@ -3311,7 +3491,7 @@ abstract class AppLocalizations {
   /// No description provided for @listingVinFieldHelper.
   ///
   /// In ru, this message translates to:
-  /// **'Необязательно. Полный VIN не будет показан публично.'**
+  /// **'Необязательно. VIN помогает добавить к объявлению базовую информацию об автомобиле и повышает доверие покупателей. Полный VIN публично не показывается.'**
   String get listingVinFieldHelper;
 
   /// No description provided for @validationVinInvalid.
@@ -3583,6 +3763,204 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Трансмиссия'**
   String get listingBuyerVinReportDecodedTransmissionLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaManufacturerLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Производитель'**
+  String get listingBuyerVinReportNhtsaManufacturerLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaPlantCountryLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Страна сборки'**
+  String get listingBuyerVinReportNhtsaPlantCountryLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaPlantCityLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Город сборки'**
+  String get listingBuyerVinReportNhtsaPlantCityLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaPlantCompanyLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Завод'**
+  String get listingBuyerVinReportNhtsaPlantCompanyLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaVehicleTypeLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип ТС'**
+  String get listingBuyerVinReportNhtsaVehicleTypeLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaTrimLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комплектация'**
+  String get listingBuyerVinReportNhtsaTrimLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaSeriesLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Серия'**
+  String get listingBuyerVinReportNhtsaSeriesLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaDriveTypeLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Привод'**
+  String get listingBuyerVinReportNhtsaDriveTypeLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaDoorsLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дверей'**
+  String get listingBuyerVinReportNhtsaDoorsLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaDisplacementLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объём'**
+  String get listingBuyerVinReportNhtsaDisplacementLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaCylindersLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цилиндров'**
+  String get listingBuyerVinReportNhtsaCylindersLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaGvwrLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Класс полной массы'**
+  String get listingBuyerVinReportNhtsaGvwrLabel;
+
+  /// No description provided for @listingBuyerVinReportNhtsaCatalogDecodeCaution.
+  ///
+  /// In ru, this message translates to:
+  /// **'Каталог вернул неполные данные по VIN — используйте сведения как ориентир, а не как подтверждение.'**
+  String get listingBuyerVinReportNhtsaCatalogDecodeCaution;
+
+  /// No description provided for @listingBuyerVinReportNhtsaGroupCoreIdentity.
+  ///
+  /// In ru, this message translates to:
+  /// **'Основное'**
+  String get listingBuyerVinReportNhtsaGroupCoreIdentity;
+
+  /// No description provided for @listingBuyerVinReportNhtsaGroupVehicleSpecs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Характеристики'**
+  String get listingBuyerVinReportNhtsaGroupVehicleSpecs;
+
+  /// No description provided for @listingBuyerVinReportNhtsaGroupOrigin.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сборка'**
+  String get listingBuyerVinReportNhtsaGroupOrigin;
+
+  /// No description provided for @listingBuyerVinReportManualSourcesSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дополнительные проверки'**
+  String get listingBuyerVinReportManualSourcesSectionTitle;
+
+  /// No description provided for @listingBuyerVinReportManualSourcesIntro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Carzon пока не получает эти данные автоматически. Ниже — источники, которые можно проверить отдельно.'**
+  String get listingBuyerVinReportManualSourcesIntro;
+
+  /// No description provided for @listingBuyerVinReportManualStatusExternalCheck.
+  ///
+  /// In ru, this message translates to:
+  /// **'Внешняя проверка'**
+  String get listingBuyerVinReportManualStatusExternalCheck;
+
+  /// No description provided for @listingBuyerVinReportManualStatusSellerDocument.
+  ///
+  /// In ru, this message translates to:
+  /// **'Документ от продавца'**
+  String get listingBuyerVinReportManualStatusSellerDocument;
+
+  /// No description provided for @listingBuyerVinReportManualStatusFuture.
+  ///
+  /// In ru, this message translates to:
+  /// **'Будущий источник'**
+  String get listingBuyerVinReportManualStatusFuture;
+
+  /// No description provided for @listingBuyerVinReportManualMdRcaTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'История повреждений в Молдове'**
+  String get listingBuyerVinReportManualMdRcaTitle;
+
+  /// No description provided for @listingBuyerVinReportManualMdRcaBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные о повреждениях можно проверить на официальном портале RCA/BNM по VIN. Carzon не получает эти данные автоматически.'**
+  String get listingBuyerVinReportManualMdRcaBody;
+
+  /// No description provided for @listingBuyerVinReportManualMdRcaLimitation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Результат внешней проверки не отображается в этом отчёте.'**
+  String get listingBuyerVinReportManualMdRcaLimitation;
+
+  /// No description provided for @listingBuyerVinReportManualMdAspTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Документы и регистрационные данные'**
+  String get listingBuyerVinReportManualMdAspTitle;
+
+  /// No description provided for @listingBuyerVinReportManualMdAspBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продавец может предоставить документ ASP / выписку из Государственного регистра транспорта. Перед покупкой сверяйте оригинал документа.'**
+  String get listingBuyerVinReportManualMdAspBody;
+
+  /// No description provided for @listingBuyerVinReportManualMdAspLimitation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Carzon не проверяет подлинность документов автоматически.'**
+  String get listingBuyerVinReportManualMdAspLimitation;
+
+  /// No description provided for @listingBuyerVinReportManualPmrCustomsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Таможенное оформление в ПМР'**
+  String get listingBuyerVinReportManualPmrCustomsTitle;
+
+  /// No description provided for @listingBuyerVinReportManualPmrCustomsBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сведения о таможенном оформлении можно проверять через официальный источник ГТК ПМР. Автоматическая проверка в Carzon пока не выполняется.'**
+  String get listingBuyerVinReportManualPmrCustomsBody;
+
+  /// No description provided for @listingBuyerVinReportManualPmrCustomsLimitation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные таможни не включены в этот отчёт.'**
+  String get listingBuyerVinReportManualPmrCustomsLimitation;
+
+  /// No description provided for @listingBuyerVinReportManualCommercialTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Расширенный отчёт по истории'**
+  String get listingBuyerVinReportManualCommercialTitle;
+
+  /// No description provided for @listingBuyerVinReportManualCommercialBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Коммерческие отчёты могут содержать дополнительные данные по истории автомобиля, если источник покрывает этот рынок. Интеграция будет оцениваться отдельно.'**
+  String get listingBuyerVinReportManualCommercialBody;
+
+  /// No description provided for @listingBuyerVinReportManualCommercialLimitation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Коммерческие источники пока не подключены к Carzon.'**
+  String get listingBuyerVinReportManualCommercialLimitation;
 
   /// No description provided for @editListingVinReportSectionTitle.
   ///

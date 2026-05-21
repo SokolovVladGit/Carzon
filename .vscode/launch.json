@@ -1,0 +1,42 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Carzon Debug",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}",
+      "flutterMode": "debug",
+      "toolArgs": [
+        "--dart-define-from-file=${workspaceFolder}/.env.client"
+      ],
+      "preLaunchTask": "validate-env-client",
+      "templateFor": ""
+    },
+    {
+      "name": "Carzon Profile",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}",
+      "flutterMode": "profile",
+      "toolArgs": [
+        "--dart-define-from-file=${workspaceFolder}/.env.client"
+      ],
+      "preLaunchTask": "validate-env-client"
+    },
+    {
+      "name": "Carzon Release",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}",
+      "flutterMode": "release",
+      "toolArgs": [
+        "--dart-define-from-file=${workspaceFolder}/.env.client"
+      ],
+      "preLaunchTask": "validate-env-client"
+    }
+  ]
+}

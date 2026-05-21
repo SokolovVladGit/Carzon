@@ -1,56 +1,64 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-/// Strongly-typed access to environment variables loaded from `.env`.
+/// Client-safe compile-time configuration.
 ///
-/// All sensitive values (Supabase URL, anon key, etc.) MUST come from here.
-/// Never hardcode credentials in the codebase.
+/// Values must be passed via `--dart-define` or
+/// `--dart-define-from-file=.env.client` (see `.env.client.example`).
+/// Each key uses a **literal** [String.fromEnvironment] — dynamic key lookup
+/// does not receive compile-time defines.
+///
+/// Widget tests may call [dotenv.testLoad] when compile-time defines are empty;
+/// that path is never used at app startup.
 class Env {
   Env._();
 
-  /// Keys that the app cannot run without.
+  static const String _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+  static const String _supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+  );
+  static const String _passwordResetRedirectUrl = String.fromEnvironment(
+    'SUPABASE_PASSWORD_RESET_REDIRECT_URL',
+  );
+  static const String _reportEmail = String.fromEnvironment(
+    'CARZON_REPORT_EMAIL',
+  );
+  static const String _pushNotificationsEnabled = String.fromEnvironment(
+    'PUSH_NOTIFICATIONS_ENABLED',
+  );
+
+  /// Keys the app cannot run without.
   static const List<String> requiredKeys = <String>[
     'SUPABASE_URL',
     'SUPABASE_ANON_KEY',
   ];
 
-  static String get supabaseUrl => _required('SUPABASE_URL');
-  static String get supabaseAnonKey => _required('SUPABASE_ANON_KEY');
+  static String get supabaseUrl => _required(_supabaseUrl, 'SUPABASE_URL');
 
-  /// Optional. When set, password-reset emails will deep-link to this
-  /// URL (app custom scheme or a web fallback). When absent, Supabase
-  /// uses the project's Site URL; the MVP still works end-to-end in
-  /// the browser even without native deep-link plumbing.
-  static String? get passwordResetRedirectUrl {
-    final value = dotenv.maybeGet('SUPABASE_PASSWORD_RESET_REDIRECT_URL');
-    if (value == null || value.isEmpty) return null;
-    return value;
-  }
+  static String get supabaseAnonKey =>
+      _required(_supabaseAnonKey, 'SUPABASE_ANON_KEY');
 
-  /// Optional. Destination address for the in-app "Report listing"
-  /// mailto action on `ListingDetailsPage`. When absent (or empty),
-  /// the report action is hidden entirely — the app is fully usable
-  /// without it and MUST NOT synthesize a fake production address.
-  ///
-  /// This is intentionally NOT part of [requiredKeys]: Carzon must
-  /// boot and serve the public feed even if the ops team has not yet
-  /// provisioned a reports inbox.
+  /// Optional deep-link target for password-reset / email-confirmation emails.
+  static String? get passwordResetRedirectUrl => _optionalNonEmpty(
+    _passwordResetRedirectUrl,
+    'SUPABASE_PASSWORD_RESET_REDIRECT_URL',
+  );
+
+  /// Optional mailto destination for in-app listing reports; hidden when absent.
   static String? get reportEmail {
-    final value = dotenv.maybeGet('CARZON_REPORT_EMAIL');
-    if (value == null || value.trim().isEmpty) return null;
-    return value.trim();
+    final value = _optionalNonEmpty(_reportEmail, 'CARZON_REPORT_EMAIL');
+    if (value == null) return null;
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+    return trimmed;
   }
 
-  /// Client-side Firebase Cloud Messaging bootstrap (Phase 2).
-  ///
-  /// Default **false** when unset or empty. Only `1`, `true`, `yes`, and
-  /// `on` (case-insensitive) enable the client path.
-  ///
-  /// Enabling this does **not** mean server-side push delivery exists; it
-  /// only allows token registration when Firebase platform config, OS
-  /// permission, and an authenticated session are present.
+  /// Client FCM bootstrap flag. Default **false** when unset or empty.
   static bool get pushNotificationsEnabled {
-    final raw = dotenv.maybeGet('PUSH_NOTIFICATIONS_ENABLED');
-    if (raw == null || raw.trim().isEmpty) return false;
+    final raw = _optionalNonEmpty(
+      _pushNotificationsEnabled,
+      'PUSH_NOTIFICATIONS_ENABLED',
+    );
+    if (raw == null) return false;
     switch (raw.trim().toLowerCase()) {
       case '1':
       case 'true':
@@ -62,25 +70,47 @@ class Env {
     }
   }
 
-  /// Returns the list of required keys that are missing or empty.
-  /// Use during startup to fail fast with a clear UI instead of crashing later.
+  /// Required keys missing from compile-time defines (and test dotenv fallback).
   static List<String> missingKeys() {
-    return requiredKeys
-        .where((k) {
-          final v = dotenv.maybeGet(k);
-          return v == null || v.isEmpty;
-        })
-        .toList(growable: false);
+    final missing = <String>[];
+    if (_isMissing(_supabaseUrl, 'SUPABASE_URL')) {
+      missing.add('SUPABASE_URL');
+    }
+    if (_isMissing(_supabaseAnonKey, 'SUPABASE_ANON_KEY')) {
+      missing.add('SUPABASE_ANON_KEY');
+    }
+    return missing;
   }
 
-  static String _required(String key) {
-    final value = dotenv.maybeGet(key);
-    if (value == null || value.isEmpty) {
-      throw StateError(
-        'Missing required environment variable: $key. '
-        'Check the .env file (see .env.example).',
-      );
+  static bool _isMissing(String compiled, String dotenvKey) {
+    if (compiled.isNotEmpty) return false;
+    final test = _testDotenvValue(dotenvKey);
+    return test == null || test.isEmpty;
+  }
+
+  static String _required(String compiled, String dotenvKey) {
+    if (compiled.isNotEmpty) return compiled;
+    final test = _testDotenvValue(dotenvKey);
+    if (test != null && test.isNotEmpty) return test;
+    throw StateError(
+      'Missing required environment variable: $dotenvKey. '
+      'Copy .env.client.example to .env.client, fill client-safe values, '
+      'and run with --dart-define-from-file=.env.client',
+    );
+  }
+
+  static String? _optionalNonEmpty(String compiled, String dotenvKey) {
+    if (compiled.isNotEmpty) return compiled;
+    final test = _testDotenvValue(dotenvKey);
+    if (test == null || test.isEmpty) return null;
+    return test;
+  }
+
+  static String? _testDotenvValue(String key) {
+    try {
+      return dotenv.maybeGet(key);
+    } catch (_) {
+      return null;
     }
-    return value;
   }
 }

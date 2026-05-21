@@ -10,7 +10,9 @@ import 'listing_sort_option.dart';
 /// Intentionally separate from [ListingsQuery] so the same field set can later
 /// be serialized for local last-applied feed restore, filter alerts, deep-links —
 /// without duplicating filter logic across features.
-/// Notifications, persistence tables, and push are out of scope for now.
+///
+/// Filter-alert SQL matching uses the same field predicates as discovery but **does not**
+/// read [sort]; [sort] only affects feed ordering.
 class ListingDiscoveryCriteria extends Equatable {
   const ListingDiscoveryCriteria({
     this.search,

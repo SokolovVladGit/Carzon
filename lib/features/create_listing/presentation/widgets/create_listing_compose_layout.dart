@@ -3,26 +3,93 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Visual rhythm for create-listing section cards (editorial hierarchy).
-enum CreateListingSectionTone {
-  /// Dominant: photo composer block.
-  hero,
+enum CreateListingSectionTone { hero, identity, placement, metrics, finale }
 
-  /// Vehicle identity (make, model, year, city).
-  identity,
-
-  /// Deal + market placement.
-  placement,
-
-  /// Price and mileage facts.
-  metrics,
-
-  /// Contacts and publish.
-  finale,
+/// Scroll canvas behind the compose form — soft ivory/graphite, not flat white.
+Color createListingCanvasColor(ThemeData theme) {
+  final cs = theme.colorScheme;
+  final light = theme.brightness == Brightness.light;
+  return Color.alphaBlend(
+    cs.outlineVariant.withValues(alpha: light ? 0.022 : 0.05),
+    cs.surface,
+  );
 }
 
-/// In-body editorial intro for the create-listing compose flow.
-class CreateListingComposeIntro extends StatelessWidget {
-  const CreateListingComposeIntro({super.key, required this.l10n});
+/// Shared field chrome for the create-listing compose flow.
+InputDecoration createListingFieldDecoration(
+  ThemeData theme, {
+  String? labelText,
+  String? hintText,
+  String? helperText,
+}) {
+  final cs = theme.colorScheme;
+  final br = theme.brightness;
+  final radius = BorderRadius.circular(14);
+  final fillBase = br == Brightness.light
+      ? cs.surface
+      : cs.surfaceContainerLowest;
+  final subtleFill = Color.alphaBlend(
+    cs.outlineVariant.withValues(alpha: br == Brightness.light ? 0.04 : 0.08),
+    fillBase,
+  );
+  final focusBorderColor = cs.onSurface.withValues(
+    alpha: br == Brightness.light ? 0.28 : 0.36,
+  );
+  final quietVariant = cs.onSurfaceVariant.withValues(
+    alpha: br == Brightness.light ? 0.72 : 0.78,
+  );
+
+  return InputDecoration(
+    labelText: labelText,
+    hintText: hintText,
+    helperText: helperText,
+    helperMaxLines: 4,
+    floatingLabelBehavior: labelText != null
+        ? FloatingLabelBehavior.auto
+        : FloatingLabelBehavior.never,
+    labelStyle: TextStyle(
+      color: quietVariant,
+      fontWeight: FontWeight.w500,
+      fontSize: 13.5,
+      letterSpacing: 0.02,
+    ),
+    hintStyle: TextStyle(
+      color: quietVariant.withValues(alpha: 0.92),
+      fontWeight: FontWeight.w400,
+    ),
+    helperStyle: TextStyle(
+      color: quietVariant.withValues(alpha: 0.78),
+      fontWeight: FontWeight.w400,
+      fontSize: 12,
+      height: 1.42,
+    ),
+    border: OutlineInputBorder(borderRadius: radius),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(
+        color: cs.outlineVariant.withValues(
+          alpha: br == Brightness.light ? 0.30 : 0.34,
+        ),
+      ),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: focusBorderColor, width: 1.08),
+    ),
+    errorBorder: OutlineInputBorder(borderRadius: radius),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: cs.error, width: 1.12),
+    ),
+    filled: true,
+    fillColor: subtleFill,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  );
+}
+
+/// Premium product moment at the top of the compose flow.
+class CreateListingComposeHero extends StatelessWidget {
+  const CreateListingComposeHero({super.key, required this.l10n});
 
   final AppLocalizations l10n;
 
@@ -30,39 +97,122 @@ class CreateListingComposeIntro extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+    final quiet = cs.onSurfaceVariant.withValues(alpha: light ? 0.62 : 0.68);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(1, 0, 1, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.createListingComposeHeadline,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.55,
-              height: 1.1,
+    final topFill = Color.alphaBlend(
+      cs.outlineVariant.withValues(alpha: light ? 0.04 : 0.08),
+      cs.surfaceContainerLowest,
+    );
+    final bottomFill = Color.alphaBlend(
+      cs.outlineVariant.withValues(alpha: light ? 0.02 : 0.05),
+      cs.surface,
+    );
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: cs.outlineVariant.withValues(alpha: light ? 0.34 : 0.38),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [topFill, bottomFill],
+        ),
+        boxShadow: light
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 28,
+                  offset: const Offset(0, 10),
+                ),
+              ]
+            : null,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.createListingComposeEyebrow.toUpperCase(),
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.1,
+                fontSize: 10.5,
+                color: quiet,
+              ),
             ),
-          ),
-          const SizedBox(height: 11),
-          Text(
-            l10n.createListingComposeSubtitle,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: cs.onSurfaceVariant.withValues(alpha: 0.88),
-              height: 1.38,
-              fontWeight: FontWeight.w400,
+            const SizedBox(height: 12),
+            Text(
+              l10n.createListingComposeHeadline,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.52,
+                height: 1.08,
+                fontSize: 26,
+                color: cs.onSurface.withValues(alpha: 0.97),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Text(
+              l10n.createListingComposeSubtitle,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: quiet,
+                height: 1.44,
+                fontWeight: FontWeight.w400,
+                fontSize: 14.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: cs.outlineVariant.withValues(alpha: light ? 0.28 : 0.32),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Premium grouped block with editorial tone variants — not identical cards.
+/// @deprecated Use [CreateListingComposeHero]. Kept for imports/tests compatibility.
+typedef CreateListingComposeIntro = CreateListingComposeHero;
+
+/// Secondary copy under a field group — guidance, not utility noise.
+class CreateListingHelperText extends StatelessWidget {
+  const CreateListingHelperText(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+    return Padding(
+      padding: const EdgeInsets.only(left: 1, bottom: 2),
+      child: Text(
+        text,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: cs.onSurfaceVariant.withValues(alpha: light ? 0.50 : 0.56),
+          height: 1.4,
+          fontWeight: FontWeight.w400,
+          fontSize: 11.5,
+          letterSpacing: 0.01,
+        ),
+      ),
+    );
+  }
+}
+
+/// Curated step shell for the create-listing form.
 class CreateListingPremiumSection extends StatelessWidget {
   const CreateListingPremiumSection({
     super.key,
+    required this.stepIndex,
     required this.title,
     this.subtitle,
     this.kicker,
@@ -70,6 +220,8 @@ class CreateListingPremiumSection extends StatelessWidget {
     this.tone = CreateListingSectionTone.identity,
   });
 
+  /// 1-based step index shown as «01», «02», …
+  final int stepIndex;
   final String? kicker;
   final String title;
   final String? subtitle;
@@ -80,145 +232,103 @@ class CreateListingPremiumSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+    final quietSubtitle = cs.onSurfaceVariant.withValues(
+      alpha: light ? 0.50 : 0.56,
+    );
 
     final radius = switch (tone) {
-      CreateListingSectionTone.hero => 30.0,
-      CreateListingSectionTone.finale => 24.0,
-      CreateListingSectionTone.identity => 22.0,
-      CreateListingSectionTone.placement => 18.0,
-      CreateListingSectionTone.metrics => 18.0,
+      CreateListingSectionTone.hero => 24.0,
+      CreateListingSectionTone.finale => 22.0,
+      _ => 20.0,
     };
 
     final padding = switch (tone) {
       CreateListingSectionTone.hero => const EdgeInsets.fromLTRB(
         20,
-        22,
+        20,
         20,
         24,
       ),
       CreateListingSectionTone.finale => const EdgeInsets.fromLTRB(
         20,
-        22,
         20,
-        28,
+        20,
+        26,
       ),
-      CreateListingSectionTone.identity => const EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        22,
-      ),
-      CreateListingSectionTone.placement => const EdgeInsets.fromLTRB(
-        18,
-        18,
-        18,
-        20,
-      ),
-      CreateListingSectionTone.metrics => const EdgeInsets.fromLTRB(
-        18,
-        18,
-        18,
-        20,
-      ),
+      _ => const EdgeInsets.fromLTRB(20, 20, 20, 22),
     };
 
-    final borderColor = switch (tone) {
-      CreateListingSectionTone.hero => cs.outlineVariant.withValues(
-        alpha: theme.brightness == Brightness.light ? 0.38 : 0.42,
-      ),
-      CreateListingSectionTone.finale => cs.outlineVariant.withValues(
-        alpha: theme.brightness == Brightness.light ? 0.36 : 0.40,
-      ),
-      CreateListingSectionTone.identity => cs.outlineVariant.withValues(
-        alpha: 0.32,
-      ),
-      CreateListingSectionTone.placement => cs.outlineVariant.withValues(
-        alpha: 0.28,
-      ),
-      CreateListingSectionTone.metrics => cs.outlineVariant.withValues(
-        alpha: 0.26,
-      ),
-    };
+    final borderColor = cs.outlineVariant.withValues(
+      alpha: switch (tone) {
+        CreateListingSectionTone.hero => light ? 0.36 : 0.40,
+        CreateListingSectionTone.finale => light ? 0.32 : 0.36,
+        _ => light ? 0.28 : 0.32,
+      },
+    );
 
-    final fill = switch (tone) {
-      CreateListingSectionTone.hero => Color.alphaBlend(
-        cs.outlineVariant.withValues(
-          alpha: theme.brightness == Brightness.light ? 0.038 : 0.082,
-        ),
-        cs.surface,
+    final fillTop = Color.alphaBlend(
+      cs.outlineVariant.withValues(
+        alpha: light
+            ? (tone == CreateListingSectionTone.hero ? 0.038 : 0.028)
+            : 0.07,
       ),
-      CreateListingSectionTone.identity => Color.alphaBlend(
-        cs.outlineVariant.withValues(
-          alpha: theme.brightness == Brightness.light ? 0.035 : 0.08,
-        ),
-        cs.surfaceContainerLowest,
-      ),
-      CreateListingSectionTone.placement => Color.alphaBlend(
-        cs.outlineVariant.withValues(
-          alpha: theme.brightness == Brightness.light ? 0.02 : 0.06,
-        ),
-        cs.surfaceContainerLowest,
-      ),
-      CreateListingSectionTone.metrics => Color.alphaBlend(
-        cs.outlineVariant.withValues(
-          alpha: theme.brightness == Brightness.light ? 0.025 : 0.06,
-        ),
-        cs.surfaceContainerLowest,
-      ),
-      CreateListingSectionTone.finale => Color.alphaBlend(
-        cs.outlineVariant.withValues(
-          alpha: theme.brightness == Brightness.light ? 0.034 : 0.078,
-        ),
-        cs.surface,
-      ),
-    };
+      tone == CreateListingSectionTone.hero
+          ? cs.surfaceContainerLowest
+          : cs.surface,
+    );
+    final fillBottom = Color.alphaBlend(
+      cs.outlineVariant.withValues(alpha: light ? 0.012 : 0.03),
+      cs.surfaceContainerLowest,
+    );
 
-    final titleStyle = switch (tone) {
-      CreateListingSectionTone.hero => theme.textTheme.titleLarge?.copyWith(
-        fontWeight: FontWeight.w800,
-        letterSpacing: -0.4,
-      ),
-      CreateListingSectionTone.identity => theme.textTheme.titleLarge?.copyWith(
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.3,
-        fontSize: (theme.textTheme.titleLarge?.fontSize ?? 22) * 0.96,
-      ),
-      CreateListingSectionTone.placement =>
-        theme.textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.18,
-        ),
-      CreateListingSectionTone.metrics => theme.textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.w600,
-        letterSpacing: -0.1,
-        color: cs.onSurface.withValues(alpha: 0.92),
-      ),
-      CreateListingSectionTone.finale => theme.textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.w800,
-        letterSpacing: -0.22,
-      ),
-    };
+    final titleStyle = theme.textTheme.titleMedium?.copyWith(
+      fontWeight: FontWeight.w700,
+      letterSpacing: -0.28,
+      height: 1.16,
+      fontSize: tone == CreateListingSectionTone.hero ? 20 : 18,
+      color: cs.onSurface.withValues(alpha: 0.96),
+    );
+
+    final subtitleStyle = theme.textTheme.bodySmall?.copyWith(
+      color: quietSubtitle,
+      height: 1.4,
+      fontWeight: FontWeight.w400,
+      fontSize: 12,
+      letterSpacing: 0.01,
+    );
 
     final afterHeaderGap = switch (tone) {
-      CreateListingSectionTone.hero => 22.0,
-      CreateListingSectionTone.placement => 12.0,
-      CreateListingSectionTone.metrics => 14.0,
-      CreateListingSectionTone.finale => 16.0,
-      _ => 16.0,
+      CreateListingSectionTone.hero => 24.0,
+      CreateListingSectionTone.finale => 20.0,
+      _ => 18.0,
     };
 
-    final light = theme.brightness == Brightness.light;
+    final stepLabel = stepIndex.clamp(1, 99).toString().padLeft(2, '0');
 
-    return Card(
-      elevation: light ? (tone == CreateListingSectionTone.hero ? 2 : 1) : 0,
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
-      color: fill,
-      shadowColor: Colors.black.withValues(alpha: light ? 0.055 : 0),
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
+    return DecoratedBox(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
-        side: BorderSide(color: borderColor),
+        border: Border.all(color: borderColor),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [fillTop, fillBottom],
+        ),
+        boxShadow: light
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(
+                    alpha: tone == CreateListingSectionTone.hero ? 0.045 : 0.03,
+                  ),
+                  blurRadius: tone == CreateListingSectionTone.hero ? 24 : 16,
+                  offset: Offset(
+                    0,
+                    tone == CreateListingSectionTone.hero ? 8 : 5,
+                  ),
+                ),
+              ]
+            : null,
       ),
       child: Padding(
         padding: padding,
@@ -226,30 +336,67 @@ class CreateListingPremiumSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (kicker != null) ...[
-              Text(
-                kicker!,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.55,
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.82),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: cs.outlineVariant.withValues(alpha: 0.32),
+                    ),
+                    color: Color.alphaBlend(
+                      cs.onSurface.withValues(alpha: light ? 0.04 : 0.08),
+                      cs.surface,
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    child: Text(
+                      kicker!,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.35,
+                        fontSize: 11,
+                        color: quietSubtitle.withValues(alpha: 0.95),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              SizedBox(height: tone == CreateListingSectionTone.finale ? 7 : 5),
+              const SizedBox(height: 12),
             ],
-            Text(title, style: titleStyle),
-            if (subtitle != null) ...[
-              SizedBox(height: tone == CreateListingSectionTone.hero ? 7 : 5),
-              Text(
-                subtitle!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.9),
-                  height: 1.4,
-                  fontWeight: tone == CreateListingSectionTone.hero
-                      ? FontWeight.w500
-                      : FontWeight.w400,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _CreateListingStepBadge(label: stepLabel, theme: theme),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: titleStyle),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 6),
+                        Text(subtitle!, style: subtitleStyle),
+                      ],
+                      const SizedBox(height: 14),
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        indent: 0,
+                        endIndent: 0,
+                        color: cs.outlineVariant.withValues(
+                          alpha: light ? 0.16 : 0.22,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
             SizedBox(height: afterHeaderGap),
             child,
           ],
@@ -259,7 +406,45 @@ class CreateListingPremiumSection extends StatelessWidget {
   }
 }
 
-/// Stable label above a field (Material floating labels omitted where this is used).
+class _CreateListingStepBadge extends StatelessWidget {
+  const _CreateListingStepBadge({required this.label, required this.theme});
+
+  final String label;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(
+          color: cs.outlineVariant.withValues(alpha: light ? 0.34 : 0.38),
+        ),
+        color: Color.alphaBlend(
+          cs.outlineVariant.withValues(alpha: light ? 0.04 : 0.08),
+          cs.surface,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+        child: Text(
+          label,
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.45,
+            fontSize: 12,
+            color: cs.onSurfaceVariant.withValues(alpha: light ? 0.72 : 0.78),
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Stable label above a field.
 class CreateListingFieldLabel extends StatelessWidget {
   const CreateListingFieldLabel(this.text, {super.key});
 
@@ -268,14 +453,18 @@ class CreateListingFieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
     return Padding(
-      padding: const EdgeInsets.only(left: 1),
+      padding: const EdgeInsets.only(left: 1, bottom: 1),
       child: Text(
         text,
         style: theme.textTheme.labelLarge?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.88),
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.12,
+          color: cs.onSurface.withValues(alpha: light ? 0.72 : 0.78),
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.03,
+          fontSize: 13.5,
+          height: 1.2,
         ),
       ),
     );

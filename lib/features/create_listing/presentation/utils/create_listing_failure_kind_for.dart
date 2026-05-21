@@ -49,8 +49,7 @@ CreateListingFailureKind _kindForServerFailure(ServerFailure f) {
     return CreateListingFailureKind.permissionDenied;
   }
 
-  if (blob.contains('23514') ||
-      blob.contains('violates check constraint')) {
+  if (blob.contains('23514') || blob.contains('violates check constraint')) {
     return CreateListingFailureKind.checkConstraintViolation;
   }
 

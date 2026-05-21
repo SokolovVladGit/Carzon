@@ -30,7 +30,8 @@ SUPABASE_ANON_KEY=anon
     test('accepts true, 1, yes, on case-insensitively', () {
       for (final v in <String>['true', 'TRUE', '1', 'Yes', 'ON']) {
         dotenv.testLoad(
-          fileInput: '''
+          fileInput:
+              '''
 SUPABASE_URL=https://example.supabase.co
 SUPABASE_ANON_KEY=anon
 PUSH_NOTIFICATIONS_ENABLED=$v

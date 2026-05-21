@@ -82,10 +82,19 @@ class ListingDetailsExtra {
 
 /// Pass with [AppRoutes.listings] `extra` when opening feed with predefined
 /// discovery (e.g. filter-alert preview).
+///
+/// [openFilterSheetOnEntry] auto-opens the catalog filter sheet after the
+/// feed renders. Used by the alert management screen so "Edit in catalog"
+/// drops the user directly into the catalog filter UX with the saved
+/// criteria seeded.
 class ListingsFeedLaunch {
-  const ListingsFeedLaunch({required this.snapshot});
+  const ListingsFeedLaunch({
+    required this.snapshot,
+    this.openFilterSheetOnEntry = false,
+  });
 
   final ListingDiscoveryCriteria snapshot;
+  final bool openFilterSheetOnEntry;
 }
 
 class AppRouter {

@@ -200,6 +200,13 @@ String getBrandIconPath(String? make) {
 
 String _pathFor(String slug) => '$_assetDir/$slug.svg';
 
+/// Suffix of the neutral fallback asset returned for unknown makes.
+const String brandIconDefaultAssetSuffix = '/default.svg';
+
+/// True when [assetPath] is the resolver's neutral fallback (not a brand SVG).
+bool isBrandIconDefaultAssetPath(String assetPath) =>
+    assetPath.endsWith(brandIconDefaultAssetSuffix);
+
 /// Normalizes a free-text brand name for alias lookup.
 ///
 /// Steps:

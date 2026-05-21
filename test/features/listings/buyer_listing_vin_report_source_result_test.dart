@@ -17,6 +17,21 @@ void main() {
       expect(r.normalizedSummary?['year'], '2020');
     });
 
+    test('tryParse preserves expanded NHTSA summary keys', () {
+      final r = BuyerListingVinReportSourceResult.tryParse({
+        'source_id': 'nhtsa_vpic',
+        'normalized_summary': {
+          'make': 'BMW',
+          'trim': 'xDrive',
+          'plant_country': 'Germany',
+          'drive_type': 'AWD',
+        },
+      });
+      expect(r, isNotNull);
+      expect(r!.normalizedSummary?['trim'], 'xDrive');
+      expect(r.normalizedSummary?['plant_country'], 'Germany');
+    });
+
     test('tryParse returns null when source_id missing', () {
       expect(BuyerListingVinReportSourceResult.tryParse({}), isNull);
     });

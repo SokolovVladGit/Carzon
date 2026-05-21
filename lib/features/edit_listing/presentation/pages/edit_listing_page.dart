@@ -1379,6 +1379,38 @@ class _EditListingOwnerVinStatusSection extends StatelessWidget {
                   l10n.editListingVinReportDecodedFuelLabel,
                   basic.fuelType!.trim(),
                 ),
+              if (basic.engine != null && basic.engine!.trim().isNotEmpty)
+                _ownerVinDecodeSummaryFieldRow(
+                  theme,
+                  l10n.listingBuyerVinReportDecodedEngineLabel,
+                  basic.engine!.trim(),
+                ),
+              if (basic.transmission != null &&
+                  basic.transmission!.trim().isNotEmpty)
+                _ownerVinDecodeSummaryFieldRow(
+                  theme,
+                  l10n.listingBuyerVinReportDecodedTransmissionLabel,
+                  basic.transmission!.trim(),
+                ),
+              if (basic.trim != null && basic.trim!.trim().isNotEmpty)
+                _ownerVinDecodeSummaryFieldRow(
+                  theme,
+                  l10n.listingBuyerVinReportNhtsaTrimLabel,
+                  basic.trim!.trim(),
+                ),
+              if (basic.driveType != null && basic.driveType!.trim().isNotEmpty)
+                _ownerVinDecodeSummaryFieldRow(
+                  theme,
+                  l10n.listingBuyerVinReportNhtsaDriveTypeLabel,
+                  basic.driveType!.trim(),
+                ),
+              if (basic.manufacturer != null &&
+                  basic.manufacturer!.trim().isNotEmpty)
+                _ownerVinDecodeSummaryFieldRow(
+                  theme,
+                  l10n.listingBuyerVinReportNhtsaManufacturerLabel,
+                  basic.manufacturer!.trim(),
+                ),
               const SizedBox(height: 10),
               Text(
                 l10n.editListingVinReportSourceLine,

@@ -6,7 +6,15 @@ import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
 import '../../domain/repositories/listings_repository.dart';
 import '../../../../core/utils/result.dart';
 import '../utils/buyer_vin_report_date_format.dart';
+import '../utils/nhtsa_vin_summary_display.dart';
+import 'buyer_vin_manual_source_cards_section.dart';
 import 'buyer_vin_report_limitation_section.dart';
+
+/// Vertical space for sticky footer (button + padding) so scroll content clears it.
+const double kBuyerVinReportStickyFooterBlockHeight = 76;
+
+/// Extra scroll padding below last content for comfortable reading above the button.
+const double kBuyerVinReportScrollContentEndGap = 20;
 
 /// Opens buyer-facing VIN report. Does not display full VIN.
 void showBuyerVinReportSheet(
@@ -125,8 +133,14 @@ class _BuyerVinReportSheetContentState
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final maxSheetHeight = MediaQuery.sizeOf(context).height * 0.78;
 
+    final scrollBottomPadding =
+        kBuyerVinReportStickyFooterBlockHeight +
+        kBuyerVinReportScrollContentEndGap;
+
     Widget scrollBody() {
       return SingleChildScrollView(
+        key: const ValueKey('buyer_vin_report_sheet_scroll'),
+        padding: EdgeInsets.only(bottom: scrollBottomPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -179,12 +193,25 @@ class _BuyerVinReportSheetContentState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(child: scrollBody()),
-            Padding(
-              padding: EdgeInsets.only(top: 12, bottom: 16 + bottomInset),
-              child: FilledButton(
-                key: const ValueKey('buyer_vin_report_sheet_close'),
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.listingBuyerVinReportClose),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                border: Border(
+                  top: BorderSide(
+                    color: scheme.outlineVariant.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Padding(
+                  padding: EdgeInsets.only(top: 12, bottom: 16 + bottomInset),
+                  child: FilledButton(
+                    key: const ValueKey('buyer_vin_report_sheet_close'),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(l10n.listingBuyerVinReportClose),
+                  ),
+                ),
               ),
             ),
           ],
@@ -195,10 +222,7 @@ class _BuyerVinReportSheetContentState
 }
 
 class _EmptyBuyerVinReportBody extends StatelessWidget {
-  const _EmptyBuyerVinReportBody({
-    required this.l10n,
-    required this.theme,
-  });
+  const _EmptyBuyerVinReportBody({required this.l10n, required this.theme});
 
   final AppLocalizations l10n;
   final ThemeData theme;
@@ -229,6 +253,8 @@ class _EmptyBuyerVinReportBody extends StatelessWidget {
           l10n.listingBuyerVinReportFormatOnlyExplanation,
           style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
         ),
+        const SizedBox(height: 16),
+        BuyerVinManualSourceCardsSection(l10n: l10n, theme: theme),
         const SizedBox(height: 14),
         Text(
           l10n.editListingVinReportLimitationNote,
@@ -263,8 +289,9 @@ class _BuyerVinReportWithSources extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
-    final nhtsa =
-        results.where((r) => r.sourceId == 'nhtsa_vpic').toList(growable: false);
+    final nhtsa = results
+        .where((r) => r.sourceId == 'nhtsa_vpic')
+        .toList(growable: false);
     final other = results
         .where((r) => r.sourceId != 'nhtsa_vpic')
         .toList(growable: false);
@@ -324,6 +351,8 @@ class _BuyerVinReportWithSources extends StatelessWidget {
             const SizedBox(height: 16),
           ],
         ],
+        BuyerVinManualSourceCardsSection(l10n: l10n, theme: theme),
+        const SizedBox(height: 16),
         if (other.isNotEmpty) ...[
           Text(
             l10n.listingBuyerVinReportSourcesSectionTitle,
@@ -353,51 +382,55 @@ class _NhtsaPublicDecodeSection extends StatelessWidget {
   final ThemeData theme;
   final BuyerListingVinReportSourceResult result;
 
-  static String? _str(dynamic v) {
-    if (v == null) return null;
-    final s = v.toString().trim();
-    return s.isEmpty ? null : s;
-  }
-
-  static int? _year(dynamic v) {
-    if (v == null) return null;
-    if (v is int) return v;
-    if (v is num) return v.toInt();
-    return int.tryParse(v.toString().trim());
-  }
-
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
     final m = result.normalizedSummary;
     final when = result.fetchedAt ?? result.updatedAt;
-    final rows = _buildFieldRows(l10n, theme, m);
-    final hasRows = rows.isNotEmpty;
+    final groups = nhtsaVinSummaryGroupsFromMap(l10n, m);
+    final hasGroups = groups.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (hasRows) ...[
+        if (hasGroups) ...[
           DecoratedBox(
             decoration: BoxDecoration(
               color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
               borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: scheme.outlineVariant.withValues(alpha: 0.35),
+              ),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    l10n.editListingVinReportBasicInfoHeading,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  ...rows,
+                  for (var i = 0; i < groups.length; i++) ...[
+                    if (i > 0)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Divider(
+                          height: 1,
+                          color: scheme.outlineVariant.withValues(alpha: 0.45),
+                        ),
+                      ),
+                    _NhtsaSummaryGroupBlock(theme: theme, group: groups[i]),
+                  ],
                 ],
               ),
+            ),
+          ),
+        ],
+        if (nhtsaVinSummaryShowsCatalogCaution(m)) ...[
+          const SizedBox(height: 10),
+          Text(
+            l10n.listingBuyerVinReportNhtsaCatalogDecodeCaution,
+            style: theme.textTheme.bodySmall?.copyWith(
+              height: 1.42,
+              color: scheme.onSurfaceVariant,
+              fontStyle: FontStyle.italic,
             ),
           ),
         ],
@@ -449,38 +482,39 @@ class _NhtsaPublicDecodeSection extends StatelessWidget {
       ],
     );
   }
+}
 
-  List<Widget> _buildFieldRows(
-    AppLocalizations l10n,
-    ThemeData theme,
-    Map<String, dynamic>? map,
-  ) {
-    if (map == null || map.isEmpty) return [];
-    final make = _str(map['make']);
-    final model = _str(map['model']);
-    final year = _year(map['year']);
-    final body = _str(map['body_type']);
-    final fuel = _str(map['fuel_type']);
-    final engine = _str(map['engine']);
-    final transmission = _str(map['transmission']);
-    final out = <Widget>[];
-    void add(String label, String? value) {
-      if (value == null) return;
-      out.add(
-        _SummaryFieldRow(theme: theme, label: label, value: value),
-      );
-    }
+class _NhtsaSummaryGroupBlock extends StatelessWidget {
+  const _NhtsaSummaryGroupBlock({required this.theme, required this.group});
 
-    add(l10n.editListingVinReportDecodedMakeLabel, make);
-    add(l10n.editListingVinReportDecodedModelLabel, model);
-    if (year != null) {
-      add(l10n.editListingVinReportDecodedYearLabel, '$year');
-    }
-    add(l10n.editListingVinReportDecodedBodyLabel, body);
-    add(l10n.editListingVinReportDecodedFuelLabel, fuel);
-    add(l10n.listingBuyerVinReportDecodedEngineLabel, engine);
-    add(l10n.listingBuyerVinReportDecodedTransmissionLabel, transmission);
-    return out;
+  final ThemeData theme;
+  final NhtsaVinSummaryGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = theme.colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          group.title,
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: scheme.onSurface.withValues(alpha: 0.88),
+            letterSpacing: 0.1,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (final f in group.fields)
+          f.stackValue
+              ? _SummaryFieldStacked(
+                  theme: theme,
+                  label: f.label,
+                  value: f.value,
+                )
+              : _SummaryFieldRow(theme: theme, label: f.label, value: f.value),
+      ],
+    );
   }
 }
 
@@ -642,25 +676,70 @@ class _SummaryFieldRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 2,
+          SizedBox(
+            width: 118,
             child: Text(
               label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: scheme.onSurface.withValues(alpha: 0.85),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurfaceVariant,
+                height: 1.3,
               ),
             ),
           ),
+          const SizedBox(width: 10),
           Expanded(
-            flex: 3,
             child: Text(
               value,
-              style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummaryFieldStacked extends StatelessWidget {
+  const _SummaryFieldStacked({
+    required this.theme,
+    required this.label,
+    required this.value,
+  });
+
+  final ThemeData theme;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = theme.colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: scheme.onSurfaceVariant,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              height: 1.45,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
