@@ -35,11 +35,32 @@ class ListingsFilterHost extends StatefulWidget {
     this.onBrowseFeedReset,
     this.onApplyBlockedByValidation,
     this.onAlertResetPersist,
+    this.filterFormExternalKey,
+    this.browseHeaderTrailing,
+    this.browseHeaderNotice,
+    this.onBrowseDraftMutated,
+    this.applyEnabled = true,
   });
 
   final ListingsFilterFormSeed seed;
   final VoidCallback onDismiss;
   final ValueChanged<ListingsFilterApplyResult> onApply;
+
+  /// Optional shared key for catalog browse sheets (bell + actions outside host).
+  final GlobalKey<ListingsFilterFormState>? filterFormExternalKey;
+
+  /// Browse mode: replaces the trailing header placeholder (typically filter alerts).
+  final Widget? browseHeaderTrailing;
+
+  /// Browse mode: sheet-local notice rendered between the header
+  /// subtitle and the form. Used to surface validation feedback that
+  /// originated *inside* the open sheet (e.g. the bell rejected a
+  /// too-broad draft) without leaking onto the catalog page through
+  /// the root [ScaffoldMessenger].
+  final Widget? browseHeaderNotice;
+
+  /// Browse mode: notified when discovery draft fields update.
+  final VoidCallback? onBrowseDraftMutated;
 
   /// When [submit()] returns null (validation failed), invoked if non-null.
   ///
@@ -63,18 +84,34 @@ class ListingsFilterHost extends StatefulWidget {
   /// instead when the account alert editor should clear stored criteria.
   final VoidCallback? onBrowseFeedReset;
 
+  /// When `false`, the primary apply CTA (e.g. "Show cars") is rendered
+  /// disabled and ignores taps. Used by the catalog sheet to guard
+  /// against the user dismissing the modal while an async filter-alert
+  /// bell operation is still in flight, which otherwise causes the bell
+  /// snackbar to surface on the listings page after the sheet closes.
+  final bool applyEnabled;
+
   @override
   State<ListingsFilterHost> createState() => _ListingsFilterHostState();
 }
 
 class _ListingsFilterHostState extends State<ListingsFilterHost> {
-  final GlobalKey<ListingsFilterFormState> _formKey = GlobalKey();
+  final GlobalKey<ListingsFilterFormState> _internalFormKey =
+      GlobalKey<ListingsFilterFormState>();
+
+  GlobalKey<ListingsFilterFormState> get _formKeyEffective =>
+      widget.filterFormExternalKey ?? _internalFormKey;
+
+  void _onBrowseDraftTouched() {
+    widget.onBrowseDraftMutated?.call();
+    if (mounted) setState(() {});
+  }
 
   /// Matches trailing width so the title stays optically centered.
   static const double _headerTrailWidth = 44;
 
   void _onApplyTap() {
-    final result = _formKey.currentState?.submit();
+    final result = _formKeyEffective.currentState?.submit();
     if (result != null) {
       widget.onApply(result);
     } else {
@@ -83,7 +120,7 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
   }
 
   void _onResetTap() {
-    _formKey.currentState?.resetDraftToVanilla();
+    _formKeyEffective.currentState?.resetDraftToVanilla();
     if (widget.mode == ListingsFilterHostMode.browse) {
       widget.onBrowseFeedReset?.call();
       return;
@@ -266,7 +303,23 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                             ],
                           ),
                         ),
-                        const SizedBox(width: _headerTrailWidth),
+                        SizedBox(
+                          width: _headerTrailWidth,
+                          child: Align(
+                            alignment: Alignment.topRight,
+                            child:
+                                (!isAlert &&
+                                        widget.browseHeaderTrailing !=
+                                            null)
+                                    ? Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 2),
+                                        child:
+                                            widget.browseHeaderTrailing!,
+                                      )
+                                    : const SizedBox.shrink(),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -291,6 +344,13 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                         color: scheme.outlineVariant.withValues(alpha: 0.2),
                       ),
                     ),
+                    if (!isAlert && widget.browseHeaderNotice != null) ...[
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: widget.browseHeaderNotice!,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -306,9 +366,11 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                   ),
                   children: [
                     ListingsFilterForm(
-                      key: _formKey,
+                      key: _formKeyEffective,
                       seed: widget.seed,
                       showDraftSummaryStrip: !isAlert,
+                      onDraftMutated:
+                          !isAlert ? _onBrowseDraftTouched : null,
                     ),
                   ],
                 ),
@@ -375,7 +437,7 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                       Expanded(
                         flex: 2,
                         child: FilledButton(
-                          onPressed: _onApplyTap,
+                          onPressed: widget.applyEnabled ? _onApplyTap : null,
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 18),
                             elevation: 0,

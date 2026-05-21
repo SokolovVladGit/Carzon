@@ -24,5 +24,32 @@ void main() {
       expect(isKnownListingBrand(null), isFalse);
       expect(listingBrandNormalizeForLookup('  '), isNull);
     });
+
+    test('feed quick-filter catalog is catalog minus Other', () {
+      expect(
+        kListingBrandFeedQuickFilterCatalog,
+        kListingBrandCatalog
+            .where((b) => b != kListingBrandCatalogOther)
+            .toList(growable: false),
+      );
+      expect(kListingBrandFeedQuickFilterCatalog, isNot(contains('Other')));
+    });
+
+    test('feed quick-filter selection uses normalization', () {
+      expect(
+        listingBrandFeedQuickFilterIsSelected('mercedes benz', 'Mercedes-Benz'),
+        isTrue,
+      );
+      expect(listingBrandFeedQuickFilterAllSelected('Toyota'), isFalse);
+      expect(listingBrandFeedQuickFilterAllSelected(null), isTrue);
+      expect(listingBrandFeedQuickFilterAllSelected('Custom Garage'), isFalse);
+      expect(
+        listingBrandFeedQuickFilterSelectionUnchanged(
+          'mercedes benz',
+          'Mercedes-Benz',
+        ),
+        isTrue,
+      );
+    });
   });
 }

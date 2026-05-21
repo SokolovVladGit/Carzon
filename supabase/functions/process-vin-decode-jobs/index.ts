@@ -153,9 +153,23 @@ Deno.serve(async (req: Request): Promise<Response> => {
           fuelType: norm.fuelType,
           engine: norm.engine,
           transmission: norm.transmission,
+          manufacturer: norm.manufacturer,
+          plantCountry: norm.plantCountry,
+          plantCity: norm.plantCity,
+          plantCompany: norm.plantCompany,
+          vehicleType: norm.vehicleType,
+          trim: norm.trim,
+          series: norm.series,
+          driveType: norm.driveType,
+          doors: norm.doors,
+          displacement: norm.displacement,
+          cylinders: norm.cylinders,
+          grossVehicleWeightRating: norm.grossVehicleWeightRating,
           market: norm.market,
           rawCompletenessScore: norm.rawCompletenessScore,
           warnings: norm.warnings,
+          decodeErrorCode: norm.decodeErrorCode,
+          decodeErrorText: norm.decodeErrorText,
         };
 
         const pSourceMetadata: Record<string, unknown> = {

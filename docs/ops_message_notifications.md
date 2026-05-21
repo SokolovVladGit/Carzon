@@ -16,7 +16,7 @@ These are **different** storage systems. The cron worker **never** reads Edge Fu
 
 **Function URL:** set only in Vault as **`carzon_process_message_notifications_url`** (full `POST` URL). The Edge runtime does **not** need its own URL as an env var for sending FCM.
 
-**Optional local `.env` (gitignored):** You may define **`CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`** for **`curl`** or other host scripts. **`Env` in Flutter (`lib/core/config/env.dart`) does not load this key** — the mobile app never uses it.
+**Optional developer shell env (not Flutter):** Export **`CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`** in your shell for **`curl`** smoke only. **`Env` in Flutter (`lib/core/config/env.dart`) does not load this key** — never put it in `.env.client` or `--dart-define-from-file`.
 
 ## What runs the processor
 

@@ -44,8 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Environment files (keep .env.example committed)
+# Environment files (commit only .env.client.example — placeholders)
 .env
 .env.local
 .env.*.local
+.env.client
+.env.client.local
 

@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/filter_alerts/domain/entities/filter_alert_settings.dart';
 import 'package:carzon/features/filter_alerts/domain/repositories/filter_alerts_repository.dart';
+import 'package:carzon/features/filter_alerts/domain/services/filter_alert_delivery_orchestrator.dart';
 import 'package:carzon/features/filter_alerts/domain/usecases/clear_filter_alert_criteria.dart';
 import 'package:carzon/features/filter_alerts/domain/usecases/get_filter_alert_settings.dart';
 import 'package:carzon/features/filter_alerts/domain/usecases/save_filter_alert_criteria.dart';
@@ -49,9 +50,11 @@ void main() {
       getSettings: GetFilterAlertSettings(filterRepo),
       saveCriteria: SaveFilterAlertCriteria(filterRepo),
       clearCriteria: ClearFilterAlertCriteria(filterRepo),
-      setNotificationsEnabled: SetFilterAlertNotificationsEnabled(filterRepo),
-      notificationsRepository: notifRepo,
-      pushRegistration: pushReg,
+      deliveryOrchestrator: FilterAlertDeliveryOrchestrator(
+        notificationsRepository: notifRepo,
+        pushRegistration: pushReg,
+        setNotificationsEnabled: SetFilterAlertNotificationsEnabled(filterRepo),
+      ),
     );
   }
 
@@ -78,16 +81,13 @@ PUSH_NOTIFICATIONS_ENABLED=true
           userId: 'u1',
           globalEnabled: inv.namedArguments[#globalEnabled] as bool,
           messagesEnabled: inv.namedArguments[#messagesEnabled] as bool,
-          filterAlertsEnabled:
-              inv.namedArguments[#filterAlertsEnabled] as bool,
+          filterAlertsEnabled: inv.namedArguments[#filterAlertsEnabled] as bool,
           createdAt: DateTime.utc(2026, 1, 1),
           updatedAt: DateTime.utc(2026, 1, 2),
         ),
       );
     });
-    when(
-      () => notifRepo.getMyPreferences(),
-    ).thenAnswer(
+    when(() => notifRepo.getMyPreferences()).thenAnswer(
       (_) async => Success(
         NotificationPreferences(
           userId: 'u1',
@@ -115,9 +115,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
   blocTest<FilterAlertSettingsCubit, FilterAlertSettingsState>(
     'enable without criteria surfaces notice and skips permission',
     setUp: () {
-      when(() => filterRepo.loadMine()).thenAnswer(
-        (_) async => Success(_settings(criteria: null)),
-      );
+      when(
+        () => filterRepo.loadMine(),
+      ).thenAnswer((_) async => Success(_settings(criteria: null)));
     },
     build: buildCubit,
     act: (c) async {
@@ -143,9 +143,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
     ],
     verify: (_) {
       verifyNever(() => pushReg.requestOsNotificationPermission());
-      verifyNever(
-        () => filterRepo.setNotificationsEnabled(any()),
-      );
+      verifyNever(() => filterRepo.setNotificationsEnabled(any()));
     },
   );
 
@@ -154,9 +152,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
     setUp: () {
       when(() => filterRepo.loadMine()).thenAnswer(
         (_) async => Success(
-          _settings(
-            criteria: const ListingDiscoveryCriteria(make: 'Audi'),
-          ),
+          _settings(criteria: const ListingDiscoveryCriteria(make: 'Audi')),
         ),
       );
       when(
@@ -189,9 +185,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
     setUp: () {
       when(() => filterRepo.loadMine()).thenAnswer(
         (_) async => Success(
-          _settings(
-            criteria: const ListingDiscoveryCriteria(make: 'Audi'),
-          ),
+          _settings(criteria: const ListingDiscoveryCriteria(make: 'Audi')),
         ),
       );
       when(() => filterRepo.setNotificationsEnabled(true)).thenAnswer(
@@ -269,9 +263,7 @@ SUPABASE_ANON_KEY=anon
       );
       when(() => filterRepo.loadMine()).thenAnswer(
         (_) async => Success(
-          _settings(
-            criteria: const ListingDiscoveryCriteria(make: 'Audi'),
-          ),
+          _settings(criteria: const ListingDiscoveryCriteria(make: 'Audi')),
         ),
       );
     },
@@ -286,16 +278,42 @@ SUPABASE_ANON_KEY=anon
         'status',
         FilterAlertSettingsLoadStatus.loading,
       ),
-      isA<FilterAlertSettingsState>().having(
-        (s) => s.status,
-        'status',
-        FilterAlertSettingsLoadStatus.loaded,
-      ),
-      isA<FilterAlertSettingsState>().having(
-        (s) => s.userNotice,
-        'notice',
-        FilterAlertSettingsUserNotice.pushUnavailableInBuild,
-      ),
+      isA<FilterAlertSettingsState>()
+          .having(
+            (s) => s.status,
+            'status',
+            FilterAlertSettingsLoadStatus.loaded,
+          )
+          .having((s) => s.busyNotificationToggle, 'toggle', false)
+          .having(
+            (s) => s.settings?.notificationsEnabled,
+            'notificationsEnabled',
+            false,
+          ),
+      isA<FilterAlertSettingsState>()
+          .having(
+            (s) => s.status,
+            'status',
+            FilterAlertSettingsLoadStatus.loaded,
+          )
+          .having((s) => s.busyNotificationToggle, 'toggle', true)
+          .having(
+            (s) => s.userNotice,
+            'notice',
+            FilterAlertSettingsUserNotice.none,
+          ),
+      isA<FilterAlertSettingsState>()
+          .having(
+            (s) => s.status,
+            'status',
+            FilterAlertSettingsLoadStatus.loaded,
+          )
+          .having((s) => s.busyNotificationToggle, 'toggle', false)
+          .having(
+            (s) => s.userNotice,
+            'notice',
+            FilterAlertSettingsUserNotice.pushUnavailableInBuild,
+          ),
     ],
     verify: (_) {
       verifyNever(() => pushReg.requestOsNotificationPermission());

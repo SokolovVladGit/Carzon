@@ -5,28 +5,68 @@ import '../../domain/entities/listing_sort_option.dart';
 import '../bloc/listings_state.dart';
 import '../widgets/filters/listings_filter_labels.dart';
 
-/// Human-readable bullet labels for discovery chips — shared by feed strip and
-/// filter-alert summaries (no duplicated localized copy).
-List<String> listingsDiscoveryChipLabels(
+/// Structured representation of a single active-discovery chip.
+///
+/// Used by the feed's active-filter strip so chips can render label
+/// (`Марка`) and value (`Opel`) with separate typographic weight
+/// instead of one flat `"Марка: Opel"` string. Chips whose meaning is
+/// fully encoded in the value (e.g. "Sale", region name) carry only a
+/// [value] and no [label].
+class ListingsDiscoveryChip {
+  const ListingsDiscoveryChip({required this.value, this.label});
+
+  final String? label;
+  final String value;
+
+  /// Flat "Label: Value" form, preserved for backwards-compatible
+  /// callers and accessibility labels.
+  String get flat => label == null ? value : '$label: $value';
+}
+
+/// Structured chips for the feed's active-filter strip and for shared
+/// filter-alert summaries.
+///
+/// Each chip is either a label/value pair (`Марка · Opel`) or just a
+/// value (`Sale`, `Кишинёв` region marker). Cardinality matches
+/// [listingsDiscoveryActiveFilterGroupCount] exactly.
+List<ListingsDiscoveryChip> listingsDiscoveryChips(
   ListingsState s,
   AppLocalizations l10n,
 ) {
-  final out = <String>[];
+  final out = <ListingsDiscoveryChip>[];
   if (s.search != null && s.search!.trim().isNotEmpty) {
-    out.add('${l10n.listingsSearchHint}: ${s.search!.trim()}');
+    out.add(ListingsDiscoveryChip(
+      label: l10n.listingsSearchHint,
+      value: s.search!.trim(),
+    ));
   }
   if (s.make != null && s.make!.trim().isNotEmpty) {
-    out.add('${l10n.filterMake}: ${s.make!.trim()}');
+    out.add(ListingsDiscoveryChip(
+      label: l10n.filterMake,
+      value: s.make!.trim(),
+    ));
   }
   if (s.model != null && s.model!.trim().isNotEmpty) {
-    out.add('${l10n.filterModel}: ${s.model!.trim()}');
+    out.add(ListingsDiscoveryChip(
+      label: l10n.filterModel,
+      value: s.model!.trim(),
+    ));
   }
   if (s.minYear != null && s.maxYear != null) {
-    out.add('${l10n.listingFieldYear}: ${s.minYear}–${s.maxYear}');
+    out.add(ListingsDiscoveryChip(
+      label: l10n.listingFieldYear,
+      value: '${s.minYear}–${s.maxYear}',
+    ));
   } else if (s.minYear != null) {
-    out.add('${l10n.filterMinYear}: ${s.minYear}');
+    out.add(ListingsDiscoveryChip(
+      label: l10n.filterMinYear,
+      value: '${s.minYear}',
+    ));
   } else if (s.maxYear != null) {
-    out.add('${l10n.filterMaxYear}: ${s.maxYear}');
+    out.add(ListingsDiscoveryChip(
+      label: l10n.filterMaxYear,
+      value: '${s.maxYear}',
+    ));
   }
   if (s.minPrice != null || s.maxPrice != null) {
     final a = s.minPrice?.toString() ?? '…';
@@ -34,46 +74,70 @@ List<String> listingsDiscoveryChipLabels(
     final range = '$a–$b';
     switch (s.priceCurrencyFilter) {
       case ListingPriceCurrencyFilter.any:
-        out.add('${l10n.filterPriceChipPrefix}: $range');
+        out.add(ListingsDiscoveryChip(
+          label: l10n.filterPriceChipPrefix,
+          value: range,
+        ));
       case ListingPriceCurrencyFilter.usd:
-        out.add('\$ $range');
+        out.add(ListingsDiscoveryChip(value: '\$ $range'));
       case ListingPriceCurrencyFilter.eur:
-        out.add('€ $range');
+        out.add(ListingsDiscoveryChip(value: '€ $range'));
     }
   } else {
     switch (s.priceCurrencyFilter) {
       case ListingPriceCurrencyFilter.any:
         break;
       case ListingPriceCurrencyFilter.usd:
-        out.add(l10n.filterPriceCurrencyActiveUsd);
+        out.add(ListingsDiscoveryChip(value: l10n.filterPriceCurrencyActiveUsd));
       case ListingPriceCurrencyFilter.eur:
-        out.add(l10n.filterPriceCurrencyActiveEur);
+        out.add(ListingsDiscoveryChip(value: l10n.filterPriceCurrencyActiveEur));
     }
   }
   if (s.maxMileage != null) {
-    out.add('≤ ${s.maxMileage} ${l10n.commonKilometersShort}');
+    out.add(ListingsDiscoveryChip(
+      value: '≤ ${s.maxMileage} ${l10n.commonKilometersShort}',
+    ));
   }
   if (s.city != null && s.city!.trim().isNotEmpty) {
-    out.add('${l10n.filterCity}: ${s.city!.trim()}');
+    out.add(ListingsDiscoveryChip(
+      label: l10n.filterCity,
+      value: s.city!.trim(),
+    ));
   }
   if (s.regionFilter == MarketRegionFilter.moldova) {
-    out.add(l10n.regionMoldova);
+    out.add(ListingsDiscoveryChip(value: l10n.regionMoldova));
   } else if (s.regionFilter == MarketRegionFilter.both) {
-    out.add(l10n.regionBoth);
+    out.add(ListingsDiscoveryChip(value: l10n.regionBoth));
   }
   if (s.bodyTypeFilter != null) {
-    out.add(listingFilterBodyTypeLabel(l10n, s.bodyTypeFilter!));
+    out.add(ListingsDiscoveryChip(
+      value: listingFilterBodyTypeLabel(l10n, s.bodyTypeFilter!),
+    ));
   }
   if (s.typeFilter == ListingTypeFilter.sale) {
-    out.add(l10n.typeSale);
+    out.add(ListingsDiscoveryChip(value: l10n.typeSale));
   } else if (s.typeFilter == ListingTypeFilter.exchange) {
-    out.add(l10n.typeExchange);
+    out.add(ListingsDiscoveryChip(value: l10n.typeExchange));
   }
   if (s.sortOption != ListingSortOption.newestFirst) {
-    out.add(listingFilterSortOptionLabel(l10n, s.sortOption));
+    out.add(ListingsDiscoveryChip(
+      value: listingFilterSortOptionLabel(l10n, s.sortOption),
+    ));
   }
   return out;
 }
+
+/// Human-readable bullet labels for discovery chips — shared by feed strip and
+/// filter-alert summaries (no duplicated localized copy).
+///
+/// Thin wrapper around [listingsDiscoveryChips] preserved for callers
+/// that just need flat `"Label: Value"` strings (filter-alert summary,
+/// semantics labels, etc.).
+List<String> listingsDiscoveryChipLabels(
+  ListingsState s,
+  AppLocalizations l10n,
+) =>
+    listingsDiscoveryChips(s, l10n).map((c) => c.flat).toList(growable: false);
 
 /// Count of active discovery dimensions shown as chips in the feed —
 /// cardinality must stay aligned with [listingsDiscoveryChipLabels].

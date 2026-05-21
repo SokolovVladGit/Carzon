@@ -20,8 +20,10 @@ is missing here, the release is not ready.
 
 ## B. Environment variables
 
-Copy `.env.example` to `.env` and fill in real values. Never commit
-the populated `.env`.
+Copy `.env.client.example` to `.env.client` and fill in client-safe values only.
+Never commit the populated `.env.client`. Run and release builds with
+`--dart-define-from-file=.env.client` (or CI equivalents). Do not add server
+secrets to client config.
 
 **Required** (the app fails fast on startup if either is missing):
 
@@ -84,7 +86,7 @@ migrations (Supabase Data API / PostgREST requires explicit **`GRANT`** on new *
       and seller avatars (`Image.network`). Writes are scoped per-owner
       by storage policies — do not widen them.
 - [ ] **API → Project Settings**: confirm the anon key in the
-      dashboard matches the value in `.env`.
+      dashboard matches the value in `.env.client` used at build time.
 - [ ] **Edge Functions (message + filter alert push):** deploy
       **`process-message-notifications`** and **`process-filter-alert-notifications`**
       from `supabase/functions/`, each with secrets documented in [RELEASE.md](RELEASE.md)

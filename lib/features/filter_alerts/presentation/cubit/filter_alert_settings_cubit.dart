@@ -1,19 +1,14 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/config/env.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/result.dart';
 import '../../../listings/domain/entities/listing_discovery_criteria.dart';
-import '../../../notifications/domain/entities/notification_preferences.dart';
-import '../../../notifications/domain/repositories/notifications_repository.dart';
-import '../../../notifications/services/push_messaging_permission_status.dart';
-import '../../../notifications/services/push_notification_registration_service.dart';
 import '../../domain/entities/filter_alert_settings.dart';
+import '../../domain/services/filter_alert_delivery_orchestrator.dart';
 import '../../domain/usecases/clear_filter_alert_criteria.dart';
 import '../../domain/usecases/get_filter_alert_settings.dart';
 import '../../domain/usecases/save_filter_alert_criteria.dart';
-import '../../domain/usecases/set_filter_alert_notifications_enabled.dart';
 
 enum FilterAlertSettingsLoadStatus { initial, loading, loaded, failure }
 
@@ -91,23 +86,17 @@ class FilterAlertSettingsCubit extends Cubit<FilterAlertSettingsState> {
     required GetFilterAlertSettings getSettings,
     required SaveFilterAlertCriteria saveCriteria,
     required ClearFilterAlertCriteria clearCriteria,
-    required SetFilterAlertNotificationsEnabled setNotificationsEnabled,
-    required NotificationsRepository notificationsRepository,
-    required PushNotificationRegistrationService pushRegistration,
+    required FilterAlertDeliveryOrchestrator deliveryOrchestrator,
   }) : _getSettings = getSettings,
        _saveCriteria = saveCriteria,
        _clearCriteria = clearCriteria,
-       _setNotificationsEnabled = setNotificationsEnabled,
-       _notificationsRepository = notificationsRepository,
-       _pushRegistration = pushRegistration,
+       _deliveryOrchestrator = deliveryOrchestrator,
        super(const FilterAlertSettingsState());
 
   final GetFilterAlertSettings _getSettings;
   final SaveFilterAlertCriteria _saveCriteria;
   final ClearFilterAlertCriteria _clearCriteria;
-  final SetFilterAlertNotificationsEnabled _setNotificationsEnabled;
-  final NotificationsRepository _notificationsRepository;
-  final PushNotificationRegistrationService _pushRegistration;
+  final FilterAlertDeliveryOrchestrator _deliveryOrchestrator;
 
   void clearUserNotice() {
     if (state.userNotice == FilterAlertSettingsUserNotice.none) return;
@@ -202,14 +191,6 @@ class FilterAlertSettingsCubit extends Cubit<FilterAlertSettingsState> {
       );
       return const FailureResult(UnknownFailure('no_criteria'));
     }
-    if (!Env.pushNotificationsEnabled) {
-      emit(
-        state.copyWith(
-          userNotice: FilterAlertSettingsUserNotice.pushUnavailableInBuild,
-        ),
-      );
-      return const FailureResult(UnknownFailure('push_disabled'));
-    }
 
     emit(
       state.copyWith(
@@ -218,83 +199,42 @@ class FilterAlertSettingsCubit extends Cubit<FilterAlertSettingsState> {
       ),
     );
 
-    try {
-      final requested = await _pushRegistration.requestOsNotificationPermission();
-      if (!requested.allowsTokenRegistration) {
+    final deliver = await _deliveryOrchestrator.enableDeliveries(
+      state.settings!,
+    );
+
+    switch (deliver) {
+      case FailureResult(:final failure):
+        final FilterAlertSettingsUserNotice notice =
+            failure.message == 'filter_alert_delivery_push_disabled'
+                ? FilterAlertSettingsUserNotice.pushUnavailableInBuild
+                : failure.message ==
+                        'filter_alert_delivery_permission_denied'
+                    ? FilterAlertSettingsUserNotice.osPermissionDenied
+                    : FilterAlertSettingsUserNotice.prefsUpdateFailed;
         emit(
           state.copyWith(
             busyNotificationToggle: false,
-            userNotice: FilterAlertSettingsUserNotice.osPermissionDenied,
+            userNotice: notice,
           ),
         );
-        return const FailureResult(UnknownFailure('permission_denied'));
-      }
-
-      NotificationPreferences prefs;
-      final prefsResult = await _notificationsRepository.getMyPreferences();
-      switch (prefsResult) {
-        case FailureResult():
-          emit(
-            state.copyWith(
-              busyNotificationToggle: false,
-              userNotice: FilterAlertSettingsUserNotice.prefsUpdateFailed,
-            ),
-          );
-          return const FailureResult(UnknownFailure('prefs_load_failed'));
-        case Success(:final value):
-          prefs = value;
-      }
-
-      final prefUp = await _notificationsRepository.updateMyPreferences(
-        globalEnabled: true,
-        messagesEnabled: prefs.messagesEnabled,
-        filterAlertsEnabled: true,
-      );
-      switch (prefUp) {
-        case FailureResult():
-          emit(
-            state.copyWith(
-              busyNotificationToggle: false,
-              userNotice: FilterAlertSettingsUserNotice.prefsUpdateFailed,
-            ),
-          );
-          return const FailureResult(UnknownFailure('prefs_update_failed'));
-        case Success():
-          break;
-      }
-
-      final toggle = await _setNotificationsEnabled(true);
-      switch (toggle) {
-        case FailureResult():
-          emit(state.copyWith(busyNotificationToggle: false));
-          await refresh();
-          return toggle;
-        case Success(:final value):
-          await _pushRegistration.syncTokenWithBackendIfEligible();
-          emit(
-            FilterAlertSettingsState(
-              status: FilterAlertSettingsLoadStatus.loaded,
-              settings: value,
-              busyNotificationToggle: false,
-            ),
-          );
-          return toggle;
-      }
-    } catch (_) {
-      emit(state.copyWith(busyNotificationToggle: false));
-      emit(
-        state.copyWith(
-          userNotice: FilterAlertSettingsUserNotice.prefsUpdateFailed,
-        ),
-      );
-      return const FailureResult(UnknownFailure('enable_failed'));
+        return deliver;
+      case Success(:final value):
+        emit(
+          FilterAlertSettingsState(
+            status: FilterAlertSettingsLoadStatus.loaded,
+            settings: value,
+            busyNotificationToggle: false,
+          ),
+        );
+        return deliver;
     }
   }
 
   /// Disables filter-alert delivery flag only (criteria and global/message prefs unchanged).
   Future<Result<FilterAlertSettings>> disableFilterAlertNotifications() async {
     emit(state.copyWith(busyNotificationToggle: true, clearNotice: true));
-    final result = await _setNotificationsEnabled(false);
+    final result = await _deliveryOrchestrator.disableDeliveriesFlagOnly();
     switch (result) {
       case FailureResult():
         emit(state.copyWith(busyNotificationToggle: false));

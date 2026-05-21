@@ -35,12 +35,16 @@ class ListingsFilterForm extends StatefulWidget {
     super.key,
     required this.seed,
     this.showDraftSummaryStrip = true,
+    this.onDraftMutated,
   });
 
   final ListingsFilterFormSeed seed;
 
   /// When `false`, the live summary chip card is omitted (alert filter editor).
   final bool showDraftSummaryStrip;
+
+  /// Optional hook when any controlled draft field updates (browse filter bell).
+  final VoidCallback? onDraftMutated;
 
   @override
   State<ListingsFilterForm> createState() => ListingsFilterFormState();
@@ -114,6 +118,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
   }
 
   void _onDraftChanged() {
+    widget.onDraftMutated?.call();
     if (mounted) {
       setState(() {});
     }
@@ -304,6 +309,13 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     _assignCatalogMake(picked);
   }
 
+  /// Notifies the host that the draft has been mutated through a
+  /// non-controller path (chip/dropdown/year picker). Text controller
+  /// listeners already fire `_onDraftChanged`, which calls this too.
+  void _notifyDraftMutated() {
+    widget.onDraftMutated?.call();
+  }
+
   void _assignCatalogMake(String englishCatalog) {
     final prev = _catalogMake;
     setState(() {
@@ -315,6 +327,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
         _model.clear();
       }
     });
+    _notifyDraftMutated();
   }
 
   void _clearMakeSelection() {
@@ -324,6 +337,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
       _customBrand.clear();
       _model.clear();
     });
+    _notifyDraftMutated();
   }
 
   Future<void> _pickYear({required bool isMin}) async {
@@ -357,6 +371,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
         _minYearError = null;
         _maxYearError = null;
       });
+      _notifyDraftMutated();
     }
   }
 
@@ -370,6 +385,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
       _minYearError = null;
       _maxYearError = null;
     });
+    _notifyDraftMutated();
   }
 
   Widget _filterYearCompactCell({
@@ -711,7 +727,24 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
 
   /// Validates fields and returns an apply result, or `null` if validation failed.
   ListingsFilterApplyResult? submit() {
-    final l10n = context.l10n;
+    return _buildApplyOutcome(
+      l10n: context.l10n,
+      mutateInlineErrors: true,
+    );
+  }
+
+  /// Same validation as [submit] without touching inline errors (peek only).
+  ListingsFilterApplyResult? peekValidatedApplyOutcome() {
+    return _buildApplyOutcome(
+      l10n: context.l10n,
+      mutateInlineErrors: false,
+    );
+  }
+
+  ListingsFilterApplyResult? _buildApplyOutcome({
+    required AppLocalizations l10n,
+    required bool mutateInlineErrors,
+  }) {
     final makeDraft = _effectiveMakeFilter();
     final model = _model.text.trim();
     final minYear = _minYearValue;
@@ -754,20 +787,18 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
         minPriceErr != null ||
         maxPriceErr != null ||
         maxMileageErr != null) {
-      setState(() {
-        _minYearError = minYearErr;
-        _maxYearError = maxYearErr;
-        _minPriceError = minPriceErr;
-        _maxPriceError = maxPriceErr;
-        _maxMileageError = maxMileageErr;
-      });
+      if (mutateInlineErrors) {
+        setState(() {
+          _minYearError = minYearErr;
+          _maxYearError = maxYearErr;
+          _minPriceError = minPriceErr;
+          _maxPriceError = maxPriceErr;
+          _maxMileageError = maxMileageErr;
+        });
+      }
       return null;
     }
 
-    // Vanilla sheet constraints match baseline discovery. Browse callers resolve
-    // this via [ListingsFilterApplyResult.clear()] — same semantics as resetting
-    // search + clearing last-applied criteria (feed). Alert editor maps `cleared`
-    // criteria through [listingDiscoveryCriteriaFromFilterApply].
     if (isListingsFilterDraftVanilla(draftSeed)) {
       return const ListingsFilterApplyResult.clear();
     }
@@ -831,7 +862,10 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
         theme: theme,
         selected: selected,
         label: label,
-        onSelected: (_) => setState(() => _region = value),
+        onSelected: (_) {
+          setState(() => _region = value);
+          _notifyDraftMutated();
+        },
       );
     }
 
@@ -853,7 +887,10 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
         theme: theme,
         selected: selected,
         label: label,
-        onSelected: (_) => setState(() => _type = value),
+        onSelected: (_) {
+          setState(() => _type = value);
+          _notifyDraftMutated();
+        },
       );
     }
 
@@ -1048,7 +1085,10 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                       const SizedBox(height: 10),
                       ListingsFilterSegmentedControl<ListingPriceCurrencyFilter>(
                         value: _priceCurrency,
-                        onChanged: (v) => setState(() => _priceCurrency = v),
+                        onChanged: (v) {
+                          setState(() => _priceCurrency = v);
+                          _notifyDraftMutated();
+                        },
                         entries: [
                           ListingsFilterSegmentEntry(
                             value: ListingPriceCurrencyFilter.any,
@@ -1173,7 +1213,10 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                           child: Text(listingFilterBodyTypeLabel(l10n, b)),
                         ),
                     ],
-                    onChanged: (v) => setState(() => _bodyType = v),
+                    onChanged: (v) {
+                      setState(() => _bodyType = v);
+                      _notifyDraftMutated();
+                    },
                   ),
                 ),
               ),
@@ -1208,6 +1251,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
               onChanged: (v) {
                 if (v == null) return;
                 setState(() => _sort = v);
+                _notifyDraftMutated();
               },
             ),
           ),

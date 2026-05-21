@@ -108,6 +108,45 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingsFiltersTooltip => 'Фильтры';
 
   @override
+  String get catalogBrowseFilterBellTooltip => 'Оповещения по этому фильтру';
+
+  @override
+  String get catalogBrowseFilterBellFilterChipSemantics =>
+      'Активны оповещения по сохранённому фильтру, совпадающему с текущими условиями поиска';
+
+  @override
+  String get catalogBrowseFilterBellTooBroad =>
+      'Уточните фильтр (поиск, марка, параметры или регион), затем сохраните оповещение — базовый каталог без условий слишком широкий.';
+
+  @override
+  String get catalogBrowseFilterAlertTooBroadInlineTitle =>
+      'Уточните фильтр, чтобы сохранить оповещение.';
+
+  @override
+  String get catalogBrowseFilterAlertTooBroadInlineBody =>
+      'Базовый каталог без условий слишком широкий.';
+
+  @override
+  String get catalogBrowseFilterBellEnabledSnack =>
+      'Оповещения по этому фильтру включены.';
+
+  @override
+  String get catalogBrowseFilterBellDisabledSnack =>
+      'Оповещения по фильтру выключены.';
+
+  @override
+  String get catalogBrowseFilterBellSavedDeliveryUnavailableTooltip =>
+      'Оповещение сохранено. Нажмите, чтобы удалить.';
+
+  @override
+  String get catalogBrowseFilterBellInactiveTooltip =>
+      'Включить оповещения по этому фильтру.';
+
+  @override
+  String get catalogBrowseFilterBellActiveTooltip =>
+      'Оповещения включены. Нажмите, чтобы выключить.';
+
+  @override
   String get listingsEmptyTitle => 'Объявления не найдены';
 
   @override
@@ -166,7 +205,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingBodyTypeSectionSubtitle =>
-      'Укажите кузов — иначе объявление не попадёт в фильтры «Седан», «SUV» и т.д. Если не подходит ни один вариант, выберите «Другое».';
+      'Для фильтров по типу кузова. Если не подходит — «Другое».';
 
   @override
   String get regionTransnistria => 'Приднестровье';
@@ -519,14 +558,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get createListingSectionSpecsSubtitle =>
-      'Технические данные необязательны, но помогают покупателю.';
+      'По желанию — помогают в поиске и фильтрах.';
 
   @override
   String get createListingSectionDescription => 'Описание';
 
   @override
   String get createListingSectionDescriptionSubtitle =>
-      'Состояние, комплектация, недостатки, сервис, торг.';
+      'Состояние, комплектация, сервис — своими словами.';
 
   @override
   String get createListingDescriptionLabel => 'Текст объявления';
@@ -720,46 +759,47 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createListingTitle => 'Подать объявление';
 
   @override
+  String get createListingComposeEyebrow => 'Новое объявление · Carzon';
+
+  @override
   String get createListingComposeHeadline => 'Создайте объявление';
 
   @override
   String get createListingComposeSubtitle =>
-      'Сильные фото и точные данные помогают быстрее связаться с покупателем.';
+      'Подготовьте карточку автомобиля: фото, характеристики и аккуратные контакты — чтобы покупатель сразу увидел главное.';
 
   @override
   String get createListingSectionPhotosLead => 'Фото и заголовок';
 
   @override
   String get createListingSectionPhotosLeadSubtitle =>
-      'Первое фото станет обложкой в каталоге — выберите удачный ракурс.';
+      'Обложка каталога и необязательный заголовок.';
 
   @override
   String get createListingSectionVehicle => 'Об автомобиле';
 
   @override
   String get createListingSectionVehicleSubtitle =>
-      'Город, марка, модель и год выпуска.';
+      'Город, марка, модель, год и характеристики.';
 
   @override
   String get createListingSectionDeal => 'Сделка и рынок';
 
   @override
-  String get createListingSectionDealSubtitle =>
-      'Тип сделки и регион размещения.';
+  String get createListingSectionDealSubtitle => 'Тип сделки и регион показа.';
 
   @override
   String get createListingSectionPrice => 'Цена и пробег';
 
   @override
-  String get createListingSectionPriceSubtitle =>
-      'Выберите валюту и укажите фактические значения.';
+  String get createListingSectionPriceSubtitle => 'Валюта и фактические цифры.';
 
   @override
   String get createListingSectionPublish => 'Контакты и публикация';
 
   @override
   String get createListingSectionPublishSubtitle =>
-      'Проверьте контакты — они появятся в активном объявлении.';
+      'Контакты будут видны в активном объявлении.';
 
   @override
   String get createListingPublishKicker => 'Финальный шаг';
@@ -800,11 +840,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Нажмите, чтобы добавить фото объявления. До девяти снимков — по одному из галереи.';
 
   @override
-  String get createListingHeroEmptyTitle => 'Добавьте фотографии';
+  String get createListingMediaCoverHint => 'Обложка каталога';
+
+  @override
+  String get createListingHeroEmptyTitle => 'Добавьте фотографии автомобиля';
 
   @override
   String get createListingHeroEmptyDetail =>
-      'До девяти кадров из галереи. Первое фото станет обложкой в каталоге.';
+      'До девяти снимков из галереи. Начните с удачного ракурса.';
 
   @override
   String get createListingAddPhoto => 'Добавить фото';
@@ -1307,7 +1350,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get filterAlertProfileRowSubtitle =>
-      'Настройте фильтр и включите оповещения на экране редактора.';
+      'Просмотрите сохранённый фильтр и управляйте доставкой оповещений.';
 
   @override
   String get filterAlertSavedSuccess => 'Фильтр сохранён';
@@ -1352,6 +1395,68 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get filterAlertNotificationsPushDisabled =>
       'В этой сборке push недоступен (PUSH_NOTIFICATIONS_ENABLED).';
+
+  @override
+  String get filterAlertManagementHeaderEyebrow => 'CARZON · ОПОВЕЩЕНИЯ';
+
+  @override
+  String get filterAlertManagementSubtitle =>
+      'Управляйте сохранённым фильтром и доставкой оповещений. Уведомления настраиваются в фильтрах каталога.';
+
+  @override
+  String get filterAlertManagementDeliveryOnLabel =>
+      'Доставка оповещений включена';
+
+  @override
+  String get filterAlertManagementDeliveryOffLabel =>
+      'Доставка оповещений выключена';
+
+  @override
+  String get filterAlertManagementCriteriaSectionTitle => 'Параметры фильтра';
+
+  @override
+  String get filterAlertManagementEditAction => 'Изменить в каталоге';
+
+  @override
+  String get filterAlertManagementDisableAction => 'Выключить оповещения';
+
+  @override
+  String get filterAlertManagementClearAction => 'Удалить сохранённый фильтр';
+
+  @override
+  String get filterAlertManagementClearConfirmTitle =>
+      'Удалить сохранённый фильтр?';
+
+  @override
+  String get filterAlertManagementClearConfirmBody =>
+      'Параметры фильтра будут стёрты. Доставка push также выключится. Действие можно повторить из каталога.';
+
+  @override
+  String get filterAlertManagementClearConfirmCta => 'Удалить';
+
+  @override
+  String get filterAlertManagementEmptyTitle =>
+      'Сохранённого оповещения пока нет';
+
+  @override
+  String get filterAlertManagementEmptyBody =>
+      'Создавайте оповещения в фильтрах каталога: задайте параметры поиска и нажмите колокольчик.';
+
+  @override
+  String get filterAlertManagementGoToCatalog => 'Перейти в каталог';
+
+  @override
+  String get filterAlertManagementDeliveryDisabledSnack =>
+      'Оповещения по фильтру выключены.';
+
+  @override
+  String get filterAlertManagementClearedSnack => 'Сохранённый фильтр удалён.';
+
+  @override
+  String get filterAlertSummarySearchLabel => 'Поиск';
+
+  @override
+  String get filterAlertSummaryMileageLabel => 'Пробег';
 
   @override
   String get profilePublicSellerNameTitle => 'Публичное имя продавца';
@@ -1800,7 +1905,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingVinFieldHelper =>
-      'Необязательно. Полный VIN не будет показан публично.';
+      'Необязательно. VIN помогает добавить к объявлению базовую информацию об автомобиле и повышает доверие покупателей. Полный VIN публично не показывается.';
 
   @override
   String get validationVinInvalid =>
@@ -1961,6 +2066,122 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingBuyerVinReportDecodedTransmissionLabel => 'Трансмиссия';
+
+  @override
+  String get listingBuyerVinReportNhtsaManufacturerLabel => 'Производитель';
+
+  @override
+  String get listingBuyerVinReportNhtsaPlantCountryLabel => 'Страна сборки';
+
+  @override
+  String get listingBuyerVinReportNhtsaPlantCityLabel => 'Город сборки';
+
+  @override
+  String get listingBuyerVinReportNhtsaPlantCompanyLabel => 'Завод';
+
+  @override
+  String get listingBuyerVinReportNhtsaVehicleTypeLabel => 'Тип ТС';
+
+  @override
+  String get listingBuyerVinReportNhtsaTrimLabel => 'Комплектация';
+
+  @override
+  String get listingBuyerVinReportNhtsaSeriesLabel => 'Серия';
+
+  @override
+  String get listingBuyerVinReportNhtsaDriveTypeLabel => 'Привод';
+
+  @override
+  String get listingBuyerVinReportNhtsaDoorsLabel => 'Дверей';
+
+  @override
+  String get listingBuyerVinReportNhtsaDisplacementLabel => 'Объём';
+
+  @override
+  String get listingBuyerVinReportNhtsaCylindersLabel => 'Цилиндров';
+
+  @override
+  String get listingBuyerVinReportNhtsaGvwrLabel => 'Класс полной массы';
+
+  @override
+  String get listingBuyerVinReportNhtsaCatalogDecodeCaution =>
+      'Каталог вернул неполные данные по VIN — используйте сведения как ориентир, а не как подтверждение.';
+
+  @override
+  String get listingBuyerVinReportNhtsaGroupCoreIdentity => 'Основное';
+
+  @override
+  String get listingBuyerVinReportNhtsaGroupVehicleSpecs => 'Характеристики';
+
+  @override
+  String get listingBuyerVinReportNhtsaGroupOrigin => 'Сборка';
+
+  @override
+  String get listingBuyerVinReportManualSourcesSectionTitle =>
+      'Дополнительные проверки';
+
+  @override
+  String get listingBuyerVinReportManualSourcesIntro =>
+      'Carzon пока не получает эти данные автоматически. Ниже — источники, которые можно проверить отдельно.';
+
+  @override
+  String get listingBuyerVinReportManualStatusExternalCheck =>
+      'Внешняя проверка';
+
+  @override
+  String get listingBuyerVinReportManualStatusSellerDocument =>
+      'Документ от продавца';
+
+  @override
+  String get listingBuyerVinReportManualStatusFuture => 'Будущий источник';
+
+  @override
+  String get listingBuyerVinReportManualMdRcaTitle =>
+      'История повреждений в Молдове';
+
+  @override
+  String get listingBuyerVinReportManualMdRcaBody =>
+      'Данные о повреждениях можно проверить на официальном портале RCA/BNM по VIN. Carzon не получает эти данные автоматически.';
+
+  @override
+  String get listingBuyerVinReportManualMdRcaLimitation =>
+      'Результат внешней проверки не отображается в этом отчёте.';
+
+  @override
+  String get listingBuyerVinReportManualMdAspTitle =>
+      'Документы и регистрационные данные';
+
+  @override
+  String get listingBuyerVinReportManualMdAspBody =>
+      'Продавец может предоставить документ ASP / выписку из Государственного регистра транспорта. Перед покупкой сверяйте оригинал документа.';
+
+  @override
+  String get listingBuyerVinReportManualMdAspLimitation =>
+      'Carzon не проверяет подлинность документов автоматически.';
+
+  @override
+  String get listingBuyerVinReportManualPmrCustomsTitle =>
+      'Таможенное оформление в ПМР';
+
+  @override
+  String get listingBuyerVinReportManualPmrCustomsBody =>
+      'Сведения о таможенном оформлении можно проверять через официальный источник ГТК ПМР. Автоматическая проверка в Carzon пока не выполняется.';
+
+  @override
+  String get listingBuyerVinReportManualPmrCustomsLimitation =>
+      'Данные таможни не включены в этот отчёт.';
+
+  @override
+  String get listingBuyerVinReportManualCommercialTitle =>
+      'Расширенный отчёт по истории';
+
+  @override
+  String get listingBuyerVinReportManualCommercialBody =>
+      'Коммерческие отчёты могут содержать дополнительные данные по истории автомобиля, если источник покрывает этот рынок. Интеграция будет оцениваться отдельно.';
+
+  @override
+  String get listingBuyerVinReportManualCommercialLimitation =>
+      'Коммерческие источники пока не подключены к Carzon.';
 
   @override
   String get editListingVinReportSectionTitle => 'Статус VIN';

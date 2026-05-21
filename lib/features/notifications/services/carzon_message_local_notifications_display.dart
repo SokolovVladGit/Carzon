@@ -88,6 +88,11 @@ class CarzonMessageLocalNotificationsDisplay
         settings: settings,
         onDidReceiveNotificationResponse: _onNotificationResponse,
       );
+      // `false` is returned in some environments (notably the iOS Simulator
+      // before notification surfaces are fully available, or when plugin
+      // init is a no-op). It does not throw — foreground presentation may
+      // be limited on simulator, but the presenter can still attempt
+      // [show] when a message arrives; log only at WARN, non-blocking.
       if (ok == false) {
         _logger.warn('flutter_local_notifications initialize returned false');
       }

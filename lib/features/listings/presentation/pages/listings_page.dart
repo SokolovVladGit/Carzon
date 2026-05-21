@@ -15,11 +15,17 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../../shared/brands/brand_icon_resolver.dart';
 import '../../../../shared/ui/carzon_icons.dart';
+import '../../domain/catalog/listing_brands.dart';
 import '../../data/local/last_applied_listing_discovery_repository.dart';
 import '../bloc/listings_bloc.dart';
 import '../bloc/listings_event.dart';
 import '../bloc/listings_state.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../cubit/browse_catalog_filter_alerts_cubit.dart';
+import '../widgets/filters/catalog_browse_filter_alert_sheet_bell.dart';
+import '../widgets/filters/catalog_browse_filter_alert_sheet_notice.dart';
+import '../widgets/filters/catalog_filter_alert_ui_constants.dart';
 import '../../../messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import '../../../sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import '../widgets/category_chip.dart';
@@ -31,6 +37,7 @@ import '../utils/feed_home_body_chips.dart';
 import '../widgets/filters/listings_filter_apply_result.dart';
 import '../widgets/filters/listings_filter_form.dart';
 import '../widgets/filters/listings_filter_host.dart';
+import '../../domain/browse_state_for_alert_criteria.dart';
 import '../utils/discovery_feed_chip_labels.dart';
 
 bool _listingsFilterChromeChanged(ListingsState p, ListingsState q) {
@@ -58,11 +65,21 @@ class ListingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<ListingsBloc>(),
-      child: _ListingsDiscoveryBootstrap(
-        feedLaunch: feedLaunch,
-        child: const _ListingsView(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => sl<ListingsBloc>()),
+        BlocProvider(create: (_) => sl<BrowseCatalogFilterAlertsCubit>()),
+      ],
+      child: BlocListener<AuthCubit, AuthState>(
+        listener: (context, auth) {
+          context.read<BrowseCatalogFilterAlertsCubit>().onAuthChanged(auth);
+        },
+        child: _ListingsDiscoveryBootstrap(
+          feedLaunch: feedLaunch,
+          child: _ListingsView(
+            openFilterSheetOnEntry: feedLaunch?.openFilterSheetOnEntry ?? false,
+          ),
+        ),
       ),
     );
   }
@@ -116,13 +133,21 @@ class _ListingsDiscoveryBootstrapState
 }
 
 class _ListingsView extends StatefulWidget {
-  const _ListingsView();
+  const _ListingsView({this.openFilterSheetOnEntry = false});
+
+  /// When `true`, the catalog filter sheet auto-opens after the first
+  /// frame. Used by `/filter-alert` "Edit in catalog" so the management
+  /// page sends the user straight into the filter UX where alerts are
+  /// edited.
+  final bool openFilterSheetOnEntry;
 
   @override
   State<_ListingsView> createState() => _ListingsViewState();
 }
 
 class _ListingsViewState extends State<_ListingsView> {
+  final GlobalKey<ListingsFilterFormState> _catalogFilterSheetFormKey =
+      GlobalKey<ListingsFilterFormState>();
   final _scrollCtrl = ScrollController();
   final _searchCtrl = TextEditingController();
 
@@ -142,6 +167,10 @@ class _ListingsViewState extends State<_ListingsView> {
       final auth = context.read<AuthCubit>().state;
       unawaited(context.read<SelfSellerVisualCubit>().prime(auth));
       unawaited(context.read<MessagingUnreadSummaryCubit>().sync(auth));
+      context.read<BrowseCatalogFilterAlertsCubit>().onAuthChanged(auth);
+      if (widget.openFilterSheetOnEntry) {
+        unawaited(_openFiltersSheet(context));
+      }
     });
   }
 
@@ -173,16 +202,77 @@ class _ListingsViewState extends State<_ListingsView> {
       useSafeArea: false,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
+        final browseAlerts = context.read<BrowseCatalogFilterAlertsCubit>();
         final h = MediaQuery.sizeOf(sheetContext).height;
-        return SizedBox(
-          height: h,
-          child: ListingsFilterHost(
-            seed: ListingsFilterFormSeed.fromListingsState(current),
-            onDismiss: () => Navigator.of(sheetContext).pop(),
-            onApply: (r) => Navigator.of(sheetContext).pop(r),
-            onBrowseFeedReset: () {
-              _searchCtrl.clear();
-              bloc.add(const ListingsFiltersCleared());
+        // Sheet-scoped inline notice (e.g. "Refine the filter to save
+        // an alert"). Owned by the sheet builder so it lives and dies
+        // with the modal — guaranteeing the message never reappears
+        // on the listings page after the user closes the sheet, which
+        // was the root-snackbar bleed bug we're fixing here.
+        CatalogBellInlineNotice? inlineNotice;
+        return BlocProvider<BrowseCatalogFilterAlertsCubit>.value(
+          value: browseAlerts,
+          child: StatefulBuilder(
+            builder: (sheetContext, setSheetState) {
+              return SizedBox(
+                height: h,
+                child: Builder(
+                  builder: (sheetContext) {
+                    String resolvedSearchSnippet() {
+                      final typed = _searchCtrl.text.trim();
+                      if (typed.isNotEmpty) return typed;
+                      return bloc.state.search?.trim() ?? '';
+                    }
+
+                    // The "Show cars" CTA intentionally stays unaffected
+                    // by `alerts.bellBusy`: the bell already disables
+                    // itself while a save/clear is in flight, and tying
+                    // the apply CTA to the same flag made the button
+                    // briefly flash to its disabled style every time the
+                    // user toggled the bell. Apply remains visually stable.
+                    return ListingsFilterHost(
+                      filterFormExternalKey: _catalogFilterSheetFormKey,
+                      onBrowseDraftMutated: () => setSheetState(() {
+                        // Any draft edit clears the "refine filter"
+                        // notice — the user has acknowledged it and
+                        // is iterating on the draft.
+                        inlineNotice = null;
+                      }),
+                      browseHeaderTrailing: CatalogBrowseFilterAlertSheetBell(
+                        sheetFormKey: _catalogFilterSheetFormKey,
+                        sheetContext: sheetContext,
+                        searchSnippet: resolvedSearchSnippet,
+                        // Canonical seed: the same catalog applied state
+                        // that drove the main FAB indicator. Used by the
+                        // bell as initial draft criteria so the bell and
+                        // FAB never disagree on the first sheet frame.
+                        appliedState: current,
+                        onInlineNoticeRequested: (notice) =>
+                            setSheetState(() => inlineNotice = notice),
+                      ),
+                      browseHeaderNotice: inlineNotice == null
+                          ? null
+                          : CatalogBrowseFilterAlertSheetNotice(
+                              notice: inlineNotice!,
+                            ),
+                      // Bell visual + tooltip are the only saved-state
+                      // surface in the catalog filter sheet now: a tech
+                      // "push disabled" inline banner was removed because
+                      // the saved/off colour + tap-to-remove tooltip carry
+                      // the same information without product-unfriendly
+                      // build-flag copy.
+                      seed: ListingsFilterFormSeed.fromListingsState(current),
+                      onDismiss: () => Navigator.of(sheetContext).pop(),
+                      onApply: (r) => Navigator.of(sheetContext).pop(r),
+                      onBrowseFeedReset: () {
+                        _searchCtrl.clear();
+                        bloc.add(const ListingsFiltersCleared());
+                        setSheetState(() => inlineNotice = null);
+                      },
+                    );
+                  },
+                ),
+              );
             },
           ),
         );
@@ -422,10 +512,11 @@ class _ListingsViewState extends State<_ListingsView> {
     final bloc = context.read<ListingsBloc>();
     final s = bloc.state;
     final current = s.make;
-    // Short-circuit redundant taps: selecting the already-selected
-    // chip (or tapping "All" when no make filter is active) must
-    // not trigger a loading state / refetch.
-    if ((current ?? '') == (brand ?? '')) return;
+    // Short-circuit redundant taps using the same normalization as tile
+    // selected-state (e.g. `mercedes benz` vs `Mercedes-Benz`).
+    if (listingBrandFeedQuickFilterSelectionUnchanged(current, brand)) {
+      return;
+    }
     bloc.add(
       ListingsFiltersApplied(
         make: brand,
@@ -798,98 +889,155 @@ class _SearchAndFilterBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          BlocBuilder<ListingsBloc, ListingsState>(
-            buildWhen: (prev, curr) {
-              final pa = listingsDiscoveryActiveFilterGroupCount(prev) > 0;
-              final qa = listingsDiscoveryActiveFilterGroupCount(curr) > 0;
-              return pa != qa;
-            },
-            builder: (context, state) {
-              final active = listingsDiscoveryActiveFilterGroupCount(state) > 0;
-              // Align with search pill: inactive reads as crisp white/light;
-              // active uses clearer primary tint + icon + small check badge.
-              final restingBg = isDark
-                  ? scheme.surfaceContainerHighest
-                  : Colors.white;
-              final bg = active
-                  ? Color.alphaBlend(
-                      scheme.primary.withValues(alpha: isDark ? 0.26 : 0.14),
-                      restingBg,
-                    )
-                  : restingBg;
-              final fg = active
-                  ? scheme.primary
-                  : scheme.onSurfaceVariant.withValues(alpha: 0.88);
-              final border = active
-                  ? scheme.primary.withValues(alpha: isDark ? 0.52 : 0.40)
-                  : pillBorder;
-              final badgeOutline = restingBg;
-              return Container(
-                height: barHeight,
-                width: barHeight,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(filterRadius),
-                  boxShadow: [searchShadow],
-                ),
-                child: Material(
-                  color: bg,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(filterRadius),
-                    side: BorderSide(color: border, width: active ? 1.25 : 1),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Tooltip(
-                    message: l10n.listingsFiltersTooltip,
-                    child: InkWell(
-                      onTap: onOpenFilters,
-                      child: Semantics(
-                        button: true,
-                        label: l10n.listingsFiltersTooltip,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          clipBehavior: Clip.none,
-                          children: [
-                            Icon(CarzonIcons.filter, size: 20, color: fg),
-                            if (active)
-                              Positioned(
-                                top: 5,
-                                right: 5,
-                                child: IgnorePointer(
-                                  child: DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      color: scheme.primary,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: badgeOutline,
-                                        width: 1.25,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: scheme.shadow.withValues(
-                                            alpha: 0.08,
-                                          ),
-                                          blurRadius: 3,
-                                          offset: const Offset(0, 1),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4),
-                                      child: Icon(
-                                        Icons.check,
-                                        size: 10,
-                                        color: scheme.onPrimary,
-                                      ),
+          BlocBuilder<
+            BrowseCatalogFilterAlertsCubit,
+            BrowseCatalogFilterAlertsState
+          >(
+            builder: (context, _) {
+              return BlocBuilder<ListingsBloc, ListingsState>(
+                buildWhen: (prev, curr) {
+                  final pActive =
+                      listingsDiscoveryActiveFilterGroupCount(prev) > 0;
+                  final qActive =
+                      listingsDiscoveryActiveFilterGroupCount(curr) > 0;
+                  final pCrit = listingDiscoveryCriteriaFromBrowseStateForAlert(
+                    prev,
+                  );
+                  final qCrit = listingDiscoveryCriteriaFromBrowseStateForAlert(
+                    curr,
+                  );
+                  return pActive != qActive || pCrit != qCrit;
+                },
+                builder: (context, state) {
+                  final alertsCubit = context
+                      .read<BrowseCatalogFilterAlertsCubit>();
+                  final active =
+                      listingsDiscoveryActiveFilterGroupCount(state) > 0;
+                  final bellBadge = alertsCubit
+                      .catalogBellBadgeVisibleForApplied(state);
+                  // Mutually exclusive with [bellBadge]: active delivery
+                  // wins. The helper itself guards `deliveryFullyEnabled`,
+                  // so both flags cannot be true simultaneously.
+                  final savedNoDeliveryBadge =
+                      !bellBadge &&
+                      alertsCubit
+                          .catalogBellSavedWithoutDeliveryVisibleForApplied(
+                            state,
+                          );
+                  final restingBg = isDark
+                      ? scheme.surfaceContainerHighest
+                      : Colors.white;
+                  final bg = active
+                      ? Color.alphaBlend(
+                          scheme.primary.withValues(
+                            alpha: isDark ? 0.26 : 0.14,
+                          ),
+                          restingBg,
+                        )
+                      : restingBg;
+                  final fg = active
+                      ? scheme.primary
+                      : scheme.onSurfaceVariant.withValues(alpha: 0.88);
+                  final border = active
+                      ? scheme.primary.withValues(alpha: isDark ? 0.52 : 0.40)
+                      : pillBorder;
+                  final badgeOutline = restingBg;
+                  final semanticsLabel = bellBadge
+                      ? '${l10n.listingsFiltersTooltip}. '
+                            '${l10n.catalogBrowseFilterBellFilterChipSemantics}'
+                      : savedNoDeliveryBadge
+                      ? '${l10n.listingsFiltersTooltip}. '
+                            '${l10n.catalogBrowseFilterBellSavedDeliveryUnavailableTooltip}'
+                      : l10n.listingsFiltersTooltip;
+                  return Container(
+                    height: barHeight,
+                    width: barHeight,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(filterRadius),
+                      boxShadow: [searchShadow],
+                    ),
+                    child: Material(
+                      color: bg,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(filterRadius),
+                        side: BorderSide(
+                          color: border,
+                          width: active ? 1.25 : 1,
+                        ),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Tooltip(
+                        message: l10n.listingsFiltersTooltip,
+                        child: InkWell(
+                          onTap: onOpenFilters,
+                          child: Semantics(
+                            button: true,
+                            label: semanticsLabel,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              clipBehavior: Clip.none,
+                              children: [
+                                Icon(CarzonIcons.filter, size: 20, color: fg),
+                                // Two-corner badge system: filter-active
+                                // marker top-right, alert-state marker
+                                // bottom-right. Both are 16 dp circular
+                                // badges with the same outline weight so
+                                // they read as one polished component
+                                // rather than two stuck-on stickers.
+                                if (active)
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: _FilterFabCornerBadge(
+                                      background: scheme.primary,
+                                      outline: badgeOutline,
+                                      icon: Icons.check,
+                                      iconColor: scheme.onPrimary,
+                                      iconSize: 9,
                                     ),
                                   ),
-                                ),
-                              ),
-                          ],
+                                if (bellBadge)
+                                  Positioned(
+                                    bottom: 4,
+                                    right: 4,
+                                    child: _FilterFabCornerBadge(
+                                      ornamentKey: CatalogFilterAlertAccent
+                                          .discoveryFilterFABAlertBellKey,
+                                      background:
+                                          CatalogFilterAlertAccent.amber,
+                                      outline: badgeOutline,
+                                      icon: Icons.notifications,
+                                      iconColor: scheme.onPrimary,
+                                      iconSize: 9,
+                                    ),
+                                  )
+                                else if (savedNoDeliveryBadge)
+                                  Positioned(
+                                    bottom: 4,
+                                    right: 4,
+                                    child: _FilterFabCornerBadge(
+                                      ornamentKey: CatalogFilterAlertAccent
+                                          .discoveryFilterFABSavedNoDeliveryBellKey,
+                                      background: Color.alphaBlend(
+                                        CatalogFilterAlertAccent.amber
+                                            .withValues(alpha: 0.22),
+                                        restingBg,
+                                      ),
+                                      outline: CatalogFilterAlertAccent.amber
+                                          .withValues(alpha: 0.55),
+                                      icon: Icons.notifications,
+                                      iconColor: CatalogFilterAlertAccent.amber,
+                                      iconSize: 9,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
               );
             },
           ),
@@ -909,62 +1057,39 @@ class _SearchAndFilterBar extends StatelessWidget {
 /// "All brands" tile at the front of the list is the unset state
 /// (dispatches a `null` make).
 ///
-/// The brand list is curated from brands whose SVG assets are known
-/// to resolve via [getBrandIconPath] (no default fallback); order
-/// favors brands common in the target market. No brand names are
-/// rendered under the icons — semantics labels handle accessibility
-/// and long-press tooltips.
+/// Brands come from [kListingBrandFeedQuickFilterCatalog] (full catalog
+/// except Other). Missing SVGs use a monogram fallback on Home only.
 class _BrandFilterRow extends StatelessWidget {
   const _BrandFilterRow({required this.onBrandSelected});
 
   final ValueChanged<String?> onBrandSelected;
 
-  /// Curated brand ordering. Each string is the canonical make value
-  /// passed to [getBrandIconPath] and dispatched as the make filter.
-  /// Values match the seller-facing spelling in [brand_icon_resolver]
-  /// aliases so the repository's case-insensitive `ilike` query
-  /// reliably matches listings of that brand.
-  static const List<String> _brands = [
-    'Toyota',
-    'Volkswagen',
-    'Skoda',
-    'Opel',
-    'BMW',
-    'Mercedes-Benz',
-    'Audi',
-    'Tesla',
-    'Renault',
-    'Ford',
-  ];
-
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 64,
+      height: 68,
       child: BlocSelector<ListingsBloc, ListingsState, String?>(
         selector: (state) => state.make,
         builder: (context, currentMake) {
-          final normalized = currentMake?.trim().toLowerCase();
           return ListView.separated(
             scrollDirection: Axis.horizontal,
-            // Same 20 px gutter as the editorial column, with a bit
-            // of trailing air so the last tile never clips the edge
-            // of the viewport when fully scrolled.
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-            itemCount: _brands.length + 1,
+            padding: const EdgeInsets.fromLTRB(20, 8, 24, 8),
+            itemCount: kListingBrandFeedQuickFilterCatalog.length + 1,
             separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (context, index) {
               if (index == 0) {
                 return _BrandTile.all(
-                  selected: normalized == null || normalized.isEmpty,
+                  selected: listingBrandFeedQuickFilterAllSelected(currentMake),
                   onTap: () => onBrandSelected(null),
                 );
               }
-              final brand = _brands[index - 1];
-              final isSelected = normalized == brand.toLowerCase();
+              final brand = kListingBrandFeedQuickFilterCatalog[index - 1];
               return _BrandTile.brand(
                 make: brand,
-                selected: isSelected,
+                selected: listingBrandFeedQuickFilterIsSelected(
+                  currentMake,
+                  brand,
+                ),
                 onTap: () => onBrandSelected(brand),
               );
             },
@@ -979,7 +1104,7 @@ class _BrandFilterRow extends StatelessWidget {
 ///   * [_BrandTile.all] — the "All brands" entry at the head of the
 ///     row, rendered as a neutral search icon;
 ///   * [_BrandTile.brand] — a concrete brand, rendered from the
-///     resolver-provided SVG asset.
+///     resolver-provided SVG asset or a monogram when no SVG exists.
 class _BrandTile extends StatelessWidget {
   const _BrandTile._({
     required this.selected,
@@ -987,6 +1112,7 @@ class _BrandTile extends StatelessWidget {
     required this.semanticsLabel,
     required this.assetPath,
     required this.fallbackIcon,
+    this.monogram,
   });
 
   factory _BrandTile.all({
@@ -1007,12 +1133,15 @@ class _BrandTile extends StatelessWidget {
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final resolvedPath = getBrandIconPath(make);
+    final useMonogram = listingBrandFeedQuickFilterShouldUseMonogram(make);
     return _BrandTile._(
       selected: selected,
       onTap: onTap,
       semanticsLabel: make,
-      assetPath: getBrandIconPath(make),
+      assetPath: useMonogram ? null : resolvedPath,
       fallbackIcon: null,
+      monogram: useMonogram ? listingBrandFeedQuickFilterMonogram(make) : null,
     );
   }
 
@@ -1024,12 +1153,16 @@ class _BrandTile extends StatelessWidget {
   /// from the l10n bundle in that case.
   final String? semanticsLabel;
 
-  /// SVG asset path for a concrete brand. Null for the "All" tile.
+  /// SVG asset path for a concrete brand. Null for the "All" tile or
+  /// monogram fallback brands.
   final String? assetPath;
 
   /// Icon used when [assetPath] is null (i.e. the "All brands" head
   /// tile).
   final IconData? fallbackIcon;
+
+  /// Two-letter initials when no brand SVG is available on Home.
+  final String? monogram;
 
   static const double _size = 48;
   static const double _radius = 14;
@@ -1041,35 +1174,52 @@ class _BrandTile extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final l10n = context.l10n;
 
-    // Close-to-white resting background so the tile reads as a
-    // lifted chip on the pure-white feed surface, not a grey block.
-    // Selection is expressed via a whisper primary tint + a tinted
-    // hairline border rather than a strong fill, keeping the row
-    // quiet while still clearly indicating which brand is active.
     final bg = selected
         ? (isDark
-              ? scheme.primary.withValues(alpha: 0.14)
+              ? scheme.primary.withValues(alpha: 0.22)
               : Color.alphaBlend(
-                  scheme.primary.withValues(alpha: 0.04),
+                  scheme.primary.withValues(alpha: 0.11),
                   Colors.white,
                 ))
         : (isDark ? scheme.surfaceContainerHighest : Colors.white);
     final borderColor = selected
-        ? scheme.primary.withValues(alpha: isDark ? 0.5 : 0.32)
+        ? scheme.primary.withValues(alpha: isDark ? 0.72 : 0.58)
         : (isDark
               ? Colors.white.withValues(alpha: 0.05)
-              : scheme.outlineVariant.withValues(alpha: 0.45));
+              : scheme.outlineVariant.withValues(alpha: 0.42));
+    final borderWidth = selected ? 2.0 : 1.0;
     final shadow = BoxShadow(
       color: selected
-          ? scheme.primary.withValues(alpha: isDark ? 0.16 : 0.07)
-          : Colors.black.withValues(alpha: isDark ? 0.18 : 0.02),
-      blurRadius: selected ? 10 : 6,
-      offset: const Offset(0, 2),
+          ? scheme.primary.withValues(alpha: isDark ? 0.22 : 0.12)
+          : Colors.black.withValues(alpha: isDark ? 0.18 : 0.025),
+      blurRadius: selected ? 12 : 6,
+      spreadRadius: selected ? 0.5 : 0,
+      offset: Offset(0, selected ? 3 : 2),
     );
 
     final label = semanticsLabel != null
         ? l10n.brandFilterBrandSemantics(semanticsLabel!)
         : l10n.brandFilterAllSemantics;
+
+    Widget glyph;
+    if (assetPath != null) {
+      glyph = SvgPicture.asset(
+        assetPath!,
+        width: 28,
+        height: 28,
+        fit: BoxFit.contain,
+      );
+    } else if (monogram != null) {
+      glyph = _BrandMonogramMark(monogram: monogram!, selected: selected);
+    } else {
+      glyph = Icon(
+        fallbackIcon,
+        size: 20,
+        color: selected
+            ? scheme.primary
+            : scheme.onSurfaceVariant.withValues(alpha: 0.72),
+      );
+    }
 
     return Semantics(
       button: true,
@@ -1088,30 +1238,145 @@ class _BrandTile extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(_radius),
-              side: BorderSide(color: borderColor),
+              side: BorderSide(color: borderColor, width: borderWidth),
             ),
             child: InkWell(
               onTap: onTap,
               child: SizedBox(
                 width: _size,
                 height: _size,
-                child: Center(
-                  child: assetPath != null
-                      ? SvgPicture.asset(
-                          assetPath!,
-                          width: 28,
-                          height: 28,
-                          fit: BoxFit.contain,
-                        )
-                      : Icon(
-                          fallbackIcon,
-                          size: 20,
-                          color: selected
-                              ? scheme.primary
-                              : scheme.onSurfaceVariant.withValues(alpha: 0.75),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedScale(
+                      scale: selected ? 1.04 : 1.0,
+                      duration: const Duration(milliseconds: 160),
+                      curve: Curves.easeOutCubic,
+                      child: glyph,
+                    ),
+                    if (selected)
+                      Positioned(
+                        bottom: 5,
+                        child: Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: scheme.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark ? scheme.surface : Colors.white,
+                              width: 1,
+                            ),
+                          ),
                         ),
+                      ),
+                  ],
                 ),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Home-only initials mark for catalog brands without a dedicated SVG.
+class _BrandMonogramMark extends StatelessWidget {
+  const _BrandMonogramMark({required this.monogram, required this.selected});
+
+  final String monogram;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final ring = scheme.outlineVariant.withValues(alpha: isDark ? 0.42 : 0.38);
+    final fill = Color.alphaBlend(
+      scheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.05),
+      isDark ? scheme.surfaceContainerHigh : scheme.surfaceContainerLowest,
+    );
+    final textColor = scheme.onSurface.withValues(
+      alpha: selected ? (isDark ? 0.94 : 0.88) : (isDark ? 0.78 : 0.72),
+    );
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: fill,
+        border: Border.all(color: ring),
+      ),
+      child: SizedBox(
+        width: 30,
+        height: 30,
+        child: Center(
+          child: Text(
+            monogram,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 11,
+              letterSpacing: 0.6,
+              color: textColor,
+              height: 1,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Unified corner badge used by the catalog filter FAB ornaments.
+///
+/// Renders a small circular chip in the same dimensions for the two
+/// corners of the filter button, so the filter-active marker and the
+/// alert-state marker (active delivery or saved-without-delivery) read
+/// as one polished status system rather than ad-hoc stickers.
+class _FilterFabCornerBadge extends StatelessWidget {
+  const _FilterFabCornerBadge({
+    this.ornamentKey,
+    required this.background,
+    required this.outline,
+    required this.icon,
+    required this.iconColor,
+    required this.iconSize,
+  });
+
+  final Key? ornamentKey;
+  final Color background;
+  final Color outline;
+  final IconData icon;
+  final Color iconColor;
+  final double iconSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: SizedBox(
+        width: 16,
+        height: 16,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: background,
+            shape: BoxShape.circle,
+            border: Border.all(color: outline, width: 1.25),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 2.5,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Icon(
+              icon,
+              key: ornamentKey,
+              size: iconSize,
+              color: iconColor,
             ),
           ),
         ),
@@ -1128,48 +1393,119 @@ class _ActiveDiscoverySummaryStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final chips = listingsDiscoveryChipLabels(state, l10n);
+    final chips = listingsDiscoveryChips(state, l10n);
     if (chips.isEmpty) return const SizedBox.shrink();
     return Semantics(
       container: true,
       label: l10n.filtersTitle,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          physics: const BouncingScrollPhysics(),
           child: Row(
             children: [
-              for (final label in chips)
+              for (var i = 0; i < chips.length; i++)
                 Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: scheme.surfaceContainerHighest.withValues(
-                        alpha: 0.45,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: scheme.outlineVariant.withValues(alpha: 0.35),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
-                      ),
-                      child: Text(
-                        label,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: scheme.onSurface.withValues(alpha: 0.88),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                  padding: EdgeInsets.only(
+                    right: i == chips.length - 1 ? 0 : 8,
                   ),
+                  child: _ActiveDiscoveryChip(data: chips[i]),
                 ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Premium compact pill rendering a single active discovery dimension.
+///
+/// Renders a soft surface gradient with a hairline outline and a thin
+/// `label · value` typographic split (muted label, medium-weight value,
+/// faded mid-dot separator). Falls back to a single value-only line
+/// when the chip carries no [ListingsDiscoveryChip.label] (e.g.
+/// "Sale", region marker). Designed to scale gracefully when many
+/// chips are active without feeling like generic Material `Chip`s.
+class _ActiveDiscoveryChip extends StatelessWidget {
+  const _ActiveDiscoveryChip({required this.data});
+
+  final ListingsDiscoveryChip data;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final fill = isDark
+        ? scheme.surfaceContainerHighest.withValues(alpha: 0.42)
+        : Color.alphaBlend(
+            scheme.onSurface.withValues(alpha: 0.025),
+            scheme.surface,
+          );
+    final stroke = scheme.outlineVariant.withValues(
+      alpha: isDark ? 0.38 : 0.32,
+    );
+
+    final valueStyle = theme.textTheme.labelMedium?.copyWith(
+      color: scheme.onSurface.withValues(alpha: 0.92),
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.05,
+      height: 1.1,
+    );
+    final labelStyle = theme.textTheme.labelSmall?.copyWith(
+      color: scheme.onSurface.withValues(alpha: 0.52),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.08,
+      height: 1.1,
+    );
+    final dotStyle = theme.textTheme.labelMedium?.copyWith(
+      color: scheme.onSurface.withValues(alpha: 0.32),
+      fontWeight: FontWeight.w500,
+      height: 1.1,
+    );
+
+    final hasLabel = data.label != null && data.label!.isNotEmpty;
+
+    return Semantics(
+      label: data.flat,
+      excludeSemantics: true,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: fill,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: stroke, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: scheme.shadow.withValues(alpha: isDark ? 0.18 : 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (hasLabel) ...[
+                Text(data.label!, style: labelStyle, maxLines: 1),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Text('·', style: dotStyle),
+                ),
+              ],
+              Flexible(
+                child: Text(
+                  data.value,
+                  style: valueStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),

@@ -17,9 +17,24 @@ export type VinDecoderNormalizedFields = {
   fuelType: string | null;
   engine: string | null;
   transmission: string | null;
+  manufacturer: string | null;
+  plantCountry: string | null;
+  plantCity: string | null;
+  plantCompany: string | null;
+  vehicleType: string | null;
+  trim: string | null;
+  series: string | null;
+  driveType: string | null;
+  doors: string | null;
+  displacement: string | null;
+  cylinders: string | null;
+  grossVehicleWeightRating: string | null;
   market: string | null;
   rawCompletenessScore: number;
   warnings: string[];
+  /** Internal only — not copied to buyer normalized_summary. */
+  decodeErrorCode: string | null;
+  decodeErrorText: string | null;
 };
 
 export type VinDecoderSuccessMetadata = {

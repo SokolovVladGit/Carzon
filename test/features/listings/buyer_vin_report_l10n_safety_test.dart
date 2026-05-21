@@ -10,14 +10,31 @@ void main() {
     final tail = raw.substring(start);
     const forbidden = [
       'VIN проверен',
+      'Официально проверено',
       'официально подтверждён',
+      'История проверена',
       'история проверена',
       'проверено по базе',
+      'Без ДТП',
       'без ДТП',
+      'Чистая история',
       'чистая история',
+      'Автомобиль полностью проверен',
+      'Юридически чистый',
+      'Пробег подтверждён',
+      'Ограничений нет',
     ];
     for (final phrase in forbidden) {
       expect(tail.contains(phrase), isFalse, reason: phrase);
     }
+    expect(
+      tail.contains('listingBuyerVinReportNhtsaCatalogDecodeCaution'),
+      isTrue,
+    );
+    expect(
+      tail.contains('listingBuyerVinReportManualSourcesSectionTitle'),
+      isTrue,
+    );
+    expect(tail.contains('listingBuyerVinReportManualMdRcaTitle'), isTrue);
   });
 }

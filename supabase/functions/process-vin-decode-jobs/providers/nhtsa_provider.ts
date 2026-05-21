@@ -2,7 +2,12 @@
  * NHTSA vPIC DecodeVinValues adapter (basic decode only; not EU/MD verification).
  */
 
-import type { VinDecoderInput, VinDecoderProvider, VinDecoderResult } from "./types.ts";
+import type {
+  VinDecoderInput,
+  VinDecoderNormalizedFields,
+  VinDecoderProvider,
+  VinDecoderResult,
+} from "./types.ts";
 
 const NHTSA_TIMEOUT_MS = 15_000;
 const VPIC_BASE =
@@ -24,6 +29,22 @@ function parseYear(v: unknown): number | null {
   return n;
 }
 
+function parsePositiveIntString(v: unknown): string | null {
+  const s = trimOrNull(v);
+  if (!s) return null;
+  const n = Number.parseInt(s, 10);
+  if (!Number.isFinite(n) || n <= 0) return s;
+  return '$n';
+}
+
+function formatDisplacementLiters(v: unknown): string | null {
+  const s = trimOrNull(v);
+  if (!s) return null;
+  const n = Number.parseFloat(s);
+  if (!Number.isFinite(n) || n <= 0) return s;
+  return `${n} L`;
+}
+
 function buildEngine(row: NhtsaVinValuesRow): string | null {
   const parts = [
     trimOrNull(row["EngineConfiguration"]),
@@ -41,26 +62,89 @@ function buildTransmission(row: NhtsaVinValuesRow): string | null {
   return style ?? speeds;
 }
 
-function scoreCompleteness(n: {
-  make: string | null;
-  model: string | null;
-  year: number | null;
-  bodyType: string | null;
-  fuelType: string | null;
-  engine: string | null;
-  transmission: string | null;
-}): number {
-  const keys = [
-    n.make,
-    n.model,
-    n.year !== null ? "y" : null,
-    n.bodyType,
-    n.fuelType,
-    n.engine,
-    n.transmission,
-  ];
-  const filled = keys.filter((x) => x !== null && x !== undefined).length;
-  return filled / keys.length;
+function decodeIssueWarnings(row: NhtsaVinValuesRow): string[] {
+  const code = trimOrNull(row["ErrorCode"]);
+  const text = trimOrNull(row["ErrorText"]);
+  if (!code && !text) return [];
+  if (code === "0" || code?.toLowerCase() === "success") return [];
+  return ["nhtsa_catalog_decode_caution"];
+}
+
+/** Maps a single DecodeVinValues row into Carzon normalized fields (no raw row stored). */
+export function mapNhtsaVinValuesRow(row: NhtsaVinValuesRow): {
+  normalized: VinDecoderNormalizedFields;
+} {
+  const make = trimOrNull(row["Make"]);
+  const model = trimOrNull(row["Model"]);
+  const year = parseYear(row["ModelYear"]);
+  const bodyType = trimOrNull(row["BodyClass"]);
+  const fuelType = trimOrNull(row["FuelTypePrimary"]);
+  const engine = buildEngine(row);
+  const transmission = buildTransmission(row);
+
+  const issueWarnings = decodeIssueWarnings(row);
+  const warnings: string[] = [];
+  if (!make && !model && year === null) {
+    warnings.push("nhtsa_partial_or_empty_decode");
+  }
+  for (const w of issueWarnings) {
+    if (!warnings.includes(w)) warnings.push(w);
+  }
+
+  const coreFilled = [
+    make,
+    model,
+    year !== null ? "y" : null,
+    bodyType,
+    fuelType,
+    engine,
+    transmission,
+  ].filter((x) => x !== null).length;
+
+  const extendedFilled = [
+    trimOrNull(row["Manufacturer"]),
+    trimOrNull(row["VehicleType"]),
+    trimOrNull(row["Trim"]),
+    trimOrNull(row["DriveType"]),
+    trimOrNull(row["PlantCountry"]),
+  ].filter((x) => x !== null).length;
+
+  const denom = 12;
+  const rawCompletenessScore = Math.min(
+    1,
+    (coreFilled + extendedFilled * 0.5) / denom,
+  );
+
+  const normalized: VinDecoderNormalizedFields = {
+    make,
+    model,
+    year,
+    bodyType,
+    fuelType,
+    engine,
+    transmission,
+    manufacturer: trimOrNull(row["Manufacturer"]),
+    plantCountry: trimOrNull(row["PlantCountry"]),
+    plantCity: trimOrNull(row["PlantCity"]),
+    plantCompany: trimOrNull(row["PlantCompany"]),
+    vehicleType: trimOrNull(row["VehicleType"]),
+    trim: trimOrNull(row["Trim"]),
+    series: trimOrNull(row["Series"]),
+    driveType: trimOrNull(row["DriveType"]),
+    doors: parsePositiveIntString(row["Doors"]),
+    displacement: formatDisplacementLiters(row["DisplacementL"]),
+    cylinders: parsePositiveIntString(
+      row["EngineCylinders"] ?? row["EngineNumberOfCylinders"],
+    ),
+    grossVehicleWeightRating: trimOrNull(row["GVWR"]),
+    market: "US_catalog_bias",
+    rawCompletenessScore,
+    warnings,
+    decodeErrorCode: trimOrNull(row["ErrorCode"]),
+    decodeErrorText: trimOrNull(row["ErrorText"]),
+  };
+
+  return { normalized };
 }
 
 export class NhtsaVpicVinDecoderProvider implements VinDecoderProvider {
@@ -123,46 +207,14 @@ export class NhtsaVpicVinDecoderProvider implements VinDecoderProvider {
         };
       }
 
-      const make = trimOrNull(row["Make"]);
-      const model = trimOrNull(row["Model"]);
-      const year = parseYear(row["ModelYear"]);
-      const bodyType = trimOrNull(row["BodyClass"]);
-      const fuelType = trimOrNull(row["FuelTypePrimary"]);
-      const engine = buildEngine(row);
-      const transmission = buildTransmission(row);
-
-      const warnings: string[] = [];
-      if (!make && !model && year === null) {
-        warnings.push("nhtsa_partial_or_empty_decode");
-      }
-
-      const normalized = {
-        make,
-        model,
-        year,
-        bodyType,
-        fuelType,
-        engine,
-        transmission,
-        market: "US_catalog_bias",
-        rawCompletenessScore: scoreCompleteness({
-          make,
-          model,
-          year,
-          bodyType,
-          fuelType,
-          engine,
-          transmission,
-        }),
-        warnings,
-      };
+      const { normalized } = mapNhtsaVinValuesRow(row);
 
       return {
         ok: true,
         normalized,
         metadata: {
           providerId: this.id,
-          providerVersion: "decode-vin-values-v1",
+          providerVersion: "decode-vin-values-v2",
           latencyMs,
         },
       };

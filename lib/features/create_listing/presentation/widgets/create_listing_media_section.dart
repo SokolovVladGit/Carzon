@@ -9,9 +9,6 @@ import '../../domain/constants/listing_gallery_limits.dart';
 import '../models/create_listing_photo_draft.dart';
 
 /// Hero + optional thumbnails for the create-listing staging gallery (≤ [kMaxListingPhotos]).
-///
-/// Index 0 is rendered in the hero; when [photos] is non-empty, thumbnails + add tile appear below.
-/// When empty, the hero alone is the add-photo surface — no duplicate small add tile.
 class CreateListingMediaSection extends StatelessWidget {
   const CreateListingMediaSection({
     super.key,
@@ -23,26 +20,26 @@ class CreateListingMediaSection extends StatelessWidget {
     this.showHeading = true,
   });
 
-  /// Staging blobs in display order — first element is cover.
   final List<CreateListingPhotoDraft> photos;
-
   final bool pickingImage;
   final bool disabled;
   final VoidCallback onAddPhoto;
   final void Function(int index) onRemovePhotoAt;
-
-  /// When false, hides the title + subtitle rows (parent section supplies hierarchy).
   final bool showHeading;
 
   static const phase3TestKey = ValueKey('create_listing_media_section');
 
-  static const double _heroRadius = 24;
+  static const double _frameRadius = 20;
+  static const double _wellRadius = 18;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
     final l10n = context.l10n;
     final canMutate = !disabled && !pickingImage;
+    final quiet = cs.onSurfaceVariant.withValues(alpha: light ? 0.62 : 0.68);
 
     final heroBytes = photos.isNotEmpty ? photos.first.bytes : null;
 
@@ -55,160 +52,205 @@ class CreateListingMediaSection extends StatelessWidget {
             l10n.createListingMediaTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
+              letterSpacing: -0.12,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             l10n.createListingMediaSubtitle,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: quiet,
+              height: 1.38,
+              fontSize: 13,
             ),
           ),
           const SizedBox(height: 12),
         ],
-        AspectRatio(
-          aspectRatio: 16 / 9,
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(_heroRadius),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: (heroBytes == null && canMutate) ? onAddPhoto : null,
-              borderRadius: BorderRadius.circular(_heroRadius),
-              splashColor: theme.colorScheme.onSurface.withValues(alpha: 0.045),
-              highlightColor: theme.colorScheme.onSurface.withValues(
-                alpha: 0.022,
-              ),
-              child: Ink(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(_heroRadius),
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: heroBytes != null ? 0.24 : 0.38,
+        DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(_frameRadius),
+            border: Border.all(
+              color: cs.outlineVariant.withValues(alpha: light ? 0.34 : 0.38),
+            ),
+            color: Color.alphaBlend(
+              cs.outlineVariant.withValues(alpha: light ? 0.025 : 0.05),
+              cs.surfaceContainerLowest,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(_wellRadius),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: (heroBytes == null && canMutate) ? onAddPhoto : null,
+                  borderRadius: BorderRadius.circular(_wellRadius),
+                  splashColor: cs.onSurface.withValues(alpha: 0.04),
+                  highlightColor: cs.onSurface.withValues(alpha: 0.02),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(_wellRadius),
+                      border: Border.all(
+                        color: cs.outlineVariant.withValues(
+                          alpha: heroBytes != null
+                              ? (light ? 0.2 : 0.24)
+                              : (light ? 0.3 : 0.32),
+                        ),
+                        strokeAlign: BorderSide.strokeAlignInside,
+                      ),
+                      color: heroBytes != null
+                          ? cs.surfaceContainerLow
+                          : Color.alphaBlend(
+                              cs.onSurface.withValues(
+                                alpha: light ? 0.03 : 0.06,
+                              ),
+                              cs.surface,
+                            ),
                     ),
-                    strokeAlign: BorderSide.strokeAlignInside,
-                  ),
-                  gradient: heroBytes == null
-                      ? LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            theme.colorScheme.surface,
-                            Color.alphaBlend(
-                              theme.colorScheme.outlineVariant.withValues(
-                                alpha: 0.035,
-                              ),
-                              theme.colorScheme.surface,
-                            ),
-                            theme.colorScheme.surfaceContainerLow,
-                          ],
-                          stops: const [0.0, 0.45, 1.0],
-                        )
-                      : null,
-                  color: heroBytes != null
-                      ? theme.colorScheme.surfaceContainerLow
-                      : null,
-                ),
-                child: heroBytes != null
-                    ? SizedBox.expand(
-                        child: Image.memory(heroBytes, fit: BoxFit.cover),
-                      )
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          if (pickingImage) {
-                            return Center(
-                              child: SizedBox.square(
-                                dimension: 30,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.2,
-                                  color: theme.colorScheme.onSurfaceVariant,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (heroBytes != null)
+                          Image.memory(heroBytes, fit: BoxFit.cover)
+                        else
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              if (pickingImage) {
+                                return Center(
+                                  child: SizedBox.square(
+                                    dimension: 28,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: quiet,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
                                 ),
-                              ),
-                            );
-                          }
-                          final cs = theme.colorScheme;
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    alignment: Alignment.center,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        maxWidth: constraints.maxWidth - 20,
-                                      ),
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          DecoratedBox(
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: Color.alphaBlend(
-                                                cs.outlineVariant.withValues(
-                                                  alpha: 0.075,
-                                                ),
-                                                cs.surface,
-                                              ),
-                                              border: Border.all(
-                                                color: cs.outlineVariant
-                                                    .withValues(alpha: 0.34),
-                                              ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.center,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxWidth: constraints.maxWidth - 16,
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: cs.surface,
+                                            border: Border.all(
+                                              color: cs.outlineVariant
+                                                  .withValues(
+                                                    alpha: light ? 0.32 : 0.36,
+                                                  ),
                                             ),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(11),
-                                              child: Icon(
-                                                CarzonIcons.addPhoto,
-                                                size: 28,
-                                                color: cs.onSurfaceVariant
-                                                    .withValues(alpha: 0.82),
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(12),
+                                            child: Icon(
+                                              CarzonIcons.addPhoto,
+                                              size: 26,
+                                              color: cs.onSurface.withValues(
+                                                alpha: 0.62,
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            l10n.createListingHeroEmptyTitle,
-                                            textAlign: TextAlign.center,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: theme.textTheme.titleMedium
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.w700,
-                                                  letterSpacing: -0.26,
-                                                  height: 1.18,
-                                                  color: cs.onSurface
-                                                      .withValues(alpha: 0.94),
+                                        ),
+                                        const SizedBox(height: 11),
+                                        Text(
+                                          l10n.createListingHeroEmptyTitle,
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: -0.2,
+                                                height: 1.12,
+                                                fontSize: 16,
+                                                color: cs.onSurface.withValues(
+                                                  alpha: 0.9,
                                                 ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            l10n.createListingHeroEmptyDetail,
-                                            textAlign: TextAlign.center,
-                                            maxLines: 3,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: theme.textTheme.bodySmall
-                                                ?.copyWith(
-                                                  color: cs.onSurfaceVariant
-                                                      .withValues(alpha: 0.88),
-                                                  height: 1.32,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          l10n.createListingHeroEmptyDetail,
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: quiet.withValues(
+                                                  alpha: 0.92,
                                                 ),
+                                                height: 1.34,
+                                                fontSize: 11.5,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 11),
+                                        DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              11,
+                                            ),
+                                            border: Border.all(
+                                              color: cs.outlineVariant
+                                                  .withValues(
+                                                    alpha: light ? 0.36 : 0.4,
+                                                  ),
+                                            ),
+                                            color: cs.surface,
                                           ),
-                                        ],
-                                      ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 8,
+                                            ),
+                                            child: Text(
+                                              l10n.createListingAddPhoto,
+                                              style: theme.textTheme.labelMedium
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w500,
+                                                    letterSpacing: 0.04,
+                                                    color: cs.onSurface
+                                                        .withValues(
+                                                          alpha: 0.78,
+                                                        ),
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              ],
+                              );
+                            },
+                          ),
+                        if (heroBytes == null)
+                          Positioned(
+                            left: 12,
+                            top: 12,
+                            child: _CoverHintChip(
+                              label: l10n.createListingMediaCoverHint,
+                              theme: theme,
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -225,6 +267,40 @@ class CreateListingMediaSection extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _CoverHintChip extends StatelessWidget {
+  const _CoverHintChip({required this.label, required this.theme});
+
+  final String label;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(
+          color: cs.outlineVariant.withValues(alpha: light ? 0.32 : 0.36),
+        ),
+        color: cs.surface.withValues(alpha: light ? 0.92 : 0.88),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w500,
+            fontSize: 10,
+            letterSpacing: 0.2,
+            color: cs.onSurfaceVariant.withValues(alpha: light ? 0.68 : 0.74),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -250,12 +326,11 @@ class _ThumbnailStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final canMutate = !disabled && !pickingImage;
-
     final canAddMore = photos.length < kMaxListingPhotos;
     final addLabel = l10n.createListingAddMorePhotos;
 
     return SizedBox(
-      height: 96,
+      height: 94,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
@@ -274,7 +349,7 @@ class _ThumbnailStrip extends StatelessWidget {
           ],
           const SizedBox(width: 10),
           SizedBox(
-            width: 128,
+            width: 124,
             child: _AddTile(
               enabled: canMutate && canAddMore,
               label: addLabel,
@@ -312,14 +387,15 @@ class _PhotoThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = theme.colorScheme;
     return Tooltip(
       message: tooltipRemove,
       child: SizedBox(
-        width: 128,
+        width: 124,
         child: AspectRatio(
           aspectRatio: 16 / 9,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -330,21 +406,21 @@ class _PhotoThumb extends StatelessWidget {
                     top: 6,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer.withValues(
-                          alpha: 0.92,
-                        ),
+                        color: cs.onSurface.withValues(alpha: 0.76),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
+                          horizontal: 7,
                           vertical: 3,
                         ),
                         child: Text(
                           coverBadge,
                           style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: theme.colorScheme.onSecondaryContainer,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10.5,
+                            letterSpacing: 0.2,
+                            color: cs.surface.withValues(alpha: 0.96),
                           ),
                         ),
                       ),
@@ -358,17 +434,19 @@ class _PhotoThumb extends StatelessWidget {
                     child: IconButton(
                       tooltip: tooltipRemove,
                       constraints: const BoxConstraints(
-                        minWidth: 34,
-                        minHeight: 34,
+                        minWidth: 32,
+                        minHeight: 32,
                       ),
                       padding: EdgeInsets.zero,
                       style: IconButton.styleFrom(
-                        backgroundColor: theme.colorScheme.surface.withValues(
-                          alpha: .88,
-                        ),
+                        backgroundColor: cs.surface.withValues(alpha: 0.92),
                       ),
                       onPressed: enabledControls ? onRemove : null,
-                      icon: Icon(CarzonIcons.close, size: 18),
+                      icon: Icon(
+                        CarzonIcons.close,
+                        size: 17,
+                        color: cs.onSurface.withValues(alpha: 0.72),
+                      ),
                     ),
                   ),
                 ),
@@ -398,6 +476,10 @@ class _AddTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+    final quiet = cs.onSurfaceVariant.withValues(alpha: light ? 0.62 : 0.68);
+
     return Tooltip(
       message: label,
       child: AspectRatio(
@@ -406,33 +488,30 @@ class _AddTile extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: enabled && !busy ? onTap : null,
-            borderRadius: BorderRadius.circular(14),
-            splashColor: theme.colorScheme.onSurface.withValues(alpha: 0.042),
-            highlightColor: theme.colorScheme.onSurface.withValues(alpha: 0.02),
+            borderRadius: BorderRadius.circular(12),
+            splashColor: cs.onSurface.withValues(alpha: 0.04),
+            highlightColor: cs.onSurface.withValues(alpha: 0.02),
             child: Ink(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: theme.colorScheme.outlineVariant.withValues(
-                    alpha: enabled ? 0.38 : 0.22,
+                  color: cs.outlineVariant.withValues(
+                    alpha: enabled ? (light ? 0.32 : 0.34) : 0.2,
                   ),
-                  width: 1,
                   strokeAlign: BorderSide.strokeAlignInside,
                 ),
                 color: Color.alphaBlend(
-                  theme.colorScheme.outlineVariant.withValues(
-                    alpha: enabled ? 0.042 : 0.025,
-                  ),
-                  theme.colorScheme.surface,
+                  cs.outlineVariant.withValues(alpha: enabled ? 0.03 : 0.02),
+                  cs.surface,
                 ),
               ),
               child: busy
                   ? Center(
                       child: SizedBox.square(
-                        dimension: 22,
+                        dimension: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: theme.colorScheme.onSurfaceVariant,
+                          color: quiet,
                         ),
                       ),
                     )
@@ -441,21 +520,19 @@ class _AddTile extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.add_photo_alternate_outlined,
-                          size: 26,
-                          color: theme.colorScheme.onSurfaceVariant.withValues(
-                            alpha: 0.82,
-                          ),
+                          size: 24,
+                          color: quiet,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 5),
                         Text(
                           label,
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurfaceVariant
-                                .withValues(alpha: 0.88),
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                            color: quiet,
                           ),
                         ),
                       ],

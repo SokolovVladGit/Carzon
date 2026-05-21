@@ -57,6 +57,12 @@ void main() {
       expect(indexTs, contains('"unauthorized"'));
     });
 
+    test('success RPC passes extended normalized_data without vin in payload', () {
+      expect(indexTs, contains('manufacturer: norm.manufacturer'));
+      expect(indexTs, contains('plantCountry: norm.plantCountry'));
+      expect(indexLower, isNot(contains('decodevin')));
+    });
+
     test('response JSON shape omits vin-sensitive fields', () {
       expect(indexTs, contains('ok: true'));
       expect(indexTs, contains('claimed:'));
@@ -89,6 +95,10 @@ void main() {
     test('NHTSA adapter uses vPIC DecodeVinValues base path', () {
       expect(providersCombined, contains('vpic.nhtsa.dot.gov'));
       expect(providersCombined, contains('DecodeVinValues'));
+      expect(providersCombined, contains('mapNhtsaVinValuesRow'));
+      expect(providersCombined, contains('decode-vin-values-v2'));
+      expect(providersCombined, contains('manufacturer:'));
+      expect(providersCombined, contains('grossVehicleWeightRating:'));
     });
 
     test('fetch exists only in provider layer', () {

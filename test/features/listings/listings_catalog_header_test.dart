@@ -8,12 +8,18 @@ import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
+import 'package:carzon/features/filter_alerts/domain/entities/filter_alert_settings.dart';
 import 'package:carzon/features/listings/data/local/last_applied_listing_discovery_repository.dart';
+import 'package:carzon/features/listings/domain/browse_state_for_alert_criteria.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
+import 'package:carzon/features/listings/domain/entities/listing_discovery_criteria.dart';
+import 'package:carzon/features/listings/domain/entities/listing_sort_option.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_bloc.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_event.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
+import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_alert_ui_constants.dart';
 import 'package:carzon/features/listings/presentation/pages/listings_page.dart';
+import 'package:carzon/features/notifications/domain/entities/notification_preferences.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -29,6 +35,7 @@ import 'package:carzon/features/sellers/domain/usecases/get_my_seller_profile.da
 import 'package:carzon/features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
+import '../../helpers/browse_catalog_filter_alerts_sl.dart';
 import '../../helpers/noop_last_applied_listing_discovery_repository.dart';
 
 class _MockListingsBloc extends MockBloc<ListingsEvent, ListingsState>
@@ -95,6 +102,7 @@ Widget _host({
 void main() {
   setUpAll(() {
     registerFallbackValue(const ListingsRequested());
+    registerFallbackValue(const ListingDiscoveryCriteria());
     registerFallbackValue(
       const ListingsRegionFilterChanged(MarketRegionFilter.both),
     );
@@ -109,6 +117,11 @@ void main() {
   late _MockFavoritesCubit favs;
   late _MockSellersRepository sellersRepo;
   late _MockMessagingRepository messagingRepo;
+
+  late MockFilterAlertsRepository browseFilterAlertsRepo;
+  late MockNotificationsRepository browseNotificationsRepo;
+  late MockPushNotificationRegistrationService browsePushRegistration;
+
   final l10n = ruStrings();
 
   setUp(() async {
@@ -162,6 +175,17 @@ void main() {
     sl.registerLazySingleton<LastAppliedListingDiscoveryRepository>(
       () => const NoopLastAppliedListingDiscoveryRepository(),
     );
+
+    browseFilterAlertsRepo = MockFilterAlertsRepository();
+    browseNotificationsRepo = MockNotificationsRepository();
+    browsePushRegistration = MockPushNotificationRegistrationService();
+    primeListingBrowseFilterAlertsDeps(
+      sl,
+      filterRepo: browseFilterAlertsRepo,
+      notificationsRepo: browseNotificationsRepo,
+      pushRegistration: browsePushRegistration,
+    );
+
     sl.registerFactory<ListingsBloc>(() => bloc);
   });
 
@@ -347,9 +371,7 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('masthead includes account avatar control key', (
-      tester,
-    ) async {
+    testWidgets('masthead includes account avatar control key', (tester) async {
       await tester.pumpWidget(
         _host(
           bloc: bloc,
@@ -389,44 +411,43 @@ void main() {
       expect(find.text(l10n.profileTitle), findsOneWidget);
     });
 
-    testWidgets(
-      'masthead unread badge avoids showing message count digits',
-      (tester) async {
-        when(() => messagingRepo.getUnreadConversationCount()).thenAnswer(
-          (_) async => const Success(14),
-        );
-        when(() => auth.state).thenReturn(
-          const AuthState.authenticated(
-            AuthUser(id: 'u', email: 'u@example.com'),
-          ),
-        );
-        whenListen(
-          auth,
-          const Stream<AuthState>.empty(),
-          initialState: const AuthState.authenticated(
-            AuthUser(id: 'u', email: 'u@example.com'),
-          ),
-        );
+    testWidgets('masthead unread badge avoids showing message count digits', (
+      tester,
+    ) async {
+      when(
+        () => messagingRepo.getUnreadConversationCount(),
+      ).thenAnswer((_) async => const Success(14));
+      when(() => auth.state).thenReturn(
+        const AuthState.authenticated(
+          AuthUser(id: 'u', email: 'u@example.com'),
+        ),
+      );
+      whenListen(
+        auth,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.authenticated(
+          AuthUser(id: 'u', email: 'u@example.com'),
+        ),
+      );
 
-        await tester.pumpWidget(
-          _host(
-            bloc: bloc,
-            auth: auth,
-            favorites: favs,
-            sellersRepo: sellersRepo,
-            messagingRepo: messagingRepo,
-          ),
-        );
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _host(
+          bloc: bloc,
+          auth: auth,
+          favorites: favs,
+          sellersRepo: sellersRepo,
+          messagingRepo: messagingRepo,
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        expect(
-          find.byKey(const ValueKey('feed_home_unread_indicator_dot')),
-          findsOneWidget,
-        );
-        expect(find.text('14'), findsNothing);
-        expect(find.text('1'), findsNothing);
-      },
-    );
+      expect(
+        find.byKey(const ValueKey('feed_home_unread_indicator_dot')),
+        findsOneWidget,
+      );
+      expect(find.text('14'), findsNothing);
+      expect(find.text('1'), findsNothing);
+    });
 
     testWidgets(
       'masthead unread dot is hidden when unread summary RPC fails with no prior count',
@@ -460,6 +481,432 @@ void main() {
 
         expect(
           find.byKey(const ValueKey('feed_home_unread_indicator_dot')),
+          findsNothing,
+        );
+      },
+    );
+  });
+
+  group('Catalog discovery filter FAB filter-alert ornament', () {
+    NotificationPreferences browsePrefsDeliveriesFullyOn() =>
+        NotificationPreferences(
+          userId: 'browse-fab-test',
+          globalEnabled: true,
+          messagesEnabled: true,
+          filterAlertsEnabled: true,
+          createdAt: DateTime.utc(2026, 6, 1),
+          updatedAt: DateTime.utc(2026, 6, 2),
+        );
+
+    FilterAlertSettings enabledToyotaSavedRow(ListingDiscoveryCriteria crit) =>
+        FilterAlertSettings(
+          userId: 'browse-fab-test',
+          criteria: crit,
+          notificationsEnabled: true,
+          createdAt: DateTime.utc(2026, 6, 4),
+          updatedAt: DateTime.utc(2026, 6, 5),
+        );
+
+    testWidgets(
+      'shows amber bell ornament when deliveries are on AND saved Toyota criteria '
+      'matches applied browse Toyota feed',
+      (tester) async {
+        const toyotaApplied = ListingsState(
+          status: ListingsStatus.success,
+          items: [],
+          hasReachedEnd: true,
+          make: 'Toyota',
+        );
+        final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
+          toyotaApplied,
+        );
+        final savedRow = enabledToyotaSavedRow(critToyota);
+
+        when(
+          () => browseNotificationsRepo.getMyPreferences(),
+        ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
+        when(
+          () => browseFilterAlertsRepo.loadMine(),
+        ).thenAnswer((_) async => Success(savedRow));
+
+        when(() => auth.state).thenReturn(
+          const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+        whenListen(
+          auth,
+          const Stream<AuthState>.empty(),
+          initialState: const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+
+        when(() => bloc.state).thenReturn(toyotaApplied);
+        whenListen(
+          bloc,
+          const Stream<ListingsState>.empty(),
+          initialState: toyotaApplied,
+        );
+
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(CatalogFilterAlertAccent.discoveryFilterFABAlertBellKey),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'does not adorn filter chip when deliveries are on yet applied discovery '
+      'differs from the saved Toyota row',
+      (tester) async {
+        const toyotaCritFeed = ListingsState(
+          status: ListingsStatus.success,
+          items: [],
+          hasReachedEnd: true,
+          make: 'Toyota',
+        );
+        final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
+          toyotaCritFeed,
+        );
+        final savedRow = enabledToyotaSavedRow(critToyota);
+
+        when(
+          () => browseNotificationsRepo.getMyPreferences(),
+        ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
+        when(
+          () => browseFilterAlertsRepo.loadMine(),
+        ).thenAnswer((_) async => Success(savedRow));
+
+        when(() => auth.state).thenReturn(
+          const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+        whenListen(
+          auth,
+          const Stream<AuthState>.empty(),
+          initialState: const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+
+        const mismatchFeed = ListingsState(
+          status: ListingsStatus.success,
+          items: [],
+          hasReachedEnd: true,
+          make: 'Skoda',
+        );
+        when(() => bloc.state).thenReturn(mismatchFeed);
+        whenListen(
+          bloc,
+          const Stream<ListingsState>.empty(),
+          initialState: mismatchFeed,
+        );
+
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(CatalogFilterAlertAccent.discoveryFilterFABAlertBellKey),
+          findsNothing,
+        );
+      },
+    );
+
+    FilterAlertSettings disabledToyotaSavedRow(
+      ListingDiscoveryCriteria crit,
+    ) =>
+        FilterAlertSettings(
+          userId: 'browse-fab-test',
+          criteria: crit,
+          notificationsEnabled: false,
+          createdAt: DateTime.utc(2026, 6, 4),
+          updatedAt: DateTime.utc(2026, 6, 5),
+        );
+
+    testWidgets(
+      'shows distinct saved-no-delivery ornament when saved Toyota row matches '
+      'applied Toyota feed but notifications_enabled is false (push-disabled)',
+      (tester) async {
+        const toyotaApplied = ListingsState(
+          status: ListingsStatus.success,
+          items: [],
+          hasReachedEnd: true,
+          make: 'Toyota',
+        );
+        final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
+          toyotaApplied,
+        );
+        final savedRow = disabledToyotaSavedRow(critToyota);
+
+        when(
+          () => browseNotificationsRepo.getMyPreferences(),
+        ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
+        when(
+          () => browseFilterAlertsRepo.loadMine(),
+        ).thenAnswer((_) async => Success(savedRow));
+
+        when(() => auth.state).thenReturn(
+          const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+        whenListen(
+          auth,
+          const Stream<AuthState>.empty(),
+          initialState: const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+
+        when(() => bloc.state).thenReturn(toyotaApplied);
+        whenListen(
+          bloc,
+          const Stream<ListingsState>.empty(),
+          initialState: toyotaApplied,
+        );
+
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Saved-but-delivery-off ornament is present, fully-active
+        // ornament is absent — the two states are mutually exclusive.
+        expect(
+          find.byKey(
+            CatalogFilterAlertAccent
+                .discoveryFilterFABSavedNoDeliveryBellKey,
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(CatalogFilterAlertAccent.discoveryFilterFABAlertBellKey),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'fully-active ornament wins over saved-no-delivery when deliveryFullyEnabled',
+      (tester) async {
+        const toyotaApplied = ListingsState(
+          status: ListingsStatus.success,
+          items: [],
+          hasReachedEnd: true,
+          make: 'Toyota',
+        );
+        final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
+          toyotaApplied,
+        );
+        final savedRow = enabledToyotaSavedRow(critToyota);
+
+        when(
+          () => browseNotificationsRepo.getMyPreferences(),
+        ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
+        when(
+          () => browseFilterAlertsRepo.loadMine(),
+        ).thenAnswer((_) async => Success(savedRow));
+
+        when(() => auth.state).thenReturn(
+          const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+        whenListen(
+          auth,
+          const Stream<AuthState>.empty(),
+          initialState: const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+
+        when(() => bloc.state).thenReturn(toyotaApplied);
+        whenListen(
+          bloc,
+          const Stream<ListingsState>.empty(),
+          initialState: toyotaApplied,
+        );
+
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(CatalogFilterAlertAccent.discoveryFilterFABAlertBellKey),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(
+            CatalogFilterAlertAccent
+                .discoveryFilterFABSavedNoDeliveryBellKey,
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'saved-no-delivery ornament absent when applied feed differs from saved row',
+      (tester) async {
+        const toyotaCritFeed = ListingsState(
+          status: ListingsStatus.success,
+          items: [],
+          hasReachedEnd: true,
+          make: 'Toyota',
+        );
+        final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
+          toyotaCritFeed,
+        );
+        final savedRow = disabledToyotaSavedRow(critToyota);
+
+        when(
+          () => browseNotificationsRepo.getMyPreferences(),
+        ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
+        when(
+          () => browseFilterAlertsRepo.loadMine(),
+        ).thenAnswer((_) async => Success(savedRow));
+
+        when(() => auth.state).thenReturn(
+          const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+        whenListen(
+          auth,
+          const Stream<AuthState>.empty(),
+          initialState: const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+
+        const mismatchFeed = ListingsState(
+          status: ListingsStatus.success,
+          items: [],
+          hasReachedEnd: true,
+          make: 'Skoda',
+        );
+        when(() => bloc.state).thenReturn(mismatchFeed);
+        whenListen(
+          bloc,
+          const Stream<ListingsState>.empty(),
+          initialState: mismatchFeed,
+        );
+
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(
+            CatalogFilterAlertAccent
+                .discoveryFilterFABSavedNoDeliveryBellKey,
+          ),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'does not adorn filter chip for sort-only applied discovery versus saved Toyota',
+      (tester) async {
+        const toyotaCritFeed = ListingsState(
+          status: ListingsStatus.success,
+          items: [],
+          hasReachedEnd: true,
+          make: 'Toyota',
+        );
+        final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
+          toyotaCritFeed,
+        );
+        final savedRow = enabledToyotaSavedRow(critToyota);
+
+        when(
+          () => browseNotificationsRepo.getMyPreferences(),
+        ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
+        when(
+          () => browseFilterAlertsRepo.loadMine(),
+        ).thenAnswer((_) async => Success(savedRow));
+
+        when(() => auth.state).thenReturn(
+          const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+        whenListen(
+          auth,
+          const Stream<AuthState>.empty(),
+          initialState: const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
+
+        const sortOnlyFeed = ListingsState(
+          status: ListingsStatus.success,
+          items: [],
+          hasReachedEnd: true,
+          sortOption: ListingSortOption.priceLowToHigh,
+        );
+        when(() => bloc.state).thenReturn(sortOnlyFeed);
+        whenListen(
+          bloc,
+          const Stream<ListingsState>.empty(),
+          initialState: sortOnlyFeed,
+        );
+
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(CatalogFilterAlertAccent.discoveryFilterFABAlertBellKey),
           findsNothing,
         );
       },

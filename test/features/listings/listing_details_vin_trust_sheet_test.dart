@@ -136,118 +136,288 @@ void main() {
   testWidgets('format_valid shows tappable VIN badge affordance', (
     tester,
   ) async {
-    await tester.pumpWidget(app(_listing(vinStatus: ListingVinStatus.formatValid)));
+    await tester.pumpWidget(
+      app(_listing(vinStatus: ListingVinStatus.formatValid)),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text(ru.listingVinBadgeIndicated), findsOneWidget);
-    expect(find.byKey(const ValueKey('listing_vin_trust_badge_tap')), findsOneWidget);
-  });
-
-  testWidgets('tap opens buyer VIN report shell (empty public sources, no full VIN)', (
-    tester,
-  ) async {
-    await tester.pumpWidget(app(_listing(vinStatus: ListingVinStatus.formatValid)));
-    await tester.pumpAndSettle();
-
-    final tapTarget = find.byKey(const ValueKey('listing_vin_trust_badge_tap'));
-    await tester.ensureVisible(tapTarget);
-    await tester.pumpAndSettle();
-
-    await tester.tap(tapTarget);
-    await tester.pumpAndSettle();
-
-    expect(find.text(ru.listingBuyerVinReportTitle), findsOneWidget);
-    expect(find.text(ru.listingBuyerVinReportVinAddedBySeller), findsOneWidget);
-    expect(find.text(ru.listingBuyerVinReportPublicDataUnavailable), findsOneWidget);
     expect(
-      find.textContaining('Полный VIN не показывается публично'),
-      findsWidgets,
-    );
-    for (final phrase in [
-      'VIN проверен',
-      'официально подтверждён',
-      'история проверена',
-      'проверено по базе',
-      'без ДТП',
-      'чистая история',
-    ]) {
-      expect(find.textContaining(phrase), findsNothing);
-    }
-
-    expect(find.byKey(const ValueKey('buyer_vin_report_sheet_close')), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('buyer_vin_report_sheet_close')));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byKey(const ValueKey('buyer_vin_report_sheet_close')),
-      findsNothing,
+      find.byKey(const ValueKey('listing_vin_trust_badge_tap')),
+      findsOneWidget,
     );
   });
 
   testWidgets(
-      'buyer report primary close control stays tappable on small screen with long NHTSA body',
-      (tester) async {
-    tester.view.physicalSize = const Size(320, 568);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    'tap opens buyer VIN report shell (empty public sources, no full VIN)',
+    (tester) async {
+      await tester.pumpWidget(
+        app(_listing(vinStatus: ListingVinStatus.formatValid)),
+      );
+      await tester.pumpAndSettle();
 
-    final longEngine = List.filled(24, 'VeryLongToken ').join();
-    when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
-      (_) async => Success(
-        BuyerListingVinReportLookupResult(
-          results: [
-            BuyerListingVinReportSourceResult(
-              sourceId: 'nhtsa_vpic',
-              visibilityRaw: 'public_summary',
-              normalizedSummary: {
-                'make': 'HONDA',
-                'model': 'CIVIC',
-                'year': 2019,
-                'body_type': 'Sedan',
-                'fuel_type': 'Gasoline',
-                'engine': longEngine,
-                'transmission': 'Automatic transmission with long descriptive label',
-              },
-              fetchedAt: DateTime(2026, 5, 16),
-              limitationCodes: const ['basic_decode_only'],
-            ),
-          ],
+      final tapTarget = find.byKey(
+        const ValueKey('listing_vin_trust_badge_tap'),
+      );
+      await tester.ensureVisible(tapTarget);
+      await tester.pumpAndSettle();
+
+      await tester.tap(tapTarget);
+      await tester.pumpAndSettle();
+
+      expect(find.text(ru.listingBuyerVinReportTitle), findsOneWidget);
+      expect(
+        find.text(ru.listingBuyerVinReportVinAddedBySeller),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportPublicDataUnavailable),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('Полный VIN не показывается публично'),
+        findsWidgets,
+      );
+      for (final phrase in [
+        'VIN проверен',
+        'официально подтверждён',
+        'история проверена',
+        'проверено по базе',
+        'без ДТП',
+        'чистая история',
+      ]) {
+        expect(find.textContaining(phrase), findsNothing);
+      }
+
+      expect(
+        find.byKey(const ValueKey('buyer_vin_report_sheet_close')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('buyer_vin_report_sheet_close')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('buyer_vin_report_sheet_close')),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets(
+    'buyer report primary close control stays tappable on small screen with long NHTSA body',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final longEngine = List.filled(24, 'VeryLongToken ').join();
+      when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
+        (_) async => Success(
+          BuyerListingVinReportLookupResult(
+            results: [
+              BuyerListingVinReportSourceResult(
+                sourceId: 'nhtsa_vpic',
+                visibilityRaw: 'public_summary',
+                normalizedSummary: {
+                  'make': 'HONDA',
+                  'model': 'CIVIC',
+                  'year': 2019,
+                  'body_type': 'Sedan',
+                  'fuel_type': 'Gasoline',
+                  'engine': longEngine,
+                  'transmission':
+                      'Automatic transmission with long descriptive label',
+                },
+                fetchedAt: DateTime(2026, 5, 16),
+                limitationCodes: const ['basic_decode_only'],
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-    await tester.pumpWidget(app(_listing(vinStatus: ListingVinStatus.formatValid)));
-    await tester.pumpAndSettle();
-    final tapTarget = find.byKey(const ValueKey('listing_vin_trust_badge_tap'));
-    await tester.ensureVisible(tapTarget);
-    await tester.pumpAndSettle();
-    await tester.tap(tapTarget);
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpWidget(
+        app(_listing(vinStatus: ListingVinStatus.formatValid)),
+      );
+      await tester.pumpAndSettle();
+      final tapTarget = find.byKey(
+        const ValueKey('listing_vin_trust_badge_tap'),
+      );
+      await tester.ensureVisible(tapTarget);
+      await tester.pumpAndSettle();
+      await tester.tap(tapTarget);
+      await tester.pumpAndSettle();
 
-    final closeBtn = find.byKey(const ValueKey('buyer_vin_report_sheet_close'));
-    expect(closeBtn, findsOneWidget);
-    expect(find.text('16.05.2026'), findsOneWidget);
-    expect(find.text('2026-05-16'), findsNothing);
-    for (final raw in [
-      'basic_decode_only',
-      'not_md_pmr_official_verification',
-    ]) {
-      expect(find.textContaining(raw), findsNothing);
-    }
-    await tester.tap(closeBtn);
-    await tester.pumpAndSettle();
-    expect(closeBtn, findsNothing);
-  });
+      final closeBtn = find.byKey(
+        const ValueKey('buyer_vin_report_sheet_close'),
+      );
+      expect(closeBtn, findsOneWidget);
+      expect(find.text('16.05.2026'), findsOneWidget);
+      expect(find.text('2026-05-16'), findsNothing);
+      for (final raw in [
+        'basic_decode_only',
+        'not_md_pmr_official_verification',
+      ]) {
+        expect(find.textContaining(raw), findsNothing);
+      }
+      await tester.tap(closeBtn);
+      await tester.pumpAndSettle();
+      expect(closeBtn, findsNothing);
+    },
+  );
+
+  testWidgets(
+    'buyer report has one close button and scroll reveals limitations above footer',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
+        (_) async => Success(
+          BuyerListingVinReportLookupResult(
+            results: [
+              BuyerListingVinReportSourceResult(
+                sourceId: 'nhtsa_vpic',
+                visibilityRaw: 'public_summary',
+                normalizedSummary: {
+                  'make': 'Toyota',
+                  'model': 'Camry',
+                  'year': 2020,
+                  'manufacturer': 'TOYOTA MOTOR CORPORATION',
+                  'body_type': '4-Door Sedan',
+                  'vehicle_type': 'PASSENGER CAR',
+                  'series': 'Camry SE',
+                  'fuel_type': 'Gasoline',
+                  'engine': '2.5L 4 cyl',
+                  'drive_type': 'FWD',
+                  'cylinders': 4,
+                  'plant_country': 'Japan',
+                },
+                limitationCodes: const [
+                  'basic_decode_only',
+                  'not_md_pmr_official_verification',
+                  'not_accident_history',
+                  'not_ownership_check',
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpWidget(
+        app(_listing(vinStatus: ListingVinStatus.formatValid)),
+      );
+      await tester.pumpAndSettle();
+      final tapTarget = find.byKey(
+        const ValueKey('listing_vin_trust_badge_tap'),
+      );
+      await tester.ensureVisible(tapTarget);
+      await tester.pumpAndSettle();
+      await tester.tap(tapTarget);
+      await tester.pumpAndSettle();
+
+      expect(find.text(ru.listingBuyerVinReportClose), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('buyer_vin_report_sheet_close')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportNhtsaCatalogSourceLine),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportManualSourcesSectionTitle),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportManualMdRcaTitle),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportManualMdAspTitle),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('buyer_vin_manual_card_md_rca_damage')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportNotVerifiedSectionTitle),
+        findsOneWidget,
+      );
+
+      await tester.scrollUntilVisible(
+        find.text(ru.listingBuyerVinReportNotVerifiedSectionTitle),
+        120,
+        scrollable: find.descendant(
+          of: find.byKey(const ValueKey('buyer_vin_report_sheet_scroll')),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(ru.listingBuyerVinReportLimitationRegistrationMdPmr),
+        findsOneWidget,
+      );
+      for (final phrase in [
+        'VIN проверен',
+        'Без ДТП',
+        'Чистая история',
+        'Официально проверено',
+        'Ограничений нет',
+      ]) {
+        expect(find.textContaining(phrase), findsNothing);
+      }
+    },
+  );
+
+  testWidgets(
+    'buyer report empty public data still shows manual source cards',
+    (tester) async {
+      when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
+        (_) async => const Success(BuyerListingVinReportLookupResult()),
+      );
+      await tester.pumpWidget(
+        app(_listing(vinStatus: ListingVinStatus.formatValid)),
+      );
+      await tester.pumpAndSettle();
+      final tapTarget = find.byKey(
+        const ValueKey('listing_vin_trust_badge_tap'),
+      );
+      await tester.ensureVisible(tapTarget);
+      await tester.pumpAndSettle();
+      await tester.tap(tapTarget);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(ru.listingBuyerVinReportManualSourcesSectionTitle),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportManualCommercialTitle),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportNhtsaCatalogSourceLine),
+        findsNothing,
+      );
+    },
+  );
 
   testWidgets('buyer report shows error when RPC returns fetchFailed', (
     tester,
   ) async {
     when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
-      (_) async => const Success(
-        BuyerListingVinReportLookupResult(fetchFailed: true),
-      ),
+      (_) async =>
+          const Success(BuyerListingVinReportLookupResult(fetchFailed: true)),
     );
-    await tester.pumpWidget(app(_listing(vinStatus: ListingVinStatus.formatValid)));
+    await tester.pumpWidget(
+      app(_listing(vinStatus: ListingVinStatus.formatValid)),
+    );
     await tester.pumpAndSettle();
     final tapTarget = find.byKey(const ValueKey('listing_vin_trust_badge_tap'));
     await tester.ensureVisible(tapTarget);
@@ -257,55 +427,7 @@ void main() {
     expect(find.text(ru.listingBuyerVinReportLoadError), findsOneWidget);
   });
 
-  testWidgets('buyer report shows decoded summary when public_summary row returned', (
-    tester,
-  ) async {
-    when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
-      (_) async => Success(
-        BuyerListingVinReportLookupResult(
-          results: [
-            BuyerListingVinReportSourceResult(
-              sourceId: 'nhtsa_vpic',
-              visibilityRaw: 'public_summary',
-              normalizedSummary: {'make': 'HONDA'},
-              fetchedAt: DateTime(2026, 5, 16),
-              limitationCodes: ['basic_decode_only'],
-            ),
-          ],
-        ),
-      ),
-    );
-    await tester.pumpWidget(app(_listing(vinStatus: ListingVinStatus.formatValid)));
-    await tester.pumpAndSettle();
-    final tapTarget = find.byKey(const ValueKey('listing_vin_trust_badge_tap'));
-    await tester.ensureVisible(tapTarget);
-    await tester.pumpAndSettle();
-    await tester.tap(tapTarget);
-    await tester.pumpAndSettle();
-    expect(find.text(ru.editListingVinReportBasicInfoHeading), findsOneWidget);
-    expect(find.text(ru.listingBuyerVinReportNhtsaCatalogSourceLine), findsOneWidget);
-    expect(find.text(ru.listingBuyerVinReportBasicDecodeCatalogLine), findsOneWidget);
-    expect(find.text(ru.listingBuyerVinReportBasicDecodeNotOfficialLine), findsOneWidget);
-    expect(find.text(ru.listingBuyerVinReportNotVerifiedSectionTitle), findsOneWidget);
-    expect(find.text(ru.listingBuyerVinReportLimitationOwner), findsOneWidget);
-    expect(find.text('HONDA'), findsOneWidget);
-    expect(find.text('16.05.2026'), findsOneWidget);
-    expect(find.text('2026-05-16'), findsNothing);
-    expect(find.text(ru.listingBuyerVinReportSourcesSectionTitle), findsNothing);
-    for (final raw in [
-      'basic_decode_only',
-      'not_md_pmr_official_verification',
-      'not_accident_history',
-      'not_ownership_check',
-      'not_insurance_check',
-      'not_mileage_check',
-      'not_registration_check',
-    ]) {
-      expect(find.textContaining(raw), findsNothing);
-    }
-  });
-
-  testWidgets('buyer report compare match when decode aligns with listing', (
+  testWidgets('buyer report never shows worker cylinders placeholder', (
     tester,
   ) async {
     when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
@@ -316,26 +438,35 @@ void main() {
               sourceId: 'nhtsa_vpic',
               visibilityRaw: 'public_summary',
               normalizedSummary: {
-                'make': 'Audi',
-                'model': 'A4',
-                'year': 2020,
+                'make': 'Test',
+                'cylinders': r'$n',
+                'doors': 4,
               },
+              limitationCodes: ['basic_decode_only'],
             ),
           ],
         ),
       ),
     );
-    await tester.pumpWidget(app(_listing(vinStatus: ListingVinStatus.formatValid)));
+    await tester.pumpWidget(
+      app(_listing(vinStatus: ListingVinStatus.formatValid)),
+    );
     await tester.pumpAndSettle();
     final tapTarget = find.byKey(const ValueKey('listing_vin_trust_badge_tap'));
     await tester.ensureVisible(tapTarget);
     await tester.pumpAndSettle();
     await tester.tap(tapTarget);
     await tester.pumpAndSettle();
-    expect(find.text(ru.listingBuyerVinReportCompareMatch), findsOneWidget);
+    expect(find.text(r'$n'), findsNothing);
+    expect(
+      find.text(ru.listingBuyerVinReportNhtsaCylindersLabel),
+      findsNothing,
+    );
+    expect(find.text(ru.listingBuyerVinReportNhtsaDoorsLabel), findsOneWidget);
+    expect(find.text('4'), findsOneWidget);
   });
 
-  testWidgets('buyer report compare mismatch when decode differs from listing', (
+  testWidgets('buyer report shows expanded NHTSA summary fields when present', (
     tester,
   ) async {
     when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
@@ -347,29 +478,190 @@ void main() {
               visibilityRaw: 'public_summary',
               normalizedSummary: {
                 'make': 'Toyota',
-                'model': 'Camry',
-                'year': 2019,
+                'trim': 'LE',
+                'plant_country': 'Japan',
+                'drive_type': 'FWD',
               },
+              limitationCodes: ['basic_decode_only'],
             ),
           ],
         ),
       ),
     );
-    await tester.pumpWidget(app(_listing(vinStatus: ListingVinStatus.formatValid)));
+    await tester.pumpWidget(
+      app(_listing(vinStatus: ListingVinStatus.formatValid)),
+    );
     await tester.pumpAndSettle();
     final tapTarget = find.byKey(const ValueKey('listing_vin_trust_badge_tap'));
     await tester.ensureVisible(tapTarget);
     await tester.pumpAndSettle();
     await tester.tap(tapTarget);
     await tester.pumpAndSettle();
-    expect(find.text(ru.listingBuyerVinReportCompareMismatch), findsOneWidget);
+    expect(find.text(ru.listingBuyerVinReportNhtsaTrimLabel), findsOneWidget);
+    expect(find.text('LE'), findsOneWidget);
+    expect(
+      find.text(ru.listingBuyerVinReportNhtsaPlantCountryLabel),
+      findsOneWidget,
+    );
+    expect(find.text('Japan'), findsOneWidget);
+    expect(
+      find.text(ru.listingBuyerVinReportNhtsaDriveTypeLabel),
+      findsOneWidget,
+    );
+    expect(find.text('FWD'), findsOneWidget);
+    expect(
+      find.text(ru.listingBuyerVinReportNhtsaCatalogSourceLine),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('buyer report shows error on repository failure', (tester) async {
+  testWidgets(
+    'buyer report shows decoded summary when public_summary row returned',
+    (tester) async {
+      when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
+        (_) async => Success(
+          BuyerListingVinReportLookupResult(
+            results: [
+              BuyerListingVinReportSourceResult(
+                sourceId: 'nhtsa_vpic',
+                visibilityRaw: 'public_summary',
+                normalizedSummary: {'make': 'HONDA'},
+                fetchedAt: DateTime(2026, 5, 16),
+                limitationCodes: ['basic_decode_only'],
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpWidget(
+        app(_listing(vinStatus: ListingVinStatus.formatValid)),
+      );
+      await tester.pumpAndSettle();
+      final tapTarget = find.byKey(
+        const ValueKey('listing_vin_trust_badge_tap'),
+      );
+      await tester.ensureVisible(tapTarget);
+      await tester.pumpAndSettle();
+      await tester.tap(tapTarget);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(ru.listingBuyerVinReportNhtsaGroupCoreIdentity),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportNhtsaCatalogSourceLine),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportBasicDecodeCatalogLine),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportBasicDecodeNotOfficialLine),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportNotVerifiedSectionTitle),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportLimitationOwner),
+        findsOneWidget,
+      );
+      expect(find.text('HONDA'), findsOneWidget);
+      expect(find.text('16.05.2026'), findsOneWidget);
+      expect(find.text('2026-05-16'), findsNothing);
+      expect(
+        find.text(ru.listingBuyerVinReportSourcesSectionTitle),
+        findsNothing,
+      );
+      for (final raw in [
+        'basic_decode_only',
+        'not_md_pmr_official_verification',
+        'not_accident_history',
+        'not_ownership_check',
+        'not_insurance_check',
+        'not_mileage_check',
+        'not_registration_check',
+      ]) {
+        expect(find.textContaining(raw), findsNothing);
+      }
+    },
+  );
+
+  testWidgets('buyer report compare match when decode aligns with listing', (
+    tester,
+  ) async {
     when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
-      (_) async => const FailureResult(ServerFailure('network')),
+      (_) async => Success(
+        BuyerListingVinReportLookupResult(
+          results: [
+            BuyerListingVinReportSourceResult(
+              sourceId: 'nhtsa_vpic',
+              visibilityRaw: 'public_summary',
+              normalizedSummary: {'make': 'Audi', 'model': 'A4', 'year': 2020},
+            ),
+          ],
+        ),
+      ),
     );
-    await tester.pumpWidget(app(_listing(vinStatus: ListingVinStatus.formatValid)));
+    await tester.pumpWidget(
+      app(_listing(vinStatus: ListingVinStatus.formatValid)),
+    );
+    await tester.pumpAndSettle();
+    final tapTarget = find.byKey(const ValueKey('listing_vin_trust_badge_tap'));
+    await tester.ensureVisible(tapTarget);
+    await tester.pumpAndSettle();
+    await tester.tap(tapTarget);
+    await tester.pumpAndSettle();
+    expect(find.text(ru.listingBuyerVinReportCompareMatch), findsOneWidget);
+  });
+
+  testWidgets(
+    'buyer report compare mismatch when decode differs from listing',
+    (tester) async {
+      when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
+        (_) async => Success(
+          BuyerListingVinReportLookupResult(
+            results: [
+              BuyerListingVinReportSourceResult(
+                sourceId: 'nhtsa_vpic',
+                visibilityRaw: 'public_summary',
+                normalizedSummary: {
+                  'make': 'Toyota',
+                  'model': 'Camry',
+                  'year': 2019,
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pumpWidget(
+        app(_listing(vinStatus: ListingVinStatus.formatValid)),
+      );
+      await tester.pumpAndSettle();
+      final tapTarget = find.byKey(
+        const ValueKey('listing_vin_trust_badge_tap'),
+      );
+      await tester.ensureVisible(tapTarget);
+      await tester.pumpAndSettle();
+      await tester.tap(tapTarget);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(ru.listingBuyerVinReportCompareMismatch),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('buyer report shows error on repository failure', (tester) async {
+    when(
+      () => listingsRepo.fetchBuyerVinReportSources('l1'),
+    ).thenAnswer((_) async => const FailureResult(ServerFailure('network')));
+    await tester.pumpWidget(
+      app(_listing(vinStatus: ListingVinStatus.formatValid)),
+    );
     await tester.pumpAndSettle();
     final tapTarget = find.byKey(const ValueKey('listing_vin_trust_badge_tap'));
     await tester.ensureVisible(tapTarget);
@@ -384,6 +676,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(ru.listingVinBadgeIndicated), findsNothing);
-    expect(find.byKey(const ValueKey('listing_vin_trust_badge_tap')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('listing_vin_trust_badge_tap')),
+      findsNothing,
+    );
   });
 }

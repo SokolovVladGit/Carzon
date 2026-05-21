@@ -26,16 +26,41 @@ class CarzonApp extends StatefulWidget {
   State<CarzonApp> createState() => _CarzonAppState();
 }
 
-class _CarzonAppState extends State<CarzonApp> {
+class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
     if (Env.pushNotificationsEnabled) {
+      WidgetsBinding.instance.addObserver(this);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         unawaited(sl<MessagePushTapHandler>().start());
         unawaited(sl<MessageForegroundNotificationPresenter>().start());
       });
     }
+  }
+
+  @override
+  void dispose() {
+    if (Env.pushNotificationsEnabled) {
+      WidgetsBinding.instance.removeObserver(this);
+    }
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      return;
+    }
+    if (!Env.pushNotificationsEnabled) {
+      return;
+    }
+    // Retry FCM token sync when the app returns to foreground: on iOS the
+    // APNs token may not have existed at cold-start bootstrap, so startup
+    // sync no-ops; this path is cheap (returns early if still not eligible).
+    unawaited(
+      sl<PushNotificationRegistrationService>().syncTokenWithBackendIfEligible(),
+    );
   }
 
   @override

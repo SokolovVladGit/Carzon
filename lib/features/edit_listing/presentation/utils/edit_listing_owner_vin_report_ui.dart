@@ -74,7 +74,9 @@ EditListingOwnerVinReportUiKind resolveEditListingOwnerVinReportUiKind({
 }
 
 /// Owner-only decoded summary: succeeded + decoded + at least one field.
-bool editListingOwnerVinReportShowDecodedSummary(OwnerListingVinReportStatus? r) {
+bool editListingOwnerVinReportShowDecodedSummary(
+  OwnerListingVinReportStatus? r,
+) {
   if (r == null) return false;
   final dec = r.decodeStatusRaw?.trim().toLowerCase();
   final proc = r.processingStatusRaw?.trim().toLowerCase();
@@ -90,6 +92,11 @@ class OwnerVinBasicDecodeFields extends Equatable {
     this.year,
     this.bodyType,
     this.fuelType,
+    this.engine,
+    this.transmission,
+    this.trim,
+    this.driveType,
+    this.manufacturer,
   });
 
   final String? make;
@@ -97,16 +104,37 @@ class OwnerVinBasicDecodeFields extends Equatable {
   final int? year;
   final String? bodyType;
   final String? fuelType;
+  final String? engine;
+  final String? transmission;
+  final String? trim;
+  final String? driveType;
+  final String? manufacturer;
 
   bool get hasAny =>
       (make != null && make!.trim().isNotEmpty) ||
       (model != null && model!.trim().isNotEmpty) ||
       year != null ||
       (bodyType != null && bodyType!.trim().isNotEmpty) ||
-      (fuelType != null && fuelType!.trim().isNotEmpty);
+      (fuelType != null && fuelType!.trim().isNotEmpty) ||
+      (engine != null && engine!.trim().isNotEmpty) ||
+      (transmission != null && transmission!.trim().isNotEmpty) ||
+      (trim != null && trim!.trim().isNotEmpty) ||
+      (driveType != null && driveType!.trim().isNotEmpty) ||
+      (manufacturer != null && manufacturer!.trim().isNotEmpty);
 
   @override
-  List<Object?> get props => [make, model, year, bodyType, fuelType];
+  List<Object?> get props => [
+    make,
+    model,
+    year,
+    bodyType,
+    fuelType,
+    engine,
+    transmission,
+    trim,
+    driveType,
+    manufacturer,
+  ];
 }
 
 String? _summaryString(dynamic v) {
@@ -139,6 +167,11 @@ OwnerVinBasicDecodeFields? resolveOwnerVinBasicDecodeFields({
         year: _summaryYear(m['year']),
         bodyType: _summaryString(m['body_type']),
         fuelType: _summaryString(m['fuel_type']),
+        engine: _summaryString(m['engine']),
+        transmission: _summaryString(m['transmission']),
+        trim: _summaryString(m['trim']),
+        driveType: _summaryString(m['drive_type']),
+        manufacturer: _summaryString(m['manufacturer']),
       );
       if (fields.hasAny) return fields;
     }

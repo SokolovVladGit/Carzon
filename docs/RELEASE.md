@@ -20,10 +20,12 @@ Ship the matching client **only after** the backend for that environment exposes
 
 **Security**
 
-- **`service_role` keys must never** appear in Flutter env, Dart code, or committed `.env`.
-- `.env` is loaded as part of client configuration; bundle **only** client-safe values (URL + anon key + optional redirects/report email + optional push flag).
+- **`service_role` keys must never** appear in Flutter config, Dart code, or committed env templates.
+- Client config is compile-time via `--dart-define-from-file=.env.client` (see `.env.client.example`). Bundle **only** client-safe values (URL + anon key + optional redirects/report email + optional push flag). **No** `.env` Flutter asset.
 
 See also: `lib/core/config/env.dart` (`Env.requiredKeys`). Optional push flag: `Env.pushNotificationsEnabled`.
+
+**Local IDE / terminal:** Copy `.env.client.example` → `.env.client`, fill client-safe values only. In Cursor/VS Code use launch config **Carzon Debug** (see `.vscode/launch.json`). Terminal: `flutter run --dart-define-from-file=.env.client` or `./tools/run_dev.sh`.
 
 ---
 
@@ -32,7 +34,7 @@ See also: `lib/core/config/env.dart` (`Env.requiredKeys`). Optional push flag: `
 **Shipped in app code (not automatic end-to-end push):**
 
 - Dependencies: **`firebase_core`**, **`firebase_messaging`** (see `pubspec.yaml`).
-- Env: **`PUSH_NOTIFICATIONS_ENABLED`** (default **false**); see `.env.example`.
+- Env: **`PUSH_NOTIFICATIONS_ENABLED`** (default **false**); see `.env.client.example`.
 - Services: **`PushNotificationRegistrationService`**, **`FirebasePushMessagingClient`**, **`PushAuthGate`** — **no** direct `SupabaseClient` calls except via **`NotificationsRepository`** RPCs.
 - Bootstrap: starts FCM listener when the flag is on; **does not** show the OS permission dialog on cold start; syncs token when the user is signed in and permission was already **authorized** or **provisional** (iOS).
 - Sign-out: **`SignOut`** pre-hook calls **`deactivate_my_push_tokens`** while the session is still valid, then best-effort **`deleteToken`** on the client.
@@ -50,7 +52,7 @@ See also: `lib/core/config/env.dart` (`Env.requiredKeys`). Optional push flag: `
 2. Create a **Firebase** project; enable **Cloud Messaging**; add apps for Android / iOS.
 3. **Android:** download **`google-services.json`** into **`android/app/`** (do not commit placeholders). The Gradle plugin **`com.google.gms.google-services`** is applied **only** when this file **exists**, so builds without Firebase still succeed.
 4. **iOS:** add **`GoogleService-Info.plist`** via Xcode ; enable **Push Notifications** capability and APNs (development/prod) per Apple + Firebase docs — not verified by CI.
-5. Set **`PUSH_NOTIFICATIONS_ENABLED=true`** in `.env` for dev builds that should register tokens.
+5. Set **`PUSH_NOTIFICATIONS_ENABLED=true`** in `.env.client` and pass **`--dart-define-from-file=.env.client`** for dev builds that should register tokens (requires Firebase plist/json).
 
 **Manual SQL reminder:** Token RPCs require **`authenticated`** — confirm `register_push_token` / `deactivate_my_push_tokens` exist on the target project (§5).
 
@@ -425,7 +427,7 @@ ORDER BY policyname;
 - [ ] §5 RPC/function list verified (existence + `authenticated`/`anon` grants per migration intent)
 - [ ] Listing columns for **specs + description** and **`updated_at`** present on **`public.listings`** (see §7 column spot-check)
 - [ ] **Notifications:** Phase 1 tables **`notification_preferences`**, **`user_push_tokens`**; Phase 3A internal **`notification_delivery_events`**, **`notification_delivery_attempts`** after **`20260528120000_message_notification_delivery_pipeline.sql`**. **Live message push** additionally requires deployed Edge **`process-message-notifications`** + FCM secrets + ops scheduling — verify RPCs from §5; **filter-alert delivery still absent**
-- [ ] Flutter `.env` contains **only** `SUPABASE_URL`, **`SUPABASE_ANON_KEY`**, optional client-safe overrides — **no service role key**
+- [ ] `.env.client` (or CI dart-defines) contains **only** client-safe keys — **no service role key**, FCM server keys, or Edge internal secrets
 - [ ] Auth → **Redirect URLs** include **`carzon://auth-callback`**; Auth **Site URL** is a **real HTTPS** fallback (see [`mvp_release_checklist.md`](mvp_release_checklist.md) §C — **never** rely on **`localhost`** for production/public rollout)
 - [ ] §6 staging QA passed for the build about to ship
 - [ ] Rollback/mitigation understood (§9); team knows who applies emergency DB fixes
