@@ -10,6 +10,8 @@ import '../core/theme/app_theme.dart';
 import '../l10n/app_localizations.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/auth/presentation/bloc/auth_state.dart';
+import '../features/compare/presentation/cubit/compare_cubit.dart';
+import '../features/compare/presentation/widgets/compare_tray_host.dart';
 import '../features/favorites/presentation/bloc/favorites_cubit.dart';
 import '../features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import '../features/notifications/services/message_foreground_notification_presenter.dart';
@@ -73,6 +75,7 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
       providers: [
         BlocProvider<AuthCubit>.value(value: sl<AuthCubit>()),
         BlocProvider<FavoritesCubit>.value(value: sl<FavoritesCubit>()),
+        BlocProvider<CompareCubit>.value(value: sl<CompareCubit>()),
         BlocProvider<SelfSellerVisualCubit>.value(
           value: sl<SelfSellerVisualCubit>(),
         ),
@@ -133,6 +136,10 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           routerConfig: sl<GoRouter>(),
+          builder: (context, child) => CompareTrayHost(
+            router: sl<GoRouter>(),
+            child: child,
+          ),
           debugShowCheckedModeBanner: false,
         ),
       ),

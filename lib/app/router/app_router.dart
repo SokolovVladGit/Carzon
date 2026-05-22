@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/config/env.dart';
 import '../../core/l10n/app_localizations_x.dart';
+import '../../features/compare/presentation/pages/compare_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/pages/sign_in_page.dart';
@@ -36,6 +37,7 @@ class AppRoutes {
   static const createListing = '/create-listing';
   static const myListings = '/my-listings';
   static const favorites = '/favorites';
+  static const compare = '/compare';
   static const profile = '/profile';
   static const menu = '/menu';
   static const legal = '/legal';
@@ -164,6 +166,10 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.favorites,
           builder: (_, _) => const FavoritesPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.compare,
+          builder: (_, _) => const ComparePage(),
         ),
         GoRoute(
           path: AppRoutes.profile,

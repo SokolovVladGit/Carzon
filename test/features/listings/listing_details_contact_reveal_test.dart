@@ -167,10 +167,8 @@ void main() {
       await tester.pumpWidget(wrap());
       await tester.pump();
 
-      expect(
-        find.text(l10n.contactTelegramLabel('ana_seller')),
-        findsOneWidget,
-      );
+      expect(find.text(l10n.contactTelegram), findsOneWidget);
+      expect(find.textContaining('@ana_seller'), findsNothing);
       expect(find.text(l10n.contactWhatsapp), findsOneWidget);
       expect(find.text(phone), findsNothing);
       expect(find.textContaining('373'), findsNothing);
@@ -186,6 +184,29 @@ void main() {
     await tester.pump();
 
     expect(find.text(l10n.contactShowPhone), findsNothing);
-    expect(find.text(l10n.contactTelegramLabel('ana_seller')), findsOneWidget);
+    expect(find.text(l10n.contactTelegram), findsOneWidget);
+    expect(find.textContaining('@ana_seller'), findsNothing);
+  });
+
+  testWidgets('hides Telegram row when telegram username is absent', (
+    tester,
+  ) async {
+    stubListing(_seed(contactPhone: phone, whatsappEnabled: true));
+
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    expect(find.text(l10n.contactTelegram), findsNothing);
+    expect(find.text(l10n.contactWhatsapp), findsOneWidget);
+  });
+
+  testWidgets('hides WhatsApp row when whatsapp is disabled', (tester) async {
+    stubListing(_seed(contactPhone: phone, telegramUsername: 'ana_seller'));
+
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    expect(find.text(l10n.contactTelegram), findsOneWidget);
+    expect(find.text(l10n.contactWhatsapp), findsNothing);
   });
 }

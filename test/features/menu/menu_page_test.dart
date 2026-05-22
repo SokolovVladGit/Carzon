@@ -11,6 +11,10 @@ import 'package:carzon/core/widgets/floating_capsule_nav.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
+import 'package:carzon/features/compare/domain/entities/compare_item.dart';
+import 'package:carzon/features/compare/domain/repositories/compare_repository.dart';
+import 'package:carzon/core/widgets/app_back_button.dart';
+import 'package:carzon/features/compare/presentation/cubit/compare_cubit.dart';
 import 'package:carzon/features/menu/presentation/pages/menu_page.dart';
 import 'package:carzon/features/profile/presentation/pages/profile_page.dart';
 import 'package:carzon/l10n/app_localizations.dart';
@@ -28,6 +32,19 @@ class _MockSellersRepository extends Mock implements SellersRepository {}
 
 class _MockMessagingRepository extends Mock implements MessagingRepository {}
 
+class _MemoryCompareRepository implements CompareRepository {
+  List<CompareItem> items = const [];
+
+  @override
+  Future<void> clear() async => items = const [];
+
+  @override
+  Future<List<CompareItem>> loadItems() async => items;
+
+  @override
+  Future<void> saveItems(List<CompareItem> value) async => items = value;
+}
+
 MySellerProfileModel _menuSellerProfile({
   String? displayName,
   String? avatarUrl,
@@ -44,6 +61,7 @@ Widget _wrap(
   AuthCubit cubit, {
   required SellersRepository sellersRepo,
   required MessagingRepository messagingRepo,
+  required CompareCubit compareCubit,
 }) {
   return MaterialApp(
     locale: const Locale('ru'),
@@ -52,6 +70,7 @@ Widget _wrap(
     home: MultiBlocProvider(
       providers: [
         BlocProvider<AuthCubit>.value(value: cubit),
+        BlocProvider<CompareCubit>.value(value: compareCubit),
         BlocProvider(
           create: (_) => SelfSellerVisualCubit(GetMySellerProfile(sellersRepo)),
         ),
@@ -66,6 +85,7 @@ void main() {
   late _MockAuthCubit cubit;
   late _MockSellersRepository sellersRepo;
   late _MockMessagingRepository messagingRepo;
+  late CompareCubit compareCubit;
   final l10n = ruStrings();
 
   setUpAll(() {
@@ -85,7 +105,10 @@ void main() {
     when(
       () => messagingRepo.getUnreadConversationCount(),
     ).thenAnswer((_) async => const Success(0));
+    compareCubit = CompareCubit(repository: _MemoryCompareRepository());
   });
+
+  tearDown(() => compareCubit.close());
 
   testWidgets(
     'unauthenticated: renders Sign in CTA and does not surface sign-out',
@@ -103,6 +126,7 @@ void main() {
           cubit,
           sellersRepo: sellersRepo,
           messagingRepo: messagingRepo,
+          compareCubit: compareCubit,
         ),
       );
 
@@ -137,6 +161,7 @@ void main() {
         cubit,
         sellersRepo: sellersRepo,
         messagingRepo: messagingRepo,
+        compareCubit: compareCubit,
       ),
     );
 
@@ -163,6 +188,7 @@ void main() {
         cubit,
         sellersRepo: sellersRepo,
         messagingRepo: messagingRepo,
+        compareCubit: compareCubit,
       ),
     );
     final signOutFinder = find.byKey(const ValueKey('menu_sign_out_action'));
@@ -215,11 +241,14 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp.router(
-          locale: const Locale('ru'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          routerConfig: router,
+        BlocProvider<CompareCubit>.value(
+          value: compareCubit,
+          child: MaterialApp.router(
+            locale: const Locale('ru'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -274,6 +303,7 @@ void main() {
         cubit,
         sellersRepo: sellersRepo,
         messagingRepo: messagingRepo,
+        compareCubit: compareCubit,
       ),
     );
     await tester.pumpAndSettle();
@@ -315,6 +345,7 @@ void main() {
           cubit,
           sellersRepo: sellersRepo,
           messagingRepo: messagingRepo,
+          compareCubit: compareCubit,
         ),
       );
       await tester.pumpAndSettle();
@@ -330,4 +361,70 @@ void main() {
       );
     },
   );
+
+  testWidgets('menu compare row uses go and back falls back to menu', (
+    tester,
+  ) async {
+    when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.unauthenticated(),
+    );
+
+    final router = GoRouter(
+      initialLocation: AppRoutes.menu,
+      routes: [
+        GoRoute(
+          path: AppRoutes.menu,
+          builder: (_, _) => MultiBlocProvider(
+            providers: [
+              BlocProvider<AuthCubit>.value(value: cubit),
+              BlocProvider<CompareCubit>.value(value: compareCubit),
+              BlocProvider(
+                create: (_) =>
+                    SelfSellerVisualCubit(GetMySellerProfile(sellersRepo)),
+              ),
+              BlocProvider(
+                create: (_) => MessagingUnreadSummaryCubit(messagingRepo),
+              ),
+            ],
+            child: const MenuPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.compare,
+          builder: (_, _) => Scaffold(
+            appBar: AppBar(
+              leading: const AppBackButton(fallback: AppRoutes.menu),
+            ),
+            body: const Text('compare-screen'),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.menuCompare));
+    await tester.pumpAndSettle();
+
+    expect(find.text('compare-screen'), findsOneWidget);
+    expect(router.canPop(), isFalse);
+
+    await tester.tap(find.byType(AppBackButton));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MenuPage), findsOneWidget);
+    expect(find.text('compare-screen'), findsNothing);
+  });
 }

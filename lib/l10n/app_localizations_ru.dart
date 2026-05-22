@@ -606,6 +606,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Контакты продавца видны в активных объявлениях.';
 
   @override
+  String get contactTelegram => 'Telegram';
+
+  @override
   String contactTelegramLabel(String username) {
     return 'Telegram @$username';
   }
@@ -1913,6 +1916,214 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingVinBadgeIndicated => 'VIN указан';
+
+  @override
+  String get listingVinReportOpenHint => 'Открыть отчёт по VIN';
+
+  @override
+  String get listingVinNotProvidedTitle => 'VIN-код не указан';
+
+  @override
+  String get listingVinNotProvidedHint => 'Продавец не добавил VIN';
+
+  @override
+  String get menuCompare => 'Сравнение';
+
+  @override
+  String get compareTitle => 'Сравнение';
+
+  @override
+  String get compareVehiclesTitle => 'Сравнение автомобилей';
+
+  @override
+  String get compareEmptyBody =>
+      'Добавьте 2–3 автомобиля, чтобы сравнить цену, пробег, характеристики и VIN-статус.';
+
+  @override
+  String get compareGoToListings => 'Перейти к объявлениям';
+
+  @override
+  String get compareAddOneMoreTitle => 'Добавьте ещё один автомобиль';
+
+  @override
+  String get compareAddOneMoreBody =>
+      'Для сравнения нужно минимум два автомобиля. Добавьте ещё одно объявление из каталога.';
+
+  @override
+  String get compareClear => 'Очистить сравнение';
+
+  @override
+  String get compareMaxReachedMessage =>
+      'Можно сравнить не более 3 автомобилей';
+
+  @override
+  String get compareTrayMaxLimitTitle => 'Максимум 3 автомобиля';
+
+  @override
+  String get compareTrayMaxLimitHint =>
+      'Удалите одно авто, чтобы добавить другое';
+
+  @override
+  String get compareAddedMessage => 'Добавлено к сравнению';
+
+  @override
+  String get compareRemovedMessage => 'Удалено из сравнения';
+
+  @override
+  String get compareAddTooltip => 'Добавить к сравнению';
+
+  @override
+  String get compareRemoveTooltip => 'Убрать из сравнения';
+
+  @override
+  String get compareTrayOneVehicle => '1 авто в сравнении';
+
+  @override
+  String compareTrayVehicleCount(int count) {
+    return '$count авто в сравнении';
+  }
+
+  @override
+  String get compareTrayAddOneMore => 'Добавьте ещё одно';
+
+  @override
+  String get compareTrayOpen => 'Сравнить';
+
+  @override
+  String compareVehicleCountShort(int count) {
+    return '$count авто';
+  }
+
+  @override
+  String get compareShowOnlyDifferences => 'Показать только отличия';
+
+  @override
+  String get compareNoDifferences => 'Отличий по выбранным полям нет';
+
+  @override
+  String get compareRemoveVehicle => 'Убрать из сравнения';
+
+  @override
+  String get compareUnavailableListing => 'Объявление недоступно';
+
+  @override
+  String get compareInactiveListing => 'Снято с публикации';
+
+  @override
+  String get compareSectionPriceBasics => 'Цена и базовое';
+
+  @override
+  String get compareSectionVehicle => 'Автомобиль';
+
+  @override
+  String get compareSectionSpecs => 'Характеристики';
+
+  @override
+  String get compareSectionTrustData => 'Доверие / данные';
+
+  @override
+  String get compareRowPrice => 'Цена';
+
+  @override
+  String get compareRowYear => 'Год';
+
+  @override
+  String get compareRowMileage => 'Пробег';
+
+  @override
+  String get compareRowCityRegion => 'Город / регион';
+
+  @override
+  String get compareRowStatus => 'Статус объявления';
+
+  @override
+  String get compareRowMake => 'Марка';
+
+  @override
+  String get compareRowModel => 'Модель';
+
+  @override
+  String get compareRowBody => 'Кузов';
+
+  @override
+  String get compareRowVehicleType => 'Тип транспорта';
+
+  @override
+  String get compareRowRegistration => 'Регистрация';
+
+  @override
+  String get compareRowFuel => 'Топливо';
+
+  @override
+  String get compareRowEngine => 'Двигатель';
+
+  @override
+  String get compareRowPower => 'Мощность';
+
+  @override
+  String get compareRowTransmission => 'Коробка';
+
+  @override
+  String get compareRowDrivetrain => 'Привод';
+
+  @override
+  String get compareRowDisplacement => 'Объём';
+
+  @override
+  String get compareRowVin => 'VIN';
+
+  @override
+  String get compareRowPhotos => 'Фото';
+
+  @override
+  String get compareRowPublishedAt => 'Дата публикации';
+
+  @override
+  String get compareVinProvided => 'VIN указан';
+
+  @override
+  String get compareVinNotProvided => 'VIN не указан';
+
+  @override
+  String get compareValueMissing => '—';
+
+  @override
+  String get listingVinReportLoadingCta => 'Загружаем отчёт по VIN…';
+
+  @override
+  String get listingVinReportPendingCta => 'Отчёт по VIN готовится';
+
+  @override
+  String get listingVinReportNoDataCta => 'Данные по VIN не найдены';
+
+  @override
+  String get listingVinReportUnavailableCta => 'Отчёт по VIN недоступен';
+
+  @override
+  String get listingVinReportPendingTitle => 'Отчёт по VIN пока готовится';
+
+  @override
+  String get listingVinReportPendingBody =>
+      'VIN добавлен продавцом. Данные расшифровки появятся после обработки.';
+
+  @override
+  String get listingVinReportNoDataTitle => 'Данные по VIN не найдены';
+
+  @override
+  String get listingVinReportNoDataBody =>
+      'VIN добавлен продавцом, но сейчас нет доступной публичной расшифровки по этому VIN.';
+
+  @override
+  String get listingVinReportNoDataNote =>
+      'Это не означает проверку истории автомобиля.';
+
+  @override
+  String get listingVinReportUnavailableTitle =>
+      'Не удалось получить отчёт по VIN';
+
+  @override
+  String get listingVinReportUnavailableBody =>
+      'VIN добавлен продавцом, но сейчас отчёт недоступен. Попробуйте позже.';
 
   @override
   String get listingVinTrustSheetTitle => 'Проверка по VIN';

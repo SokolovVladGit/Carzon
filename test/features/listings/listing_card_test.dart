@@ -3,6 +3,10 @@ import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
+import 'package:carzon/features/compare/domain/entities/compare_item.dart';
+import 'package:carzon/features/compare/domain/repositories/compare_repository.dart';
+import 'package:carzon/features/compare/presentation/cubit/compare_cubit.dart';
+import 'package:carzon/features/compare/presentation/widgets/compare_toggle_button.dart';
 import 'package:carzon/features/favorites/presentation/widgets/favorite_toggle_button.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/widgets/listing_card.dart';
@@ -19,6 +23,17 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
 class _MockFavoritesCubit extends MockCubit<FavoritesState>
     implements FavoritesCubit {}
+
+class _MemoryCompareRepository implements CompareRepository {
+  @override
+  Future<void> clear() async {}
+
+  @override
+  Future<List<CompareItem>> loadItems() async => const [];
+
+  @override
+  Future<void> saveItems(List<CompareItem> items) async {}
+}
 
 Listing _seed({
   String? coverImageUrl,
@@ -199,13 +214,15 @@ void main() {
     );
   });
 
-  group('ListingTile favorite toggle integration', () {
+  group('ListingTile compare and favorite actions', () {
     late _MockAuthCubit auth;
     late _MockFavoritesCubit favorites;
+    late CompareCubit compareCubit;
 
     setUp(() {
       auth = _MockAuthCubit();
       favorites = _MockFavoritesCubit();
+      compareCubit = CompareCubit(repository: _MemoryCompareRepository());
       when(() => auth.state).thenReturn(const AuthState.unauthenticated());
       whenListen(
         auth,
@@ -220,29 +237,88 @@ void main() {
       );
     });
 
-    testWidgets(
-      'public ListingTile exposes a FavoriteToggleButton as the overlay action',
-      (tester) async {
-        await tester.pumpWidget(
-          localizedApp(
-            home: MultiBlocProvider(
-              providers: [
-                BlocProvider<AuthCubit>.value(value: auth),
-                BlocProvider<FavoritesCubit>.value(value: favorites),
-              ],
-              child: Scaffold(
-                body: SingleChildScrollView(
-                  child: ListingTile(listing: _seed()),
+    tearDown(() => compareCubit.close());
+
+    testWidgets('public ListingTile exposes compare and favorite actions', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        localizedApp(
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<AuthCubit>.value(value: auth),
+              BlocProvider<FavoritesCubit>.value(value: favorites),
+              BlocProvider<CompareCubit>.value(value: compareCubit),
+            ],
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: ListingTile(listing: _seed()),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(CompareToggleButton), findsOneWidget);
+      expect(find.byType(FavoriteToggleButton), findsOneWidget);
+    });
+
+    testWidgets('tapping compare does not trigger card onTap', (tester) async {
+      var cardTaps = 0;
+      await tester.pumpWidget(
+        localizedApp(
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<AuthCubit>.value(value: auth),
+              BlocProvider<FavoritesCubit>.value(value: favorites),
+              BlocProvider<CompareCubit>.value(value: compareCubit),
+            ],
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: ListingTile(
+                  listing: _seed(),
+                  onTap: () => cardTaps += 1,
                 ),
               ),
             ),
           ),
-        );
-        await tester.pump();
+        ),
+      );
+      await tester.pump();
 
-        expect(find.byType(FavoriteToggleButton), findsOneWidget);
-      },
-    );
+      await tester.tap(find.byKey(const ValueKey('compare_toggle_l1')));
+      await tester.pump();
+      expect(cardTaps, 0);
+      expect(compareCubit.state.containsListing('l1'), isTrue);
+    });
+
+    testWidgets('tapping card body still invokes onTap', (tester) async {
+      var cardTaps = 0;
+      await tester.pumpWidget(
+        localizedApp(
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider<AuthCubit>.value(value: auth),
+              BlocProvider<FavoritesCubit>.value(value: favorites),
+              BlocProvider<CompareCubit>.value(value: compareCubit),
+            ],
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: ListingTile(
+                  listing: _seed(),
+                  onTap: () => cardTaps += 1,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.text('Volkswagen Golf'));
+      expect(cardTaps, 1);
+    });
   });
 
   group('ListingCard.hero shuttle radius', () {

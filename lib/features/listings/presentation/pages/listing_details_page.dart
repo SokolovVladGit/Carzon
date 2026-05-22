@@ -20,6 +20,7 @@ import '../../../../shared/ui/carzon_icons.dart';
 import '../../../../shared/ui/whatsapp_contact_icon.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../compare/presentation/widgets/compare_toggle_button.dart';
 import '../../../favorites/presentation/widgets/favorite_toggle_button.dart';
 import '../../../messaging/presentation/utils/messaging_failure_mapper.dart';
 import '../../../messaging/presentation/utils/messaging_user_messages.dart';
@@ -30,10 +31,9 @@ import '../utils/contact_format.dart';
 import '../utils/listing_formatters.dart';
 import '../utils/listing_details_header_titles.dart';
 import '../utils/report_listing_mailto.dart';
-import '../widgets/listing_card.dart';
 import '../widgets/listing_cover_image.dart';
-import '../widgets/buyer_vin_report_sheet.dart';
 import '../widgets/listing_details_fullscreen_gallery.dart';
+import '../widgets/listing_details_vin_entry.dart';
 import '../../../sellers/presentation/widgets/seller_trust_section.dart';
 
 /// Minimal launcher seam local to this page — mirrors the
@@ -133,6 +133,13 @@ class _ListingDetailsView extends StatefulWidget {
 class _ListingDetailsViewState extends State<_ListingDetailsView> {
   int _carouselPageIndex = 0;
 
+  final GlobalKey _compareFlySourceKey = GlobalKey(
+    debugLabel: 'listing_details_compare_fly_source',
+  );
+  final GlobalKey _compareToggleFlyKey = GlobalKey(
+    debugLabel: 'listing_details_compare_fly_fallback',
+  );
+
   /// Single source of truth for the hoisted hero PageView (loading route
   /// extra, success `heroImageUrls`, or `listing.coverImageUrl` fallback).
   List<String> _effectiveHeroUrls(ListingDetailsState state) {
@@ -192,9 +199,12 @@ class _ListingDetailsViewState extends State<_ListingDetailsView> {
                     width: double.infinity,
                     child: _ListingHeroCarousel(
                       listingId: widget.id,
+                      listing: state.listing,
                       urls: carouselUrls,
                       heroFlightSourceTopRadius:
                           widget.heroFlightSourceTopRadius,
+                      flySourceKey: _compareFlySourceKey,
+                      compareFlyFallbackKey: _compareToggleFlyKey,
                       onPageChanged: (i) =>
                           setState(() => _carouselPageIndex = i),
                     ),
@@ -372,14 +382,20 @@ Iterable<Widget>? _spreadOptionalTrailing(Widget? w) =>
 class _ListingHeroCarousel extends StatefulWidget {
   const _ListingHeroCarousel({
     required this.listingId,
+    this.listing,
     required this.urls,
     required this.heroFlightSourceTopRadius,
+    this.flySourceKey,
+    this.compareFlyFallbackKey,
     required this.onPageChanged,
   });
 
   final String listingId;
+  final Listing? listing;
   final List<String> urls;
   final double heroFlightSourceTopRadius;
+  final GlobalKey? flySourceKey;
+  final GlobalKey? compareFlyFallbackKey;
   final ValueChanged<int> onPageChanged;
 
   @override
@@ -421,7 +437,7 @@ class _ListingHeroCarouselState extends State<_ListingHeroCarousel> {
   }
 
   Widget _heroStack({required Widget backdrop, Widget? pageDots}) {
-    return ClipRect(
+    final stack = ClipRect(
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -434,12 +450,20 @@ class _ListingHeroCarouselState extends State<_ListingHeroCarousel> {
             right: 0,
             child: SafeArea(
               bottom: false,
-              child: _HeroTopControls(listingId: widget.listingId),
+              child: _HeroTopControls(
+                listingId: widget.listingId,
+                listing: widget.listing,
+                flySourceKey: widget.flySourceKey,
+                compareFlyFallbackKey: widget.compareFlyFallbackKey,
+              ),
             ),
           ),
         ],
       ),
     );
+    final key = widget.flySourceKey;
+    if (key == null) return stack;
+    return KeyedSubtree(key: key, child: stack);
   }
 
   @override
@@ -562,9 +586,17 @@ class _HeroScrim extends StatelessWidget {
 /// pulled tight to the safe-area top so the tiles feel anchored to
 /// the corners of the image, not floating in its middle.
 class _HeroTopControls extends StatelessWidget {
-  const _HeroTopControls({required this.listingId});
+  const _HeroTopControls({
+    required this.listingId,
+    this.listing,
+    this.flySourceKey,
+    this.compareFlyFallbackKey,
+  });
 
   final String listingId;
+  final Listing? listing;
+  final GlobalKey? flySourceKey;
+  final GlobalKey? compareFlyFallbackKey;
 
   @override
   Widget build(BuildContext context) {
@@ -576,6 +608,17 @@ class _HeroTopControls extends StatelessWidget {
             child: const AppBackButton(fallback: AppRoutes.listings),
           ),
           const Spacer(),
+          if (listing != null) ...[
+            _HeroGlassTile(
+              child: CompareToggleButton.fromListing(
+                listing!,
+                density: CompareToggleDensity.hero,
+                flySourceKey: flySourceKey,
+                flySourceFallbackKey: compareFlyFallbackKey,
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           _HeroGlassTile(child: FavoriteToggleButton(listingId: listingId)),
         ],
       ),
@@ -1223,47 +1266,8 @@ class _DetailsList extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        if (listing.vinStatus == ListingVinStatus.formatValid) ...[
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Semantics(
-              button: true,
-              label: l10n.listingBuyerVinReportTitle,
-              child: InkWell(
-                key: const ValueKey('listing_vin_trust_badge_tap'),
-                borderRadius: BorderRadius.circular(999),
-                onTap: () => showBuyerVinReportSheet(
-                  context,
-                  listingId: listing.id,
-                  listingMake: listing.make,
-                  listingModel: listing.model,
-                  listingYear: listing.year,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListingBadge(
-                        label: l10n.listingVinBadgeIndicated,
-                        tone: ListingBadgeTone.neutral,
-                      ),
-                      const SizedBox(width: 6),
-                      Icon(
-                        Icons.info_outline_rounded,
-                        size: 15,
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.55,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
+        ListingDetailsVinEntry(listing: listing),
+        const SizedBox(height: 12),
         for (var i = 0; i < rows.length; i++)
           _ListingSpecRow(
             data: rows[i],
@@ -1382,7 +1386,7 @@ class _SecondaryContactLinks extends StatelessWidget {
           onPressed: () =>
               _launch(context, Uri.parse('https://t.me/$telegram')),
           icon: const Icon(CarzonIcons.send),
-          label: Text(l10n.contactTelegramLabel(telegram)),
+          label: Text(l10n.contactTelegram),
         ),
       if (waDigits != null)
         TextButton.icon(

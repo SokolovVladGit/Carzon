@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
+import '../../../../core/utils/result.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
+import '../../domain/entities/listing.dart';
 import '../../domain/repositories/listings_repository.dart';
-import '../../../../core/utils/result.dart';
 import '../utils/buyer_vin_report_date_format.dart';
+import '../utils/buyer_vin_report_ui_state.dart';
 import '../utils/nhtsa_vin_summary_display.dart';
 import 'buyer_vin_manual_source_cards_section.dart';
 import 'buyer_vin_report_limitation_section.dart';
+import 'buyer_vin_report_sheet_ui.dart';
 
 /// Vertical space for sticky footer (button + padding) so scroll content clears it.
-const double kBuyerVinReportStickyFooterBlockHeight = 76;
+const double kBuyerVinReportStickyFooterBlockHeight = 96;
 
 /// Extra scroll padding below last content for comfortable reading above the button.
-const double kBuyerVinReportScrollContentEndGap = 20;
+const double kBuyerVinReportScrollContentEndGap = 36;
 
 /// Opens buyer-facing VIN report. Does not display full VIN.
 void showBuyerVinReportSheet(
@@ -23,6 +26,9 @@ void showBuyerVinReportSheet(
   String? listingMake,
   String? listingModel,
   int? listingYear,
+  BuyerListingVinReportLookupResult? initialLookup,
+  bool initialFetchFailed = false,
+  bool initialLoading = false,
 }) {
   showModalBottomSheet<void>(
     context: context,
@@ -34,6 +40,9 @@ void showBuyerVinReportSheet(
       listingMake: listingMake,
       listingModel: listingModel,
       listingYear: listingYear,
+      initialLookup: initialLookup,
+      initialFetchFailed: initialFetchFailed,
+      initialLoading: initialLoading,
     ),
   );
 }
@@ -78,18 +87,33 @@ _VinListingCompare _compareVinToListing(
   return same ? _VinListingCompare.match : _VinListingCompare.mismatch;
 }
 
+BuyerListingVinReportSourceResult? _primaryNhtsaResult(
+  List<BuyerListingVinReportSourceResult> results,
+) {
+  for (final r in results) {
+    if (r.sourceId == 'nhtsa_vpic') return r;
+  }
+  return null;
+}
+
 class _BuyerVinReportSheetContent extends StatefulWidget {
   const _BuyerVinReportSheetContent({
     required this.listingId,
     this.listingMake,
     this.listingModel,
     this.listingYear,
+    this.initialLookup,
+    this.initialFetchFailed = false,
+    this.initialLoading = false,
   });
 
   final String listingId;
   final String? listingMake;
   final String? listingModel;
   final int? listingYear;
+  final BuyerListingVinReportLookupResult? initialLookup;
+  final bool initialFetchFailed;
+  final bool initialLoading;
 
   @override
   State<_BuyerVinReportSheetContent> createState() =>
@@ -98,17 +122,23 @@ class _BuyerVinReportSheetContent extends StatefulWidget {
 
 class _BuyerVinReportSheetContentState
     extends State<_BuyerVinReportSheetContent> {
-  bool _loading = true;
-  bool _failed = false;
+  late bool _loading;
+  bool _fetchFailed = false;
   List<BuyerListingVinReportSourceResult> _results = const [];
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loading = widget.initialLoading;
+    _fetchFailed = widget.initialFetchFailed;
+    _results = widget.initialLookup?.results ?? const [];
+    if (widget.initialLoading || widget.initialLookup == null) {
+      _load();
+    }
   }
 
   Future<void> _load() async {
+    setState(() => _loading = true);
     final repo = sl<ListingsRepository>();
     final out = await repo.fetchBuyerVinReportSources(widget.listingId);
     if (!mounted) return;
@@ -116,13 +146,69 @@ class _BuyerVinReportSheetContentState
       _loading = false;
       switch (out) {
         case Success(:final value):
-          _failed = value.fetchFailed;
+          _fetchFailed = value.fetchFailed;
           _results = value.results;
         case FailureResult():
-          _failed = true;
+          _fetchFailed = true;
           _results = const [];
       }
     });
+  }
+
+  BuyerVinReportUiState get _uiState => resolveBuyerVinReportUiState(
+    listingVinStatus: ListingVinStatus.formatValid,
+    lookup: BuyerListingVinReportLookupResult(
+      results: _results,
+      fetchFailed: _fetchFailed,
+    ),
+    loading: _loading,
+    fetchFailed: _fetchFailed,
+  );
+
+  BuyerVinReportHeroHeader _heroHeader({
+    required AppLocalizations l10n,
+    required ThemeData theme,
+    required _VinListingCompare compare,
+    required bool hasDisplayableDecode,
+    BuyerListingVinReportSourceResult? nhtsa,
+    required bool showSuccessVinBadge,
+  }) {
+    final hasCompare =
+        hasDisplayableDecode && compare != _VinListingCompare.uncertain;
+    final when = nhtsa?.fetchedAt ?? nhtsa?.updatedAt;
+    final m = nhtsa?.normalizedSummary;
+
+    return BuyerVinReportHeroHeader(
+      theme: theme,
+      reportTitle: l10n.listingBuyerVinReportTitle,
+      vinAddedLine: l10n.listingBuyerVinReportVinAddedBySeller,
+      vinPrivateLine: l10n.listingBuyerVinReportFullVinPrivate,
+      compareHint: hasCompare ? l10n.listingBuyerVinReportCompareHint : null,
+      compareResult: hasCompare
+          ? (compare == _VinListingCompare.match
+                ? l10n.listingBuyerVinReportCompareMatch
+                : l10n.listingBuyerVinReportCompareMismatch)
+          : null,
+      compareIsMatch: hasCompare ? compare == _VinListingCompare.match : null,
+      compareAvailableHint: hasDisplayableDecode && !hasCompare
+          ? l10n.listingBuyerVinReportCompareHint
+          : null,
+      sourceLine: hasDisplayableDecode
+          ? l10n.listingBuyerVinReportNhtsaCatalogSourceLine
+          : null,
+      updatedLabel: when != null ? l10n.listingBuyerVinReportUpdatedLabel : null,
+      updatedDate: when != null ? formatBuyerVinReportDate(when) : null,
+      basicDecodeLine: hasDisplayableDecode
+          ? l10n.listingBuyerVinReportBasicDecodeCatalogLine
+          : null,
+      notOfficialLine: hasDisplayableDecode
+          ? l10n.listingBuyerVinReportBasicDecodeNotOfficialLine
+          : null,
+      cautionLine: nhtsaVinSummaryShowsCatalogCaution(m)
+          ? l10n.listingBuyerVinReportNhtsaCatalogDecodeCaution
+          : null,
+      showSuccessVinBadge: showSuccessVinBadge,
+    );
   }
 
   @override
@@ -131,88 +217,115 @@ class _BuyerVinReportSheetContentState
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
-    final maxSheetHeight = MediaQuery.sizeOf(context).height * 0.78;
+    final maxSheetHeight = MediaQuery.sizeOf(context).height * 0.86;
 
     final scrollBottomPadding =
         kBuyerVinReportStickyFooterBlockHeight +
         kBuyerVinReportScrollContentEndGap;
 
-    Widget scrollBody() {
-      return SingleChildScrollView(
-        key: const ValueKey('buyer_vin_report_sheet_scroll'),
-        padding: EdgeInsets.only(bottom: scrollBottomPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    final uiState = _uiState;
+    final showSuccessBadge = buyerVinReportShowsSuccessBadge(uiState);
+
+    final nhtsa = _primaryNhtsaResult(_results);
+    final primarySummary = nhtsa?.normalizedSummary;
+    final hasDisplayableDecode = buyerVinReportHasDisplayableSummary(
+      primarySummary,
+    );
+    final compare = _compareVinToListing(
+      widget.listingMake,
+      widget.listingModel,
+      widget.listingYear,
+      primarySummary,
+    );
+
+    Widget bodyBelowHero() {
+      if (uiState == BuyerVinReportUiState.loading) {
+        return Column(
+          key: const ValueKey('buyer_vin_report_loading'),
           children: [
+            const SizedBox(height: 24),
+            const Center(child: CircularProgressIndicator()),
+            const SizedBox(height: 16),
             Text(
-              l10n.listingBuyerVinReportTitle,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.2,
+              l10n.listingVinReportLoadingCta,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 16),
-            if (_loading) ...[
-              const SizedBox(height: 24),
-              const Center(child: CircularProgressIndicator()),
-              const SizedBox(height: 16),
-              Text(
-                l10n.listingBuyerVinReportLoading,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 24),
-            ] else if (_failed)
-              Text(
-                l10n.listingBuyerVinReportLoadError,
-                style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
-              )
-            else if (_results.isEmpty)
-              _EmptyBuyerVinReportBody(l10n: l10n, theme: theme)
-            else
-              _BuyerVinReportWithSources(
-                l10n: l10n,
-                theme: theme,
-                results: _results,
-                listingMake: widget.listingMake,
-                listingModel: widget.listingModel,
-                listingYear: widget.listingYear,
-              ),
+            const SizedBox(height: 24),
           ],
+        );
+      }
+
+      return switch (uiState) {
+        BuyerVinReportUiState.reportAvailable => _BuyerVinReportSpecSheetBody(
+          key: const ValueKey('buyer_vin_report_spec'),
+          l10n: l10n,
+          theme: theme,
+          results: _results,
         ),
-      );
+        BuyerVinReportUiState.pendingOrNotReady => _BuyerVinReportStateBody(
+          key: const ValueKey('buyer_vin_report_pending'),
+          theme: theme,
+          title: l10n.listingVinReportPendingTitle,
+          body: l10n.listingVinReportPendingBody,
+          showManualSources: true,
+          l10n: l10n,
+        ),
+        BuyerVinReportUiState.noPublicData => _BuyerVinReportStateBody(
+          key: const ValueKey('buyer_vin_report_no_data'),
+          theme: theme,
+          title: l10n.listingVinReportNoDataTitle,
+          body: l10n.listingVinReportNoDataBody,
+          note: l10n.listingVinReportNoDataNote,
+          showManualSources: true,
+          l10n: l10n,
+        ),
+        BuyerVinReportUiState.unavailableOrError => _BuyerVinReportStateBody(
+          key: const ValueKey('buyer_vin_report_unavailable'),
+          theme: theme,
+          title: l10n.listingVinReportUnavailableTitle,
+          body: l10n.listingVinReportUnavailableBody,
+          l10n: l10n,
+        ),
+        _ => const SizedBox.shrink(),
+      };
     }
 
     return SizedBox(
       height: maxSheetHeight,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: scrollBody()),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: scheme.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: scheme.outlineVariant.withValues(alpha: 0.5),
-                  ),
+            Expanded(
+              child: SingleChildScrollView(
+                key: const ValueKey('buyer_vin_report_sheet_scroll'),
+                padding: EdgeInsets.only(bottom: scrollBottomPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _heroHeader(
+                      l10n: l10n,
+                      theme: theme,
+                      compare: compare,
+                      hasDisplayableDecode: hasDisplayableDecode,
+                      nhtsa: nhtsa,
+                      showSuccessVinBadge: showSuccessBadge,
+                    ),
+                    const SizedBox(height: 16),
+                    bodyBelowHero(),
+                  ],
                 ),
               ),
-              child: SafeArea(
-                top: false,
-                child: Padding(
-                  padding: EdgeInsets.only(top: 12, bottom: 16 + bottomInset),
-                  child: FilledButton(
-                    key: const ValueKey('buyer_vin_report_sheet_close'),
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(l10n.listingBuyerVinReportClose),
-                  ),
-                ),
-              ),
+            ),
+            BuyerVinReportStickyFooter(
+              theme: theme,
+              bottomInset: bottomInset,
+              closeLabel: l10n.listingBuyerVinReportClose,
+              onClose: () => Navigator.of(context).pop(),
             ),
           ],
         ),
@@ -221,74 +334,64 @@ class _BuyerVinReportSheetContentState
   }
 }
 
-class _EmptyBuyerVinReportBody extends StatelessWidget {
-  const _EmptyBuyerVinReportBody({required this.l10n, required this.theme});
+class _BuyerVinReportStateBody extends StatelessWidget {
+  const _BuyerVinReportStateBody({
+    super.key,
+    required this.theme,
+    required this.title,
+    required this.body,
+    this.note,
+    this.showManualSources = false,
+    required this.l10n,
+  });
 
-  final AppLocalizations l10n;
   final ThemeData theme;
+  final String title;
+  final String body;
+  final String? note;
+  final bool showManualSources;
+  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = theme.colorScheme;
     return Column(
-      key: const ValueKey('buyer_vin_empty'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.listingBuyerVinReportVinAddedBySeller,
-          style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
+        BuyerVinReportStateMessageCard(
+          theme: theme,
+          title: title,
+          body: body,
+          note: note,
         ),
-        const SizedBox(height: 10),
-        Text(
-          l10n.listingBuyerVinReportFullVinPrivate,
-          style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          l10n.listingBuyerVinReportPublicDataUnavailable,
-          style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          l10n.listingBuyerVinReportFormatOnlyExplanation,
-          style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
-        ),
-        const SizedBox(height: 16),
-        BuyerVinManualSourceCardsSection(l10n: l10n, theme: theme),
-        const SizedBox(height: 14),
-        Text(
-          l10n.editListingVinReportLimitationNote,
-          style: theme.textTheme.bodySmall?.copyWith(
-            height: 1.42,
-            color: scheme.onSurfaceVariant,
-            fontStyle: FontStyle.italic,
+        if (showManualSources) ...[
+          const SizedBox(height: 18),
+          BuyerVinManualSourceCardsSection(l10n: l10n, theme: theme),
+          const SizedBox(height: 12),
+          Text(
+            l10n.editListingVinReportLimitationNote,
+            style: buyerVinReportMicrocopyStyle(theme),
           ),
-        ),
+        ],
       ],
     );
   }
 }
 
-class _BuyerVinReportWithSources extends StatelessWidget {
-  const _BuyerVinReportWithSources({
+/// Premium spec-sheet sections below the hero (NHTSA groups, limitations, manual).
+class _BuyerVinReportSpecSheetBody extends StatelessWidget {
+  const _BuyerVinReportSpecSheetBody({
+    super.key,
     required this.l10n,
     required this.theme,
     required this.results,
-    this.listingMake,
-    this.listingModel,
-    this.listingYear,
   });
 
   final AppLocalizations l10n;
   final ThemeData theme;
   final List<BuyerListingVinReportSourceResult> results;
-  final String? listingMake;
-  final String? listingModel;
-  final int? listingYear;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = theme.colorScheme;
     final nhtsa = results
         .where((r) => r.sourceId == 'nhtsa_vpic')
         .toList(growable: false);
@@ -296,64 +399,27 @@ class _BuyerVinReportWithSources extends StatelessWidget {
         .where((r) => r.sourceId != 'nhtsa_vpic')
         .toList(growable: false);
 
-    Map<String, dynamic>? primaryNhtsaSummary;
-    for (final r in nhtsa) {
-      final m = r.normalizedSummary;
-      if (m != null && m.isNotEmpty) {
-        primaryNhtsaSummary = m;
-        break;
-      }
-    }
-
-    final compare = _compareVinToListing(
-      listingMake,
-      listingModel,
-      listingYear,
-      primaryNhtsaSummary,
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.listingBuyerVinReportVinAddedBySeller,
-          style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          l10n.listingBuyerVinReportFullVinPrivate,
-          style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
-        ),
-        const SizedBox(height: 14),
-        if (nhtsa.isNotEmpty && compare != _VinListingCompare.uncertain) ...[
-          Text(
-            l10n.listingBuyerVinReportCompareHint,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              height: 1.42,
-              color: scheme.onSurface.withValues(alpha: 0.88),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            compare == _VinListingCompare.match
-                ? l10n.listingBuyerVinReportCompareMatch
-                : l10n.listingBuyerVinReportCompareMismatch,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              height: 1.45,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 14),
-        ],
         if (nhtsa.isNotEmpty) ...[
+          Text(
+            l10n.editListingVinReportBasicInfoHeading,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 10),
           for (final r in nhtsa) ...[
-            _NhtsaPublicDecodeSection(l10n: l10n, theme: theme, result: r),
-            const SizedBox(height: 16),
+            _NhtsaSpecSheetSection(l10n: l10n, theme: theme, result: r),
+            const SizedBox(height: 12),
           ],
         ],
         BuyerVinManualSourceCardsSection(l10n: l10n, theme: theme),
-        const SizedBox(height: 16),
         if (other.isNotEmpty) ...[
+          const SizedBox(height: 16),
           Text(
             l10n.listingBuyerVinReportSourcesSectionTitle,
             style: theme.textTheme.titleSmall?.copyWith(
@@ -363,7 +429,7 @@ class _BuyerVinReportWithSources extends StatelessWidget {
           const SizedBox(height: 12),
           for (final r in other) ...[
             _GenericSourceResultCard(l10n: l10n, theme: theme, result: r),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
           ],
         ],
       ],
@@ -371,8 +437,8 @@ class _BuyerVinReportWithSources extends StatelessWidget {
   }
 }
 
-class _NhtsaPublicDecodeSection extends StatelessWidget {
-  const _NhtsaPublicDecodeSection({
+class _NhtsaSpecSheetSection extends StatelessWidget {
+  const _NhtsaSpecSheetSection({
     required this.l10n,
     required this.theme,
     required this.result,
@@ -384,135 +450,28 @@ class _NhtsaPublicDecodeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = theme.colorScheme;
-    final m = result.normalizedSummary;
-    final when = result.fetchedAt ?? result.updatedAt;
-    final groups = nhtsaVinSummaryGroupsFromMap(l10n, m);
-    final hasGroups = groups.isNotEmpty;
+    final groups = nhtsaVinSummaryGroupsFromMap(l10n, result.normalizedSummary);
+    if (groups.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (hasGroups) ...[
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: scheme.outlineVariant.withValues(alpha: 0.35),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (var i = 0; i < groups.length; i++) ...[
-                    if (i > 0)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Divider(
-                          height: 1,
-                          color: scheme.outlineVariant.withValues(alpha: 0.45),
-                        ),
-                      ),
-                    _NhtsaSummaryGroupBlock(theme: theme, group: groups[i]),
-                  ],
-                ],
-              ),
-            ),
+        for (var i = 0; i < groups.length; i++) ...[
+          BuyerVinReportNhtsaGroupSection(
+            theme: theme,
+            group: groups[i],
+            groupIndex: i,
+          ),
+          if (i < groups.length - 1) const SizedBox(height: 10),
+        ],
+        if (result.limitationCodes.isNotEmpty) ...[
+          if (groups.isNotEmpty) const SizedBox(height: 10),
+          BuyerVinReportLimitationSection(
+            l10n: l10n,
+            theme: theme,
+            limitationCodes: result.limitationCodes,
           ),
         ],
-        if (nhtsaVinSummaryShowsCatalogCaution(m)) ...[
-          const SizedBox(height: 10),
-          Text(
-            l10n.listingBuyerVinReportNhtsaCatalogDecodeCaution,
-            style: theme.textTheme.bodySmall?.copyWith(
-              height: 1.42,
-              color: scheme.onSurfaceVariant,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ],
-        const SizedBox(height: 12),
-        Text(
-          l10n.listingBuyerVinReportNhtsaCatalogSourceLine,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            height: 1.45,
-            color: scheme.onSurface.withValues(alpha: 0.9),
-          ),
-        ),
-        if (when != null) ...[
-          const SizedBox(height: 12),
-          Text(
-            l10n.listingBuyerVinReportUpdatedLabel,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: scheme.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            formatBuyerVinReportDate(when),
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
-          ),
-        ],
-        const SizedBox(height: 14),
-        Text(
-          l10n.listingBuyerVinReportBasicDecodeCatalogLine,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            height: 1.5,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          l10n.listingBuyerVinReportBasicDecodeNotOfficialLine,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            height: 1.45,
-            color: scheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 12),
-        BuyerVinReportLimitationSection(
-          l10n: l10n,
-          theme: theme,
-          limitationCodes: result.limitationCodes,
-        ),
-      ],
-    );
-  }
-}
-
-class _NhtsaSummaryGroupBlock extends StatelessWidget {
-  const _NhtsaSummaryGroupBlock({required this.theme, required this.group});
-
-  final ThemeData theme;
-  final NhtsaVinSummaryGroup group;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = theme.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          group.title,
-          style: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: scheme.onSurface.withValues(alpha: 0.88),
-            letterSpacing: 0.1,
-          ),
-        ),
-        const SizedBox(height: 8),
-        for (final f in group.fields)
-          f.stackValue
-              ? _SummaryFieldStacked(
-                  theme: theme,
-                  label: f.label,
-                  value: f.value,
-                )
-              : _SummaryFieldRow(theme: theme, label: f.label, value: f.value),
       ],
     );
   }
@@ -544,65 +503,42 @@ class _GenericSourceResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = theme.colorScheme;
     final label = result.sourceLabel ?? result.sourceId;
     final when = result.fetchedAt ?? result.updatedAt;
+    final fields = _summaryFields(l10n, result.normalizedSummary);
+    if (fields.isEmpty && when == null) return const SizedBox.shrink();
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.listingBuyerVinReportSourceHeading,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: scheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                height: 1.35,
-              ),
-            ),
-            if (when != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                l10n.listingBuyerVinReportUpdatedLabel,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                formatBuyerVinReportDate(when),
-                style: theme.textTheme.bodyMedium?.copyWith(height: 1.35),
-              ),
-            ],
-            ..._summaryRows(l10n, theme, result.normalizedSummary),
-            BuyerVinReportLimitationSection(
-              l10n: l10n,
+    return BuyerVinReportSectionCard(
+      theme: theme,
+      tone: BuyerVinReportSectionTone.dataCore,
+      title: label,
+      subtitle: l10n.listingBuyerVinReportSourceHeading,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (when != null) ...[
+            BuyerVinReportMetaRow(
               theme: theme,
-              limitationCodes: result.limitationCodes,
+              label: l10n.listingBuyerVinReportUpdatedLabel,
+              value: formatBuyerVinReportDate(when),
             ),
+            if (fields.isNotEmpty) const SizedBox(height: 12),
           ],
-        ),
+          if (fields.isNotEmpty)
+            BuyerVinReportIdentityPanel(theme: theme, fields: fields),
+          BuyerVinReportLimitationSection(
+            l10n: l10n,
+            theme: theme,
+            limitationCodes: result.limitationCodes,
+            wrapInCard: false,
+          ),
+        ],
       ),
     );
   }
 
-  List<Widget> _summaryRows(
+  List<NhtsaVinSummaryField> _summaryFields(
     AppLocalizations l10n,
-    ThemeData theme,
     Map<String, dynamic>? m,
   ) {
     if (m == null || m.isEmpty) return const [];
@@ -611,139 +547,31 @@ class _GenericSourceResultCard extends StatelessWidget {
     final year = _year(m['year']);
     final body = _str(m['body_type']);
     final fuel = _str(m['fuel_type']);
-    if (make == null &&
-        model == null &&
-        year == null &&
-        body == null &&
-        fuel == null) {
-      return const [];
+    final out = <NhtsaVinSummaryField>[];
+    void add(
+      String key,
+      String label,
+      String? value, {
+      bool stack = false,
+    }) {
+      if (value == null) return;
+      out.add(
+        NhtsaVinSummaryField(
+          label: label,
+          value: value,
+          stackValue: stack,
+          fieldKey: key,
+        ),
+      );
     }
-    return [
-      const SizedBox(height: 12),
-      Text(
-        l10n.editListingVinReportBasicInfoHeading,
-        style: theme.textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      const SizedBox(height: 8),
-      if (make != null)
-        _SummaryFieldRow(
-          theme: theme,
-          label: l10n.editListingVinReportDecodedMakeLabel,
-          value: make,
-        ),
-      if (model != null)
-        _SummaryFieldRow(
-          theme: theme,
-          label: l10n.editListingVinReportDecodedModelLabel,
-          value: model,
-        ),
-      if (year != null)
-        _SummaryFieldRow(
-          theme: theme,
-          label: l10n.editListingVinReportDecodedYearLabel,
-          value: '$year',
-        ),
-      if (body != null)
-        _SummaryFieldRow(
-          theme: theme,
-          label: l10n.editListingVinReportDecodedBodyLabel,
-          value: body,
-        ),
-      if (fuel != null)
-        _SummaryFieldRow(
-          theme: theme,
-          label: l10n.editListingVinReportDecodedFuelLabel,
-          value: fuel,
-        ),
-    ];
-  }
-}
 
-class _SummaryFieldRow extends StatelessWidget {
-  const _SummaryFieldRow({
-    required this.theme,
-    required this.label,
-    required this.value,
-  });
-
-  final ThemeData theme;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = theme.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 118,
-            child: Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: scheme.onSurfaceVariant,
-                height: 1.3,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                height: 1.4,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryFieldStacked extends StatelessWidget {
-  const _SummaryFieldStacked({
-    required this.theme,
-    required this.label,
-    required this.value,
-  });
-
-  final ThemeData theme;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = theme.colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: scheme.onSurfaceVariant,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              height: 1.45,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
+    add('make', l10n.editListingVinReportDecodedMakeLabel, make);
+    add('model', l10n.editListingVinReportDecodedModelLabel, model);
+    if (year != null) {
+      add('year', l10n.editListingVinReportDecodedYearLabel, '$year');
+    }
+    add('body_type', l10n.editListingVinReportDecodedBodyLabel, body, stack: true);
+    add('fuel_type', l10n.editListingVinReportDecodedFuelLabel, fuel);
+    return out;
   }
 }

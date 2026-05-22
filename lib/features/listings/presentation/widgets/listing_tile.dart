@@ -1,17 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../compare/presentation/widgets/compare_toggle_button.dart';
 import '../../../favorites/presentation/widgets/favorite_toggle_button.dart';
 import '../../domain/entities/listing.dart';
 import 'listing_card.dart';
 
 /// Public/favorites feed tile.
 ///
-/// Thin wrapper around [ListingCard] that wires the favorite toggle as
-/// the card's overlay action. Kept as a separate widget so the public
-/// feed and favorites page don't need to know about the card's
-/// internals or the favorite toggle's slot.
-class ListingTile extends StatelessWidget {
+/// Thin wrapper around [ListingCard] that wires compare + favorite toggles
+/// as the card's overlay actions.
+class ListingTile extends StatefulWidget {
   const ListingTile({
     super.key,
     required this.listing,
@@ -35,13 +34,43 @@ class ListingTile extends StatelessWidget {
   final ValueListenable<double>? coverParallax;
 
   @override
+  State<ListingTile> createState() => _ListingTileState();
+}
+
+class _ListingTileState extends State<ListingTile> {
+  final GlobalKey _compareFlySourceKey = GlobalKey(
+    debugLabel: 'listing_compare_fly_source',
+  );
+
+  @override
   Widget build(BuildContext context) {
     return ListingCard(
-      listing: listing,
-      onTap: onTap,
-      trailing: FavoriteToggleButton(listingId: listing.id),
-      variant: variant,
-      coverParallax: coverParallax,
+      listing: widget.listing,
+      onTap: widget.onTap,
+      trailingWide: true,
+      compareFlySourceKey: _compareFlySourceKey,
+      trailing: IconButtonTheme(
+        data: IconButtonThemeData(
+          style: IconButton.styleFrom(
+            minimumSize: const Size(36, 36),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            padding: EdgeInsets.zero,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CompareToggleButton.fromListing(
+              widget.listing,
+              density: CompareToggleDensity.compact,
+              flySourceKey: _compareFlySourceKey,
+            ),
+            FavoriteToggleButton(listingId: widget.listing.id),
+          ],
+        ),
+      ),
+      variant: widget.variant,
+      coverParallax: widget.coverParallax,
     );
   }
 }

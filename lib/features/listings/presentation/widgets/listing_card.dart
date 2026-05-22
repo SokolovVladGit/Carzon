@@ -47,9 +47,11 @@ class ListingCard extends StatefulWidget {
     required this.listing,
     this.onTap,
     this.trailing,
+    this.trailingWide = false,
     this.statusBadge,
     this.variant = ListingCardVariant.regular,
     this.coverParallax,
+    this.compareFlySourceKey,
   });
 
   final Listing listing;
@@ -68,10 +70,16 @@ class ListingCard extends StatefulWidget {
   /// incurred on the rest of the feed.
   final ValueListenable<double>? coverParallax;
 
+  /// Optional key on the cover image layer (compare fly-to-tray source).
+  final GlobalKey? compareFlySourceKey;
+
   /// Optional widget rendered inside the info panel on the right side.
   /// Used for the favorite toggle on public cards and for the owner
   /// overflow menu on My Listings.
   final Widget? trailing;
+
+  /// When true, the trailing slot uses a wider pill (compare + favorite).
+  final bool trailingWide;
 
   /// Optional status badge rendered in the badges row. Owner-facing
   /// surfaces (My Listings) pass a status pill; public surfaces leave
@@ -183,6 +191,7 @@ class _ListingCardState extends State<ListingCard> {
                 coverImageUrl: listing.coverImageUrl,
                 heroTag: listingCoverHeroTag(listing.id),
                 parallax: widget.coverParallax,
+                flySourceKey: widget.compareFlySourceKey,
               ),
               // Child 1: info panel that overlaps the image's bottom.
               _InfoPanel(
@@ -196,6 +205,7 @@ class _ListingCardState extends State<ListingCard> {
                 isFeatured: isFeatured,
                 badges: badges,
                 trailing: widget.trailing,
+                trailingWide: widget.trailingWide,
                 radius: panelRadius,
               ),
             ],
@@ -219,11 +229,13 @@ class _CoverStack extends StatelessWidget {
     required this.coverImageUrl,
     required this.heroTag,
     this.parallax,
+    this.flySourceKey,
   });
 
   final double imageRadius;
   final String? coverImageUrl;
   final Object heroTag;
+  final GlobalKey? flySourceKey;
 
   /// Optional feed-scroll offset (pixels). When provided drives a
   /// subtle `Transform.translate` so the cover photo "floats" at
@@ -284,24 +296,31 @@ class _CoverStack extends StatelessWidget {
       child: stack,
     );
 
+    Widget layer = clipped;
     final parallaxSource = parallax;
-    if (parallaxSource == null) return clipped;
+    if (parallaxSource != null) {
+      // Only the image+scrim `ClipRRect` is inside the AnimatedBuilder
+      // subtree. The Hero lives inside `clipped`, so its current
+      // render position naturally reflects the parallax transform —
+      // exactly what we want when a flight starts from the visually
+      // translated image.
+      layer = AnimatedBuilder(
+        animation: parallaxSource,
+        builder: (context, child) {
+          // Clamp so long scrolls don't pull the photo off its frame.
+          final raw = parallaxSource.value;
+          final dy = -(raw * 0.15).clamp(-24.0, 24.0);
+          return Transform.translate(offset: Offset(0, dy), child: child);
+        },
+        child: clipped,
+      );
+    }
 
-    // Only the image+scrim `ClipRRect` is inside the AnimatedBuilder
-    // subtree. The Hero lives inside `clipped`, so its current
-    // render position naturally reflects the parallax transform —
-    // exactly what we want when a flight starts from the visually
-    // translated image.
-    return AnimatedBuilder(
-      animation: parallaxSource,
-      builder: (context, child) {
-        // Clamp so long scrolls don't pull the photo off its frame.
-        final raw = parallaxSource.value;
-        final dy = -(raw * 0.15).clamp(-24.0, 24.0);
-        return Transform.translate(offset: Offset(0, dy), child: child);
-      },
-      child: clipped,
-    );
+    final key = flySourceKey;
+    if (key != null) {
+      layer = KeyedSubtree(key: key, child: layer);
+    }
+    return layer;
   }
 }
 
@@ -394,6 +413,7 @@ class _InfoPanel extends StatelessWidget {
     required this.badges,
     required this.radius,
     this.trailing,
+    this.trailingWide = false,
   });
 
   final String priceLabel;
@@ -410,6 +430,7 @@ class _InfoPanel extends StatelessWidget {
   final bool isFeatured;
   final List<Widget> badges;
   final Widget? trailing;
+  final bool trailingWide;
   final double radius;
 
   @override
@@ -664,7 +685,10 @@ class _InfoPanel extends StatelessWidget {
                   ),
                   if (trailing != null) ...[
                     const SizedBox(width: 8),
-                    _PanelActionSlot(child: trailing!),
+                    _PanelActionSlot(
+                      wide: trailingWide,
+                      child: trailing!,
+                    ),
                   ],
                 ],
               ),
@@ -758,9 +782,14 @@ class _MetaSeparator extends StatelessWidget {
 /// distinct, slightly translucent affordance with a hairline edge
 /// rather than a flat tinted circle.
 class _PanelActionSlot extends StatelessWidget {
-  const _PanelActionSlot({required this.child});
+  const _PanelActionSlot({required this.child, this.wide = false});
 
   final Widget child;
+  final bool wide;
+
+  static const double _compactSize = 36;
+  static const double _wideWidth = 88;
+  static const double _height = 36;
 
   @override
   Widget build(BuildContext context) {
@@ -785,12 +814,20 @@ class _PanelActionSlot extends StatelessWidget {
     final shadowColor = isDark
         ? Colors.black.withValues(alpha: 0.32)
         : Colors.black.withValues(alpha: 0.08);
+    final borderRadius = wide ? 18.0 : _compactSize / 2;
+    final clip = wide
+        ? ClipRRect(
+            borderRadius: BorderRadius.circular(borderRadius),
+            child: _glassChild(bg, borderColor, borderRadius, scheme),
+          )
+        : ClipOval(child: _glassChild(bg, borderColor, borderRadius, scheme));
+
     return SizedBox(
-      width: 36,
-      height: 36,
+      width: wide ? _wideWidth : _compactSize,
+      height: _height,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(borderRadius),
           boxShadow: [
             BoxShadow(
               color: shadowColor,
@@ -800,25 +837,28 @@ class _PanelActionSlot extends StatelessWidget {
             ),
           ],
         ),
-        // ClipOval + BackdropFilter match the panel's glass
-        // language: the chip picks up and softens whatever sits
-        // behind it (the translucent panel + the photo peeking
-        // through the overlap region).
-        child: ClipOval(
-          child: BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: bg,
-                shape: BoxShape.circle,
-                border: Border.all(color: borderColor, width: 0.5),
-              ),
-              child: IconTheme.merge(
-                data: IconThemeData(color: scheme.onSurface, size: 19),
-                child: child,
-              ),
-            ),
-          ),
+        child: clip,
+      ),
+    );
+  }
+
+  Widget _glassChild(
+    Color bg,
+    Color borderColor,
+    double borderRadius,
+    ColorScheme scheme,
+  ) {
+    return BackdropFilter(
+      filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(borderRadius),
+          border: Border.all(color: borderColor, width: 0.5),
+        ),
+        child: IconTheme.merge(
+          data: IconThemeData(color: scheme.onSurface, size: 19),
+          child: child,
         ),
       ),
     );

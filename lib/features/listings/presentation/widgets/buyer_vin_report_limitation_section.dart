@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../utils/buyer_vin_report_limitation_labels.dart';
+import 'buyer_vin_report_sheet_ui.dart';
 
 /// Human-readable limitations for buyer VIN report (no raw worker codes).
 class BuyerVinReportLimitationSection extends StatelessWidget {
@@ -10,49 +11,57 @@ class BuyerVinReportLimitationSection extends StatelessWidget {
     required this.l10n,
     required this.theme,
     required this.limitationCodes,
+    this.wrapInCard = true,
   });
 
   final AppLocalizations l10n;
   final ThemeData theme;
   final List<String> limitationCodes;
+  final bool wrapInCard;
 
   @override
   Widget build(BuildContext context) {
-    final bullets = localizedBuyerVinReportLimitationBullets(l10n, limitationCodes);
+    final bullets = localizedBuyerVinReportLimitationBullets(
+      l10n,
+      limitationCodes,
+    );
     if (bullets.isEmpty) {
       return const SizedBox.shrink();
     }
 
     final scheme = theme.colorScheme;
-    return Column(
+    final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           l10n.listingBuyerVinReportNotVerifiedSectionTitle,
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
+            letterSpacing: -0.1,
           ),
         ),
         const SizedBox(height: 10),
-        for (final line in bullets)
+        for (var i = 0; i < bullets.length; i++)
           Padding(
-            padding: const EdgeInsets.only(bottom: 6),
+            padding: EdgeInsets.only(bottom: i < bullets.length - 1 ? 8 : 0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '• ',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.35,
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Icon(
+                    Icons.circle,
+                    size: 6,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
                   ),
                 ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    line,
+                    bullets[i],
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      height: 1.45,
-                      color: scheme.onSurface.withValues(alpha: 0.92),
+                      height: 1.48,
+                      color: scheme.onSurface.withValues(alpha: 0.9),
                     ),
                   ),
                 ),
@@ -60,6 +69,20 @@ class BuyerVinReportLimitationSection extends StatelessWidget {
             ),
           ),
       ],
+    );
+
+    if (!wrapInCard) return body;
+
+    return DecoratedBox(
+      key: const ValueKey('buyer_vin_report_limitations_card'),
+      decoration: buyerVinReportSectionDecoration(
+        scheme,
+        BuyerVinReportSectionTone.limitations,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: body,
+      ),
     );
   }
 }
