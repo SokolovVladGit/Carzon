@@ -133,15 +133,31 @@ void main() {
     );
   }
 
-  testWidgets('format_valid shows tappable VIN badge affordance', (
+  testWidgets('format_valid with decode shows green badge and open hint', (
     tester,
   ) async {
+    when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
+      (_) async => Success(
+        BuyerListingVinReportLookupResult(
+          results: [
+            BuyerListingVinReportSourceResult(
+              sourceId: 'nhtsa_vpic',
+              normalizedSummary: {'make': 'Audi'},
+            ),
+          ],
+        ),
+      ),
+    );
     await tester.pumpWidget(
       app(_listing(vinStatus: ListingVinStatus.formatValid)),
     );
     await tester.pumpAndSettle();
 
     expect(find.text(ru.listingVinBadgeIndicated), findsOneWidget);
+    expect(find.text(ru.listingVinReportOpenHint), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
+    expect(find.byKey(const ValueKey('vin_present_latin_badge_v')), findsOneWidget);
+    expect(find.text('В'), findsNothing);
     expect(
       find.byKey(const ValueKey('listing_vin_trust_badge_tap')),
       findsOneWidget,
@@ -170,9 +186,11 @@ void main() {
         find.text(ru.listingBuyerVinReportVinAddedBySeller),
         findsOneWidget,
       );
+      expect(find.text(ru.listingVinReportNoDataTitle), findsWidgets);
+      expect(find.text(ru.listingVinReportNoDataBody), findsOneWidget);
       expect(
-        find.text(ru.listingBuyerVinReportPublicDataUnavailable),
-        findsOneWidget,
+        find.byKey(const ValueKey('vin_present_latin_badge_v')),
+        findsNothing,
       );
       expect(
         find.textContaining('Полный VIN не показывается публично'),
@@ -408,7 +426,7 @@ void main() {
     },
   );
 
-  testWidgets('buyer report shows error when RPC returns fetchFailed', (
+  testWidgets('buyer report shows unavailable state when RPC fetchFailed', (
     tester,
   ) async {
     when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
@@ -419,12 +437,15 @@ void main() {
       app(_listing(vinStatus: ListingVinStatus.formatValid)),
     );
     await tester.pumpAndSettle();
+    expect(find.text(ru.listingVinReportUnavailableCta), findsOneWidget);
     final tapTarget = find.byKey(const ValueKey('listing_vin_trust_badge_tap'));
     await tester.ensureVisible(tapTarget);
     await tester.pumpAndSettle();
     await tester.tap(tapTarget);
     await tester.pumpAndSettle();
-    expect(find.text(ru.listingBuyerVinReportLoadError), findsOneWidget);
+    expect(find.text(ru.listingVinReportUnavailableTitle), findsOneWidget);
+    expect(find.text(ru.listingVinReportUnavailableBody), findsOneWidget);
+    expect(find.text(ru.listingBuyerVinReportLoadError), findsNothing);
   });
 
   testWidgets('buyer report never shows worker cylinders placeholder', (
@@ -655,7 +676,9 @@ void main() {
     },
   );
 
-  testWidgets('buyer report shows error on repository failure', (tester) async {
+  testWidgets('buyer report shows unavailable state on repository failure', (
+    tester,
+  ) async {
     when(
       () => listingsRepo.fetchBuyerVinReportSources('l1'),
     ).thenAnswer((_) async => const FailureResult(ServerFailure('network')));
@@ -663,18 +686,56 @@ void main() {
       app(_listing(vinStatus: ListingVinStatus.formatValid)),
     );
     await tester.pumpAndSettle();
+    expect(find.text(ru.listingVinReportUnavailableCta), findsOneWidget);
     final tapTarget = find.byKey(const ValueKey('listing_vin_trust_badge_tap'));
     await tester.ensureVisible(tapTarget);
     await tester.pumpAndSettle();
     await tester.tap(tapTarget);
     await tester.pumpAndSettle();
-    expect(find.text(ru.listingBuyerVinReportLoadError), findsOneWidget);
+    expect(find.text(ru.listingVinReportUnavailableTitle), findsOneWidget);
+    expect(find.text(ru.listingBuyerVinReportLoadError), findsNothing);
   });
 
-  testWidgets('not_provided hides VIN badge and tap target', (tester) async {
+  testWidgets('pending report shows pending copy without green badge', (
+    tester,
+  ) async {
+    when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
+      (_) async => Success(
+        BuyerListingVinReportLookupResult(
+          results: [
+            BuyerListingVinReportSourceResult(
+              sourceId: 'nhtsa_vpic',
+              statusRaw: 'processing',
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpWidget(
+      app(_listing(vinStatus: ListingVinStatus.formatValid)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(ru.listingVinReportPendingCta), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('vin_present_latin_badge_v')),
+      findsNothing,
+    );
+    final tapTarget = find.byKey(const ValueKey('listing_vin_trust_badge_tap'));
+    await tester.ensureVisible(tapTarget);
+    await tester.pumpAndSettle();
+    await tester.tap(tapTarget);
+    await tester.pumpAndSettle();
+    expect(find.text(ru.listingVinReportPendingTitle), findsWidgets);
+    expect(find.text(ru.listingVinReportPendingBody), findsOneWidget);
+  });
+
+  testWidgets('not_provided shows muted absent state without report tap', (
+    tester,
+  ) async {
     await tester.pumpWidget(app(_listing()));
     await tester.pumpAndSettle();
 
+    expect(find.text(ru.listingVinNotProvidedTitle), findsOneWidget);
     expect(find.text(ru.listingVinBadgeIndicated), findsNothing);
     expect(
       find.byKey(const ValueKey('listing_vin_trust_badge_tap')),

@@ -5,6 +5,10 @@ import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
+import 'package:carzon/features/compare/domain/entities/compare_item.dart';
+import 'package:carzon/features/compare/domain/repositories/compare_repository.dart';
+import 'package:carzon/features/compare/presentation/cubit/compare_cubit.dart';
+import 'package:carzon/features/compare/presentation/widgets/compare_toggle_button.dart';
 import 'package:carzon/features/favorites/presentation/widgets/favorite_toggle_button.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit.dart';
@@ -30,6 +34,19 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 class _MockFavoritesCubit extends MockCubit<FavoritesState>
     implements FavoritesCubit {}
 
+class _MemoryCompareRepository implements CompareRepository {
+  List<CompareItem> items = const [];
+
+  @override
+  Future<void> clear() async => items = const [];
+
+  @override
+  Future<List<CompareItem>> loadItems() async => items;
+
+  @override
+  Future<void> saveItems(List<CompareItem> value) async => items = value;
+}
+
 Listing _seed() => Listing(
   id: 'l1',
   title: 'VW Golf',
@@ -50,6 +67,7 @@ void main() {
   late _MockDetailsCubit detailsCubit;
   late _MockAuthCubit authCubit;
   late _MockFavoritesCubit favoritesCubit;
+  late CompareCubit compareCubit;
   late MockGetSellerPublicProfile sellerProfileUseCase;
   final l10n = ruStrings();
 
@@ -58,6 +76,7 @@ void main() {
     detailsCubit = _MockDetailsCubit();
     authCubit = _MockAuthCubit();
     favoritesCubit = _MockFavoritesCubit();
+    compareCubit = CompareCubit(repository: _MemoryCompareRepository());
     sellerProfileUseCase = MockGetSellerPublicProfile();
     stubSellerPublicProfileHidden(sellerProfileUseCase);
 
@@ -95,6 +114,7 @@ void main() {
   });
 
   tearDown(() async {
+    await compareCubit.close();
     await sl.reset();
   });
 
@@ -123,6 +143,7 @@ void main() {
       providers: [
         BlocProvider<AuthCubit>.value(value: authCubit),
         BlocProvider<FavoritesCubit>.value(value: favoritesCubit),
+        BlocProvider<CompareCubit>.value(value: compareCubit),
       ],
       child: MaterialApp.router(
         locale: const Locale('ru'),
@@ -142,11 +163,27 @@ void main() {
       expect(find.byType(AppBackButton), findsOneWidget);
       expect(find.byType(BackButtonIcon), findsOneWidget);
       expect(find.byType(FavoriteToggleButton), findsOneWidget);
+      expect(find.byType(CompareToggleButton), findsOneWidget);
       // The page intentionally no longer shows the
       // `listingDetailsTitle` overline — the brand identity row
       // replaces it so the header reads as an automotive marker,
       // not a generic "Listing" page label.
       expect(find.text(l10n.listingDetailsTitle), findsNothing);
+    });
+
+    testWidgets('hero compare toggle adds listing to compare set', (
+      tester,
+    ) async {
+      await tester.pumpWidget(wrapWithRouter(initialLocation: '/listings/l1'));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const ValueKey('compare_toggle_l1')));
+      await tester.pump();
+      await tester.pump();
+
+      expect(compareCubit.state.containsListing('l1'), isTrue);
+      expect(find.text(l10n.compareAddedMessage), findsNothing);
+      expect(find.byType(FavoriteToggleButton), findsOneWidget);
     });
 
     testWidgets(

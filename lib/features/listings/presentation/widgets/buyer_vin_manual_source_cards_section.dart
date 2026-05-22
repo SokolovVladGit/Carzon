@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../utils/vin_manual_source_cards.dart';
+import 'buyer_vin_report_sheet_ui.dart';
 
 /// Informational manual/external source cards (Phase C; no live data).
 class BuyerVinManualSourceCardsSection extends StatelessWidget {
@@ -27,6 +28,7 @@ class BuyerVinManualSourceCardsSection extends StatelessWidget {
           l10n.listingBuyerVinReportManualSourcesSectionTitle,
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
+            letterSpacing: -0.15,
           ),
         ),
         const SizedBox(height: 6),
@@ -37,7 +39,7 @@ class BuyerVinManualSourceCardsSection extends StatelessWidget {
             color: scheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         for (var i = 0; i < cards.length; i++) ...[
           if (i > 0) const SizedBox(height: 10),
           _ManualSourceCardTile(theme: theme, card: cards[i]),
@@ -48,7 +50,10 @@ class BuyerVinManualSourceCardsSection extends StatelessWidget {
 }
 
 class _ManualSourceCardTile extends StatelessWidget {
-  const _ManualSourceCardTile({required this.theme, required this.card});
+  const _ManualSourceCardTile({
+    required this.theme,
+    required this.card,
+  });
 
   final ThemeData theme;
   final VinManualSourceCardDefinition card;
@@ -58,43 +63,61 @@ class _ManualSourceCardTile extends StatelessWidget {
     final scheme = theme.colorScheme;
     return DecoratedBox(
       key: ValueKey('buyer_vin_manual_card_${card.sourceId}'),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.4)),
+      decoration: buyerVinReportSectionDecoration(
+        scheme,
+        BuyerVinReportSectionTone.manualModule,
       ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        child: Column(
+      child: IntrinsicHeight(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              card.title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                height: 1.3,
+            Container(
+              width: 3,
+              decoration: BoxDecoration(
+                color: scheme.outlineVariant.withValues(alpha: 0.55),
+                borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(14),
+                ),
               ),
             ),
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: _ManualSourceStatusChip(theme: theme, label: card.statusLabel),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              card.body,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                height: 1.45,
-                color: scheme.onSurface.withValues(alpha: 0.9),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              card.limitationLine,
-              style: theme.textTheme.bodySmall?.copyWith(
-                height: 1.4,
-                color: scheme.onSurfaceVariant,
-                fontStyle: FontStyle.italic,
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      card.title,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        height: 1.32,
+                        letterSpacing: -0.08,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _ManualSourceStatusChip(
+                        theme: theme,
+                        label: card.statusLabel,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      card.body,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        height: 1.48,
+                        fontWeight: FontWeight.w400,
+                        color: scheme.onSurface.withValues(alpha: 0.88),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      card.limitationLine,
+                      style: buyerVinReportMicrocopyStyle(theme),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -115,20 +138,20 @@ class _ManualSourceStatusChip extends StatelessWidget {
     final scheme = theme.colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh.withValues(alpha: 0.65),
+        color: scheme.surfaceContainerHigh.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.55),
+          color: scheme.outlineVariant.withValues(alpha: 0.32),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
         child: Text(
           label,
           style: theme.textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
             color: scheme.onSurfaceVariant,
-            height: 1.2,
+            height: 1.25,
           ),
         ),
       ),

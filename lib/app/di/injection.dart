@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import '../../core/services/auth_deep_link_service.dart';
 import '../../core/services/supabase_service.dart';
 import '../../features/auth/di/auth_injection.dart';
+import '../../features/compare/di/compare_injection.dart';
 import '../../features/create_listing/di/create_listing_injection.dart';
 import '../../features/edit_listing/di/edit_listing_injection.dart';
 import '../../features/favorites/di/favorites_injection.dart';
@@ -41,6 +42,7 @@ Future<void> configureDependencies(SupabaseService supabaseService) async {
   registerProfileFeature(sl);
   registerFilterAlertsFeature(sl);
   registerFavoritesFeature(sl);
+  registerCompareFeature(sl);
   registerCreateListingFeature(sl);
   registerMyListingsFeature(sl);
   registerEditListingFeature(sl);

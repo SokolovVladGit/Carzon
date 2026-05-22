@@ -41,6 +41,7 @@ class CarzonIcons {
   static const IconData chevronRight = LucideIcons.chevronRight;
   static const IconData heartOutline = LucideIcons.heart;
   static const IconData heartFilled = LucideIcons.heart;
+  static const IconData compare = LucideIcons.arrowLeftRight;
 
   // ---- Listing details — feature strip ----
   static const IconData calendar = LucideIcons.calendar;

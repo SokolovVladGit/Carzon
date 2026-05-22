@@ -1196,6 +1196,12 @@ abstract class AppLocalizations {
   /// **'Контакты продавца видны в активных объявлениях.'**
   String get contactPublicNotice;
 
+  /// No description provided for @contactTelegram.
+  ///
+  /// In ru, this message translates to:
+  /// **'Telegram'**
+  String get contactTelegram;
+
   /// No description provided for @contactTelegramLabel.
   ///
   /// In ru, this message translates to:
@@ -3505,6 +3511,396 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'VIN указан'**
   String get listingVinBadgeIndicated;
+
+  /// No description provided for @listingVinReportOpenHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть отчёт по VIN'**
+  String get listingVinReportOpenHint;
+
+  /// No description provided for @listingVinNotProvidedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN-код не указан'**
+  String get listingVinNotProvidedTitle;
+
+  /// No description provided for @listingVinNotProvidedHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продавец не добавил VIN'**
+  String get listingVinNotProvidedHint;
+
+  /// No description provided for @menuCompare.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сравнение'**
+  String get menuCompare;
+
+  /// No description provided for @compareTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сравнение'**
+  String get compareTitle;
+
+  /// No description provided for @compareVehiclesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сравнение автомобилей'**
+  String get compareVehiclesTitle;
+
+  /// No description provided for @compareEmptyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавьте 2–3 автомобиля, чтобы сравнить цену, пробег, характеристики и VIN-статус.'**
+  String get compareEmptyBody;
+
+  /// No description provided for @compareGoToListings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перейти к объявлениям'**
+  String get compareGoToListings;
+
+  /// No description provided for @compareAddOneMoreTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавьте ещё один автомобиль'**
+  String get compareAddOneMoreTitle;
+
+  /// No description provided for @compareAddOneMoreBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для сравнения нужно минимум два автомобиля. Добавьте ещё одно объявление из каталога.'**
+  String get compareAddOneMoreBody;
+
+  /// No description provided for @compareClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить сравнение'**
+  String get compareClear;
+
+  /// No description provided for @compareMaxReachedMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Можно сравнить не более 3 автомобилей'**
+  String get compareMaxReachedMessage;
+
+  /// No description provided for @compareTrayMaxLimitTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Максимум 3 автомобиля'**
+  String get compareTrayMaxLimitTitle;
+
+  /// No description provided for @compareTrayMaxLimitHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалите одно авто, чтобы добавить другое'**
+  String get compareTrayMaxLimitHint;
+
+  /// No description provided for @compareAddedMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавлено к сравнению'**
+  String get compareAddedMessage;
+
+  /// No description provided for @compareRemovedMessage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалено из сравнения'**
+  String get compareRemovedMessage;
+
+  /// No description provided for @compareAddTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить к сравнению'**
+  String get compareAddTooltip;
+
+  /// No description provided for @compareRemoveTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать из сравнения'**
+  String get compareRemoveTooltip;
+
+  /// No description provided for @compareTrayOneVehicle.
+  ///
+  /// In ru, this message translates to:
+  /// **'1 авто в сравнении'**
+  String get compareTrayOneVehicle;
+
+  /// No description provided for @compareTrayVehicleCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count} авто в сравнении'**
+  String compareTrayVehicleCount(int count);
+
+  /// No description provided for @compareTrayAddOneMore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавьте ещё одно'**
+  String get compareTrayAddOneMore;
+
+  /// No description provided for @compareTrayOpen.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сравнить'**
+  String get compareTrayOpen;
+
+  /// No description provided for @compareVehicleCountShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count} авто'**
+  String compareVehicleCountShort(int count);
+
+  /// No description provided for @compareShowOnlyDifferences.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать только отличия'**
+  String get compareShowOnlyDifferences;
+
+  /// No description provided for @compareNoDifferences.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отличий по выбранным полям нет'**
+  String get compareNoDifferences;
+
+  /// No description provided for @compareRemoveVehicle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать из сравнения'**
+  String get compareRemoveVehicle;
+
+  /// No description provided for @compareUnavailableListing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объявление недоступно'**
+  String get compareUnavailableListing;
+
+  /// No description provided for @compareInactiveListing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Снято с публикации'**
+  String get compareInactiveListing;
+
+  /// No description provided for @compareSectionPriceBasics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена и базовое'**
+  String get compareSectionPriceBasics;
+
+  /// No description provided for @compareSectionVehicle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Автомобиль'**
+  String get compareSectionVehicle;
+
+  /// No description provided for @compareSectionSpecs.
+  ///
+  /// In ru, this message translates to:
+  /// **'Характеристики'**
+  String get compareSectionSpecs;
+
+  /// No description provided for @compareSectionTrustData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Доверие / данные'**
+  String get compareSectionTrustData;
+
+  /// No description provided for @compareRowPrice.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена'**
+  String get compareRowPrice;
+
+  /// No description provided for @compareRowYear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Год'**
+  String get compareRowYear;
+
+  /// No description provided for @compareRowMileage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пробег'**
+  String get compareRowMileage;
+
+  /// No description provided for @compareRowCityRegion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Город / регион'**
+  String get compareRowCityRegion;
+
+  /// No description provided for @compareRowStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статус объявления'**
+  String get compareRowStatus;
+
+  /// No description provided for @compareRowMake.
+  ///
+  /// In ru, this message translates to:
+  /// **'Марка'**
+  String get compareRowMake;
+
+  /// No description provided for @compareRowModel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Модель'**
+  String get compareRowModel;
+
+  /// No description provided for @compareRowBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кузов'**
+  String get compareRowBody;
+
+  /// No description provided for @compareRowVehicleType.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип транспорта'**
+  String get compareRowVehicleType;
+
+  /// No description provided for @compareRowRegistration.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регистрация'**
+  String get compareRowRegistration;
+
+  /// No description provided for @compareRowFuel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Топливо'**
+  String get compareRowFuel;
+
+  /// No description provided for @compareRowEngine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Двигатель'**
+  String get compareRowEngine;
+
+  /// No description provided for @compareRowPower.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мощность'**
+  String get compareRowPower;
+
+  /// No description provided for @compareRowTransmission.
+  ///
+  /// In ru, this message translates to:
+  /// **'Коробка'**
+  String get compareRowTransmission;
+
+  /// No description provided for @compareRowDrivetrain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Привод'**
+  String get compareRowDrivetrain;
+
+  /// No description provided for @compareRowDisplacement.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объём'**
+  String get compareRowDisplacement;
+
+  /// No description provided for @compareRowVin.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN'**
+  String get compareRowVin;
+
+  /// No description provided for @compareRowPhotos.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото'**
+  String get compareRowPhotos;
+
+  /// No description provided for @compareRowPublishedAt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дата публикации'**
+  String get compareRowPublishedAt;
+
+  /// No description provided for @compareVinProvided.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN указан'**
+  String get compareVinProvided;
+
+  /// No description provided for @compareVinNotProvided.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN не указан'**
+  String get compareVinNotProvided;
+
+  /// No description provided for @compareValueMissing.
+  ///
+  /// In ru, this message translates to:
+  /// **'—'**
+  String get compareValueMissing;
+
+  /// No description provided for @listingVinReportLoadingCta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Загружаем отчёт по VIN…'**
+  String get listingVinReportLoadingCta;
+
+  /// No description provided for @listingVinReportPendingCta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отчёт по VIN готовится'**
+  String get listingVinReportPendingCta;
+
+  /// No description provided for @listingVinReportNoDataCta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные по VIN не найдены'**
+  String get listingVinReportNoDataCta;
+
+  /// No description provided for @listingVinReportUnavailableCta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отчёт по VIN недоступен'**
+  String get listingVinReportUnavailableCta;
+
+  /// No description provided for @listingVinReportPendingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отчёт по VIN пока готовится'**
+  String get listingVinReportPendingTitle;
+
+  /// No description provided for @listingVinReportPendingBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN добавлен продавцом. Данные расшифровки появятся после обработки.'**
+  String get listingVinReportPendingBody;
+
+  /// No description provided for @listingVinReportNoDataTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные по VIN не найдены'**
+  String get listingVinReportNoDataTitle;
+
+  /// No description provided for @listingVinReportNoDataBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN добавлен продавцом, но сейчас нет доступной публичной расшифровки по этому VIN.'**
+  String get listingVinReportNoDataBody;
+
+  /// No description provided for @listingVinReportNoDataNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это не означает проверку истории автомобиля.'**
+  String get listingVinReportNoDataNote;
+
+  /// No description provided for @listingVinReportUnavailableTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось получить отчёт по VIN'**
+  String get listingVinReportUnavailableTitle;
+
+  /// No description provided for @listingVinReportUnavailableBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN добавлен продавцом, но сейчас отчёт недоступен. Попробуйте позже.'**
+  String get listingVinReportUnavailableBody;
 
   /// No description provided for @listingVinTrustSheetTitle.
   ///

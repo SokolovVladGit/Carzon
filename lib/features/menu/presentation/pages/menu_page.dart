@@ -10,6 +10,8 @@ import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../../shared/ui/carzon_icons.dart';
+import '../../../compare/presentation/cubit/compare_cubit.dart';
+import '../../../compare/presentation/cubit/compare_state.dart';
 import '../../../auth/domain/entities/auth_user.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -130,6 +132,16 @@ class _MenuPageState extends State<MenuPage> {
                       icon: CarzonIcons.heartOutline,
                       title: l10n.profileFavorites,
                       onTap: () => context.go(AppRoutes.favorites),
+                    ),
+                    BlocBuilder<CompareCubit, CompareState>(
+                      builder: (context, compareState) {
+                        return _PremiumMenuRow(
+                          icon: CarzonIcons.compare,
+                          title: l10n.menuCompare,
+                          badgeCount: compareState.count,
+                          onTap: () => context.go(AppRoutes.compare),
+                        );
+                      },
                     ),
                     _PremiumMenuRow(
                       icon: CarzonIcons.chat,
@@ -256,18 +268,64 @@ class _PremiumGroupedCard extends StatelessWidget {
   }
 }
 
+/// Compact count pill for menu rows (compare set size, etc.).
+class _MenuCountBadge extends StatelessWidget {
+  const _MenuCountBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final isZero = count == 0;
+    final bg = isZero
+        ? scheme.surfaceContainerHighest
+        : scheme.primaryContainer;
+    final fg = isZero
+        ? scheme.onSurfaceVariant.withValues(alpha: 0.75)
+        : scheme.onPrimaryContainer;
+
+    return Container(
+      key: ValueKey('menu_count_badge_$count'),
+      constraints: const BoxConstraints(minWidth: 24, minHeight: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+        border: isZero
+            ? Border.all(color: scheme.outlineVariant.withValues(alpha: 0.4))
+            : null,
+      ),
+      child: Text(
+        '$count',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w700,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
 class _PremiumMenuRow extends StatelessWidget {
   const _PremiumMenuRow({
     required this.icon,
     required this.title,
     required this.onTap,
     this.showDividerAfter = true,
+    this.badgeCount,
   });
 
   final IconData icon;
   final String title;
   final VoidCallback onTap;
   final bool showDividerAfter;
+
+  /// Optional numeric badge (e.g. compare set size 0–3).
+  final int? badgeCount;
 
   static double get _dividerIndent =>
       16 + _PremiumIconCapsule.size + 14; // padding + capsule + gap
@@ -306,6 +364,10 @@ class _PremiumMenuRow extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (badgeCount != null) ...[
+                    _MenuCountBadge(count: badgeCount!),
+                    const SizedBox(width: 8),
+                  ],
                   Icon(
                     CarzonIcons.chevronRight,
                     size: 19,

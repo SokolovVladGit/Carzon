@@ -6,6 +6,7 @@ class NhtsaVinSummaryField {
     required this.label,
     required this.value,
     this.stackValue = false,
+    this.fieldKey,
   });
 
   final String label;
@@ -13,6 +14,9 @@ class NhtsaVinSummaryField {
 
   /// Label above value (wrap-friendly) for long catalog strings.
   final bool stackValue;
+
+  /// Summary map key (e.g. make, model) for layout selection in buyer report.
+  final String? fieldKey;
 }
 
 /// Grouped NHTSA fields for buyer report layout.
@@ -66,7 +70,9 @@ bool nhtsaVinSummaryPrefersStackedValue(String fieldKey) {
     case 'manufacturer':
     case 'body_type':
     case 'vehicle_type':
+    case 'trim':
     case 'series':
+    case 'transmission':
     case 'plant_company':
     case 'engine':
     case 'gross_vehicle_weight_rating':
@@ -176,6 +182,7 @@ NhtsaVinSummaryGroup? _buildGroup(
         label: def.label(l10n),
         value: value,
         stackValue: nhtsaVinSummaryPrefersStackedValue(def.key),
+        fieldKey: def.key,
       ),
     );
   }
