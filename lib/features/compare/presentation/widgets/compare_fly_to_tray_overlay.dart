@@ -19,7 +19,8 @@ class CompareFlyToTrayOverlay extends StatefulWidget {
   static const Duration duration = Duration(milliseconds: 500);
 
   @override
-  State<CompareFlyToTrayOverlay> createState() => _CompareFlyToTrayOverlayState();
+  State<CompareFlyToTrayOverlay> createState() =>
+      _CompareFlyToTrayOverlayState();
 }
 
 class _CompareFlyToTrayOverlayState extends State<CompareFlyToTrayOverlay>

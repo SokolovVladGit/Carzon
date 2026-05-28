@@ -9,7 +9,7 @@ import '../datasources/filter_alerts_remote_datasource.dart';
 
 class FilterAlertsRepositoryImpl implements FilterAlertsRepository {
   FilterAlertsRepositoryImpl(this._remote)
-      : _logger = AppLogger('FilterAlertsRepository');
+    : _logger = AppLogger('FilterAlertsRepository');
 
   final FilterAlertsRemoteDataSource _remote;
   final AppLogger _logger;
@@ -62,7 +62,9 @@ class FilterAlertsRepositoryImpl implements FilterAlertsRepository {
   }
 
   @override
-  Future<Result<FilterAlertSettings>> setNotificationsEnabled(bool enabled) async {
+  Future<Result<FilterAlertSettings>> setNotificationsEnabled(
+    bool enabled,
+  ) async {
     try {
       final row = await _remote.setNotificationsEnabled(enabled);
       return Success(row);

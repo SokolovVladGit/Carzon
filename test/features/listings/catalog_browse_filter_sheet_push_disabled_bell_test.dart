@@ -63,21 +63,21 @@ FilterAlertSettings _row({
   required ListingDiscoveryCriteria? criteria,
   required bool notificationsEnabled,
 }) => FilterAlertSettings(
-      userId: 'u',
-      criteria: criteria,
-      notificationsEnabled: notificationsEnabled,
-      createdAt: DateTime.utc(2026, 5, 1),
-      updatedAt: DateTime.utc(2026, 5, 2),
-    );
+  userId: 'u',
+  criteria: criteria,
+  notificationsEnabled: notificationsEnabled,
+  createdAt: DateTime.utc(2026, 5, 1),
+  updatedAt: DateTime.utc(2026, 5, 2),
+);
 
 NotificationPreferences _prefsAllOn() => NotificationPreferences(
-      userId: 'u',
-      globalEnabled: true,
-      messagesEnabled: true,
-      filterAlertsEnabled: true,
-      createdAt: DateTime.utc(2026, 5, 1),
-      updatedAt: DateTime.utc(2026, 5, 2),
-    );
+  userId: 'u',
+  globalEnabled: true,
+  messagesEnabled: true,
+  filterAlertsEnabled: true,
+  createdAt: DateTime.utc(2026, 5, 1),
+  updatedAt: DateTime.utc(2026, 5, 2),
+);
 
 /// Loads a deterministic push-disabled dotenv snapshot. Required keys
 /// remain present so unrelated `Env._required` accesses cannot trip the
@@ -94,9 +94,7 @@ PUSH_NOTIFICATIONS_ENABLED=false
 
 void main() {
   setUpAll(() {
-    registerFallbackValue(
-      _row(criteria: null, notificationsEnabled: false),
-    );
+    registerFallbackValue(_row(criteria: null, notificationsEnabled: false));
     registerFallbackValue(const ListingDiscoveryCriteria());
   });
 
@@ -148,11 +146,7 @@ void main() {
       const AuthUser(id: 'id', email: 'e@m.com'),
     );
     when(() => auth.state).thenReturn(state);
-    whenListen(
-      auth,
-      const Stream<AuthState>.empty(),
-      initialState: state,
-    );
+    whenListen(auth, const Stream<AuthState>.empty(), initialState: state);
     return auth;
   }
 
@@ -174,10 +168,12 @@ void main() {
       // save, so the mock must reflect the persisted criteria for the
       // sheet bell to render the saved-no-delivery glyph deterministically.
       var backend = _row(criteria: null, notificationsEnabled: false);
-      when(() => filterRepo.loadMine())
-          .thenAnswer((_) async => Success(backend));
-      when(() => notifRepo.getMyPreferences())
-          .thenAnswer((_) async => Success(_prefsAllOn()));
+      when(
+        () => filterRepo.loadMine(),
+      ).thenAnswer((_) async => Success(backend));
+      when(
+        () => notifRepo.getMyPreferences(),
+      ).thenAnswer((_) async => Success(_prefsAllOn()));
 
       ListingDiscoveryCriteria? lastSavedCriteria;
       bool? lastSavedNotificationsEnabled;
@@ -208,16 +204,18 @@ void main() {
       await alertsCubit.refresh();
 
       final formKey = GlobalKey<ListingsFilterFormState>();
-      await tester.pumpWidget(buildSheet(
-        alertsCubit: alertsCubit,
-        auth: auth,
-        formKey: formKey,
-        seedState: const ListingsState(
-          make: 'Toyota',
-          regionFilter: MarketRegionFilter.transnistria,
+      await tester.pumpWidget(
+        buildSheet(
+          alertsCubit: alertsCubit,
+          auth: auth,
+          formKey: formKey,
+          seedState: const ListingsState(
+            make: 'Toyota',
+            regionFilter: MarketRegionFilter.transnistria,
+          ),
+          onApply: (_) {},
         ),
-        onApply: (_) {},
-      ));
+      );
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));
@@ -226,10 +224,7 @@ void main() {
       // Criteria persisted with notifications_enabled = false (delivery
       // intentionally stays off in a push-disabled build).
       verify(
-        () => filterRepo.saveCriteria(
-          any(),
-          notificationsEnabled: false,
-        ),
+        () => filterRepo.saveCriteria(any(), notificationsEnabled: false),
       ).called(1);
       expect(lastSavedCriteria?.make, 'Toyota');
       expect(lastSavedNotificationsEnabled, isFalse);
@@ -280,10 +275,7 @@ void main() {
           matching: find.byType(Icon),
         ),
       );
-      expect(
-        icons.any((i) => i.icon == Icons.notifications_active),
-        isFalse,
-      );
+      expect(icons.any((i) => i.icon == Icons.notifications_active), isFalse);
       // Saved-off tooltip explicitly invites the user to tap to remove
       // the alert — toggle-off discoverability invariant.
       final saveOffTooltip = tester
@@ -298,53 +290,53 @@ void main() {
     },
   );
 
-  testWidgets(
-    'push-disabled: second tap on the bell clears the saved alert, '
-    'inline banner disappears, bell returns to inactive glyph',
-    (tester) async {
-      _loadPushDisabledEnv();
-      tester.view.physicalSize = const Size(420, 1400);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
+  testWidgets('push-disabled: second tap on the bell clears the saved alert, '
+      'inline banner disappears, bell returns to inactive glyph', (
+    tester,
+  ) async {
+    _loadPushDisabledEnv();
+    tester.view.physicalSize = const Size(420, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
 
-      final auth = signedInAuth();
-      final filterRepo = _MockFilterAlertsRepository();
-      final notifRepo = _MockNotificationsRepository();
-      final orch = _MockDeliveryOrchestrator();
+    final auth = signedInAuth();
+    final filterRepo = _MockFilterAlertsRepository();
+    final notifRepo = _MockNotificationsRepository();
+    final orch = _MockDeliveryOrchestrator();
 
-      var backend = _row(criteria: null, notificationsEnabled: false);
-      when(() => filterRepo.loadMine())
-          .thenAnswer((_) async => Success(backend));
-      when(() => notifRepo.getMyPreferences())
-          .thenAnswer((_) async => Success(_prefsAllOn()));
+    var backend = _row(criteria: null, notificationsEnabled: false);
+    when(() => filterRepo.loadMine()).thenAnswer((_) async => Success(backend));
+    when(
+      () => notifRepo.getMyPreferences(),
+    ).thenAnswer((_) async => Success(_prefsAllOn()));
 
-      when(
-        () => filterRepo.saveCriteria(
-          any(),
-          notificationsEnabled: any(named: 'notificationsEnabled'),
-        ),
-      ).thenAnswer((inv) async {
-        final crit =
-            inv.positionalArguments.first as ListingDiscoveryCriteria;
-        backend = _row(criteria: crit, notificationsEnabled: false);
-        return Success(backend);
-      });
-      when(() => filterRepo.clearPersistedCriteria()).thenAnswer((_) async {
-        backend = _row(criteria: null, notificationsEnabled: false);
-        return Success(backend);
-      });
+    when(
+      () => filterRepo.saveCriteria(
+        any(),
+        notificationsEnabled: any(named: 'notificationsEnabled'),
+      ),
+    ).thenAnswer((inv) async {
+      final crit = inv.positionalArguments.first as ListingDiscoveryCriteria;
+      backend = _row(criteria: crit, notificationsEnabled: false);
+      return Success(backend);
+    });
+    when(() => filterRepo.clearPersistedCriteria()).thenAnswer((_) async {
+      backend = _row(criteria: null, notificationsEnabled: false);
+      return Success(backend);
+    });
 
-      final alertsCubit = BrowseCatalogFilterAlertsCubit(
-        getSettings: GetFilterAlertSettings(filterRepo),
-        saveCriteria: SaveFilterAlertCriteria(filterRepo),
-        clearCriteria: ClearFilterAlertCriteria(filterRepo),
-        notificationsRepository: notifRepo,
-        deliveryOrchestrator: orch,
-      );
-      await alertsCubit.refresh();
+    final alertsCubit = BrowseCatalogFilterAlertsCubit(
+      getSettings: GetFilterAlertSettings(filterRepo),
+      saveCriteria: SaveFilterAlertCriteria(filterRepo),
+      clearCriteria: ClearFilterAlertCriteria(filterRepo),
+      notificationsRepository: notifRepo,
+      deliveryOrchestrator: orch,
+    );
+    await alertsCubit.refresh();
 
-      final formKey = GlobalKey<ListingsFilterFormState>();
-      await tester.pumpWidget(buildSheet(
+    final formKey = GlobalKey<ListingsFilterFormState>();
+    await tester.pumpWidget(
+      buildSheet(
         alertsCubit: alertsCubit,
         auth: auth,
         formKey: formKey,
@@ -353,71 +345,68 @@ void main() {
           regionFilter: MarketRegionFilter.transnistria,
         ),
         onApply: (_) {},
-      ));
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      // First tap saves the alert; the saved/off glyph is now the
-      // only visible saved-state surface (no inline banner anymore).
-      await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));
-      await tester.pumpAndSettle();
+    // First tap saves the alert; the saved/off glyph is now the
+    // only visible saved-state surface (no inline banner anymore).
+    await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));
+    await tester.pumpAndSettle();
 
-      final l10n = ruStrings();
-      expect(
-        find.byKey(CatalogFilterAlertAccent.sheetBellSavedNoDeliveryIconKey),
-        findsOneWidget,
-      );
-      final savedOffTooltip = tester
-          .widget<IconButton>(
-            find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey),
-          )
-          .tooltip;
-      expect(
-        savedOffTooltip,
-        l10n.catalogBrowseFilterBellSavedDeliveryUnavailableTooltip,
-        reason:
-            'Saved/off tooltip must advertise tap-to-remove without any '
-            'build-flag copy.',
-      );
-      expect(
-        find.textContaining('Доставка push'),
-        findsNothing,
-        reason: 'No technical banner copy after first tap.',
-      );
+    final l10n = ruStrings();
+    expect(
+      find.byKey(CatalogFilterAlertAccent.sheetBellSavedNoDeliveryIconKey),
+      findsOneWidget,
+    );
+    final savedOffTooltip = tester
+        .widget<IconButton>(
+          find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey),
+        )
+        .tooltip;
+    expect(
+      savedOffTooltip,
+      l10n.catalogBrowseFilterBellSavedDeliveryUnavailableTooltip,
+      reason:
+          'Saved/off tooltip must advertise tap-to-remove without any '
+          'build-flag copy.',
+    );
+    expect(
+      find.textContaining('Доставка push'),
+      findsNothing,
+      reason: 'No technical banner copy after first tap.',
+    );
 
-      // Second tap on the SAME draft must clear the saved alert via
-      // the new toggle path. Bell falls back to the inactive glyph
-      // and no SnackBar bleeds anywhere.
-      await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));
-      await tester.pumpAndSettle();
+    // Second tap on the SAME draft must clear the saved alert via
+    // the new toggle path. Bell falls back to the inactive glyph
+    // and no SnackBar bleeds anywhere.
+    await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));
+    await tester.pumpAndSettle();
 
-      verify(() => filterRepo.clearPersistedCriteria()).called(1);
-      expect(
-        find.byKey(CatalogFilterAlertAccent.sheetBellSavedNoDeliveryIconKey),
-        findsNothing,
-      );
-      // Inactive tooltip + the inactive glyph come back.
-      final inactiveTooltip = tester
-          .widget<IconButton>(
-            find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey),
-          )
-          .tooltip;
-      expect(inactiveTooltip, l10n.catalogBrowseFilterBellInactiveTooltip);
-      final iconsAfter = tester
-          .widgetList<Icon>(
-            find.descendant(
-              of: find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey),
-              matching: find.byType(Icon),
-            ),
-          )
-          .toList();
-      expect(
-        iconsAfter.any((i) => i.icon == Icons.notifications_none),
-        isTrue,
-      );
-      // No bleed: clear path emits no root SnackBar.
-      expect(find.byType(SnackBar), findsNothing);
-    },
-  );
+    verify(() => filterRepo.clearPersistedCriteria()).called(1);
+    expect(
+      find.byKey(CatalogFilterAlertAccent.sheetBellSavedNoDeliveryIconKey),
+      findsNothing,
+    );
+    // Inactive tooltip + the inactive glyph come back.
+    final inactiveTooltip = tester
+        .widget<IconButton>(
+          find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey),
+        )
+        .tooltip;
+    expect(inactiveTooltip, l10n.catalogBrowseFilterBellInactiveTooltip);
+    final iconsAfter = tester
+        .widgetList<Icon>(
+          find.descendant(
+            of: find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey),
+            matching: find.byType(Icon),
+          ),
+        )
+        .toList();
+    expect(iconsAfter.any((i) => i.icon == Icons.notifications_none), isTrue);
+    // No bleed: clear path emits no root SnackBar.
+    expect(find.byType(SnackBar), findsNothing);
+  });
 
   testWidgets(
     'push-disabled: Show cars CTA stays visually stable while bellBusy '
@@ -436,8 +425,9 @@ void main() {
       when(() => filterRepo.loadMine()).thenAnswer(
         (_) async => Success(_row(criteria: null, notificationsEnabled: false)),
       );
-      when(() => notifRepo.getMyPreferences())
-          .thenAnswer((_) async => Success(_prefsAllOn()));
+      when(
+        () => notifRepo.getMyPreferences(),
+      ).thenAnswer((_) async => Success(_prefsAllOn()));
 
       final alertsCubit = BrowseCatalogFilterAlertsCubit(
         getSettings: GetFilterAlertSettings(filterRepo),
@@ -451,26 +441,32 @@ void main() {
       final formKey = GlobalKey<ListingsFilterFormState>();
       bool applyFired = false;
 
-      await tester.pumpWidget(buildSheet(
-        alertsCubit: alertsCubit,
-        auth: auth,
-        formKey: formKey,
-        seedState: const ListingsState(
-          make: 'Toyota',
-          regionFilter: MarketRegionFilter.transnistria,
+      await tester.pumpWidget(
+        buildSheet(
+          alertsCubit: alertsCubit,
+          auth: auth,
+          formKey: formKey,
+          seedState: const ListingsState(
+            make: 'Toyota',
+            regionFilter: MarketRegionFilter.transnistria,
+          ),
+          onApply: (_) {
+            applyFired = true;
+          },
         ),
-        onApply: (_) {
-          applyFired = true;
-        },
-      ));
+      );
       await tester.pumpAndSettle();
 
       final l10n = ruStrings();
-      final applyFinder = find.widgetWithText(FilledButton, l10n.filterShowCars);
+      final applyFinder = find.widgetWithText(
+        FilledButton,
+        l10n.filterShowCars,
+      );
       expect(applyFinder, findsOneWidget);
       // Snapshot the enabled CTA before flipping bellBusy.
-      final enabledOnPressed =
-          tester.widget<FilledButton>(applyFinder).onPressed;
+      final enabledOnPressed = tester
+          .widget<FilledButton>(applyFinder)
+          .onPressed;
       expect(enabledOnPressed, isNotNull);
 
       // Synthesize the in-flight bell operation. Toggling `bellBusy`
@@ -481,7 +477,8 @@ void main() {
       expect(
         tester.widget<FilledButton>(applyFinder).onPressed,
         isNotNull,
-        reason: 'Show cars must stay enabled while the bell is busy '
+        reason:
+            'Show cars must stay enabled while the bell is busy '
             '(no visual flicker between toggles).',
       );
 
@@ -494,14 +491,14 @@ void main() {
       expect(applyFired, isTrue);
 
       // Bell self-disables: tapping it while busy is rejected.
-      final bellButton = tester
-          .widget<IconButton>(
-            find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey),
-          );
+      final bellButton = tester.widget<IconButton>(
+        find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey),
+      );
       expect(
         bellButton.onPressed,
         isNull,
-        reason: 'Bell IconButton must drop taps while `bellBusy=true` '
+        reason:
+            'Bell IconButton must drop taps while `bellBusy=true` '
             'to prevent duplicate save/clear round-trips.',
       );
 
@@ -516,10 +513,7 @@ void main() {
             .onPressed,
         isNotNull,
       );
-      expect(
-        tester.widget<FilledButton>(applyFinder).onPressed,
-        isNotNull,
-      );
+      expect(tester.widget<FilledButton>(applyFinder).onPressed, isNotNull);
     },
   );
 
@@ -540,8 +534,9 @@ void main() {
       when(() => filterRepo.loadMine()).thenAnswer(
         (_) async => Success(_row(criteria: null, notificationsEnabled: false)),
       );
-      when(() => notifRepo.getMyPreferences())
-          .thenAnswer((_) async => Success(_prefsAllOn()));
+      when(
+        () => notifRepo.getMyPreferences(),
+      ).thenAnswer((_) async => Success(_prefsAllOn()));
 
       final alertsCubit = BrowseCatalogFilterAlertsCubit(
         getSettings: GetFilterAlertSettings(filterRepo),
@@ -554,24 +549,24 @@ void main() {
 
       final formKey = GlobalKey<ListingsFilterFormState>();
       bool applyFired = false;
-      await tester.pumpWidget(buildSheet(
-        alertsCubit: alertsCubit,
-        auth: auth,
-        formKey: formKey,
-        seedState: const ListingsState(
-          make: 'Toyota',
-          regionFilter: MarketRegionFilter.transnistria,
+      await tester.pumpWidget(
+        buildSheet(
+          alertsCubit: alertsCubit,
+          auth: auth,
+          formKey: formKey,
+          seedState: const ListingsState(
+            make: 'Toyota',
+            regionFilter: MarketRegionFilter.transnistria,
+          ),
+          onApply: (_) {
+            applyFired = true;
+          },
         ),
-        onApply: (_) {
-          applyFired = true;
-        },
-      ));
+      );
       await tester.pumpAndSettle();
 
       final l10n = ruStrings();
-      await tester.tap(
-        find.widgetWithText(FilledButton, l10n.filterShowCars),
-      );
+      await tester.tap(find.widgetWithText(FilledButton, l10n.filterShowCars));
       await tester.pumpAndSettle();
 
       expect(applyFired, isTrue);
@@ -590,10 +585,7 @@ void main() {
         find.text(l10n.filterAlertNotificationsPushDisabled),
         findsNothing,
       );
-      expect(
-        find.textContaining('Доставка push'),
-        findsNothing,
-      );
+      expect(find.textContaining('Доставка push'), findsNothing);
       expect(
         find.byKey(CatalogFilterAlertAccent.sheetBellSavedNoDeliveryIconKey),
         findsNothing,
@@ -631,10 +623,12 @@ void main() {
         marketRegion: MarketRegion.transnistria,
       );
       var backend = _row(criteria: savedCrit, notificationsEnabled: false);
-      when(() => filterRepo.loadMine())
-          .thenAnswer((_) async => Success(backend));
-      when(() => notifRepo.getMyPreferences())
-          .thenAnswer((_) async => Success(_prefsAllOn()));
+      when(
+        () => filterRepo.loadMine(),
+      ).thenAnswer((_) async => Success(backend));
+      when(
+        () => notifRepo.getMyPreferences(),
+      ).thenAnswer((_) async => Success(_prefsAllOn()));
       when(() => filterRepo.clearPersistedCriteria()).thenAnswer((_) async {
         backend = _row(criteria: null, notificationsEnabled: false);
         return Success(backend);
@@ -655,13 +649,15 @@ void main() {
       );
 
       final formKey = GlobalKey<ListingsFilterFormState>();
-      await tester.pumpWidget(buildSheet(
-        alertsCubit: alertsCubit,
-        auth: auth,
-        formKey: formKey,
-        seedState: appliedState,
-        onApply: (_) {},
-      ));
+      await tester.pumpWidget(
+        buildSheet(
+          alertsCubit: alertsCubit,
+          auth: auth,
+          formKey: formKey,
+          seedState: appliedState,
+          onApply: (_) {},
+        ),
+      );
       // Single pump only — the canonical-applied-state fallback in the
       // bell must produce the saved-off glyph on this very first frame.
       await tester.pump();
@@ -717,14 +713,13 @@ void main() {
         make: 'BMW',
         marketRegion: MarketRegion.transnistria,
       );
-      final savedRow = _row(
-        criteria: savedCrit,
-        notificationsEnabled: false,
-      );
-      when(() => filterRepo.loadMine())
-          .thenAnswer((_) async => Success(savedRow));
-      when(() => notifRepo.getMyPreferences())
-          .thenAnswer((_) async => Success(_prefsAllOn()));
+      final savedRow = _row(criteria: savedCrit, notificationsEnabled: false);
+      when(
+        () => filterRepo.loadMine(),
+      ).thenAnswer((_) async => Success(savedRow));
+      when(
+        () => notifRepo.getMyPreferences(),
+      ).thenAnswer((_) async => Success(_prefsAllOn()));
 
       final alertsCubit = BrowseCatalogFilterAlertsCubit(
         getSettings: GetFilterAlertSettings(filterRepo),
@@ -759,8 +754,7 @@ void main() {
               body: Builder(
                 builder: (context) => ListingsFilterHost(
                   filterFormExternalKey: formKey,
-                  seed:
-                      ListingsFilterFormSeed.fromListingsState(appliedState),
+                  seed: ListingsFilterFormSeed.fromListingsState(appliedState),
                   onDismiss: () {},
                   onApply: (_) {},
                   browseHeaderTrailing: CatalogBrowseFilterAlertSheetBell(
@@ -807,14 +801,13 @@ void main() {
         make: 'BMW',
         marketRegion: MarketRegion.transnistria,
       );
-      final savedRow = _row(
-        criteria: savedCrit,
-        notificationsEnabled: false,
-      );
-      when(() => filterRepo.loadMine())
-          .thenAnswer((_) async => Success(savedRow));
-      when(() => notifRepo.getMyPreferences())
-          .thenAnswer((_) async => Success(_prefsAllOn()));
+      final savedRow = _row(criteria: savedCrit, notificationsEnabled: false);
+      when(
+        () => filterRepo.loadMine(),
+      ).thenAnswer((_) async => Success(savedRow));
+      when(
+        () => notifRepo.getMyPreferences(),
+      ).thenAnswer((_) async => Success(_prefsAllOn()));
 
       final alertsCubit = BrowseCatalogFilterAlertsCubit(
         getSettings: GetFilterAlertSettings(filterRepo),
@@ -831,13 +824,15 @@ void main() {
       );
 
       final formKey = GlobalKey<ListingsFilterFormState>();
-      await tester.pumpWidget(buildSheet(
-        alertsCubit: alertsCubit,
-        auth: auth,
-        formKey: formKey,
-        seedState: appliedState,
-        onApply: (_) {},
-      ));
+      await tester.pumpWidget(
+        buildSheet(
+          alertsCubit: alertsCubit,
+          auth: auth,
+          formKey: formKey,
+          seedState: appliedState,
+          onApply: (_) {},
+        ),
+      );
       await tester.pumpAndSettle();
 
       // Bell must be inactive — saved BMW alert does not match applied
@@ -857,7 +852,8 @@ void main() {
       expect(
         icons.any((i) => i.icon == Icons.notifications_none),
         isTrue,
-        reason: 'Inactive glyph (`notifications_none`) is the expected '
+        reason:
+            'Inactive glyph (`notifications_none`) is the expected '
             'default for a draft that does not match saved criteria.',
       );
     },

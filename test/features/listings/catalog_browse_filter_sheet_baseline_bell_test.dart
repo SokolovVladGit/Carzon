@@ -56,10 +56,7 @@ class _MockDeliveryOrchestrator extends Mock
 /// state, clears it on draft mutation, and publishes new payloads via
 /// the bell's `onInlineNoticeRequested` callback.
 class _SheetHarness extends StatefulWidget {
-  const _SheetHarness({
-    required this.formKey,
-    required this.seedState,
-  });
+  const _SheetHarness({required this.formKey, required this.seedState});
 
   final GlobalKey<ListingsFilterFormState> formKey;
   final ListingsState seedState;
@@ -79,8 +76,7 @@ class _SheetHarnessState extends State<_SheetHarness> {
         seed: ListingsFilterFormSeed.fromListingsState(widget.seedState),
         onDismiss: () {},
         onApply: (_) {},
-        onBrowseDraftMutated: () =>
-            setState(() => _inlineNotice = null),
+        onBrowseDraftMutated: () => setState(() => _inlineNotice = null),
         onBrowseFeedReset: () => setState(() => _inlineNotice = null),
         browseHeaderTrailing: CatalogBrowseFilterAlertSheetBell(
           sheetFormKey: widget.formKey,
@@ -125,11 +121,14 @@ void main() {
       return auth;
     }
 
-    Future<(
-      BrowseCatalogFilterAlertsCubit,
-      _MockDeliveryOrchestrator,
-      _MockFilterAlertsRepository
-    )> setupCubit() async {
+    Future<
+      (
+        BrowseCatalogFilterAlertsCubit,
+        _MockDeliveryOrchestrator,
+        _MockFilterAlertsRepository,
+      )
+    >
+    setupCubit() async {
       final filterRepo = _MockFilterAlertsRepository();
       final notifRepo = _MockNotificationsRepository();
       final orch = _MockDeliveryOrchestrator();
@@ -175,7 +174,9 @@ void main() {
     }) {
       return MultiBlocProvider(
         providers: [
-          BlocProvider<BrowseCatalogFilterAlertsCubit>.value(value: alertsCubit),
+          BlocProvider<BrowseCatalogFilterAlertsCubit>.value(
+            value: alertsCubit,
+          ),
           BlocProvider<AuthCubit>.value(value: auth),
         ],
         child: MaterialApp(
@@ -201,11 +202,9 @@ void main() {
         final (alertsCubit, orch, filterRepo) = await setupCubit();
         final formKey = GlobalKey<ListingsFilterFormState>();
 
-        await tester.pumpWidget(hostApp(
-          auth: auth,
-          alertsCubit: alertsCubit,
-          formKey: formKey,
-        ));
+        await tester.pumpWidget(
+          hostApp(auth: auth, alertsCubit: alertsCubit, formKey: formKey),
+        );
         await tester.pumpAndSettle();
 
         expect(
@@ -225,15 +224,15 @@ void main() {
           ),
         );
 
-        final notice =
-            find.byKey(CatalogFilterAlertAccent.sheetTooBroadNoticeKey);
+        final notice = find.byKey(
+          CatalogFilterAlertAccent.sheetTooBroadNoticeKey,
+        );
         expect(notice, findsOneWidget);
         final ru = ruStrings();
         expect(
           find.descendant(
             of: notice,
-            matching:
-                find.text(ru.catalogBrowseFilterAlertTooBroadInlineTitle),
+            matching: find.text(ru.catalogBrowseFilterAlertTooBroadInlineTitle),
           ),
           findsOneWidget,
         );
@@ -252,57 +251,53 @@ void main() {
       },
     );
 
-    testWidgets(
-      'host-level reset (footer "Clear" button) dismisses the inline '
-      '"refine filter" notice — the host wiring forwards through '
-      'onBrowseFeedReset so the sheet can drop the stale notice',
-      (tester) async {
-        tester.view.physicalSize = const Size(420, 1400);
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.reset);
+    testWidgets('host-level reset (footer "Clear" button) dismisses the inline '
+        '"refine filter" notice — the host wiring forwards through '
+        'onBrowseFeedReset so the sheet can drop the stale notice', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(420, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-        final auth = buildSignedInAuth();
-        final (alertsCubit, _, _) = await setupCubit();
-        final formKey = GlobalKey<ListingsFilterFormState>();
+      final auth = buildSignedInAuth();
+      final (alertsCubit, _, _) = await setupCubit();
+      final formKey = GlobalKey<ListingsFilterFormState>();
 
-        await tester.pumpWidget(hostApp(
-          auth: auth,
-          alertsCubit: alertsCubit,
-          formKey: formKey,
-        ));
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        hostApp(auth: auth, alertsCubit: alertsCubit, formKey: formKey),
+      );
+      await tester.pumpAndSettle();
 
-        await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));
-        await tester.pumpAndSettle();
-        expect(
-          find.byKey(CatalogFilterAlertAccent.sheetTooBroadNoticeKey),
-          findsOneWidget,
-        );
+      await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(CatalogFilterAlertAccent.sheetTooBroadNoticeKey),
+        findsOneWidget,
+      );
 
-        // Drive a draft mutation via the sticky footer's reset button
-        // (`OutlinedButton` with the `filterClear` label). The host's
-        // `_onResetTap` calls `resetDraftToVanilla()` and then invokes
-        // `widget.onBrowseFeedReset?.call()`, which the sheet harness
-        // wires to clear the inline notice (mirroring the listings-page
-        // sheet builder). Tapping the always-visible footer avoids the
-        // off-screen chip + scrolling hit-test fragility while still
-        // exercising the host-level draft mutation path.
-        final ru = ruStrings();
-        final resetButton =
-            find.widgetWithText(OutlinedButton, ru.filterClear);
-        expect(resetButton, findsOneWidget);
-        await tester.tap(resetButton);
-        await tester.pumpAndSettle();
+      // Drive a draft mutation via the sticky footer's reset button
+      // (`OutlinedButton` with the `filterClear` label). The host's
+      // `_onResetTap` calls `resetDraftToVanilla()` and then invokes
+      // `widget.onBrowseFeedReset?.call()`, which the sheet harness
+      // wires to clear the inline notice (mirroring the listings-page
+      // sheet builder). Tapping the always-visible footer avoids the
+      // off-screen chip + scrolling hit-test fragility while still
+      // exercising the host-level draft mutation path.
+      final ru = ruStrings();
+      final resetButton = find.widgetWithText(OutlinedButton, ru.filterClear);
+      expect(resetButton, findsOneWidget);
+      await tester.tap(resetButton);
+      await tester.pumpAndSettle();
 
-        expect(
-          find.byKey(CatalogFilterAlertAccent.sheetTooBroadNoticeKey),
-          findsNothing,
-          reason:
-              'Draft edits must dismiss the "refine filter" inline notice '
-              'so the user can iterate without manual close.',
-        );
-      },
-    );
+      expect(
+        find.byKey(CatalogFilterAlertAccent.sheetTooBroadNoticeKey),
+        findsNothing,
+        reason:
+            'Draft edits must dismiss the "refine filter" inline notice '
+            'so the user can iterate without manual close.',
+      );
+    });
 
     testWidgets(
       'bell tap on a non-broad draft does not show the too-broad inline '
@@ -316,10 +311,12 @@ void main() {
         final (alertsCubit, orch, filterRepo) = await setupCubit();
         // Accept any save with non-null criteria so the cubit's
         // too-broad guard never fires.
-        when(() => filterRepo.saveCriteria(
-              any(),
-              notificationsEnabled: any(named: 'notificationsEnabled'),
-            )).thenAnswer(
+        when(
+          () => filterRepo.saveCriteria(
+            any(),
+            notificationsEnabled: any(named: 'notificationsEnabled'),
+          ),
+        ).thenAnswer(
           (inv) async => Success(
             FilterAlertSettings(
               userId: 'u',
@@ -333,20 +330,21 @@ void main() {
           ),
         );
         when(() => orch.enableDeliveries(any())).thenAnswer(
-          (inv) async => Success(
-            inv.positionalArguments.first as FilterAlertSettings,
-          ),
+          (inv) async =>
+              Success(inv.positionalArguments.first as FilterAlertSettings),
         );
 
         final formKey = GlobalKey<ListingsFilterFormState>();
-        await tester.pumpWidget(hostApp(
-          auth: auth,
-          alertsCubit: alertsCubit,
-          formKey: formKey,
-          // Non-broad: a make selected is enough to clear the cubit's
-          // too-broad guard.
-          seedState: const ListingsState(make: 'BMW'),
-        ));
+        await tester.pumpWidget(
+          hostApp(
+            auth: auth,
+            alertsCubit: alertsCubit,
+            formKey: formKey,
+            // Non-broad: a make selected is enough to clear the cubit's
+            // too-broad guard.
+            seedState: const ListingsState(make: 'BMW'),
+          ),
+        );
         await tester.pumpAndSettle();
 
         await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));

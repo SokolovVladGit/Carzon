@@ -21,9 +21,15 @@ void registerFilterAlertsFeature(GetIt sl) {
   sl.registerLazySingleton<FilterAlertsRepository>(
     () => FilterAlertsRepositoryImpl(sl<FilterAlertsRemoteDataSource>()),
   );
-  sl.registerFactory(() => GetFilterAlertSettings(sl<FilterAlertsRepository>()));
-  sl.registerFactory(() => SaveFilterAlertCriteria(sl<FilterAlertsRepository>()));
-  sl.registerFactory(() => ClearFilterAlertCriteria(sl<FilterAlertsRepository>()));
+  sl.registerFactory(
+    () => GetFilterAlertSettings(sl<FilterAlertsRepository>()),
+  );
+  sl.registerFactory(
+    () => SaveFilterAlertCriteria(sl<FilterAlertsRepository>()),
+  );
+  sl.registerFactory(
+    () => ClearFilterAlertCriteria(sl<FilterAlertsRepository>()),
+  );
   sl.registerFactory(
     () => SetFilterAlertNotificationsEnabled(sl<FilterAlertsRepository>()),
   );

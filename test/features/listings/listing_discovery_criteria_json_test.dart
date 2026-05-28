@@ -11,8 +11,9 @@ void main() {
   group('listingDiscoveryCriteriaToJson / fromJson', () {
     void assertRoundTrip(ListingDiscoveryCriteria input) {
       final encoded = listingDiscoveryCriteriaToJson(input);
-      final decoded =
-          listingDiscoveryCriteriaFromJson(Map<String, dynamic>.from(encoded));
+      final decoded = listingDiscoveryCriteriaFromJson(
+        Map<String, dynamic>.from(encoded),
+      );
       expect(decoded, input);
     }
 
@@ -60,13 +61,16 @@ void main() {
       );
     });
 
-    test('drops unknown ListingType wires and ignores invalid typeIn elements', () {
-      final decoded = listingDiscoveryCriteriaFromJson(<String, dynamic>{
-        ListingDiscoveryCriteriaJsonSchema.schemaVersionKey: 1,
-        'typeIn': ['sale', 'alien_offer', 'exchange', 42],
-      });
-      expect(decoded!.typeIn, [ListingType.exchange, ListingType.sale]);
-    });
+    test(
+      'drops unknown ListingType wires and ignores invalid typeIn elements',
+      () {
+        final decoded = listingDiscoveryCriteriaFromJson(<String, dynamic>{
+          ListingDiscoveryCriteriaJsonSchema.schemaVersionKey: 1,
+          'typeIn': ['sale', 'alien_offer', 'exchange', 42],
+        });
+        expect(decoded!.typeIn, [ListingType.exchange, ListingType.sale]);
+      },
+    );
 
     test('unknown bodyType wire becomes null (safe)', () {
       final decoded = listingDiscoveryCriteriaFromJson(<String, dynamic>{

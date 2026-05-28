@@ -47,6 +47,9 @@ final class SharedPreferencesLastAppliedListingDiscoveryRepository
       return;
     }
 
-    await prefs.setString(_prefsKey, jsonEncode(listingDiscoveryCriteriaToJson(snapshot)));
+    await prefs.setString(
+      _prefsKey,
+      jsonEncode(listingDiscoveryCriteriaToJson(snapshot)),
+    );
   }
 }

@@ -8,7 +8,10 @@ List<String> localizedBuyerVinReportLimitationBullets(
 ) {
   if (rawCodes.isEmpty) return const [];
 
-  final codes = rawCodes.map((c) => c.trim()).where((c) => c.isNotEmpty).toList();
+  final codes = rawCodes
+      .map((c) => c.trim())
+      .where((c) => c.isNotEmpty)
+      .toList();
   if (codes.isEmpty) return const [];
 
   var unknown = false;

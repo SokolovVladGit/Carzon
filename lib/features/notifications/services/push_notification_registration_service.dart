@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../../../core/config/env.dart';
+import '../../../core/l10n/app_locale_preference.dart';
 import '../../../core/utils/logger.dart';
 import '../domain/repositories/notifications_repository.dart';
 import 'client_push_platform.dart';
@@ -17,15 +18,18 @@ class PushNotificationRegistrationService {
     required PushMessagingClient messagingClient,
     required NotificationsRepository notificationsRepository,
     required PushAuthGate authGate,
+    required AppLocalePreference Function() readLocalePreference,
     AppLogger? logger,
   }) : _messagingClient = messagingClient,
        _notificationsRepository = notificationsRepository,
        _authGate = authGate,
+       _readLocalePreference = readLocalePreference,
        _logger = logger ?? AppLogger('PushNotificationRegistration');
 
   final PushMessagingClient _messagingClient;
   final NotificationsRepository _notificationsRepository;
   final PushAuthGate _authGate;
+  final AppLocalePreference Function() _readLocalePreference;
   final AppLogger _logger;
 
   bool _firebaseReady = false;
@@ -79,7 +83,8 @@ class PushNotificationRegistrationService {
   }
 
   /// Explicit OS permission request (user-driven flows only).
-  Future<PushMessagingPermissionStatus> requestOsNotificationPermission() async {
+  Future<PushMessagingPermissionStatus>
+  requestOsNotificationPermission() async {
     try {
       if (!Env.pushNotificationsEnabled) {
         return PushMessagingPermissionStatus.notDetermined;
@@ -217,11 +222,19 @@ class PushNotificationRegistrationService {
     }
   }
 
+  String _pushTokenLocaleTag() {
+    return switch (_readLocalePreference()) {
+      AppLocalePreference.ro => 'ro',
+      AppLocalePreference.ru => 'ru',
+    };
+  }
+
   Future<void> _registerWithRepository(String token) async {
     final platform = detectClientPushTokenPlatform();
     final result = await _notificationsRepository.registerPushToken(
       token: token,
       platform: platform,
+      locale: _pushTokenLocaleTag(),
     );
     result.fold(
       (failure) => _logger.warn('registerPushToken failed: ${failure.message}'),

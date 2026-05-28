@@ -33,28 +33,31 @@ ListingsQuery _queryFromListingsState(ListingsState state) {
 
 void main() {
   group('Default listings feed query', () {
-    test('initial ListingsState applies only active + default region + sort', () {
-      const state = ListingsState();
-      final q = _queryFromListingsState(state);
-      expect(q.status, ListingStatus.active);
-      expect(q.marketRegion, MarketRegion.transnistria);
-      expect(q.sort, ListingSortOption.newestFirst);
-      expect(q.search, isNull);
-      expect(q.make, isNull);
-      expect(q.model, isNull);
-      expect(q.minYear, isNull);
-      expect(q.maxYear, isNull);
-      expect(q.minPrice, isNull);
-      expect(q.maxPrice, isNull);
-      expect(q.maxMileage, isNull);
-      expect(q.city, isNull);
-      expect(q.bodyType, isNull);
-      expect(q.typeIn, isNull);
-      expect(q.sellerId, isNull);
-      expect(q.page, 0);
-      expect(q.pageSize, AppConstants.defaultPageSize);
-      expect(q.priceCurrency, isNull);
-    });
+    test(
+      'initial ListingsState applies only active + default region + sort',
+      () {
+        const state = ListingsState();
+        final q = _queryFromListingsState(state);
+        expect(q.status, ListingStatus.active);
+        expect(q.marketRegion, MarketRegion.transnistria);
+        expect(q.sort, ListingSortOption.newestFirst);
+        expect(q.search, isNull);
+        expect(q.make, isNull);
+        expect(q.model, isNull);
+        expect(q.minYear, isNull);
+        expect(q.maxYear, isNull);
+        expect(q.minPrice, isNull);
+        expect(q.maxPrice, isNull);
+        expect(q.maxMileage, isNull);
+        expect(q.city, isNull);
+        expect(q.bodyType, isNull);
+        expect(q.typeIn, isNull);
+        expect(q.sellerId, isNull);
+        expect(q.page, 0);
+        expect(q.pageSize, AppConstants.defaultPageSize);
+        expect(q.priceCurrency, isNull);
+      },
+    );
 
     test('ListingDiscoveryCriteria blank strings do not become filters', () {
       const c = ListingDiscoveryCriteria(

@@ -8,7 +8,7 @@ import '../datasources/favorites_remote_datasource.dart';
 
 class FavoritesRepositoryImpl implements FavoritesRepository {
   FavoritesRepositoryImpl(this._remote)
-      : _logger = AppLogger('FavoritesRepository');
+    : _logger = AppLogger('FavoritesRepository');
 
   final FavoritesRemoteDataSource _remote;
   final AppLogger _logger;

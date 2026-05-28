@@ -53,8 +53,9 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
       // further transforms return [PostgrestTransformBuilder]; reassigning that
       // into a variable inferred as the filter type throws at runtime:
       // PostgrestTransformBuilder is not a subtype of PostgrestFilterBuilder.
-      sb.PostgrestFilterBuilder<sb.PostgrestList> filterQuery =
-          _supabase.client.from(_table).select();
+      sb.PostgrestFilterBuilder<sb.PostgrestList> filterQuery = _supabase.client
+          .from(_table)
+          .select();
       if (query.search != null && query.search!.trim().isNotEmpty) {
         filterQuery = filterQuery.ilike('title', '%${query.search!.trim()}%');
       }

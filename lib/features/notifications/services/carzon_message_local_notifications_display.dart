@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../../../core/l10n/app_locale_preference.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/utils/logger.dart';
 import 'filter_alert_notification_public_copy.dart';
 import 'filter_alert_notification_tap_payload.dart';
@@ -16,32 +19,29 @@ class CarzonMessageLocalNotificationsDisplay
   CarzonMessageLocalNotificationsDisplay({
     required void Function(String conversationId) onConversationNotificationTap,
     required void Function(String listingId) onFilterAlertNotificationTap,
+    required AppLocalePreference Function() readLocalePreference,
     FlutterLocalNotificationsPlugin? plugin,
     AppLogger? logger,
   }) : _pluginOverride = plugin,
        _onConversationNotificationTap = onConversationNotificationTap,
        _onFilterAlertNotificationTap = onFilterAlertNotificationTap,
+       _readLocalePreference = readLocalePreference,
        _logger = logger ?? AppLogger('CarzonLocalNotifications');
 
   static const androidChannelId = 'carzon_messages';
-  static const androidChannelName = 'Carzon — сообщения';
-  static const androidChannelDescription =
-      'Уведомления о новых сообщениях в чате';
-
   static const androidFilterChannelId = 'carzon_filter_alerts';
-  static const androidFilterChannelName = 'Carzon — оповещения по фильтру';
-  static const androidFilterChannelDescription =
-      'Уведомления о новых объявлениях по сохранённому фильтру';
 
   final void Function(String conversationId) _onConversationNotificationTap;
   final void Function(String listingId) _onFilterAlertNotificationTap;
+  final AppLocalePreference Function() _readLocalePreference;
   final FlutterLocalNotificationsPlugin? _pluginOverride;
   final AppLogger _logger;
 
   FlutterLocalNotificationsPlugin? _pluginInstance;
 
   FlutterLocalNotificationsPlugin get _plugin =>
-      _pluginOverride ?? (_pluginInstance ??= FlutterLocalNotificationsPlugin());
+      _pluginOverride ??
+      (_pluginInstance ??= FlutterLocalNotificationsPlugin());
 
   bool _initialized = false;
 
@@ -71,8 +71,9 @@ class CarzonMessageLocalNotificationsDisplay
       return;
     }
     try {
-      const androidSettings =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
       const darwinSettings = DarwinInitializationSettings(
         requestAlertPermission: false,
         requestSoundPermission: false,
@@ -97,24 +98,25 @@ class CarzonMessageLocalNotificationsDisplay
         _logger.warn('flutter_local_notifications initialize returned false');
       }
 
-      if (!kIsWeb &&
-          defaultTargetPlatform == TargetPlatform.android) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        final l10n = _l10n();
         final androidPlugin = _plugin
             .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin>();
+              AndroidFlutterLocalNotificationsPlugin
+            >();
         await androidPlugin?.createNotificationChannel(
-          const AndroidNotificationChannel(
+          AndroidNotificationChannel(
             androidChannelId,
-            androidChannelName,
-            description: androidChannelDescription,
+            l10n.notificationAndroidChannelMessagesName,
+            description: l10n.notificationAndroidChannelMessagesDescription,
             importance: Importance.high,
           ),
         );
         await androidPlugin?.createNotificationChannel(
-          const AndroidNotificationChannel(
+          AndroidNotificationChannel(
             androidFilterChannelId,
-            androidFilterChannelName,
-            description: androidFilterChannelDescription,
+            l10n.notificationAndroidChannelFilterName,
+            description: l10n.notificationAndroidChannelFilterDescription,
             importance: Importance.high,
           ),
         );
@@ -122,7 +124,11 @@ class CarzonMessageLocalNotificationsDisplay
 
       _initialized = true;
     } catch (e, st) {
-      _logger.error('CarzonMessageLocalNotificationsDisplay.init failed', e, st);
+      _logger.error(
+        'CarzonMessageLocalNotificationsDisplay.init failed',
+        e,
+        st,
+      );
       rethrow;
     }
   }
@@ -133,15 +139,18 @@ class CarzonMessageLocalNotificationsDisplay
       await initialize();
     }
     try {
+      final preference = _readLocalePreference();
+      final l10n = _l10nFor(preference);
       await _plugin.show(
         id: conversationId.hashCode & 0x7fffffff,
-        title: MessageNotificationPublicCopy.title,
-        body: MessageNotificationPublicCopy.body,
+        title: MessageNotificationPublicCopy.title(preference),
+        body: MessageNotificationPublicCopy.body(preference),
         notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             androidChannelId,
-            androidChannelName,
-            channelDescription: androidChannelDescription,
+            l10n.notificationAndroidChannelMessagesName,
+            channelDescription:
+                l10n.notificationAndroidChannelMessagesDescription,
             importance: Importance.high,
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
@@ -165,15 +174,18 @@ class CarzonMessageLocalNotificationsDisplay
       await initialize();
     }
     try {
+      final preference = _readLocalePreference();
+      final l10n = _l10nFor(preference);
       await _plugin.show(
         id: (listingId.hashCode ^ 0x13579bdf) & 0x7fffffff,
-        title: FilterAlertNotificationPublicCopy.title,
-        body: FilterAlertNotificationPublicCopy.body,
+        title: FilterAlertNotificationPublicCopy.title(preference),
+        body: FilterAlertNotificationPublicCopy.body(preference),
         notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
             androidFilterChannelId,
-            androidFilterChannelName,
-            channelDescription: androidFilterChannelDescription,
+            l10n.notificationAndroidChannelFilterName,
+            channelDescription:
+                l10n.notificationAndroidChannelFilterDescription,
             importance: Importance.high,
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
@@ -189,5 +201,13 @@ class CarzonMessageLocalNotificationsDisplay
     } catch (e, st) {
       _logger.error('showFilterAlertForegroundNotification failed', e, st);
     }
+  }
+
+  AppLocalizations _l10n() => _l10nFor(_readLocalePreference());
+
+  AppLocalizations _l10nFor(AppLocalePreference preference) {
+    return lookupAppLocalizations(
+      Locale(appLocalePreferenceToLanguageCode(preference)),
+    );
   }
 }

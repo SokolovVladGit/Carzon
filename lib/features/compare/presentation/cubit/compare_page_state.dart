@@ -5,10 +5,7 @@ import '../../domain/entities/compare_resolved_slot.dart';
 
 /// Screen-specific state for resolving listings on the compare page.
 class ComparePageState extends Equatable {
-  const ComparePageState({
-    this.slots = const [],
-    this.isResolving = false,
-  });
+  const ComparePageState({this.slots = const [], this.isResolving = false});
 
   const ComparePageState.idle() : slots = const [], isResolving = false;
 

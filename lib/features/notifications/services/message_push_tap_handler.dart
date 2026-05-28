@@ -15,7 +15,8 @@ import 'message_notification_tap_payload.dart';
 class MessagePushTapHandler {
   MessagePushTapHandler({
     required MessageConversationNavigationCoordinator navigationCoordinator,
-    required FilterAlertListingNavigationCoordinator listingNavigationCoordinator,
+    required FilterAlertListingNavigationCoordinator
+    listingNavigationCoordinator,
     FirebaseMessagingOpenEvents? openEvents,
     bool Function()? firebaseAppReady,
     AppLogger? logger,
@@ -95,9 +96,13 @@ class MessagePushTapHandler {
         _navigationCoordinator.requestOpenThread(msgPayload.conversationId);
         return;
       }
-      final filterPayload = parseFilterAlertNotificationTapPayload(message.data);
+      final filterPayload = parseFilterAlertNotificationTapPayload(
+        message.data,
+      );
       if (filterPayload != null) {
-        _listingNavigationCoordinator.requestOpenListing(filterPayload.listingId);
+        _listingNavigationCoordinator.requestOpenListing(
+          filterPayload.listingId,
+        );
         return;
       }
     } catch (e, st) {

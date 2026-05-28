@@ -1,10 +1,5 @@
 /// Client-reported platform for FCM/APNs registration (Phase 1 wire values only).
-enum PushTokenPlatform {
-  android,
-  ios,
-  web,
-  unknown,
-}
+enum PushTokenPlatform { android, ios, web, unknown }
 
 String pushTokenPlatformToWire(PushTokenPlatform p) {
   switch (p) {

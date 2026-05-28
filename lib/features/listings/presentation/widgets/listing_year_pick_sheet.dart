@@ -81,7 +81,8 @@ class _ListingYearWheelSheetBody extends StatefulWidget {
       _ListingYearWheelSheetBodyState();
 }
 
-class _ListingYearWheelSheetBodyState extends State<_ListingYearWheelSheetBody> {
+class _ListingYearWheelSheetBodyState
+    extends State<_ListingYearWheelSheetBody> {
   late final List<int> _yearsNewestFirst;
   late final FixedExtentScrollController _wheel;
   late int _selectedIndex;
@@ -157,22 +158,24 @@ class _ListingYearWheelSheetBodyState extends State<_ListingYearWheelSheetBody> 
                   children: [
                     if (widget.allowClear)
                       TextButton(
-                        onPressed: () => Navigator.maybePop<ListingYearPickerOutcome?>(
-                          context,
-                          ListingYearPickerClear(),
-                        ),
+                        onPressed: () =>
+                            Navigator.maybePop<ListingYearPickerOutcome?>(
+                              context,
+                              ListingYearPickerClear(),
+                            ),
                         child: Text(widget.l10n.filterClear),
                       )
                     else
                       const SizedBox(width: 8),
                     const Spacer(),
                     TextButton(
-                      onPressed: () => Navigator.maybePop<ListingYearPickerOutcome?>(
-                        context,
-                        ListingYearPickerChosen(
-                          _yearsNewestFirst[_selectedIndex],
-                        ),
-                      ),
+                      onPressed: () =>
+                          Navigator.maybePop<ListingYearPickerOutcome?>(
+                            context,
+                            ListingYearPickerChosen(
+                              _yearsNewestFirst[_selectedIndex],
+                            ),
+                          ),
                       child: Text(widget.l10n.commonDone),
                     ),
                   ],
@@ -180,14 +183,17 @@ class _ListingYearWheelSheetBodyState extends State<_ListingYearWheelSheetBody> 
               ),
               Expanded(
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: CupertinoTheme(
                       data: CupertinoTheme.of(context).copyWith(
                         textTheme: CupertinoTextThemeData(
-                          textStyle: theme.textTheme.titleMedium?.copyWith(
+                          textStyle:
+                              theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: pickerFg,
                               ) ??
@@ -198,16 +204,16 @@ class _ListingYearWheelSheetBodyState extends State<_ListingYearWheelSheetBody> 
                         fit: StackFit.expand,
                         children: [
                           ColoredBox(
-                            color:
-                                scheme.surfaceContainerHighest.withValues(
+                            color: scheme.surfaceContainerHighest.withValues(
                               alpha: 0.09,
                             ),
                           ),
                           Center(
                             child: Container(
                               height: 42,
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 10),
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
                               decoration: BoxDecoration(
                                 border: Border(
                                   top: BorderSide(
@@ -234,15 +240,16 @@ class _ListingYearWheelSheetBodyState extends State<_ListingYearWheelSheetBody> 
                             },
                             squeeze: 1.06,
                             children: [
-                              for (var idx = 0;
-                                  idx < _yearsNewestFirst.length;
-                                  idx++)
+                              for (
+                                var idx = 0;
+                                idx < _yearsNewestFirst.length;
+                                idx++
+                              )
                                 Center(
                                   child: AnimatedDefaultTextStyle(
-                                    duration:
-                                        const Duration(milliseconds: 120),
-                                    style: theme.textTheme.titleMedium
-                                            ?.copyWith(
+                                    duration: const Duration(milliseconds: 120),
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
                                           fontWeight: idx == _selectedIndex
                                               ? FontWeight.w700
                                               : FontWeight.w500,

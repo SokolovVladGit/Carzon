@@ -168,8 +168,7 @@ class SupabaseCreateListingRemoteDataSource
 
       params['p_body_type'] = input.bodyType?.name;
       params['p_fuel_type'] = input.fuelType?.name;
-      params['p_engine_displacement_liters'] =
-          input.engineDisplacementLiters;
+      params['p_engine_displacement_liters'] = input.engineDisplacementLiters;
       params['p_engine_power_hp'] = input.enginePowerHp;
       params['p_drivetrain'] = input.drivetrain == null
           ? null

@@ -37,7 +37,10 @@ void main() {
       expect(c.minPrice, 5000);
       expect(c.maxPrice, 12000);
       expect(c.maxMileage, 95000);
-      expect(c.marketRegion, isNull); // Both → unconstrained regions in SQL JSON
+      expect(
+        c.marketRegion,
+        isNull,
+      ); // Both → unconstrained regions in SQL JSON
       expect(c.bodyType, ListingBodyType.hatchback);
       expect(
         c.typeIn,
@@ -61,20 +64,20 @@ void main() {
       expect(c.make, 'BMW');
     });
 
-    test('sort is carried for codec parity even though Postgres matcher ignores it', () {
-      const state = ListingsState(
-        search: 'v8',
-        sortOption: ListingSortOption.priceLowToHigh,
-        regionFilter: MarketRegionFilter.moldova,
-      );
-      final c = listingDiscoveryCriteriaFromBrowseStateForAlert(state);
-      expect(c.sort, ListingSortOption.priceLowToHigh);
-      expect(
-        listingDiscoveryCriteriaToJson(c)['sort'],
-        'price_low_to_high',
-      );
-      // Narrowing predicates still come from search + region moldova — not asserting SQL here.
-    });
+    test(
+      'sort is carried for codec parity even though Postgres matcher ignores it',
+      () {
+        const state = ListingsState(
+          search: 'v8',
+          sortOption: ListingSortOption.priceLowToHigh,
+          regionFilter: MarketRegionFilter.moldova,
+        );
+        final c = listingDiscoveryCriteriaFromBrowseStateForAlert(state);
+        expect(c.sort, ListingSortOption.priceLowToHigh);
+        expect(listingDiscoveryCriteriaToJson(c)['sort'], 'price_low_to_high');
+        // Narrowing predicates still come from search + region moldova — not asserting SQL here.
+      },
+    );
   });
 
   group('browseStateEligibleForFilterAlertSnapshot', () {
@@ -88,9 +91,7 @@ void main() {
     test('rejects sort-only deviation from baseline', () {
       expect(
         browseStateEligibleForFilterAlertSnapshot(
-          const ListingsState(
-            sortOption: ListingSortOption.priceLowToHigh,
-          ),
+          const ListingsState(sortOption: ListingSortOption.priceLowToHigh),
         ),
         isFalse,
       );
@@ -117,9 +118,7 @@ void main() {
     test('allows region picker change Moldova-only with no extra filters', () {
       expect(
         browseStateEligibleForFilterAlertSnapshot(
-          const ListingsState(
-            regionFilter: MarketRegionFilter.moldova,
-          ),
+          const ListingsState(regionFilter: MarketRegionFilter.moldova),
         ),
         isTrue,
       );

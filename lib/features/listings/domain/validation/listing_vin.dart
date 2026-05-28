@@ -19,8 +19,7 @@ class ListingVin {
   }
 
   /// Whether user input is blank / whitespace-only (no VIN intent).
-  static bool isBlankInput(String? raw) =>
-      raw == null || raw.trim().isEmpty;
+  static bool isBlankInput(String? raw) => raw == null || raw.trim().isEmpty;
 
   /// Non-null normalized string must satisfy [isValidNormalized].
   static bool isOptionalInputValid(String? raw) {

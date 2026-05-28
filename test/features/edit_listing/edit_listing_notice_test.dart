@@ -16,21 +16,21 @@ class _MockEditCubit extends MockCubit<EditListingState>
     implements EditListingCubit {}
 
 Listing _seed() => Listing(
-      id: 'l1',
-      title: 'VW Golf',
-      make: 'Volkswagen',
-      model: 'Golf',
-      year: 2016,
-      priceEur: 8900,
-      mileageKm: 120000,
-      type: ListingType.sale,
-      city: 'Chișinău',
-      marketRegion: MarketRegion.moldova,
-      createdAt: DateTime.utc(2026, 4, 1),
-      status: ListingStatus.active,
-      sellerId: 's1',
-      contactPhone: '+373 690 00001',
-    );
+  id: 'l1',
+  title: 'VW Golf',
+  make: 'Volkswagen',
+  model: 'Golf',
+  year: 2016,
+  priceEur: 8900,
+  mileageKm: 120000,
+  type: ListingType.sale,
+  city: 'Chișinău',
+  marketRegion: MarketRegion.moldova,
+  createdAt: DateTime.utc(2026, 4, 1),
+  status: ListingStatus.active,
+  sellerId: 's1',
+  contactPhone: '+373 690 00001',
+);
 
 void main() {
   late _MockEditCubit cubit;

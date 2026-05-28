@@ -29,7 +29,9 @@ void main() {
       () async {
         debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
         when(() => messaging.getAPNSToken()).thenAnswer((_) async => null);
-        when(() => messaging.getToken()).thenAnswer((_) async => 'should-not-run');
+        when(
+          () => messaging.getToken(),
+        ).thenAnswer((_) async => 'should-not-run');
 
         final token = await sut.getFcmToken();
 
@@ -43,7 +45,9 @@ void main() {
       'on iOS, FirebaseException apns-token-not-set is non-fatal (null, no rethrow)',
       () async {
         debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
-        when(() => messaging.getAPNSToken()).thenAnswer((_) async => 'apns-token');
+        when(
+          () => messaging.getAPNSToken(),
+        ).thenAnswer((_) async => 'apns-token');
         when(() => messaging.getToken()).thenThrow(
           FirebaseException(
             plugin: 'firebase_messaging',
@@ -79,15 +83,18 @@ void main() {
       },
     );
 
-    test('on Android, does not call getAPNSToken; uses getToken only', () async {
-      debugDefaultTargetPlatformOverride = TargetPlatform.android;
-      when(() => messaging.getToken()).thenAnswer((_) async => 'android-fcm');
+    test(
+      'on Android, does not call getAPNSToken; uses getToken only',
+      () async {
+        debugDefaultTargetPlatformOverride = TargetPlatform.android;
+        when(() => messaging.getToken()).thenAnswer((_) async => 'android-fcm');
 
-      final token = await sut.getFcmToken();
+        final token = await sut.getFcmToken();
 
-      expect(token, 'android-fcm');
-      verifyNever(() => messaging.getAPNSToken());
-      verify(() => messaging.getToken()).called(1);
-    });
+        expect(token, 'android-fcm');
+        verifyNever(() => messaging.getAPNSToken());
+        verify(() => messaging.getToken()).called(1);
+      },
+    );
   });
 }

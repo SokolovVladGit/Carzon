@@ -24,10 +24,9 @@ Future<String?> showListingBrandPickSheet({
 String localizedListingBrandCatalogLabel(
   AppLocalizations l10n,
   String catalogValue,
-) =>
-    catalogValue == kListingBrandCatalog.last
-        ? l10n.createListingBrandOther
-        : catalogValue;
+) => catalogValue == kListingBrandCatalog.last
+    ? l10n.createListingBrandOther
+    : catalogValue;
 
 class ListingBrandPickSheet extends StatefulWidget {
   const ListingBrandPickSheet({super.key, required this.appL10n});
@@ -57,9 +56,9 @@ class _ListingBrandPickSheetState extends State<ListingBrandPickSheet> {
           (b) =>
               q.isEmpty ||
               localizedListingBrandCatalogLabel(
-                    l10n,
-                    b,
-                  ).toLowerCase().contains(q),
+                l10n,
+                b,
+              ).toLowerCase().contains(q),
         )
         .toList(growable: false);
 
@@ -109,11 +108,18 @@ class _ListingBrandPickSheetState extends State<ListingBrandPickSheet> {
               child: ListView.separated(
                 padding: const EdgeInsets.only(bottom: 24),
                 itemCount: filtered.length,
-                separatorBuilder: (context, index) =>
-                    Divider(height: 1, thickness: .5, indent: 16, endIndent: 16),
+                separatorBuilder: (context, index) => Divider(
+                  height: 1,
+                  thickness: .5,
+                  indent: 16,
+                  endIndent: 16,
+                ),
                 itemBuilder: (context, index) {
                   final brandEnglish = filtered[index];
-                  final label = localizedListingBrandCatalogLabel(l10n, brandEnglish);
+                  final label = localizedListingBrandCatalogLabel(
+                    l10n,
+                    brandEnglish,
+                  );
                   return ListTile(
                     title: Text(label),
                     onTap: () => Navigator.pop(context, brandEnglish),

@@ -4,6 +4,9 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
 import 'package:carzon/app/router/app_router.dart';
 import 'package:carzon/core/errors/failures.dart';
+import 'package:carzon/core/l10n/app_locale_cubit.dart';
+import 'package:carzon/core/l10n/app_locale_local_datasource.dart';
+import 'package:carzon/core/l10n/app_locale_preference.dart';
 import 'package:carzon/core/theme/theme_mode_cubit.dart';
 import 'package:carzon/core/theme/theme_mode_local_datasource.dart';
 import 'package:carzon/core/theme/theme_mode_preference.dart';
@@ -67,10 +70,24 @@ final class _InMemoryThemeModeLocalDataSource
   }
 }
 
+final class _InMemoryAppLocaleLocalDataSource
+    implements AppLocaleLocalDataSource {
+  AppLocalePreference _preference = AppLocalePreference.ru;
+
+  @override
+  Future<AppLocalePreference> loadPreference() async => _preference;
+
+  @override
+  Future<void> savePreference(AppLocalePreference preference) async {
+    _preference = preference;
+  }
+}
+
 GoRouter _profileTestGoRouter({
   required AuthCubit cubit,
   required MessagingUnreadSummaryCubit messagingUnread,
   required ThemeModeCubit themeModeCubit,
+  required AppLocaleCubit appLocaleCubit,
 }) {
   return GoRouter(
     initialLocation: AppRoutes.profile,
@@ -91,6 +108,7 @@ GoRouter _profileTestGoRouter({
               value: messagingUnread,
             ),
             BlocProvider<ThemeModeCubit>.value(value: themeModeCubit),
+            BlocProvider<AppLocaleCubit>.value(value: appLocaleCubit),
           ],
           child: const ProfilePage(),
         ),
@@ -148,15 +166,20 @@ Widget _profileTestApp({
   required AuthCubit cubit,
   required MessagingUnreadSummaryCubit messagingUnread,
   ThemeModeCubit? themeModeCubit,
+  AppLocaleCubit? appLocaleCubit,
 }) {
   final resolvedThemeModeCubit =
       themeModeCubit ??
       ThemeModeCubit(localDataSource: _InMemoryThemeModeLocalDataSource());
+  final resolvedAppLocaleCubit =
+      appLocaleCubit ??
+      AppLocaleCubit(localDataSource: _InMemoryAppLocaleLocalDataSource());
   return _profileTestMaterial(
     _profileTestGoRouter(
       cubit: cubit,
       messagingUnread: messagingUnread,
       themeModeCubit: resolvedThemeModeCubit,
+      appLocaleCubit: resolvedAppLocaleCubit,
     ),
   );
 }
@@ -345,14 +368,11 @@ void main() {
         findsOneWidget,
       );
 
-      expect(find.text(l10n.commonComingSoon), findsOneWidget);
-
+      expect(find.text(l10n.commonComingSoon), findsNothing);
+      expect(find.text(l10n.profileLanguageCurrentRussian), findsOneWidget);
       expect(
-        find.descendant(
-          of: find.byKey(const ValueKey('profile_future_row_language')),
-          matching: find.byType(InkWell),
-        ),
-        findsNothing,
+        find.byKey(const ValueKey('profile_future_row_language')),
+        findsOneWidget,
       );
 
       expect(find.text('Saved Shop'), findsWidgets);
@@ -819,6 +839,9 @@ void main() {
         cubit: cubit,
         messagingUnread: unreadSummaryCubit,
         themeModeCubit: themeModeCubit,
+        appLocaleCubit: AppLocaleCubit(
+          localDataSource: _InMemoryAppLocaleLocalDataSource(),
+        ),
       );
       const user = AuthUser(id: 'u1', email: 'seller@example.com');
       when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
@@ -984,6 +1007,42 @@ void main() {
       );
     },
   );
+
+  testWidgets('language row opens sheet and switches to Romanian', (
+    tester,
+  ) async {
+    final localeDataSource = _InMemoryAppLocaleLocalDataSource();
+    final appLocaleCubit = AppLocaleCubit(localDataSource: localeDataSource);
+    const user = AuthUser(id: 'u1', email: 'a@b.com');
+    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(user),
+    );
+
+    await tester.pumpWidget(
+      _profileTestApp(
+        cubit: cubit,
+        messagingUnread: unreadSummaryCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('profile_future_row_language')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('profile_future_row_language')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('profile_language_option_ro')));
+    await tester.pumpAndSettle();
+
+    expect(appLocaleCubit.state.preference, AppLocalePreference.ro);
+    expect(find.text(l10n.profileLanguageCurrentRomanian), findsOneWidget);
+    expect(find.text(l10n.commonComingSoon), findsNothing);
+  });
 
   testWidgets(
     'private header uses seller_profiles avatar ahead of AuthUser.photo',

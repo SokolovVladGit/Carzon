@@ -111,17 +111,18 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('seller profile renders header and section chrome in dark theme', (
-    tester,
-  ) async {
-    await pumpProfile(tester, seller: profile());
+  testWidgets(
+    'seller profile renders header and section chrome in dark theme',
+    (tester) async {
+      await pumpProfile(tester, seller: profile());
 
-    expect(find.text(ru.sellerProfileTitle), findsOneWidget);
-    expect(find.byType(AppBackButton), findsOneWidget);
-    expect(find.text('Premium Motors'), findsOneWidget);
-    expect(find.text(ru.sellerListingsSectionTitle), findsOneWidget);
-    expect(find.byType(SellerProfileHeaderCard), findsOneWidget);
-  });
+      expect(find.text(ru.sellerProfileTitle), findsOneWidget);
+      expect(find.byType(AppBackButton), findsOneWidget);
+      expect(find.text('Premium Motors'), findsOneWidget);
+      expect(find.text(ru.sellerListingsSectionTitle), findsOneWidget);
+      expect(find.byType(SellerProfileHeaderCard), findsOneWidget);
+    },
+  );
 
   testWidgets('seller profile empty listings state renders in dark theme', (
     tester,

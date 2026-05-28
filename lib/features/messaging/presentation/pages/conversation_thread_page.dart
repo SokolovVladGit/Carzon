@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/l10n/app_locale_cubit.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/error_view.dart';
@@ -429,7 +430,8 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
   Widget build(BuildContext context) {
     final threadHostContext = context;
     final l10n = context.l10n;
-    final timeFormat = DateFormat.Hm('ru');
+    final intlTag = context.watch<AppLocaleCubit>().state.intlLanguageTag;
+    final timeFormat = DateFormat.Hm(intlTag);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;

@@ -19,7 +19,8 @@ import '../../helpers/noop_last_applied_listing_discovery_repository.dart';
 
 class _MockListingsRepository extends Mock implements ListingsRepository {}
 
-final class _RecordingLastApplied implements LastAppliedListingDiscoveryRepository {
+final class _RecordingLastApplied
+    implements LastAppliedListingDiscoveryRepository {
   ListingDiscoveryCriteria? lastPersisted;
 
   @override
@@ -54,7 +55,10 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => const Success([]));
     },
-    build: () => ListingsBloc(getListings: GetListings(repo), lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository()),
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
     act: (b) => b.add(const ListingsRequested()),
     verify: (_) {
       final q =
@@ -82,7 +86,10 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => const Success([]));
     },
-    build: () => ListingsBloc(getListings: GetListings(repo), lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository()),
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
     act: (b) => b.add(
       const ListingsFiltersApplied(
         make: null,
@@ -123,7 +130,10 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => const Success([]));
     },
-    build: () => ListingsBloc(getListings: GetListings(repo), lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository()),
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
     act: (b) => b.add(
       const ListingsFiltersApplied(
         make: null,
@@ -158,7 +168,10 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => const Success([]));
     },
-    build: () => ListingsBloc(getListings: GetListings(repo), lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository()),
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
     act: (b) => b
       ..add(
         const ListingsFiltersApplied(
@@ -328,11 +341,12 @@ void main() {
       expect(lastAppliedRecorder!.lastPersisted!.search, isNull);
       expect(
         isDefaultListingsDiscoveryState(
-          listingsStateFromDiscoveryCriteria(lastAppliedRecorder!.lastPersisted!),
+          listingsStateFromDiscoveryCriteria(
+            lastAppliedRecorder!.lastPersisted!,
+          ),
         ),
         isTrue,
       );
     },
   );
 }
-

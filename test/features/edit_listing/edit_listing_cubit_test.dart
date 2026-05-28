@@ -62,11 +62,11 @@ Listing _seed({
   status: ListingStatus.active,
   sellerId: 's1',
   contactPhone: '+373 690 00001',
-    telegramUsername: null,
-    whatsappEnabled: false,
-    coverImageUrl: coverImageUrl,
-    vinStatus: ListingVinStatus.notProvided,
-  );
+  telegramUsername: null,
+  whatsappEnabled: false,
+  coverImageUrl: coverImageUrl,
+  vinStatus: ListingVinStatus.notProvided,
+);
 
 ListingImage _img(
   String id,
@@ -176,9 +176,9 @@ void main() {
       (_) async => const Success(BuyerListingVinReportLookupResult()),
     );
 
-    when(() => editRepo.fetchOwnerVin(any())).thenAnswer(
-      (_) async => const Success(OwnerListingVinLookupResult()),
-    );
+    when(
+      () => editRepo.fetchOwnerVin(any()),
+    ).thenAnswer((_) async => const Success(OwnerListingVinLookupResult()));
 
     when(() => editRepo.fetchOwnerVinReportStatus(any())).thenAnswer(
       (_) async => const Success(OwnerListingVinReportLookupResult()),
@@ -354,8 +354,9 @@ void main() {
           () => listingsRepo.getById('l1'),
         ).thenAnswer((_) async => Success(_seed()));
         when(() => editRepo.fetchOwnerVinReportStatus('l1')).thenAnswer(
-          (_) async =>
-              const Success(OwnerListingVinReportLookupResult(fetchFailed: true)),
+          (_) async => const Success(
+            OwnerListingVinReportLookupResult(fetchFailed: true),
+          ),
         );
       },
       build: () => cubit,
@@ -419,8 +420,7 @@ void main() {
           () => listingsRepo.getById('l1'),
         ).thenAnswer((_) async => Success(_seed()));
         when(() => editRepo.fetchOwnerVinSourceResults('l1')).thenAnswer(
-          (_) async =>
-              const FailureResult(ServerFailure('source results rpc')),
+          (_) async => const FailureResult(ServerFailure('source results rpc')),
         );
       },
       build: () => cubit,

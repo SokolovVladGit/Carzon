@@ -2,8 +2,7 @@ final RegExp _filterUuidV4ish = RegExp(
   r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
 );
 
-bool _isListingUuid(String value) =>
-    _filterUuidV4ish.hasMatch(value.trim());
+bool _isListingUuid(String value) => _filterUuidV4ish.hasMatch(value.trim());
 
 String _stringData(Map<String, dynamic> data, String key) {
   final value = data[key];
@@ -60,6 +59,8 @@ String? parseFilterAlertLocalNotificationPayload(String? raw) {
   if (!trimmed.startsWith(kFilterAlertLocalNotificationPayloadPrefix)) {
     return null;
   }
-  final id = trimmed.substring(kFilterAlertLocalNotificationPayloadPrefix.length).trim();
+  final id = trimmed
+      .substring(kFilterAlertLocalNotificationPayloadPrefix.length)
+      .trim();
   return _isListingUuid(id) ? id : null;
 }

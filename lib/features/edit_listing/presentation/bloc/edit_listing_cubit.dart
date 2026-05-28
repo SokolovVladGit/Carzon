@@ -230,7 +230,8 @@ class EditListingCubit extends Cubit<EditListingState> {
             ownerVinReportStatus: ownerVinReportStatus,
             ownerVinReportLookupFailed: ownerVinReportLookupFailed,
             ownerVinSourceResults: ownerVinSourceResults,
-            ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
+            ownerVinSourceResultsLookupFailed:
+                ownerVinSourceResultsLookupFailed,
           ),
         );
         return;
@@ -259,7 +260,8 @@ class EditListingCubit extends Cubit<EditListingState> {
             ownerVinReportStatus: ownerVinReportStatus,
             ownerVinReportLookupFailed: ownerVinReportLookupFailed,
             ownerVinSourceResults: ownerVinSourceResults,
-            ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
+            ownerVinSourceResultsLookupFailed:
+                ownerVinSourceResultsLookupFailed,
           ),
         );
       case Success(:final value):
@@ -352,7 +354,8 @@ class EditListingCubit extends Cubit<EditListingState> {
             ownerVinReportStatus: ownerVinReportStatus,
             ownerVinReportLookupFailed: ownerVinReportLookupFailed,
             ownerVinSourceResults: ownerVinSourceResults,
-            ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
+            ownerVinSourceResultsLookupFailed:
+                ownerVinSourceResultsLookupFailed,
           ),
         );
     }

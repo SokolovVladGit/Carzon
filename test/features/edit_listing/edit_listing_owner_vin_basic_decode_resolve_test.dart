@@ -5,34 +5,37 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('resolveOwnerVinBasicDecodeFields', () {
-    test('prefers NHTSA normalized_summary over empty legacy decoded fields', () {
-      final report = OwnerListingVinReportStatus(
-        listingId: 'l1',
-        publicVinStatusRaw: 'format_valid',
-        processingStatusRaw: 'succeeded',
-        decodeStatusRaw: 'decoded',
-      );
-      final sources = [
-        OwnerListingVinSourceResult(
-          sourceId: 'nhtsa_vpic',
-          statusRaw: 'succeeded',
-          normalizedSummary: const {
-            'make': 'Honda',
-            'model': 'Civic',
-            'year': 2019,
-          },
-        ),
-      ];
-      final f = resolveOwnerVinBasicDecodeFields(
-        report: report,
-        sourceResults: sources,
-        sourceResultsLookupFailed: false,
-      );
-      expect(f, isNotNull);
-      expect(f!.make, 'Honda');
-      expect(f.model, 'Civic');
-      expect(f.year, 2019);
-    });
+    test(
+      'prefers NHTSA normalized_summary over empty legacy decoded fields',
+      () {
+        final report = OwnerListingVinReportStatus(
+          listingId: 'l1',
+          publicVinStatusRaw: 'format_valid',
+          processingStatusRaw: 'succeeded',
+          decodeStatusRaw: 'decoded',
+        );
+        final sources = [
+          OwnerListingVinSourceResult(
+            sourceId: 'nhtsa_vpic',
+            statusRaw: 'succeeded',
+            normalizedSummary: const {
+              'make': 'Honda',
+              'model': 'Civic',
+              'year': 2019,
+            },
+          ),
+        ];
+        final f = resolveOwnerVinBasicDecodeFields(
+          report: report,
+          sourceResults: sources,
+          sourceResultsLookupFailed: false,
+        );
+        expect(f, isNotNull);
+        expect(f!.make, 'Honda');
+        expect(f.model, 'Civic');
+        expect(f.year, 2019);
+      },
+    );
 
     test('maps expanded NHTSA summary fields for owner display', () {
       final report = OwnerListingVinReportStatus(

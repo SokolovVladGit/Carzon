@@ -1,6 +1,9 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/app.dart';
 import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/core/l10n/app_locale_cubit.dart';
+import 'package:carzon/core/l10n/app_locale_local_datasource.dart';
+import 'package:carzon/core/l10n/app_locale_preference.dart';
 import 'package:carzon/core/theme/theme_mode_cubit.dart';
 import 'package:carzon/core/theme/theme_mode_local_datasource.dart';
 import 'package:carzon/core/theme/theme_mode_preference.dart';
@@ -47,6 +50,15 @@ final class _InMemoryThemeModeLocalDataSource
 
   @override
   Future<void> savePreference(ThemeModePreference preference) async {}
+}
+
+final class _InMemoryAppLocaleLocalDataSource
+    implements AppLocaleLocalDataSource {
+  @override
+  Future<AppLocalePreference> loadPreference() async => AppLocalePreference.ru;
+
+  @override
+  Future<void> savePreference(AppLocalePreference preference) async {}
 }
 
 void main() {
@@ -130,6 +142,18 @@ void main() {
     sl.registerSingleton<MessagingUnreadSummaryCubit>(
       messagingUnreadSummaryCubit,
     );
+    sl.registerLazySingleton<ThemeModeLocalDataSource>(
+      () => _InMemoryThemeModeLocalDataSource(ThemeModePreference.light),
+    );
+    sl.registerLazySingleton<AppLocaleLocalDataSource>(
+      () => _InMemoryAppLocaleLocalDataSource(),
+    );
+    sl.registerSingleton(
+      ThemeModeCubit(localDataSource: sl<ThemeModeLocalDataSource>()),
+    );
+    sl.registerSingleton(
+      AppLocaleCubit(localDataSource: sl<AppLocaleLocalDataSource>()),
+    );
     sl.registerSingleton<GoRouter>(
       GoRouter(
         initialLocation: '/',
@@ -145,14 +169,8 @@ void main() {
   });
 
   testWidgets('applies dark theme mode from ThemeModeCubit', (tester) async {
-    final themeModeCubit = ThemeModeCubit(
-      localDataSource: _InMemoryThemeModeLocalDataSource(
-        ThemeModePreference.dark,
-      ),
-    );
-    await themeModeCubit.load();
-    sl.registerSingleton<ThemeModeCubit>(themeModeCubit);
-    addTearDown(themeModeCubit.close);
+    await sl<ThemeModeCubit>().setDarkEnabled(true);
+    await sl<AppLocaleCubit>().load();
 
     await tester.pumpWidget(const CarzonApp());
     await tester.pumpAndSettle();
@@ -162,14 +180,8 @@ void main() {
   });
 
   testWidgets('applies light theme mode from ThemeModeCubit', (tester) async {
-    final themeModeCubit = ThemeModeCubit(
-      localDataSource: _InMemoryThemeModeLocalDataSource(
-        ThemeModePreference.light,
-      ),
-    );
-    await themeModeCubit.load();
-    sl.registerSingleton<ThemeModeCubit>(themeModeCubit);
-    addTearDown(themeModeCubit.close);
+    await sl<ThemeModeCubit>().setDarkEnabled(false);
+    await sl<AppLocaleCubit>().load();
 
     await tester.pumpWidget(const CarzonApp());
     await tester.pumpAndSettle();

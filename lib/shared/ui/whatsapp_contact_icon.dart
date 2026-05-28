@@ -11,8 +11,8 @@ class WhatsappContactIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = IconTheme.of(context).color ??
-        Theme.of(context).colorScheme.onSurface;
+    final color =
+        IconTheme.of(context).color ?? Theme.of(context).colorScheme.onSurface;
     return SvgPicture.asset(
       _asset,
       width: size,

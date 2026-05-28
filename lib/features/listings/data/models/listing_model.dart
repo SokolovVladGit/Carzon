@@ -13,9 +13,7 @@ String? _stringFromDynamic(dynamic value) {
 String _requiredNonEmptyId(dynamic value) {
   final s = _stringFromDynamic(value)?.trim();
   if (s == null || s.isEmpty) {
-    throw ServerException(
-      'Listing row is missing or empty id.',
-    );
+    throw ServerException('Listing row is missing or empty id.');
   }
   return s;
 }
@@ -253,14 +251,10 @@ class ListingModel extends Listing {
       case 'moldova':
         return MarketRegion.moldova;
       case null:
-        throw ServerException(
-          'Listing row is missing or empty market_region.',
-        );
+        throw ServerException('Listing row is missing or empty market_region.');
       default:
         final display = _stringFromDynamic(raw)?.trim() ?? '$raw';
-        throw ServerException(
-          'Unknown market_region value: "$display".',
-        );
+        throw ServerException('Unknown market_region value: "$display".');
     }
   }
 
@@ -296,7 +290,9 @@ class ListingModel extends Listing {
     'fuel_type': fuelType?.name,
     'engine_displacement_liters': engineDisplacementLiters,
     'engine_power_hp': enginePowerHp,
-    'drivetrain': drivetrain == null ? null : listingDrivetrainToDbValue(drivetrain!),
+    'drivetrain': drivetrain == null
+        ? null
+        : listingDrivetrainToDbValue(drivetrain!),
     'registration': registration,
     'description': description,
     'created_at': createdAt.toIso8601String(),

@@ -20,82 +20,78 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('catalog filter-alert criteria mapping alignment', () {
-    test(
-      'BMW + Transnistria applied state maps to the same criteria from both '
-      'the FAB indicator path and the sheet-bell apply-result path',
-      () {
-        const applied = ListingsState(
-          make: 'BMW',
-          regionFilter: MarketRegionFilter.transnistria,
-        );
+    test('BMW + Transnistria applied state maps to the same criteria from both '
+        'the FAB indicator path and the sheet-bell apply-result path', () {
+      const applied = ListingsState(
+        make: 'BMW',
+        regionFilter: MarketRegionFilter.transnistria,
+      );
 
-        final fromBrowse =
-            listingDiscoveryCriteriaFromBrowseStateForAlert(applied);
-        final fromApply = listingDiscoveryCriteriaFromFilterApply(
-          ListingsFilterApplyResult.apply(
-            make: applied.make,
-            model: applied.model,
-            minYear: applied.minYear,
-            maxYear: applied.maxYear,
-            minPrice: applied.minPrice,
-            maxPrice: applied.maxPrice,
-            maxMileage: applied.maxMileage,
-            city: applied.city,
-            typeFilter: applied.typeFilter,
-            sort: applied.sortOption,
-            region: applied.regionFilter,
-            bodyType: applied.bodyTypeFilter,
-            priceCurrencyFilter: applied.priceCurrencyFilter,
-          ),
-          preservedSearch: applied.search,
-        );
+      final fromBrowse = listingDiscoveryCriteriaFromBrowseStateForAlert(
+        applied,
+      );
+      final fromApply = listingDiscoveryCriteriaFromFilterApply(
+        ListingsFilterApplyResult.apply(
+          make: applied.make,
+          model: applied.model,
+          minYear: applied.minYear,
+          maxYear: applied.maxYear,
+          minPrice: applied.minPrice,
+          maxPrice: applied.maxPrice,
+          maxMileage: applied.maxMileage,
+          city: applied.city,
+          typeFilter: applied.typeFilter,
+          sort: applied.sortOption,
+          region: applied.regionFilter,
+          bodyType: applied.bodyTypeFilter,
+          priceCurrencyFilter: applied.priceCurrencyFilter,
+        ),
+        preservedSearch: applied.search,
+      );
 
-        expect(
-          listingDiscoveryCriteriaEqualIgnoringSort(fromBrowse, fromApply),
-          isTrue,
-        );
-      },
-    );
+      expect(
+        listingDiscoveryCriteriaEqualIgnoringSort(fromBrowse, fromApply),
+        isTrue,
+      );
+    });
 
-    test(
-      'applied state with search snippet preserves the search in both paths '
-      'so the saved-alert comparator sees identical criteria',
-      () {
-        const applied = ListingsState(
-          search: 'X5',
-          make: 'BMW',
-          regionFilter: MarketRegionFilter.transnistria,
-        );
+    test('applied state with search snippet preserves the search in both paths '
+        'so the saved-alert comparator sees identical criteria', () {
+      const applied = ListingsState(
+        search: 'X5',
+        make: 'BMW',
+        regionFilter: MarketRegionFilter.transnistria,
+      );
 
-        final fromBrowse =
-            listingDiscoveryCriteriaFromBrowseStateForAlert(applied);
-        final fromApply = listingDiscoveryCriteriaFromFilterApply(
-          ListingsFilterApplyResult.apply(
-            make: applied.make,
-            model: applied.model,
-            minYear: applied.minYear,
-            maxYear: applied.maxYear,
-            minPrice: applied.minPrice,
-            maxPrice: applied.maxPrice,
-            maxMileage: applied.maxMileage,
-            city: applied.city,
-            typeFilter: applied.typeFilter,
-            sort: applied.sortOption,
-            region: applied.regionFilter,
-            bodyType: applied.bodyTypeFilter,
-            priceCurrencyFilter: applied.priceCurrencyFilter,
-          ),
-          preservedSearch: applied.search,
-        );
+      final fromBrowse = listingDiscoveryCriteriaFromBrowseStateForAlert(
+        applied,
+      );
+      final fromApply = listingDiscoveryCriteriaFromFilterApply(
+        ListingsFilterApplyResult.apply(
+          make: applied.make,
+          model: applied.model,
+          minYear: applied.minYear,
+          maxYear: applied.maxYear,
+          minPrice: applied.minPrice,
+          maxPrice: applied.maxPrice,
+          maxMileage: applied.maxMileage,
+          city: applied.city,
+          typeFilter: applied.typeFilter,
+          sort: applied.sortOption,
+          region: applied.regionFilter,
+          bodyType: applied.bodyTypeFilter,
+          priceCurrencyFilter: applied.priceCurrencyFilter,
+        ),
+        preservedSearch: applied.search,
+      );
 
-        expect(fromBrowse.search, applied.search);
-        expect(fromApply.search, applied.search);
-        expect(
-          listingDiscoveryCriteriaEqualIgnoringSort(fromBrowse, fromApply),
-          isTrue,
-        );
-      },
-    );
+      expect(fromBrowse.search, applied.search);
+      expect(fromApply.search, applied.search);
+      expect(
+        listingDiscoveryCriteriaEqualIgnoringSort(fromBrowse, fromApply),
+        isTrue,
+      );
+    });
 
     test(
       'sort-only differences do not cause a saved-alert mismatch '
@@ -107,8 +103,9 @@ void main() {
           sortOption: ListingSortOption.priceLowToHigh,
         );
 
-        final fromBrowse =
-            listingDiscoveryCriteriaFromBrowseStateForAlert(applied);
+        final fromBrowse = listingDiscoveryCriteriaFromBrowseStateForAlert(
+          applied,
+        );
         final fromApply = listingDiscoveryCriteriaFromFilterApply(
           ListingsFilterApplyResult.apply(
             make: applied.make,
@@ -137,51 +134,49 @@ void main() {
       },
     );
 
-    test(
-      'every filter dimension covered by ListingsFilterApplyResult is '
-      'carried through both mappings (defensive coverage)',
-      () {
-        const applied = ListingsState(
-          search: 'editorial',
-          make: 'Audi',
-          model: 'A6',
-          minYear: 2018,
-          maxYear: 2024,
-          minPrice: 5000,
-          maxPrice: 30000,
-          maxMileage: 120000,
-          city: 'Tiraspol',
-          typeFilter: ListingTypeFilter.sale,
-          regionFilter: MarketRegionFilter.moldova,
-          priceCurrencyFilter: ListingPriceCurrencyFilter.eur,
-        );
+    test('every filter dimension covered by ListingsFilterApplyResult is '
+        'carried through both mappings (defensive coverage)', () {
+      const applied = ListingsState(
+        search: 'editorial',
+        make: 'Audi',
+        model: 'A6',
+        minYear: 2018,
+        maxYear: 2024,
+        minPrice: 5000,
+        maxPrice: 30000,
+        maxMileage: 120000,
+        city: 'Tiraspol',
+        typeFilter: ListingTypeFilter.sale,
+        regionFilter: MarketRegionFilter.moldova,
+        priceCurrencyFilter: ListingPriceCurrencyFilter.eur,
+      );
 
-        final fromBrowse =
-            listingDiscoveryCriteriaFromBrowseStateForAlert(applied);
-        final fromApply = listingDiscoveryCriteriaFromFilterApply(
-          ListingsFilterApplyResult.apply(
-            make: applied.make,
-            model: applied.model,
-            minYear: applied.minYear,
-            maxYear: applied.maxYear,
-            minPrice: applied.minPrice,
-            maxPrice: applied.maxPrice,
-            maxMileage: applied.maxMileage,
-            city: applied.city,
-            typeFilter: applied.typeFilter,
-            sort: applied.sortOption,
-            region: applied.regionFilter,
-            bodyType: applied.bodyTypeFilter,
-            priceCurrencyFilter: applied.priceCurrencyFilter,
-          ),
-          preservedSearch: applied.search,
-        );
+      final fromBrowse = listingDiscoveryCriteriaFromBrowseStateForAlert(
+        applied,
+      );
+      final fromApply = listingDiscoveryCriteriaFromFilterApply(
+        ListingsFilterApplyResult.apply(
+          make: applied.make,
+          model: applied.model,
+          minYear: applied.minYear,
+          maxYear: applied.maxYear,
+          minPrice: applied.minPrice,
+          maxPrice: applied.maxPrice,
+          maxMileage: applied.maxMileage,
+          city: applied.city,
+          typeFilter: applied.typeFilter,
+          sort: applied.sortOption,
+          region: applied.regionFilter,
+          bodyType: applied.bodyTypeFilter,
+          priceCurrencyFilter: applied.priceCurrencyFilter,
+        ),
+        preservedSearch: applied.search,
+      );
 
-        expect(
-          listingDiscoveryCriteriaEqualIgnoringSort(fromBrowse, fromApply),
-          isTrue,
-        );
-      },
-    );
+      expect(
+        listingDiscoveryCriteriaEqualIgnoringSort(fromBrowse, fromApply),
+        isTrue,
+      );
+    });
   });
 }

@@ -20,7 +20,7 @@ class ErrorView extends StatelessWidget {
           context,
           AppLocalizations,
         )?.commonRetry ??
-        'Повторить';
+        lookupAppLocalizations(const Locale('ru')).commonRetry;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),

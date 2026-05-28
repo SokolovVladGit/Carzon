@@ -5,10 +5,7 @@ import 'package:carzon/features/notifications/domain/entities/push_token_platfor
 void main() {
   group('pushTokenPlatformToWire / pushTokenPlatformFromWire', () {
     test('round-trips core platforms', () {
-      expect(
-        pushTokenPlatformToWire(PushTokenPlatform.android),
-        'android',
-      );
+      expect(pushTokenPlatformToWire(PushTokenPlatform.android), 'android');
       expect(pushTokenPlatformToWire(PushTokenPlatform.ios), 'ios');
       expect(pushTokenPlatformToWire(PushTokenPlatform.web), 'web');
       expect(pushTokenPlatformToWire(PushTokenPlatform.unknown), 'unknown');

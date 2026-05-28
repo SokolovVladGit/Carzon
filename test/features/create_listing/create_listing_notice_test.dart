@@ -53,14 +53,14 @@ void main() {
   });
 
   Widget wrap() => MaterialApp(
-        locale: const Locale('ru'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: BlocProvider<AuthCubit>.value(
-          value: authCubit,
-          child: const CreateListingPage(),
-        ),
-      );
+    locale: const Locale('ru'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: BlocProvider<AuthCubit>.value(
+      value: authCubit,
+      child: const CreateListingPage(),
+    ),
+  );
 
   testWidgets(
     'renders the PublicContactNotice near the contact fields and keeps it '

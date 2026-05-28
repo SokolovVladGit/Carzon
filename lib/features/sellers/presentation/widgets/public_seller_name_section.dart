@@ -16,10 +16,7 @@ import '../utils/seller_initial_labels.dart';
 /// When [embeddedInSection] is true, the widget omits outer card chrome so a
 /// parent section card can wrap it without nested borders/shadows.
 class PublicSellerNameSection extends StatefulWidget {
-  const PublicSellerNameSection({
-    super.key,
-    this.embeddedInSection = false,
-  });
+  const PublicSellerNameSection({super.key, this.embeddedInSection = false});
 
   /// Omit inner card/decoration — for use inside Profile account grouped card only.
   final bool embeddedInSection;
@@ -279,8 +276,8 @@ class _PublicSellerNameSectionState extends State<PublicSellerNameSection> {
                         onPressed: busyIdentity
                             ? null
                             : () => context
-                                .read<PublicSellerIdentityCubit>()
-                                .removeAvatar(),
+                                  .read<PublicSellerIdentityCubit>()
+                                  .removeAvatar(),
                         child: Text(l10n.profilePublicSellerAvatarRemovePhoto),
                       ),
                     ],
@@ -290,9 +287,7 @@ class _PublicSellerNameSectionState extends State<PublicSellerNameSection> {
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color: scheme.outline.withValues(
-                    alpha: isDark ? 0.14 : 0.11,
-                  ),
+                  color: scheme.outline.withValues(alpha: isDark ? 0.14 : 0.11),
                 ),
                 const SizedBox(height: 14),
                 TextField(
@@ -388,8 +383,8 @@ class _PublicSellerNameSectionState extends State<PublicSellerNameSection> {
                                 onPressed: busyIdentity
                                     ? null
                                     : () => context
-                                        .read<PublicSellerIdentityCubit>()
-                                        .removeAvatar(),
+                                          .read<PublicSellerIdentityCubit>()
+                                          .removeAvatar(),
                                 child: Text(
                                   l10n.profilePublicSellerAvatarRemovePhoto,
                                 ),
@@ -489,9 +484,7 @@ class _LoadingBlock extends StatelessWidget {
     if (embedded) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 28),
-        child: Center(
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
+        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
     return DecoratedBox(
@@ -565,10 +558,7 @@ class _ErrorBlock extends StatelessWidget {
         ),
         boxShadow: shadow,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: content,
-      ),
+      child: Padding(padding: const EdgeInsets.all(16), child: content),
     );
   }
 }

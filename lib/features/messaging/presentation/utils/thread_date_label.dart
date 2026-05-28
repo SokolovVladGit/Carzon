@@ -13,5 +13,5 @@ String threadDateSeparatorLabel(DateTime dayStart, AppLocalizations l10n) {
   if (dayStart == yesterday) {
     return l10n.messagingDateYesterday;
   }
-  return DateFormat('d MMMM y', 'ru').format(dayStart);
+  return DateFormat('d MMMM y', l10n.localeName).format(dayStart);
 }

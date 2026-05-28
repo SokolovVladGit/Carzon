@@ -17,37 +17,43 @@ void main() {
     repo = EditListingRepositoryImpl(remote);
   });
 
-  test('fetchOwnerVinReportStatus maps successful lookup from datasource', () async {
-    when(() => remote.fetchOwnerListingVinReportStatus('lid')).thenAnswer(
-      (_) async => OwnerListingVinReportLookupResult(
-        status: OwnerListingVinReportStatus(
-          listingId: 'lid',
-          publicVinStatusRaw: 'format_valid',
-          processingStatusRaw: 'succeeded',
-          decodeStatusRaw: 'decoded',
-          decodedMake: 'TOYOTA',
-          decodedYear: 2021,
+  test(
+    'fetchOwnerVinReportStatus maps successful lookup from datasource',
+    () async {
+      when(() => remote.fetchOwnerListingVinReportStatus('lid')).thenAnswer(
+        (_) async => OwnerListingVinReportLookupResult(
+          status: OwnerListingVinReportStatus(
+            listingId: 'lid',
+            publicVinStatusRaw: 'format_valid',
+            processingStatusRaw: 'succeeded',
+            decodeStatusRaw: 'decoded',
+            decodedMake: 'TOYOTA',
+            decodedYear: 2021,
+          ),
         ),
-      ),
-    );
+      );
 
-    final out = await repo.fetchOwnerVinReportStatus('lid');
-    expect(out, isA<Success<OwnerListingVinReportLookupResult>>());
-    final v = (out as Success<OwnerListingVinReportLookupResult>).value;
-    expect(v.fetchFailed, isFalse);
-    expect(v.status?.decodeStatusRaw, 'decoded');
-    expect(v.status?.decodedMake, 'TOYOTA');
-    expect(v.status?.decodedYear, 2021);
-  });
+      final out = await repo.fetchOwnerVinReportStatus('lid');
+      expect(out, isA<Success<OwnerListingVinReportLookupResult>>());
+      final v = (out as Success<OwnerListingVinReportLookupResult>).value;
+      expect(v.fetchFailed, isFalse);
+      expect(v.status?.decodeStatusRaw, 'decoded');
+      expect(v.status?.decodedMake, 'TOYOTA');
+      expect(v.status?.decodedYear, 2021);
+    },
+  );
 
-  test('fetchOwnerVinReportStatus returns Failure when datasource throws', () async {
-    when(
-      () => remote.fetchOwnerListingVinReportStatus('lid'),
-    ).thenThrow(Exception('network'));
+  test(
+    'fetchOwnerVinReportStatus returns Failure when datasource throws',
+    () async {
+      when(
+        () => remote.fetchOwnerListingVinReportStatus('lid'),
+      ).thenThrow(Exception('network'));
 
-    final out = await repo.fetchOwnerVinReportStatus('lid');
-    expect(out, isA<FailureResult<OwnerListingVinReportLookupResult>>());
-  });
+      final out = await repo.fetchOwnerVinReportStatus('lid');
+      expect(out, isA<FailureResult<OwnerListingVinReportLookupResult>>());
+    },
+  );
 
   test('fetchOwnerVinSourceResults maps successful datasource list', () async {
     when(() => remote.fetchOwnerListingVinSourceResults('lid')).thenAnswer(
@@ -70,12 +76,18 @@ void main() {
     expect(v.results.single.normalizedSummary?['make'], 'Mazda');
   });
 
-  test('fetchOwnerVinSourceResults returns Failure when datasource throws', () async {
-    when(
-      () => remote.fetchOwnerListingVinSourceResults('lid'),
-    ).thenThrow(Exception('network'));
+  test(
+    'fetchOwnerVinSourceResults returns Failure when datasource throws',
+    () async {
+      when(
+        () => remote.fetchOwnerListingVinSourceResults('lid'),
+      ).thenThrow(Exception('network'));
 
-    final out = await repo.fetchOwnerVinSourceResults('lid');
-    expect(out, isA<FailureResult<OwnerListingVinSourceResultsLookupResult>>());
-  });
+      final out = await repo.fetchOwnerVinSourceResults('lid');
+      expect(
+        out,
+        isA<FailureResult<OwnerListingVinSourceResultsLookupResult>>(),
+      );
+    },
+  );
 }

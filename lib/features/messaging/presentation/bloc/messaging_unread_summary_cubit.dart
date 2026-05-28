@@ -11,11 +11,11 @@ import 'messaging_unread_summary_state.dart';
 /// successful count so callers can distinguish RPC errors from a definitive zero.
 class MessagingUnreadSummaryCubit extends Cubit<MessagingUnreadSummaryState> {
   MessagingUnreadSummaryCubit(this._repository)
-      : super(
-          const MessagingUnreadSummaryState(
-            phase: MessagingUnreadSummaryPhase.initial,
-          ),
-        );
+    : super(
+        const MessagingUnreadSummaryState(
+          phase: MessagingUnreadSummaryPhase.initial,
+        ),
+      );
 
   final MessagingRepository _repository;
 
@@ -30,9 +30,7 @@ class MessagingUnreadSummaryCubit extends Cubit<MessagingUnreadSummaryState> {
       return;
     }
 
-    emit(
-      state.copyWith(phase: MessagingUnreadSummaryPhase.loading),
-    );
+    emit(state.copyWith(phase: MessagingUnreadSummaryPhase.loading));
 
     final result = await _repository.getUnreadConversationCount();
     switch (result) {

@@ -61,20 +61,19 @@ void main() {
     registerFallbackValue('');
   });
 
-  ComparePageCubit buildCubit() => ComparePageCubit(
-    getListingById: getById,
-    getListingImages: getImages,
-  );
+  ComparePageCubit buildCubit() =>
+      ComparePageCubit(getListingById: getById, getListingImages: getImages);
 
   blocTest<ComparePageCubit, ComparePageState>(
     'resolve emits loading then ready slots',
     build: buildCubit,
     act: (cubit) async {
-      when(() => getById('a')).thenAnswer(
-        (_) async => Success(_listing(id: 'a')),
-      );
+      when(
+        () => getById('a'),
+      ).thenAnswer((_) async => Success(_listing(id: 'a')));
       when(() => getById('b')).thenAnswer(
-        (_) async => Success(_listing(id: 'b', vin: ListingVinStatus.formatValid)),
+        (_) async =>
+            Success(_listing(id: 'b', vin: ListingVinStatus.formatValid)),
       );
       when(() => getImages(any())).thenAnswer(
         (_) async => Success([
@@ -106,12 +105,12 @@ void main() {
     'failed fetch marks slot unavailable',
     build: buildCubit,
     act: (cubit) async {
-      when(() => getById('gone')).thenAnswer(
-        (_) async => const FailureResult(ServerFailure('missing')),
-      );
-      when(() => getById('ok')).thenAnswer(
-        (_) async => Success(_listing(id: 'ok')),
-      );
+      when(
+        () => getById('gone'),
+      ).thenAnswer((_) async => const FailureResult(ServerFailure('missing')));
+      when(
+        () => getById('ok'),
+      ).thenAnswer((_) async => Success(_listing(id: 'ok')));
       when(() => getImages(any())).thenAnswer((_) async => const Success([]));
       await cubit.resolve([_item('gone'), _item('ok')]);
     },
@@ -126,13 +125,11 @@ void main() {
     build: buildCubit,
     act: (cubit) async {
       when(() => getById('sold')).thenAnswer(
-        (_) async => Success(
-          _listing(id: 'sold', status: ListingStatus.sold),
-        ),
+        (_) async => Success(_listing(id: 'sold', status: ListingStatus.sold)),
       );
-      when(() => getById('active')).thenAnswer(
-        (_) async => Success(_listing(id: 'active')),
-      );
+      when(
+        () => getById('active'),
+      ).thenAnswer((_) async => Success(_listing(id: 'active')));
       when(() => getImages(any())).thenAnswer((_) async => const Success([]));
       await cubit.resolve([_item('sold'), _item('active')]);
     },
@@ -149,44 +146,58 @@ void main() {
     await cubit.close();
   });
 
-  test('stale resolve result is ignored when a newer resolve completes first', () async {
-    final cubit = buildCubit();
-    final slowDone = Completer<void>();
-    final fastDone = Completer<void>();
+  test(
+    'stale resolve result is ignored when a newer resolve completes first',
+    () async {
+      final cubit = buildCubit();
+      final slowDone = Completer<void>();
+      final fastDone = Completer<void>();
 
-    when(() => getById('slow-a')).thenAnswer((_) async {
-      await slowDone.future;
-      return Success(_listing(id: 'slow-a'));
-    });
-    when(() => getById('slow-b')).thenAnswer((_) async {
-      await slowDone.future;
-      return Success(_listing(id: 'slow-b'));
-    });
-    when(() => getById('fast-a')).thenAnswer((_) async {
-      await fastDone.future;
-      return Success(_listing(id: 'fast-a'));
-    });
-    when(() => getById('fast-b')).thenAnswer((_) async {
-      await fastDone.future;
-      return Success(_listing(id: 'fast-b'));
-    });
-    when(() => getImages(any())).thenAnswer((_) async => const Success([]));
+      when(() => getById('slow-a')).thenAnswer((_) async {
+        await slowDone.future;
+        return Success(_listing(id: 'slow-a'));
+      });
+      when(() => getById('slow-b')).thenAnswer((_) async {
+        await slowDone.future;
+        return Success(_listing(id: 'slow-b'));
+      });
+      when(() => getById('fast-a')).thenAnswer((_) async {
+        await fastDone.future;
+        return Success(_listing(id: 'fast-a'));
+      });
+      when(() => getById('fast-b')).thenAnswer((_) async {
+        await fastDone.future;
+        return Success(_listing(id: 'fast-b'));
+      });
+      when(() => getImages(any())).thenAnswer((_) async => const Success([]));
 
-    final slowFuture = cubit.resolve([_item('slow-a'), _item('slow-b')]);
-    final fastFuture = cubit.resolve([_item('fast-a'), _item('fast-b')]);
+      final slowFuture = cubit.resolve([_item('slow-a'), _item('slow-b')]);
+      final fastFuture = cubit.resolve([_item('fast-a'), _item('fast-b')]);
 
-    fastDone.complete();
-    await fastFuture;
-    expect(cubit.state.slots.every((s) => s.listingId == 'fast-a' || s.listingId == 'fast-b'), isTrue);
-    expect(cubit.state.slots.any((s) => s.listingId.startsWith('slow')), isFalse);
+      fastDone.complete();
+      await fastFuture;
+      expect(
+        cubit.state.slots.every(
+          (s) => s.listingId == 'fast-a' || s.listingId == 'fast-b',
+        ),
+        isTrue,
+      );
+      expect(
+        cubit.state.slots.any((s) => s.listingId.startsWith('slow')),
+        isFalse,
+      );
 
-    slowDone.complete();
-    await slowFuture;
-    expect(cubit.state.slots.any((s) => s.listingId.startsWith('slow')), isFalse);
-    expect(cubit.state.slots.map((s) => s.listingId), ['fast-a', 'fast-b']);
+      slowDone.complete();
+      await slowFuture;
+      expect(
+        cubit.state.slots.any((s) => s.listingId.startsWith('slow')),
+        isFalse,
+      );
+      expect(cubit.state.slots.map((s) => s.listingId), ['fast-a', 'fast-b']);
 
-    await cubit.close();
-  });
+      await cubit.close();
+    },
+  );
 
   test('resolve does not emit after cubit is closed', () async {
     final cubit = buildCubit();

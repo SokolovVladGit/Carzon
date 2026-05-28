@@ -19,7 +19,8 @@ abstract interface class FilterAlertsRemoteDataSource {
   Future<FilterAlertSettingsModel> setNotificationsEnabled(bool enabled);
 }
 
-class SupabaseFilterAlertsRemoteDataSource implements FilterAlertsRemoteDataSource {
+class SupabaseFilterAlertsRemoteDataSource
+    implements FilterAlertsRemoteDataSource {
   SupabaseFilterAlertsRemoteDataSource(this._supabase);
 
   final SupabaseService _supabase;
@@ -35,12 +36,11 @@ class SupabaseFilterAlertsRemoteDataSource implements FilterAlertsRemoteDataSour
       if (uid == null || uid.isEmpty) {
         throw ServerException('Not authenticated');
       }
-      final row =
-          await _supabase.client
-              .from(_table)
-              .select(_cols)
-              .eq('user_id', uid)
-              .maybeSingle();
+      final row = await _supabase.client
+          .from(_table)
+          .select(_cols)
+          .eq('user_id', uid)
+          .maybeSingle();
       if (row == null) return null;
       return FilterAlertSettingsModel.fromSupabase(
         Map<String, dynamic>.from(row),
@@ -67,19 +67,15 @@ class SupabaseFilterAlertsRemoteDataSource implements FilterAlertsRemoteDataSour
       if (uid == null || uid.isEmpty) {
         throw ServerException('Not authenticated');
       }
-      final row =
-          await _supabase.client
-              .from(_table)
-              .upsert(
-                {
-                  'user_id': uid,
-                  'criteria': listingDiscoveryCriteriaToJson(criteria),
-                  'notifications_enabled': notificationsEnabled,
-                },
-                onConflict: 'user_id',
-              )
-              .select(_cols)
-              .maybeSingle();
+      final row = await _supabase.client
+          .from(_table)
+          .upsert({
+            'user_id': uid,
+            'criteria': listingDiscoveryCriteriaToJson(criteria),
+            'notifications_enabled': notificationsEnabled,
+          }, onConflict: 'user_id')
+          .select(_cols)
+          .maybeSingle();
 
       if (row == null) {
         throw ServerException('Filter alert upsert returned no row.');
@@ -107,38 +103,28 @@ class SupabaseFilterAlertsRemoteDataSource implements FilterAlertsRemoteDataSour
         throw ServerException('Not authenticated');
       }
 
-      final afterUpdate =
-          await _supabase.client
-              .from(_table)
-              .update({
-                'criteria': null,
-                'notifications_enabled': false,
-              })
-              .eq('user_id', uid)
-              .select(_cols)
-              .maybeSingle();
+      final afterUpdate = await _supabase.client
+          .from(_table)
+          .update({'criteria': null, 'notifications_enabled': false})
+          .eq('user_id', uid)
+          .select(_cols)
+          .maybeSingle();
 
       final Map<String, dynamic> rowFromUpdate;
       if (afterUpdate != null) {
         rowFromUpdate = Map<String, dynamic>.from(afterUpdate);
       } else {
-        final inserted =
-            await _supabase.client
-                .from(_table)
-                .upsert(
-                  <String, dynamic>{
-                    'user_id': uid,
-                    'criteria': null,
-                    'notifications_enabled': false,
-                  },
-                  onConflict: 'user_id',
-                )
-                .select(_cols)
-                .maybeSingle();
+        final inserted = await _supabase.client
+            .from(_table)
+            .upsert(<String, dynamic>{
+              'user_id': uid,
+              'criteria': null,
+              'notifications_enabled': false,
+            }, onConflict: 'user_id')
+            .select(_cols)
+            .maybeSingle();
         if (inserted == null) {
-          throw ServerException(
-            'Filter alert clear/update returned no row.',
-          );
+          throw ServerException('Filter alert clear/update returned no row.');
         }
         rowFromUpdate = Map<String, dynamic>.from(inserted);
       }
@@ -164,13 +150,12 @@ class SupabaseFilterAlertsRemoteDataSource implements FilterAlertsRemoteDataSour
         throw ServerException('Not authenticated');
       }
 
-      final afterUpdate =
-          await _supabase.client
-              .from(_table)
-              .update({'notifications_enabled': enabled})
-              .eq('user_id', uid)
-              .select(_cols)
-              .maybeSingle();
+      final afterUpdate = await _supabase.client
+          .from(_table)
+          .update({'notifications_enabled': enabled})
+          .eq('user_id', uid)
+          .select(_cols)
+          .maybeSingle();
 
       if (afterUpdate != null) {
         return FilterAlertSettingsModel.fromSupabase(
@@ -178,22 +163,20 @@ class SupabaseFilterAlertsRemoteDataSource implements FilterAlertsRemoteDataSour
         );
       }
 
-      final inserted =
-          await _supabase.client
-              .from(_table)
-              .upsert(
-                <String, dynamic>{
-                  'user_id': uid,
-                  'criteria': null,
-                  'notifications_enabled': enabled,
-                },
-                onConflict: 'user_id',
-              )
-              .select(_cols)
-              .maybeSingle();
+      final inserted = await _supabase.client
+          .from(_table)
+          .upsert(<String, dynamic>{
+            'user_id': uid,
+            'criteria': null,
+            'notifications_enabled': enabled,
+          }, onConflict: 'user_id')
+          .select(_cols)
+          .maybeSingle();
 
       if (inserted == null) {
-        throw ServerException('Filter alert notifications toggle returned no row.');
+        throw ServerException(
+          'Filter alert notifications toggle returned no row.',
+        );
       }
       return FilterAlertSettingsModel.fromSupabase(
         Map<String, dynamic>.from(inserted),

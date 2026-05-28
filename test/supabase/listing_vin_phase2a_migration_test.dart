@@ -11,7 +11,11 @@ void main() {
       final f = File(
         'supabase/migrations/20260618120000_vin_phase2a_processing_foundation.sql',
       );
-      expect(f.existsSync(), isTrue, reason: 'VIN Phase 2A migration must exist');
+      expect(
+        f.existsSync(),
+        isTrue,
+        reason: 'VIN Phase 2A migration must exist',
+      );
       sql = f.readAsStringSync();
     });
 
@@ -100,8 +104,14 @@ void main() {
           'after insert or update of vin_hash on public.listing_vehicle_identity',
         ),
       );
-      expect(lower, contains('after delete on public.listing_vehicle_identity'));
-      expect(lower, contains('carzon_after_listing_vehicle_identity_vin_hash_change'));
+      expect(
+        lower,
+        contains('after delete on public.listing_vehicle_identity'),
+      );
+      expect(
+        lower,
+        contains('carzon_after_listing_vehicle_identity_vin_hash_change'),
+      );
       expect(lower, contains('carzon_after_listing_vehicle_identity_deleted'));
     });
 
@@ -154,14 +164,17 @@ void main() {
       expect(lower, isNot(contains('https://')));
     });
 
-    test('RPC definition omits vin_hash and vin_normalized from return shape', () {
-      final sigStart = sql.toLowerCase().indexOf(
-            'get_my_listing_vin_report_status(p_listing_id uuid)',
-          );
-      expect(sigStart, greaterThan(-1));
-      final chunk = sql.toLowerCase().substring(sigStart, sigStart + 900);
-      expect(chunk.contains('vin_hash'), isFalse);
-      expect(chunk.contains('vin_normalized'), isFalse);
-    });
+    test(
+      'RPC definition omits vin_hash and vin_normalized from return shape',
+      () {
+        final sigStart = sql.toLowerCase().indexOf(
+          'get_my_listing_vin_report_status(p_listing_id uuid)',
+        );
+        expect(sigStart, greaterThan(-1));
+        final chunk = sql.toLowerCase().substring(sigStart, sigStart + 900);
+        expect(chunk.contains('vin_hash'), isFalse);
+        expect(chunk.contains('vin_normalized'), isFalse);
+      },
+    );
   });
 }

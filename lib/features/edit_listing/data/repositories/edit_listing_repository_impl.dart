@@ -86,8 +86,7 @@ class EditListingRepositoryImpl implements EditListingRepository {
     String listingId,
   ) async {
     try {
-      final result =
-          await _remote.fetchOwnerListingVinReportStatus(listingId);
+      final result = await _remote.fetchOwnerListingVinReportStatus(listingId);
       return Success(result);
     } on ServerException catch (e) {
       return FailureResult(ServerFailure(e.message));

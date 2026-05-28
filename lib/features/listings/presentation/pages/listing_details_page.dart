@@ -949,7 +949,7 @@ class _ListingHeader extends StatelessWidget {
               ),
               _FeatureItemData(
                 icon: Icons.speed_outlined,
-                value: formatKm(listing.mileageKm),
+                value: formatKm(l10n, listing.mileageKm),
               ),
               if (listing.city.isNotEmpty)
                 _FeatureItemData(
@@ -1348,7 +1348,10 @@ class _DetailsList extends StatelessWidget {
       if (hasValue(listing.model))
         _DetailsRowData(l10n.listingFieldModel, listing.model.trim()),
       _DetailsRowData(l10n.listingFieldYear, listing.year.toString()),
-      _DetailsRowData(l10n.listingFieldMileage, formatKm(listing.mileageKm)),
+      _DetailsRowData(
+        l10n.listingFieldMileage,
+        formatKm(l10n, listing.mileageKm),
+      ),
       _DetailsRowData(l10n.listingFieldType, formatType(l10n, listing.type)),
       if (listing.bodyType != null)
         _DetailsRowData(

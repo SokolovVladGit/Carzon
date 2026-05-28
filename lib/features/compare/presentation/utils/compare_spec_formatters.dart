@@ -34,7 +34,7 @@ class CompareSpecFormatters {
 
   String formatMileage(Listing? listing) {
     if (listing == null) return missing;
-    return listing_fmt.formatKm(listing.mileageKm);
+    return listing_fmt.formatKm(l10n, listing.mileageKm);
   }
 
   String formatYear(Listing? listing, CompareListingSnapshot snapshot) {

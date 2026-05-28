@@ -23,9 +23,7 @@ void main() {
       ],
     );
 
-    await tester.pumpWidget(
-      MaterialApp.router(routerConfig: router),
-    );
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
 
     final context = tester.element(find.text('home'));
     requestCompareFlyToTray(
@@ -42,76 +40,77 @@ void main() {
     expect(controller.isAnimating, isFalse);
   });
 
-  testWidgets('requestCompareFlyToTray runs on listing details when tray is laid out', (
-    tester,
-  ) async {
-    final controller = CompareFlyToTrayController();
-    addTearDown(controller.cancel);
-    final sourceKey = GlobalKey();
+  testWidgets(
+    'requestCompareFlyToTray runs on listing details when tray is laid out',
+    (tester) async {
+      final controller = CompareFlyToTrayController();
+      addTearDown(controller.cancel);
+      final sourceKey = GlobalKey();
 
-    final router = GoRouter(
-      initialLocation: '/listings/abc',
-      routes: [
-        GoRoute(
-          path: '/listings/:id',
-          builder: (context, _) => MediaQuery(
-            data: const MediaQueryData(disableAnimations: false),
-            child: Scaffold(
-              body: SizedBox(
-                key: sourceKey,
-                width: 100,
-                height: 80,
-                child: ElevatedButton(
-                  onPressed: () => requestCompareFlyToTray(
-                    context: context,
-                    controller: controller,
-                    sourceKey: sourceKey,
-                    imageUrl: 'https://example.com/a.jpg',
-                    itemWasAdded: true,
-                    trayWasHiddenBeforeAdd: false,
+      final router = GoRouter(
+        initialLocation: '/listings/abc',
+        routes: [
+          GoRoute(
+            path: '/listings/:id',
+            builder: (context, _) => MediaQuery(
+              data: const MediaQueryData(disableAnimations: false),
+              child: Scaffold(
+                body: SizedBox(
+                  key: sourceKey,
+                  width: 100,
+                  height: 80,
+                  child: ElevatedButton(
+                    onPressed: () => requestCompareFlyToTray(
+                      context: context,
+                      controller: controller,
+                      sourceKey: sourceKey,
+                      imageUrl: 'https://example.com/a.jpg',
+                      itemWasAdded: true,
+                      trayWasHiddenBeforeAdd: false,
+                    ),
+                    child: const Text('trigger_fly'),
                   ),
-                  child: const Text('trigger_fly'),
                 ),
               ),
             ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
 
-    await tester.pumpWidget(
-      MaterialApp.router(
-        routerConfig: router,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(disableAnimations: false),
-          child: SizedBox.expand(
-          child: Stack(
-            children: [
-              if (child != null) child!,
-              Positioned(
-              left: 18,
-              right: 18,
-              bottom: 82,
-              child: KeyedSubtree(
-                key: controller.trayFlyTargetKey,
-                child: const SizedBox(height: 68, width: 200),
+      await tester.pumpWidget(
+        MaterialApp.router(
+          routerConfig: router,
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: false),
+            child: SizedBox.expand(
+              child: Stack(
+                children: [
+                  if (child != null) child!,
+                  Positioned(
+                    left: 18,
+                    right: 18,
+                    bottom: 82,
+                    child: KeyedSubtree(
+                      key: controller.trayFlyTargetKey,
+                      child: const SizedBox(height: 68, width: 200),
+                    ),
+                  ),
+                ],
               ),
-              ),
-            ],
+            ),
           ),
         ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(measureGlobalRect(sourceKey), isNotNull);
-    expect(measureGlobalRect(controller.trayFlyTargetKey), isNotNull);
+      expect(measureGlobalRect(sourceKey), isNotNull);
+      expect(measureGlobalRect(controller.trayFlyTargetKey), isNotNull);
 
-    await tester.tap(find.text('trigger_fly'));
-    await tester.pump();
-    await tester.pump();
+      await tester.tap(find.text('trigger_fly'));
+      await tester.pump();
+      await tester.pump();
 
-    expect(controller.isAnimating, isTrue);
-  });
+      expect(controller.isAnimating, isTrue);
+    },
+  );
 }

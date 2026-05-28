@@ -12,16 +12,28 @@ void main() {
       final f = File(
         'supabase/migrations/20260624120000_vin_phase2f_nhtsa_source_results_bridge.sql',
       );
-      expect(f.existsSync(), isTrue, reason: 'Phase 2F NHTSA bridge migration must exist');
+      expect(
+        f.existsSync(),
+        isTrue,
+        reason: 'Phase 2F NHTSA bridge migration must exist',
+      );
       sql = f.readAsStringSync();
       lower = sql.toLowerCase();
     });
 
-    test('replaces complete_vin_decode_job_success with same parameter list', () {
-      expect(lower, contains('create or replace function public.complete_vin_decode_job_success'));
-      expect(lower, contains('p_normalized_data jsonb'));
-      expect(lower, contains('p_field_comparisons jsonb'));
-    });
+    test(
+      'replaces complete_vin_decode_job_success with same parameter list',
+      () {
+        expect(
+          lower,
+          contains(
+            'create or replace function public.complete_vin_decode_job_success',
+          ),
+        );
+        expect(lower, contains('p_normalized_data jsonb'));
+        expect(lower, contains('p_field_comparisons jsonb'));
+      },
+    );
 
     test('upserts listing_vin_source_results only for nhtsa_vpic', () {
       expect(lower, contains("if p_provider_id = 'nhtsa_vpic'"));
@@ -47,18 +59,25 @@ void main() {
         'not_mileage_check',
         'not_registration_check',
       ]) {
-        expect(lower, contains("'$code'"), reason: 'limitation_codes must include $code');
+        expect(
+          lower,
+          contains("'$code'"),
+          reason: 'limitation_codes must include $code',
+        );
       }
     });
 
-    test('normalized_summary uses make model year body_type fuel engine transmission', () {
-      expect(lower, contains("'make'"));
-      expect(lower, contains("'body_type'"));
-      expect(lower, contains("'fuel_type'"));
-      expect(lower, contains("'engine'"));
-      expect(lower, contains("'transmission'"));
-      expect(lower, contains('jsonb_strip_nulls'));
-    });
+    test(
+      'normalized_summary uses make model year body_type fuel engine transmission',
+      () {
+        expect(lower, contains("'make'"));
+        expect(lower, contains("'body_type'"));
+        expect(lower, contains("'fuel_type'"));
+        expect(lower, contains("'engine'"));
+        expect(lower, contains("'transmission'"));
+        expect(lower, contains('jsonb_strip_nulls'));
+      },
+    );
 
     test('source_metadata allows safe provenance only', () {
       expect(lower, contains("'provider_id'"));
@@ -91,15 +110,28 @@ void main() {
     test('listing_vin_source_results insert block omits vin_hash column', () {
       final i = lower.indexOf('insert into public.listing_vin_source_results');
       expect(i, greaterThan(-1));
-      final untilConflict = lower.indexOf('on conflict (listing_id, source_id)', i);
+      final untilConflict = lower.indexOf(
+        'on conflict (listing_id, source_id)',
+        i,
+      );
       expect(untilConflict, greaterThan(i));
       final block = lower.substring(i, untilConflict);
       expect(block, isNot(contains('vin_hash')));
     });
 
     test('no new grants on listing_vin_source_results for client roles', () {
-      expect(lower, isNot(contains('grant select on table public.listing_vin_source_results')));
-      expect(lower, isNot(contains('grant insert on table public.listing_vin_source_results')));
+      expect(
+        lower,
+        isNot(
+          contains('grant select on table public.listing_vin_source_results'),
+        ),
+      );
+      expect(
+        lower,
+        isNot(
+          contains('grant insert on table public.listing_vin_source_results'),
+        ),
+      );
       expect(lower, isNot(contains('to authenticated')));
       expect(lower, isNot(contains('to anon')));
     });

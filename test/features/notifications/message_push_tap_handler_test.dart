@@ -140,10 +140,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
       );
       var auth = AuthState.authenticated(user);
       final fake = _FakeOpenEvents()
-        ..initialMessageReply = RemoteMessage(data: {
-          'type': 'message',
-          'conversation_id': okId,
-        });
+        ..initialMessageReply = RemoteMessage(
+          data: {'type': 'message', 'conversation_id': okId},
+        );
       final authEmitter = StreamController<AuthState>.broadcast();
       final navigated = <String>[];
 
@@ -179,52 +178,54 @@ PUSH_NOTIFICATIONS_ENABLED=true
       await authEmitter.close();
     });
 
-    test('valid filter_alert initial opens listing when authenticated', () async {
-      dotenv.testLoad(
-        fileInput: '''
+    test(
+      'valid filter_alert initial opens listing when authenticated',
+      () async {
+        dotenv.testLoad(
+          fileInput: '''
 SUPABASE_URL=https://x.supabase.co
 SUPABASE_ANON_KEY=anon
 PUSH_NOTIFICATIONS_ENABLED=true
 ''',
-      );
-      var auth = AuthState.authenticated(user);
-      final fake = _FakeOpenEvents()
-        ..initialMessageReply = RemoteMessage(data: {
-          'type': 'filter_alert',
-          'listing_id': filterListingId,
-        });
-      final authEmitter = StreamController<AuthState>.broadcast();
-      final navigated = <String>[];
-      final navigatedListings = <String>[];
+        );
+        var auth = AuthState.authenticated(user);
+        final fake = _FakeOpenEvents()
+          ..initialMessageReply = RemoteMessage(
+            data: {'type': 'filter_alert', 'listing_id': filterListingId},
+          );
+        final authEmitter = StreamController<AuthState>.broadcast();
+        final navigated = <String>[];
+        final navigatedListings = <String>[];
 
-      final coordinator = MessageConversationNavigationCoordinator(
-        authStateStream: authEmitter.stream,
-        authStateSnapshot: () => auth,
-        navigateToConversation: navigated.add,
-      );
-      final listingCoordinator = FilterAlertListingNavigationCoordinator(
-        authStateStream: authEmitter.stream,
-        authStateSnapshot: () => auth,
-        navigateToListingDetail: navigatedListings.add,
-      );
+        final coordinator = MessageConversationNavigationCoordinator(
+          authStateStream: authEmitter.stream,
+          authStateSnapshot: () => auth,
+          navigateToConversation: navigated.add,
+        );
+        final listingCoordinator = FilterAlertListingNavigationCoordinator(
+          authStateStream: authEmitter.stream,
+          authStateSnapshot: () => auth,
+          navigateToListingDetail: navigatedListings.add,
+        );
 
-      final handler = MessagePushTapHandler(
-        navigationCoordinator: coordinator,
-        listingNavigationCoordinator: listingCoordinator,
-        openEvents: fake,
-        firebaseAppReady: () => true,
-      );
+        final handler = MessagePushTapHandler(
+          navigationCoordinator: coordinator,
+          listingNavigationCoordinator: listingCoordinator,
+          openEvents: fake,
+          firebaseAppReady: () => true,
+        );
 
-      await handler.start();
-      expect(navigatedListings, [filterListingId]);
-      expect(navigated, isEmpty);
+        await handler.start();
+        expect(navigatedListings, [filterListingId]);
+        expect(navigated, isEmpty);
 
-      await handler.dispose();
-      await coordinator.dispose();
-      await listingCoordinator.dispose();
-      await fake.close();
-      await authEmitter.close();
-    });
+        await handler.dispose();
+        await coordinator.dispose();
+        await listingCoordinator.dispose();
+        await fake.close();
+        await authEmitter.close();
+      },
+    );
 
     test('malformed filter_alert listing_id does not navigate', () async {
       dotenv.testLoad(
@@ -236,10 +237,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
       );
       var auth = AuthState.authenticated(user);
       final fake = _FakeOpenEvents()
-        ..initialMessageReply = RemoteMessage(data: {
-          'type': 'filter_alert',
-          'listing_id': 'x',
-        });
+        ..initialMessageReply = RemoteMessage(
+          data: {'type': 'filter_alert', 'listing_id': 'x'},
+        );
       final authEmitter = StreamController<AuthState>.broadcast();
       final navigated = <String>[];
       final navigatedListings = <String>[];
@@ -283,10 +283,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
       );
       var auth = const AuthState.unauthenticated();
       final fake = _FakeOpenEvents()
-        ..initialMessageReply = RemoteMessage(data: {
-          'type': 'message',
-          'conversation_id': okId,
-        });
+        ..initialMessageReply = RemoteMessage(
+          data: {'type': 'message', 'conversation_id': okId},
+        );
       final authEmitter = StreamController<AuthState>.broadcast();
       final navigated = <String>[];
 
@@ -333,10 +332,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
       );
       var auth = AuthState.authenticated(user);
       final fake = _FakeOpenEvents()
-        ..initialMessageReply = RemoteMessage(data: {
-          'type': 'message',
-          'conversation_id': 'x',
-        });
+        ..initialMessageReply = RemoteMessage(
+          data: {'type': 'message', 'conversation_id': 'x'},
+        );
 
       final authEmitter = StreamController<AuthState>.broadcast();
       final navigated = <String>[];
@@ -401,10 +399,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
       );
 
       await handler.start();
-      final msg = RemoteMessage(data: {
-        'type': 'message',
-        'conversation_id': okId,
-      });
+      final msg = RemoteMessage(
+        data: {'type': 'message', 'conversation_id': okId},
+      );
       fake.openedApp.add(msg);
       fake.openedApp.add(msg);
       await Future<void>.delayed(Duration.zero);

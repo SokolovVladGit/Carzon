@@ -60,14 +60,28 @@ void main() {
         .expand((s) => s.rows)
         .where((r) => r.id == 'price');
     expect(priceRows, isNotEmpty);
-    final makeRows = filtered.expand((s) => s.rows).where((r) => r.id == 'make');
+    final makeRows = filtered
+        .expand((s) => s.rows)
+        .where((r) => r.id == 'make');
     expect(makeRows, isEmpty);
   });
 
   test('VIN row uses safe provided/not-provided labels only', () {
     final slots = [
-      _slot(id: 'a', price: 1, mileage: 1, year: 2018, vin: ListingVinStatus.formatValid),
-      _slot(id: 'b', price: 2, mileage: 2, year: 2019, vin: ListingVinStatus.notProvided),
+      _slot(
+        id: 'a',
+        price: 1,
+        mileage: 1,
+        year: 2018,
+        vin: ListingVinStatus.formatValid,
+      ),
+      _slot(
+        id: 'b',
+        price: 2,
+        mileage: 2,
+        year: 2019,
+        vin: ListingVinStatus.notProvided,
+      ),
     ];
     final sections = CompareSpecBuilder(ru, slots).buildSections();
     final vinRow = sections

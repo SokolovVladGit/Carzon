@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:carzon/core/l10n/app_locale_preference.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/notifications/domain/entities/push_token_platform.dart';
 import 'package:carzon/features/notifications/domain/repositories/notifications_repository.dart';
@@ -69,6 +70,7 @@ void main() {
   late _MockNotificationsRepository repo;
   late _FakeAuthGate authGate;
   late PushNotificationRegistrationService sut;
+  AppLocalePreference localePreference = AppLocalePreference.ru;
 
   setUp(() {
     dotenv.testLoad(
@@ -81,10 +83,12 @@ PUSH_NOTIFICATIONS_ENABLED=true
     client = _FakePushMessagingClient();
     repo = _MockNotificationsRepository();
     authGate = _FakeAuthGate(signedIn: true);
+    localePreference = AppLocalePreference.ru;
     sut = PushNotificationRegistrationService(
       messagingClient: client,
       notificationsRepository: repo,
       authGate: authGate,
+      readLocalePreference: () => localePreference,
     );
 
     registerFallbackValue(PushTokenPlatform.android);
@@ -97,9 +101,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
         locale: any(named: 'locale'),
       ),
     ).thenAnswer((_) async => const Success<void>(null));
-    when(() => repo.deactivateMyPushTokens()).thenAnswer(
-      (_) async => const Success<void>(null),
-    );
+    when(
+      () => repo.deactivateMyPushTokens(),
+    ).thenAnswer((_) async => const Success<void>(null));
   });
 
   tearDown(() async {
@@ -127,39 +131,45 @@ PUSH_NOTIFICATIONS_ENABLED=true
     expect(client.permissionRequestCalls, 0);
   });
 
-  test('when push disabled via env, start does not initialize Firebase', () async {
-    dotenv.testLoad(
-      fileInput: '''
+  test(
+    'when push disabled via env, start does not initialize Firebase',
+    () async {
+      dotenv.testLoad(
+        fileInput: '''
 SUPABASE_URL=https://example.supabase.co
 SUPABASE_ANON_KEY=anon
 PUSH_NOTIFICATIONS_ENABLED=false
 ''',
-    );
-    await sut.start();
-    expect(client.initCalls, 0);
-    verifyNever(
-      () => repo.registerPushToken(
-        token: any(named: 'token'),
-        platform: any(named: 'platform'),
-        appVersion: any(named: 'appVersion'),
-        deviceId: any(named: 'deviceId'),
-        locale: any(named: 'locale'),
-      ),
-    );
-  });
+      );
+      await sut.start();
+      expect(client.initCalls, 0);
+      verifyNever(
+        () => repo.registerPushToken(
+          token: any(named: 'token'),
+          platform: any(named: 'platform'),
+          appVersion: any(named: 'appVersion'),
+          deviceId: any(named: 'deviceId'),
+          locale: any(named: 'locale'),
+        ),
+      );
+    },
+  );
 
-  test('requestOsNotificationPermission is a no-op when push disabled', () async {
-    dotenv.testLoad(
-      fileInput: '''
+  test(
+    'requestOsNotificationPermission is a no-op when push disabled',
+    () async {
+      dotenv.testLoad(
+        fileInput: '''
 SUPABASE_URL=https://example.supabase.co
 SUPABASE_ANON_KEY=anon
 PUSH_NOTIFICATIONS_ENABLED=false
 ''',
-    );
-    final status = await sut.requestOsNotificationPermission();
-    expect(status, PushMessagingPermissionStatus.notDetermined);
-    expect(client.permissionRequestCalls, 0);
-  });
+      );
+      final status = await sut.requestOsNotificationPermission();
+      expect(status, PushMessagingPermissionStatus.notDetermined);
+      expect(client.permissionRequestCalls, 0);
+    },
+  );
 
   test('sync skips registration when not authenticated', () async {
     authGate.signedIn = false;
@@ -221,7 +231,24 @@ PUSH_NOTIFICATIONS_ENABLED=false
     },
   );
 
-  test('sync registers when push enabled, signed in, permission ok, token set', () async {
+  test(
+    'sync registers when push enabled, signed in, permission ok, token set',
+    () async {
+      await sut.syncTokenWithBackendIfEligible();
+      verify(
+        () => repo.registerPushToken(
+          token: 'fake-token',
+          platform: any(named: 'platform'),
+          appVersion: null,
+          deviceId: null,
+          locale: 'ru',
+        ),
+      ).called(1);
+    },
+  );
+
+  test('sync passes ro locale when app preference is Romanian', () async {
+    localePreference = AppLocalePreference.ro;
     await sut.syncTokenWithBackendIfEligible();
     verify(
       () => repo.registerPushToken(
@@ -229,7 +256,7 @@ PUSH_NOTIFICATIONS_ENABLED=false
         platform: any(named: 'platform'),
         appVersion: null,
         deviceId: null,
-        locale: null,
+        locale: 'ro',
       ),
     ).called(1);
   });
@@ -259,7 +286,7 @@ PUSH_NOTIFICATIONS_ENABLED=false
         platform: any(named: 'platform'),
         appVersion: null,
         deviceId: null,
-        locale: null,
+        locale: 'ru',
       ),
     ).called(1);
   });

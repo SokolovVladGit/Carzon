@@ -23,10 +23,9 @@ class FilterAlertSettingsModel extends FilterAlertSettings {
     if (criteriaRaw == null) {
       criteria = null;
     } else if (criteriaRaw is Map) {
-      final m =
-          criteriaRaw is Map<String, dynamic>
-              ? criteriaRaw
-              : Map<String, dynamic>.from(criteriaRaw);
+      final m = criteriaRaw is Map<String, dynamic>
+          ? criteriaRaw
+          : Map<String, dynamic>.from(criteriaRaw);
       criteria = listingDiscoveryCriteriaFromJson(m);
     } else {
       throw ServerException(

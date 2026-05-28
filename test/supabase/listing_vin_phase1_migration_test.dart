@@ -8,7 +8,9 @@ void main() {
     late String sql;
 
     setUpAll(() {
-      final f = File('supabase/migrations/20260616120000_listing_vin_phase1.sql');
+      final f = File(
+        'supabase/migrations/20260616120000_listing_vin_phase1.sql',
+      );
       expect(f.existsSync(), isTrue, reason: 'VIN migration must exist');
       sql = f.readAsStringSync();
     });
@@ -75,7 +77,10 @@ void main() {
     });
 
     test('extends create_listing_v2 with trailing p_vin', () {
-      expect(sql.toLowerCase(), contains('create function public.create_listing_v2('));
+      expect(
+        sql.toLowerCase(),
+        contains('create function public.create_listing_v2('),
+      );
       expect(sql.toLowerCase(), contains('p_vin'));
       expect(
         sql.toLowerCase(),

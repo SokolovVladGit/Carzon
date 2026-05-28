@@ -518,6 +518,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingEngineDisplacementLitersSuffix => 'л';
 
   @override
+  String get listingEngineDisplacementCcSuffix => 'см³';
+
+  @override
   String get listingEnginePowerHpSuffix => 'л.с.';
 
   @override
@@ -1255,6 +1258,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileLanguageCurrentRussian => 'Русский';
+
+  @override
+  String get profileLanguageCurrentRomanian => 'Română';
+
+  @override
+  String get profileLanguageOptionRussian => 'Русский';
+
+  @override
+  String get profileLanguageOptionRomanian => 'Română';
 
   @override
   String get profileNotificationsTitle => 'Уведомления';
@@ -2453,4 +2465,32 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get editListingVinReportSourceLine =>
       'Источник: базовая расшифровка NHTSA vPIC.';
+
+  @override
+  String get notificationMessageTitle => 'Новое сообщение';
+
+  @override
+  String get notificationMessageBody => 'Вам написали по объявлению в Carzon.';
+
+  @override
+  String get notificationFilterAlertTitle => 'Новое объявление';
+
+  @override
+  String get notificationFilterAlertBody =>
+      'Есть объявление по вашему сохранённому фильтру. Откройте, чтобы посмотреть.';
+
+  @override
+  String get notificationAndroidChannelMessagesName => 'Carzon — сообщения';
+
+  @override
+  String get notificationAndroidChannelMessagesDescription =>
+      'Уведомления о новых сообщениях в чате';
+
+  @override
+  String get notificationAndroidChannelFilterName =>
+      'Carzon — оповещения по фильтру';
+
+  @override
+  String get notificationAndroidChannelFilterDescription =>
+      'Уведомления о новых объявлениях по сохранённому фильтру';
 }

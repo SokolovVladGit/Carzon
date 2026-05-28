@@ -53,8 +53,7 @@ class NotificationSettingsState extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [phase, preferences, osPermission, notice, busy];
+  List<Object?> get props => [phase, preferences, osPermission, notice, busy];
 }
 
 class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
@@ -114,7 +113,9 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
     }
 
     if (!Env.pushNotificationsEnabled) {
-      emit(state.copyWith(notice: NotificationUserNotice.pushUnavailableInBuild));
+      emit(
+        state.copyWith(notice: NotificationUserNotice.pushUnavailableInBuild),
+      );
       return;
     }
 
@@ -122,8 +123,8 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
 
     try {
       if (enabled) {
-        final requested =
-            await _pushRegistration.requestOsNotificationPermission();
+        final requested = await _pushRegistration
+            .requestOsNotificationPermission();
         if (!requested.allowsTokenRegistration) {
           emit(
             state.copyWith(
@@ -149,8 +150,8 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             );
             return;
           case Success(:final value):
-            final perm =
-                await _pushRegistration.readOsNotificationPermissionStatus();
+            final perm = await _pushRegistration
+                .readOsNotificationPermissionStatus();
             await _pushRegistration.syncTokenWithBackendIfEligible();
             emit(
               state.copyWith(
@@ -177,8 +178,8 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             return;
           case Success(:final value):
             await _pushRegistration.revokeDevicePushRegistration();
-            final perm =
-                await _pushRegistration.readOsNotificationPermissionStatus();
+            final perm = await _pushRegistration
+                .readOsNotificationPermissionStatus();
             emit(
               state.copyWith(
                 busy: false,
@@ -190,10 +191,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
       }
     } catch (_) {
       emit(
-        state.copyWith(
-          busy: false,
-          notice: NotificationUserNotice.saveFailed,
-        ),
+        state.copyWith(busy: false, notice: NotificationUserNotice.saveFailed),
       );
     }
   }
@@ -209,7 +207,9 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
     }
 
     if (!Env.pushNotificationsEnabled) {
-      emit(state.copyWith(notice: NotificationUserNotice.pushUnavailableInBuild));
+      emit(
+        state.copyWith(notice: NotificationUserNotice.pushUnavailableInBuild),
+      );
       return;
     }
 
@@ -246,15 +246,11 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             );
             return;
           case Success(:final value):
-            final p =
-                await _pushRegistration.readOsNotificationPermissionStatus();
+            final p = await _pushRegistration
+                .readOsNotificationPermissionStatus();
             await _pushRegistration.syncTokenWithBackendIfEligible();
             emit(
-              state.copyWith(
-                busy: false,
-                preferences: value,
-                osPermission: p,
-              ),
+              state.copyWith(busy: false, preferences: value, osPermission: p),
             );
         }
       } else {
@@ -273,23 +269,16 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             );
             return;
           case Success(:final value):
-            final p =
-                await _pushRegistration.readOsNotificationPermissionStatus();
+            final p = await _pushRegistration
+                .readOsNotificationPermissionStatus();
             emit(
-              state.copyWith(
-                busy: false,
-                preferences: value,
-                osPermission: p,
-              ),
+              state.copyWith(busy: false, preferences: value, osPermission: p),
             );
         }
       }
     } catch (_) {
       emit(
-        state.copyWith(
-          busy: false,
-          notice: NotificationUserNotice.saveFailed,
-        ),
+        state.copyWith(busy: false, notice: NotificationUserNotice.saveFailed),
       );
     }
   }
@@ -305,7 +294,9 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
     }
 
     if (!Env.pushNotificationsEnabled) {
-      emit(state.copyWith(notice: NotificationUserNotice.pushUnavailableInBuild));
+      emit(
+        state.copyWith(notice: NotificationUserNotice.pushUnavailableInBuild),
+      );
       return;
     }
 
@@ -342,15 +333,11 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             );
             return;
           case Success(:final value):
-            final p =
-                await _pushRegistration.readOsNotificationPermissionStatus();
+            final p = await _pushRegistration
+                .readOsNotificationPermissionStatus();
             await _pushRegistration.syncTokenWithBackendIfEligible();
             emit(
-              state.copyWith(
-                busy: false,
-                preferences: value,
-                osPermission: p,
-              ),
+              state.copyWith(busy: false, preferences: value, osPermission: p),
             );
         }
       } else {
@@ -369,23 +356,16 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             );
             return;
           case Success(:final value):
-            final p =
-                await _pushRegistration.readOsNotificationPermissionStatus();
+            final p = await _pushRegistration
+                .readOsNotificationPermissionStatus();
             emit(
-              state.copyWith(
-                busy: false,
-                preferences: value,
-                osPermission: p,
-              ),
+              state.copyWith(busy: false, preferences: value, osPermission: p),
             );
         }
       }
     } catch (_) {
       emit(
-        state.copyWith(
-          busy: false,
-          notice: NotificationUserNotice.saveFailed,
-        ),
+        state.copyWith(busy: false, notice: NotificationUserNotice.saveFailed),
       );
     }
   }

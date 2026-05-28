@@ -35,14 +35,17 @@ void main() {
     expect(v.results.single.sourceId, 'nhtsa_vpic');
   });
 
-  test('fetchBuyerVinReportSources returns Success with fetchFailed on unknown error', () async {
-    when(
-      () => remote.fetchBuyerListingVinReportSources('lid'),
-    ).thenThrow(Exception('boom'));
+  test(
+    'fetchBuyerVinReportSources returns Success with fetchFailed on unknown error',
+    () async {
+      when(
+        () => remote.fetchBuyerListingVinReportSources('lid'),
+      ).thenThrow(Exception('boom'));
 
-    final out = await repo.fetchBuyerVinReportSources('lid');
-    expect(out, isA<Success<BuyerListingVinReportLookupResult>>());
-    final v = (out as Success<BuyerListingVinReportLookupResult>).value;
-    expect(v.fetchFailed, isTrue);
-  });
+      final out = await repo.fetchBuyerVinReportSources('lid');
+      expect(out, isA<Success<BuyerListingVinReportLookupResult>>());
+      final v = (out as Success<BuyerListingVinReportLookupResult>).value;
+      expect(v.fetchFailed, isTrue);
+    },
+  );
 }

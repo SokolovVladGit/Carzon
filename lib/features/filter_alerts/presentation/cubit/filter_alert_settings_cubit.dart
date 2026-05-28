@@ -39,8 +39,7 @@ class FilterAlertSettingsState extends Equatable {
   final bool busyNotificationToggle;
   final FilterAlertSettingsUserNotice userNotice;
 
-  bool get hasBackendRow =>
-      settings != null && settings!.criteria != null;
+  bool get hasBackendRow => settings != null && settings!.criteria != null;
 
   FilterAlertSettingsState copyWith({
     FilterAlertSettingsLoadStatus? status,
@@ -57,8 +56,7 @@ class FilterAlertSettingsState extends Equatable {
     return FilterAlertSettingsState(
       status: status ?? this.status,
       settings: clearSettings ? null : (settings ?? this.settings),
-      errorMessage:
-          clearError ? null : (errorMessage ?? this.errorMessage),
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       busySaving: busySaving ?? this.busySaving,
       busyClearing: busyClearing ?? this.busyClearing,
       busyNotificationToggle:
@@ -134,10 +132,7 @@ class FilterAlertSettingsCubit extends Cubit<FilterAlertSettingsState> {
   ) async {
     emit(state.copyWith(busySaving: true, clearError: true, clearNotice: true));
     final notif = state.settings?.notificationsEnabled ?? false;
-    final result = await _saveCriteria(
-      criteria,
-      notificationsEnabled: notif,
-    );
+    final result = await _saveCriteria(criteria, notificationsEnabled: notif);
     switch (result) {
       case FailureResult():
         emit(
@@ -159,7 +154,9 @@ class FilterAlertSettingsCubit extends Cubit<FilterAlertSettingsState> {
   }
 
   Future<Result<FilterAlertSettings>> clearPersistedCriteria() async {
-    emit(state.copyWith(busyClearing: true, clearError: true, clearNotice: true));
+    emit(
+      state.copyWith(busyClearing: true, clearError: true, clearNotice: true),
+    );
     final result = await _clearCriteria();
     switch (result) {
       case FailureResult():
@@ -186,18 +183,14 @@ class FilterAlertSettingsCubit extends Cubit<FilterAlertSettingsState> {
     if (state.settings?.criteria == null) {
       emit(
         state.copyWith(
-          userNotice: FilterAlertSettingsUserNotice.saveFilterBeforeNotifications,
+          userNotice:
+              FilterAlertSettingsUserNotice.saveFilterBeforeNotifications,
         ),
       );
       return const FailureResult(UnknownFailure('no_criteria'));
     }
 
-    emit(
-      state.copyWith(
-        busyNotificationToggle: true,
-        clearNotice: true,
-      ),
-    );
+    emit(state.copyWith(busyNotificationToggle: true, clearNotice: true));
 
     final deliver = await _deliveryOrchestrator.enableDeliveries(
       state.settings!,
@@ -207,17 +200,11 @@ class FilterAlertSettingsCubit extends Cubit<FilterAlertSettingsState> {
       case FailureResult(:final failure):
         final FilterAlertSettingsUserNotice notice =
             failure.message == 'filter_alert_delivery_push_disabled'
-                ? FilterAlertSettingsUserNotice.pushUnavailableInBuild
-                : failure.message ==
-                        'filter_alert_delivery_permission_denied'
-                    ? FilterAlertSettingsUserNotice.osPermissionDenied
-                    : FilterAlertSettingsUserNotice.prefsUpdateFailed;
-        emit(
-          state.copyWith(
-            busyNotificationToggle: false,
-            userNotice: notice,
-          ),
-        );
+            ? FilterAlertSettingsUserNotice.pushUnavailableInBuild
+            : failure.message == 'filter_alert_delivery_permission_denied'
+            ? FilterAlertSettingsUserNotice.osPermissionDenied
+            : FilterAlertSettingsUserNotice.prefsUpdateFailed;
+        emit(state.copyWith(busyNotificationToggle: false, userNotice: notice));
         return deliver;
       case Success(:final value):
         emit(

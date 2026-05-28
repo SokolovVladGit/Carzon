@@ -24,49 +24,68 @@ void main() {
     test('replaces complete_vin_decode_job_success', () {
       expect(
         lower,
-        contains('create or replace function public.complete_vin_decode_job_success'),
+        contains(
+          'create or replace function public.complete_vin_decode_job_success',
+        ),
       );
     });
 
     test('nhtsa insert uses public_summary visibility', () {
       expect(lower, contains('if p_provider_id = \'nhtsa_vpic\''));
-      final idxInsert = lower.indexOf('insert into public.listing_vin_source_results');
+      final idxInsert = lower.indexOf(
+        'insert into public.listing_vin_source_results',
+      );
       expect(idxInsert, greaterThan(-1));
       final chunk = lower.substring(idxInsert, idxInsert + 1200);
       expect(chunk, contains('\'public_summary\''));
       expect(chunk, isNot(contains("'owner'")));
     });
 
-    test('backfill promotes only nhtsa_vpic basic_decode owner succeeded partial', () {
-      expect(lower, contains('update public.listing_vin_source_results'));
-      expect(lower, contains("source_id = 'nhtsa_vpic'"));
-      expect(lower, contains("confidence = 'basic_decode'"));
-      expect(lower, contains("visibility = 'owner'"));
-      expect(lower, contains("visibility = 'public_summary'"));
-      expect(lower, contains("status in ('succeeded', 'partial')"));
-    });
+    test(
+      'backfill promotes only nhtsa_vpic basic_decode owner succeeded partial',
+      () {
+        expect(lower, contains('update public.listing_vin_source_results'));
+        expect(lower, contains("source_id = 'nhtsa_vpic'"));
+        expect(lower, contains("confidence = 'basic_decode'"));
+        expect(lower, contains("visibility = 'owner'"));
+        expect(lower, contains("visibility = 'public_summary'"));
+        expect(lower, contains("status in ('succeeded', 'partial')"));
+      },
+    );
 
     test('does not grant table privileges on listing_vin_source_results', () {
       expect(
         lower,
-        isNot(contains('grant select on table public.listing_vin_source_results')),
+        isNot(
+          contains('grant select on table public.listing_vin_source_results'),
+        ),
       );
     });
 
     test('worker execute limited to service_role', () {
-      expect(lower, contains('grant execute on function public.complete_vin_decode_job_success'));
+      expect(
+        lower,
+        contains(
+          'grant execute on function public.complete_vin_decode_job_success',
+        ),
+      );
       expect(lower, contains('to service_role'));
       expect(lower, contains('from anon'));
     });
 
-    test('listing_vin_source_results insert lists no vin or vin_hash columns', () {
-      final start = lower.indexOf('insert into public.listing_vin_source_results');
-      expect(start, greaterThan(-1));
-      final end = lower.indexOf('on conflict (listing_id, source_id)', start);
-      expect(end, greaterThan(start));
-      final block = lower.substring(start, end);
-      expect(block, isNot(contains('vin_hash')));
-      expect(block, isNot(contains('full_vin')));
-    });
+    test(
+      'listing_vin_source_results insert lists no vin or vin_hash columns',
+      () {
+        final start = lower.indexOf(
+          'insert into public.listing_vin_source_results',
+        );
+        expect(start, greaterThan(-1));
+        final end = lower.indexOf('on conflict (listing_id, source_id)', start);
+        expect(end, greaterThan(start));
+        final block = lower.substring(start, end);
+        expect(block, isNot(contains('vin_hash')));
+        expect(block, isNot(contains('full_vin')));
+      },
+    );
   });
 }

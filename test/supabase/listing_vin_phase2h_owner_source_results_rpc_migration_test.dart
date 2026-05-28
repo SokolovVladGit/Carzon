@@ -46,25 +46,34 @@ void main() {
       expect(lower, isNot(contains("= 'internal'")));
     });
 
-    test('returns projection excludes VIN, vin_hash, owner_id, raw source_metadata', () {
-      final returnsBlockStart = lower.indexOf('returns table (');
-      expect(returnsBlockStart, greaterThan(-1));
-      final returnsBlockEnd = lower.indexOf(')', returnsBlockStart + 1);
-      expect(returnsBlockEnd, greaterThan(returnsBlockStart));
-      final returnsBlock = lower.substring(returnsBlockStart, returnsBlockEnd);
-      expect(returnsBlock, isNot(contains('vin')));
-      expect(returnsBlock, isNot(contains('vin_hash')));
-      expect(returnsBlock, isNot(contains('owner_id')));
-      expect(returnsBlock, isNot(contains('source_metadata')));
-    });
+    test(
+      'returns projection excludes VIN, vin_hash, owner_id, raw source_metadata',
+      () {
+        final returnsBlockStart = lower.indexOf('returns table (');
+        expect(returnsBlockStart, greaterThan(-1));
+        final returnsBlockEnd = lower.indexOf(')', returnsBlockStart + 1);
+        expect(returnsBlockEnd, greaterThan(returnsBlockStart));
+        final returnsBlock = lower.substring(
+          returnsBlockStart,
+          returnsBlockEnd,
+        );
+        expect(returnsBlock, isNot(contains('vin')));
+        expect(returnsBlock, isNot(contains('vin_hash')));
+        expect(returnsBlock, isNot(contains('owner_id')));
+        expect(returnsBlock, isNot(contains('source_metadata')));
+      },
+    );
 
-    test('return query selects only safe columns (no vin_hash / full vin columns)', () {
-      expect(lower, contains('from public.listing_vin_source_results r'));
-      expect(lower, isNot(contains('r.vin')));
-      expect(lower, isNot(contains('r.vin_hash')));
-      expect(lower, isNot(contains('r.owner_id')));
-      expect(lower, isNot(contains('r.raw')));
-    });
+    test(
+      'return query selects only safe columns (no vin_hash / full vin columns)',
+      () {
+        expect(lower, contains('from public.listing_vin_source_results r'));
+        expect(lower, isNot(contains('r.vin')));
+        expect(lower, isNot(contains('r.vin_hash')));
+        expect(lower, isNot(contains('r.owner_id')));
+        expect(lower, isNot(contains('r.raw')));
+      },
+    );
 
     test('maps NHTSA vPIC source_label and allowlisted provider_version', () {
       expect(lower, contains("when 'nhtsa_vpic' then 'nhtsa vpic'"));
@@ -87,7 +96,9 @@ void main() {
       );
       expect(
         lower,
-        contains('grant execute on function public.get_my_listing_vin_source_results(uuid)'),
+        contains(
+          'grant execute on function public.get_my_listing_vin_source_results(uuid)',
+        ),
       );
       expect(lower, contains('to authenticated'));
       expect(
@@ -102,7 +113,12 @@ void main() {
     });
 
     test('listing_vin_source_results stays without client table grants', () {
-      expect(lower, isNot(contains('grant select on table public.listing_vin_source_results')));
+      expect(
+        lower,
+        isNot(
+          contains('grant select on table public.listing_vin_source_results'),
+        ),
+      );
     });
   });
 }

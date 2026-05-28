@@ -4,19 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   Map<String, dynamic> baseJson() => <String, dynamic>{
-        'id': '11111111-1111-1111-1111-111111111111',
-        'title': 'BMW 320d',
-        'make': 'BMW',
-        'model': '320',
-        'year': 2019,
-        'price_eur': 18750,
-        'mileage_km': 95000,
-        'type': 'sale',
-        'city': 'Chișinău',
-        'market_region': 'moldova',
-        'created_at': '2026-01-01T00:00:00Z',
-        'status': 'active',
-      };
+    'id': '11111111-1111-1111-1111-111111111111',
+    'title': 'BMW 320d',
+    'make': 'BMW',
+    'model': '320',
+    'year': 2019,
+    'price_eur': 18750,
+    'mileage_km': 95000,
+    'type': 'sale',
+    'city': 'Chișinău',
+    'market_region': 'moldova',
+    'created_at': '2026-01-01T00:00:00Z',
+    'status': 'active',
+  };
 
   group('ListingModel.fromJson — price_currency', () {
     test('defaults to EUR when column missing', () {
@@ -58,7 +58,9 @@ void main() {
 
     test('parses whatsapp_enabled from 1 and string true', () {
       expect(
-        ListingModel.fromJson(baseJson()..['whatsapp_enabled'] = 1).whatsappEnabled,
+        ListingModel.fromJson(
+          baseJson()..['whatsapp_enabled'] = 1,
+        ).whatsappEnabled,
         true,
       );
       expect(

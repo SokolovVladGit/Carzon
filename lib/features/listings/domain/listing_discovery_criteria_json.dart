@@ -141,7 +141,9 @@ String listingTypeToWire(ListingType t) => t.name;
 /// Encodes criteria for persistence (local + Supabase `criteria` JSONB).
 ///
 /// Insertion order is stable for fingerprinting / duplicate checks.
-Map<String, dynamic> listingDiscoveryCriteriaToJson(ListingDiscoveryCriteria c) {
+Map<String, dynamic> listingDiscoveryCriteriaToJson(
+  ListingDiscoveryCriteria c,
+) {
   final typeStrings = <String>[];
   final types = <ListingType>[...(c.typeIn ?? const <ListingType>[])];
   types.sort((a, b) => listingTypeToWire(a).compareTo(listingTypeToWire(b)));
@@ -162,8 +164,7 @@ Map<String, dynamic> listingDiscoveryCriteriaToJson(ListingDiscoveryCriteria c) 
     'maxMileage': c.maxMileage,
     'city': c.city,
     'marketRegion': marketRegionToWireNullable(c.marketRegion),
-    'bodyType':
-        c.bodyType == null ? null : listingBodyTypeToWire(c.bodyType!),
+    'bodyType': c.bodyType == null ? null : listingBodyTypeToWire(c.bodyType!),
     'typeIn': typeStrings.isEmpty ? <String>[] : typeStrings,
     'priceCurrencyFilter': listingPriceCurrencyFilterToWire(
       c.priceCurrencyFilter,
@@ -200,8 +201,7 @@ ListingDiscoveryCriteria? listingDiscoveryCriteriaFromJson(dynamic raw) {
       if (parsed != null) resolved.add(parsed);
     }
     if (resolved.isNotEmpty) {
-      final typed = resolved.toList()
-        ..sort((a, b) => a.name.compareTo(b.name));
+      final typed = resolved.toList()..sort((a, b) => a.name.compareTo(b.name));
       typeInDecoded = typed;
     }
   }

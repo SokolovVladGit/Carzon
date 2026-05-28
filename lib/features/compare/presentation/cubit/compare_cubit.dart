@@ -31,10 +31,7 @@ class CompareCubit extends Cubit<CompareState> {
   Future<void> addSnapshot(CompareListingSnapshot snapshot) async {
     if (state.containsListing(snapshot.listingId)) return;
     if (state.isFull) return;
-    final next = [
-      ...state.items,
-      CompareItem(snapshot: snapshot),
-    ];
+    final next = [...state.items, CompareItem(snapshot: snapshot)];
     await _persist(next);
   }
 

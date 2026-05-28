@@ -12,13 +12,21 @@ void main() {
   late String providersLower;
 
   setUpAll(() {
-    final indexFile = File('supabase/functions/process-vin-decode-jobs/index.ts');
+    final indexFile = File(
+      'supabase/functions/process-vin-decode-jobs/index.ts',
+    );
     expect(indexFile.existsSync(), isTrue, reason: 'Edge entrypoint exists');
     indexTs = indexFile.readAsStringSync();
     indexLower = indexTs.toLowerCase();
 
-    final providersDir = Directory('supabase/functions/process-vin-decode-jobs/providers');
-    expect(providersDir.existsSync(), isTrue, reason: 'providers folder exists');
+    final providersDir = Directory(
+      'supabase/functions/process-vin-decode-jobs/providers',
+    );
+    expect(
+      providersDir.existsSync(),
+      isTrue,
+      reason: 'providers folder exists',
+    );
     final parts = <String>[];
     for (final e in providersDir.listSync().whereType<File>()) {
       if (e.path.endsWith('.ts')) parts.add(e.readAsStringSync());
@@ -57,11 +65,14 @@ void main() {
       expect(indexTs, contains('"unauthorized"'));
     });
 
-    test('success RPC passes extended normalized_data without vin in payload', () {
-      expect(indexTs, contains('manufacturer: norm.manufacturer'));
-      expect(indexTs, contains('plantCountry: norm.plantCountry'));
-      expect(indexLower, isNot(contains('decodevin')));
-    });
+    test(
+      'success RPC passes extended normalized_data without vin in payload',
+      () {
+        expect(indexTs, contains('manufacturer: norm.manufacturer'));
+        expect(indexTs, contains('plantCountry: norm.plantCountry'));
+        expect(indexLower, isNot(contains('decodevin')));
+      },
+    );
 
     test('response JSON shape omits vin-sensitive fields', () {
       expect(indexTs, contains('ok: true'));
@@ -76,13 +87,16 @@ void main() {
       expect(block, isNot(contains('vin_normalized')));
     });
 
-    test('does not stringify claimed payload or log vin fields in templates', () {
-      expect(indexLower, isNot(contains('console.log')));
-      expect(indexLower, isNot(contains('json.stringify(claimed')));
-      expect(indexLower, isNot(contains('json.stringify(job')));
-      expect(indexTs, isNot(contains(r'`${job.vin_hash}`')));
-      expect(indexTs, isNot(contains(r'`${vinNormalized}`')));
-    });
+    test(
+      'does not stringify claimed payload or log vin fields in templates',
+      () {
+        expect(indexLower, isNot(contains('console.log')));
+        expect(indexLower, isNot(contains('json.stringify(claimed')));
+        expect(indexLower, isNot(contains('json.stringify(job')));
+        expect(indexTs, isNot(contains(r'`${job.vin_hash}`')));
+        expect(indexTs, isNot(contains(r'`${vinNormalized}`')));
+      },
+    );
 
     test('no commercial provider env placeholders', () {
       expect(indexLower, isNot(contains('carvertical')));

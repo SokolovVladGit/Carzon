@@ -10,28 +10,16 @@ void main() {
     });
 
     test('normalizeOptional uppercases and strips spaces/hyphens', () {
-      expect(
-        ListingVin.normalizeOptional('  ab-cd ef \n'),
-        'ABCDEF',
-      );
+      expect(ListingVin.normalizeOptional('  ab-cd ef \n'), 'ABCDEF');
     });
 
     test('rejects wrong length', () {
-      expect(
-        ListingVin.isOptionalInputValid('1HGBH41JXMN10918'),
-        isFalse,
-      );
+      expect(ListingVin.isOptionalInputValid('1HGBH41JXMN10918'), isFalse);
     });
 
     test('rejects I O Q', () {
-      expect(
-        ListingVin.isOptionalInputValid('1HGBH41JXON109186'),
-        isFalse,
-      );
-      expect(
-        ListingVin.isOptionalInputValid('1HGBH41JXMN10918I'),
-        isFalse,
-      );
+      expect(ListingVin.isOptionalInputValid('1HGBH41JXON109186'), isFalse);
+      expect(ListingVin.isOptionalInputValid('1HGBH41JXMN10918I'), isFalse);
     });
 
     test('accepts syntactically valid 17-char VIN without checksum', () {

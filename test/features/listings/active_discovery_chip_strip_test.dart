@@ -30,63 +30,54 @@ void main() {
       expect(chips.single.flat, '${l10n.filterMake}: Opel');
     });
 
-    test(
-      'multiple active filters render in stable order with mixed '
-      'labelled/value-only chips (no overflow shape changes)',
-      () async {
-        final l10n = await _ru();
-        const state = ListingsState(
-          search: 'X5',
-          make: 'BMW',
-          model: '530d',
-          minYear: 2018,
-          maxYear: 2024,
-          city: 'Tiraspol',
-          typeFilter: ListingTypeFilter.sale,
-          regionFilter: MarketRegionFilter.moldova,
-          sortOption: ListingSortOption.priceLowToHigh,
-        );
+    test('multiple active filters render in stable order with mixed '
+        'labelled/value-only chips (no overflow shape changes)', () async {
+      final l10n = await _ru();
+      const state = ListingsState(
+        search: 'X5',
+        make: 'BMW',
+        model: '530d',
+        minYear: 2018,
+        maxYear: 2024,
+        city: 'Tiraspol',
+        typeFilter: ListingTypeFilter.sale,
+        regionFilter: MarketRegionFilter.moldova,
+        sortOption: ListingSortOption.priceLowToHigh,
+      );
 
-        final chips = listingsDiscoveryChips(state, l10n);
+      final chips = listingsDiscoveryChips(state, l10n);
 
-        // Labelled label/value chips for the dimensions that benefit
-        // from a "Label · Value" split.
-        expect(
-          chips.where((c) => c.label != null).map((c) => c.value).toList(),
-          containsAll(<String>['X5', 'BMW', '530d', '2018–2024', 'Tiraspol']),
-        );
-        // Value-only chips for self-describing dimensions (sale,
-        // region, sort order).
-        final valueOnly = chips
-            .where((c) => c.label == null)
-            .map((c) => c.value)
-            .toList();
-        expect(valueOnly, contains(l10n.typeSale));
-        expect(valueOnly, contains(l10n.regionMoldova));
-        expect(valueOnly, contains(l10n.filterSortPriceLowHigh));
+      // Labelled label/value chips for the dimensions that benefit
+      // from a "Label · Value" split.
+      expect(
+        chips.where((c) => c.label != null).map((c) => c.value).toList(),
+        containsAll(<String>['X5', 'BMW', '530d', '2018–2024', 'Tiraspol']),
+      );
+      // Value-only chips for self-describing dimensions (sale,
+      // region, sort order).
+      final valueOnly = chips
+          .where((c) => c.label == null)
+          .map((c) => c.value)
+          .toList();
+      expect(valueOnly, contains(l10n.typeSale));
+      expect(valueOnly, contains(l10n.regionMoldova));
+      expect(valueOnly, contains(l10n.filterSortPriceLowHigh));
 
-        // Cardinality still matches the active-group counter so the
-        // FAB and the strip can never disagree about "n filters active".
-        expect(chips.length, listingsDiscoveryActiveFilterGroupCount(state));
-      },
-    );
+      // Cardinality still matches the active-group counter so the
+      // FAB and the strip can never disagree about "n filters active".
+      expect(chips.length, listingsDiscoveryActiveFilterGroupCount(state));
+    });
 
-    test(
-      'flat fallback preserves "Label: Value" copy for filter-alert '
-      'summary callers (no breaking change in shared text path)',
-      () async {
-        final l10n = await _ru();
-        const state = ListingsState(make: 'Opel', maxYear: 2024);
+    test('flat fallback preserves "Label: Value" copy for filter-alert '
+        'summary callers (no breaking change in shared text path)', () async {
+      final l10n = await _ru();
+      const state = ListingsState(make: 'Opel', maxYear: 2024);
 
-        expect(
-          listingsDiscoveryChipLabels(state, l10n),
-          <String>[
-            '${l10n.filterMake}: Opel',
-            '${l10n.filterMaxYear}: 2024',
-          ],
-        );
-      },
-    );
+      expect(listingsDiscoveryChipLabels(state, l10n), <String>[
+        '${l10n.filterMake}: Opel',
+        '${l10n.filterMaxYear}: 2024',
+      ]);
+    });
 
     test('default catalog produces no chips', () async {
       final l10n = await _ru();

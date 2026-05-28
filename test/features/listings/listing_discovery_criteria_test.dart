@@ -7,36 +7,39 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ListingDiscoveryCriteria', () {
-    test('defaults match unfiltered feed dimensions (besides pagination/status)', () {
-      const c = ListingDiscoveryCriteria();
-      expect(
-        c.hasNonRegionConstraints(),
-        isFalse,
-        reason: 'empty criteria should read as no user filters',
-      );
-      final q = c.toListingsQuery(
-        page: 2,
-        pageSize: AppConstants.defaultPageSize,
-        status: ListingStatus.active,
-      );
-      expect(q.search, isNull);
-      expect(q.make, isNull);
-      expect(q.model, isNull);
-      expect(q.minYear, isNull);
-      expect(q.maxYear, isNull);
-      expect(q.minPrice, isNull);
-      expect(q.maxPrice, isNull);
-      expect(q.maxMileage, isNull);
-      expect(q.city, isNull);
-      expect(q.marketRegion, isNull);
-      expect(q.bodyType, isNull);
-      expect(q.typeIn, isNull);
-      expect(q.sort, ListingSortOption.newestFirst);
-      expect(q.page, 2);
-      expect(q.pageSize, AppConstants.defaultPageSize);
-      expect(q.status, ListingStatus.active);
-      expect(q.priceCurrency, isNull);
-    });
+    test(
+      'defaults match unfiltered feed dimensions (besides pagination/status)',
+      () {
+        const c = ListingDiscoveryCriteria();
+        expect(
+          c.hasNonRegionConstraints(),
+          isFalse,
+          reason: 'empty criteria should read as no user filters',
+        );
+        final q = c.toListingsQuery(
+          page: 2,
+          pageSize: AppConstants.defaultPageSize,
+          status: ListingStatus.active,
+        );
+        expect(q.search, isNull);
+        expect(q.make, isNull);
+        expect(q.model, isNull);
+        expect(q.minYear, isNull);
+        expect(q.maxYear, isNull);
+        expect(q.minPrice, isNull);
+        expect(q.maxPrice, isNull);
+        expect(q.maxMileage, isNull);
+        expect(q.city, isNull);
+        expect(q.marketRegion, isNull);
+        expect(q.bodyType, isNull);
+        expect(q.typeIn, isNull);
+        expect(q.sort, ListingSortOption.newestFirst);
+        expect(q.page, 2);
+        expect(q.pageSize, AppConstants.defaultPageSize);
+        expect(q.status, ListingStatus.active);
+        expect(q.priceCurrency, isNull);
+      },
+    );
 
     test('priceCurrencyFilter maps to ListingsQuery.priceCurrency', () {
       const c = ListingDiscoveryCriteria(
@@ -50,12 +53,15 @@ void main() {
       expect(q.priceCurrency, ListingCurrency.usd);
     });
 
-    test('hasNonRegionConstraints is true when price currency is constrained', () {
-      const c = ListingDiscoveryCriteria(
-        priceCurrencyFilter: ListingPriceCurrencyFilter.eur,
-      );
-      expect(c.hasNonRegionConstraints(), isTrue);
-    });
+    test(
+      'hasNonRegionConstraints is true when price currency is constrained',
+      () {
+        const c = ListingDiscoveryCriteria(
+          priceCurrencyFilter: ListingPriceCurrencyFilter.eur,
+        );
+        expect(c.hasNonRegionConstraints(), isTrue);
+      },
+    );
 
     test('priceCurrency any omits currency predicate on query', () {
       const c = ListingDiscoveryCriteria(
@@ -70,7 +76,9 @@ void main() {
     });
 
     test('hasNonRegionConstraints is true when sort differs from default', () {
-      const c = ListingDiscoveryCriteria(sort: ListingSortOption.priceLowToHigh);
+      const c = ListingDiscoveryCriteria(
+        sort: ListingSortOption.priceLowToHigh,
+      );
       expect(c.hasNonRegionConstraints(), isTrue);
     });
 

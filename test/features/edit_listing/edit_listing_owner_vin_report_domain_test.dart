@@ -29,9 +29,7 @@ void main() {
 
     test('returns null when listing_id missing', () {
       expect(
-        OwnerListingVinReportStatus.tryParse({
-          'decode_status': 'decoded',
-        }),
+        OwnerListingVinReportStatus.tryParse({'decode_status': 'decoded'}),
         isNull,
       );
     });

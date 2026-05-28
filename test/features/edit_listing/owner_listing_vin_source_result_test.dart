@@ -11,10 +11,7 @@ void main() {
         'status': 'weird_status',
         'visibility': 'owner',
         'confidence': 'lowish',
-        'normalized_summary': {
-          'make': ' TOYOTA ',
-          'year': 2020,
-        },
+        'normalized_summary': {'make': ' TOYOTA ', 'year': 2020},
         'limitation_codes': ['basic_decode_only', 'other'],
         'requires_user_consent': false,
         'consent_required_reason': null,

@@ -75,8 +75,9 @@ class SupabaseNotificationsRemoteDataSource
   @override
   Future<NotificationPreferences> fetchMyPreferences() async {
     try {
-      final dynamic data =
-          await _supabase.client.rpc('get_my_notification_preferences');
+      final dynamic data = await _supabase.client.rpc(
+        'get_my_notification_preferences',
+      );
       return _parsePreferencesRow(data);
     } on sb.PostgrestException catch (e, st) {
       throw ServerException(e.message, cause: e, stackTrace: st);

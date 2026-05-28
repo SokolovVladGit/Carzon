@@ -16,10 +16,7 @@ void main() {
       final first = listingDiscoveryCriteriaFromBrowseStateForAlert(feed);
       final second = listingDiscoveryCriteriaFromBrowseStateForAlert(feed);
 
-      expect(
-        listingDiscoveryCriteriaEqualIgnoringSort(first, second),
-        isTrue,
-      );
+      expect(listingDiscoveryCriteriaEqualIgnoringSort(first, second), isTrue);
     });
 
     test('differs only by sort ordering', () {

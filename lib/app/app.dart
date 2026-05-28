@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/config/env.dart';
 import '../core/constants/app_constants.dart';
+import '../core/l10n/app_locale_cubit.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_mode_cubit.dart';
 import '../l10n/app_localizations.dart';
@@ -85,6 +86,7 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
           value: sl<MessagingUnreadSummaryCubit>(),
         ),
         BlocProvider<ThemeModeCubit>.value(value: sl<ThemeModeCubit>()),
+        BlocProvider<AppLocaleCubit>.value(value: sl<AppLocaleCubit>()),
       ],
       child: MultiBlocListener(
         listeners: [
@@ -126,23 +128,32 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
           ),
         ],
         child: BlocBuilder<ThemeModeCubit, ThemeModeState>(
-          builder: (context, themeState) => MaterialApp.router(
-            title: AppConstants.appName,
-            theme: AppTheme.light(),
-            darkTheme: AppTheme.dark(),
-            themeMode: themeState.themeMode,
-            // Russian is the MVP product language. Romanian (`ro`) and
-            // English (`en`) are planned but intentionally not added yet;
-            // forcing `locale` to `ru` means unsupported device locales
-            // also render in Russian instead of falling back to English.
-            locale: const Locale('ru'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            routerConfig: sl<GoRouter>(),
-            builder: (context, child) =>
-                CompareTrayHost(router: sl<GoRouter>(), child: child),
-            debugShowCheckedModeBanner: false,
-          ),
+          builder: (context, themeState) =>
+              BlocBuilder<AppLocaleCubit, AppLocaleState>(
+                builder: (context, localeState) => MaterialApp.router(
+                  title: AppConstants.appName,
+                  theme: AppTheme.light(),
+                  darkTheme: AppTheme.dark(),
+                  themeMode: themeState.themeMode,
+                  locale: localeState.locale,
+                  localizationsDelegates:
+                      AppLocalizations.localizationsDelegates,
+                  supportedLocales: AppLocalizations.supportedLocales,
+                  localeResolutionCallback: (locale, supported) {
+                    for (final supportedLocale in supported) {
+                      if (supportedLocale.languageCode ==
+                          localeState.locale.languageCode) {
+                        return supportedLocale;
+                      }
+                    }
+                    return const Locale('ru');
+                  },
+                  routerConfig: sl<GoRouter>(),
+                  builder: (context, child) =>
+                      CompareTrayHost(router: sl<GoRouter>(), child: child),
+                  debugShowCheckedModeBanner: false,
+                ),
+              ),
         ),
       ),
     );

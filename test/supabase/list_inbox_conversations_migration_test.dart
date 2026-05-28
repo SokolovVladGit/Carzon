@@ -15,15 +15,20 @@ void main() {
       sql = f.readAsStringSync();
     });
 
-    test('defines security definer list_inbox_conversations with has_unread', () {
-      final lower = sql.toLowerCase();
-      expect(
-        lower.contains('create or replace function public.list_inbox_conversations'),
-        isTrue,
-      );
-      expect(lower.contains('has_unread boolean'), isTrue);
-      expect(lower.contains('security definer'), isTrue);
-    });
+    test(
+      'defines security definer list_inbox_conversations with has_unread',
+      () {
+        final lower = sql.toLowerCase();
+        expect(
+          lower.contains(
+            'create or replace function public.list_inbox_conversations',
+          ),
+          isTrue,
+        );
+        expect(lower.contains('has_unread boolean'), isTrue);
+        expect(lower.contains('security definer'), isTrue);
+      },
+    );
 
     test('unread predicate aligns with inbound-after-read semantics', () {
       final lower = sql.toLowerCase();
@@ -50,11 +55,15 @@ void main() {
       );
       expect(lower.contains('not authenticated'), isTrue);
       expect(
-        lower.contains('revoke all on function public.list_inbox_conversations() from public'),
+        lower.contains(
+          'revoke all on function public.list_inbox_conversations() from public',
+        ),
         isTrue,
       );
       expect(
-        lower.contains('revoke all on function public.list_inbox_conversations() from anon'),
+        lower.contains(
+          'revoke all on function public.list_inbox_conversations() from anon',
+        ),
         isTrue,
       );
     });

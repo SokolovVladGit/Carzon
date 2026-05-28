@@ -123,10 +123,7 @@ class ListingVehicleSpecPickerRow extends StatelessWidget {
 }
 
 class _FuelTypePickSheet extends StatelessWidget {
-  const _FuelTypePickSheet({
-    required this.appL10n,
-    required this.selected,
-  });
+  const _FuelTypePickSheet({required this.appL10n, required this.selected});
 
   final AppLocalizations appL10n;
   final ListingFuelType? selected;
@@ -137,19 +134,12 @@ class _FuelTypePickSheet extends StatelessWidget {
     final cs = theme.colorScheme;
     final br = theme.brightness;
 
-    final items =
-        <
-          ({
-            ListingFuelType? value,
-            String label,
-          })
-        >[
-          (value: null, label: appL10n.listingBodyTypeNotSpecified),
-          ...ListingFuelType.values.map(
-            (e) =>
-                (value: e, label: formatListingFuelType(appL10n, e)),
-          ),
-        ];
+    final items = <({ListingFuelType? value, String label})>[
+      (value: null, label: appL10n.listingBodyTypeNotSpecified),
+      ...ListingFuelType.values.map(
+        (e) => (value: e, label: formatListingFuelType(appL10n, e)),
+      ),
+    ];
 
     return SafeArea(
       child: SizedBox(
@@ -200,8 +190,7 @@ class _FuelTypePickSheet extends StatelessWidget {
                           border: Border.all(
                             color: isSel
                                 ? cs.onSurface.withValues(
-                                    alpha:
-                                        br == Brightness.light ? 0.26 : 0.34,
+                                    alpha: br == Brightness.light ? 0.26 : 0.34,
                                   )
                                 : cs.outlineVariant.withValues(alpha: 0.30),
                           ),
@@ -226,7 +215,9 @@ class _FuelTypePickSheet extends StatelessWidget {
                         child: Text(
                           item.label,
                           style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: isSel ? FontWeight.w700 : FontWeight.w600,
+                            fontWeight: isSel
+                                ? FontWeight.w700
+                                : FontWeight.w600,
                             height: 1.2,
                           ),
                         ),
@@ -244,10 +235,7 @@ class _FuelTypePickSheet extends StatelessWidget {
 }
 
 class _DrivetrainPickSheet extends StatelessWidget {
-  const _DrivetrainPickSheet({
-    required this.appL10n,
-    required this.selected,
-  });
+  const _DrivetrainPickSheet({required this.appL10n, required this.selected});
 
   final AppLocalizations appL10n;
   final ListingDrivetrain? selected;
@@ -258,19 +246,12 @@ class _DrivetrainPickSheet extends StatelessWidget {
     final cs = theme.colorScheme;
     final br = theme.brightness;
 
-    final items =
-        <
-          ({
-            ListingDrivetrain? value,
-            String label,
-          })
-        >[
-          (value: null, label: appL10n.listingBodyTypeNotSpecified),
-          ...ListingDrivetrain.values.map(
-            (e) =>
-                (value: e, label: formatListingDrivetrain(appL10n, e)),
-          ),
-        ];
+    final items = <({ListingDrivetrain? value, String label})>[
+      (value: null, label: appL10n.listingBodyTypeNotSpecified),
+      ...ListingDrivetrain.values.map(
+        (e) => (value: e, label: formatListingDrivetrain(appL10n, e)),
+      ),
+    ];
 
     return SafeArea(
       child: SizedBox(
@@ -323,8 +304,7 @@ class _DrivetrainPickSheet extends StatelessWidget {
                           border: Border.all(
                             color: isSel
                                 ? cs.onSurface.withValues(
-                                    alpha:
-                                        br == Brightness.light ? 0.26 : 0.34,
+                                    alpha: br == Brightness.light ? 0.26 : 0.34,
                                   )
                                 : cs.outlineVariant.withValues(alpha: 0.30),
                           ),
@@ -349,7 +329,9 @@ class _DrivetrainPickSheet extends StatelessWidget {
                         child: Text(
                           item.label,
                           style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: isSel ? FontWeight.w700 : FontWeight.w600,
+                            fontWeight: isSel
+                                ? FontWeight.w700
+                                : FontWeight.w600,
                             height: 1.2,
                           ),
                         ),

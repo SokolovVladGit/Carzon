@@ -5,10 +5,7 @@ import 'compare_fly_to_tray_overlay.dart';
 
 /// Full-screen slot for the fly animation, painted above the compare tray.
 class CompareFlyToTrayOverlaySlot extends StatefulWidget {
-  const CompareFlyToTrayOverlaySlot({
-    super.key,
-    required this.controller,
-  });
+  const CompareFlyToTrayOverlaySlot({super.key, required this.controller});
 
   final CompareFlyToTrayController controller;
 
@@ -17,7 +14,8 @@ class CompareFlyToTrayOverlaySlot extends StatefulWidget {
       _CompareFlyToTrayOverlaySlotState();
 }
 
-class _CompareFlyToTrayOverlaySlotState extends State<CompareFlyToTrayOverlaySlot> {
+class _CompareFlyToTrayOverlaySlotState
+    extends State<CompareFlyToTrayOverlaySlot> {
   final GlobalKey _layerKey = GlobalKey(debugLabel: 'compare_fly_layer');
 
   @override

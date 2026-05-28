@@ -11,8 +11,8 @@ import '../../l10n/app_localizations.dart';
 /// ```
 ///
 /// `AppLocalizations.of(context)` is guaranteed non-null at runtime for
-/// Carzon because the app always renders with `Locale('ru')` and the
-/// `AppLocalizations` delegate is installed in `MaterialApp.router`.
+/// Carzon because `MaterialApp.router` installs the delegate and sets
+/// `locale` from [AppLocaleCubit] (`ru` or `ro`).
 /// If `AppLocalizations` is missing (e.g. a test forgot the
 /// localization delegates), this extension throws a clear
 /// [FlutterError] instead of returning `null`.

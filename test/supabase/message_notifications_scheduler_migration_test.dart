@@ -14,11 +14,7 @@ void main() {
       final f = File(
         'supabase/migrations/20260529120000_schedule_process_message_notifications_cron.sql',
       );
-      expect(
-        f.existsSync(),
-        isTrue,
-        reason: 'Phase 3E cron migration exists',
-      );
+      expect(f.existsSync(), isTrue, reason: 'Phase 3E cron migration exists');
       sql = f.readAsStringSync();
       lower = sql.toLowerCase();
     });
@@ -29,26 +25,35 @@ void main() {
       expect(lower, contains('carzon_process_message_notifications_1m'));
       expect(lower, contains("cron.schedule"));
       expect(lower, contains('* * * * *'));
-      expect(lower, contains('carzon_invoke_process_message_notifications_worker'));
-    });
-
-    test('references process-message-notifications path and internal header', () {
       expect(
         lower,
-        contains('functions/v1/process-message-notifications'),
+        contains('carzon_invoke_process_message_notifications_worker'),
       );
-      expect(lower, contains('x-carzon-internal-secret'));
-      expect(lower, contains('carzon_process_message_notifications_url'));
-      expect(lower, contains('carzon_process_message_notifications_secret'));
     });
 
-    test('reads secrets from vault view only (no env secret assignment in SQL)', () {
-      expect(lower, contains('vault.decrypted_secrets'));
-      expect(sql.toUpperCase(), isNot(contains('CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET=')));
-      expect(lower, isNot(contains('begin private key')));
-      // No real project ref in SQL (placeholders only in comments).
-      expect(lower, isNot(contains('zypqfwktvzfnfvihxhbd')));
-    });
+    test(
+      'references process-message-notifications path and internal header',
+      () {
+        expect(lower, contains('functions/v1/process-message-notifications'));
+        expect(lower, contains('x-carzon-internal-secret'));
+        expect(lower, contains('carzon_process_message_notifications_url'));
+        expect(lower, contains('carzon_process_message_notifications_secret'));
+      },
+    );
+
+    test(
+      'reads secrets from vault view only (no env secret assignment in SQL)',
+      () {
+        expect(lower, contains('vault.decrypted_secrets'));
+        expect(
+          sql.toUpperCase(),
+          isNot(contains('CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET=')),
+        );
+        expect(lower, isNot(contains('begin private key')));
+        // No real project ref in SQL (placeholders only in comments).
+        expect(lower, isNot(contains('zypqfwktvzfnfvihxhbd')));
+      },
+    );
 
     test('does not grant anon/authenticated on queue tables', () {
       expect(lower, isNot(contains('notification_delivery_events')));
@@ -62,9 +67,15 @@ void main() {
       expect(lower, isNot(contains('grant execute')));
     });
 
-    test('worker forces claim path unchanged (still Edge / service_role only)', () {
-      expect(lower, isNot(contains('claim_notification_events_for_processing')));
-    });
+    test(
+      'worker forces claim path unchanged (still Edge / service_role only)',
+      () {
+        expect(
+          lower,
+          isNot(contains('claim_notification_events_for_processing')),
+        );
+      },
+    );
   });
 
   group('supabase/config.toml process-message-notifications', () {
@@ -80,34 +91,45 @@ void main() {
       expect(raw, contains('[functions.process-message-notifications]'));
       expect(raw, contains('[functions.process-filter-alert-notifications]'));
       expect(raw, contains('[functions.process-vin-decode-jobs]'));
-      final lines = raw.split('\n').where((l) => l.trim() == 'verify_jwt = false').length;
+      final lines = raw
+          .split('\n')
+          .where((l) => l.trim() == 'verify_jwt = false')
+          .length;
       expect(lines >= 3, isTrue);
     });
 
-    test('docs reference Phase 3E, Phase 4A, VIN scheduler migrations or ops runbooks', () {
-      expect(
-        raw.contains('20260529120000') ||
-            raw.contains('20260601120000') ||
-            raw.contains('20260621120000') ||
-            raw.contains('ops_message_notifications') ||
-            raw.contains('ops_vin_decode_jobs'),
-        isTrue,
-      );
-    });
+    test(
+      'docs reference Phase 3E, Phase 4A, VIN scheduler migrations or ops runbooks',
+      () {
+        expect(
+          raw.contains('20260529120000') ||
+              raw.contains('20260601120000') ||
+              raw.contains('20260621120000') ||
+              raw.contains('ops_message_notifications') ||
+              raw.contains('ops_vin_decode_jobs'),
+          isTrue,
+        );
+      },
+    );
   });
 
-  group('supabase/functions/process-message-notifications/index.ts (Phase 3E invariants)', () {
-    late String ts;
+  group(
+    'supabase/functions/process-message-notifications/index.ts (Phase 3E invariants)',
+    () {
+      late String ts;
 
-    setUpAll(() {
-      final f = File('supabase/functions/process-message-notifications/index.ts');
-      expect(f.existsSync(), isTrue);
-      ts = f.readAsStringSync();
-    });
+      setUpAll(() {
+        final f = File(
+          'supabase/functions/process-message-notifications/index.ts',
+        );
+        expect(f.existsSync(), isTrue);
+        ts = f.readAsStringSync();
+      });
 
-    test('still requires x-carzon-internal-secret vs env', () {
-      expect(ts, contains('x-carzon-internal-secret'));
-      expect(ts, contains('CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET'));
-    });
-  });
+      test('still requires x-carzon-internal-secret vs env', () {
+        expect(ts, contains('x-carzon-internal-secret'));
+        expect(ts, contains('CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET'));
+      });
+    },
+  );
 }

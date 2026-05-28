@@ -114,11 +114,7 @@ Offset compareFlyVisualEndCenter(Rect traySlot, Rect thumbInTray) {
 Rect compareFlyVisualEndRect(Rect traySlot) {
   final thumb = compareFlyThumbnailTargetRect(traySlot);
   final center = compareFlyVisualEndCenter(traySlot, thumb);
-  return Rect.fromCenter(
-    center: center,
-    width: 44,
-    height: 44,
-  );
+  return Rect.fromCenter(center: center, width: 44, height: 44);
 }
 
 /// Bounds of the flying thumbnail at progress [t].
@@ -154,8 +150,7 @@ Rect compareFlyThumbnailTargetRect(
   double thumbSize = 44,
 }) {
   const padLeft = 12;
-  final top = traySlotBounds.top +
-      (traySlotBounds.height - thumbSize) / 2;
+  final top = traySlotBounds.top + (traySlotBounds.height - thumbSize) / 2;
   return Rect.fromLTWH(
     traySlotBounds.left + padLeft,
     top,

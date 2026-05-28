@@ -47,16 +47,16 @@ class SelfSellerVisualState extends Equatable {
 
   @override
   List<Object?> get props => [
-        loading,
-        sellerAvatarUrl,
-        sellerDisplayName,
-        loadFailed,
-      ];
+    loading,
+    sellerAvatarUrl,
+    sellerDisplayName,
+    loadFailed,
+  ];
 }
 
 class SelfSellerVisualCubit extends Cubit<SelfSellerVisualState> {
   SelfSellerVisualCubit(this._getMySellerProfile)
-      : super(const SelfSellerVisualState());
+    : super(const SelfSellerVisualState());
 
   final GetMySellerProfile _getMySellerProfile;
 
@@ -78,12 +78,7 @@ class SelfSellerVisualCubit extends Cubit<SelfSellerVisualState> {
 
     switch (result) {
       case FailureResult():
-        emit(
-          state.copyWith(
-            loading: false,
-            loadFailed: true,
-          ),
-        );
+        emit(state.copyWith(loading: false, loadFailed: true));
       case Success(:final value):
         final trimmedUrl = value.avatarUrl?.trim();
         final trimmedName = value.displayName?.trim();
@@ -91,12 +86,12 @@ class SelfSellerVisualCubit extends Cubit<SelfSellerVisualState> {
           SelfSellerVisualState(
             loading: false,
             loadFailed: false,
-            sellerAvatarUrl:
-                trimmedUrl != null && trimmedUrl.isNotEmpty ? trimmedUrl : null,
-            sellerDisplayName:
-                trimmedName != null && trimmedName.isNotEmpty
-                    ? trimmedName
-                    : null,
+            sellerAvatarUrl: trimmedUrl != null && trimmedUrl.isNotEmpty
+                ? trimmedUrl
+                : null,
+            sellerDisplayName: trimmedName != null && trimmedName.isNotEmpty
+                ? trimmedName
+                : null,
           ),
         );
     }

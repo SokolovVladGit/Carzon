@@ -36,10 +36,7 @@ void main() {
 
   group('create listing invalid-VIN gate (mirrors create_listing_page)', () {
     test('non-empty invalid VIN fails isOptionalInputValid before submit', () {
-      expect(
-        ListingVin.isOptionalInputValid('1HGBH41JXON109186'),
-        isFalse,
-      );
+      expect(ListingVin.isOptionalInputValid('1HGBH41JXON109186'), isFalse);
     });
   });
 }

@@ -65,8 +65,7 @@ class CompareToggleButton extends StatelessWidget {
     if (flySourceKey == null && flySourceFallbackKey == null) return false;
     final router = GoRouter.maybeOf(context);
     if (router == null) return false;
-    final location =
-        router.routerDelegate.currentConfiguration.uri.toString();
+    final location = router.routerDelegate.currentConfiguration.uri.toString();
     return !compareTrayHiddenForRoute(location);
   }
 
@@ -130,7 +129,9 @@ class CompareToggleButton extends StatelessWidget {
 
         return IconButton(
           key: ValueKey('compare_toggle_$listingId'),
-          tooltip: selected ? l10n.compareRemoveTooltip : l10n.compareAddTooltip,
+          tooltip: selected
+              ? l10n.compareRemoveTooltip
+              : l10n.compareAddTooltip,
           constraints: BoxConstraints(minWidth: minSide, minHeight: minSide),
           padding: EdgeInsets.zero,
           style: IconButton.styleFrom(
@@ -152,11 +153,7 @@ class CompareToggleButton extends StatelessWidget {
                       color: iconColor,
                     ),
                   )
-                : Icon(
-                    CarzonIcons.compare,
-                    size: iconSize,
-                    color: iconColor,
-                  ),
+                : Icon(CarzonIcons.compare, size: iconSize, color: iconColor),
           ),
         );
       },

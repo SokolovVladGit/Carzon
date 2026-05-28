@@ -7,5 +7,6 @@ class ClearFilterAlertCriteria {
 
   final FilterAlertsRepository _repository;
 
-  Future<Result<FilterAlertSettings>> call() => _repository.clearPersistedCriteria();
+  Future<Result<FilterAlertSettings>> call() =>
+      _repository.clearPersistedCriteria();
 }

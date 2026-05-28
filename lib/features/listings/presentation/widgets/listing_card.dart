@@ -197,7 +197,7 @@ class _ListingCardState extends State<ListingCard> {
                 priceLabel: formatListingPriceFromListing(listing),
                 titleLabel: '${listing.make} ${listing.model}',
                 brandIconAsset: getBrandIconPath(listing.make),
-                mileageLabel: formatKm(listing.mileageKm),
+                mileageLabel: formatKm(l10n, listing.mileageKm),
                 yearLabel: listing.year.toString(),
                 city: listing.city,
                 theme: theme,

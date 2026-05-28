@@ -20,17 +20,14 @@ class CompareTrayVisualPolicy {
   /// When true, tray thumbs are flat color chips (no network decode).
   final bool solidTrayThumbnails;
 
-  static const CompareTrayVisualPolicy production =
-      CompareTrayVisualPolicy();
+  static const CompareTrayVisualPolicy production = CompareTrayVisualPolicy();
 
   static const CompareTrayVisualPolicy auditNoFly = CompareTrayVisualPolicy(
     renderFlyOverlay: false,
   );
 
   static const CompareTrayVisualPolicy auditSolidThumbs =
-      CompareTrayVisualPolicy(
-    solidTrayThumbnails: true,
-  );
+      CompareTrayVisualPolicy(solidTrayThumbnails: true);
 
   static const CompareTrayVisualPolicy auditMinimal = CompareTrayVisualPolicy(
     renderFlyOverlay: false,

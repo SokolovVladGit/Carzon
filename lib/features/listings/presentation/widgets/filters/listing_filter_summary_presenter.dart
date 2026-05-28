@@ -57,8 +57,8 @@ bool isListingsFilterDraftVanilla(ListingsFilterFormSeed draft) {
       draft.sort == ListingSortOption.newestFirst;
 }
 
-String _formatAmountRu(num n) {
-  return NumberFormat.decimalPattern('ru').format(n);
+String _formatAmount(AppLocalizations l10n, num n) {
+  return NumberFormat.decimalPattern(l10n.localeName).format(n);
 }
 
 String? _makeModelPart(String? make, String? model) {
@@ -90,18 +90,18 @@ String? _pricePart(AppLocalizations l10n, ListingsFilterFormSeed d) {
 
   final s = sym(d.priceCurrencyFilter);
   if (hasMin && hasMax) {
-    final a = _formatAmountRu(d.minPrice!);
-    final b = _formatAmountRu(d.maxPrice!);
+    final a = _formatAmount(l10n, d.minPrice!);
+    final b = _formatAmount(l10n, d.maxPrice!);
     if (d.priceCurrencyFilter == ListingPriceCurrencyFilter.any) {
       return l10n.filterSummaryPriceRangePlain(a, b);
     }
     return l10n.filterSummaryPriceRangeWithSymbol(s, a, b);
   }
   if (hasMax) {
-    final amt = '$s${_formatAmountRu(d.maxPrice!)}';
+    final amt = '$s${_formatAmount(l10n, d.maxPrice!)}';
     return l10n.filterSummaryPriceUpTo(amt);
   }
-  final amt = '$s${_formatAmountRu(d.minPrice!)}';
+  final amt = '$s${_formatAmount(l10n, d.minPrice!)}';
   return l10n.filterSummaryPriceFrom(amt);
 }
 
@@ -130,7 +130,7 @@ ListingsFilterSummaryView buildListingsFilterSummaryView(
 
   if (draft.maxMileage != null) {
     parts.add(
-      l10n.filterSummaryMileageUpTo(_formatAmountRu(draft.maxMileage!)),
+      l10n.filterSummaryMileageUpTo(_formatAmount(l10n, draft.maxMileage!)),
     );
   }
 

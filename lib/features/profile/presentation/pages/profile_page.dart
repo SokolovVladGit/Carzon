@@ -7,7 +7,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
+import '../../../../core/config/env.dart';
+import '../../../notifications/services/push_notification_registration_service.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../core/l10n/app_locale_cubit.dart';
+import '../../../../core/l10n/app_locale_preference.dart';
 import '../../../../core/theme/theme_mode_cubit.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../shared/ui/carzon_icons.dart';
@@ -278,18 +283,7 @@ class _AccountViewState extends State<_AccountView> {
                 _MutedDivider(scheme: scheme, isDark: isDark),
                 _ProfileDarkThemeRow(theme: theme, scheme: scheme),
                 _MutedDivider(scheme: scheme, isDark: isDark),
-                IgnorePointer(
-                  ignoring: true,
-                  child: _FutureSettingsRow(
-                    key: const ValueKey('profile_future_row_language'),
-                    title: l10n.profileLanguageTitle,
-                    subtitle: l10n.profileLanguageCurrentRussian,
-                    badgeLabel: l10n.commonComingSoon,
-                    scheme: scheme,
-                    isDark: isDark,
-                    dimmed: true,
-                  ),
-                ),
+                _ProfileLanguageRow(theme: theme, scheme: scheme),
                 _MutedDivider(scheme: scheme, isDark: isDark),
                 _ProfileNotificationSettingsRow(theme: theme, scheme: scheme),
               ],
@@ -805,6 +799,149 @@ class _ProfileListingAlertsPreferenceRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ProfileLanguageRow extends StatelessWidget {
+  const _ProfileLanguageRow({required this.theme, required this.scheme});
+
+  final ThemeData theme;
+  final ColorScheme scheme;
+
+  static String _currentLanguageLabel(
+    AppLocalizations l10n,
+    AppLocalePreference preference,
+  ) {
+    return switch (preference) {
+      AppLocalePreference.ru => l10n.profileLanguageCurrentRussian,
+      AppLocalePreference.ro => l10n.profileLanguageCurrentRomanian,
+    };
+  }
+
+  Future<void> _syncPushTokenLocaleAfterChange() async {
+    if (!Env.pushNotificationsEnabled) {
+      return;
+    }
+    unawaited(
+      sl<PushNotificationRegistrationService>()
+          .syncTokenWithBackendIfEligible(),
+    );
+  }
+
+  Future<void> _showLanguageSheet(BuildContext context) async {
+    final l10n = context.l10n;
+    final cubit = context.read<AppLocaleCubit>();
+    final selected = cubit.state.preference;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                key: const ValueKey('profile_language_option_ru'),
+                title: Text(l10n.profileLanguageOptionRussian),
+                trailing: selected == AppLocalePreference.ru
+                    ? Icon(Icons.check, color: scheme.primary)
+                    : null,
+                onTap: () async {
+                  await cubit.setPreference(AppLocalePreference.ru);
+                  await _syncPushTokenLocaleAfterChange();
+                  if (sheetContext.mounted) {
+                    Navigator.of(sheetContext).pop();
+                  }
+                },
+              ),
+              ListTile(
+                key: const ValueKey('profile_language_option_ro'),
+                title: Text(l10n.profileLanguageOptionRomanian),
+                trailing: selected == AppLocalePreference.ro
+                    ? Icon(Icons.check, color: scheme.primary)
+                    : null,
+                onTap: () async {
+                  await cubit.setPreference(AppLocalePreference.ro);
+                  await _syncPushTokenLocaleAfterChange();
+                  if (sheetContext.mounted) {
+                    Navigator.of(sheetContext).pop();
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return BlocBuilder<AppLocaleCubit, AppLocaleState>(
+      builder: (context, localeState) {
+        return Padding(
+          padding: const EdgeInsets.only(
+            left: 16,
+            right: 10,
+            top: 6,
+            bottom: 6,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: const ValueKey('profile_future_row_language'),
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => _showLanguageSheet(context),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.language_outlined,
+                      size: 22,
+                      color: scheme.primary.withValues(alpha: 0.92),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.profileLanguageTitle,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.06,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _currentLanguageLabel(l10n, localeState.preference),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant.withValues(
+                                alpha: 0.82,
+                              ),
+                              height: 1.32,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      CarzonIcons.chevronRight,
+                      size: 19,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
