@@ -35,38 +35,38 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
 ) {
   final out = <ListingsDiscoveryChip>[];
   if (s.search != null && s.search!.trim().isNotEmpty) {
-    out.add(ListingsDiscoveryChip(
-      label: l10n.listingsSearchHint,
-      value: s.search!.trim(),
-    ));
+    out.add(
+      ListingsDiscoveryChip(
+        label: l10n.listingsSearchHint,
+        value: s.search!.trim(),
+      ),
+    );
   }
   if (s.make != null && s.make!.trim().isNotEmpty) {
-    out.add(ListingsDiscoveryChip(
-      label: l10n.filterMake,
-      value: s.make!.trim(),
-    ));
+    out.add(
+      ListingsDiscoveryChip(label: l10n.filterMake, value: s.make!.trim()),
+    );
   }
   if (s.model != null && s.model!.trim().isNotEmpty) {
-    out.add(ListingsDiscoveryChip(
-      label: l10n.filterModel,
-      value: s.model!.trim(),
-    ));
+    out.add(
+      ListingsDiscoveryChip(label: l10n.filterModel, value: s.model!.trim()),
+    );
   }
   if (s.minYear != null && s.maxYear != null) {
-    out.add(ListingsDiscoveryChip(
-      label: l10n.listingFieldYear,
-      value: '${s.minYear}–${s.maxYear}',
-    ));
+    out.add(
+      ListingsDiscoveryChip(
+        label: l10n.listingFieldYear,
+        value: '${s.minYear}–${s.maxYear}',
+      ),
+    );
   } else if (s.minYear != null) {
-    out.add(ListingsDiscoveryChip(
-      label: l10n.filterMinYear,
-      value: '${s.minYear}',
-    ));
+    out.add(
+      ListingsDiscoveryChip(label: l10n.filterMinYear, value: '${s.minYear}'),
+    );
   } else if (s.maxYear != null) {
-    out.add(ListingsDiscoveryChip(
-      label: l10n.filterMaxYear,
-      value: '${s.maxYear}',
-    ));
+    out.add(
+      ListingsDiscoveryChip(label: l10n.filterMaxYear, value: '${s.maxYear}'),
+    );
   }
   if (s.minPrice != null || s.maxPrice != null) {
     final a = s.minPrice?.toString() ?? '…';
@@ -74,10 +74,12 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
     final range = '$a–$b';
     switch (s.priceCurrencyFilter) {
       case ListingPriceCurrencyFilter.any:
-        out.add(ListingsDiscoveryChip(
-          label: l10n.filterPriceChipPrefix,
-          value: range,
-        ));
+        out.add(
+          ListingsDiscoveryChip(
+            label: l10n.filterPriceChipPrefix,
+            value: range,
+          ),
+        );
       case ListingPriceCurrencyFilter.usd:
         out.add(ListingsDiscoveryChip(value: '\$ $range'));
       case ListingPriceCurrencyFilter.eur:
@@ -88,21 +90,26 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
       case ListingPriceCurrencyFilter.any:
         break;
       case ListingPriceCurrencyFilter.usd:
-        out.add(ListingsDiscoveryChip(value: l10n.filterPriceCurrencyActiveUsd));
+        out.add(
+          ListingsDiscoveryChip(value: l10n.filterPriceCurrencyActiveUsd),
+        );
       case ListingPriceCurrencyFilter.eur:
-        out.add(ListingsDiscoveryChip(value: l10n.filterPriceCurrencyActiveEur));
+        out.add(
+          ListingsDiscoveryChip(value: l10n.filterPriceCurrencyActiveEur),
+        );
     }
   }
   if (s.maxMileage != null) {
-    out.add(ListingsDiscoveryChip(
-      value: '≤ ${s.maxMileage} ${l10n.commonKilometersShort}',
-    ));
+    out.add(
+      ListingsDiscoveryChip(
+        value: '≤ ${s.maxMileage} ${l10n.commonKilometersShort}',
+      ),
+    );
   }
   if (s.city != null && s.city!.trim().isNotEmpty) {
-    out.add(ListingsDiscoveryChip(
-      label: l10n.filterCity,
-      value: s.city!.trim(),
-    ));
+    out.add(
+      ListingsDiscoveryChip(label: l10n.filterCity, value: s.city!.trim()),
+    );
   }
   if (s.regionFilter == MarketRegionFilter.moldova) {
     out.add(ListingsDiscoveryChip(value: l10n.regionMoldova));
@@ -110,9 +117,11 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
     out.add(ListingsDiscoveryChip(value: l10n.regionBoth));
   }
   if (s.bodyTypeFilter != null) {
-    out.add(ListingsDiscoveryChip(
-      value: listingFilterBodyTypeLabel(l10n, s.bodyTypeFilter!),
-    ));
+    out.add(
+      ListingsDiscoveryChip(
+        value: listingFilterBodyTypeLabel(l10n, s.bodyTypeFilter!),
+      ),
+    );
   }
   if (s.typeFilter == ListingTypeFilter.sale) {
     out.add(ListingsDiscoveryChip(value: l10n.typeSale));
@@ -120,9 +129,11 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
     out.add(ListingsDiscoveryChip(value: l10n.typeExchange));
   }
   if (s.sortOption != ListingSortOption.newestFirst) {
-    out.add(ListingsDiscoveryChip(
-      value: listingFilterSortOptionLabel(l10n, s.sortOption),
-    ));
+    out.add(
+      ListingsDiscoveryChip(
+        value: listingFilterSortOptionLabel(l10n, s.sortOption),
+      ),
+    );
   }
   return out;
 }
@@ -136,8 +147,7 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
 List<String> listingsDiscoveryChipLabels(
   ListingsState s,
   AppLocalizations l10n,
-) =>
-    listingsDiscoveryChips(s, l10n).map((c) => c.flat).toList(growable: false);
+) => listingsDiscoveryChips(s, l10n).map((c) => c.flat).toList(growable: false);
 
 /// Count of active discovery dimensions shown as chips in the feed —
 /// cardinality must stay aligned with [listingsDiscoveryChipLabels].

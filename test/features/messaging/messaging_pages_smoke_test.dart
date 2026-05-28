@@ -68,19 +68,18 @@ void main() {
   Conversation sampleConversation({
     String listingTitle = 'Volkswagen Golf',
     bool hasUnread = false,
-  }) =>
-      Conversation(
-        id: 'conv-1',
-        listingId: 'list-1',
-        buyerId: 'u1',
-        sellerId: 's1',
-        createdAt: t0,
-        updatedAt: t0,
-        lastMessageAt: t0,
-        lastMessagePreview: 'Last',
-        listingTitle: listingTitle,
-        hasUnread: hasUnread,
-      );
+  }) => Conversation(
+    id: 'conv-1',
+    listingId: 'list-1',
+    buyerId: 'u1',
+    sellerId: 's1',
+    createdAt: t0,
+    updatedAt: t0,
+    lastMessageAt: t0,
+    lastMessagePreview: 'Last',
+    listingTitle: listingTitle,
+    hasUnread: hasUnread,
+  );
 
   Widget testedInbox(Widget child) {
     return MaterialApp(
@@ -399,29 +398,26 @@ void main() {
   });
 
   group('Inbox unread visibility', () {
-    testWidgets(
-      'unread conversation shows dot marker and bold listing title',
-      (tester) async {
-        final conv = sampleConversation(hasUnread: true);
-        when(
-          () => messagingRepo.getConversations(),
-        ).thenAnswer((_) async => Success<List<Conversation>>([conv]));
+    testWidgets('unread conversation shows dot marker and bold listing title', (
+      tester,
+    ) async {
+      final conv = sampleConversation(hasUnread: true);
+      when(
+        () => messagingRepo.getConversations(),
+      ).thenAnswer((_) async => Success<List<Conversation>>([conv]));
 
-        await tester.pumpWidget(testedInbox(const MessagesInboxPage()));
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(testedInbox(const MessagesInboxPage()));
+      await tester.pumpAndSettle();
 
-        expect(
-          find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-1')),
-          findsOneWidget,
-        );
-        final title = tester.widget<Text>(
-          find.byWidgetPredicate(
-            (w) => w is Text && w.data == 'Volkswagen Golf',
-          ),
-        );
-        expect(title.style?.fontWeight, FontWeight.w700);
-      },
-    );
+      expect(
+        find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-1')),
+        findsOneWidget,
+      );
+      final title = tester.widget<Text>(
+        find.byWidgetPredicate((w) => w is Text && w.data == 'Volkswagen Golf'),
+      );
+      expect(title.style?.fontWeight, FontWeight.w700);
+    });
 
     testWidgets('read conversation hides unread dot and lowers title weight', (
       tester,
@@ -439,9 +435,7 @@ void main() {
         findsNothing,
       );
       final title = tester.widget<Text>(
-        find.byWidgetPredicate(
-          (w) => w is Text && w.data == 'Volkswagen Golf',
-        ),
+        find.byWidgetPredicate((w) => w is Text && w.data == 'Volkswagen Golf'),
       );
       expect(title.style?.fontWeight, FontWeight.w500);
     });
@@ -473,19 +467,23 @@ void main() {
         listingTitle: 'Hot Lead',
         hasUnread: true,
       );
-      when(() => messagingRepo.getConversations()).thenAnswer(
-        (_) async => Success<List<Conversation>>([unread, read]),
-      );
+      when(
+        () => messagingRepo.getConversations(),
+      ).thenAnswer((_) async => Success<List<Conversation>>([unread, read]));
 
       await tester.pumpWidget(testedInbox(const MessagesInboxPage()));
       await tester.pumpAndSettle();
 
       expect(
-        find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-unread')),
+        find.byKey(
+          const ValueKey<String>('messages_inbox_unread_dot_conv-unread'),
+        ),
         findsOneWidget,
       );
       expect(
-        find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-read')),
+        find.byKey(
+          const ValueKey<String>('messages_inbox_unread_dot_conv-read'),
+        ),
         findsNothing,
       );
 
@@ -508,89 +506,97 @@ void main() {
       );
       expect(unreadPreview.style?.fontWeight, FontWeight.w500);
       expect(readPreview.style?.fontWeight, FontWeight.w400);
-      expect(unreadPreview.style?.color, isNot(equals(readPreview.style?.color)));
+      expect(
+        unreadPreview.style?.color,
+        isNot(equals(readPreview.style?.color)),
+      );
     });
 
-    testWidgets('returning from thread triggers silent refresh and clears unread row', (
-      tester,
-    ) async {
-      var convFetchPass = 0;
-      when(() => messagingRepo.getConversations()).thenAnswer((_) async {
-        convFetchPass++;
-        if (convFetchPass == 1) {
+    testWidgets(
+      'returning from thread triggers silent refresh and clears unread row',
+      (tester) async {
+        var convFetchPass = 0;
+        when(() => messagingRepo.getConversations()).thenAnswer((_) async {
+          convFetchPass++;
+          if (convFetchPass == 1) {
+            return Success<List<Conversation>>([
+              sampleConversation(hasUnread: true),
+            ]);
+          }
           return Success<List<Conversation>>([
-            sampleConversation(hasUnread: true),
+            sampleConversation(hasUnread: false),
           ]);
-        }
-        return Success<List<Conversation>>([
-          sampleConversation(hasUnread: false),
-        ]);
-      });
+        });
 
-      final conv = sampleConversation(hasUnread: false);
-      when(() => messagingRepo.getConversation('conv-1')).thenAnswer(
-        (_) async => Success(conv),
-      );
-      when(
-        () => messagingRepo.getMessages('conv-1'),
-      ).thenAnswer((_) async => const Success<List<ChatMessage>>([]));
+        final conv = sampleConversation(hasUnread: false);
+        when(
+          () => messagingRepo.getConversation('conv-1'),
+        ).thenAnswer((_) async => Success(conv));
+        when(
+          () => messagingRepo.getMessages('conv-1'),
+        ).thenAnswer((_) async => const Success<List<ChatMessage>>([]));
 
-      final router = GoRouter(
-        initialLocation: '/messages',
-        routes: [
-          GoRoute(
-            path: '/messages',
-            builder: (context, state) => BlocProvider<AuthCubit>.value(
-              value: authCubit,
-              child: const MessagesInboxPage(),
-            ),
-          ),
-          GoRoute(
-            path: '/messages/:conversationId',
-            builder: (_, state) => BlocProvider<AuthCubit>.value(
-              value: authCubit,
-              child: ConversationThreadPage(
-                conversationId: state.pathParameters['conversationId']!,
+        final router = GoRouter(
+          initialLocation: '/messages',
+          routes: [
+            GoRoute(
+              path: '/messages',
+              builder: (context, state) => BlocProvider<AuthCubit>.value(
+                value: authCubit,
+                child: const MessagesInboxPage(),
               ),
             ),
+            GoRoute(
+              path: '/messages/:conversationId',
+              builder: (_, state) => BlocProvider<AuthCubit>.value(
+                value: authCubit,
+                child: ConversationThreadPage(
+                  conversationId: state.pathParameters['conversationId']!,
+                ),
+              ),
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          MaterialApp.router(
+            locale: const Locale('ru'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
           ),
-        ],
-      );
+        );
+        await tester.pumpAndSettle();
 
-      await tester.pumpWidget(
-        MaterialApp.router(
-          locale: const Locale('ru'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          routerConfig: router,
-        ),
-      );
-      await tester.pumpAndSettle();
+        expect(
+          find.byKey(
+            const ValueKey<String>('messages_inbox_unread_dot_conv-1'),
+          ),
+          findsOneWidget,
+        );
 
-      expect(
-        find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-1')),
-        findsOneWidget,
-      );
+        await tester.tap(find.text('Volkswagen Golf'));
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Volkswagen Golf'));
-      await tester.pumpAndSettle();
+        expect(find.byType(ConversationThreadPage), findsOneWidget);
 
-      expect(find.byType(ConversationThreadPage), findsOneWidget);
+        await tester.tap(find.byType(IconButton).first);
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(IconButton).first);
-      await tester.pumpAndSettle();
-
-      expect(convFetchPass, greaterThanOrEqualTo(2));
-      expect(
-        find.byKey(const ValueKey<String>('messages_inbox_unread_dot_conv-1')),
-        findsNothing,
-      );
-      final title = tester.widget<Text>(
-        find.byWidgetPredicate(
-          (w) => w is Text && w.data == 'Volkswagen Golf',
-        ),
-      );
-      expect(title.style?.fontWeight, FontWeight.w500);
-    });
+        expect(convFetchPass, greaterThanOrEqualTo(2));
+        expect(
+          find.byKey(
+            const ValueKey<String>('messages_inbox_unread_dot_conv-1'),
+          ),
+          findsNothing,
+        );
+        final title = tester.widget<Text>(
+          find.byWidgetPredicate(
+            (w) => w is Text && w.data == 'Volkswagen Golf',
+          ),
+        );
+        expect(title.style?.fontWeight, FontWeight.w500);
+      },
+    );
   });
 }

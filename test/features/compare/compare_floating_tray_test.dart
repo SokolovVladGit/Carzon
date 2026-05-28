@@ -53,10 +53,7 @@ void main() {
   testWidgets('shows count title and compare hint for two vehicles', (
     tester,
   ) async {
-    await pumpTray(
-      tester,
-      items: [_compareItem('a'), _compareItem('b')],
-    );
+    await pumpTray(tester, items: [_compareItem('a'), _compareItem('b')]);
 
     expect(find.text(ru.compareTrayVehicleCount(2)), findsOneWidget);
     expect(find.text(ru.compareTrayOpen), findsOneWidget);
@@ -68,11 +65,7 @@ void main() {
   ) async {
     await pumpTray(
       tester,
-      items: [
-        _compareItem('a'),
-        _compareItem('b'),
-        _compareItem('c'),
-      ],
+      items: [_compareItem('a'), _compareItem('b'), _compareItem('c')],
     );
 
     expect(find.text(ru.compareTrayVehicleCount(3)), findsOneWidget);
@@ -99,10 +92,12 @@ void main() {
     );
 
     final stack = tester.widget<Stack>(
-      find.descendant(
-        of: find.byType(CompareFloatingTray),
-        matching: find.byType(Stack),
-      ).first,
+      find
+          .descendant(
+            of: find.byType(CompareFloatingTray),
+            matching: find.byType(Stack),
+          )
+          .first,
     );
     expect(stack.clipBehavior, Clip.hardEdge);
   });

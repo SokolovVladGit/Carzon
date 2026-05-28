@@ -124,9 +124,7 @@ Widget _wrappedPage(
         builder: (context, state) {
           final extra = state.extra;
           recorder.calls.add((location: AppRoutes.listings, extra: extra));
-          return const Scaffold(
-            body: Text('catalog_landing_for_test'),
-          );
+          return const Scaffold(body: Text('catalog_landing_for_test'));
         },
       ),
       GoRoute(
@@ -172,9 +170,9 @@ SUPABASE_ANON_KEY=anon
 ''',
     );
     registerFallbackValue(PushTokenPlatform.android);
-    when(() => notificationsRepo.getMyPreferences()).thenAnswer(
-      (_) async => Success(_defaultNotificationPreferences()),
-    );
+    when(
+      () => notificationsRepo.getMyPreferences(),
+    ).thenAnswer((_) async => Success(_defaultNotificationPreferences()));
     when(
       () => notificationsRepo.updateMyPreferences(
         globalEnabled: any(named: 'globalEnabled'),
@@ -201,9 +199,7 @@ SUPABASE_ANON_KEY=anon
     // verify with `verifyNever`.
     when(
       () => pushRegistration.requestOsNotificationPermission(),
-    ).thenAnswer(
-      (_) async => PushMessagingPermissionStatus.authorized,
-    );
+    ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
     when(
       () => pushRegistration.syncTokenWithBackendIfEligible(),
     ).thenAnswer((_) async {});
@@ -217,12 +213,12 @@ SUPABASE_ANON_KEY=anon
     await sl.reset();
   });
 
-  testWidgets('empty alert: shows empty card and go-to-catalog CTA',
-      (tester) async {
+  testWidgets('empty alert: shows empty card and go-to-catalog CTA', (
+    tester,
+  ) async {
     const user = AuthUser(id: 'u1', email: 'a@b.com');
     when(() => repo.loadMine()).thenAnswer((_) async => const Success(null));
-    when(() => auth.state)
-        .thenReturn(const AuthState.authenticated(user));
+    when(() => auth.state).thenReturn(const AuthState.authenticated(user));
     whenListen(
       auth,
       const Stream<AuthState>.empty(),
@@ -273,8 +269,9 @@ SUPABASE_ANON_KEY=anon
     expect(routeRecorder.calls.first.extra, isNull);
   });
 
-  testWidgets('saved alert: shows summary rows and management actions',
-      (tester) async {
+  testWidgets('saved alert: shows summary rows and management actions', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(420, 1400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -299,8 +296,7 @@ SUPABASE_ANON_KEY=anon
       updatedAt: DateTime.utc(2026, 5, 2),
     );
     when(() => repo.loadMine()).thenAnswer((_) async => Success(settings));
-    when(() => auth.state)
-        .thenReturn(const AuthState.authenticated(user));
+    when(() => auth.state).thenReturn(const AuthState.authenticated(user));
     whenListen(
       auth,
       const Stream<AuthState>.empty(),
@@ -354,8 +350,9 @@ SUPABASE_ANON_KEY=anon
     expect(find.text(l10n.filterAlertSaveFilterAction), findsNothing);
   });
 
-  testWidgets('push disabled: toggle is inactive and shows localized notice',
-      (tester) async {
+  testWidgets('push disabled: toggle is inactive and shows localized notice', (
+    tester,
+  ) async {
     const user = AuthUser(id: 'u1', email: 'a@b.com');
     final settings = FilterAlertSettings(
       userId: 'u1',
@@ -365,8 +362,7 @@ SUPABASE_ANON_KEY=anon
       updatedAt: DateTime.utc(2026, 5, 2),
     );
     when(() => repo.loadMine()).thenAnswer((_) async => Success(settings));
-    when(() => auth.state)
-        .thenReturn(const AuthState.authenticated(user));
+    when(() => auth.state).thenReturn(const AuthState.authenticated(user));
     whenListen(
       auth,
       const Stream<AuthState>.empty(),
@@ -384,10 +380,7 @@ SUPABASE_ANON_KEY=anon
     await tester.pumpWidget(_wrappedPage(auth, recorder: routeRecorder));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text(l10n.filterAlertNotificationsToggleTitle),
-      findsOneWidget,
-    );
+    expect(find.text(l10n.filterAlertNotificationsToggleTitle), findsOneWidget);
     expect(
       find.text(l10n.filterAlertNotificationsPushDisabled),
       findsOneWidget,
@@ -410,62 +403,57 @@ SUPABASE_ANON_KEY=anon
     );
   });
 
-  testWidgets(
-    'edit action: navigates to catalog seeded with saved criteria '
-    'and openFilterSheetOnEntry=true',
-    (tester) async {
-      tester.view.physicalSize = const Size(420, 1400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-      const user = AuthUser(id: 'u1', email: 'a@b.com');
-      final settings = FilterAlertSettings(
-        userId: 'u1',
-        criteria: const ListingDiscoveryCriteria(
-          make: 'Toyota',
-          marketRegion: MarketRegion.transnistria,
-        ),
-        notificationsEnabled: false,
-        createdAt: DateTime.utc(2026, 5, 1),
-        updatedAt: DateTime.utc(2026, 5, 2),
-      );
-      when(() => repo.loadMine()).thenAnswer((_) async => Success(settings));
-      when(() => auth.state)
-          .thenReturn(const AuthState.authenticated(user));
-      whenListen(
-        auth,
-        const Stream<AuthState>.empty(),
-        initialState: const AuthState.authenticated(user),
-      );
+  testWidgets('edit action: navigates to catalog seeded with saved criteria '
+      'and openFilterSheetOnEntry=true', (tester) async {
+    tester.view.physicalSize = const Size(420, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    const user = AuthUser(id: 'u1', email: 'a@b.com');
+    final settings = FilterAlertSettings(
+      userId: 'u1',
+      criteria: const ListingDiscoveryCriteria(
+        make: 'Toyota',
+        marketRegion: MarketRegion.transnistria,
+      ),
+      notificationsEnabled: false,
+      createdAt: DateTime.utc(2026, 5, 1),
+      updatedAt: DateTime.utc(2026, 5, 2),
+    );
+    when(() => repo.loadMine()).thenAnswer((_) async => Success(settings));
+    when(() => auth.state).thenReturn(const AuthState.authenticated(user));
+    whenListen(
+      auth,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(user),
+    );
 
-      await sl.reset();
-      _registerSlWithRepository(
-        repo: repo,
-        notificationsRepository: notificationsRepo,
-        pushRegistration: pushRegistration,
-      );
+    await sl.reset();
+    _registerSlWithRepository(
+      repo: repo,
+      notificationsRepository: notificationsRepo,
+      pushRegistration: pushRegistration,
+    );
 
-      await tester.pumpWidget(_wrappedPage(auth, recorder: routeRecorder));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_wrappedPage(auth, recorder: routeRecorder));
+    await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byKey(
-          const ValueKey<String>('filter_alert_management_edit_action'),
-        ),
-      );
-      await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('filter_alert_management_edit_action')),
+    );
+    await tester.pumpAndSettle();
 
-      expect(find.text('catalog_landing_for_test'), findsOneWidget);
-      expect(routeRecorder.calls, isNotEmpty);
-      final extra = routeRecorder.calls.last.extra;
-      expect(extra, isA<ListingsFeedLaunch>());
-      final launch = extra! as ListingsFeedLaunch;
-      expect(launch.snapshot.make, 'Toyota');
-      expect(launch.openFilterSheetOnEntry, isTrue);
-    },
-  );
+    expect(find.text('catalog_landing_for_test'), findsOneWidget);
+    expect(routeRecorder.calls, isNotEmpty);
+    final extra = routeRecorder.calls.last.extra;
+    expect(extra, isA<ListingsFeedLaunch>());
+    final launch = extra! as ListingsFeedLaunch;
+    expect(launch.snapshot.make, 'Toyota');
+    expect(launch.openFilterSheetOnEntry, isTrue);
+  });
 
-  testWidgets('clear action: confirm dialog → clearPersistedCriteria',
-      (tester) async {
+  testWidgets('clear action: confirm dialog → clearPersistedCriteria', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(420, 1400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -489,10 +477,10 @@ SUPABASE_ANON_KEY=anon
       loadCount++;
       return Success(loadCount == 1 ? audi : cleared);
     });
-    when(() => repo.clearPersistedCriteria())
-        .thenAnswer((_) async => Success(cleared));
-    when(() => auth.state)
-        .thenReturn(const AuthState.authenticated(user));
+    when(
+      () => repo.clearPersistedCriteria(),
+    ).thenAnswer((_) async => Success(cleared));
+    when(() => auth.state).thenReturn(const AuthState.authenticated(user));
     whenListen(
       auth,
       const Stream<AuthState>.empty(),
@@ -517,8 +505,14 @@ SUPABASE_ANON_KEY=anon
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.filterAlertManagementClearConfirmTitle), findsOneWidget);
-    expect(find.text(l10n.filterAlertManagementClearConfirmBody), findsOneWidget);
+    expect(
+      find.text(l10n.filterAlertManagementClearConfirmTitle),
+      findsOneWidget,
+    );
+    expect(
+      find.text(l10n.filterAlertManagementClearConfirmBody),
+      findsOneWidget,
+    );
 
     // Cancel first to verify no-op semantics.
     await tester.tap(find.text(l10n.commonCancel));
@@ -554,103 +548,103 @@ SUPABASE_ANON_KEY=anon
     );
   });
 
-  testWidgets(
-    'disable action: keeps criteria but disables delivery',
-    (tester) async {
-      tester.view.physicalSize = const Size(420, 1400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-      dotenv.testLoad(
-        fileInput: '''
+  testWidgets('disable action: keeps criteria but disables delivery', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(420, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    dotenv.testLoad(
+      fileInput: '''
 SUPABASE_URL=https://example.supabase.co
 SUPABASE_ANON_KEY=anon
 PUSH_NOTIFICATIONS_ENABLED=true
 ''',
-      );
+    );
 
-      const user = AuthUser(id: 'u1', email: 'a@b.com');
-      final delivered = FilterAlertSettings(
-        userId: 'u1',
-        criteria: const ListingDiscoveryCriteria(make: 'BMW'),
-        notificationsEnabled: true,
-        createdAt: DateTime.utc(2026, 5, 1),
-        updatedAt: DateTime.utc(2026, 5, 2),
-      );
-      final disabledRow = FilterAlertSettings(
-        userId: 'u1',
-        criteria: const ListingDiscoveryCriteria(make: 'BMW'),
-        notificationsEnabled: false,
-        createdAt: DateTime.utc(2026, 5, 1),
-        updatedAt: DateTime.utc(2026, 5, 3),
-      );
-      when(() => notificationsRepo.getMyPreferences()).thenAnswer(
-        (_) async => Success(
-          NotificationPreferences(
-            userId: 'u1',
-            globalEnabled: true,
-            messagesEnabled: false,
-            filterAlertsEnabled: true,
-            createdAt: DateTime.utc(2026, 1, 1),
-            updatedAt: DateTime.utc(2026, 1, 2),
-          ),
+    const user = AuthUser(id: 'u1', email: 'a@b.com');
+    final delivered = FilterAlertSettings(
+      userId: 'u1',
+      criteria: const ListingDiscoveryCriteria(make: 'BMW'),
+      notificationsEnabled: true,
+      createdAt: DateTime.utc(2026, 5, 1),
+      updatedAt: DateTime.utc(2026, 5, 2),
+    );
+    final disabledRow = FilterAlertSettings(
+      userId: 'u1',
+      criteria: const ListingDiscoveryCriteria(make: 'BMW'),
+      notificationsEnabled: false,
+      createdAt: DateTime.utc(2026, 5, 1),
+      updatedAt: DateTime.utc(2026, 5, 3),
+    );
+    when(() => notificationsRepo.getMyPreferences()).thenAnswer(
+      (_) async => Success(
+        NotificationPreferences(
+          userId: 'u1',
+          globalEnabled: true,
+          messagesEnabled: false,
+          filterAlertsEnabled: true,
+          createdAt: DateTime.utc(2026, 1, 1),
+          updatedAt: DateTime.utc(2026, 1, 2),
         ),
-      );
-      when(() => repo.loadMine()).thenAnswer((_) async => Success(delivered));
-      when(() => repo.setNotificationsEnabled(false))
-          .thenAnswer((_) async => Success(disabledRow));
-      when(() => auth.state)
-          .thenReturn(const AuthState.authenticated(user));
-      whenListen(
-        auth,
-        const Stream<AuthState>.empty(),
-        initialState: const AuthState.authenticated(user),
-      );
+      ),
+    );
+    when(() => repo.loadMine()).thenAnswer((_) async => Success(delivered));
+    when(
+      () => repo.setNotificationsEnabled(false),
+    ).thenAnswer((_) async => Success(disabledRow));
+    when(() => auth.state).thenReturn(const AuthState.authenticated(user));
+    whenListen(
+      auth,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(user),
+    );
 
-      await sl.reset();
-      _registerSlWithRepository(
-        repo: repo,
-        notificationsRepository: notificationsRepo,
-        pushRegistration: pushRegistration,
-      );
+    await sl.reset();
+    _registerSlWithRepository(
+      repo: repo,
+      notificationsRepository: notificationsRepo,
+      pushRegistration: pushRegistration,
+    );
 
-      final l10n = ruStrings();
-      await tester.pumpWidget(_wrappedPage(auth, recorder: routeRecorder));
-      await tester.pumpAndSettle();
+    final l10n = ruStrings();
+    await tester.pumpWidget(_wrappedPage(auth, recorder: routeRecorder));
+    await tester.pumpAndSettle();
 
-      // Delivery on → disable button is visible.
-      expect(
-        find.byKey(
-          const ValueKey<String>('filter_alert_management_disable_action'),
-        ),
-        findsOneWidget,
-      );
+    // Delivery on → disable button is visible.
+    expect(
+      find.byKey(
+        const ValueKey<String>('filter_alert_management_disable_action'),
+      ),
+      findsOneWidget,
+    );
 
-      await tester.tap(
-        find.byKey(
-          const ValueKey<String>('filter_alert_management_disable_action'),
-        ),
-      );
-      await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(
+        const ValueKey<String>('filter_alert_management_disable_action'),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      verify(() => repo.setNotificationsEnabled(false)).called(1);
-      verifyNever(() => repo.clearPersistedCriteria());
-      verifyNever(
-        () => repo.saveCriteria(
-          any(),
-          notificationsEnabled: any(named: 'notificationsEnabled'),
-        ),
-      );
-      expect(
-        find.text(l10n.filterAlertManagementDeliveryDisabledSnack),
-        findsOneWidget,
-      );
-      // Criteria summary still rendered (BMW still saved).
-      expect(find.text('BMW'), findsOneWidget);
-    },
-  );
+    verify(() => repo.setNotificationsEnabled(false)).called(1);
+    verifyNever(() => repo.clearPersistedCriteria());
+    verifyNever(
+      () => repo.saveCriteria(
+        any(),
+        notificationsEnabled: any(named: 'notificationsEnabled'),
+      ),
+    );
+    expect(
+      find.text(l10n.filterAlertManagementDeliveryDisabledSnack),
+      findsOneWidget,
+    );
+    // Criteria summary still rendered (BMW still saved).
+    expect(find.text('BMW'), findsOneWidget);
+  });
 
-  testWidgets('load failure: localized message + retry recalls repository',
-      (tester) async {
+  testWidgets('load failure: localized message + retry recalls repository', (
+    tester,
+  ) async {
     const user = AuthUser(id: 'u1', email: 'a@b.com');
     var loadCount = 0;
     when(() => repo.loadMine()).thenAnswer((_) async {
@@ -660,8 +654,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
       }
       return const Success(null);
     });
-    when(() => auth.state)
-        .thenReturn(const AuthState.authenticated(user));
+    when(() => auth.state).thenReturn(const AuthState.authenticated(user));
     whenListen(
       auth,
       const Stream<AuthState>.empty(),
@@ -692,8 +685,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
     );
   });
 
-  testWidgets('load failure: hides PostgREST-style technical payloads',
-      (tester) async {
+  testWidgets('load failure: hides PostgREST-style technical payloads', (
+    tester,
+  ) async {
     const user = AuthUser(id: 'u1', email: 'a@b.com');
     when(() => repo.loadMine()).thenAnswer(
       (_) async => const FailureResult(
@@ -702,8 +696,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
         ),
       ),
     );
-    when(() => auth.state)
-        .thenReturn(const AuthState.authenticated(user));
+    when(() => auth.state).thenReturn(const AuthState.authenticated(user));
     whenListen(
       auth,
       const Stream<AuthState>.empty(),
@@ -726,10 +719,10 @@ PUSH_NOTIFICATIONS_ENABLED=true
     expect(find.textContaining('filter_alert'), findsNothing);
   });
 
-  testWidgets('unauthenticated: sign-in CTA + repository never called',
-      (tester) async {
-    when(() => auth.state)
-        .thenReturn(const AuthState.unauthenticated());
+  testWidgets('unauthenticated: sign-in CTA + repository never called', (
+    tester,
+  ) async {
+    when(() => auth.state).thenReturn(const AuthState.unauthenticated());
     whenListen(
       auth,
       const Stream<AuthState>.empty(),
@@ -748,7 +741,10 @@ PUSH_NOTIFICATIONS_ENABLED=true
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.filterAlertSignInRequired), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, l10n.commonSignIn), findsOneWidget);
+    expect(
+      find.widgetWithText(FilledButton, l10n.commonSignIn),
+      findsOneWidget,
+    );
     verifyNever(() => repo.loadMine());
   });
 }

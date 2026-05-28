@@ -12,7 +12,11 @@ void main() {
       final f = File(
         'supabase/migrations/20260623120000_vin_phase2e_listing_vin_source_results.sql',
       );
-      expect(f.existsSync(), isTrue, reason: 'Phase 2E source results migration must exist');
+      expect(
+        f.existsSync(),
+        isTrue,
+        reason: 'Phase 2E source results migration must exist',
+      );
       sql = f.readAsStringSync();
       lower = sql.toLowerCase();
     });
@@ -33,39 +37,58 @@ void main() {
           'alter table public.listing_vin_source_results enable row level security',
         ),
       );
-      expect(lower, contains('revoke all on table public.listing_vin_source_results'));
+      expect(
+        lower,
+        contains('revoke all on table public.listing_vin_source_results'),
+      );
       expect(lower, contains('from anon'));
       expect(lower, contains('from authenticated'));
     });
 
     test('does not grant table privileges to anon or authenticated', () {
-      expect(lower, isNot(contains('grant select on table public.listing_vin_source_results')));
-      expect(lower, isNot(contains('grant insert on table public.listing_vin_source_results')));
-      expect(lower, isNot(contains('grant all on table public.listing_vin_source_results')));
-    });
-
-    test('has no forbidden secret or VIN identity columns in table definition', () {
-      bool lineLooksLikeColumnDef(String line) {
-        final t = line.trimLeft();
-        if (t.startsWith('constraint ')) return false;
-        if (t.startsWith('--')) return false;
-        return RegExp(r'^[a-z_][a-z0-9_]*\s+').hasMatch(t);
-      }
-
-      final forbiddenName = RegExp(
-        r'^(vin_hash|vin_normalized|raw_|.*payload|credential|access_token|api_key|refresh_token|password)\b',
-        caseSensitive: false,
+      expect(
+        lower,
+        isNot(
+          contains('grant select on table public.listing_vin_source_results'),
+        ),
       );
-      for (final line in sql.split('\n')) {
-        if (!lineLooksLikeColumnDef(line)) continue;
-        final name = line.trimLeft().split(RegExp(r'\s+')).first;
-        expect(
-          forbiddenName.hasMatch(name),
-          isFalse,
-          reason: 'Unexpected column $name in listing_vin_source_results',
-        );
-      }
+      expect(
+        lower,
+        isNot(
+          contains('grant insert on table public.listing_vin_source_results'),
+        ),
+      );
+      expect(
+        lower,
+        isNot(contains('grant all on table public.listing_vin_source_results')),
+      );
     });
+
+    test(
+      'has no forbidden secret or VIN identity columns in table definition',
+      () {
+        bool lineLooksLikeColumnDef(String line) {
+          final t = line.trimLeft();
+          if (t.startsWith('constraint ')) return false;
+          if (t.startsWith('--')) return false;
+          return RegExp(r'^[a-z_][a-z0-9_]*\s+').hasMatch(t);
+        }
+
+        final forbiddenName = RegExp(
+          r'^(vin_hash|vin_normalized|raw_|.*payload|credential|access_token|api_key|refresh_token|password)\b',
+          caseSensitive: false,
+        );
+        for (final line in sql.split('\n')) {
+          if (!lineLooksLikeColumnDef(line)) continue;
+          final name = line.trimLeft().split(RegExp(r'\s+')).first;
+          expect(
+            forbiddenName.hasMatch(name),
+            isFalse,
+            reason: 'Unexpected column $name in listing_vin_source_results',
+          );
+        }
+      },
+    );
 
     test('CHECK lists required access_mode literals', () {
       for (final v in [
@@ -94,12 +117,15 @@ void main() {
       }
     });
 
-    test('comments forbid auto-registration and describe manual_external_check', () {
-      expect(lower, contains('must not auto-register'));
-      expect(lower, contains('auto-register users'));
-      expect(lower, contains('manual_external_check'));
-      expect(lower, contains('explicit consent'));
-    });
+    test(
+      'comments forbid auto-registration and describe manual_external_check',
+      () {
+        expect(lower, contains('must not auto-register'));
+        expect(lower, contains('auto-register users'));
+        expect(lower, contains('manual_external_check'));
+        expect(lower, contains('explicit consent'));
+      },
+    );
 
     test('clears source results when listing_vehicle_identity deleted', () {
       expect(lower, contains('carzon_after_listing_vehicle_identity_deleted'));

@@ -32,7 +32,6 @@ bool browseStateEligibleForFilterAlertSnapshot(ListingsState state) {
   if (isDefaultListingsDiscoveryState(state)) {
     return false;
   }
-  final ignoringSort =
-      state.copyWith(clearSort: true); // resets to newestFirst
+  final ignoringSort = state.copyWith(clearSort: true); // resets to newestFirst
   return !isDefaultListingsDiscoveryState(ignoringSort);
 }

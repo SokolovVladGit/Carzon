@@ -1,3 +1,4 @@
+import 'package:carzon/core/l10n/app_locale_preference.dart';
 import 'package:carzon/features/notifications/services/filter_alert_notification_public_copy.dart';
 import 'package:carzon/features/notifications/services/filter_alert_notification_tap_payload.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -54,7 +55,6 @@ void main() {
         isNull,
       );
     });
-
   });
 
   group('parseFilterAlertLocalNotificationPayload', () {
@@ -70,16 +70,17 @@ void main() {
     });
 
     test('rejects bad id after prefix', () {
-      expect(
-        parseFilterAlertLocalNotificationPayload('fa|x'),
-        isNull,
-      );
+      expect(parseFilterAlertLocalNotificationPayload('fa|x'), isNull);
     });
   });
 
   test('public copy stays generic (no listing fields)', () {
-    expect(FilterAlertNotificationPublicCopy.title, isNot(contains('₽')));
-    expect(FilterAlertNotificationPublicCopy.body, isNot(contains('@')));
-    expect(FilterAlertNotificationPublicCopy.body.toLowerCase(), isNot(contains('seller')));
+    const pref = AppLocalePreference.ru;
+    expect(FilterAlertNotificationPublicCopy.title(pref), isNot(contains('₽')));
+    expect(FilterAlertNotificationPublicCopy.body(pref), isNot(contains('@')));
+    expect(
+      FilterAlertNotificationPublicCopy.body(pref).toLowerCase(),
+      isNot(contains('seller')),
+    );
   });
 }

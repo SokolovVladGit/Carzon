@@ -75,6 +75,7 @@ class CarzonIcons {
 
   /// Bell outline for informational “alert” chrome (delivery not implemented MVP).
   static const IconData notificationsOutline = LucideIcons.bell;
+  static const IconData darkTheme = LucideIcons.moon;
 
   // ---- My listings / edit / create ----
   static const IconData myListings = LucideIcons.listChecks;

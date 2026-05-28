@@ -8,10 +8,13 @@ class VinPresentLatinBadge extends StatelessWidget {
   final bool heroSize;
 
   static const Color _vinPresentGreen = Color(0xFF1F9D57);
+  static const Color _vinPresentGreenDark = Color(0xFF3DB87A);
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final green = isDark ? _vinPresentGreenDark : _vinPresentGreen;
     final vSize = heroSize ? 22.0 : 17.0;
     final inSize = heroSize ? 10.5 : 9.5;
     final padH = heroSize ? 12.0 : 8.0;
@@ -21,16 +24,20 @@ class VinPresentLatinBadge extends StatelessWidget {
     return DecoratedBox(
       key: const ValueKey('vin_present_latin_badge'),
       decoration: BoxDecoration(
-        color: _vinPresentGreen.withValues(alpha: heroSize ? 0.14 : 0.12),
+        color: green.withValues(
+          alpha: heroSize ? (isDark ? 0.18 : 0.14) : 0.12,
+        ),
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
-          color: _vinPresentGreen.withValues(alpha: heroSize ? 0.32 : 0.28),
+          color: green.withValues(
+            alpha: heroSize ? (isDark ? 0.36 : 0.32) : 0.28,
+          ),
         ),
         boxShadow: heroSize
             ? [
                 BoxShadow(
-                  color: _vinPresentGreen.withValues(alpha: 0.08),
-                  blurRadius: 8,
+                  color: green.withValues(alpha: isDark ? 0.12 : 0.08),
+                  blurRadius: isDark ? 10 : 8,
                   offset: const Offset(0, 3),
                   spreadRadius: -2,
                 ),
@@ -51,7 +58,7 @@ class VinPresentLatinBadge extends StatelessWidget {
                 height: 1,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.6,
-                color: _vinPresentGreen,
+                color: green,
                 fontStyle: FontStyle.normal,
               ),
             ),

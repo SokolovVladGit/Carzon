@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,6 +7,7 @@ import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/error_view.dart';
@@ -58,10 +60,17 @@ class FilterAlertSettingsPage extends StatelessWidget {
       builder: (context, auth) {
         final l10n = context.l10n;
         if (auth.status != AuthStatus.authenticated || auth.user == null) {
+          final scheme = Theme.of(context).colorScheme;
           return Scaffold(
+            backgroundColor: scheme.surface,
             appBar: AppBar(
               leading: const AppBackButton(fallback: AppRoutes.profile),
               title: Text(l10n.filterAlertEditorTitle),
+              backgroundColor: scheme.surface,
+              surfaceTintColor: Colors.transparent,
+              systemOverlayStyle: scheme.brightness == Brightness.dark
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark,
             ),
             body: Center(
               child: Padding(
@@ -99,6 +108,43 @@ class _FilterAlertManagementBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    AppBar chromeAppBar() => AppBar(
+      leading: const AppBackButton(fallback: AppRoutes.profile),
+      title: Text(l10n.filterAlertEditorTitle),
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: scheme.surface,
+      surfaceTintColor: Colors.transparent,
+      foregroundColor: scheme.onSurface,
+      systemOverlayStyle: isDark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
+    );
+
+    Widget chromeScaffold({required Widget body, required AppBar appBar}) {
+      return Scaffold(
+        backgroundColor: scheme.surface,
+        appBar: appBar,
+        body: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: isDark
+                ? LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: AppTheme.editorialDarkFilterCanvasGradient(scheme),
+                    stops: const [0, 0.4, 1],
+                  )
+                : null,
+            color: isDark ? null : scheme.surface,
+          ),
+          child: body,
+        ),
+      );
+    }
+
     return BlocConsumer<FilterAlertSettingsCubit, FilterAlertSettingsState>(
       listenWhen: (previous, current) =>
           previous.userNotice != current.userNotice &&
@@ -113,32 +159,23 @@ class _FilterAlertManagementBody extends StatelessWidget {
         context.read<FilterAlertSettingsCubit>().clearUserNotice();
       },
       builder: (context, state) {
-        AppBar chromeAppBar() => AppBar(
-              leading: const AppBackButton(fallback: AppRoutes.profile),
-              title: Text(l10n.filterAlertEditorTitle),
-              elevation: 0,
-              scrolledUnderElevation: 0,
-            );
-
+        final appBar = chromeAppBar();
         switch (state.status) {
           case FilterAlertSettingsLoadStatus.initial:
           case FilterAlertSettingsLoadStatus.loading:
-            return Scaffold(
-              appBar: chromeAppBar(),
-              body: const LoadingView(),
-            );
+            return chromeScaffold(appBar: appBar, body: const LoadingView());
           case FilterAlertSettingsLoadStatus.failure:
-            return Scaffold(
-              appBar: chromeAppBar(),
+            return chromeScaffold(
+              appBar: appBar,
               body: ErrorView(
                 message: l10n.filterAlertLoadFailed,
-                onRetry:
-                    () => context.read<FilterAlertSettingsCubit>().refresh(),
+                onRetry: () =>
+                    context.read<FilterAlertSettingsCubit>().refresh(),
               ),
             );
           case FilterAlertSettingsLoadStatus.loaded:
-            return Scaffold(
-              appBar: chromeAppBar(),
+            return chromeScaffold(
+              appBar: appBar,
               body: _ManagementContent(state: state),
             );
         }
@@ -214,13 +251,7 @@ class _EmptyAlertCard extends StatelessWidget {
     final scheme = theme.colorScheme;
     return Container(
       key: const ValueKey<String>('filter_alert_management_empty_card'),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
+      decoration: AppTheme.filterAlertManagementSurface(scheme),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -274,46 +305,54 @@ class _DeliveryStatusStrip extends StatelessWidget {
     final subtitle = !pushOn
         ? l10n.filterAlertNotificationsPushDisabled
         : !hasCriteria
-            ? l10n.filterAlertNotificationsNeedsSavedFilter
-            : l10n.filterAlertNotificationsToggleSubtitle;
+        ? l10n.filterAlertNotificationsNeedsSavedFilter
+        : l10n.filterAlertNotificationsToggleSubtitle;
 
     return Material(
-      color: scheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(14),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: SwitchListTile.adaptive(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-          title: Text(
-            l10n.filterAlertNotificationsToggleTitle,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
+      color: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      clipBehavior: Clip.antiAlias,
+      child: DecoratedBox(
+        decoration: AppTheme.filterAlertManagementSurface(
+          scheme,
+          borderRadius: 14,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: SwitchListTile.adaptive(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            title: Text(
+              l10n.filterAlertNotificationsToggleTitle,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          subtitle: Text(subtitle),
-          value: deliveryOn,
-          onChanged: !pushOn ||
-                  !hasCriteria ||
-                  state.busyNotificationToggle ||
-                  state.busyClearing
-              ? null
-              : (enabled) async {
-                  final cubit = context.read<FilterAlertSettingsCubit>();
-                  if (enabled) {
-                    await cubit.enableFilterAlertNotifications();
-                  } else {
-                    await cubit.disableFilterAlertNotifications();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            l10n.filterAlertManagementDeliveryDisabledSnack,
+            subtitle: Text(subtitle),
+            value: deliveryOn,
+            onChanged:
+                !pushOn ||
+                    !hasCriteria ||
+                    state.busyNotificationToggle ||
+                    state.busyClearing
+                ? null
+                : (enabled) async {
+                    final cubit = context.read<FilterAlertSettingsCubit>();
+                    if (enabled) {
+                      await cubit.enableFilterAlertNotifications();
+                    } else {
+                      await cubit.disableFilterAlertNotifications();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              l10n.filterAlertManagementDeliveryDisabledSnack,
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     }
-                  }
-                },
+                  },
+          ),
         ),
       ),
     );

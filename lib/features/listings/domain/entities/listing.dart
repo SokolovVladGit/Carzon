@@ -34,10 +34,7 @@ enum ListingFuelType { petrol, diesel, hybrid, electric, lpg, cng, other }
 enum ListingDrivetrain { fwd, rwd, awd, fourWheel }
 
 /// Public-only VIN hint from `listings.vin_status` (Phase 1).
-enum ListingVinStatus {
-  notProvided,
-  formatValid,
-}
+enum ListingVinStatus { notProvided, formatValid }
 
 class Listing extends Equatable {
   const Listing({

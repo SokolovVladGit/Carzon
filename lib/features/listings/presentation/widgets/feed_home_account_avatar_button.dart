@@ -68,8 +68,10 @@ class FeedHomeAccountAvatarButton extends StatelessWidget {
                   );
                 },
               ),
-              BlocBuilder<MessagingUnreadSummaryCubit,
-                  MessagingUnreadSummaryState>(
+              BlocBuilder<
+                MessagingUnreadSummaryCubit,
+                MessagingUnreadSummaryState
+              >(
                 buildWhen: (p, q) =>
                     p.unreadConversationCount != q.unreadConversationCount ||
                     p.phase != q.phase,
@@ -87,10 +89,7 @@ class FeedHomeAccountAvatarButton extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: scheme.error,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: scheme.surface,
-                          width: 1.5,
-                        ),
+                        border: Border.all(color: scheme.surface, width: 1.5),
                       ),
                     ),
                   );

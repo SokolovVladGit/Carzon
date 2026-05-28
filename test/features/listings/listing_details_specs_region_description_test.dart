@@ -35,28 +35,27 @@ Listing _listing({
   String? registration,
   String? description,
   String city = 'Chișinău',
-}) =>
-    Listing(
-      id: 'l1',
-      title: 'Test',
-      make: 'Audi',
-      model: 'A4',
-      year: 2020,
-      priceEur: 1000,
-      mileageKm: 50000,
-      type: ListingType.sale,
-      city: city,
-      marketRegion: MarketRegion.moldova,
-      fuelType: fuel,
-      engineDisplacementLiters: liters,
-      enginePowerHp: hp,
-      drivetrain: drivetrain,
-      registration: registration,
-      description: description,
-      createdAt: DateTime.utc(2026, 4, 1),
-      status: ListingStatus.active,
-      sellerId: 's1',
-    );
+}) => Listing(
+  id: 'l1',
+  title: 'Test',
+  make: 'Audi',
+  model: 'A4',
+  year: 2020,
+  priceEur: 1000,
+  mileageKm: 50000,
+  type: ListingType.sale,
+  city: city,
+  marketRegion: MarketRegion.moldova,
+  fuelType: fuel,
+  engineDisplacementLiters: liters,
+  enginePowerHp: hp,
+  drivetrain: drivetrain,
+  registration: registration,
+  description: description,
+  createdAt: DateTime.utc(2026, 4, 1),
+  status: ListingStatus.active,
+  sellerId: 's1',
+);
 
 void main() {
   late _MockDetailsCubit detailsCubit;
@@ -170,8 +169,9 @@ void main() {
     },
   );
 
-  testWidgets('description section is hidden when description empty',
-      (tester) async {
+  testWidgets('description section is hidden when description empty', (
+    tester,
+  ) async {
     await tester.pumpWidget(app(_listing(description: null)));
     await tester.pumpAndSettle();
 
@@ -181,9 +181,7 @@ void main() {
   testWidgets('description section shows trimmed body when description set', (
     tester,
   ) async {
-    await tester.pumpWidget(
-      app(_listing(description: '  Unique paint  ')),
-    );
+    await tester.pumpWidget(app(_listing(description: '  Unique paint  ')));
     await tester.pumpAndSettle();
 
     expect(find.text(ru.listingDetailsDescriptionSection), findsOneWidget);

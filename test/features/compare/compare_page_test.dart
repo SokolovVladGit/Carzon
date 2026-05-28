@@ -50,7 +50,12 @@ CompareListingSnapshot _snap(String id, {int price = 15000, int year = 2018}) {
   );
 }
 
-Listing _listing(String id, {int price = 15000, int year = 2018, int mileage = 80000}) {
+Listing _listing(
+  String id, {
+  int price = 15000,
+  int year = 2018,
+  int mileage = 80000,
+}) {
   return Listing(
     id: id,
     title: 'Test',
@@ -113,10 +118,7 @@ void main() {
     await tester.pumpWidget(
       BlocProvider.value(
         value: compareCubit,
-        child: compareApp(
-          compareCubit: compareCubit,
-          pageCubit: pageCubit,
-        ),
+        child: compareApp(compareCubit: compareCubit, pageCubit: pageCubit),
       ),
     );
     await tester.pump();
@@ -140,10 +142,15 @@ void main() {
 
     expect(find.text(ru.compareVehiclesTitle), findsOneWidget);
     expect(find.text(ru.compareEmptyBody), findsOneWidget);
-    expect(find.byKey(const ValueKey('compare_browse_listings_button')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('compare_browse_listings_button')),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('one-item compare page renders need-one-more state', (tester) async {
+  testWidgets('one-item compare page renders need-one-more state', (
+    tester,
+  ) async {
     final repo = _MemoryCompareRepository();
     final cubit = CompareCubit(repository: repo);
     final pageCubit = ComparePageCubit(
@@ -187,7 +194,9 @@ void main() {
     expect(find.byKey(const ValueKey('compare_diff_toggle')), findsOneWidget);
   });
 
-  testWidgets('persisted four items are trimmed to three on load', (tester) async {
+  testWidgets('persisted four items are trimmed to three on load', (
+    tester,
+  ) async {
     final repo = _MemoryCompareRepository()
       ..items = [
         CompareItem(snapshot: _snap('a')),
@@ -229,7 +238,8 @@ void main() {
     });
     when(() => getById('a')).thenAnswer((_) async => Success(_listing('a')));
     when(() => getById('b')).thenAnswer(
-      (_) async => Success(_listing('b', price: 18000, year: 2020, mileage: 50000)),
+      (_) async =>
+          Success(_listing('b', price: 18000, year: 2020, mileage: 50000)),
     );
     await cubit.addSnapshot(_snap('a'));
     await cubit.addSnapshot(_snap('b'));
@@ -254,9 +264,9 @@ void main() {
       await pageCubit.close();
     });
     when(() => getById('a')).thenAnswer((_) async => Success(_listing('a')));
-    when(() => getById('b')).thenAnswer(
-      (_) async => Success(_listing('b', price: 18000, year: 2020)),
-    );
+    when(
+      () => getById('b'),
+    ).thenAnswer((_) async => Success(_listing('b', price: 18000, year: 2020)));
     await cubit.addSnapshot(_snap('a'));
     await cubit.addSnapshot(_snap('b'));
 
@@ -280,9 +290,9 @@ void main() {
       await cubit.close();
       await pageCubit.close();
     });
-    when(() => getById('gone')).thenAnswer(
-      (_) async => const FailureResult(ServerFailure('x')),
-    );
+    when(
+      () => getById('gone'),
+    ).thenAnswer((_) async => const FailureResult(ServerFailure('x')));
     when(() => getById('ok')).thenAnswer((_) async => Success(_listing('ok')));
     await cubit.addSnapshot(_snap('gone'));
     await cubit.addSnapshot(_snap('ok'));
@@ -332,7 +342,9 @@ void main() {
     await pumpCompare(tester, compareCubit: cubit, pageCubit: pageCubit);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('compare_browse_listings_button')));
+    await tester.tap(
+      find.byKey(const ValueKey('compare_browse_listings_button')),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('listings-home'), findsOneWidget);

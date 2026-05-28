@@ -633,9 +633,7 @@ void main() {
       },
     );
 
-    FilterAlertSettings disabledToyotaSavedRow(
-      ListingDiscoveryCriteria crit,
-    ) =>
+    FilterAlertSettings disabledToyotaSavedRow(ListingDiscoveryCriteria crit) =>
         FilterAlertSettings(
           userId: 'browse-fab-test',
           criteria: crit,
@@ -701,8 +699,7 @@ void main() {
         // ornament is absent — the two states are mutually exclusive.
         expect(
           find.byKey(
-            CatalogFilterAlertAccent
-                .discoveryFilterFABSavedNoDeliveryBellKey,
+            CatalogFilterAlertAccent.discoveryFilterFABSavedNoDeliveryBellKey,
           ),
           findsOneWidget,
         );
@@ -771,8 +768,7 @@ void main() {
         );
         expect(
           find.byKey(
-            CatalogFilterAlertAccent
-                .discoveryFilterFABSavedNoDeliveryBellKey,
+            CatalogFilterAlertAccent.discoveryFilterFABSavedNoDeliveryBellKey,
           ),
           findsNothing,
         );
@@ -839,8 +835,7 @@ void main() {
 
         expect(
           find.byKey(
-            CatalogFilterAlertAccent
-                .discoveryFilterFABSavedNoDeliveryBellKey,
+            CatalogFilterAlertAccent.discoveryFilterFABSavedNoDeliveryBellKey,
           ),
           findsNothing,
         );

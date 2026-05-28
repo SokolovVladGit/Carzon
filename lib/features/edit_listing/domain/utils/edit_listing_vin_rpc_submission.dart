@@ -45,9 +45,7 @@ EditListingVinRpcSubmission resolveEditListingVinRpcSubmission({
       );
     }
     if (currentNorm == initial) {
-      return const EditListingVinRpcSubmission(
-        submitVinParameterToRpc: false,
-      );
+      return const EditListingVinRpcSubmission(submitVinParameterToRpc: false);
     }
     return EditListingVinRpcSubmission(
       submitVinParameterToRpc: true,
@@ -56,9 +54,7 @@ EditListingVinRpcSubmission resolveEditListingVinRpcSubmission({
   }
 
   if (currentNorm == null) {
-    return const EditListingVinRpcSubmission(
-      submitVinParameterToRpc: false,
-    );
+    return const EditListingVinRpcSubmission(submitVinParameterToRpc: false);
   }
   return EditListingVinRpcSubmission(
     submitVinParameterToRpc: true,

@@ -14,9 +14,7 @@ ListingDiscoveryCriteria listingDiscoveryCriteriaFromFilterApply(
   if (result.cleared) {
     return listingDiscoveryCriteriaFromListingsState(
       ListingsState(
-        search:
-            preservedSearch == null ||
-                preservedSearch.trim().isEmpty
+        search: preservedSearch == null || preservedSearch.trim().isEmpty
             ? null
             : preservedSearch.trim(),
       ),
@@ -24,9 +22,7 @@ ListingDiscoveryCriteria listingDiscoveryCriteriaFromFilterApply(
   }
   return listingDiscoveryCriteriaFromListingsState(
     ListingsState(
-      search:
-          preservedSearch == null ||
-              preservedSearch.trim().isEmpty
+      search: preservedSearch == null || preservedSearch.trim().isEmpty
           ? null
           : preservedSearch.trim(),
       make: result.make,

@@ -136,20 +136,17 @@ void main() {
     await cubit.addSnapshot(_snapshot('a'));
     await pumpHost(tester, policy: CompareTrayVisualPolicy.production);
 
-    expect(find.byKey(CompareTrayCapsuleBackplate.backplateKey), findsOneWidget);
+    expect(
+      find.byKey(CompareTrayCapsuleBackplate.backplateKey),
+      findsOneWidget,
+    );
     expect(find.byType(SizedBox), findsWidgets);
 
     final backplateBox = tester.renderObject<RenderBox>(
       find.byKey(CompareTrayCapsuleBackplate.backplateKey),
     );
     final screenBox = tester.renderObject<RenderBox>(find.byType(Stack).first);
-    expect(
-      backplateBox.size.width,
-      lessThan(screenBox.size.width * 0.98),
-    );
-    expect(
-      backplateBox.size.height,
-      lessThan(CompareFloatingTray.height + 24),
-    );
+    expect(backplateBox.size.width, lessThan(screenBox.size.width * 0.98));
+    expect(backplateBox.size.height, lessThan(CompareFloatingTray.height + 24));
   });
 }

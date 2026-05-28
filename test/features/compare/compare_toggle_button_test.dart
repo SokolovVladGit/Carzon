@@ -130,28 +130,26 @@ void main() {
     expect(find.byType(SnackBar), findsNothing);
   });
 
-  testWidgets('when full but already in compare tapping removes without snackbar', (
-    tester,
-  ) async {
-    for (var i = 0; i < 3; i++) {
-      await cubit.addSnapshot(
-        CompareListingSnapshot.fromListing(_listing(id: 'x$i')),
+  testWidgets(
+    'when full but already in compare tapping removes without snackbar',
+    (tester) async {
+      for (var i = 0; i < 3; i++) {
+        await cubit.addSnapshot(
+          CompareListingSnapshot.fromListing(_listing(id: 'x$i')),
+        );
+      }
+      final inSet = _listing(id: 'x0');
+      await tester.pumpWidget(
+        harness(listing: inSet, child: CompareToggleButton.fromListing(inSet)),
       );
-    }
-    final inSet = _listing(id: 'x0');
-    await tester.pumpWidget(
-      harness(
-        listing: inSet,
-        child: CompareToggleButton.fromListing(inSet),
-      ),
-    );
-    await tester.pump();
+      await tester.pump();
 
-    await tester.tap(find.byKey(const ValueKey('compare_toggle_x0')));
-    await tester.pump();
-    await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('compare_toggle_x0')));
+      await tester.pump();
+      await tester.pump();
 
-    expect(cubit.state.containsListing('x0'), isFalse);
-    expect(find.text(ru.compareRemovedMessage), findsNothing);
-  });
+      expect(cubit.state.containsListing('x0'), isFalse);
+      expect(find.text(ru.compareRemovedMessage), findsNothing);
+    },
+  );
 }

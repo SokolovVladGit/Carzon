@@ -9,9 +9,12 @@ import 'package:carzon/features/compare/presentation/cubit/compare_cubit.dart';
 import 'package:carzon/features/compare/presentation/widgets/compare_toggle_button.dart';
 import 'package:carzon/features/favorites/presentation/widgets/favorite_toggle_button.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
+import 'package:carzon/core/theme/app_theme.dart';
 import 'package:carzon/features/listings/presentation/widgets/listing_card.dart';
+import 'package:carzon/shared/brands/brand_logo_glyph.dart';
 import 'package:carzon/features/listings/presentation/widgets/listing_cover_image.dart';
 import 'package:carzon/features/listings/presentation/widgets/listing_tile.dart';
+import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,11 +42,12 @@ Listing _seed({
   String? coverImageUrl,
   ListingType type = ListingType.sale,
   MarketRegion region = MarketRegion.transnistria,
+  String make = 'Volkswagen',
 }) {
   return Listing(
     id: 'l1',
     title: 'VW Golf',
-    make: 'Volkswagen',
+    make: make,
     model: 'Golf',
     year: 2016,
     priceEur: 8900,
@@ -113,6 +117,28 @@ void main() {
         expect(find.byIcon(Icons.directions_car_filled_outlined), findsWidgets);
       },
     );
+
+    testWidgets('dark mode shows brand logo contrast well for dark SVG marks', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ListingCard(listing: _seed(make: 'Toyota')),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoDarkWellKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsOneWidget);
+    });
 
     testWidgets('forwards onTap when the card is tapped', (tester) async {
       var tapped = 0;
@@ -251,9 +277,7 @@ void main() {
               BlocProvider<CompareCubit>.value(value: compareCubit),
             ],
             child: Scaffold(
-              body: SingleChildScrollView(
-                child: ListingTile(listing: _seed()),
-              ),
+              body: SingleChildScrollView(child: ListingTile(listing: _seed())),
             ),
           ),
         ),

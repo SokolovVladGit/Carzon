@@ -65,8 +65,9 @@ class SupabaseMessagingRemoteDataSource implements MessagingRemoteDataSource {
   @override
   Future<List<ConversationModel>> fetchConversations() async {
     try {
-      final dynamic raw =
-          await _supabase.client.rpc('list_inbox_conversations');
+      final dynamic raw = await _supabase.client.rpc(
+        'list_inbox_conversations',
+      );
       if (raw == null) return const [];
       if (raw is! List<dynamic>) {
         throw ServerException('Unexpected inbox response');

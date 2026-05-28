@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_theme.dart';
@@ -29,13 +30,26 @@ class StartupErrorApp extends StatelessWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(title: Text(title)),
-        body: ErrorView(
-          message: details.isEmpty
-              ? message
-              : '$message\n\n${details.join('\n')}',
-        ),
+      home: Builder(
+        builder: (context) {
+          final scheme = Theme.of(context).colorScheme;
+          return Scaffold(
+            backgroundColor: scheme.surface,
+            appBar: AppBar(
+              title: Text(title),
+              backgroundColor: scheme.surface,
+              surfaceTintColor: Colors.transparent,
+              systemOverlayStyle: scheme.brightness == Brightness.dark
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark,
+            ),
+            body: ErrorView(
+              message: details.isEmpty
+                  ? message
+                  : '$message\n\n${details.join('\n')}',
+            ),
+          );
+        },
       ),
     );
   }

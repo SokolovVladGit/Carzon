@@ -1,10 +1,7 @@
 # Flutter gen-l10n configuration for Carzon.
 #
-# The Carzon MVP launches first in Transnistria, where Russian is the
-# primary product language. Romanian (`ro`) and English (`en`) are
-# planned future locales and will be added as `app_ro.arb` / `app_en.arb`
-# in a later pass. Do not add placeholder Romanian or English ARB files
-# before those translations are actually done.
+# Template locale is Russian (`app_ru.arb`). Romanian (`app_ro.arb`) must
+# keep full key parity with the template. English is not supported yet.
 arb-dir: lib/l10n
 template-arb-file: app_ru.arb
 output-localization-file: app_localizations.dart

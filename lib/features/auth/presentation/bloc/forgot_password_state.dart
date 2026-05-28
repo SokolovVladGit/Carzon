@@ -25,11 +25,11 @@ class ForgotPasswordState extends Equatable {
 
   const ForgotPasswordState.idle() : this();
   const ForgotPasswordState.submitting()
-      : this(status: ForgotPasswordStatus.submitting);
+    : this(status: ForgotPasswordStatus.submitting);
   const ForgotPasswordState.success()
-      : this(status: ForgotPasswordStatus.success);
+    : this(status: ForgotPasswordStatus.success);
   const ForgotPasswordState.failure(ForgotPasswordFailureKind kind)
-      : this(status: ForgotPasswordStatus.failure, failureKind: kind);
+    : this(status: ForgotPasswordStatus.failure, failureKind: kind);
 
   @override
   List<Object?> get props => [status, failureKind];

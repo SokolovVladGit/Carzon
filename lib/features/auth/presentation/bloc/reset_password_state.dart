@@ -31,11 +31,11 @@ class ResetPasswordState extends Equatable {
 
   const ResetPasswordState.idle() : this();
   const ResetPasswordState.submitting()
-      : this(status: ResetPasswordStatus.submitting);
+    : this(status: ResetPasswordStatus.submitting);
   const ResetPasswordState.success()
-      : this(status: ResetPasswordStatus.success);
+    : this(status: ResetPasswordStatus.success);
   const ResetPasswordState.failure(ResetPasswordFailureKind kind)
-      : this(status: ResetPasswordStatus.failure, failureKind: kind);
+    : this(status: ResetPasswordStatus.failure, failureKind: kind);
 
   @override
   List<Object?> get props => [status, failureKind];

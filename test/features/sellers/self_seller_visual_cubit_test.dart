@@ -12,10 +12,7 @@ import 'package:mocktail/mocktail.dart';
 
 class _MockSellersRepository extends Mock implements SellersRepository {}
 
-MySellerProfileModel _row({
-  String? displayName,
-  String? avatarUrl,
-}) =>
+MySellerProfileModel _row({String? displayName, String? avatarUrl}) =>
     MySellerProfileModel(
       displayName: displayName,
       avatarUrl: avatarUrl,
@@ -39,7 +36,8 @@ void main() {
     'authenticated success loads trimmed avatar and display name',
     build: () {
       when(() => repository.getMySellerProfile()).thenAnswer(
-        (_) async => Success(_row(displayName: '  Shop ', avatarUrl: ' https://x/a ')),
+        (_) async =>
+            Success(_row(displayName: '  Shop ', avatarUrl: ' https://x/a ')),
       );
       return SelfSellerVisualCubit(GetMySellerProfile(repository));
     },
@@ -57,9 +55,9 @@ void main() {
   blocTest<SelfSellerVisualCubit, SelfSellerVisualState>(
     'unauthenticated prime clears seller visuals and loadFailed',
     build: () {
-      when(() => repository.getMySellerProfile()).thenAnswer(
-        (_) async => Success(_row(displayName: 'A')),
-      );
+      when(
+        () => repository.getMySellerProfile(),
+      ).thenAnswer((_) async => Success(_row(displayName: 'A')));
       return SelfSellerVisualCubit(GetMySellerProfile(repository));
     },
     seed: () => SelfSellerVisualState(
@@ -79,9 +77,9 @@ void main() {
   blocTest<SelfSellerVisualCubit, SelfSellerVisualState>(
     'authenticated FailureResult preserves prior avatar and display name',
     build: () {
-      when(() => repository.getMySellerProfile()).thenAnswer(
-        (_) async => const FailureResult(NetworkFailure('oops')),
-      );
+      when(
+        () => repository.getMySellerProfile(),
+      ).thenAnswer((_) async => const FailureResult(NetworkFailure('oops')));
       return SelfSellerVisualCubit(GetMySellerProfile(repository));
     },
     seed: () => const SelfSellerVisualState(
@@ -104,9 +102,9 @@ void main() {
   blocTest<SelfSellerVisualCubit, SelfSellerVisualState>(
     'authenticated FailureResult from empty state does not crash',
     build: () {
-      when(() => repository.getMySellerProfile()).thenAnswer(
-        (_) async => const FailureResult(NetworkFailure('oops')),
-      );
+      when(
+        () => repository.getMySellerProfile(),
+      ).thenAnswer((_) async => const FailureResult(NetworkFailure('oops')));
       return SelfSellerVisualCubit(GetMySellerProfile(repository));
     },
     act: (c) => c.prime(authenticated),

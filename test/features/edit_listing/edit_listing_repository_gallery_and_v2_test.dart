@@ -100,16 +100,21 @@ void main() {
       expect(cap.vinParameter, '');
     });
 
-    test('forwards preserve-VIN omission (submitVinParameterToRpc false)', () async {
-      when(() => remote.updateDetailsV2(any())).thenAnswer((_) async => _row());
+    test(
+      'forwards preserve-VIN omission (submitVinParameterToRpc false)',
+      () async {
+        when(
+          () => remote.updateDetailsV2(any()),
+        ).thenAnswer((_) async => _row());
 
-      await repo.updateDetailsV2(_minimalInput());
+        await repo.updateDetailsV2(_minimalInput());
 
-      final cap =
-          verify(() => remote.updateDetailsV2(captureAny())).captured.single
-              as EditListingInput;
-      expect(cap.submitVinParameterToRpc, isFalse);
-    });
+        final cap =
+            verify(() => remote.updateDetailsV2(captureAny())).captured.single
+                as EditListingInput;
+        expect(cap.submitVinParameterToRpc, isFalse);
+      },
+    );
   });
 
   group('replaceListingImages', () {

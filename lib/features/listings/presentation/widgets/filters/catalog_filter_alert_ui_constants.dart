@@ -42,9 +42,8 @@ abstract final class CatalogFilterAlertAccent {
 
   /// "Saved, delivery pending" bell foreground — muted amber that reads
   /// as intentional yet does not mimic the fully-active delivery glyph.
-  static Color savedNoDelivery(ColorScheme scheme) =>
-      Color.alphaBlend(
-        amber.withValues(alpha: 0.55),
-        scheme.onSurface.withValues(alpha: 0.32),
-      );
+  static Color savedNoDelivery(ColorScheme scheme) => Color.alphaBlend(
+    amber.withValues(alpha: 0.55),
+    scheme.onSurface.withValues(alpha: 0.32),
+  );
 }

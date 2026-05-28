@@ -9,7 +9,8 @@ void showCompareTrayMaxLimitFeedback({
   BuildContext? context,
   CompareTrayFeedbackController? controller,
 }) {
-  final resolved = controller ??
+  final resolved =
+      controller ??
       (context != null ? CompareTrayFeedbackScope.maybeOf(context) : null) ??
       _resolveFeedbackController();
   resolved?.showMaxLimitFeedback();

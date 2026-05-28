@@ -2,23 +2,20 @@ import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// Synchronously resolves an [AppLocalizations] instance for `ru` so
-/// tests can assert against the exact localized strings the app
-/// renders. Uses the gen_l10n-emitted [lookupAppLocalizations]
-/// top-level function, which is a synchronous factory for Carzon's
-/// single supported locale.
+/// Synchronously resolves [AppLocalizations] for `ru`.
 AppLocalizations ruStrings() => lookupAppLocalizations(const Locale('ru'));
 
-/// Builds a [MaterialApp] wrapper with the Russian locale forced and
-/// all required localization delegates installed. Use for widget tests
-/// of pages/widgets that call `context.l10n` so the delegate chain
-/// matches the production `CarzonApp` configuration.
+/// Synchronously resolves [AppLocalizations] for `ro`.
+AppLocalizations roStrings() => lookupAppLocalizations(const Locale('ro'));
+
+/// Builds a [MaterialApp] wrapper with localization delegates installed.
 MaterialApp localizedApp({
   required Widget home,
+  Locale locale = const Locale('ru'),
   NavigatorObserver? navigatorObserver,
 }) {
   return MaterialApp(
-    locale: const Locale('ru'),
+    locale: locale,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     navigatorObservers: [?navigatorObserver],
@@ -26,11 +23,12 @@ MaterialApp localizedApp({
   );
 }
 
-/// Convenience for tests that need to pump a widget with the full
-/// localization setup installed. Wraps [widget] in [localizedApp],
-/// pumps it, and lets the initial frame settle so `AppLocalizations.of`
-/// is available when the test asserts against text.
-Future<void> pumpLocalizedWidget(WidgetTester tester, Widget widget) async {
-  await tester.pumpWidget(localizedApp(home: widget));
+/// Convenience for tests that need to pump a widget with localization.
+Future<void> pumpLocalizedWidget(
+  WidgetTester tester,
+  Widget widget, {
+  Locale locale = const Locale('ru'),
+}) async {
+  await tester.pumpWidget(localizedApp(home: widget, locale: locale));
   await tester.pump();
 }

@@ -4,12 +4,7 @@ import '../../../listings/domain/entities/listing.dart';
 import 'compare_item.dart';
 
 /// Resolution phase for one compare column.
-enum CompareSlotPhase {
-  loading,
-  ready,
-  unavailable,
-  inactive,
-}
+enum CompareSlotPhase { loading, ready, unavailable, inactive }
 
 /// One vehicle column after listing fetch (or failure).
 class CompareResolvedSlot extends Equatable {

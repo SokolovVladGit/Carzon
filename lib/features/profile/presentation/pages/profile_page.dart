@@ -7,7 +7,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
+import '../../../../core/config/env.dart';
+import '../../../notifications/services/push_notification_registration_service.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../core/l10n/app_locale_cubit.dart';
+import '../../../../core/l10n/app_locale_preference.dart';
+import '../../../../core/theme/theme_mode_cubit.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/domain/entities/auth_user.dart';
@@ -94,7 +100,10 @@ class _SignInRequired extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(l10n.profileSignInRequired, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
-                FilledButton(onPressed: onSignIn, child: Text(l10n.commonSignIn)),
+                FilledButton(
+                  onPressed: onSignIn,
+                  child: Text(l10n.commonSignIn),
+                ),
               ],
             ),
           ),
@@ -140,158 +149,155 @@ class _AccountViewState extends State<_AccountView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-        _PrivateAccountHeaderCard(user: user),
-        const SizedBox(height: 14),
-        _AccountGroupedCard(
-          title: l10n.profileActivitySectionTitle,
-          childPadding: EdgeInsets.zero,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => context.push(AppRoutes.messages),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                child: Row(
-                  children: [
-                    Icon(
-                      CarzonIcons.chat,
-                      size: 22,
-                      color: scheme.primary.withValues(alpha: 0.92),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.messagingTitle,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.06,
-                              height: 1.28,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          BlocBuilder<MessagingUnreadSummaryCubit,
-                              MessagingUnreadSummaryState>(
-                            buildWhen: (p, q) =>
-                                p.phase != q.phase ||
-                                p.unreadConversationCount !=
-                                    q.unreadConversationCount,
-                            builder: (context, u) {
-                              final hasUnread = u.shouldShowUnreadIndicator;
-                              final showNoUnreadCopy =
-                                  u.phase == MessagingUnreadSummaryPhase.loaded &&
-                                      u.unreadConversationCount == 0;
-                              final style = theme.textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant.withValues(
-                                  alpha: hasUnread ? 0.95 : 0.72,
-                                ),
-                                height: 1.32,
-                              );
-                              if (!hasUnread && !showNoUnreadCopy) {
-                                return const SizedBox.shrink();
-                              }
-                              return Text(
-                                hasUnread
-                                    ? l10n.profileMessagesUnreadStatus
-                                    : l10n.profileMessagesNoUnreadStatus,
-                                style: style,
-                              );
-                            },
-                          ),
-                        ],
+          _PrivateAccountHeaderCard(user: user),
+          const SizedBox(height: 14),
+          _AccountGroupedCard(
+            title: l10n.profileActivitySectionTitle,
+            childPadding: EdgeInsets.zero,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => context.push(AppRoutes.messages),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CarzonIcons.chat,
+                        size: 22,
+                        color: scheme.primary.withValues(alpha: 0.92),
                       ),
-                    ),
-                    BlocBuilder<MessagingUnreadSummaryCubit,
-                        MessagingUnreadSummaryState>(
-                      buildWhen: (p, q) =>
-                          p.phase != q.phase ||
-                          p.unreadConversationCount != q.unreadConversationCount,
-                      builder: (context, u) {
-                        final count = u.unreadConversationCount;
-                        final showBadge = u.shouldShowUnreadIndicator;
-                        final trailingIcon = Icon(
-                          CarzonIcons.chevronRight,
-                          size: 19,
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
-                        );
-                        if (!showBadge) {
-                          return trailingIcon;
-                        }
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: _ProfileUnreadCountBadge(
-                                count: count,
+                            Text(
+                              l10n.messagingTitle,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.06,
+                                height: 1.28,
                               ),
                             ),
-                            trailingIcon,
+                            const SizedBox(height: 4),
+                            BlocBuilder<
+                              MessagingUnreadSummaryCubit,
+                              MessagingUnreadSummaryState
+                            >(
+                              buildWhen: (p, q) =>
+                                  p.phase != q.phase ||
+                                  p.unreadConversationCount !=
+                                      q.unreadConversationCount,
+                              builder: (context, u) {
+                                final hasUnread = u.shouldShowUnreadIndicator;
+                                final showNoUnreadCopy =
+                                    u.phase ==
+                                        MessagingUnreadSummaryPhase.loaded &&
+                                    u.unreadConversationCount == 0;
+                                final style = theme.textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: scheme.onSurfaceVariant.withValues(
+                                        alpha: hasUnread ? 0.95 : 0.72,
+                                      ),
+                                      height: 1.32,
+                                    );
+                                if (!hasUnread && !showNoUnreadCopy) {
+                                  return const SizedBox.shrink();
+                                }
+                                return Text(
+                                  hasUnread
+                                      ? l10n.profileMessagesUnreadStatus
+                                      : l10n.profileMessagesNoUnreadStatus,
+                                  style: style,
+                                );
+                              },
+                            ),
                           ],
-                        );
-                      },
-                    ),
-                  ],
+                        ),
+                      ),
+                      BlocBuilder<
+                        MessagingUnreadSummaryCubit,
+                        MessagingUnreadSummaryState
+                      >(
+                        buildWhen: (p, q) =>
+                            p.phase != q.phase ||
+                            p.unreadConversationCount !=
+                                q.unreadConversationCount,
+                        builder: (context, u) {
+                          final count = u.unreadConversationCount;
+                          final showBadge = u.shouldShowUnreadIndicator;
+                          final trailingIcon = Icon(
+                            CarzonIcons.chevronRight,
+                            size: 19,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.48,
+                            ),
+                          );
+                          if (!showBadge) {
+                            return trailingIcon;
+                          }
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: _ProfileUnreadCountBadge(count: count),
+                              ),
+                              trailingIcon,
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 14),
-        _AccountGroupedCard(
-          title: l10n.profilePublicSellerProfileSectionTitle,
-          subtitle: l10n.profilePublicSellerProfileSectionSubtitle,
-          childPadding: EdgeInsets.zero,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
-            child: PublicSellerNameSection(embeddedInSection: true),
+          const SizedBox(height: 14),
+          _AccountGroupedCard(
+            title: l10n.profilePublicSellerProfileSectionTitle,
+            subtitle: l10n.profilePublicSellerProfileSectionSubtitle,
+            childPadding: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
+              child: PublicSellerNameSection(embeddedInSection: true),
+            ),
           ),
-        ),
-        const SizedBox(height: 14),
-        _AccountGroupedCard(
-          title: l10n.profileSettingsSectionTitle,
-          childPadding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _ProfileListingAlertsPreferenceRow(
-                theme: theme,
-                scheme: scheme,
-              ),
-              _MutedDivider(scheme: scheme, isDark: isDark),
-              IgnorePointer(
-                ignoring: true,
-                child: _FutureSettingsRow(
-                  key: const ValueKey('profile_future_row_language'),
-                  title: l10n.profileLanguageTitle,
-                  subtitle: l10n.profileLanguageCurrentRussian,
-                  badgeLabel: l10n.commonComingSoon,
+          const SizedBox(height: 14),
+          _AccountGroupedCard(
+            title: l10n.profileSettingsSectionTitle,
+            childPadding: EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _ProfileListingAlertsPreferenceRow(
+                  theme: theme,
                   scheme: scheme,
-                  isDark: isDark,
-                  dimmed: true,
                 ),
-              ),
-              _MutedDivider(scheme: scheme, isDark: isDark),
-              _ProfileNotificationSettingsRow(
-                theme: theme,
-                scheme: scheme,
-              ),
-            ],
+                _MutedDivider(scheme: scheme, isDark: isDark),
+                _ProfileDarkThemeRow(theme: theme, scheme: scheme),
+                _MutedDivider(scheme: scheme, isDark: isDark),
+                _ProfileLanguageRow(theme: theme, scheme: scheme),
+                _MutedDivider(scheme: scheme, isDark: isDark),
+                _ProfileNotificationSettingsRow(theme: theme, scheme: scheme),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 14),
-        _AccountGroupedCard(
-          child: OutlinedButton.icon(
-            key: const ValueKey('profileSignOutButton'),
-            onPressed: () => context.read<AuthCubit>().signOut(),
-            icon: const Icon(CarzonIcons.signOut),
-            label: Text(l10n.profileSignOut),
+          const SizedBox(height: 14),
+          _AccountGroupedCard(
+            child: OutlinedButton.icon(
+              key: const ValueKey('profileSignOutButton'),
+              onPressed: () => context.read<AuthCubit>().signOut(),
+              icon: const Icon(CarzonIcons.signOut),
+              label: Text(l10n.profileSignOut),
+            ),
           ),
-        ),
         ],
       ),
     );
@@ -354,8 +360,7 @@ class _PrivateAccountHeaderCard extends StatelessWidget {
     final hasEmail = email.isNotEmpty;
 
     final String primary;
-    final bool hasDisplayedName =
-        fullName != null && fullName.isNotEmpty;
+    final bool hasDisplayedName = fullName != null && fullName.isNotEmpty;
     if (hasDisplayedName) {
       primary = fullName;
     } else if (hasEmail) {
@@ -363,8 +368,7 @@ class _PrivateAccountHeaderCard extends StatelessWidget {
     } else {
       primary = l10n.profileSignedInFallback;
     }
-    final secondary =
-        hasDisplayedName && hasEmail ? email : null;
+    final secondary = hasDisplayedName && hasEmail ? email : null;
 
     const double avatarD = 56;
     final shadow = isDark
@@ -433,9 +437,7 @@ class _PrivateAccountHeaderCard extends StatelessWidget {
                       Text(
                         secondary,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: 0.9,
-                          ),
+                          color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
                           height: 1.28,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -488,7 +490,8 @@ class _AccountGroupedCard extends StatelessWidget {
             scheme.surfaceContainerLowest,
           );
 
-    final innerPad = childPadding ??
+    final innerPad =
+        childPadding ??
         (title != null
             ? const EdgeInsets.fromLTRB(4, 4, 4, 8)
             : const EdgeInsets.all(12));
@@ -529,8 +532,9 @@ class _AccountGroupedCard extends StatelessWidget {
                         Text(
                           subtitle!,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color:
-                                scheme.onSurfaceVariant.withValues(alpha: 0.9),
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.9,
+                            ),
                             height: 1.35,
                           ),
                         ),
@@ -541,16 +545,12 @@ class _AccountGroupedCard extends StatelessWidget {
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color:
-                      scheme.outline.withValues(alpha: isDark ? 0.18 : 0.13),
+                  color: scheme.outline.withValues(alpha: isDark ? 0.18 : 0.13),
                   indent: 16,
                   endIndent: 16,
                 ),
               ],
-              Padding(
-                padding: innerPad,
-                child: child,
-              ),
+              Padding(padding: innerPad, child: child),
             ],
           ),
         ),
@@ -580,8 +580,9 @@ class _FutureSettingsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fg = scheme.onSurface
-        .withValues(alpha: dimmed ? (isDark ? 0.55 : 0.52) : 1);
+    final fg = scheme.onSurface.withValues(
+      alpha: dimmed ? (isDark ? 0.55 : 0.52) : 1,
+    );
 
     final textCol = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -617,11 +618,7 @@ class _FutureSettingsRow extends StatelessWidget {
           children: [
             Expanded(child: textCol),
             const SizedBox(width: 12),
-            _ComingSoonBadge(
-              label: badgeLabel,
-              scheme: scheme,
-              isDark: isDark,
-            ),
+            _ComingSoonBadge(label: badgeLabel, scheme: scheme, isDark: isDark),
           ],
         ),
       ),
@@ -649,8 +646,9 @@ class _ComingSoonBadge extends StatelessWidget {
         border: Border.all(
           color: scheme.outlineVariant.withValues(alpha: isDark ? 0.45 : 0.55),
         ),
-        color: scheme.surfaceContainerHighest
-            .withValues(alpha: isDark ? 0.35 : 0.55),
+        color: scheme.surfaceContainerHighest.withValues(
+          alpha: isDark ? 0.35 : 0.55,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
@@ -800,6 +798,211 @@ class _ProfileListingAlertsPreferenceRow extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ProfileLanguageRow extends StatelessWidget {
+  const _ProfileLanguageRow({required this.theme, required this.scheme});
+
+  final ThemeData theme;
+  final ColorScheme scheme;
+
+  static String _currentLanguageLabel(
+    AppLocalizations l10n,
+    AppLocalePreference preference,
+  ) {
+    return switch (preference) {
+      AppLocalePreference.ru => l10n.profileLanguageCurrentRussian,
+      AppLocalePreference.ro => l10n.profileLanguageCurrentRomanian,
+    };
+  }
+
+  Future<void> _syncPushTokenLocaleAfterChange() async {
+    if (!Env.pushNotificationsEnabled) {
+      return;
+    }
+    unawaited(
+      sl<PushNotificationRegistrationService>()
+          .syncTokenWithBackendIfEligible(),
+    );
+  }
+
+  Future<void> _showLanguageSheet(BuildContext context) async {
+    final l10n = context.l10n;
+    final cubit = context.read<AppLocaleCubit>();
+    final selected = cubit.state.preference;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                key: const ValueKey('profile_language_option_ru'),
+                title: Text(l10n.profileLanguageOptionRussian),
+                trailing: selected == AppLocalePreference.ru
+                    ? Icon(Icons.check, color: scheme.primary)
+                    : null,
+                onTap: () async {
+                  await cubit.setPreference(AppLocalePreference.ru);
+                  await _syncPushTokenLocaleAfterChange();
+                  if (sheetContext.mounted) {
+                    Navigator.of(sheetContext).pop();
+                  }
+                },
+              ),
+              ListTile(
+                key: const ValueKey('profile_language_option_ro'),
+                title: Text(l10n.profileLanguageOptionRomanian),
+                trailing: selected == AppLocalePreference.ro
+                    ? Icon(Icons.check, color: scheme.primary)
+                    : null,
+                onTap: () async {
+                  await cubit.setPreference(AppLocalePreference.ro);
+                  await _syncPushTokenLocaleAfterChange();
+                  if (sheetContext.mounted) {
+                    Navigator.of(sheetContext).pop();
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return BlocBuilder<AppLocaleCubit, AppLocaleState>(
+      builder: (context, localeState) {
+        return Padding(
+          padding: const EdgeInsets.only(
+            left: 16,
+            right: 10,
+            top: 6,
+            bottom: 6,
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: const ValueKey('profile_future_row_language'),
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => _showLanguageSheet(context),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.language_outlined,
+                      size: 22,
+                      color: scheme.primary.withValues(alpha: 0.92),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.profileLanguageTitle,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.06,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _currentLanguageLabel(l10n, localeState.preference),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant.withValues(
+                                alpha: 0.82,
+                              ),
+                              height: 1.32,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      CarzonIcons.chevronRight,
+                      size: 19,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ProfileDarkThemeRow extends StatelessWidget {
+  const _ProfileDarkThemeRow({required this.theme, required this.scheme});
+
+  final ThemeData theme;
+  final ColorScheme scheme;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 12, top: 6, bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            CarzonIcons.darkTheme,
+            size: 22,
+            color: scheme.primary.withValues(alpha: 0.92),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.profileDarkThemeTitle,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.06,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.profileDarkThemeSubtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                      height: 1.32,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          BlocBuilder<ThemeModeCubit, ThemeModeState>(
+            builder: (context, state) {
+              return Switch.adaptive(
+                key: const ValueKey<String>('profile_dark_theme_switch'),
+                value: state.themeMode == ThemeMode.dark,
+                onChanged: (enabled) {
+                  context.read<ThemeModeCubit>().setDarkEnabled(enabled);
+                },
+              );
+            },
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/entities/compare_item.dart';
 import '../../domain/entities/compare_listing_snapshot.dart';
@@ -41,71 +42,87 @@ class CompareFloatingTray extends StatelessWidget {
         : l10n.compareTrayVehicleCount(count);
     final hint = count == 1 ? l10n.compareTrayAddOneMore : l10n.compareTrayOpen;
 
-    final surface = isDark ? scheme.surfaceContainerHigh : Colors.white;
+    final darkDecoration = isDark
+        ? AppTheme.editorialDarkSectionCard(scheme, borderRadius: 28)
+        : null;
+    final surface = isDark ? Colors.transparent : Colors.white;
     final borderColor = scheme.outlineVariant.withValues(
       alpha: isDark ? 0.35 : 0.22,
     );
     final shadowColor = isDark
-        ? Colors.black.withValues(alpha: 0.5)
+        ? scheme.primary.withValues(alpha: 0.12)
         : Colors.black.withValues(alpha: 0.12);
 
-    final capsule = Material(
-      color: surface,
-      elevation: 0,
-      shadowColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(28),
-        side: BorderSide(color: borderColor),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onOpenCompare,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 14, 10),
-          child: Row(
-            children: [
-              _CompareTrayThumbnailStack(
-                items: items,
-                solidThumbnails: solidThumbnails,
-              ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.15,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          hint,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: scheme.primary,
-                          ),
-                        ),
-                      ],
+    final capsuleChild = InkWell(
+      onTap: onOpenCompare,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 10, 14, 10),
+        child: Row(
+          children: [
+            _CompareTrayThumbnailStack(
+              items: items,
+              solidThumbnails: solidThumbnails,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.15,
                     ),
                   ),
-                  Icon(
-                    CarzonIcons.chevronRight,
-                    size: 20,
-                    color: scheme.primary.withValues(alpha: 0.9),
+                  const SizedBox(height: 2),
+                  Text(
+                    hint,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: scheme.primary,
+                    ),
                   ),
-            ],
-          ),
+                ],
+              ),
+            ),
+            Icon(
+              CarzonIcons.chevronRight,
+              size: 20,
+              color: scheme.primary.withValues(alpha: 0.9),
+            ),
+          ],
         ),
       ),
     );
+
+    final capsule = darkDecoration != null
+        ? Material(
+            color: Colors.transparent,
+            elevation: 0,
+            shadowColor: Colors.transparent,
+            clipBehavior: Clip.antiAlias,
+            child: DecoratedBox(
+              decoration: darkDecoration,
+              child: capsuleChild,
+            ),
+          )
+        : Material(
+            color: surface,
+            elevation: 0,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(28),
+              side: BorderSide(color: borderColor),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: capsuleChild,
+          );
 
     return Semantics(
       button: true,
@@ -149,7 +166,8 @@ class _CompareTrayThumbnailStack extends StatelessWidget {
         : 0;
 
     return SizedBox(
-      width: thumbSize +
+      width:
+          thumbSize +
           (showCount - 1) * (thumbSize - overlap) +
           (overflow > 0 ? 8 : 0),
       height: thumbSize,
@@ -199,19 +217,14 @@ class _Thumb extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: scheme.surface,
-                width: 1.5,
-              ),
+              border: Border.all(color: scheme.surface, width: 1.5),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               clipBehavior: Clip.hardEdge,
               child: solidThumbnail
                   ? _CompareTraySolidThumb(listingId: snapshot.listingId)
-                  : _CompareTrayCoverImage(
-                      imageUrl: snapshot.coverImageUrl,
-                    ),
+                  : _CompareTrayCoverImage(imageUrl: snapshot.coverImageUrl),
             ),
           ),
           if (showOverflowBadge && overflowCount > 0)

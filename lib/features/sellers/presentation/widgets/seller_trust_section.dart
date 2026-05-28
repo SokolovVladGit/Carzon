@@ -31,6 +31,7 @@ class SellerTrustSection extends StatelessWidget {
               final profile = state.profile!;
               final theme = Theme.of(context);
               final l10n = context.l10n;
+              final isDark = theme.brightness == Brightness.dark;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -39,6 +40,9 @@ class SellerTrustSection extends StatelessWidget {
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.1,
+                      color: isDark
+                          ? theme.colorScheme.onSurface.withValues(alpha: 0.96)
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 12),

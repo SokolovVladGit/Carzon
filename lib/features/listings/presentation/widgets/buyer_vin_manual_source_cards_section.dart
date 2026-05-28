@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../utils/vin_manual_source_cards.dart';
 import 'buyer_vin_report_sheet_ui.dart';
@@ -18,6 +19,7 @@ class BuyerVinManualSourceCardsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final cards = buildBuyerVinManualSourceCards(l10n);
     if (cards.isEmpty) return const SizedBox.shrink();
 
@@ -29,6 +31,7 @@ class BuyerVinManualSourceCardsSection extends StatelessWidget {
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: -0.15,
+            color: isDark ? scheme.onSurface.withValues(alpha: 0.96) : null,
           ),
         ),
         const SizedBox(height: 6),
@@ -36,7 +39,7 @@ class BuyerVinManualSourceCardsSection extends StatelessWidget {
           l10n.listingBuyerVinReportManualSourcesIntro,
           style: theme.textTheme.bodyMedium?.copyWith(
             height: 1.45,
-            color: scheme.onSurfaceVariant,
+            color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.84 : 1),
           ),
         ),
         const SizedBox(height: 14),
@@ -50,10 +53,7 @@ class BuyerVinManualSourceCardsSection extends StatelessWidget {
 }
 
 class _ManualSourceCardTile extends StatelessWidget {
-  const _ManualSourceCardTile({
-    required this.theme,
-    required this.card,
-  });
+  const _ManualSourceCardTile({required this.theme, required this.card});
 
   final ThemeData theme;
   final VinManualSourceCardDefinition card;
@@ -61,6 +61,7 @@ class _ManualSourceCardTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return DecoratedBox(
       key: ValueKey('buyer_vin_manual_card_${card.sourceId}'),
       decoration: buyerVinReportSectionDecoration(
@@ -74,7 +75,11 @@ class _ManualSourceCardTile extends StatelessWidget {
             Container(
               width: 3,
               decoration: BoxDecoration(
-                color: scheme.outlineVariant.withValues(alpha: 0.55),
+                color: isDark
+                    ? AppTheme.editorialAccentColor(
+                        scheme,
+                      ).withValues(alpha: 0.42)
+                    : scheme.outlineVariant.withValues(alpha: 0.55),
                 borderRadius: const BorderRadius.horizontal(
                   left: Radius.circular(14),
                 ),
@@ -136,12 +141,20 @@ class _ManualSourceStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh.withValues(alpha: 0.5),
+        color: isDark
+            ? Color.alphaBlend(
+                scheme.primary.withValues(alpha: 0.10),
+                scheme.surfaceContainerHigh,
+              )
+            : scheme.surfaceContainerHigh.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.32),
+          color: isDark
+              ? scheme.outline.withValues(alpha: 0.28)
+              : scheme.outlineVariant.withValues(alpha: 0.32),
         ),
       ),
       child: Padding(

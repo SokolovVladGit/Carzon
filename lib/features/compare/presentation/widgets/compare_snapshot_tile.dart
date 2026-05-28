@@ -20,9 +20,7 @@ class CompareSnapshotTile extends StatelessWidget {
       color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(
-          color: scheme.outlineVariant.withValues(alpha: 0.35),
-        ),
+        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.35)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(10),

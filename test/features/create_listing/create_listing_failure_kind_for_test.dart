@@ -61,7 +61,10 @@ void main() {
   test('42501 maps to permissionDenied', () {
     expect(
       createListingFailureKindFor(
-        ServerFailure('permission denied for schema public', postgrestCode: '42501'),
+        ServerFailure(
+          'permission denied for schema public',
+          postgrestCode: '42501',
+        ),
       ),
       CreateListingFailureKind.permissionDenied,
     );

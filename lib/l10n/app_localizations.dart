@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_ro.dart';
 import 'app_localizations_ru.dart';
 
 // ignore_for_file: type=lint
@@ -92,7 +93,10 @@ abstract class AppLocalizations {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('ru')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('ro'),
+    Locale('ru'),
+  ];
 
   /// No description provided for @appName.
   ///
@@ -1033,6 +1037,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'л'**
   String get listingEngineDisplacementLitersSuffix;
+
+  /// No description provided for @listingEngineDisplacementCcSuffix.
+  ///
+  /// In ru, this message translates to:
+  /// **'см³'**
+  String get listingEngineDisplacementCcSuffix;
 
   /// No description provided for @listingEnginePowerHpSuffix.
   ///
@@ -2348,6 +2358,18 @@ abstract class AppLocalizations {
   /// **'Настройки'**
   String get profileSettingsSectionTitle;
 
+  /// No description provided for @profileDarkThemeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тёмная тема'**
+  String get profileDarkThemeTitle;
+
+  /// No description provided for @profileDarkThemeSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переключает интерфейс приложения на тёмный режим.'**
+  String get profileDarkThemeSubtitle;
+
   /// No description provided for @profileLanguageTitle.
   ///
   /// In ru, this message translates to:
@@ -2359,6 +2381,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Русский'**
   String get profileLanguageCurrentRussian;
+
+  /// No description provided for @profileLanguageCurrentRomanian.
+  ///
+  /// In ru, this message translates to:
+  /// **'Română'**
+  String get profileLanguageCurrentRomanian;
+
+  /// No description provided for @profileLanguageOptionRussian.
+  ///
+  /// In ru, this message translates to:
+  /// **'Русский'**
+  String get profileLanguageOptionRussian;
+
+  /// No description provided for @profileLanguageOptionRomanian.
+  ///
+  /// In ru, this message translates to:
+  /// **'Română'**
+  String get profileLanguageOptionRomanian;
 
   /// No description provided for @profileNotificationsTitle.
   ///
@@ -4447,6 +4487,54 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Источник: базовая расшифровка NHTSA vPIC.'**
   String get editListingVinReportSourceLine;
+
+  /// No description provided for @notificationMessageTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новое сообщение'**
+  String get notificationMessageTitle;
+
+  /// No description provided for @notificationMessageBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вам написали по объявлению в Carzon.'**
+  String get notificationMessageBody;
+
+  /// No description provided for @notificationFilterAlertTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новое объявление'**
+  String get notificationFilterAlertTitle;
+
+  /// No description provided for @notificationFilterAlertBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Есть объявление по вашему сохранённому фильтру. Откройте, чтобы посмотреть.'**
+  String get notificationFilterAlertBody;
+
+  /// No description provided for @notificationAndroidChannelMessagesName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Carzon — сообщения'**
+  String get notificationAndroidChannelMessagesName;
+
+  /// No description provided for @notificationAndroidChannelMessagesDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления о новых сообщениях в чате'**
+  String get notificationAndroidChannelMessagesDescription;
+
+  /// No description provided for @notificationAndroidChannelFilterName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Carzon — оповещения по фильтру'**
+  String get notificationAndroidChannelFilterName;
+
+  /// No description provided for @notificationAndroidChannelFilterDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления о новых объявлениях по сохранённому фильтру'**
+  String get notificationAndroidChannelFilterDescription;
 }
 
 class _AppLocalizationsDelegate
@@ -4460,7 +4548,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['ru'].contains(locale.languageCode);
+      <String>['ro', 'ru'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -4469,6 +4557,8 @@ class _AppLocalizationsDelegate
 AppLocalizations lookupAppLocalizations(Locale locale) {
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'ro':
+      return AppLocalizationsRo();
     case 'ru':
       return AppLocalizationsRu();
   }

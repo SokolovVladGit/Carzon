@@ -3,11 +3,10 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/brands/brand_icon_resolver.dart';
+import '../../../../shared/brands/brand_logo_glyph.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/entities/listing.dart';
 import '../utils/listing_formatters.dart';
@@ -198,7 +197,7 @@ class _ListingCardState extends State<ListingCard> {
                 priceLabel: formatListingPriceFromListing(listing),
                 titleLabel: '${listing.make} ${listing.model}',
                 brandIconAsset: getBrandIconPath(listing.make),
-                mileageLabel: formatKm(listing.mileageKm),
+                mileageLabel: formatKm(l10n, listing.mileageKm),
                 yearLabel: listing.year.toString(),
                 city: listing.city,
                 theme: theme,
@@ -461,7 +460,7 @@ class _InfoPanel extends StatelessWidget {
     // feeling ghosted.
     final titleStyle = theme.textTheme.titleMedium?.copyWith(
       fontWeight: FontWeight.w500,
-      color: scheme.onSurface.withValues(alpha: 0.88),
+      color: scheme.onSurface.withValues(alpha: isDark ? 0.94 : 0.88),
       height: 1.2,
     );
     final metaStyle = theme.textTheme.bodySmall?.copyWith(
@@ -480,9 +479,9 @@ class _InfoPanel extends StatelessWidget {
     //     blur picks up the photo/page beneath for cohesion.
     final panelBg = isDark
         ? Color.alphaBlend(
-            Colors.white.withValues(alpha: 0.06),
+            scheme.onSurface.withValues(alpha: 0.04),
             scheme.surfaceContainerHigh,
-          ).withValues(alpha: 0.92)
+          )
         : Colors.white.withValues(alpha: 0.90);
     // Featured vs. regular differentiation lives in the shadow,
     // not in extra chrome:
@@ -496,7 +495,7 @@ class _InfoPanel extends StatelessWidget {
     // Dark mode leans heavier in both cases so the silhouette
     // bites against deep surfaces.
     final panelShadowColor = isDark
-        ? Colors.black.withValues(alpha: isFeatured ? 0.52 : 0.32)
+        ? scheme.shadow.withValues(alpha: isFeatured ? 0.28 : 0.16)
         : Colors.black.withValues(alpha: isFeatured ? 0.11 : 0.04);
     final panelShadowBlur = isFeatured ? 24.0 : 14.0;
     final panelShadowOffset = isFeatured
@@ -505,7 +504,7 @@ class _InfoPanel extends StatelessWidget {
     // Hairline edge. Light mode uses a faint white specular line
     // (works on glass), dark mode a whisper white edge.
     final panelBorderColor = isDark
-        ? Colors.white.withValues(alpha: 0.07)
+        ? scheme.outline.withValues(alpha: 0.32)
         : Colors.white.withValues(alpha: 0.55);
 
     return DecoratedBox(
@@ -685,10 +684,7 @@ class _InfoPanel extends StatelessWidget {
                   ),
                   if (trailing != null) ...[
                     const SizedBox(width: 8),
-                    _PanelActionSlot(
-                      wide: trailingWide,
-                      child: trailing!,
-                    ),
+                    _PanelActionSlot(wide: trailingWide, child: trailing!),
                   ],
                 ],
               ),
@@ -700,59 +696,18 @@ class _InfoPanel extends StatelessWidget {
   }
 }
 
-/// Brand logo rendered next to the title, 26×26, with **no** tile,
-/// background, or border — the mark sits directly on the panel so
-/// the logo silhouette carries the hierarchy.
-///
-/// The asset path is pre-resolved by [getBrandIconPath], which is
-/// total (unknown / empty input returns the neutral `default.svg`).
-/// When that fallback path is detected the widget draws a generic
-/// `Icons.directions_car` glyph instead of the neutral SVG so the
-/// card reads as "unknown brand" rather than "generic car logo".
+/// Brand logo in the info panel. Light mode: flat mark on the glass panel.
+/// Dark mode: [BrandLogoGlyph] adds a soft well so black SVGs stay visible.
 class _BrandIconTile extends StatelessWidget {
   const _BrandIconTile({required this.assetPath});
 
   final String assetPath;
 
-  /// Rendered size. 32 px is large enough for the brand silhouette
-  /// to read at a glance from the feed while staying subordinate to
-  /// the price type on the right.
   static const double _size = 32;
-
-  /// Sentinel suffix used to detect the resolver's neutral fallback.
-  /// The resolver is the sole source of truth for this path, so a
-  /// suffix match keeps this widget from needing to import an
-  /// internal constant.
-  static const String _defaultSuffix = '/default.svg';
-
-  /// Neutral metallic fill used ONLY by the unknown-brand fallback
-  /// glyph. Real brand SVGs are never tinted — multi-color logos
-  /// (e.g. Škoda, BMW, Alfa Romeo) must keep their native palette.
-  static const Color _fallbackSilver = Color(0xFF9E9E9E);
 
   @override
   Widget build(BuildContext context) {
-    final isUnknown = assetPath.endsWith(_defaultSuffix);
-
-    if (isUnknown) {
-      return const Icon(
-        Icons.directions_car,
-        size: _size,
-        color: _fallbackSilver,
-      );
-    }
-
-    return SizedBox(
-      width: _size,
-      height: _size,
-      child: SvgPicture.asset(
-        assetPath,
-        width: _size,
-        height: _size,
-        fit: BoxFit.contain,
-        placeholderBuilder: (_) => const SizedBox.shrink(),
-      ),
-    );
+    return BrandLogoGlyph(assetPath: assetPath, size: _size);
   }
 }
 
@@ -804,15 +759,16 @@ class _PanelActionSlot extends StatelessWidget {
     //   * dark mode: white @ 0.12 with a faint specular edge so
     //     the slot stays legible on the dark panel.
     final bg = isDark
-        ? Colors.white.withValues(alpha: 0.12)
+        ? Color.alphaBlend(
+            scheme.onSurface.withValues(alpha: 0.08),
+            scheme.surfaceContainerHighest,
+          )
         : Colors.white.withValues(alpha: 0.78);
     final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.18)
+        ? scheme.outline.withValues(alpha: 0.38)
         : Colors.white.withValues(alpha: 0.60);
-    // Subtle lift — keeps the chip legibly "pressable" against the
-    // glass panel without reading as a heavy Material button.
     final shadowColor = isDark
-        ? Colors.black.withValues(alpha: 0.32)
+        ? scheme.shadow.withValues(alpha: 0.22)
         : Colors.black.withValues(alpha: 0.08);
     final borderRadius = wide ? 18.0 : _compactSize / 2;
     final clip = wide

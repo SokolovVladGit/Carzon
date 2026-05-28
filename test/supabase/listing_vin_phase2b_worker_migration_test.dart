@@ -12,7 +12,11 @@ void main() {
       final f = File(
         'supabase/migrations/20260619120000_vin_phase2b_worker_rpcs.sql',
       );
-      expect(f.existsSync(), isTrue, reason: 'VIN Phase 2B worker migration must exist');
+      expect(
+        f.existsSync(),
+        isTrue,
+        reason: 'VIN Phase 2B worker migration must exist',
+      );
       sql = f.readAsStringSync();
       lower = sql.toLowerCase();
     });
@@ -39,28 +43,39 @@ void main() {
       expect(lower, contains('least('));
     });
 
-    test('complete success writes decode cache, snapshot, and job terminal state', () {
-      expect(lower, contains('complete_vin_decode_job_success'));
-      expect(lower, contains('vin_decode_cache'));
-      expect(lower, contains('listing_vin_report_snapshot'));
-      expect(lower, contains("decode_status = 'decoded'"));
-      expect(lower, contains("processing_status = 'succeeded'"));
-      expect(lower, contains("status = 'succeeded'"));
-      expect(lower, contains('on conflict (vin_hash)'));
-    });
+    test(
+      'complete success writes decode cache, snapshot, and job terminal state',
+      () {
+        expect(lower, contains('complete_vin_decode_job_success'));
+        expect(lower, contains('vin_decode_cache'));
+        expect(lower, contains('listing_vin_report_snapshot'));
+        expect(lower, contains("decode_status = 'decoded'"));
+        expect(lower, contains("processing_status = 'succeeded'"));
+        expect(lower, contains("status = 'succeeded'"));
+        expect(lower, contains('on conflict (vin_hash)'));
+      },
+    );
 
-    test('complete failure implements retry pending + backoff and terminal failed', () {
-      expect(lower, contains('complete_vin_decode_job_failure'));
-      expect(lower, contains("status = 'pending'"));
-      expect(lower, contains('next_run_at'));
-      expect(lower, contains('power('));
-      expect(lower, contains("status = 'failed'"));
-      expect(lower, contains("processing_status = 'failed'"));
-      expect(lower, contains("decode_status = 'failed'"));
-    });
+    test(
+      'complete failure implements retry pending + backoff and terminal failed',
+      () {
+        expect(lower, contains('complete_vin_decode_job_failure'));
+        expect(lower, contains("status = 'pending'"));
+        expect(lower, contains('next_run_at'));
+        expect(lower, contains('power('));
+        expect(lower, contains("status = 'failed'"));
+        expect(lower, contains("processing_status = 'failed'"));
+        expect(lower, contains("decode_status = 'failed'"));
+      },
+    );
 
     test('revokes execute from public/anon/authenticated on worker RPCs', () {
-      expect(lower, contains('revoke all on function public.claim_vin_decode_jobs_for_processing'));
+      expect(
+        lower,
+        contains(
+          'revoke all on function public.claim_vin_decode_jobs_for_processing',
+        ),
+      );
       expect(lower, contains('from anon'));
       expect(lower, contains('from authenticated'));
       expect(lower, contains('complete_vin_decode_job_success'));
@@ -68,13 +83,24 @@ void main() {
     });
 
     test('grants execute only to service_role', () {
-      expect(lower, contains(
-            'grant execute on function public.claim_vin_decode_jobs_for_processing(integer, text)',
-          ));
-      expect(lower, contains('grant execute on function public.complete_vin_decode_job_success'));
-      expect(lower, contains(
-            'grant execute on function public.complete_vin_decode_job_failure(uuid, text, boolean)',
-          ));
+      expect(
+        lower,
+        contains(
+          'grant execute on function public.claim_vin_decode_jobs_for_processing(integer, text)',
+        ),
+      );
+      expect(
+        lower,
+        contains(
+          'grant execute on function public.complete_vin_decode_job_success',
+        ),
+      );
+      expect(
+        lower,
+        contains(
+          'grant execute on function public.complete_vin_decode_job_failure(uuid, text, boolean)',
+        ),
+      );
       expect(lower, contains('to service_role'));
     });
 

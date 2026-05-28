@@ -14,9 +14,7 @@ void registerMessagingFeature(GetIt sl) {
   sl.registerLazySingleton<MessagingRepository>(
     () => MessagingRepositoryImpl(sl<MessagingRemoteDataSource>()),
   );
-  sl.registerFactory(
-    () => GetOrCreateConversation(sl<MessagingRepository>()),
-  );
+  sl.registerFactory(() => GetOrCreateConversation(sl<MessagingRepository>()));
 
   sl.registerLazySingleton<MessagingUnreadSummaryCubit>(
     () => MessagingUnreadSummaryCubit(sl<MessagingRepository>()),

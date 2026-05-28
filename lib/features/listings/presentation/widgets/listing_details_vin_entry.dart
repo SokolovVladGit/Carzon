@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
@@ -130,8 +131,20 @@ class _ListingDetailsVinCtaRow extends StatelessWidget {
       _ => (l10n.listingVinBadgeIndicated, l10n.listingVinReportOpenHint),
     };
 
-    final surfaceAlpha = showGreen ? 0.38 : 0.24;
-    final borderAlpha = showGreen ? 0.45 : 0.32;
+    final light = theme.brightness == Brightness.light;
+    final cardDecoration = light
+        ? BoxDecoration(
+            color: scheme.surfaceContainerHighest.withValues(
+              alpha: showGreen ? 0.38 : 0.24,
+            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: scheme.outlineVariant.withValues(
+                alpha: showGreen ? 0.45 : 0.32,
+              ),
+            ),
+          )
+        : AppTheme.editorialDarkSectionCard(scheme, borderRadius: 14)!;
 
     final child = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -152,8 +165,10 @@ class _ListingDetailsVinCtaRow extends StatelessWidget {
                     height: 1.25,
                     letterSpacing: -0.15,
                     color: tappable
-                        ? null
-                        : scheme.onSurface.withValues(alpha: 0.72),
+                        ? scheme.onSurface.withValues(alpha: light ? 1 : 0.96)
+                        : scheme.onSurface.withValues(
+                            alpha: light ? 0.72 : 0.78,
+                          ),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -161,7 +176,9 @@ class _ListingDetailsVinCtaRow extends StatelessWidget {
                   subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
                     height: 1.35,
-                    color: scheme.onSurfaceVariant,
+                    color: scheme.onSurfaceVariant.withValues(
+                      alpha: light ? 1 : 0.78,
+                    ),
                   ),
                 ),
               ],
@@ -172,7 +189,9 @@ class _ListingDetailsVinCtaRow extends StatelessWidget {
             Icon(
               Icons.chevron_right_rounded,
               size: 22,
-              color: scheme.onSurface.withValues(alpha: 0.45),
+              color: scheme.onSurfaceVariant.withValues(
+                alpha: light ? 0.45 : 0.82,
+              ),
             ),
           ],
         ],
@@ -185,14 +204,13 @@ class _ListingDetailsVinCtaRow extends StatelessWidget {
         container: true,
         label: '$title. $subtitle',
         child: Material(
-          color: scheme.surfaceContainerHighest.withValues(alpha: surfaceAlpha),
+          color: Colors.transparent,
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
-            side: BorderSide(
-              color: scheme.outlineVariant.withValues(alpha: borderAlpha),
-            ),
           ),
-          child: child,
+          clipBehavior: Clip.antiAlias,
+          child: DecoratedBox(decoration: cardDecoration, child: child),
         ),
       );
     }
@@ -201,19 +219,17 @@ class _ListingDetailsVinCtaRow extends StatelessWidget {
       button: true,
       label: '$title. $subtitle',
       child: Material(
-        color: scheme.surfaceContainerHighest.withValues(alpha: surfaceAlpha),
+        color: Colors.transparent,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: borderAlpha),
-          ),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          key: const ValueKey('listing_vin_trust_badge_tap'),
-          onTap: onTap,
-          child: child,
+        child: DecoratedBox(
+          decoration: cardDecoration,
+          child: InkWell(
+            key: const ValueKey('listing_vin_trust_badge_tap'),
+            onTap: onTap,
+            child: child,
+          ),
         ),
       ),
     );
@@ -229,50 +245,63 @@ class _ListingDetailsVinAbsentState extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+    final decoration = light
+        ? BoxDecoration(
+            color: scheme.surfaceContainerHighest.withValues(alpha: 0.22),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: scheme.outlineVariant.withValues(alpha: 0.32),
+            ),
+          )
+        : AppTheme.editorialDarkSectionCard(scheme, borderRadius: 14)!;
 
     return Semantics(
       key: const ValueKey('listing_vin_absent_state'),
       container: true,
       label: l10n.listingVinNotProvidedTitle,
       child: Material(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.22),
+        color: Colors.transparent,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: 0.32),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              const VinNeutralLatinBadge(),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.listingVinNotProvidedTitle,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        height: 1.25,
-                        color: scheme.onSurface.withValues(alpha: 0.55),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        clipBehavior: Clip.antiAlias,
+        child: DecoratedBox(
+          decoration: decoration,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                const VinNeutralLatinBadge(),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.listingVinNotProvidedTitle,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          height: 1.25,
+                          color: scheme.onSurface.withValues(
+                            alpha: light ? 0.55 : 0.72,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      l10n.listingVinNotProvidedHint,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        height: 1.35,
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.listingVinNotProvidedHint,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          height: 1.35,
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: light ? 0.85 : 0.76,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

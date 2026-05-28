@@ -28,7 +28,10 @@ String listingFilterBodyTypeLabel(AppLocalizations l10n, ListingBodyType t) {
   }
 }
 
-String listingFilterSortOptionLabel(AppLocalizations l10n, ListingSortOption o) {
+String listingFilterSortOptionLabel(
+  AppLocalizations l10n,
+  ListingSortOption o,
+) {
   switch (o) {
     case ListingSortOption.newestFirst:
       return l10n.filterSortNewestFirst;

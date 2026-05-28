@@ -92,7 +92,9 @@ void main() {
         phase: MessagingUnreadSummaryPhase.initial,
       ),
     );
-    when(() => sellerVisualCubit.state).thenReturn(const SelfSellerVisualState());
+    when(
+      () => sellerVisualCubit.state,
+    ).thenReturn(const SelfSellerVisualState());
     whenListen(
       sellerVisualCubit,
       const Stream<SelfSellerVisualState>.empty(),

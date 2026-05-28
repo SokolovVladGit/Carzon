@@ -51,18 +51,16 @@ class AccountPrivateAvatarCircle extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: scheme.surfaceContainerHighest,
-          border: Border.all(
-            color: scheme.outline.withValues(alpha: 0.14),
-          ),
+          border: Border.all(color: scheme.outline.withValues(alpha: 0.14)),
         ),
         alignment: Alignment.center,
         child: initials.isNotEmpty
             ? Text(
                 initials,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-                    ),
+                  fontWeight: FontWeight.w600,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
+                ),
               )
             : Icon(
                 Icons.person_rounded,
@@ -89,10 +87,7 @@ class AccountPrivateAvatarCircle extends StatelessWidget {
       );
     }
 
-    return Semantics(
-      label: semanticLabel,
-      child: base,
-    );
+    return Semantics(label: semanticLabel, child: base);
   }
 }
 
@@ -132,9 +127,7 @@ class AccountSignedOutAvatarCircle extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: scheme.surfaceContainerHighest,
-          border: Border.all(
-            color: scheme.outline.withValues(alpha: 0.14),
-          ),
+          border: Border.all(color: scheme.outline.withValues(alpha: 0.14)),
         ),
         alignment: Alignment.center,
         child: Icon(

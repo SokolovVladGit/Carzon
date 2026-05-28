@@ -18,6 +18,7 @@ class ThreadQuickReplyChips extends StatelessWidget {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final replies = [
       l10n.messagingQuickReplyStillAvailable,
       l10n.messagingQuickReplyWhereToView,
@@ -25,7 +26,7 @@ class ThreadQuickReplyChips extends StatelessWidget {
       l10n.messagingQuickReplyWhenCall,
     ];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -33,7 +34,7 @@ class ThreadQuickReplyChips extends StatelessWidget {
             l10n.messagingQuickReplyHint,
             textAlign: TextAlign.center,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: cs.onSurfaceVariant,
+              color: cs.onSurfaceVariant.withValues(alpha: isDark ? 0.78 : 1),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -45,13 +46,23 @@ class ThreadQuickReplyChips extends StatelessWidget {
             children: replies
                 .map((t) {
                   return ActionChip(
-                    label: Text(t, style: theme.textTheme.labelLarge),
-                    visualDensity: VisualDensity.compact,
-                    backgroundColor: cs.surfaceContainerLow.withValues(
-                      alpha: 0.92,
+                    label: Text(
+                      t,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: cs.onSurface.withValues(
+                          alpha: isDark ? 0.94 : 1,
+                        ),
+                      ),
                     ),
+                    visualDensity: VisualDensity.compact,
+                    backgroundColor: isDark
+                        ? Color.alphaBlend(
+                            cs.primary.withValues(alpha: 0.10),
+                            cs.surfaceContainerHigh,
+                          )
+                        : cs.surfaceContainerLow.withValues(alpha: 0.92),
                     side: BorderSide(
-                      color: cs.outlineVariant.withValues(alpha: 0.4),
+                      color: cs.outline.withValues(alpha: isDark ? 0.28 : 0.4),
                     ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 4,

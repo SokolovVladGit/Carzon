@@ -9,6 +9,5 @@ class GetOwnerListingVinSourceResultsForEdit {
 
   Future<Result<OwnerListingVinSourceResultsLookupResult>> call(
     String listingId,
-  ) =>
-      _repository.fetchOwnerVinSourceResults(listingId);
+  ) => _repository.fetchOwnerVinSourceResults(listingId);
 }

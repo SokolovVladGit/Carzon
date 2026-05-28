@@ -32,12 +32,15 @@ void main() {
       expect(lower, contains('carzon_invoke_process_vin_decode_jobs_worker'));
     });
 
-    test('references process-vin-decode-jobs URL shape and internal header', () {
-      expect(lower, contains('functions/v1/process-vin-decode-jobs'));
-      expect(lower, contains('x-carzon-internal-secret'));
-      expect(lower, contains('carzon_process_vin_decode_jobs_url'));
-      expect(lower, contains('carzon_process_vin_decode_jobs_secret'));
-    });
+    test(
+      'references process-vin-decode-jobs URL shape and internal header',
+      () {
+        expect(lower, contains('functions/v1/process-vin-decode-jobs'));
+        expect(lower, contains('x-carzon-internal-secret'));
+        expect(lower, contains('carzon_process_vin_decode_jobs_url'));
+        expect(lower, contains('carzon_process_vin_decode_jobs_secret'));
+      },
+    );
 
     test('posts conservative batch limit in JSON body', () {
       expect(lower, contains("'limit'"));
@@ -45,12 +48,18 @@ void main() {
       expect(lower, contains('jsonb_build_object'));
     });
 
-    test('reads secrets from vault view only (no env secret assignment in SQL)', () {
-      expect(lower, contains('vault.decrypted_secrets'));
-      expect(sql.toUpperCase(), isNot(contains('CARZON_PROCESS_VIN_DECODE_JOBS_SECRET=')));
-      expect(lower, isNot(contains('begin private key')));
-      expect(lower, isNot(contains('zypqfwktvzfnfvihxhbd')));
-    });
+    test(
+      'reads secrets from vault view only (no env secret assignment in SQL)',
+      () {
+        expect(lower, contains('vault.decrypted_secrets'));
+        expect(
+          sql.toUpperCase(),
+          isNot(contains('CARZON_PROCESS_VIN_DECODE_JOBS_SECRET=')),
+        );
+        expect(lower, isNot(contains('begin private key')));
+        expect(lower, isNot(contains('zypqfwktvzfnfvihxhbd')));
+      },
+    );
 
     test('does not alter public listings or vin_status', () {
       expect(lower, isNot(contains('alter table public.listings')));

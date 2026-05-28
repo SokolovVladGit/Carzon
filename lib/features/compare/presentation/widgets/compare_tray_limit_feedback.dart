@@ -18,7 +18,9 @@ class CompareTrayLimitFeedback extends StatelessWidget {
     final borderColor = scheme.outlineVariant.withValues(
       alpha: isDark ? 0.35 : 0.22,
     );
-    final iconBg = scheme.primaryContainer.withValues(alpha: isDark ? 0.45 : 0.55);
+    final iconBg = scheme.primaryContainer.withValues(
+      alpha: isDark ? 0.45 : 0.55,
+    );
 
     return Semantics(
       liveRegion: true,

@@ -12,17 +12,27 @@ void main() {
       final f = File(
         'supabase/migrations/20260625120000_vin_phase2g_backfill_nhtsa_source_results.sql',
       );
-      expect(f.existsSync(), isTrue, reason: 'Phase 2G backfill migration must exist');
+      expect(
+        f.existsSync(),
+        isTrue,
+        reason: 'Phase 2G backfill migration must exist',
+      );
       sql = f.readAsStringSync();
       lower = sql.toLowerCase();
     });
 
-    test('inserts into listing_vin_source_results from snapshot and cache join', () {
-      expect(lower, contains('insert into public.listing_vin_source_results'));
-      expect(lower, contains('from public.listing_vin_report_snapshot s'));
-      expect(lower, contains('inner join public.vin_decode_cache c'));
-      expect(lower, contains('on c.vin_hash = s.vin_hash'));
-    });
+    test(
+      'inserts into listing_vin_source_results from snapshot and cache join',
+      () {
+        expect(
+          lower,
+          contains('insert into public.listing_vin_source_results'),
+        );
+        expect(lower, contains('from public.listing_vin_report_snapshot s'));
+        expect(lower, contains('inner join public.vin_decode_cache c'));
+        expect(lower, contains('on c.vin_hash = s.vin_hash'));
+      },
+    );
 
     test('filters to nhtsa_vpic and successful decoded snapshot', () {
       expect(lower, contains("c.provider_id = 'nhtsa_vpic'"));
@@ -54,7 +64,11 @@ void main() {
         'not_mileage_check',
         'not_registration_check',
       ]) {
-        expect(lower, contains("'$code'"), reason: 'limitation_codes must include $code');
+        expect(
+          lower,
+          contains("'$code'"),
+          reason: 'limitation_codes must include $code',
+        );
       }
     });
 
@@ -75,17 +89,27 @@ void main() {
     });
 
     test('fetched_at uses cache then snapshot fallbacks', () {
-      expect(lower, contains('coalesce(c.fetched_at, s.last_processed_at, s.updated_at, now())'));
+      expect(
+        lower,
+        contains(
+          'coalesce(c.fetched_at, s.last_processed_at, s.updated_at, now())',
+        ),
+      );
     });
 
-    test('insert column list does not target vin_hash on source results table', () {
-      final open = lower.indexOf('insert into public.listing_vin_source_results');
-      expect(open, greaterThan(-1));
-      final close = lower.indexOf('select', open);
-      expect(close, greaterThan(open));
-      final insertCols = lower.substring(open, close);
-      expect(insertCols, isNot(contains('vin_hash')));
-    });
+    test(
+      'insert column list does not target vin_hash on source results table',
+      () {
+        final open = lower.indexOf(
+          'insert into public.listing_vin_source_results',
+        );
+        expect(open, greaterThan(-1));
+        final close = lower.indexOf('select', open);
+        expect(close, greaterThan(open));
+        final insertCols = lower.substring(open, close);
+        expect(insertCols, isNot(contains('vin_hash')));
+      },
+    );
 
     test('does not grant client roles on listing_vin_source_results', () {
       expect(lower, isNot(contains('grant ')));

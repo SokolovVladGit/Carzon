@@ -1,3 +1,4 @@
+import 'package:carzon/core/theme/app_theme.dart';
 import 'package:carzon/features/listings/presentation/widgets/category_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -116,13 +117,7 @@ void main() {
   testWidgets('CategoryChip builds in dark theme', (tester) async {
     await tester.pumpWidget(
       _chipHarness(
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blue,
-            brightness: Brightness.dark,
-          ),
-        ),
+        theme: AppTheme.dark(),
         child: CategoryChip(
           label: 'Хэтчбек',
           icon: Icons.time_to_leave_outlined,
@@ -133,5 +128,46 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Хэтчбек'), findsOneWidget);
+  });
+
+  testWidgets('CategoryChip unselected icon uses readable foreground in dark', (
+    tester,
+  ) async {
+    final theme = AppTheme.dark();
+    await tester.pumpWidget(
+      _chipHarness(
+        theme: theme,
+        child: CategoryChip(
+          label: 'Седан',
+          icon: Icons.directions_car_outlined,
+          isSelected: false,
+          onTap: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final icon = tester.widget<Icon>(find.byType(Icon));
+    expect(icon.color!.a, greaterThan(0.94));
+  });
+
+  testWidgets('CategoryChip selected icon uses high-contrast color in dark', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _chipHarness(
+        theme: AppTheme.dark(),
+        child: CategoryChip(
+          label: 'Купе',
+          icon: Icons.time_to_leave_outlined,
+          isSelected: true,
+          onTap: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final icon = tester.widget<Icon>(find.byType(Icon));
+    expect(icon.color!.a, greaterThan(0.94));
   });
 }

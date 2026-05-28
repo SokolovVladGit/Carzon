@@ -9,9 +9,9 @@ import '../../helpers/l10n_test_helpers.dart';
 
 void main() {
   ListingsState vanillaTransnistria() => const ListingsState(
-        status: ListingsStatus.success,
-        regionFilter: MarketRegionFilter.transnistria,
-      );
+    status: ListingsStatus.success,
+    regionFilter: MarketRegionFilter.transnistria,
+  );
 
   test(
     'listingsDiscoveryActiveFilterGroupCount matches chip labels cardinality',
@@ -20,10 +20,7 @@ void main() {
       final states = [
         vanillaTransnistria(),
         vanillaTransnistria().copyWith(make: 'Skoda'),
-        vanillaTransnistria().copyWith(
-          make: 'Skoda',
-          model: ' Octavia ',
-        ),
+        vanillaTransnistria().copyWith(make: 'Skoda', model: ' Octavia '),
         vanillaTransnistria().copyWith(minYear: 2018, maxYear: 2022),
         vanillaTransnistria().copyWith(minYear: null, maxYear: 2024),
         vanillaTransnistria().copyWith(minPrice: 1000, maxPrice: null),
@@ -36,9 +33,7 @@ void main() {
           regionFilter: MarketRegionFilter.moldova,
         ),
         vanillaTransnistria().copyWith(regionFilter: MarketRegionFilter.both),
-        vanillaTransnistria().copyWith(
-          bodyTypeFilter: ListingBodyType.suv,
-        ),
+        vanillaTransnistria().copyWith(bodyTypeFilter: ListingBodyType.suv),
         vanillaTransnistria().copyWith(typeFilter: ListingTypeFilter.exchange),
         vanillaTransnistria().copyWith(
           sortOption: ListingSortOption.priceLowToHigh,

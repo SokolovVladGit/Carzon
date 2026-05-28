@@ -20,9 +20,7 @@ void main() {
           child: Scaffold(
             body: SizedBox.expand(
               child: Stack(
-                children: [
-                  CompareFlyToTrayOverlaySlot(controller: controller),
-                ],
+                children: [CompareFlyToTrayOverlaySlot(controller: controller)],
               ),
             ),
           ),
@@ -58,9 +56,7 @@ void main() {
           child: Scaffold(
             body: SizedBox.expand(
               child: Stack(
-                children: [
-                  CompareFlyToTrayOverlaySlot(controller: controller),
-                ],
+                children: [CompareFlyToTrayOverlaySlot(controller: controller)],
               ),
             ),
           ),

@@ -18,10 +18,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { JWT } from "npm:google-auth-library@9.14.2";
-
-const RUSSIAN_TITLE = "Новое объявление";
-const RUSSIAN_BODY =
-  "Есть объявление по вашему сохранённому фильтру. Откройте, чтобы посмотреть.";
+import { filterAlertNotificationCopyForLocale } from "../_shared/push_notification_copy.ts";
 
 const MAX_SEND_ATTEMPTS = 8;
 const DEFAULT_BATCH = 25;
@@ -92,6 +89,8 @@ async function sendFcmToToken(params: {
   projectId: string;
   accessToken: string;
   deviceToken: string;
+  title: string;
+  body: string;
   data: Record<string, string>;
 }): Promise<{ ok: boolean; messageId?: string; errorCode?: string; errorMessage?: string }> {
   const res = await fetch(
@@ -106,8 +105,8 @@ async function sendFcmToToken(params: {
         message: {
           token: params.deviceToken,
           notification: {
-            title: RUSSIAN_TITLE,
-            body: RUSSIAN_BODY,
+            title: params.title,
+            body: params.body,
           },
           data: params.data,
           android: { priority: "HIGH" },
@@ -295,7 +294,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
       const { data: tokens, error: tokErr } = await supabase
         .from("user_push_tokens")
-        .select("id, token")
+        .select("id, token, locale")
         .eq("user_id", event.recipient_user_id)
         .eq("is_active", true);
 
@@ -320,10 +319,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
       let lastErr = "";
 
       for (const row of tokens) {
+        const copy = filterAlertNotificationCopyForLocale(
+          (row as { locale?: string | null }).locale,
+        );
         const send = await sendFcmToToken({
           projectId,
           accessToken,
           deviceToken: row.token,
+          title: copy.title,
+          body: copy.body,
           data: stringData,
         });
 

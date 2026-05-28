@@ -57,10 +57,7 @@ void main() {
     await cubit.close();
   });
 
-  Future<void> pumpHost(
-    WidgetTester tester, {
-    required GoRouter router,
-  }) async {
+  Future<void> pumpHost(WidgetTester tester, {required GoRouter router}) async {
     await tester.pumpWidget(
       BlocProvider<CompareCubit>.value(
         value: cubit,
@@ -100,6 +97,10 @@ void main() {
           path: '/listings/:id',
           builder: (_, _) => const Scaffold(body: Text('details')),
         ),
+        GoRoute(
+          path: AppRoutes.createListing,
+          builder: (_, _) => const Scaffold(body: Text('create')),
+        ),
       ],
     );
   }
@@ -113,7 +114,10 @@ void main() {
     await pumpHost(tester, router: router);
 
     expect(find.byType(AnimatedSwitcher), findsNothing);
-    expect(find.byKey(CompareTrayCapsuleBackplate.backplateKey), findsOneWidget);
+    expect(
+      find.byKey(CompareTrayCapsuleBackplate.backplateKey),
+      findsOneWidget,
+    );
     expect(find.byType(CompareFloatingTray), findsOneWidget);
   });
 
@@ -145,13 +149,22 @@ void main() {
     expect(find.byType(CompareFloatingTray), findsNothing);
   });
 
-  testWidgets('tray visible on listing details route', (tester) async {
+  testWidgets('tray hidden on listing details route', (tester) async {
     await cubit.addSnapshot(_snapshot('a'));
     final router = buildRouter(initialLocation: '/listings/listing-1');
     addTearDown(router.dispose);
     await pumpHost(tester, router: router);
 
-    expect(find.byType(CompareFloatingTray), findsOneWidget);
+    expect(find.byType(CompareFloatingTray), findsNothing);
+  });
+
+  testWidgets('tray hidden on create listing route', (tester) async {
+    await cubit.addSnapshot(_snapshot('a'));
+    final router = buildRouter(initialLocation: AppRoutes.createListing);
+    addTearDown(router.dispose);
+    await pumpHost(tester, router: router);
+
+    expect(find.byType(CompareFloatingTray), findsNothing);
   });
 
   testWidgets('tap tray navigates to compare', (tester) async {

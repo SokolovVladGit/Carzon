@@ -28,11 +28,20 @@ class ListingsFilterSegmentedControl<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
     final radius = BorderRadius.circular(18.0);
-    final shell = Color.alphaBlend(
-      scheme.surfaceContainerHighest.withValues(alpha: 0.08),
-      scheme.surface,
-    );
+    final shell = light
+        ? Color.alphaBlend(
+            scheme.surfaceContainerHighest.withValues(alpha: 0.08),
+            scheme.surface,
+          )
+        : Color.alphaBlend(
+            scheme.primary.withValues(alpha: 0.06),
+            scheme.surfaceContainerLow,
+          );
+    final shellBorder = light
+        ? scheme.outlineVariant.withValues(alpha: 0.22)
+        : scheme.outline.withValues(alpha: 0.30);
 
     return Semantics(
       container: true,
@@ -40,16 +49,23 @@ class ListingsFilterSegmentedControl<T> extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: radius,
           color: shell,
-          border: Border.all(
-            color: scheme.outlineVariant.withValues(alpha: 0.22),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: scheme.shadow.withValues(alpha: 0.03),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          border: Border.all(color: shellBorder),
+          boxShadow: light
+              ? [
+                  BoxShadow(
+                    color: scheme.shadow.withValues(alpha: 0.03),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: scheme.primary.withValues(alpha: 0.04),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                    spreadRadius: -2,
+                  ),
+                ],
         ),
         child: ClipRRect(
           borderRadius: radius,
@@ -60,7 +76,9 @@ class ListingsFilterSegmentedControl<T> extends StatelessWidget {
                   Container(
                     width: 1,
                     height: height,
-                    color: scheme.outlineVariant.withValues(alpha: 0.18),
+                    color: light
+                        ? scheme.outlineVariant.withValues(alpha: 0.18)
+                        : scheme.outline.withValues(alpha: 0.24),
                   ),
                 Expanded(
                   child: _Segment<T>(
@@ -96,11 +114,17 @@ class _Segment<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
     final bg = selected
-        ? Color.alphaBlend(
-            scheme.primaryContainer.withValues(alpha: 0.52),
-            scheme.surface.withValues(alpha: 0.02),
-          )
+        ? (light
+              ? Color.alphaBlend(
+                  scheme.primaryContainer.withValues(alpha: 0.52),
+                  scheme.surface.withValues(alpha: 0.02),
+                )
+              : Color.alphaBlend(
+                  scheme.primary.withValues(alpha: 0.22),
+                  scheme.surfaceContainerHigh,
+                ))
         : Colors.transparent;
     return Material(
       color: bg,
@@ -116,8 +140,12 @@ class _Segment<T> extends StatelessWidget {
               style: theme.textTheme.labelLarge!.copyWith(
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                 color: selected
-                    ? scheme.onPrimaryContainer.withValues(alpha: 0.94)
-                    : scheme.onSurface.withValues(alpha: 0.74),
+                    ? (light
+                          ? scheme.onPrimaryContainer.withValues(alpha: 0.94)
+                          : scheme.onSurface.withValues(alpha: 0.96))
+                    : scheme.onSurfaceVariant.withValues(
+                        alpha: light ? 0.74 : 0.82,
+                      ),
               ),
               textAlign: TextAlign.center,
               child: child,

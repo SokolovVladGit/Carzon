@@ -42,30 +42,30 @@ FilterAlertSettings _row({
 ListingDiscoveryCriteria _discoveryCriteriaWithSortOnly(
   ListingDiscoveryCriteria base,
   ListingSortOption sort,
-) =>
-    ListingDiscoveryCriteria(
-      search: base.search,
-      make: base.make,
-      model: base.model,
-      minYear: base.minYear,
-      maxYear: base.maxYear,
-      minPrice: base.minPrice,
-      maxPrice: base.maxPrice,
-      maxMileage: base.maxMileage,
-      city: base.city,
-      marketRegion: base.marketRegion,
-      bodyType: base.bodyType,
-      typeIn: base.typeIn,
-      priceCurrencyFilter: base.priceCurrencyFilter,
-      sort: sort,
-    );
+) => ListingDiscoveryCriteria(
+  search: base.search,
+  make: base.make,
+  model: base.model,
+  minYear: base.minYear,
+  maxYear: base.maxYear,
+  minPrice: base.minPrice,
+  maxPrice: base.maxPrice,
+  maxMileage: base.maxMileage,
+  city: base.city,
+  marketRegion: base.marketRegion,
+  bodyType: base.bodyType,
+  typeIn: base.typeIn,
+  priceCurrencyFilter: base.priceCurrencyFilter,
+  sort: sort,
+);
 
 /// Replace the active dotenv snapshot so `Env.pushNotificationsEnabled`
 /// flips deterministically per test. Keep the required Supabase keys
 /// present so any incidental access does not throw `StateError`.
 void _setPushEnv({required bool enabled}) {
   dotenv.testLoad(
-    fileInput: '''
+    fileInput:
+        '''
 SUPABASE_URL=https://example.supabase.co
 SUPABASE_ANON_KEY=anon
 PUSH_NOTIFICATIONS_ENABLED=${enabled ? 'true' : 'false'}
@@ -367,10 +367,7 @@ void main() {
           make: 'Toyota',
           marketRegion: MarketRegion.transnistria,
         );
-        var backend = _row(
-          criteria: toyotaCrit,
-          notificationsEnabled: false,
-        );
+        var backend = _row(criteria: toyotaCrit, notificationsEnabled: false);
         final clearedRow = _row(criteria: null, notificationsEnabled: false);
 
         when(
@@ -426,179 +423,139 @@ void main() {
       );
     });
 
-    test(
-      'catalogBellSavedWithoutDeliveryVisibleForApplied true when saved '
-      'matches applied feed but delivery is not fully enabled',
-      () async {
-        _setPushEnv(enabled: false);
+    test('catalogBellSavedWithoutDeliveryVisibleForApplied true when saved '
+        'matches applied feed but delivery is not fully enabled', () async {
+      _setPushEnv(enabled: false);
 
-        const toyotaApplied = ListingsState(
-          make: 'Toyota',
-          regionFilter: MarketRegionFilter.transnistria,
-        );
-        final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
-          toyotaApplied,
-        );
+      const toyotaApplied = ListingsState(
+        make: 'Toyota',
+        regionFilter: MarketRegionFilter.transnistria,
+      );
+      final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
+        toyotaApplied,
+      );
 
-        final cubit = buildCubit();
-        cubit.emit(
-          BrowseCatalogFilterAlertsState(
-            phase: BrowseCatalogFilterAlertsLoadPhase.ready,
-            prefs: prefsAllOn(),
-            settings: _row(
-              criteria: critToyota,
-              notificationsEnabled: false,
-            ),
-          ),
-        );
+      final cubit = buildCubit();
+      cubit.emit(
+        BrowseCatalogFilterAlertsState(
+          phase: BrowseCatalogFilterAlertsLoadPhase.ready,
+          prefs: prefsAllOn(),
+          settings: _row(criteria: critToyota, notificationsEnabled: false),
+        ),
+      );
 
-        expect(
-          cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(
-            toyotaApplied,
-          ),
-          isTrue,
-        );
-        // Mutually exclusive with active-delivery FAB ornament.
-        expect(
-          cubit.catalogBellBadgeVisibleForApplied(toyotaApplied),
-          isFalse,
-        );
-      },
-    );
+      expect(
+        cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(toyotaApplied),
+        isTrue,
+      );
+      // Mutually exclusive with active-delivery FAB ornament.
+      expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isFalse);
+    });
 
-    test(
-      'catalogBellSavedWithoutDeliveryVisibleForApplied false when delivery '
-      'is fully enabled (active-delivery ornament owns this case)',
-      () async {
-        const toyotaApplied = ListingsState(
-          make: 'Toyota',
-          regionFilter: MarketRegionFilter.transnistria,
-        );
-        final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
-          toyotaApplied,
-        );
+    test('catalogBellSavedWithoutDeliveryVisibleForApplied false when delivery '
+        'is fully enabled (active-delivery ornament owns this case)', () async {
+      const toyotaApplied = ListingsState(
+        make: 'Toyota',
+        regionFilter: MarketRegionFilter.transnistria,
+      );
+      final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
+        toyotaApplied,
+      );
 
-        final cubit = buildCubit();
-        cubit.emit(
-          BrowseCatalogFilterAlertsState(
-            phase: BrowseCatalogFilterAlertsLoadPhase.ready,
-            prefs: prefsAllOn(),
-            settings: _row(
-              criteria: critToyota,
-              notificationsEnabled: true,
-            ),
-          ),
-        );
+      final cubit = buildCubit();
+      cubit.emit(
+        BrowseCatalogFilterAlertsState(
+          phase: BrowseCatalogFilterAlertsLoadPhase.ready,
+          prefs: prefsAllOn(),
+          settings: _row(criteria: critToyota, notificationsEnabled: true),
+        ),
+      );
 
-        expect(
-          cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(
-            toyotaApplied,
-          ),
-          isFalse,
-        );
-        expect(
-          cubit.catalogBellBadgeVisibleForApplied(toyotaApplied),
-          isTrue,
-        );
-      },
-    );
+      expect(
+        cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(toyotaApplied),
+        isFalse,
+      );
+      expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isTrue);
+    });
 
-    test(
-      'catalogBellSavedWithoutDeliveryVisibleForApplied false when applied '
-      'feed differs from saved criteria',
-      () async {
-        _setPushEnv(enabled: false);
+    test('catalogBellSavedWithoutDeliveryVisibleForApplied false when applied '
+        'feed differs from saved criteria', () async {
+      _setPushEnv(enabled: false);
 
-        const toyotaSavedFeed = ListingsState(
-          make: 'Toyota',
-          regionFilter: MarketRegionFilter.transnistria,
-        );
-        final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
-          toyotaSavedFeed,
-        );
+      const toyotaSavedFeed = ListingsState(
+        make: 'Toyota',
+        regionFilter: MarketRegionFilter.transnistria,
+      );
+      final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
+        toyotaSavedFeed,
+      );
 
-        final cubit = buildCubit();
-        cubit.emit(
-          BrowseCatalogFilterAlertsState(
-            phase: BrowseCatalogFilterAlertsLoadPhase.ready,
-            prefs: prefsAllOn(),
-            settings: _row(
-              criteria: critToyota,
-              notificationsEnabled: false,
-            ),
-          ),
-        );
+      final cubit = buildCubit();
+      cubit.emit(
+        BrowseCatalogFilterAlertsState(
+          phase: BrowseCatalogFilterAlertsLoadPhase.ready,
+          prefs: prefsAllOn(),
+          settings: _row(criteria: critToyota, notificationsEnabled: false),
+        ),
+      );
 
-        const skodaApplied = ListingsState(
-          make: 'Skoda',
-          regionFilter: MarketRegionFilter.transnistria,
-        );
-        expect(
-          cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(skodaApplied),
-          isFalse,
-        );
-      },
-    );
+      const skodaApplied = ListingsState(
+        make: 'Skoda',
+        regionFilter: MarketRegionFilter.transnistria,
+      );
+      expect(
+        cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(skodaApplied),
+        isFalse,
+      );
+    });
 
-    test(
-      'browseBellShowsSavedDraftWithoutDelivery is true for matching saved '
-      'criteria when delivery is not fully enabled',
-      () async {
-        _setPushEnv(enabled: false);
+    test('browseBellShowsSavedDraftWithoutDelivery is true for matching saved '
+        'criteria when delivery is not fully enabled', () async {
+      _setPushEnv(enabled: false);
 
-        final toyotaCrit = ListingDiscoveryCriteria(
-          make: 'Toyota',
-          marketRegion: MarketRegion.transnistria,
-        );
+      final toyotaCrit = ListingDiscoveryCriteria(
+        make: 'Toyota',
+        marketRegion: MarketRegion.transnistria,
+      );
 
-        final cubit = buildCubit();
-        cubit.emit(
-          BrowseCatalogFilterAlertsState(
-            phase: BrowseCatalogFilterAlertsLoadPhase.ready,
-            prefs: prefsAllOn(),
-            settings: _row(
-              criteria: toyotaCrit,
-              notificationsEnabled: false,
-            ),
-          ),
-        );
+      final cubit = buildCubit();
+      cubit.emit(
+        BrowseCatalogFilterAlertsState(
+          phase: BrowseCatalogFilterAlertsLoadPhase.ready,
+          prefs: prefsAllOn(),
+          settings: _row(criteria: toyotaCrit, notificationsEnabled: false),
+        ),
+      );
 
-        expect(
-          cubit.browseBellShowsSavedDraftWithoutDelivery(toyotaCrit),
-          isTrue,
-        );
-        expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isFalse);
-      },
-    );
+      expect(
+        cubit.browseBellShowsSavedDraftWithoutDelivery(toyotaCrit),
+        isTrue,
+      );
+      expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isFalse);
+    });
 
-    test(
-      'browseBellShowsSavedDraftWithoutDelivery is false when delivery is '
-      'fully enabled (covered by active state instead)',
-      () async {
-        final toyotaCrit = ListingDiscoveryCriteria(
-          make: 'Toyota',
-          marketRegion: MarketRegion.transnistria,
-        );
+    test('browseBellShowsSavedDraftWithoutDelivery is false when delivery is '
+        'fully enabled (covered by active state instead)', () async {
+      final toyotaCrit = ListingDiscoveryCriteria(
+        make: 'Toyota',
+        marketRegion: MarketRegion.transnistria,
+      );
 
-        final cubit = buildCubit();
-        cubit.emit(
-          BrowseCatalogFilterAlertsState(
-            phase: BrowseCatalogFilterAlertsLoadPhase.ready,
-            prefs: prefsAllOn(),
-            settings: _row(
-              criteria: toyotaCrit,
-              notificationsEnabled: true,
-            ),
-          ),
-        );
+      final cubit = buildCubit();
+      cubit.emit(
+        BrowseCatalogFilterAlertsState(
+          phase: BrowseCatalogFilterAlertsLoadPhase.ready,
+          prefs: prefsAllOn(),
+          settings: _row(criteria: toyotaCrit, notificationsEnabled: true),
+        ),
+      );
 
-        expect(
-          cubit.browseBellShowsSavedDraftWithoutDelivery(toyotaCrit),
-          isFalse,
-        );
-        expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isTrue);
-      },
-    );
+      expect(
+        cubit.browseBellShowsSavedDraftWithoutDelivery(toyotaCrit),
+        isFalse,
+      );
+      expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isTrue);
+    });
 
     test(
       'matched draft with delivery fully off (push-disabled env): tap clears '
@@ -667,101 +624,83 @@ void main() {
       },
     );
 
-    test(
-      'matched draft with delivery fully on: tap clears the saved alert '
-      '(criteria + delivery flag drop in a single upsert), returns '
-      'savedAlertCleared, never calls disableDeliveriesFlagOnly',
-      () async {
-        final toyotaCrit = ListingDiscoveryCriteria(
-          make: 'Toyota',
-          marketRegion: MarketRegion.transnistria,
-        );
-        var backend = _row(
-          criteria: toyotaCrit,
-          notificationsEnabled: true,
-        );
-        final clearedRow = _row(criteria: null, notificationsEnabled: false);
+    test('matched draft with delivery fully on: tap clears the saved alert '
+        '(criteria + delivery flag drop in a single upsert), returns '
+        'savedAlertCleared, never calls disableDeliveriesFlagOnly', () async {
+      final toyotaCrit = ListingDiscoveryCriteria(
+        make: 'Toyota',
+        marketRegion: MarketRegion.transnistria,
+      );
+      var backend = _row(criteria: toyotaCrit, notificationsEnabled: true);
+      final clearedRow = _row(criteria: null, notificationsEnabled: false);
 
-        when(
-          () => filterRepo.loadMine(),
-        ).thenAnswer((_) async => Success(backend));
-        when(() => filterRepo.clearPersistedCriteria()).thenAnswer((_) async {
-          backend = clearedRow;
-          return Success(clearedRow);
-        });
+      when(
+        () => filterRepo.loadMine(),
+      ).thenAnswer((_) async => Success(backend));
+      when(() => filterRepo.clearPersistedCriteria()).thenAnswer((_) async {
+        backend = clearedRow;
+        return Success(clearedRow);
+      });
 
-        final cubit = buildCubit();
-        await cubit.refresh();
-        // Sanity: active helpers fire before the toggle.
-        const toyotaApplied = ListingsState(
-          make: 'Toyota',
-          regionFilter: MarketRegionFilter.transnistria,
-        );
-        expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isTrue);
-        expect(
-          cubit.catalogBellBadgeVisibleForApplied(toyotaApplied),
-          isTrue,
-        );
+      final cubit = buildCubit();
+      await cubit.refresh();
+      // Sanity: active helpers fire before the toggle.
+      const toyotaApplied = ListingsState(
+        make: 'Toyota',
+        regionFilter: MarketRegionFilter.transnistria,
+      );
+      expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isTrue);
+      expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isTrue);
 
-        final outcome = await cubit.handleCatalogFilterBell(
-          draftCriteria: toyotaCrit,
-          authenticated: true,
-        );
+      final outcome = await cubit.handleCatalogFilterBell(
+        draftCriteria: toyotaCrit,
+        authenticated: true,
+      );
 
-        expect(outcome, BrowseCatalogBellOutcome.savedAlertCleared);
-        verify(() => filterRepo.clearPersistedCriteria()).called(1);
-        verifyNever(() => orchestrator.disableDeliveriesFlagOnly());
+      expect(outcome, BrowseCatalogBellOutcome.savedAlertCleared);
+      verify(() => filterRepo.clearPersistedCriteria()).called(1);
+      verifyNever(() => orchestrator.disableDeliveriesFlagOnly());
 
-        // After clearing, all four indicator helpers must report false.
-        expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isFalse);
-        expect(
-          cubit.catalogBellBadgeVisibleForApplied(toyotaApplied),
-          isFalse,
-        );
-        expect(
-          cubit.browseBellShowsSavedDraftWithoutDelivery(toyotaCrit),
-          isFalse,
-        );
-        expect(
-          cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(toyotaApplied),
-          isFalse,
-        );
-      },
-    );
+      // After clearing, all four indicator helpers must report false.
+      expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isFalse);
+      expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isFalse);
+      expect(
+        cubit.browseBellShowsSavedDraftWithoutDelivery(toyotaCrit),
+        isFalse,
+      );
+      expect(
+        cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(toyotaApplied),
+        isFalse,
+      );
+    });
 
-    test(
-      'clear failure returns savedAlertClearFailed and leaves saved row '
-      'in place; never falls back to disable-flag-only',
-      () async {
-        final toyotaCrit = ListingDiscoveryCriteria(
-          make: 'Toyota',
-          marketRegion: MarketRegion.transnistria,
-        );
-        final savedRow = _row(
-          criteria: toyotaCrit,
-          notificationsEnabled: true,
-        );
+    test('clear failure returns savedAlertClearFailed and leaves saved row '
+        'in place; never falls back to disable-flag-only', () async {
+      final toyotaCrit = ListingDiscoveryCriteria(
+        make: 'Toyota',
+        marketRegion: MarketRegion.transnistria,
+      );
+      final savedRow = _row(criteria: toyotaCrit, notificationsEnabled: true);
 
-        when(
-          () => filterRepo.loadMine(),
-        ).thenAnswer((_) async => Success(savedRow));
-        when(() => filterRepo.clearPersistedCriteria()).thenAnswer(
-          (_) async => const FailureResult(ServerFailure('boom')),
-        );
+      when(
+        () => filterRepo.loadMine(),
+      ).thenAnswer((_) async => Success(savedRow));
+      when(
+        () => filterRepo.clearPersistedCriteria(),
+      ).thenAnswer((_) async => const FailureResult(ServerFailure('boom')));
 
-        final cubit = buildCubit();
-        await cubit.refresh();
+      final cubit = buildCubit();
+      await cubit.refresh();
 
-        final outcome = await cubit.handleCatalogFilterBell(
-          draftCriteria: toyotaCrit,
-          authenticated: true,
-        );
+      final outcome = await cubit.handleCatalogFilterBell(
+        draftCriteria: toyotaCrit,
+        authenticated: true,
+      );
 
-        expect(outcome, BrowseCatalogBellOutcome.savedAlertClearFailed);
-        verify(() => filterRepo.clearPersistedCriteria()).called(1);
-        verifyNever(() => orchestrator.disableDeliveriesFlagOnly());
-        expect(cubit.state.bellBusy, isFalse);
-      },
-    );
+      expect(outcome, BrowseCatalogBellOutcome.savedAlertClearFailed);
+      verify(() => filterRepo.clearPersistedCriteria()).called(1);
+      verifyNever(() => orchestrator.disableDeliveriesFlagOnly());
+      expect(cubit.state.bellBusy, isFalse);
+    });
   });
 }

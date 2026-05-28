@@ -207,6 +207,41 @@ const String brandIconDefaultAssetSuffix = '/default.svg';
 bool isBrandIconDefaultAssetPath(String assetPath) =>
     assetPath.endsWith(brandIconDefaultAssetSuffix);
 
+/// Canonical slug from a resolver asset path (`assets/brands/svg/toyota.svg` → `toyota`).
+String? brandIconSlugFromAssetPath(String assetPath) {
+  final segment = assetPath.split('/').last;
+  if (!segment.endsWith('.svg')) return null;
+  return segment.substring(0, segment.length - 4);
+}
+
+/// Black/gray single-fill SVG marks that need a light tint on dark surfaces.
+///
+/// Multi-color / gradient marks (BMW, Mercedes, Ferrari, …) are excluded so
+/// brand identity stays intact.
+const Set<String> _monochromeBrandSlugs = {
+  'honda',
+  'infiniti',
+  'jaguar',
+  'jeep',
+  'kia',
+  'lexus',
+  'mazda',
+  'mitsubishi',
+  'peugeot',
+  'renault',
+  'rolls-royce',
+  'suzuki',
+  'toyota',
+  'volvo',
+};
+
+/// True when [assetPath] is a known monochrome brand SVG (not [default.svg]).
+bool isBrandIconMonochromeAssetPath(String assetPath) {
+  if (isBrandIconDefaultAssetPath(assetPath)) return false;
+  final slug = brandIconSlugFromAssetPath(assetPath);
+  return slug != null && _monochromeBrandSlugs.contains(slug);
+}
+
 /// Normalizes a free-text brand name for alias lookup.
 ///
 /// Steps:

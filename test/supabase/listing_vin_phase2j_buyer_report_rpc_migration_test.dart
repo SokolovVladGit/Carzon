@@ -32,28 +32,34 @@ void main() {
       expect(lower, contains('security definer'));
     });
 
-    test('reads listing_vin_source_results and filters public_summary only', () {
-      expect(lower, contains('from public.listing_vin_source_results'));
-      expect(lower, contains("r.visibility = 'public_summary'"));
-      expect(lower, isNot(contains("r.visibility in ('owner'")));
-      expect(lower, isNot(contains("= 'owner'")));
-    });
+    test(
+      'reads listing_vin_source_results and filters public_summary only',
+      () {
+        expect(lower, contains('from public.listing_vin_source_results'));
+        expect(lower, contains("r.visibility = 'public_summary'"));
+        expect(lower, isNot(contains("r.visibility in ('owner'")));
+        expect(lower, isNot(contains("= 'owner'")));
+      },
+    );
 
     test('restricts to active listings', () {
       expect(lower, contains('from public.listings li'));
       expect(lower, contains("li.status = 'active'"));
     });
 
-    test('returns projection has no vin_hash vin_normalized owner_id source_metadata output', () {
-      final start = lower.indexOf('returns table (');
-      expect(start, greaterThan(-1));
-      final end = lower.indexOf(')', start + 1);
-      expect(end, greaterThan(start));
-      final block = lower.substring(start, end);
-      expect(block, isNot(contains('vin_hash')));
-      expect(block, isNot(contains('owner_id')));
-      expect(block, isNot(contains('source_metadata')));
-    });
+    test(
+      'returns projection has no vin_hash vin_normalized owner_id source_metadata output',
+      () {
+        final start = lower.indexOf('returns table (');
+        expect(start, greaterThan(-1));
+        final end = lower.indexOf(')', start + 1);
+        expect(end, greaterThan(start));
+        final block = lower.substring(start, end);
+        expect(block, isNot(contains('vin_hash')));
+        expect(block, isNot(contains('owner_id')));
+        expect(block, isNot(contains('source_metadata')));
+      },
+    );
 
     test('return query does not select r.vin_hash or r.vin', () {
       expect(lower, isNot(contains('r.vin_hash')));
@@ -61,12 +67,22 @@ void main() {
     });
 
     test('grants execute to anon and authenticated', () {
-      expect(lower, contains('grant execute on function public.get_listing_vin_report_for_buyer(uuid)'));
+      expect(
+        lower,
+        contains(
+          'grant execute on function public.get_listing_vin_report_for_buyer(uuid)',
+        ),
+      );
       expect(lower, contains('to anon, authenticated'));
     });
 
     test('does not grant select on listing_vin_source_results table', () {
-      expect(lower, isNot(contains('grant select on table public.listing_vin_source_results')));
+      expect(
+        lower,
+        isNot(
+          contains('grant select on table public.listing_vin_source_results'),
+        ),
+      );
     });
   });
 }

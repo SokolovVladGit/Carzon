@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -11,11 +10,13 @@ import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/presentation/localized_user_failure_message.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../shared/brands/brand_icon_resolver.dart';
+import '../../../../shared/brands/brand_logo_glyph.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../../../shared/ui/whatsapp_contact_icon.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
@@ -179,90 +180,114 @@ class _ListingDetailsViewState extends State<_ListingDetailsView> {
           }
         });
       },
-      child: Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        body: SingleChildScrollView(
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              BlocBuilder<ListingDetailsCubit, ListingDetailsState>(
-                buildWhen: (p, c) =>
-                    p.status != c.status ||
-                    !_urlsListEquiv(p.heroImageUrls, c.heroImageUrls) ||
-                    p.listing?.id != c.listing?.id ||
-                    p.listing?.coverImageUrl != c.listing?.coverImageUrl,
-                builder: (context, state) {
-                  final carouselUrls = _effectiveHeroUrls(state);
-                  return SizedBox(
-                    height: _heroHeight,
-                    width: double.infinity,
-                    child: _ListingHeroCarousel(
-                      listingId: widget.id,
-                      listing: state.listing,
-                      urls: carouselUrls,
-                      heroFlightSourceTopRadius:
-                          widget.heroFlightSourceTopRadius,
-                      flySourceKey: _compareFlySourceKey,
-                      compareFlyFallbackKey: _compareToggleFlyKey,
-                      onPageChanged: (i) =>
-                          setState(() => _carouselPageIndex = i),
-                    ),
-                  );
-                },
-              ),
-              BlocBuilder<ListingDetailsCubit, ListingDetailsState>(
-                builder: (context, state) {
-                  switch (state.status) {
-                    case ListingDetailsStatus.initial:
-                    case ListingDetailsStatus.loading:
-                      return const _LoadingBelowHero();
-                    case ListingDetailsStatus.failure:
-                      final l10n = context.l10n;
-                      final msg = state.loadFailure != null
-                          ? localizedUserFailureMessage(
-                              l10n,
-                              state.loadFailure!,
-                              surface: LocalizedFailureSurface.listingDetails,
-                            )
-                          : l10n.listingDetailsLoadFailed;
-                      return _FailureBelowHero(
-                        message: msg,
-                        onRetry: () => context.read<ListingDetailsCubit>().load(
-                          widget.id,
-                          initialCoverImageUrl: widget.initialCoverImageUrl,
+      child: Builder(
+        builder: (context) {
+          final scheme = Theme.of(context).colorScheme;
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Scaffold(
+            backgroundColor: isDark ? null : scheme.surface,
+            body: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: isDark
+                    ? LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: AppTheme.editorialDarkFilterCanvasGradient(
+                          scheme,
                         ),
-                      );
-                    case ListingDetailsStatus.success:
-                      final heroUrls = _effectiveHeroUrls(state);
-                      final n = heroUrls.length;
-                      final clipped = n > 0
-                          ? _carouselPageIndex.clamp(0, n - 1)
-                          : 0;
-                      return _SuccessBelowHero(
-                        listing: state.listing!,
-                        carouselPageZeroBased: clipped,
-                        carouselPhotoCount: n,
-                        reportEmail: widget.reportEmail,
-                        uriLauncher: widget.uriLauncher,
-                      );
-                  }
-                },
+                        stops: const [0, 0.35, 1],
+                      )
+                    : null,
+                color: isDark ? null : scheme.surface,
               ),
-            ],
-          ),
-        ),
-        bottomNavigationBar:
-            BlocBuilder<ListingDetailsCubit, ListingDetailsState>(
-              buildWhen: (p, c) =>
-                  p.status != c.status || p.listing != c.listing,
-              builder: (context, state) {
-                if (state.status != ListingDetailsStatus.success) {
-                  return const SizedBox.shrink();
-                }
-                return _ContactBottomBar(listing: state.listing!);
-              },
+              child: SingleChildScrollView(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    BlocBuilder<ListingDetailsCubit, ListingDetailsState>(
+                      buildWhen: (p, c) =>
+                          p.status != c.status ||
+                          !_urlsListEquiv(p.heroImageUrls, c.heroImageUrls) ||
+                          p.listing?.id != c.listing?.id ||
+                          p.listing?.coverImageUrl != c.listing?.coverImageUrl,
+                      builder: (context, state) {
+                        final carouselUrls = _effectiveHeroUrls(state);
+                        return SizedBox(
+                          height: _heroHeight,
+                          width: double.infinity,
+                          child: _ListingHeroCarousel(
+                            listingId: widget.id,
+                            listing: state.listing,
+                            urls: carouselUrls,
+                            heroFlightSourceTopRadius:
+                                widget.heroFlightSourceTopRadius,
+                            flySourceKey: _compareFlySourceKey,
+                            compareFlyFallbackKey: _compareToggleFlyKey,
+                            onPageChanged: (i) =>
+                                setState(() => _carouselPageIndex = i),
+                          ),
+                        );
+                      },
+                    ),
+                    BlocBuilder<ListingDetailsCubit, ListingDetailsState>(
+                      builder: (context, state) {
+                        switch (state.status) {
+                          case ListingDetailsStatus.initial:
+                          case ListingDetailsStatus.loading:
+                            return const _LoadingBelowHero();
+                          case ListingDetailsStatus.failure:
+                            final l10n = context.l10n;
+                            final msg = state.loadFailure != null
+                                ? localizedUserFailureMessage(
+                                    l10n,
+                                    state.loadFailure!,
+                                    surface:
+                                        LocalizedFailureSurface.listingDetails,
+                                  )
+                                : l10n.listingDetailsLoadFailed;
+                            return _FailureBelowHero(
+                              message: msg,
+                              onRetry: () =>
+                                  context.read<ListingDetailsCubit>().load(
+                                    widget.id,
+                                    initialCoverImageUrl:
+                                        widget.initialCoverImageUrl,
+                                  ),
+                            );
+                          case ListingDetailsStatus.success:
+                            final heroUrls = _effectiveHeroUrls(state);
+                            final n = heroUrls.length;
+                            final clipped = n > 0
+                                ? _carouselPageIndex.clamp(0, n - 1)
+                                : 0;
+                            return _SuccessBelowHero(
+                              listing: state.listing!,
+                              carouselPageZeroBased: clipped,
+                              carouselPhotoCount: n,
+                              reportEmail: widget.reportEmail,
+                              uriLauncher: widget.uriLauncher,
+                            );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
             ),
+            bottomNavigationBar:
+                BlocBuilder<ListingDetailsCubit, ListingDetailsState>(
+                  buildWhen: (p, c) =>
+                      p.status != c.status || p.listing != c.listing,
+                  builder: (context, state) {
+                    if (state.status != ListingDetailsStatus.success) {
+                      return const SizedBox.shrink();
+                    }
+                    return _ContactBottomBar(listing: state.listing!);
+                  },
+                ),
+          );
+        },
       ),
     );
   }
@@ -332,18 +357,54 @@ class _SuccessBelowHero extends StatelessWidget {
   }
 }
 
+/// Rounded-top panel seam below the hero (loading / failure / success body).
+class _ListingBelowHeroPanel extends StatelessWidget {
+  const _ListingBelowHeroPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+    final decoration = light
+        ? BoxDecoration(
+            color: scheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          )
+        : AppTheme.editorialDarkSectionCard(scheme, borderRadius: 24)!;
+    return DecoratedBox(decoration: decoration, child: child);
+  }
+}
+
 class _LoadingBelowHero extends StatelessWidget {
   const _LoadingBelowHero();
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(height: 40),
-        Center(child: LoadingView()),
-        SizedBox(height: 40),
-      ],
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    if (theme.brightness == Brightness.light) {
+      return const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(height: 40),
+          Center(child: LoadingView()),
+          SizedBox(height: 40),
+        ],
+      );
+    }
+    return _ListingBelowHeroPanel(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 52),
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppTheme.editorialAccentColor(scheme),
+            strokeWidth: 2.5,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -356,16 +417,43 @@ class _FailureBelowHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(height: 32),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: _pageHPadding),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    if (theme.brightness == Brightness.light) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 32),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: _pageHPadding),
+            child: ErrorView(message: message, onRetry: onRetry),
+          ),
+          const SizedBox(height: 32),
+        ],
+      );
+    }
+    return _ListingBelowHeroPanel(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          _pageHPadding,
+          36,
+          _pageHPadding,
+          40,
+        ),
+        child: Theme(
+          data: theme.copyWith(
+            iconTheme: IconThemeData(
+              color: scheme.error.withValues(alpha: 0.88),
+              size: 48,
+            ),
+            textTheme: theme.textTheme.apply(
+              bodyColor: scheme.onSurface.withValues(alpha: 0.92),
+              displayColor: scheme.onSurface.withValues(alpha: 0.92),
+            ),
+          ),
           child: ErrorView(message: message, onRetry: onRetry),
         ),
-        const SizedBox(height: 32),
-      ],
+      ),
     );
   }
 }
@@ -563,17 +651,21 @@ class _HeroScrim extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const IgnorePointer(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return IgnorePointer(
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0x1F000000), // ~12% black: ambient, not a darken
-              Color(0x00000000),
-            ],
-            stops: [0.0, 0.35],
+            colors: isDark
+                ? const [
+                    Color(0x52000000),
+                    Color(0x00000000),
+                    Color(0x38000000),
+                  ]
+                : const [Color(0x1F000000), Color(0x00000000)],
+            stops: isDark ? const [0.0, 0.45, 1.0] : const [0.0, 0.35],
           ),
         ),
       ),
@@ -656,17 +748,37 @@ class _HeroGlassTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final iconColor = scheme.onSurface;
     final isDark = theme.brightness == Brightness.dark;
-    final fillColor = isDark
-        ? scheme.surface.withValues(alpha: 0.62)
-        : Colors.white.withValues(alpha: 0.72);
+    final iconColor = isDark
+        ? scheme.onSurface.withValues(alpha: 0.94)
+        : scheme.onSurface;
+    final fillColor = isDark ? null : Colors.white.withValues(alpha: 0.72);
     final borderColor = isDark
-        ? scheme.outline.withValues(alpha: 0.38)
+        ? AppTheme.editorialAccentColor(scheme).withValues(alpha: 0.32)
         : Colors.white.withValues(alpha: 0.55);
     final shadowColor = isDark
-        ? Colors.black.withValues(alpha: 0.45)
+        ? scheme.primary.withValues(alpha: 0.10)
         : Colors.black.withValues(alpha: 0.18);
+    final darkFill = isDark
+        ? BoxDecoration(
+            borderRadius: BorderRadius.circular(_radius),
+            border: Border.all(color: borderColor, width: 0.5),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.alphaBlend(
+                  scheme.primary.withValues(alpha: 0.16),
+                  scheme.surfaceContainerHigh.withValues(alpha: 0.90),
+                ),
+                Color.alphaBlend(
+                  scheme.onSurface.withValues(alpha: 0.06),
+                  scheme.surfaceContainerLow.withValues(alpha: 0.88),
+                ),
+              ],
+            ),
+          )
+        : null;
 
     return SizedBox(
       width: _size,
@@ -677,7 +789,7 @@ class _HeroGlassTile extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: shadowColor,
-              blurRadius: 8,
+              blurRadius: isDark ? 12 : 8,
               offset: const Offset(0, 2),
             ),
           ],
@@ -687,11 +799,13 @@ class _HeroGlassTile extends StatelessWidget {
           child: BackdropFilter(
             filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
-              decoration: BoxDecoration(
-                color: fillColor,
-                borderRadius: BorderRadius.circular(_radius),
-                border: Border.all(color: borderColor, width: 0.5),
-              ),
+              decoration:
+                  darkFill ??
+                  BoxDecoration(
+                    color: fillColor,
+                    borderRadius: BorderRadius.circular(_radius),
+                    border: Border.all(color: borderColor, width: 0.5),
+                  ),
               alignment: Alignment.center,
               child: IconTheme.merge(
                 data: IconThemeData(color: iconColor, size: _iconSize),
@@ -733,12 +847,17 @@ class _ListingContentPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+    final decoration = light
+        ? BoxDecoration(
+            color: scheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          )
+        : AppTheme.editorialDarkSectionCard(scheme, borderRadius: 24)!;
     return Container(
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      decoration: decoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -777,6 +896,8 @@ class _ListingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
     final l10n = context.l10n;
     final headerDisplay = ListingDetailsHeaderDisplay.fromListing(listing);
 
@@ -795,6 +916,7 @@ class _ListingHeader extends StatelessWidget {
               fontWeight: FontWeight.w700,
               letterSpacing: -0.3,
               height: 1.1,
+              color: scheme.onSurface.withValues(alpha: light ? 1 : 0.98),
             ),
           ),
           if ((headerDisplay.tagline ?? '').isNotEmpty) ...[
@@ -827,7 +949,7 @@ class _ListingHeader extends StatelessWidget {
               ),
               _FeatureItemData(
                 icon: Icons.speed_outlined,
-                value: formatKm(listing.mileageKm),
+                value: formatKm(l10n, listing.mileageKm),
               ),
               if (listing.city.isNotEmpty)
                 _FeatureItemData(
@@ -840,7 +962,9 @@ class _ListingHeader extends StatelessWidget {
           Text(
             formatListingPriceFromListing(listing),
             style: theme.textTheme.headlineMedium?.copyWith(
-              color: theme.colorScheme.primary,
+              color: light
+                  ? scheme.primary
+                  : AppTheme.editorialAccentColor(scheme),
               fontWeight: FontWeight.w800,
               letterSpacing: -0.6,
               height: 1.05,
@@ -900,21 +1024,24 @@ class _FeatureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final shadowAlpha = theme.brightness == Brightness.dark ? 0.38 : 0.045;
+    final light = theme.brightness == Brightness.light;
+    final decoration = light
+        ? BoxDecoration(
+            color: scheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(13),
+            boxShadow: [
+              BoxShadow(
+                color: scheme.shadow.withValues(alpha: 0.045),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          )
+        : AppTheme.editorialDarkSectionCard(scheme, borderRadius: 13)!;
     return Container(
       height: 46,
       padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(13),
-        boxShadow: [
-          BoxShadow(
-            color: scheme.shadow.withValues(alpha: shadowAlpha),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+      decoration: decoration,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
@@ -922,7 +1049,9 @@ class _FeatureCard extends StatelessWidget {
           Icon(
             data.icon,
             size: _summaryChipIconSize,
-            color: scheme.primary.withValues(alpha: _summaryChipIconAlpha),
+            color:
+                (light ? scheme.primary : AppTheme.editorialAccentColor(scheme))
+                    .withValues(alpha: light ? _summaryChipIconAlpha : 0.78),
           ),
           const SizedBox(width: 6),
           Flexible(
@@ -1039,14 +1168,7 @@ class _BrandMark extends StatelessWidget {
       );
     }
 
-    return SvgPicture.asset(
-      assetPath,
-      width: _iconSize,
-      height: _iconSize,
-      fit: BoxFit.contain,
-      placeholderBuilder: (_) =>
-          const SizedBox(width: _iconSize, height: _iconSize),
-    );
+    return BrandLogoGlyph(assetPath: assetPath, size: _iconSize);
   }
 
   static String _firstLetter(String make) {
@@ -1067,16 +1189,25 @@ class _MetaBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        color: light
+            ? scheme.surfaceContainerHighest.withValues(alpha: 0.55)
+            : Color.alphaBlend(
+                scheme.primary.withValues(alpha: 0.08),
+                scheme.surfaceContainerHigh,
+              ),
         borderRadius: BorderRadius.circular(8),
+        border: light
+            ? null
+            : Border.all(color: scheme.outline.withValues(alpha: 0.24)),
       ),
       child: Text(
         label,
         style: theme.textTheme.labelMedium?.copyWith(
-          color: scheme.onSurface.withValues(alpha: 0.72),
+          color: scheme.onSurface.withValues(alpha: light ? 0.72 : 0.84),
           fontWeight: FontWeight.w600,
           letterSpacing: 0.1,
           height: 1.15,
@@ -1105,9 +1236,9 @@ class _HairlineDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(
-      context,
-    ).colorScheme.onSurface.withValues(alpha: 0.07);
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = scheme.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.16);
     return Divider(height: 1, thickness: 0.5, color: color);
   }
 }
@@ -1217,7 +1348,10 @@ class _DetailsList extends StatelessWidget {
       if (hasValue(listing.model))
         _DetailsRowData(l10n.listingFieldModel, listing.model.trim()),
       _DetailsRowData(l10n.listingFieldYear, listing.year.toString()),
-      _DetailsRowData(l10n.listingFieldMileage, formatKm(listing.mileageKm)),
+      _DetailsRowData(
+        l10n.listingFieldMileage,
+        formatKm(l10n, listing.mileageKm),
+      ),
       _DetailsRowData(l10n.listingFieldType, formatType(l10n, listing.type)),
       if (listing.bodyType != null)
         _DetailsRowData(
@@ -1581,16 +1715,21 @@ class _ContactBottomBarState extends State<_ContactBottomBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final phone = widget.listing.contactPhone;
     final tel = telUriString(phone);
-    final divider = theme.colorScheme.outlineVariant.withValues(alpha: 0.4);
+    final footerDecoration = AppTheme.editorialDarkFilterFooter(scheme);
+    final divider = scheme.outlineVariant.withValues(alpha: 0.4);
 
     return Material(
-      color: theme.colorScheme.surface,
+      color: Colors.transparent,
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: divider, width: 0.5)),
-        ),
+        decoration:
+            footerDecoration ??
+            BoxDecoration(
+              color: scheme.surface,
+              border: Border(top: BorderSide(color: divider, width: 0.5)),
+            ),
         child: SafeArea(
           top: false,
           child: Padding(
@@ -1645,6 +1784,7 @@ class _ChatPillButton extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = context.l10n;
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return SizedBox(
       height: _bottomButtonHeight,
       child: FilledButton.tonalIcon(
@@ -1661,10 +1801,18 @@ class _ChatPillButton extends StatelessWidget {
             : const Icon(CarzonIcons.chat, size: 20),
         label: Text(l10n.chatLabel),
         style: FilledButton.styleFrom(
-          backgroundColor: scheme.surfaceContainerHighest.withValues(
-            alpha: 0.9,
+          backgroundColor: isDark
+              ? Color.alphaBlend(
+                  scheme.primary.withValues(alpha: 0.10),
+                  scheme.surfaceContainerHigh,
+                )
+              : scheme.surfaceContainerHighest.withValues(alpha: 0.9),
+          foregroundColor: scheme.onSurface.withValues(
+            alpha: isDark ? 0.94 : 1,
           ),
-          foregroundColor: scheme.onSurface,
+          side: isDark
+              ? BorderSide(color: scheme.outline.withValues(alpha: 0.28))
+              : null,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           shape: _bottomButtonShape(),
           textStyle: theme.textTheme.labelLarge?.copyWith(

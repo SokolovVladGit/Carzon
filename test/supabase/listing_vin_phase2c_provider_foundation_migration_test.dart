@@ -12,7 +12,11 @@ void main() {
       final f = File(
         'supabase/migrations/20260620120000_vin_phase2c_provider_foundation.sql',
       );
-      expect(f.existsSync(), isTrue, reason: 'Phase 2C provider migration must exist');
+      expect(
+        f.existsSync(),
+        isTrue,
+        reason: 'Phase 2C provider migration must exist',
+      );
       sql = f.readAsStringSync();
       lower = sql.toLowerCase();
     });
@@ -42,16 +46,29 @@ void main() {
     });
 
     test('get_vin_for_decode_job is service_role-only', () {
-      expect(lower, contains('grant execute on function public.get_vin_for_decode_job(uuid)'));
+      expect(
+        lower,
+        contains(
+          'grant execute on function public.get_vin_for_decode_job(uuid)',
+        ),
+      );
       expect(lower, contains('to service_role'));
-      expect(lower, contains('revoke all on function public.get_vin_for_decode_job(uuid)'));
+      expect(
+        lower,
+        contains('revoke all on function public.get_vin_for_decode_job(uuid)'),
+      );
       expect(lower, contains('from anon'));
       expect(lower, contains('from authenticated'));
     });
 
     test('defines requeue_vin_decode_job_for_listing service_role-only', () {
       expect(lower, contains('requeue_vin_decode_job_for_listing'));
-      expect(lower, contains('grant execute on function public.requeue_vin_decode_job_for_listing'));
+      expect(
+        lower,
+        contains(
+          'grant execute on function public.requeue_vin_decode_job_for_listing',
+        ),
+      );
       expect(lower, contains(':decode:'));
       expect(lower, contains('p_job_version'));
     });

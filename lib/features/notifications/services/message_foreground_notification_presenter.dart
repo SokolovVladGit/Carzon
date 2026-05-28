@@ -15,7 +15,8 @@ import 'message_notification_tap_payload.dart';
 class MessageForegroundNotificationPresenter {
   MessageForegroundNotificationPresenter({
     required MessageConversationNavigationCoordinator navigationCoordinator,
-    required FilterAlertListingNavigationCoordinator listingNavigationCoordinator,
+    required FilterAlertListingNavigationCoordinator
+    listingNavigationCoordinator,
     required MessageForegroundNotificationDisplay display,
     Stream<RemoteMessage>? foregroundMessageStream,
     bool Function()? firebaseAppReady,
@@ -56,8 +57,7 @@ class MessageForegroundNotificationPresenter {
       _listingNavigationCoordinator.ensureStarted();
       await _display.initialize();
 
-      final stream =
-          _foregroundMessageStream ?? FirebaseMessaging.onMessage;
+      final stream = _foregroundMessageStream ?? FirebaseMessaging.onMessage;
       _sub = stream.listen(
         _onForegroundMessage,
         onError: (Object e, StackTrace st) {
@@ -65,7 +65,11 @@ class MessageForegroundNotificationPresenter {
         },
       );
     } catch (e, st) {
-      _logger.error('MessageForegroundNotificationPresenter.start failed', e, st);
+      _logger.error(
+        'MessageForegroundNotificationPresenter.start failed',
+        e,
+        st,
+      );
     }
   }
 
@@ -77,12 +81,18 @@ class MessageForegroundNotificationPresenter {
     try {
       final msgPayload = parseMessageNotificationTapPayload(message.data);
       if (msgPayload != null) {
-        await _display.showMessageForegroundNotification(msgPayload.conversationId);
+        await _display.showMessageForegroundNotification(
+          msgPayload.conversationId,
+        );
         return;
       }
-      final filterPayload = parseFilterAlertNotificationTapPayload(message.data);
+      final filterPayload = parseFilterAlertNotificationTapPayload(
+        message.data,
+      );
       if (filterPayload != null) {
-        await _display.showFilterAlertForegroundNotification(filterPayload.listingId);
+        await _display.showFilterAlertForegroundNotification(
+          filterPayload.listingId,
+        );
         return;
       }
     } catch (e, st) {

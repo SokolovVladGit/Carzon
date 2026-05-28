@@ -61,18 +61,19 @@ ListingTypeFilter listingTypeFilterFromTypeIn(List<ListingType>? typeIn) {
   final saleSemantics = ListingTypeFilter.sale.asListingTypes!.toSet();
   final exchSemantics = ListingTypeFilter.exchange.asListingTypes!.toSet();
 
-  if (saved.length == saleSemantics.length && saved.containsAll(saleSemantics)) {
+  if (saved.length == saleSemantics.length &&
+      saved.containsAll(saleSemantics)) {
     return ListingTypeFilter.sale;
   }
-  if (saved.length == exchSemantics.length && saved.containsAll(exchSemantics)) {
+  if (saved.length == exchSemantics.length &&
+      saved.containsAll(exchSemantics)) {
     return ListingTypeFilter.exchange;
   }
 
   if (saved.containsAll(saleSemantics) && saved.every(saleSemantics.contains)) {
     return ListingTypeFilter.sale;
   }
-  if (saved.containsAll(exchSemantics) &&
-      saved.every(exchSemantics.contains)) {
+  if (saved.containsAll(exchSemantics) && saved.every(exchSemantics.contains)) {
     return ListingTypeFilter.exchange;
   }
 

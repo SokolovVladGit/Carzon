@@ -108,12 +108,13 @@ void main() {
   setUpAll(() {
     final dir = Directory('supabase/migrations');
     expect(dir.existsSync(), isTrue, reason: 'supabase/migrations must exist');
-    final files = dir
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.sql'))
-        .toList()
-      ..sort((a, b) => a.path.compareTo(b.path));
+    final files =
+        dir
+            .listSync()
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.sql'))
+            .toList()
+          ..sort((a, b) => a.path.compareTo(b.path));
     expect(files, isNotEmpty, reason: 'migrations folder must contain SQL');
     combined = files.map((f) => f.readAsStringSync()).join('\n');
     final lower = combined.toLowerCase();
@@ -141,23 +142,28 @@ void main() {
   });
 
   group('public tables vs GRANT coverage', () {
-    test('migrations and expectedPublicTables stay in sync (no surprise tables)', () {
-      final unexpected = createdTables.difference(expectedPublicTables);
-      expect(
-        unexpected,
-        isEmpty,
-        reason: 'Undocumented `public` table(s) in migrations: ${unexpected.join(', ')}. '
-            'Add each to [expectedPublicTables] with an explicit `GRANT` in a '
-            'migration, or document a justified non–Data-API exception.',
-      );
-      final missing = expectedPublicTables.difference(createdTables);
-      expect(
-        missing,
-        isEmpty,
-        reason: 'Stale entries in [expectedPublicTables] (not created in '
-            'migrations): ${missing.join(', ')} — remove or fix migrations.',
-      );
-    });
+    test(
+      'migrations and expectedPublicTables stay in sync (no surprise tables)',
+      () {
+        final unexpected = createdTables.difference(expectedPublicTables);
+        expect(
+          unexpected,
+          isEmpty,
+          reason:
+              'Undocumented `public` table(s) in migrations: ${unexpected.join(', ')}. '
+              'Add each to [expectedPublicTables] with an explicit `GRANT` in a '
+              'migration, or document a justified non–Data-API exception.',
+        );
+        final missing = expectedPublicTables.difference(createdTables);
+        expect(
+          missing,
+          isEmpty,
+          reason:
+              'Stale entries in [expectedPublicTables] (not created in '
+              'migrations): ${missing.join(', ')} — remove or fix migrations.',
+        );
+      },
+    );
 
     test(
       'each client-facing public table has an explicit ON public.<table> GRANT '
@@ -196,12 +202,15 @@ void main() {
     test(
       'each client-facing public function has GRANT EXECUTE (exemptions explicit)',
       () {
-        final undocumentedInternal = internalFunctionsExemptFromClientExecuteGrant
-            .difference(createdFunctions);
+        final undocumentedInternal =
+            internalFunctionsExemptFromClientExecuteGrant.difference(
+              createdFunctions,
+            );
         expect(
           undocumentedInternal,
           isEmpty,
-          reason: 'Exemption list references unknown function(s): '
+          reason:
+              'Exemption list references unknown function(s): '
               '${undocumentedInternal.join(', ')} — typo or remove.',
         );
 
@@ -234,7 +243,11 @@ void main() {
       final f = File(
         'supabase/migrations/20260525120000_explicit_data_api_grants.sql',
       );
-      expect(f.existsSync(), isTrue, reason: 'explicit grants migration exists');
+      expect(
+        f.existsSync(),
+        isTrue,
+        reason: 'explicit grants migration exists',
+      );
       sql = f.readAsStringSync().toLowerCase();
     });
 
@@ -249,7 +262,11 @@ void main() {
       final f = File(
         'supabase/migrations/20260526120000_revoke_internal_trigger_function_execute.sql',
       );
-      expect(f.existsSync(), isTrue, reason: 'revoke-internal migration exists');
+      expect(
+        f.existsSync(),
+        isTrue,
+        reason: 'revoke-internal migration exists',
+      );
       final lower = f.readAsStringSync().toLowerCase();
       expect(lower, contains('touch_conversation_from_message'));
       expect(lower, contains('revoke'));

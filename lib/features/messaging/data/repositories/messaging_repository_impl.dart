@@ -94,7 +94,9 @@ class MessagingRepositoryImpl implements MessagingRepository {
       return FailureResult(ServerFailure(e.message));
     } catch (e, st) {
       _logger.error('markConversationRead unknown error', e, st);
-      return const FailureResult(UnknownFailure('Failed to sync read receipt.'));
+      return const FailureResult(
+        UnknownFailure('Failed to sync read receipt.'),
+      );
     }
   }
 
@@ -107,7 +109,9 @@ class MessagingRepositoryImpl implements MessagingRepository {
       return FailureResult(ServerFailure(e.message));
     } catch (e, st) {
       _logger.error('getUnreadConversationCount unknown error', e, st);
-      return const FailureResult(UnknownFailure('Failed to load unread count.'));
+      return const FailureResult(
+        UnknownFailure('Failed to load unread count.'),
+      );
     }
   }
 }

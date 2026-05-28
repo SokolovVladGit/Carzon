@@ -122,7 +122,11 @@ void main() {
     const start = Rect.fromLTWH(40, 40, 350, 260);
     const tray = Rect.fromLTWH(100, 500, 300, 68);
     const lastVisibleT = 0.71;
-    final thumb = compareFlyThumbRectAt(start: start, traySlot: tray, t: lastVisibleT);
+    final thumb = compareFlyThumbRectAt(
+      start: start,
+      traySlot: tray,
+      t: lastVisibleT,
+    );
     expect(compareFlyOpacityAt(lastVisibleT), greaterThan(0));
     expect(compareFlyThumbOverlapsTray(traySlot: tray, thumb: thumb), isFalse);
     expect(thumb.bottom, lessThan(tray.top));

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/l10n/app_locale_cubit.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
@@ -54,9 +55,7 @@ class MessagesInboxPage extends StatelessWidget {
             onPopInvokedWithResult: (didPop, _) {
               if (didPop) {
                 unawaited(
-                  sl<MessagingUnreadSummaryCubit>().sync(
-                    sl<AuthCubit>().state,
-                  ),
+                  sl<MessagingUnreadSummaryCubit>().sync(sl<AuthCubit>().state),
                 );
               }
             },
@@ -180,7 +179,11 @@ class _MessagesInboxView extends StatelessWidget {
                   ),
                 );
               }
-              final timeFormat = DateFormat('d MMM, HH:mm', 'ru');
+              final intlTag = context
+                  .watch<AppLocaleCubit>()
+                  .state
+                  .intlLanguageTag;
+              final timeFormat = DateFormat('d MMM, HH:mm', intlTag);
               return RefreshIndicator(
                 onRefresh: onPullRefresh,
                 child: ListView.separated(
@@ -260,7 +263,9 @@ class _MessagesInboxView extends StatelessWidget {
                           AppRoutes.messagesThreadPath(c.id),
                         );
                         if (!context.mounted) return;
-                        await context.read<MessagesInboxCubit>().silentRefresh();
+                        await context
+                            .read<MessagesInboxCubit>()
+                            .silentRefresh();
                       },
                     );
                   },

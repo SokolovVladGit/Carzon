@@ -30,7 +30,8 @@ String formatListingPriceFromListing(Listing listing) =>
 
 String formatEur(num value) => formatListingPrice(value, ListingCurrency.eur);
 
-String formatKm(int km) => '${_thousands(km.toString())} km';
+String formatKm(AppLocalizations l10n, int km) =>
+    '${_thousands(km.toString())} ${l10n.commonKilometersShort}';
 
 String formatType(AppLocalizations l10n, ListingType type) {
   switch (type) {
@@ -90,11 +91,14 @@ String formatListingDrivetrain(AppLocalizations l10n, ListingDrivetrain type) {
 /// display (`N см³`).
 const double kCcDisplacementThreshold = 80;
 
-String formatEngineDisplacementForDisplay(AppLocalizations l10n, double? litersOrCc) {
+String formatEngineDisplacementForDisplay(
+  AppLocalizations l10n,
+  double? litersOrCc,
+) {
   if (litersOrCc == null) return '';
   final v = litersOrCc;
   if (v >= kCcDisplacementThreshold && v.round() == v) {
-    return '${v.toInt()} см³';
+    return '${v.toInt()} ${l10n.listingEngineDisplacementCcSuffix}';
   }
   final fixed = v.toStringAsFixed(3);
   final trimmed = fixed.replaceFirst(RegExp(r'\.?0+$'), '');

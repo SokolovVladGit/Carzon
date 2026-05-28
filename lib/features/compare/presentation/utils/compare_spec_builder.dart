@@ -18,18 +18,29 @@ class CompareSpecBuilder {
       CompareSpecSection(
         title: l10n.compareSectionPriceBasics,
         rows: [
-          _row('price', l10n.compareRowPrice, _priceValues(), _lowestIndices(
-            slots.map((s) => s.listing?.priceEur).toList(),
-          )),
-          _row('year', l10n.compareRowYear, _yearValues(), _lowestIndices(
-            slots.map((s) {
-              final y = s.listing?.year ?? s.item.snapshot.year;
-              return y == null ? null : -y;
-            }).toList(),
-          )),
-          _row('mileage', l10n.compareRowMileage, _mileageValues(), _lowestIndices(
-            slots.map((s) => s.listing?.mileageKm).toList(),
-          )),
+          _row(
+            'price',
+            l10n.compareRowPrice,
+            _priceValues(),
+            _lowestIndices(slots.map((s) => s.listing?.priceEur).toList()),
+          ),
+          _row(
+            'year',
+            l10n.compareRowYear,
+            _yearValues(),
+            _lowestIndices(
+              slots.map((s) {
+                final y = s.listing?.year ?? s.item.snapshot.year;
+                return y == null ? null : -y;
+              }).toList(),
+            ),
+          ),
+          _row(
+            'mileage',
+            l10n.compareRowMileage,
+            _mileageValues(),
+            _lowestIndices(slots.map((s) => s.listing?.mileageKm).toList()),
+          ),
           _row('city', l10n.compareRowCityRegion, _cityValues()),
           _row('status', l10n.compareRowStatus, _statusValues()),
         ],
@@ -41,7 +52,11 @@ class CompareSpecBuilder {
           _row('model', l10n.compareRowModel, _modelValues()),
           _row('body', l10n.compareRowBody, _bodyValues()),
           _row('type', l10n.compareRowVehicleType, _vehicleTypeValues()),
-          _row('registration', l10n.compareRowRegistration, _registrationValues()),
+          _row(
+            'registration',
+            l10n.compareRowRegistration,
+            _registrationValues(),
+          ),
         ],
       ),
       CompareSpecSection(
@@ -51,7 +66,11 @@ class CompareSpecBuilder {
           _row('engine', l10n.compareRowEngine, _engineValues()),
           _row('power', l10n.compareRowPower, _powerValues()),
           _row('drivetrain', l10n.compareRowDrivetrain, _drivetrainValues()),
-          _row('displacement', l10n.compareRowDisplacement, _displacementValues()),
+          _row(
+            'displacement',
+            l10n.compareRowDisplacement,
+            _displacementValues(),
+          ),
         ],
       ),
       CompareSpecSection(
@@ -128,37 +147,29 @@ class CompareSpecBuilder {
     (slot) => _fmt.formatModel(slot.listing, slot.item.snapshot),
   );
 
-  List<String> _bodyValues() => _listingOnly(
-    (slot) => _fmt.formatBody(slot.listing),
-  );
+  List<String> _bodyValues() =>
+      _listingOnly((slot) => _fmt.formatBody(slot.listing));
 
-  List<String> _vehicleTypeValues() => _listingOnly(
-    (slot) => _fmt.formatVehicleType(slot.listing),
-  );
+  List<String> _vehicleTypeValues() =>
+      _listingOnly((slot) => _fmt.formatVehicleType(slot.listing));
 
-  List<String> _registrationValues() => _listingOnly(
-    (slot) => _fmt.formatRegistration(slot.listing),
-  );
+  List<String> _registrationValues() =>
+      _listingOnly((slot) => _fmt.formatRegistration(slot.listing));
 
-  List<String> _fuelValues() => _listingOnly(
-    (slot) => _fmt.formatFuel(slot.listing),
-  );
+  List<String> _fuelValues() =>
+      _listingOnly((slot) => _fmt.formatFuel(slot.listing));
 
-  List<String> _engineValues() => _listingOnly(
-    (slot) => _fmt.formatEngine(slot.listing),
-  );
+  List<String> _engineValues() =>
+      _listingOnly((slot) => _fmt.formatEngine(slot.listing));
 
-  List<String> _powerValues() => _listingOnly(
-    (slot) => _fmt.formatPower(slot.listing),
-  );
+  List<String> _powerValues() =>
+      _listingOnly((slot) => _fmt.formatPower(slot.listing));
 
-  List<String> _drivetrainValues() => _listingOnly(
-    (slot) => _fmt.formatDrivetrain(slot.listing),
-  );
+  List<String> _drivetrainValues() =>
+      _listingOnly((slot) => _fmt.formatDrivetrain(slot.listing));
 
-  List<String> _displacementValues() => _listingOnly(
-    (slot) => _fmt.formatDisplacement(slot.listing),
-  );
+  List<String> _displacementValues() =>
+      _listingOnly((slot) => _fmt.formatDisplacement(slot.listing));
 
   List<String> _vinValues() => slots.map((slot) {
     if (slot.phase == CompareSlotPhase.unavailable) {
@@ -175,9 +186,8 @@ class CompareSpecBuilder {
     return _fmt.formatPhotos(slot.photoCount);
   }).toList();
 
-  List<String> _publishedValues() => _listingOnly(
-    (slot) => _fmt.formatPublishedAt(slot.listing),
-  );
+  List<String> _publishedValues() =>
+      _listingOnly((slot) => _fmt.formatPublishedAt(slot.listing));
 
   List<String> _snapshotAware(String Function(CompareResolvedSlot) format) {
     return slots.map((slot) {
@@ -214,7 +224,9 @@ class CompareSpecBuilder {
   }
 }
 
-List<CompareSpecSection> filterOnlyDifferences(List<CompareSpecSection> sections) {
+List<CompareSpecSection> filterOnlyDifferences(
+  List<CompareSpecSection> sections,
+) {
   return sections
       .map((section) {
         final rows = section.rows.where((r) => !r.allValuesEqual).toList();

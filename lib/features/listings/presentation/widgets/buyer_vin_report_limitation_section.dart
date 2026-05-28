@@ -30,6 +30,7 @@ class BuyerVinReportLimitationSection extends StatelessWidget {
     }
 
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -38,6 +39,7 @@ class BuyerVinReportLimitationSection extends StatelessWidget {
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: -0.1,
+            color: isDark ? scheme.onSurface.withValues(alpha: 0.96) : null,
           ),
         ),
         const SizedBox(height: 10),

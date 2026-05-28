@@ -240,10 +240,8 @@ class EditListingState extends Equatable {
       failureKind: clearFailureKind ? null : (failureKind ?? this.failureKind),
       ownerVinNormalizedForEdit:
           ownerVinNormalizedForEdit ?? this.ownerVinNormalizedForEdit,
-      ownerVinLookupFailed:
-          ownerVinLookupFailed ?? this.ownerVinLookupFailed,
-      ownerVinReportStatus:
-          ownerVinReportStatus ?? this.ownerVinReportStatus,
+      ownerVinLookupFailed: ownerVinLookupFailed ?? this.ownerVinLookupFailed,
+      ownerVinReportStatus: ownerVinReportStatus ?? this.ownerVinReportStatus,
       ownerVinReportLookupFailed:
           ownerVinReportLookupFailed ?? this.ownerVinReportLookupFailed,
       ownerVinSourceResults:

@@ -8,7 +8,8 @@ abstract class FirebaseMessagingOpenEvents {
 }
 
 /// Production wiring to [FirebaseMessaging].
-class DefaultFirebaseMessagingOpenEvents implements FirebaseMessagingOpenEvents {
+class DefaultFirebaseMessagingOpenEvents
+    implements FirebaseMessagingOpenEvents {
   @override
   Stream<RemoteMessage> get onMessageOpenedApp =>
       FirebaseMessaging.onMessageOpenedApp;

@@ -25,10 +25,17 @@ class NotificationSettingsPage extends StatelessWidget {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, auth) {
         if (auth.status != AuthStatus.authenticated || auth.user == null) {
+          final scheme = Theme.of(context).colorScheme;
           return Scaffold(
+            backgroundColor: scheme.surface,
             appBar: AppBar(
               leading: const AppBackButton(fallback: AppRoutes.profile),
               title: Text(l10n.notificationSettingsTitle),
+              backgroundColor: scheme.surface,
+              surfaceTintColor: Colors.transparent,
+              systemOverlayStyle: scheme.brightness == Brightness.dark
+                  ? SystemUiOverlayStyle.light
+                  : SystemUiOverlayStyle.dark,
             ),
             body: Center(
               child: Padding(
@@ -96,93 +103,93 @@ class _NotificationSettingsBody extends StatelessWidget {
           ),
           body: switch (state.phase) {
             NotificationSettingsLoadPhase.initial ||
-            NotificationSettingsLoadPhase.loading =>
-              const LoadingView(),
+            NotificationSettingsLoadPhase.loading => const LoadingView(),
             NotificationSettingsLoadPhase.failure => ErrorView(
-                message: l10n.notificationSettingsLoadFailed,
-                onRetry: () =>
-                    context.read<NotificationSettingsCubit>().load(),
-              ),
+              message: l10n.notificationSettingsLoadFailed,
+              onRetry: () => context.read<NotificationSettingsCubit>().load(),
+            ),
             NotificationSettingsLoadPhase.ready => ListView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-                children: [
-                  if (!Env.pushNotificationsEnabled)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Text(
-                        l10n.notificationSettingsPushBuildDisabledBanner,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+              children: [
+                if (!Env.pushNotificationsEnabled)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      l10n.notificationSettingsPushBuildDisabledBanner,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
-                  if (Env.pushNotificationsEnabled &&
-                      state.osPermission != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        _osStatusLabel(l10n, state.osPermission!),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
+                  ),
+                if (Env.pushNotificationsEnabled && state.osPermission != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      _osStatusLabel(l10n, state.osPermission!),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
-                  SwitchListTile.adaptive(
-                    title: Text(l10n.notificationSettingsGlobalTitle),
-                    subtitle: Text(l10n.notificationSettingsGlobalSubtitle),
-                    value: state.preferences!.globalEnabled,
-                    onChanged: state.busy || !Env.pushNotificationsEnabled
-                        ? null
-                        : (v) => context
+                  ),
+                SwitchListTile.adaptive(
+                  title: Text(l10n.notificationSettingsGlobalTitle),
+                  subtitle: Text(l10n.notificationSettingsGlobalSubtitle),
+                  value: state.preferences!.globalEnabled,
+                  onChanged: state.busy || !Env.pushNotificationsEnabled
+                      ? null
+                      : (v) => context
                             .read<NotificationSettingsCubit>()
                             .setGlobalEnabled(v),
+                ),
+                SwitchListTile.adaptive(
+                  title: Text(l10n.notificationSettingsMessagesTitle),
+                  subtitle: Text(
+                    state.preferences!.globalEnabled
+                        ? l10n.notificationSettingsMessagesSubtitle
+                        : l10n.notificationSettingsMessagesNeedsGlobal,
                   ),
-                  SwitchListTile.adaptive(
-                    title: Text(l10n.notificationSettingsMessagesTitle),
-                    subtitle: Text(
-                      state.preferences!.globalEnabled
-                          ? l10n.notificationSettingsMessagesSubtitle
-                          : l10n.notificationSettingsMessagesNeedsGlobal,
-                    ),
-                    value: state.preferences!.messagesEnabled &&
-                        state.preferences!.globalEnabled,
-                    onChanged: state.busy ||
-                            !Env.pushNotificationsEnabled ||
-                            !state.preferences!.globalEnabled
-                        ? null
-                        : (v) => context
+                  value:
+                      state.preferences!.messagesEnabled &&
+                      state.preferences!.globalEnabled,
+                  onChanged:
+                      state.busy ||
+                          !Env.pushNotificationsEnabled ||
+                          !state.preferences!.globalEnabled
+                      ? null
+                      : (v) => context
                             .read<NotificationSettingsCubit>()
                             .setMessagesEnabled(v),
+                ),
+                SwitchListTile.adaptive(
+                  title: Text(l10n.notificationSettingsFilterAlertsTitle),
+                  subtitle: Text(
+                    state.preferences!.globalEnabled
+                        ? l10n.notificationSettingsFilterAlertsSubtitle
+                        : l10n.notificationSettingsFilterAlertsNeedsGlobal,
                   ),
-                  SwitchListTile.adaptive(
-                    title: Text(l10n.notificationSettingsFilterAlertsTitle),
-                    subtitle: Text(
-                      state.preferences!.globalEnabled
-                          ? l10n.notificationSettingsFilterAlertsSubtitle
-                          : l10n.notificationSettingsFilterAlertsNeedsGlobal,
-                    ),
-                    value: state.preferences!.filterAlertsEnabled &&
-                        state.preferences!.globalEnabled,
-                    onChanged: state.busy ||
-                            !Env.pushNotificationsEnabled ||
-                            !state.preferences!.globalEnabled
-                        ? null
-                        : (v) => context
+                  value:
+                      state.preferences!.filterAlertsEnabled &&
+                      state.preferences!.globalEnabled,
+                  onChanged:
+                      state.busy ||
+                          !Env.pushNotificationsEnabled ||
+                          !state.preferences!.globalEnabled
+                      ? null
+                      : (v) => context
                             .read<NotificationSettingsCubit>()
                             .setFilterAlertsEnabled(v),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16),
-                    child: Text(
-                      l10n.notificationSettingsDeliveryDisclaimer,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant
-                                .withValues(alpha: 0.86),
-                          ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Text(
+                    l10n.notificationSettingsDeliveryDisclaimer,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.86),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
           },
         );
       },
@@ -194,10 +201,8 @@ String? _noticeMessage(AppLocalizations l10n, NotificationUserNotice notice) {
   return switch (notice) {
     NotificationUserNotice.osPermissionDenied =>
       l10n.notificationSettingsOsPermissionDenied,
-    NotificationUserNotice.loadFailed =>
-      l10n.notificationSettingsLoadFailed,
-    NotificationUserNotice.saveFailed =>
-      l10n.notificationSettingsSaveFailed,
+    NotificationUserNotice.loadFailed => l10n.notificationSettingsLoadFailed,
+    NotificationUserNotice.saveFailed => l10n.notificationSettingsSaveFailed,
     NotificationUserNotice.pushUnavailableInBuild =>
       l10n.notificationSettingsPushUnavailableInBuild,
     NotificationUserNotice.none => null,

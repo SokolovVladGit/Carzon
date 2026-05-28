@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../../listings/presentation/utils/listing_formatters.dart';
 import '../../domain/entities/conversation.dart';
@@ -24,6 +25,7 @@ class ThreadListingContextCard extends StatelessWidget {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
     final primary = threadListingPrimaryLine(
       conversation,
       listingIdShortFallback,
@@ -32,16 +34,23 @@ class ThreadListingContextCard extends StatelessWidget {
     final cover = conversation.listingCoverImageUrl?.trim();
     final priceLine = _priceLine(conversation);
 
+    final decoration = light
+        ? BoxDecoration(
+            color: cs.surfaceContainerLow.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: cs.outlineVariant.withValues(alpha: 0.35),
+            ),
+          )
+        : AppTheme.editorialDarkSectionCard(cs, borderRadius: 16)!;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
       child: Material(
-        color: cs.surfaceContainerLow.withValues(alpha: 0.94),
+        color: Colors.transparent,
         elevation: 0,
         shadowColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.35)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () => context.push(
@@ -50,66 +59,81 @@ class ThreadListingContextCard extends StatelessWidget {
               coverImageUrl: cover != null && cover.isNotEmpty ? cover : null,
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _Thumbnail(url: cover),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        primary,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          height: 1.25,
-                          color: cs.onSurface,
-                        ),
-                      ),
-                      if (priceLine != null) ...[
-                        const SizedBox(height: 4),
+          child: DecoratedBox(
+            decoration: decoration,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _Thumbnail(url: cover),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          priceLine,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: cs.primary,
-                            height: 1.2,
-                          ),
-                        ),
-                      ],
-                      if (city != null && city.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          city,
-                          maxLines: 1,
+                          primary,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: cs.onSurfaceVariant,
-                            height: 1.2,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            height: 1.25,
+                            color: cs.onSurface.withValues(
+                              alpha: light ? 1 : 0.96,
+                            ),
+                          ),
+                        ),
+                        if (priceLine != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            priceLine,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: light
+                                  ? cs.primary
+                                  : AppTheme.editorialAccentColor(cs),
+                              height: 1.2,
+                            ),
+                          ),
+                        ],
+                        if (city != null && city.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            city,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant.withValues(
+                                alpha: light ? 1 : 0.78,
+                              ),
+                              height: 1.2,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.messagingThreadViewListingHint,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: light
+                                ? cs.primary.withValues(alpha: 0.85)
+                                : AppTheme.editorialAccentColor(
+                                    cs,
+                                  ).withValues(alpha: 0.88),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
-                      const SizedBox(height: 4),
-                      Text(
-                        l10n.messagingThreadViewListingHint,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: cs.primary.withValues(alpha: 0.85),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-                ),
-              ],
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: cs.onSurfaceVariant.withValues(
+                      alpha: light ? 0.7 : 0.82,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -180,7 +204,7 @@ class _Thumbnail extends StatelessWidget {
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: cs.primary,
+                  color: AppTheme.editorialAccentColor(cs),
                 ),
               ),
             ),

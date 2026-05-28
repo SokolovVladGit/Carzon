@@ -14,11 +14,9 @@ import 'push_messaging_permission_status.dart';
 /// has completed successfully (or a [FirebaseMessaging] instance was injected
 /// for tests).
 class FirebasePushMessagingClient implements PushMessagingClient {
-  FirebasePushMessagingClient({
-    FirebaseMessaging? messaging,
-    AppLogger? logger,
-  }) : _messagingInjected = messaging,
-       _logger = logger ?? AppLogger('FirebasePushMessagingClient');
+  FirebasePushMessagingClient({FirebaseMessaging? messaging, AppLogger? logger})
+    : _messagingInjected = messaging,
+      _logger = logger ?? AppLogger('FirebasePushMessagingClient');
 
   final FirebaseMessaging? _messagingInjected;
   FirebaseMessaging? _messagingResolved;

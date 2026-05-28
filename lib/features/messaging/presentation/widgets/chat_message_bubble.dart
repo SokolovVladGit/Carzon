@@ -28,10 +28,10 @@ class ChatMessageBubble extends StatelessWidget {
       bottomRight: Radius.circular(isOutgoing ? 6 : 20),
     );
 
-    final bg = isOutgoing ? cs.primaryContainer : cs.surfaceContainerHigh;
+    final bg = _bubbleColor(cs, isOutgoing: isOutgoing, isDark: isDark);
     final fg = isOutgoing ? cs.onPrimaryContainer : cs.onSurface;
     final align = isOutgoing ? Alignment.centerRight : Alignment.centerLeft;
-    final shadowAlpha = isDark ? 0.09 : 0.04;
+    final shadowAlpha = isDark ? 0.12 : 0.04;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
@@ -48,11 +48,14 @@ class ChatMessageBubble extends StatelessWidget {
               decoration: BoxDecoration(
                 color: bg,
                 borderRadius: radius,
+                border: isDark && !isOutgoing
+                    ? Border.all(color: cs.outline.withValues(alpha: 0.26))
+                    : null,
                 boxShadow: [
                   BoxShadow(
                     color: cs.shadow.withValues(alpha: shadowAlpha),
-                    blurRadius: 5,
-                    offset: const Offset(0, 1),
+                    blurRadius: isDark ? 8 : 5,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -68,7 +71,7 @@ class ChatMessageBubble extends StatelessWidget {
                       message.body,
                       softWrap: true,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: fg,
+                        color: fg.withValues(alpha: isDark ? 0.96 : 1),
                         height: 1.4,
                       ),
                     ),
@@ -89,6 +92,26 @@ class ChatMessageBubble extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Color _bubbleColor(
+    ColorScheme cs, {
+    required bool isOutgoing,
+    required bool isDark,
+  }) {
+    if (!isDark) {
+      return isOutgoing ? cs.primaryContainer : cs.surfaceContainerHigh;
+    }
+    if (isOutgoing) {
+      return Color.alphaBlend(
+        cs.primary.withValues(alpha: 0.32),
+        cs.surfaceContainerHigh,
+      );
+    }
+    return Color.alphaBlend(
+      cs.primary.withValues(alpha: 0.08),
+      cs.surfaceContainerHighest,
     );
   }
 }

@@ -87,15 +87,14 @@ void main() {
         throwsA(isA<ServerException>()),
       );
       expect(
-        () => ListingModel.fromJson(baseJson()..['market_region'] = 'antarctica'),
+        () =>
+            ListingModel.fromJson(baseJson()..['market_region'] = 'antarctica'),
         throwsA(isA<ServerException>()),
       );
     });
 
     test('unknown fuel_type maps to null', () {
-      final m = ListingModel.fromJson(
-        baseJson()..['fuel_type'] = 'unobtanium',
-      );
+      final m = ListingModel.fromJson(baseJson()..['fuel_type'] = 'unobtanium');
       expect(m.fuelType, isNull);
     });
 

@@ -3,8 +3,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 /// How long the tray-level max-limit capsule stays visible.
-const Duration kCompareTrayMaxLimitFeedbackDuration =
-    Duration(milliseconds: 1750);
+const Duration kCompareTrayMaxLimitFeedbackDuration = Duration(
+  milliseconds: 1750,
+);
 
 /// Transient UI state for inline compare tray feedback (not persisted).
 class CompareTrayFeedbackController extends ChangeNotifier {
@@ -18,7 +19,10 @@ class CompareTrayFeedbackController extends ChangeNotifier {
     _dismissTimer?.cancel();
     _showingMaxLimit = true;
     notifyListeners();
-    _dismissTimer = Timer(kCompareTrayMaxLimitFeedbackDuration, dismissMaxLimit);
+    _dismissTimer = Timer(
+      kCompareTrayMaxLimitFeedbackDuration,
+      dismissMaxLimit,
+    );
   }
 
   void dismissMaxLimit() {

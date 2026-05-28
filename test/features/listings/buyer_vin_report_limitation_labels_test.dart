@@ -7,14 +7,19 @@ void main() {
   final l10n = ruStrings();
 
   test('basic_decode_only expands to full standard limitation set', () {
-    final out = localizedBuyerVinReportLimitationBullets(
-      l10n,
-      const ['basic_decode_only'],
-    );
+    final out = localizedBuyerVinReportLimitationBullets(l10n, const [
+      'basic_decode_only',
+    ]);
     expect(out, isNotEmpty);
-    expect(out, contains(l10n.listingBuyerVinReportLimitationRegistrationMdPmr));
+    expect(
+      out,
+      contains(l10n.listingBuyerVinReportLimitationRegistrationMdPmr),
+    );
     expect(out, contains(l10n.listingBuyerVinReportLimitationOwner));
-    expect(out, contains(l10n.listingBuyerVinReportLimitationLegalEncumbrances));
+    expect(
+      out,
+      contains(l10n.listingBuyerVinReportLimitationLegalEncumbrances),
+    );
     for (final raw in [
       'basic_decode_only',
       'not_md_pmr_official_verification',
@@ -24,24 +29,24 @@ void main() {
   });
 
   test('known not_* codes map without raw tokens', () {
-    final out = localizedBuyerVinReportLimitationBullets(
-      l10n,
-      const [
-        'not_mileage_check',
-        'not_accident_history',
-      ],
-    );
+    final out = localizedBuyerVinReportLimitationBullets(l10n, const [
+      'not_mileage_check',
+      'not_accident_history',
+    ]);
     expect(out, contains(l10n.listingBuyerVinReportLimitationMileage));
     expect(out, contains(l10n.listingBuyerVinReportLimitationAccidentHistory));
-    expect(out, contains(l10n.listingBuyerVinReportLimitationLegalEncumbrances));
+    expect(
+      out,
+      contains(l10n.listingBuyerVinReportLimitationLegalEncumbrances),
+    );
     expect(out.any((s) => s.contains('not_')), isFalse);
   });
 
   test('unknown code appends generic and hides raw token', () {
-    final out = localizedBuyerVinReportLimitationBullets(
-      l10n,
-      const ['not_mileage_check', 'future_internal_reason'],
-    );
+    final out = localizedBuyerVinReportLimitationBullets(l10n, const [
+      'not_mileage_check',
+      'future_internal_reason',
+    ]);
     expect(out.last, l10n.listingBuyerVinReportLimitationUnknownFallback);
     expect(out.any((s) => s.contains('future_internal_reason')), isFalse);
   });

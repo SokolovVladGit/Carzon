@@ -36,14 +36,17 @@ void main() {
     expect(c.priceCurrencyFilter, ListingPriceCurrencyFilter.usd);
   });
 
-  test('clear result maps baseline; preservedSearch applies only to search', () {
-    const result = ListingsFilterApplyResult.clear();
-    final c = listingDiscoveryCriteriaFromFilterApply(
-      result,
-      preservedSearch: '  diesel  ',
-    );
-    expect(c.search, 'diesel');
-    expect(c.make, isNull);
-    expect(c.minPrice, isNull);
-  });
+  test(
+    'clear result maps baseline; preservedSearch applies only to search',
+    () {
+      const result = ListingsFilterApplyResult.clear();
+      final c = listingDiscoveryCriteriaFromFilterApply(
+        result,
+        preservedSearch: '  diesel  ',
+      );
+      expect(c.search, 'diesel');
+      expect(c.make, isNull);
+      expect(c.minPrice, isNull);
+    },
+  );
 }

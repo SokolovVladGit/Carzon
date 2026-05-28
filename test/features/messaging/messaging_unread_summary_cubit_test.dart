@@ -28,15 +28,10 @@ void main() {
       build: () => MessagingUnreadSummaryCubit(repository),
       act: (c) => c.sync(const AuthState.unauthenticated()),
       expect: () => [
-        isA<MessagingUnreadSummaryState>().having(
-          (s) => s.phase,
-          'phase',
-          MessagingUnreadSummaryPhase.loaded,
-        ).having((s) => s.unreadConversationCount, 'count', 0).having(
-          (s) => s.hasLoadError,
-          'hasLoadError',
-          isFalse,
-        ),
+        isA<MessagingUnreadSummaryState>()
+            .having((s) => s.phase, 'phase', MessagingUnreadSummaryPhase.loaded)
+            .having((s) => s.unreadConversationCount, 'count', 0)
+            .having((s) => s.hasLoadError, 'hasLoadError', isFalse),
       ],
       verify: (_) {
         verifyNever(() => repository.getUnreadConversationCount());
@@ -58,15 +53,10 @@ void main() {
           'phase',
           MessagingUnreadSummaryPhase.loading,
         ),
-        isA<MessagingUnreadSummaryState>().having(
-          (s) => s.phase,
-          'phase',
-          MessagingUnreadSummaryPhase.loaded,
-        ).having((s) => s.unreadConversationCount, 'count', 3).having(
-          (s) => s.hasLoadError,
-          'hasLoadError',
-          isFalse,
-        ),
+        isA<MessagingUnreadSummaryState>()
+            .having((s) => s.phase, 'phase', MessagingUnreadSummaryPhase.loaded)
+            .having((s) => s.unreadConversationCount, 'count', 3)
+            .having((s) => s.hasLoadError, 'hasLoadError', isFalse),
       ],
     );
 
@@ -85,15 +75,14 @@ void main() {
           'phase',
           MessagingUnreadSummaryPhase.loading,
         ),
-        isA<MessagingUnreadSummaryState>().having(
-          (s) => s.phase,
-          'phase',
-          MessagingUnreadSummaryPhase.loaded,
-        ).having((s) => s.unreadConversationCount, 'count', 0).having(
-          (s) => s.shouldShowUnreadIndicator,
-          'shouldShowUnreadIndicator',
-          isFalse,
-        ),
+        isA<MessagingUnreadSummaryState>()
+            .having((s) => s.phase, 'phase', MessagingUnreadSummaryPhase.loaded)
+            .having((s) => s.unreadConversationCount, 'count', 0)
+            .having(
+              (s) => s.shouldShowUnreadIndicator,
+              'shouldShowUnreadIndicator',
+              isFalse,
+            ),
       ],
     );
 
@@ -112,15 +101,14 @@ void main() {
           'phase',
           MessagingUnreadSummaryPhase.loading,
         ),
-        isA<MessagingUnreadSummaryState>().having(
-          (s) => s.phase,
-          'phase',
-          MessagingUnreadSummaryPhase.failure,
-        ).having((s) => s.unreadConversationCount, 'count', 0).having(
-          (s) => s.hasLoadError,
-          'hasLoadError',
-          isTrue,
-        ),
+        isA<MessagingUnreadSummaryState>()
+            .having(
+              (s) => s.phase,
+              'phase',
+              MessagingUnreadSummaryPhase.failure,
+            )
+            .having((s) => s.unreadConversationCount, 'count', 0)
+            .having((s) => s.hasLoadError, 'hasLoadError', isTrue),
       ],
     );
 

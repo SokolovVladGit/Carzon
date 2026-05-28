@@ -21,30 +21,33 @@ void main() {
     remote = _MockRemote();
   });
 
-  test('clearPersistedCriteria uses upsertClearsCriteria, not upsertCriteria', () async {
-    final model = FilterAlertSettingsModel(
-      userId: 'u1',
-      criteria: null,
-      notificationsEnabled: false,
-      createdAt: DateTime.utc(2026, 6, 1),
-      updatedAt: DateTime.utc(2026, 6, 2),
-    );
-    when(() => remote.upsertClearsCriteria()).thenAnswer((_) async => model);
+  test(
+    'clearPersistedCriteria uses upsertClearsCriteria, not upsertCriteria',
+    () async {
+      final model = FilterAlertSettingsModel(
+        userId: 'u1',
+        criteria: null,
+        notificationsEnabled: false,
+        createdAt: DateTime.utc(2026, 6, 1),
+        updatedAt: DateTime.utc(2026, 6, 2),
+      );
+      when(() => remote.upsertClearsCriteria()).thenAnswer((_) async => model);
 
-    final impl = FilterAlertsRepositoryImpl(remote);
-    final r = await impl.clearPersistedCriteria();
+      final impl = FilterAlertsRepositoryImpl(remote);
+      final r = await impl.clearPersistedCriteria();
 
-    expect(r, isA<Success<FilterAlertSettings>>());
-    final v = (r as Success<FilterAlertSettings>).value;
-    expect(v.criteria, isNull);
-    expect(v.notificationsEnabled, isFalse);
+      expect(r, isA<Success<FilterAlertSettings>>());
+      final v = (r as Success<FilterAlertSettings>).value;
+      expect(v.criteria, isNull);
+      expect(v.notificationsEnabled, isFalse);
 
-    verify(() => remote.upsertClearsCriteria()).called(1);
-    verifyNever(
-      () => remote.upsertCriteria(
-        any(),
-        notificationsEnabled: any(named: 'notificationsEnabled'),
-      ),
-    );
-  });
+      verify(() => remote.upsertClearsCriteria()).called(1);
+      verifyNever(
+        () => remote.upsertCriteria(
+          any(),
+          notificationsEnabled: any(named: 'notificationsEnabled'),
+        ),
+      );
+    },
+  );
 }

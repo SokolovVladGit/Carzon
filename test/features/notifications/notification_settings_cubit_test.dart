@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
+import 'package:carzon/core/l10n/app_locale_preference.dart';
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/notifications/domain/entities/notification_preferences.dart';
@@ -93,8 +94,7 @@ void main() {
     ).thenAnswer((inv) async {
       final global = inv.namedArguments[#globalEnabled] as bool;
       final messages = inv.namedArguments[#messagesEnabled] as bool;
-      final filterAlerts =
-          inv.namedArguments[#filterAlertsEnabled] as bool;
+      final filterAlerts = inv.namedArguments[#filterAlertsEnabled] as bool;
       return Success(
         _prefs(global: global, messages: messages, filterAlerts: filterAlerts),
       );
@@ -116,10 +116,13 @@ PUSH_NOTIFICATIONS_ENABLED=true
       messagingClient: client,
       notificationsRepository: repo,
       authGate: authGate,
+      readLocalePreference: () => AppLocalePreference.ru,
     );
 
     registerFallbackValue(PushTokenPlatform.android);
-    when(() => repo.getMyPreferences()).thenAnswer((_) async => Success(_prefs()));
+    when(
+      () => repo.getMyPreferences(),
+    ).thenAnswer((_) async => Success(_prefs()));
     stubRepoSuccess();
     when(
       () => repo.registerPushToken(
@@ -130,9 +133,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
         locale: any(named: 'locale'),
       ),
     ).thenAnswer((_) async => const Success<void>(null));
-    when(() => repo.deactivateMyPushTokens()).thenAnswer(
-      (_) async => const Success<void>(null),
-    );
+    when(
+      () => repo.deactivateMyPushTokens(),
+    ).thenAnswer((_) async => const Success<void>(null));
   });
 
   tearDown(() async {
@@ -141,9 +144,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
   });
 
   NotificationSettingsCubit buildCubit() => NotificationSettingsCubit(
-        notificationsRepository: repo,
-        pushRegistration: pushRegistration,
-      );
+    notificationsRepository: repo,
+    pushRegistration: pushRegistration,
+  );
 
   blocTest<NotificationSettingsCubit, NotificationSettingsState>(
     'load reads preferences via repository and reflects permission when push on',
@@ -158,23 +161,27 @@ PUSH_NOTIFICATIONS_ENABLED=true
   blocTest<NotificationSettingsCubit, NotificationSettingsState>(
     'load failure surfaces failure phase without crashing',
     setUp: () {
-      when(() => repo.getMyPreferences()).thenAnswer(
-        (_) async => FailureResult(const UnknownFailure('x')),
-      );
+      when(
+        () => repo.getMyPreferences(),
+      ).thenAnswer((_) async => FailureResult(const UnknownFailure('x')));
     },
     build: buildCubit,
     act: (c) => c.load(),
     expect: () => [
       isA<NotificationSettingsState>()
-          .having((s) => s.phase, 'phase', NotificationSettingsLoadPhase.loading)
+          .having(
+            (s) => s.phase,
+            'phase',
+            NotificationSettingsLoadPhase.loading,
+          )
           .having((s) => s.preferences, 'prefs', isNull),
       isA<NotificationSettingsState>()
-          .having((s) => s.phase, 'phase', NotificationSettingsLoadPhase.failure)
           .having(
-            (s) => s.notice,
-            'notice',
-            NotificationUserNotice.loadFailed,
-          ),
+            (s) => s.phase,
+            'phase',
+            NotificationSettingsLoadPhase.failure,
+          )
+          .having((s) => s.notice, 'notice', NotificationUserNotice.loadFailed),
     ],
   );
 
@@ -192,6 +199,7 @@ SUPABASE_ANON_KEY=anon
         messagingClient: client,
         notificationsRepository: repo,
         authGate: authGate,
+        readLocalePreference: () => AppLocalePreference.ru,
       );
     });
 
@@ -202,9 +210,9 @@ SUPABASE_ANON_KEY=anon
     blocTest<NotificationSettingsCubit, NotificationSettingsState>(
       'enabling global does not call permission or update',
       build: () => NotificationSettingsCubit(
-            notificationsRepository: repo,
-            pushRegistration: regNoPush,
-          ),
+        notificationsRepository: repo,
+        pushRegistration: regNoPush,
+      ),
       seed: () => NotificationSettingsState(
         phase: NotificationSettingsLoadPhase.ready,
         preferences: _prefs(),
@@ -232,9 +240,9 @@ SUPABASE_ANON_KEY=anon
     blocTest<NotificationSettingsCubit, NotificationSettingsState>(
       'filter alerts enabled does not call repository when push disabled',
       build: () => NotificationSettingsCubit(
-            notificationsRepository: repo,
-            pushRegistration: regNoPush,
-          ),
+        notificationsRepository: repo,
+        pushRegistration: regNoPush,
+      ),
       seed: () => NotificationSettingsState(
         phase: NotificationSettingsLoadPhase.ready,
         preferences: _prefs(global: true, messages: false, filterAlerts: false),
@@ -411,8 +419,7 @@ SUPABASE_ANON_KEY=anon
     'filter alerts toggle on requests permission and preserves messages flag',
     setUp: () {
       client.permissionStatus = PushMessagingPermissionStatus.notDetermined;
-      client.permissionAfterRequest =
-          PushMessagingPermissionStatus.authorized;
+      client.permissionAfterRequest = PushMessagingPermissionStatus.authorized;
     },
     build: buildCubit,
     seed: () => NotificationSettingsState(
@@ -501,11 +508,7 @@ SUPABASE_ANON_KEY=anon
       isA<NotificationSettingsState>().having((s) => s.busy, 'busy', true),
       isA<NotificationSettingsState>()
           .having((s) => s.busy, 'busy', false)
-          .having(
-            (s) => s.notice,
-            'notice',
-            NotificationUserNotice.saveFailed,
-          ),
+          .having((s) => s.notice, 'notice', NotificationUserNotice.saveFailed),
     ],
   );
 }

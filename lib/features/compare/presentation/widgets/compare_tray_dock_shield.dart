@@ -14,7 +14,9 @@ class CompareTrayCapsuleBackplate extends StatelessWidget {
   final Color surfaceColor;
   final Widget child;
 
-  static const Key backplateKey = ValueKey<String>('compare_tray_capsule_backplate');
+  static const Key backplateKey = ValueKey<String>(
+    'compare_tray_capsule_backplate',
+  );
 
   /// Kept for tests that referenced the old shield key name.
   static const Key shieldKey = backplateKey;

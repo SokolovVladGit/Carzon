@@ -2,6 +2,7 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/app_router.dart';
+import '../../../core/l10n/app_locale_cubit.dart';
 import '../../../core/config/env.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../auth/presentation/bloc/auth_cubit.dart';
@@ -42,6 +43,7 @@ void registerNotificationsFeature(GetIt sl) {
       messagingClient: sl<PushMessagingClient>(),
       notificationsRepository: sl<NotificationsRepository>(),
       authGate: sl<PushAuthGate>(),
+      readLocalePreference: () => sl<AppLocaleCubit>().state.preference,
     ),
   );
 
@@ -70,7 +72,8 @@ void registerNotificationsFeature(GetIt sl) {
   sl.registerLazySingleton<MessagePushTapHandler>(
     () => MessagePushTapHandler(
       navigationCoordinator: sl<MessageConversationNavigationCoordinator>(),
-      listingNavigationCoordinator: sl<FilterAlertListingNavigationCoordinator>(),
+      listingNavigationCoordinator:
+          sl<FilterAlertListingNavigationCoordinator>(),
     ),
   );
 
@@ -87,6 +90,7 @@ void registerNotificationsFeature(GetIt sl) {
                 listingId,
               );
             },
+            readLocalePreference: () => sl<AppLocaleCubit>().state.preference,
           )
         : const NoopMessageForegroundNotificationDisplay(),
   );
@@ -94,7 +98,8 @@ void registerNotificationsFeature(GetIt sl) {
   sl.registerLazySingleton<MessageForegroundNotificationPresenter>(
     () => MessageForegroundNotificationPresenter(
       navigationCoordinator: sl<MessageConversationNavigationCoordinator>(),
-      listingNavigationCoordinator: sl<FilterAlertListingNavigationCoordinator>(),
+      listingNavigationCoordinator:
+          sl<FilterAlertListingNavigationCoordinator>(),
       display: sl<MessageForegroundNotificationDisplay>(),
     ),
   );

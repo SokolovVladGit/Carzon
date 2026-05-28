@@ -52,8 +52,7 @@ class BrowseCatalogFilterAlertsState extends Equatable {
   }) {
     return BrowseCatalogFilterAlertsState(
       phase: phase ?? this.phase,
-      settings:
-          clearSettingsPrefs ? null : (settings ?? this.settings),
+      settings: clearSettingsPrefs ? null : (settings ?? this.settings),
       prefs: clearSettingsPrefs ? null : (prefs ?? this.prefs),
       bellBusy: bellBusy ?? this.bellBusy,
     );
@@ -73,7 +72,8 @@ BrowseCatalogBellOutcome _browseOutcomeFromEnableFailure(String message) {
   };
 }
 
-class BrowseCatalogFilterAlertsCubit extends Cubit<BrowseCatalogFilterAlertsState> {
+class BrowseCatalogFilterAlertsCubit
+    extends Cubit<BrowseCatalogFilterAlertsState> {
   BrowseCatalogFilterAlertsCubit({
     required GetFilterAlertSettings getSettings,
     required SaveFilterAlertCriteria saveCriteria,
@@ -163,9 +163,7 @@ class BrowseCatalogFilterAlertsCubit extends Cubit<BrowseCatalogFilterAlertsStat
   /// FAB UI must prefer the active-delivery ornament when both helpers
   /// somehow returned true (delivery wins). They cannot actually both
   /// return true: `deliveryFullyEnabled` is the discriminator.
-  bool catalogBellSavedWithoutDeliveryVisibleForApplied(
-    ListingsState applied,
-  ) {
+  bool catalogBellSavedWithoutDeliveryVisibleForApplied(ListingsState applied) {
     if (state.phase != BrowseCatalogFilterAlertsLoadPhase.ready) return false;
     final s = state.settings;
     if (s == null || s.criteria == null) return false;

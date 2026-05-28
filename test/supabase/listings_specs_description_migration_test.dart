@@ -30,8 +30,16 @@ void main() {
       expect(lower.contains('p_description'), isTrue);
       expect(lower.contains('p_fuel_type'), isTrue);
       expect(lower.contains('p_registration'), isTrue);
-      expect(lower.contains('drop function if exists public.create_listing_v2'), isTrue);
-      expect(lower.contains('drop function if exists public.update_listing_details_v2'), isTrue);
+      expect(
+        lower.contains('drop function if exists public.create_listing_v2'),
+        isTrue,
+      );
+      expect(
+        lower.contains(
+          'drop function if exists public.update_listing_details_v2',
+        ),
+        isTrue,
+      );
     });
 
     test('authenticated execute grants; revokes anon/public', () {
