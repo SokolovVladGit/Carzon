@@ -59,10 +59,8 @@ void main() {
       routes: [
         GoRoute(
           path: AppRoutes.listings,
-          builder: (_, _) => Scaffold(
-            key: const ValueKey('listings-home'),
-            body: homeChild,
-          ),
+          builder: (_, _) =>
+              Scaffold(key: const ValueKey('listings-home'), body: homeChild),
         ),
         GoRoute(
           path: AppRoutes.favorites,
@@ -138,9 +136,7 @@ void main() {
     expect(find.text('feed-body'), findsOneWidget);
   });
 
-  testWidgets('tray from favorites pushes compare and back returns to favorites', (
-    tester,
-  ) async {
+  testWidgets('tray hidden on favorites route', (tester) async {
     await cubit.addSnapshot(
       CompareListingSnapshot(
         listingId: 'b',
@@ -150,21 +146,13 @@ void main() {
       ),
     );
 
-    final router = await pumpTrayNavigationHarness(
+    await pumpTrayNavigationHarness(
       tester,
       initialLocation: AppRoutes.favorites,
       homeChild: const SizedBox.shrink(),
     );
 
-    await tester.tap(find.byType(CompareFloatingTray));
-    await tester.pumpAndSettle();
-    expect(router.canPop(), isTrue);
-
-    await tester.tap(find.byType(AppBackButton));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const ValueKey('favorites-home')), findsOneWidget);
-    expect(find.byKey(const ValueKey('menu-home')), findsNothing);
+    expect(find.byType(CompareFloatingTray), findsNothing);
   });
 
   testWidgets('rapid tray taps push compare only once', (tester) async {

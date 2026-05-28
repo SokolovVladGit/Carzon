@@ -1,3 +1,4 @@
+import 'package:carzon/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -70,19 +71,12 @@ class CategoryChip extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final Color bg = isSelected
-        ? (isDark ? scheme.surfaceContainer : scheme.surfaceContainerLow)
-        : (isDark ? scheme.surfaceContainerLow : scheme.surfaceContainerLowest);
+        ? AppTheme.selectedChipFill(scheme)
+        : AppTheme.unselectedChipFill(scheme);
 
-    final Color fg = isSelected
-        ? scheme.onSurface.withValues(alpha: isDark ? 0.96 : 0.88)
-        : Color.alphaBlend(
-            scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.88 : 0.82),
-            isDark ? scheme.surfaceContainerLow : scheme.surfaceContainerLowest,
-          );
+    final Color fg = AppTheme.categoryIconColor(scheme, selected: isSelected);
 
-    final Color borderColor = isSelected
-        ? scheme.onSurface.withValues(alpha: isDark ? 0.32 : 0.24)
-        : scheme.outline.withValues(alpha: isDark ? 0.20 : 0.15);
+    final Color borderColor = AppTheme.chipBorder(scheme, selected: isSelected);
 
     final borderWidth = isSelected ? 1.15 : 1.0;
     final radius = BorderRadius.circular(_cornerRadius);

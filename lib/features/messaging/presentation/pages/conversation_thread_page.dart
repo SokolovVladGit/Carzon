@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
@@ -432,8 +433,9 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final overlayTop = cs.surface.withValues(alpha: isDark ? 0.48 : 0.74);
-    final overlayBottom = cs.surface.withValues(alpha: isDark ? 0.60 : 0.82);
+    final overlayTop = cs.surface.withValues(alpha: isDark ? 0.72 : 0.74);
+    final overlayBottom = cs.surface.withValues(alpha: isDark ? 0.88 : 0.82);
+    final composerFooter = AppTheme.editorialDarkFilterFooter(cs);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -454,26 +456,41 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  const RepaintBoundary(
-                    child: DecoratedBox(
+                  if (isDark)
+                    DecoratedBox(
                       decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(_kChatBackgroundAsset),
-                          fit: BoxFit.cover,
-                          alignment: Alignment.center,
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: AppTheme.editorialDarkFilterCanvasGradient(
+                            cs,
+                          ),
+                          stops: const [0, 0.45, 1],
+                        ),
+                      ),
+                    )
+                  else ...[
+                    const RepaintBoundary(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage(_kChatBackgroundAsset),
+                            fit: BoxFit.cover,
+                            alignment: Alignment.center,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [overlayTop, overlayBottom],
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [overlayTop, overlayBottom],
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                   BlocBuilder<ConversationThreadCubit, ConversationThreadState>(
                     builder: (context, state) {
                       switch (state.status) {
@@ -520,40 +537,43 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                                   card,
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 28,
+                                      horizontal: 20,
                                     ),
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const SizedBox(height: 28),
-                                        Icon(
-                                          CarzonIcons.chat,
-                                          size: 44,
-                                          color: cs.primary.withValues(
-                                            alpha: 0.35,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          l10n.messagingThreadEmptyBody,
-                                          textAlign: TextAlign.center,
-                                          style: theme.textTheme.bodyLarge
-                                              ?.copyWith(
-                                                height: 1.5,
-                                                color: cs.onSurface.withValues(
-                                                  alpha: 0.9,
-                                                ),
-                                                shadows: [
-                                                  Shadow(
-                                                    color: cs.surface
-                                                        .withValues(
-                                                          alpha: 0.55,
-                                                        ),
-                                                    blurRadius: 14,
+                                        const SizedBox(height: 24),
+                                        if (isDark)
+                                          DecoratedBox(
+                                            decoration:
+                                                AppTheme.editorialDarkSectionCard(
+                                                  cs,
+                                                  borderRadius: 18,
+                                                )!,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                    20,
+                                                    22,
+                                                    20,
+                                                    18,
                                                   ),
-                                                ],
+                                              child: _ThreadEmptyPrompt(
+                                                body: l10n
+                                                    .messagingThreadEmptyBody,
+                                                theme: theme,
+                                                cs: cs,
+                                                isDark: isDark,
                                               ),
-                                        ),
+                                            ),
+                                          )
+                                        else
+                                          _ThreadEmptyPrompt(
+                                            body: l10n.messagingThreadEmptyBody,
+                                            theme: theme,
+                                            cs: cs,
+                                            isDark: isDark,
+                                          ),
                                         ThreadQuickReplyChips(
                                           textController: widget.textController,
                                         ),
@@ -629,16 +649,18 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
               ),
             ),
           ),
-          ColoredBox(
-            color: cs.surfaceContainer,
+          DecoratedBox(
+            decoration:
+                composerFooter ?? BoxDecoration(color: cs.surfaceContainer),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: cs.outlineVariant.withValues(alpha: 0.42),
-                ),
+                if (composerFooter == null)
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: cs.outlineVariant.withValues(alpha: 0.42),
+                  ),
                 SafeArea(
                   top: false,
                   child: Padding(
@@ -678,7 +700,11 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(26),
                                 borderSide: BorderSide(
-                                  color: cs.primary.withValues(alpha: 0.88),
+                                  color: isDark
+                                      ? AppTheme.editorialDarkFieldFocusBorder(
+                                          cs,
+                                        )
+                                      : cs.primary.withValues(alpha: 0.88),
                                   width: 1.5,
                                 ),
                               ),
@@ -743,6 +769,53 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ThreadEmptyPrompt extends StatelessWidget {
+  const _ThreadEmptyPrompt({
+    required this.body,
+    required this.theme,
+    required this.cs,
+    required this.isDark,
+  });
+
+  final String body;
+  final ThemeData theme;
+  final ColorScheme cs;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          CarzonIcons.chat,
+          size: 44,
+          color: isDark
+              ? AppTheme.editorialAccentColor(cs)
+              : cs.primary.withValues(alpha: 0.35),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          body,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            height: 1.5,
+            color: cs.onSurface.withValues(alpha: isDark ? 0.94 : 0.9),
+            shadows: isDark
+                ? null
+                : [
+                    Shadow(
+                      color: cs.surface.withValues(alpha: 0.55),
+                      blurRadius: 14,
+                    ),
+                  ],
+          ),
+        ),
+      ],
     );
   }
 }

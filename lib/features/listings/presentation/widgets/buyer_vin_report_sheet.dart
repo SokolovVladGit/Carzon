@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../app/di/injection.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
@@ -30,11 +31,13 @@ void showBuyerVinReportSheet(
   bool initialFetchFailed = false,
   bool initialLoading = false,
 }) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
   showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,
     isScrollControlled: true,
     showDragHandle: true,
+    backgroundColor: isDark ? Colors.transparent : null,
     builder: (ctx) => _BuyerVinReportSheetContent(
       listingId: listingId,
       listingMake: listingMake,
@@ -196,7 +199,9 @@ class _BuyerVinReportSheetContentState
       sourceLine: hasDisplayableDecode
           ? l10n.listingBuyerVinReportNhtsaCatalogSourceLine
           : null,
-      updatedLabel: when != null ? l10n.listingBuyerVinReportUpdatedLabel : null,
+      updatedLabel: when != null
+          ? l10n.listingBuyerVinReportUpdatedLabel
+          : null,
       updatedDate: when != null ? formatBuyerVinReportDate(when) : null,
       basicDecodeLine: hasDisplayableDecode
           ? l10n.listingBuyerVinReportBasicDecodeCatalogLine
@@ -218,10 +223,12 @@ class _BuyerVinReportSheetContentState
     final scheme = theme.colorScheme;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final maxSheetHeight = MediaQuery.sizeOf(context).height * 0.86;
+    final isDark = theme.brightness == Brightness.dark;
 
     final scrollBottomPadding =
         kBuyerVinReportStickyFooterBlockHeight +
-        kBuyerVinReportScrollContentEndGap;
+        kBuyerVinReportScrollContentEndGap +
+        (isDark ? kBuyerVinReportCompareTrayScrollClearance : 0);
 
     final uiState = _uiState;
     final showSuccessBadge = buyerVinReportShowsSuccessBadge(uiState);
@@ -244,13 +251,20 @@ class _BuyerVinReportSheetContentState
           key: const ValueKey('buyer_vin_report_loading'),
           children: [
             const SizedBox(height: 24),
-            const Center(child: CircularProgressIndicator()),
+            Center(
+              child: CircularProgressIndicator(
+                color: isDark ? AppTheme.editorialAccentColor(scheme) : null,
+                strokeWidth: 2.5,
+              ),
+            ),
             const SizedBox(height: 16),
             Text(
               l10n.listingVinReportLoadingCta,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
+                color: scheme.onSurfaceVariant.withValues(
+                  alpha: isDark ? 0.84 : 1,
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -293,41 +307,56 @@ class _BuyerVinReportSheetContentState
       };
     }
 
-    return SizedBox(
-      height: maxSheetHeight,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                key: const ValueKey('buyer_vin_report_sheet_scroll'),
-                padding: EdgeInsets.only(bottom: scrollBottomPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _heroHeader(
-                      l10n: l10n,
-                      theme: theme,
-                      compare: compare,
-                      hasDisplayableDecode: hasDisplayableDecode,
-                      nhtsa: nhtsa,
-                      showSuccessVinBadge: showSuccessBadge,
-                    ),
-                    const SizedBox(height: 16),
-                    bodyBelowHero(),
-                  ],
+    return Material(
+      color: isDark ? Colors.transparent : scheme.surface,
+      child: DecoratedBox(
+        decoration: isDark
+            ? BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: AppTheme.editorialDarkFilterCanvasGradient(scheme),
+                  stops: const [0, 0.28, 1],
                 ),
-              ),
+              )
+            : const BoxDecoration(),
+        child: SizedBox(
+          height: maxSheetHeight,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    key: const ValueKey('buyer_vin_report_sheet_scroll'),
+                    padding: EdgeInsets.only(bottom: scrollBottomPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _heroHeader(
+                          l10n: l10n,
+                          theme: theme,
+                          compare: compare,
+                          hasDisplayableDecode: hasDisplayableDecode,
+                          nhtsa: nhtsa,
+                          showSuccessVinBadge: showSuccessBadge,
+                        ),
+                        const SizedBox(height: 16),
+                        bodyBelowHero(),
+                      ],
+                    ),
+                  ),
+                ),
+                BuyerVinReportStickyFooter(
+                  theme: theme,
+                  bottomInset: bottomInset,
+                  closeLabel: l10n.listingBuyerVinReportClose,
+                  onClose: () => Navigator.of(context).pop(),
+                ),
+              ],
             ),
-            BuyerVinReportStickyFooter(
-              theme: theme,
-              bottomInset: bottomInset,
-              closeLabel: l10n.listingBuyerVinReportClose,
-              onClose: () => Navigator.of(context).pop(),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -408,7 +437,9 @@ class _BuyerVinReportSpecSheetBody extends StatelessWidget {
             style: theme.textTheme.labelLarge?.copyWith(
               fontWeight: FontWeight.w700,
               letterSpacing: 0.2,
-              color: theme.colorScheme.onSurfaceVariant,
+              color: theme.brightness == Brightness.dark
+                  ? theme.colorScheme.onSurface.withValues(alpha: 0.88)
+                  : theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 10),
@@ -548,12 +579,7 @@ class _GenericSourceResultCard extends StatelessWidget {
     final body = _str(m['body_type']);
     final fuel = _str(m['fuel_type']);
     final out = <NhtsaVinSummaryField>[];
-    void add(
-      String key,
-      String label,
-      String? value, {
-      bool stack = false,
-    }) {
+    void add(String key, String label, String? value, {bool stack = false}) {
       if (value == null) return;
       out.add(
         NhtsaVinSummaryField(
@@ -570,7 +596,12 @@ class _GenericSourceResultCard extends StatelessWidget {
     if (year != null) {
       add('year', l10n.editListingVinReportDecodedYearLabel, '$year');
     }
-    add('body_type', l10n.editListingVinReportDecodedBodyLabel, body, stack: true);
+    add(
+      'body_type',
+      l10n.editListingVinReportDecodedBodyLabel,
+      body,
+      stack: true,
+    );
     add('fuel_type', l10n.editListingVinReportDecodedFuelLabel, fuel);
     return out;
   }

@@ -130,9 +130,7 @@ ListingsFilterSummaryView buildListingsFilterSummaryView(
 
   if (draft.maxMileage != null) {
     parts.add(
-      l10n.filterSummaryMileageUpTo(
-        _formatAmountRu(draft.maxMileage!),
-      ),
+      l10n.filterSummaryMileageUpTo(_formatAmountRu(draft.maxMileage!)),
     );
   }
 
@@ -147,7 +145,8 @@ ListingsFilterSummaryView buildListingsFilterSummaryView(
     case MarketRegionFilter.both:
       parts.add(l10n.regionBoth);
     case MarketRegionFilter.transnistria:
-      final hasOther = mm != null ||
+      final hasOther =
+          mm != null ||
           price != null ||
           draft.minYear != null ||
           draft.maxYear != null ||
@@ -178,7 +177,9 @@ ListingsFilterSummaryView buildListingsFilterSummaryView(
   }
 
   if (parts.isEmpty) {
-    return ListingsFilterSummaryView.active(l10n.filterSummaryAllListingsInRegionPm);
+    return ListingsFilterSummaryView.active(
+      l10n.filterSummaryAllListingsInRegionPm,
+    );
   }
 
   return ListingsFilterSummaryView.active(parts.join(' · '));

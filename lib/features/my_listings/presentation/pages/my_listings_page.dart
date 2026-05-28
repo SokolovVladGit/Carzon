@@ -24,8 +24,11 @@ class MyListingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TopLevelScaffold(
       destination: TopLevelDestination.menu,
+      backgroundColor: isDark ? scheme.surface : null,
       appBar: AppBar(title: Text(l10n.myListingsTitle)),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {

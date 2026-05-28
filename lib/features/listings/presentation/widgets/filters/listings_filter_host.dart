@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../../core/l10n/app_localizations_x.dart';
+import '../../../../../core/theme/app_theme.dart';
 import 'listings_filter_apply_result.dart';
 import 'listings_filter_form.dart';
 
@@ -170,11 +171,19 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
     final listScrollBottomPad =
         28.0 + footerChromeHeight + bottomOsInset + keyboardInset;
 
+    final light = theme.brightness == Brightness.light;
     final canvasTop = Color.alphaBlend(
       scheme.surfaceContainerLow.withValues(alpha: 0.55),
       scheme.surface,
     );
     final canvasBottom = scheme.surface;
+    final canvasColors = light
+        ? [
+            canvasTop,
+            Color.lerp(canvasTop, canvasBottom, 0.65) ?? canvasBottom,
+            canvasBottom,
+          ]
+        : AppTheme.editorialDarkFilterCanvasGradient(scheme);
 
     return SizedBox.expand(
       child: DecoratedBox(
@@ -182,11 +191,7 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              canvasTop,
-              Color.lerp(canvasTop, canvasBottom, 0.65) ?? canvasBottom,
-              canvasBottom,
-            ],
+            colors: canvasColors,
             stops: const [0, 0.42, 1],
           ),
         ),
@@ -212,18 +217,30 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                               child: Tooltip(
                                 message: l10n.filtersDismissTooltip,
                                 child: Material(
-                                  color: Color.alphaBlend(
-                                    scheme.surfaceContainerHigh.withValues(
-                                      alpha: 0.5,
-                                    ),
-                                    scheme.surface.withValues(alpha: 0.12),
-                                  ),
+                                  color: light
+                                      ? Color.alphaBlend(
+                                          scheme.surfaceContainerHigh
+                                              .withValues(alpha: 0.5),
+                                          scheme.surface.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                        )
+                                      : Color.alphaBlend(
+                                          scheme.primary.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                          scheme.surfaceContainerHigh,
+                                        ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                     side: BorderSide(
-                                      color: scheme.outlineVariant.withValues(
-                                        alpha: 0.24,
-                                      ),
+                                      color: light
+                                          ? scheme.outlineVariant.withValues(
+                                              alpha: 0.24,
+                                            )
+                                          : scheme.outline.withValues(
+                                              alpha: 0.32,
+                                            ),
                                     ),
                                   ),
                                   clipBehavior: Clip.antiAlias,
@@ -267,16 +284,24 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                                       letterSpacing: 2.4,
                                       fontWeight: FontWeight.w600,
                                       height: 1.2,
-                                      color: scheme.onSurface.withValues(
-                                        alpha: 0.42,
-                                      ),
+                                      color: light
+                                          ? scheme.onSurface.withValues(
+                                              alpha: 0.42,
+                                            )
+                                          : AppTheme.editorialAccentColor(
+                                              scheme,
+                                            ).withValues(alpha: 0.72),
                                     ) ??
                                     theme.textTheme.bodySmall?.copyWith(
                                       letterSpacing: 2.0,
                                       fontWeight: FontWeight.w600,
-                                      color: scheme.onSurface.withValues(
-                                        alpha: 0.42,
-                                      ),
+                                      color: light
+                                          ? scheme.onSurface.withValues(
+                                              alpha: 0.42,
+                                            )
+                                          : AppTheme.editorialAccentColor(
+                                              scheme,
+                                            ).withValues(alpha: 0.72),
                                     ),
                               ),
                               const SizedBox(height: 6),
@@ -309,15 +334,12 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                             alignment: Alignment.topRight,
                             child:
                                 (!isAlert &&
-                                        widget.browseHeaderTrailing !=
-                                            null)
-                                    ? Padding(
-                                        padding:
-                                            const EdgeInsets.only(top: 2),
-                                        child:
-                                            widget.browseHeaderTrailing!,
-                                      )
-                                    : const SizedBox.shrink(),
+                                    widget.browseHeaderTrailing != null)
+                                ? Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: widget.browseHeaderTrailing!,
+                                  )
+                                : const SizedBox.shrink(),
                           ),
                         ),
                       ],
@@ -329,7 +351,9 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                         headerSubtitle,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurface.withValues(alpha: 0.5),
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: light ? 0.5 : 0.74,
+                          ),
                           height: 1.45,
                           fontWeight: FontWeight.w400,
                         ),
@@ -341,7 +365,14 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                       child: Divider(
                         height: 1,
                         thickness: 1,
-                        color: scheme.outlineVariant.withValues(alpha: 0.2),
+                        color: light
+                            ? scheme.outlineVariant.withValues(alpha: 0.2)
+                            : Color.alphaBlend(
+                                AppTheme.editorialAccentColor(
+                                  scheme,
+                                ).withValues(alpha: 0.16),
+                                scheme.outline.withValues(alpha: 0.24),
+                              ),
                       ),
                     ),
                     if (!isAlert && widget.browseHeaderNotice != null) ...[
@@ -369,31 +400,32 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                       key: _formKeyEffective,
                       seed: widget.seed,
                       showDraftSummaryStrip: !isAlert,
-                      onDraftMutated:
-                          !isAlert ? _onBrowseDraftTouched : null,
+                      onDraftMutated: !isAlert ? _onBrowseDraftTouched : null,
                     ),
                   ],
                 ),
               ),
               DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Color.alphaBlend(
-                    scheme.surfaceContainerHighest.withValues(alpha: 0.28),
-                    scheme.surface,
-                  ),
-                  border: Border(
-                    top: BorderSide(
-                      color: scheme.outlineVariant.withValues(alpha: 0.22),
+                decoration:
+                    AppTheme.editorialDarkFilterFooter(scheme) ??
+                    BoxDecoration(
+                      color: Color.alphaBlend(
+                        scheme.surfaceContainerHighest.withValues(alpha: 0.28),
+                        scheme.surface,
+                      ),
+                      border: Border(
+                        top: BorderSide(
+                          color: scheme.outlineVariant.withValues(alpha: 0.22),
+                        ),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: scheme.shadow.withValues(alpha: 0.07),
+                          blurRadius: 28,
+                          offset: const Offset(0, -12),
+                        ),
+                      ],
                     ),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: scheme.shadow.withValues(alpha: 0.07),
-                      blurRadius: 28,
-                      offset: const Offset(0, -12),
-                    ),
-                  ],
-                ),
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(22, 20, 22, footerBottomPad),
                   child: Row(
@@ -407,19 +439,26 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                               alpha: 0.82,
                             ),
                             side: BorderSide(
-                              color: scheme.outlineVariant.withValues(
-                                alpha: 0.45,
-                              ),
+                              color: light
+                                  ? scheme.outlineVariant.withValues(
+                                      alpha: 0.45,
+                                    )
+                                  : scheme.outline.withValues(alpha: 0.38),
                             ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            backgroundColor: Color.alphaBlend(
-                              scheme.surface.withValues(alpha: 0.72),
-                              scheme.surfaceContainerHighest.withValues(
-                                alpha: 0.08,
-                              ),
-                            ),
+                            backgroundColor: light
+                                ? Color.alphaBlend(
+                                    scheme.surface.withValues(alpha: 0.72),
+                                    scheme.surfaceContainerHighest.withValues(
+                                      alpha: 0.08,
+                                    ),
+                                  )
+                                : Color.alphaBlend(
+                                    scheme.primary.withValues(alpha: 0.06),
+                                    scheme.surfaceContainerHigh,
+                                  ),
                           ),
                           child: Text(
                             l10n.filterClear,
@@ -440,11 +479,20 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                           onPressed: widget.applyEnabled ? _onApplyTap : null,
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 18),
-                            elevation: 0,
-                            shadowColor: scheme.primary.withValues(alpha: 0.28),
+                            elevation: light ? 0 : 1,
+                            shadowColor: scheme.primary.withValues(
+                              alpha: light ? 0.28 : 0.18,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
+                            backgroundColor: light
+                                ? null
+                                : Color.lerp(
+                                    scheme.primary,
+                                    scheme.primaryContainer,
+                                    0.15,
+                                  ),
                           ),
                           child: Text(
                             applyLabel,

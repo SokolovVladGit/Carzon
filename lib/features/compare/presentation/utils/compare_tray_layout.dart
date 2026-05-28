@@ -5,10 +5,18 @@ import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../widgets/compare_floating_tray.dart';
 import '../widgets/compare_tray_dock_shield.dart';
 
+/// Main discovery feed — the only route where the floating compare tray appears.
+///
+/// [AppRoutes.listings] is `/` (home). Query strings on that path still count
+/// as the listings feed, e.g. `/?openFilters=1`.
+bool compareTrayVisibleForRoute(String location) {
+  final path = Uri.parse(location).path;
+  return path == AppRoutes.listings;
+}
+
 /// Routes where the floating compare tray is not shown.
 bool compareTrayHiddenForRoute(String location) {
-  final path = Uri.parse(location).path;
-  return path == AppRoutes.compare;
+  return !compareTrayVisibleForRoute(location);
 }
 
 /// Listing details (`/listings/:id`) with sticky contact bar.

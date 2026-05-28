@@ -105,14 +105,17 @@ class _CatalogBrowseFilterAlertSheetBellState
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return BlocBuilder<BrowseCatalogFilterAlertsCubit,
-        BrowseCatalogFilterAlertsState>(
+    return BlocBuilder<
+      BrowseCatalogFilterAlertsCubit,
+      BrowseCatalogFilterAlertsState
+    >(
       builder: (context, alerts) {
         final draftCrit = _resolveDraftCriteria();
 
         final cubit = context.read<BrowseCatalogFilterAlertsCubit>();
         final bool deliveryOn = cubit.browseBellShowsActiveDraft(draftCrit);
-        final bool savedNoDelivery = !deliveryOn &&
+        final bool savedNoDelivery =
+            !deliveryOn &&
             cubit.browseBellShowsSavedDraftWithoutDelivery(draftCrit);
 
         final l10n = widget.sheetContext.l10n;
@@ -133,8 +136,7 @@ class _CatalogBrowseFilterAlertSheetBellState
           bellIcon = Icons.notifications;
           fg = CatalogFilterAlertAccent.savedNoDelivery(scheme);
           iconSize = 24;
-          tooltip =
-              l10n.catalogBrowseFilterBellSavedDeliveryUnavailableTooltip;
+          tooltip = l10n.catalogBrowseFilterBellSavedDeliveryUnavailableTooltip;
         } else {
           bellIcon = Icons.notifications_none;
           fg = CatalogFilterAlertAccent.inactiveStroke(scheme);
@@ -149,10 +151,9 @@ class _CatalogBrowseFilterAlertSheetBellState
             key: CatalogBrowseFilterAlertSheetBell.bellKey,
             padding: EdgeInsets.zero,
             tooltip: tooltip,
-            onPressed:
-                alerts.bellBusy
-                    ? null
-                    : () => unawaited(_onBellTapped(context)),
+            onPressed: alerts.bellBusy
+                ? null
+                : () => unawaited(_onBellTapped(context)),
             icon: Icon(
               bellIcon,
               key: savedNoDelivery
@@ -228,12 +229,12 @@ class _CatalogBrowseFilterAlertSheetBellState
     final messenger = ScaffoldMessenger.maybeOf(modalContext);
     if (messenger == null) return;
 
-    final outcome =
-        await modalContext.read<BrowseCatalogFilterAlertsCubit>()
-            .handleCatalogFilterBell(
-              draftCriteria: draft,
-              authenticated: authenticated,
-            );
+    final outcome = await modalContext
+        .read<BrowseCatalogFilterAlertsCubit>()
+        .handleCatalogFilterBell(
+          draftCriteria: draft,
+          authenticated: authenticated,
+        );
 
     if (kDebugMode) {
       debugPrint(
@@ -255,8 +256,7 @@ class _CatalogBrowseFilterAlertSheetBellState
             content: Text(l10n.filterAlertSignInRequired),
             action: SnackBarAction(
               label: l10n.commonSignIn,
-              onPressed: () =>
-                  modalContext.go(AppRoutes.signIn),
+              onPressed: () => modalContext.go(AppRoutes.signIn),
             ),
           ),
         );
@@ -270,8 +270,9 @@ class _CatalogBrowseFilterAlertSheetBellState
         // *root* messenger, so any snackbar shown here outlives the
         // modal and bleeds onto the listings page after the user taps
         // "Show cars" — exactly the regression this branch removes.
-        widget.onInlineNoticeRequested
-            ?.call(CatalogBellInlineNotice.criteriaTooBroad);
+        widget.onInlineNoticeRequested?.call(
+          CatalogBellInlineNotice.criteriaTooBroad,
+        );
       case BrowseCatalogBellOutcome.pushBuildDisabled:
         messenger.showSnackBar(
           SnackBar(content: Text(l10n.filterAlertNotificationsPushDisabled)),

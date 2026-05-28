@@ -4,6 +4,9 @@ import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
+import 'package:carzon/features/compare/domain/entities/compare_item.dart';
+import 'package:carzon/features/compare/domain/repositories/compare_repository.dart';
+import 'package:carzon/features/compare/presentation/cubit/compare_cubit.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
@@ -30,10 +33,22 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 class _MockFavoritesCubit extends MockCubit<FavoritesState>
     implements FavoritesCubit {}
 
+class _MemoryCompareRepository implements CompareRepository {
+  @override
+  Future<void> clear() async {}
+
+  @override
+  Future<List<CompareItem>> loadItems() async => const [];
+
+  @override
+  Future<void> saveItems(List<CompareItem> value) async {}
+}
+
 void main() {
   late _MockDetailsCubit detailsCubit;
   late _MockAuthCubit authCubit;
   late _MockFavoritesCubit favoritesCubit;
+  late CompareCubit compareCubit;
   late MockGetSellerPublicProfile sellerProfileUseCase;
 
   final ru = ruStrings();
@@ -75,6 +90,7 @@ void main() {
     detailsCubit = _MockDetailsCubit();
     authCubit = _MockAuthCubit();
     favoritesCubit = _MockFavoritesCubit();
+    compareCubit = CompareCubit(repository: _MemoryCompareRepository());
     sellerProfileUseCase = MockGetSellerPublicProfile();
 
     when(() => detailsCubit.load(any())).thenAnswer((_) async {});
@@ -131,6 +147,7 @@ void main() {
         providers: [
           BlocProvider<AuthCubit>.value(value: authCubit),
           BlocProvider<FavoritesCubit>.value(value: favoritesCubit),
+          BlocProvider<CompareCubit>.value(value: compareCubit),
         ],
         child: MaterialApp.router(
           locale: const Locale('ru'),
@@ -193,6 +210,7 @@ void main() {
         providers: [
           BlocProvider<AuthCubit>.value(value: authCubit),
           BlocProvider<FavoritesCubit>.value(value: favoritesCubit),
+          BlocProvider<CompareCubit>.value(value: compareCubit),
         ],
         child: MaterialApp.router(
           locale: const Locale('ru'),

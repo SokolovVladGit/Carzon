@@ -23,8 +23,11 @@ class FavoritesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return TopLevelScaffold(
       destination: TopLevelDestination.favorites,
+      backgroundColor: isDark ? scheme.surface : null,
       appBar: AppBar(title: Text(l10n.favoritesTitle)),
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
@@ -53,7 +56,11 @@ class _SignInRequired extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(CarzonIcons.heartOutline, size: 48),
+            Icon(
+              CarzonIcons.heartOutline,
+              size: 48,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 12),
             Text(l10n.favoritesSignInRequired, textAlign: TextAlign.center),
             const SizedBox(height: 16),

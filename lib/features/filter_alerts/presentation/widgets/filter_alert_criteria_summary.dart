@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
@@ -33,15 +34,10 @@ class FilterAlertCriteriaSummary extends StatelessWidget {
 
     final scheme = theme.colorScheme;
     return Container(
-      key: const ValueKey<String>(
-        'filter_alert_management_summary_card',
-      ),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.5),
-        ),
+      key: const ValueKey<String>('filter_alert_management_summary_card'),
+      decoration: AppTheme.filterAlertManagementSurface(
+        scheme,
+        borderRadius: 14,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Column(
@@ -112,7 +108,10 @@ class FilterAlertCriteriaSummary extends StatelessWidget {
 
     final bodyType = criteria.bodyType;
     if (bodyType != null) {
-      rows.add((l10n.listingFieldBodyType, formatListingBodyType(l10n, bodyType)));
+      rows.add((
+        l10n.listingFieldBodyType,
+        formatListingBodyType(l10n, bodyType),
+      ));
     }
 
     final typeLabel = _formatListingTypeIn(l10n, criteria.typeIn);
@@ -137,10 +136,7 @@ class FilterAlertCriteriaSummary extends StatelessWidget {
     return '–$maxYear';
   }
 
-  String? _formatPriceRange(
-    AppLocalizations l10n,
-    ListingDiscoveryCriteria c,
-  ) {
+  String? _formatPriceRange(AppLocalizations l10n, ListingDiscoveryCriteria c) {
     final hasMin = c.minPrice != null;
     final hasMax = c.maxPrice != null;
     if (!hasMin && !hasMax) return null;
@@ -181,8 +177,7 @@ class FilterAlertCriteriaSummary extends StatelessWidget {
       ListingType.exchange,
       ListingType.both,
     };
-    if (set.length == saleSemantics.length &&
-        set.containsAll(saleSemantics)) {
+    if (set.length == saleSemantics.length && set.containsAll(saleSemantics)) {
       return l10n.typeSale;
     }
     if (set.length == exchangeSemantics.length &&

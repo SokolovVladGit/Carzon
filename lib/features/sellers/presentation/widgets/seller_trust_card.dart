@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/entities/seller_public_profile.dart';
 import '../utils/format_seller_member_since.dart';
@@ -38,8 +39,12 @@ class SellerTrustCard extends StatelessWidget {
             ),
           ];
 
+    final darkCardDecoration = isDark
+        ? AppTheme.editorialDarkSectionCard(scheme, borderRadius: 18)
+        : null;
+
     final cardFill = isDark
-        ? scheme.surfaceContainerLow
+        ? Colors.transparent
         : Color.alphaBlend(
             scheme.surfaceTint.withValues(alpha: 0.035),
             scheme.surfaceContainerLowest,
@@ -59,17 +64,20 @@ class SellerTrustCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: shadow,
-        ),
+        decoration:
+            darkCardDecoration ??
+            BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: shadow,
+            ),
         child: Material(
           color: cardFill,
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
-            side: BorderSide(
-              color: scheme.outline.withValues(alpha: isDark ? 0.26 : 0.17),
-            ),
+            side: isDark
+                ? BorderSide.none
+                : BorderSide(color: scheme.outline.withValues(alpha: 0.17)),
           ),
           clipBehavior: Clip.antiAlias,
           child: _maybeTooltip(
@@ -95,6 +103,9 @@ class SellerTrustCard extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                               letterSpacing: 0.06,
                               height: 1.22,
+                              color: isDark
+                                  ? scheme.onSurface.withValues(alpha: 0.96)
+                                  : null,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -104,7 +115,7 @@ class SellerTrustCard extends StatelessWidget {
                             memberLine,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: scheme.onSurfaceVariant.withValues(
-                                alpha: 0.88,
+                                alpha: isDark ? 0.82 : 0.88,
                               ),
                               height: 1.25,
                             ),
@@ -116,7 +127,7 @@ class SellerTrustCard extends StatelessWidget {
                             listingsLine,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: scheme.onSurfaceVariant.withValues(
-                                alpha: 0.82,
+                                alpha: isDark ? 0.76 : 0.82,
                               ),
                               height: 1.25,
                             ),
@@ -129,7 +140,9 @@ class SellerTrustCard extends StatelessWidget {
                     Icon(
                       CarzonIcons.chevronRight,
                       size: 19,
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
+                      color: scheme.onSurfaceVariant.withValues(
+                        alpha: isDark ? 0.72 : 0.48,
+                      ),
                     ),
                   ],
                 ),

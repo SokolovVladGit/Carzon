@@ -5,6 +5,9 @@ import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
+import 'package:carzon/features/compare/domain/entities/compare_item.dart';
+import 'package:carzon/features/compare/domain/repositories/compare_repository.dart';
+import 'package:carzon/features/compare/presentation/cubit/compare_cubit.dart';
 import 'package:carzon/features/listings/domain/entities/buyer_listing_vin_report_source_result.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/repositories/listings_repository.dart';
@@ -33,6 +36,17 @@ class _MockFavoritesCubit extends MockCubit<FavoritesState>
 
 class _MockListingsRepository extends Mock implements ListingsRepository {}
 
+class _MemoryCompareRepository implements CompareRepository {
+  @override
+  Future<void> clear() async {}
+
+  @override
+  Future<List<CompareItem>> loadItems() async => const [];
+
+  @override
+  Future<void> saveItems(List<CompareItem> value) async {}
+}
+
 Listing _listing({ListingVinStatus vinStatus = ListingVinStatus.notProvided}) =>
     Listing(
       id: 'l1',
@@ -56,6 +70,7 @@ void main() {
   late _MockAuthCubit authCubit;
   late _MockFavoritesCubit favoritesCubit;
   late _MockListingsRepository listingsRepo;
+  late CompareCubit compareCubit;
   late MockGetSellerPublicProfile sellerProfileUseCase;
   final ru = ruStrings();
 
@@ -67,6 +82,7 @@ void main() {
     authCubit = _MockAuthCubit();
     favoritesCubit = _MockFavoritesCubit();
     listingsRepo = _MockListingsRepository();
+    compareCubit = CompareCubit(repository: _MemoryCompareRepository());
     sellerProfileUseCase = MockGetSellerPublicProfile();
     stubSellerPublicProfileHidden(sellerProfileUseCase);
 
@@ -123,6 +139,7 @@ void main() {
       providers: [
         BlocProvider<AuthCubit>.value(value: authCubit),
         BlocProvider<FavoritesCubit>.value(value: favoritesCubit),
+        BlocProvider<CompareCubit>.value(value: compareCubit),
       ],
       child: MaterialApp.router(
         locale: const Locale('ru'),
@@ -156,7 +173,10 @@ void main() {
     expect(find.text(ru.listingVinBadgeIndicated), findsOneWidget);
     expect(find.text(ru.listingVinReportOpenHint), findsOneWidget);
     expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
-    expect(find.byKey(const ValueKey('vin_present_latin_badge_v')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('vin_present_latin_badge_v')),
+      findsOneWidget,
+    );
     expect(find.text('В'), findsNothing);
     expect(
       find.byKey(const ValueKey('listing_vin_trust_badge_tap')),

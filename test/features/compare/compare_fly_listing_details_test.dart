@@ -47,7 +47,7 @@ Listing _listing() => Listing(
 void main() {
   final ru = ruStrings();
 
-  testWidgets('adding compare on listing details shows tray above contact bar', (
+  testWidgets('adding compare on listing details does not show floating tray', (
     tester,
   ) async {
     final repo = _MemoryCompareRepository();
@@ -109,7 +109,7 @@ void main() {
 
     expect(cubit.state.containsListing('l1'), isTrue);
     expect(find.text(ru.compareAddedMessage), findsNothing);
-    expect(find.byType(CompareFloatingTray), findsOneWidget);
+    expect(find.byType(CompareFloatingTray), findsNothing);
     expect(flyController.isAnimating, isFalse);
   });
 }

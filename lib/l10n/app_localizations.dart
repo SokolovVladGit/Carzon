@@ -2348,6 +2348,18 @@ abstract class AppLocalizations {
   /// **'Настройки'**
   String get profileSettingsSectionTitle;
 
+  /// No description provided for @profileDarkThemeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тёмная тема'**
+  String get profileDarkThemeTitle;
+
+  /// No description provided for @profileDarkThemeSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Переключает интерфейс приложения на тёмный режим.'**
+  String get profileDarkThemeSubtitle;
+
   /// No description provided for @profileLanguageTitle.
   ///
   /// In ru, this message translates to:

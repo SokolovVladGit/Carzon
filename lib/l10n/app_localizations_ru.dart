@@ -1244,6 +1244,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileSettingsSectionTitle => 'Настройки';
 
   @override
+  String get profileDarkThemeTitle => 'Тёмная тема';
+
+  @override
+  String get profileDarkThemeSubtitle =>
+      'Переключает интерфейс приложения на тёмный режим.';
+
+  @override
   String get profileLanguageTitle => 'Язык приложения';
 
   @override

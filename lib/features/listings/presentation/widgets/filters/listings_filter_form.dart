@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../../core/l10n/app_localizations_x.dart';
+import '../../../../../core/theme/app_theme.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../domain/entities/listing.dart';
 import '../../../domain/entities/listing_currency.dart';
@@ -100,9 +101,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     _maxPriceFocus = FocusNode(debugLabel: 'listings_filter_max_price');
     _minPriceFocus.addListener(_syncPriceFocusDecoration);
     _maxPriceFocus.addListener(_syncPriceFocusDecoration);
-    _maxMileage = TextEditingController(
-      text: w.maxMileage?.toString() ?? '',
-    );
+    _maxMileage = TextEditingController(text: w.maxMileage?.toString() ?? '');
     _city = TextEditingController(text: w.city ?? '');
     _type = w.typeFilter;
     _region = w.region;
@@ -130,6 +129,32 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     }
   }
 
+  Color _compactFieldFill(ColorScheme scheme) {
+    if (scheme.brightness == Brightness.light) {
+      return scheme.surface.withValues(alpha: 0.42);
+    }
+    return Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.05),
+      scheme.surfaceContainerLow,
+    );
+  }
+
+  Color _compactFieldBorder(
+    ColorScheme scheme, {
+    required bool hasError,
+    required bool focused,
+  }) {
+    if (hasError) return scheme.error.withValues(alpha: 0.65);
+    if (focused) {
+      return scheme.brightness == Brightness.light
+          ? scheme.primary.withValues(alpha: 0.5)
+          : AppTheme.editorialDarkFieldFocusBorder(scheme);
+    }
+    return scheme.brightness == Brightness.light
+        ? scheme.outlineVariant.withValues(alpha: 0.22)
+        : scheme.outline.withValues(alpha: 0.32);
+  }
+
   TextStyle _compactBoundPlaceholderStyle(
     ThemeData theme,
     ColorScheme scheme, {
@@ -144,26 +169,28 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
       fontWeight: FontWeight.w400,
       letterSpacing: 0,
       height: 1.25,
-      color: scheme.onSurfaceVariant.withValues(alpha: 0.3),
+      color: scheme.onSurfaceVariant.withValues(
+        alpha: scheme.brightness == Brightness.light ? 0.3 : 0.48,
+      ),
     );
   }
 
   /// Draft criteria reflecting current field values (for live summary / previews).
   ListingsFilterFormSeed get draftSeed => ListingsFilterFormSeed(
-        make: _effectiveMakeFilter(),
-        model: _model.text.trim().isEmpty ? null : _model.text.trim(),
-        minYear: _minYearValue,
-        maxYear: _maxYearValue,
-        minPrice: _parsePrice(_minPrice.text),
-        maxPrice: _parsePrice(_maxPrice.text),
-        maxMileage: _parseMileage(_maxMileage.text),
-        city: _city.text.trim().isEmpty ? null : _city.text.trim(),
-        typeFilter: _type,
-        region: _region,
-        sort: _sort,
-        bodyType: _bodyType,
-        priceCurrencyFilter: _priceCurrency,
-      );
+    make: _effectiveMakeFilter(),
+    model: _model.text.trim().isEmpty ? null : _model.text.trim(),
+    minYear: _minYearValue,
+    maxYear: _maxYearValue,
+    minPrice: _parsePrice(_minPrice.text),
+    maxPrice: _parsePrice(_maxPrice.text),
+    maxMileage: _parseMileage(_maxMileage.text),
+    city: _city.text.trim().isEmpty ? null : _city.text.trim(),
+    typeFilter: _type,
+    region: _region,
+    sort: _sort,
+    bodyType: _bodyType,
+    priceCurrencyFilter: _priceCurrency,
+  );
 
   /// Resets all controls to the vanilla discovery baseline (draft only).
   void resetDraftToVanilla() {
@@ -217,43 +244,11 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     String? hint,
     String? errorText,
   }) {
-    final scheme = theme.colorScheme;
-    final radius = BorderRadius.circular(14);
-    return InputDecoration(
-      labelText: label,
-      hintText: hint,
+    return AppTheme.listingsFilterFieldDecoration(
+      theme,
+      label: label,
+      hint: hint,
       errorText: errorText,
-      isDense: true,
-      filled: true,
-      fillColor: scheme.surface.withValues(alpha: 0.42),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-      border: OutlineInputBorder(
-        borderRadius: radius,
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: radius,
-        borderSide: BorderSide(
-          color: scheme.outlineVariant.withValues(alpha: 0.22),
-        ),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: radius,
-        borderSide: BorderSide(
-          color: scheme.primary.withValues(alpha: 0.5),
-          width: 1.5,
-        ),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: radius,
-        borderSide: BorderSide(
-          color: scheme.error.withValues(alpha: 0.65),
-        ),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: radius,
-        borderSide: BorderSide(color: scheme.error, width: 1.5),
-      ),
     );
   }
 
@@ -397,17 +392,19 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     required bool isMin,
   }) {
     final isBoundEmpty = year == null;
-    final valueCaption =
-        isBoundEmpty ? _boundEmptyPlaceholder : '$year';
+    final valueCaption = isBoundEmpty ? _boundEmptyPlaceholder : '$year';
 
-    final fill = scheme.surface.withValues(alpha: 0.42);
+    final fill = _compactFieldFill(scheme);
     final borderRadius = BorderRadius.circular(14);
     final hasError = errorText != null;
-    final borderColor = hasError
-        ? scheme.error.withValues(alpha: 0.65)
-        : scheme.outlineVariant.withValues(alpha: 0.22);
+    final borderColor = _compactFieldBorder(
+      scheme,
+      hasError: hasError,
+      focused: false,
+    );
 
-    final labelStyle = theme.textTheme.labelSmall?.copyWith(
+    final labelStyle =
+        theme.textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w600,
           letterSpacing: 0.06,
           height: 1.15,
@@ -421,7 +418,8 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
           color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
         );
 
-    var valueStyleStrong = theme.textTheme.titleMedium?.copyWith(
+    var valueStyleStrong =
+        theme.textTheme.titleMedium?.copyWith(
           fontWeight: FontWeight.w600,
           letterSpacing: -0.12,
           height: 1.2,
@@ -498,15 +496,14 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                             errorText,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                                  color:
-                                      scheme.error.withValues(alpha: 0.9),
+                            style:
+                                theme.textTheme.bodySmall?.copyWith(
+                                  color: scheme.error.withValues(alpha: 0.9),
                                   fontWeight: FontWeight.w500,
                                   height: 1.25,
                                 ) ??
                                 TextStyle(
-                                  color:
-                                      scheme.error.withValues(alpha: 0.9),
+                                  color: scheme.error.withValues(alpha: 0.9),
                                   fontSize: 11,
                                 ),
                           ),
@@ -546,18 +543,19 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     required String? errorText,
     required bool isMin,
   }) {
-    final fill = scheme.surface.withValues(alpha: 0.42);
+    final fill = _compactFieldFill(scheme);
     final borderRadius = BorderRadius.circular(14);
     final hasError = errorText != null;
     final focused = focusNode.hasFocus;
-    final borderColor = hasError
-        ? scheme.error.withValues(alpha: 0.65)
-        : focused
-            ? scheme.primary.withValues(alpha: 0.5)
-            : scheme.outlineVariant.withValues(alpha: 0.22);
+    final borderColor = _compactFieldBorder(
+      scheme,
+      hasError: hasError,
+      focused: focused,
+    );
     final borderWidth = !hasError && focused ? 1.25 : 1.0;
 
-    final labelStyle = theme.textTheme.labelSmall?.copyWith(
+    final labelStyle =
+        theme.textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w600,
           letterSpacing: 0.06,
           height: 1.15,
@@ -571,7 +569,8 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
           color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
         );
 
-    var valueStyleStrong = theme.textTheme.titleMedium?.copyWith(
+    var valueStyleStrong =
+        theme.textTheme.titleMedium?.copyWith(
           fontWeight: FontWeight.w600,
           letterSpacing: -0.12,
           height: 1.2,
@@ -583,8 +582,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
       color: scheme.onSurface.withValues(alpha: 0.9),
     );
 
-    final showEmptyPlaceholder =
-        controller.text.trim().isEmpty && !focused;
+    final showEmptyPlaceholder = controller.text.trim().isEmpty && !focused;
 
     final hintStyle = _compactBoundPlaceholderStyle(
       theme,
@@ -613,94 +611,93 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                 child: Material(
                   color: Colors.transparent,
                   child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(14, 14, 12, 12),
-                  constraints: const BoxConstraints(minHeight: 48),
-                  decoration: BoxDecoration(
-                    borderRadius: borderRadius,
-                    color: fill,
-                    border: Border.all(
-                      color: borderColor,
-                      width: borderWidth,
+                    duration: const Duration(milliseconds: 160),
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(14, 14, 12, 12),
+                    constraints: const BoxConstraints(minHeight: 48),
+                    decoration: BoxDecoration(
+                      borderRadius: borderRadius,
+                      color: fill,
+                      border: Border.all(
+                        color: borderColor,
+                        width: borderWidth,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextField(
+                          key: ValueKey<String>(fieldKey),
+                          controller: controller,
+                          focusNode: focusNode,
+                          keyboardType: TextInputType.number,
+                          textAlign: showEmptyPlaceholder
+                              ? TextAlign.center
+                              : TextAlign.start,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          style: valueStyleStrong,
+                          onChanged: (_) => _clearPriceErrorsIfNeeded(),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            errorBorder: InputBorder.none,
+                            disabledBorder: InputBorder.none,
+                            isDense: true,
+                            filled: false,
+                            isCollapsed: false,
+                            contentPadding: EdgeInsets.zero,
+                            hintText: showEmptyPlaceholder
+                                ? _boundEmptyPlaceholder
+                                : null,
+                            hintStyle: hintStyle,
+                          ),
+                        ),
+                        if (errorText != null) ...[
+                          const SizedBox(height: 6),
+                          Text(
+                            errorText,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                theme.textTheme.bodySmall?.copyWith(
+                                  color: scheme.error.withValues(alpha: 0.9),
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.25,
+                                ) ??
+                                TextStyle(
+                                  color: scheme.error.withValues(alpha: 0.9),
+                                  fontSize: 11,
+                                ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      TextField(
-                        key: ValueKey<String>(fieldKey),
-                        controller: controller,
-                        focusNode: focusNode,
-                        keyboardType: TextInputType.number,
-                        textAlign: showEmptyPlaceholder
-                            ? TextAlign.center
-                            : TextAlign.start,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        style: valueStyleStrong,
-                        onChanged: (_) => _clearPriceErrorsIfNeeded(),
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          errorBorder: InputBorder.none,
-                          disabledBorder: InputBorder.none,
-                          isDense: true,
-                          filled: false,
-                          isCollapsed: false,
-                          contentPadding: EdgeInsets.zero,
-                          hintText: showEmptyPlaceholder
-                              ? _boundEmptyPlaceholder
-                              : null,
-                          hintStyle: hintStyle,
-                        ),
-                      ),
-                      if (errorText != null) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          errorText,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                                color:
-                                    scheme.error.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w500,
-                                height: 1.25,
-                              ) ??
-                              TextStyle(
-                                color:
-                                    scheme.error.withValues(alpha: 0.9),
-                                fontSize: 11,
-                              ),
-                        ),
-                      ],
-                    ],
+                ),
+              ),
+              Positioned(
+                left: 10,
+                top: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  color: fill,
+                  child: Text(
+                    boundLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: labelStyle,
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              left: 10,
-              top: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                color: fill,
-                child: Text(
-                  boundLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: labelStyle,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -727,18 +724,12 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
 
   /// Validates fields and returns an apply result, or `null` if validation failed.
   ListingsFilterApplyResult? submit() {
-    return _buildApplyOutcome(
-      l10n: context.l10n,
-      mutateInlineErrors: true,
-    );
+    return _buildApplyOutcome(l10n: context.l10n, mutateInlineErrors: true);
   }
 
   /// Same validation as [submit] without touching inline errors (peek only).
   ListingsFilterApplyResult? peekValidatedApplyOutcome() {
-    return _buildApplyOutcome(
-      l10n: context.l10n,
-      mutateInlineErrors: false,
-    );
+    return _buildApplyOutcome(l10n: context.l10n, mutateInlineErrors: false);
   }
 
   ListingsFilterApplyResult? _buildApplyOutcome({
@@ -910,14 +901,18 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
 
-    final bodyDropdownDecoration = _fieldDeco(
-      theme,
-      label: l10n.listingBodyTypeSectionTitle,
-    ).copyWith(
-      alignLabelWithHint: true,
-      fillColor: scheme.surface.withValues(alpha: 0.36),
-    );
+    final bodyDropdownDecoration =
+        _fieldDeco(theme, label: l10n.listingBodyTypeSectionTitle).copyWith(
+          alignLabelWithHint: true,
+          fillColor: light
+              ? scheme.surface.withValues(alpha: 0.36)
+              : Color.alphaBlend(
+                  scheme.primary.withValues(alpha: 0.04),
+                  scheme.surfaceContainerLow,
+                ),
+        );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -964,7 +959,9 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    key: const ValueKey<String>('listings_filter_make_pick_trigger'),
+                    key: const ValueKey<String>(
+                      'listings_filter_make_pick_trigger',
+                    ),
                     borderRadius: BorderRadius.circular(12),
                     onTap: _openMakeSheet,
                     child: Padding(
@@ -1020,19 +1017,35 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-                    color: scheme.outlineVariant.withValues(alpha: 0.2),
+                    color: light
+                        ? scheme.outlineVariant.withValues(alpha: 0.2)
+                        : scheme.outline.withValues(alpha: 0.28),
                   ),
-                  color: Color.alphaBlend(
-                    scheme.surfaceContainerHighest.withValues(alpha: 0.2),
-                    scheme.surface,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: scheme.shadow.withValues(alpha: 0.035),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
+                  color: light
+                      ? Color.alphaBlend(
+                          scheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                          scheme.surface,
+                        )
+                      : Color.alphaBlend(
+                          scheme.primary.withValues(alpha: 0.05),
+                          scheme.surfaceContainerLow,
+                        ),
+                  boxShadow: light
+                      ? [
+                          BoxShadow(
+                            color: scheme.shadow.withValues(alpha: 0.035),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
+                          ),
+                        ]
+                      : [
+                          BoxShadow(
+                            color: scheme.primary.withValues(alpha: 0.04),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                            spreadRadius: -2,
+                          ),
+                        ],
                 ),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
@@ -1042,7 +1055,9 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                       Text(
                         l10n.filterPriceBudgetHint,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurface.withValues(alpha: 0.52),
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: light ? 0.52 : 0.72,
+                          ),
                           height: 1.45,
                         ),
                       ),
@@ -1083,7 +1098,9 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      ListingsFilterSegmentedControl<ListingPriceCurrencyFilter>(
+                      ListingsFilterSegmentedControl<
+                        ListingPriceCurrencyFilter
+                      >(
                         value: _priceCurrency,
                         onChanged: (v) {
                           setState(() => _priceCurrency = v);

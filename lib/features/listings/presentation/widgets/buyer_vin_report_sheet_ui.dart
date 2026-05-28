@@ -1,15 +1,70 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../utils/nhtsa_vin_summary_display.dart';
 import 'vin_present_latin_badge.dart';
+
+/// Extra scroll/footer clearance so content stays above the floating compare tray
+/// when the sheet is opened from listing details (tray remains in root overlay).
+const double kBuyerVinReportCompareTrayScrollClearance = 80;
 
 /// Calm product microcopy (notes, footnotes) — no aggressive italic.
 TextStyle buyerVinReportMicrocopyStyle(ThemeData theme) {
   final scheme = theme.colorScheme;
+  final isDark = theme.brightness == Brightness.dark;
   return theme.textTheme.bodySmall!.copyWith(
     height: 1.45,
     fontWeight: FontWeight.w500,
-    color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
+    color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.82 : 0.9),
+  );
+}
+
+BoxDecoration _buyerVinReportEditorialCard(
+  ColorScheme scheme, {
+  required double borderRadius,
+}) {
+  return AppTheme.editorialDarkSectionCard(scheme, borderRadius: borderRadius)!;
+}
+
+BoxDecoration _buyerVinReportDarkDataInset(ColorScheme scheme) {
+  return BoxDecoration(
+    borderRadius: BorderRadius.circular(12),
+    border: Border.all(color: scheme.outline.withValues(alpha: 0.28)),
+    gradient: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Color.alphaBlend(
+          scheme.primary.withValues(alpha: 0.08),
+          scheme.surfaceContainerHigh,
+        ),
+        scheme.surfaceContainerLow,
+      ],
+    ),
+  );
+}
+
+BoxDecoration _buyerVinReportDarkCompareInset(
+  ColorScheme scheme, {
+  required bool isMatch,
+}) {
+  final accent = AppTheme.editorialAccentColor(scheme);
+  return BoxDecoration(
+    borderRadius: BorderRadius.circular(12),
+    border: Border.all(
+      color: (isMatch ? accent : scheme.tertiary).withValues(alpha: 0.32),
+    ),
+    gradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color.alphaBlend(
+          (isMatch ? accent : scheme.tertiary).withValues(alpha: 0.14),
+          scheme.surfaceContainerHigh,
+        ),
+        scheme.surfaceContainerLow.withValues(alpha: 0.92),
+      ],
+    ),
   );
 }
 
@@ -28,6 +83,35 @@ BoxDecoration buyerVinReportSectionDecoration(
   ColorScheme scheme,
   BuyerVinReportSectionTone tone,
 ) {
+  if (scheme.brightness == Brightness.dark) {
+    switch (tone) {
+      case BuyerVinReportSectionTone.limitations:
+        final warm = Color.alphaBlend(
+          const Color(0xFFE8B87A).withValues(alpha: 0.16),
+          scheme.surfaceContainerHigh,
+        );
+        return BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: warm,
+          border: Border.all(
+            color: const Color(0xFFD4A574).withValues(alpha: 0.38),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: scheme.primary.withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+              spreadRadius: -4,
+            ),
+          ],
+        );
+      case BuyerVinReportSectionTone.manualModule:
+        return _buyerVinReportEditorialCard(scheme, borderRadius: 14);
+      default:
+        return _buyerVinReportEditorialCard(scheme, borderRadius: 16);
+    }
+  }
+
   final radius = BorderRadius.circular(16);
   switch (tone) {
     case BuyerVinReportSectionTone.summary:
@@ -109,9 +193,7 @@ BoxDecoration buyerVinReportSectionDecoration(
       return BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: scheme.surface,
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.4),
-        ),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.4)),
         boxShadow: [
           BoxShadow(
             color: scheme.shadow.withValues(alpha: 0.03),
@@ -148,6 +230,7 @@ class BuyerVinReportSectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return DecoratedBox(
       decoration: buyerVinReportSectionDecoration(scheme, tone),
       child: Padding(
@@ -162,7 +245,11 @@ class BuyerVinReportSectionCard extends StatelessWidget {
                   Icon(
                     leadingIcon,
                     size: 18,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
+                    color: isDark
+                        ? AppTheme.editorialAccentColor(
+                            scheme,
+                          ).withValues(alpha: 0.78)
+                        : scheme.onSurfaceVariant.withValues(alpha: 0.85),
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -176,6 +263,9 @@ class BuyerVinReportSectionCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.15,
                           height: 1.25,
+                          color: isDark
+                              ? scheme.onSurface.withValues(alpha: 0.96)
+                              : null,
                         ),
                       ),
                       if (subtitle != null) ...[
@@ -184,7 +274,9 @@ class BuyerVinReportSectionCard extends StatelessWidget {
                           subtitle!,
                           style: theme.textTheme.bodySmall?.copyWith(
                             height: 1.35,
-                            color: scheme.onSurfaceVariant,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: isDark ? 0.82 : 1,
+                            ),
                           ),
                         ),
                       ],
@@ -246,32 +338,36 @@ class BuyerVinReportHeroHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final decoration = isDark
+        ? _buyerVinReportEditorialCard(scheme, borderRadius: 18)
+        : BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                scheme.surfaceContainerHigh.withValues(alpha: 0.62),
+                scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                scheme.surface.withValues(alpha: 0.85),
+              ],
+              stops: const [0, 0.55, 1],
+            ),
+            border: Border.all(
+              color: scheme.outlineVariant.withValues(alpha: 0.4),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: scheme.shadow.withValues(alpha: 0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+                spreadRadius: -6,
+              ),
+            ],
+          );
     return DecoratedBox(
       key: const ValueKey('buyer_vin_report_hero_header'),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            scheme.surfaceContainerHigh.withValues(alpha: 0.62),
-            scheme.surfaceContainerHighest.withValues(alpha: 0.4),
-            scheme.surface.withValues(alpha: 0.85),
-          ],
-          stops: const [0, 0.55, 1],
-        ),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.4),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: scheme.shadow.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            spreadRadius: -6,
-          ),
-        ],
-      ),
+      decoration: decoration,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         child: Column(
@@ -290,6 +386,9 @@ class BuyerVinReportHeroHeader extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.35,
                           height: 1.12,
+                          color: isDark
+                              ? scheme.onSurface.withValues(alpha: 0.98)
+                              : null,
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -298,7 +397,9 @@ class BuyerVinReportHeroHeader extends StatelessWidget {
                         style: theme.textTheme.bodyMedium?.copyWith(
                           height: 1.4,
                           fontWeight: FontWeight.w600,
-                          color: scheme.onSurface.withValues(alpha: 0.9),
+                          color: scheme.onSurface.withValues(
+                            alpha: isDark ? 0.92 : 0.9,
+                          ),
                         ),
                       ),
                     ],
@@ -329,16 +430,22 @@ class BuyerVinReportHeroHeader extends StatelessWidget {
             if (compareHint != null && compareResult != null) ...[
               const SizedBox(height: 12),
               DecoratedBox(
-                decoration: BoxDecoration(
-                  color: (compareIsMatch == true
-                          ? scheme.primaryContainer
-                          : scheme.tertiaryContainer)
-                      .withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: scheme.outlineVariant.withValues(alpha: 0.35),
-                  ),
-                ),
+                decoration: isDark
+                    ? _buyerVinReportDarkCompareInset(
+                        scheme,
+                        isMatch: compareIsMatch == true,
+                      )
+                    : BoxDecoration(
+                        color:
+                            (compareIsMatch == true
+                                    ? scheme.primaryContainer
+                                    : scheme.tertiaryContainer)
+                                .withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: scheme.outlineVariant.withValues(alpha: 0.35),
+                        ),
+                      ),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                   child: Column(
@@ -348,7 +455,9 @@ class BuyerVinReportHeroHeader extends StatelessWidget {
                         compareHint!,
                         style: theme.textTheme.bodySmall?.copyWith(
                           height: 1.35,
-                          color: scheme.onSurfaceVariant,
+                          color: scheme.onSurfaceVariant.withValues(
+                            alpha: isDark ? 0.82 : 1,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -357,6 +466,9 @@ class BuyerVinReportHeroHeader extends StatelessWidget {
                         style: theme.textTheme.bodyMedium?.copyWith(
                           height: 1.4,
                           fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? scheme.onSurface.withValues(alpha: 0.94)
+                              : null,
                         ),
                       ),
                     ],
@@ -405,17 +517,26 @@ class _HeroSummaryLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: scheme.onSurfaceVariant),
+        Icon(
+          icon,
+          size: 16,
+          color: isDark
+              ? scheme.onSurfaceVariant.withValues(alpha: 0.78)
+              : scheme.onSurfaceVariant,
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
             style: theme.textTheme.bodyMedium?.copyWith(
               height: 1.45,
-              color: scheme.onSurfaceVariant,
+              color: scheme.onSurfaceVariant.withValues(
+                alpha: isDark ? 0.84 : 1,
+              ),
             ),
           ),
         ),
@@ -446,14 +567,17 @@ class BuyerVinReportMetadataStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.surface.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.32),
-        ),
-      ),
+      decoration: isDark
+          ? _buyerVinReportDarkDataInset(scheme)
+          : BoxDecoration(
+              color: scheme.surface.withValues(alpha: 0.55),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: scheme.outlineVariant.withValues(alpha: 0.32),
+              ),
+            ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         child: Column(
@@ -503,10 +627,7 @@ class BuyerVinReportMetadataStrip extends StatelessWidget {
             ],
             if (cautionLine != null) ...[
               const SizedBox(height: 6),
-              Text(
-                cautionLine!,
-                style: buyerVinReportMicrocopyStyle(theme),
-              ),
+              Text(cautionLine!, style: buyerVinReportMicrocopyStyle(theme)),
             ],
           ],
         ),
@@ -531,6 +652,7 @@ class BuyerVinReportIdentityPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final gridFields = <NhtsaVinSummaryField>[];
     final longFields = <NhtsaVinSummaryField>[];
 
@@ -548,13 +670,17 @@ class BuyerVinReportIdentityPanel extends StatelessWidget {
       children: [
         if (gridFields.isNotEmpty)
           DecoratedBox(
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerHighest.withValues(alpha: 0.22),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: scheme.outlineVariant.withValues(alpha: 0.3),
-              ),
-            ),
+            decoration: isDark
+                ? _buyerVinReportDarkDataInset(scheme)
+                : BoxDecoration(
+                    color: scheme.surfaceContainerHighest.withValues(
+                      alpha: 0.22,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: scheme.outlineVariant.withValues(alpha: 0.3),
+                    ),
+                  ),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
               child: LayoutBuilder(
@@ -608,14 +734,24 @@ class _IdentityGridCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.surface.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.25),
-        ),
-      ),
+      decoration: isDark
+          ? BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: Color.alphaBlend(
+                scheme.onSurface.withValues(alpha: 0.04),
+                scheme.surfaceContainerHigh.withValues(alpha: 0.65),
+              ),
+              border: Border.all(color: scheme.outline.withValues(alpha: 0.22)),
+            )
+          : BoxDecoration(
+              color: scheme.surface.withValues(alpha: 0.65),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: scheme.outlineVariant.withValues(alpha: 0.25),
+              ),
+            ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
         child: Column(
@@ -624,7 +760,9 @@ class _IdentityGridCell extends StatelessWidget {
             Text(
               field.label,
               style: theme.textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
+                color: scheme.onSurfaceVariant.withValues(
+                  alpha: isDark ? 0.82 : 1,
+                ),
                 fontWeight: FontWeight.w600,
                 height: 1.2,
               ),
@@ -636,6 +774,7 @@ class _IdentityGridCell extends StatelessWidget {
                 fontWeight: FontWeight.w500,
                 height: 1.35,
                 letterSpacing: -0.05,
+                color: isDark ? scheme.onSurface.withValues(alpha: 0.94) : null,
               ),
             ),
           ],
@@ -703,45 +842,46 @@ class BuyerVinReportSummaryIntroCard extends StatelessWidget {
               icon: Icons.lock_outline_rounded,
               text: vinPrivateLine,
             ),
-          if (compareHint != null && compareResult != null) ...[
-            const SizedBox(height: 12),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: (compareIsMatch == true
-                        ? scheme.primaryContainer
-                        : scheme.tertiaryContainer)
-                    .withValues(alpha: 0.45),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: scheme.outlineVariant.withValues(alpha: 0.35),
+            if (compareHint != null && compareResult != null) ...[
+              const SizedBox(height: 12),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color:
+                      (compareIsMatch == true
+                              ? scheme.primaryContainer
+                              : scheme.tertiaryContainer)
+                          .withValues(alpha: 0.45),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: scheme.outlineVariant.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        compareHint!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          height: 1.35,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        compareResult!,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          height: 1.4,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      compareHint!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        height: 1.35,
-                        color: scheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      compareResult!,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        height: 1.4,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            ],
           ],
-        ],
         ),
       ),
     );
@@ -814,10 +954,7 @@ class BuyerVinReportSourceMetaCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (cautionLine != null) ...[
-            Text(
-              cautionLine!,
-              style: buyerVinReportMicrocopyStyle(theme),
-            ),
+            Text(cautionLine!, style: buyerVinReportMicrocopyStyle(theme)),
             const SizedBox(height: 10),
           ],
           if (updatedLabel != null && updatedDate != null)
@@ -967,16 +1104,19 @@ class BuyerVinReportSpecTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     return DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(
-          alpha: compact ? 0.18 : 0.24,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.32),
-        ),
-      ),
+      decoration: isDark
+          ? _buyerVinReportDarkDataInset(scheme)
+          : BoxDecoration(
+              color: scheme.surfaceContainerHighest.withValues(
+                alpha: compact ? 0.18 : 0.24,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: scheme.outlineVariant.withValues(alpha: 0.32),
+              ),
+            ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Column(
@@ -994,7 +1134,9 @@ class BuyerVinReportSpecTable extends StatelessWidget {
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color: scheme.outlineVariant.withValues(alpha: 0.28),
+                  color: scheme.outlineVariant.withValues(
+                    alpha: isDark ? 0.22 : 0.28,
+                  ),
                 ),
             ],
           ],
@@ -1031,8 +1173,9 @@ class BuyerVinReportSpecRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final bg = striped
-        ? scheme.onSurface.withValues(alpha: 0.028)
+        ? scheme.onSurface.withValues(alpha: isDark ? 0.045 : 0.028)
         : Colors.transparent;
 
     return ColoredBox(
@@ -1180,10 +1323,7 @@ class BuyerVinReportStateMessageCard extends StatelessWidget {
 
 /// Fill for buyer VIN report floating CTA — slightly lifted primary for crisp white label.
 Color buyerVinReportCtaFill(ColorScheme scheme) {
-  return Color.alphaBlend(
-    Colors.white.withValues(alpha: 0.1),
-    scheme.primary,
-  );
+  return Color.alphaBlend(Colors.white.withValues(alpha: 0.1), scheme.primary);
 }
 
 /// Floating bottom action bar for buyer VIN report sheet.
@@ -1207,56 +1347,99 @@ class BuyerVinReportStickyFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final fill = buyerVinReportCtaFill(scheme);
+    final fadeTop = isDark
+        ? scheme.surfaceContainerLow.withValues(alpha: 0)
+        : scheme.surface.withValues(alpha: 0);
+    final fadeBottom = isDark
+        ? Color.alphaBlend(
+            scheme.surfaceContainerHigh.withValues(alpha: 0.92),
+            scheme.surface,
+          )
+        : scheme.surface.withValues(alpha: 0.85);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         IgnorePointer(
           child: Container(
-            height: 24,
+            height: 28,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  scheme.surface.withValues(alpha: 0),
-                  scheme.surface.withValues(alpha: 0.85),
-                ],
+                colors: [fadeTop, fadeBottom],
               ),
             ),
           ),
         ),
-        Padding(
-          padding: EdgeInsets.fromLTRB(20, 4, 20, 12 + bottomInset),
-          child: Material(
-            key: const ValueKey('buyer_vin_report_sheet_close'),
-            color: fill,
-            elevation: 2,
-            shadowColor: scheme.shadow.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(_pillRadius),
-            child: InkWell(
-              onTap: onClose,
+        if (isDark)
+          DecoratedBox(
+            decoration:
+                AppTheme.editorialDarkFilterFooter(scheme) ??
+                BoxDecoration(color: scheme.surface),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20, 8, 20, 12 + bottomInset),
+              child: Material(
+                key: const ValueKey('buyer_vin_report_sheet_close'),
+                color: fill,
+                elevation: 0,
+                borderRadius: BorderRadius.circular(_pillRadius),
+                child: InkWell(
+                  onTap: onClose,
+                  borderRadius: BorderRadius.circular(_pillRadius),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: _pillHeight,
+                    child: Center(
+                      child: Text(
+                        closeLabel,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.15,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          )
+        else
+          Padding(
+            padding: EdgeInsets.fromLTRB(20, 4, 20, 12 + bottomInset),
+            child: Material(
+              key: const ValueKey('buyer_vin_report_sheet_close'),
+              color: fill,
+              elevation: 2,
+              shadowColor: scheme.shadow.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(_pillRadius),
-              child: SizedBox(
-                width: double.infinity,
-                height: _pillHeight,
-                child: Center(
-                  child: Text(
-                    closeLabel,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.15,
-                      height: 1.2,
+              child: InkWell(
+                onTap: onClose,
+                borderRadius: BorderRadius.circular(_pillRadius),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: _pillHeight,
+                  child: Center(
+                    child: Text(
+                      closeLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.15,
+                        height: 1.2,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }

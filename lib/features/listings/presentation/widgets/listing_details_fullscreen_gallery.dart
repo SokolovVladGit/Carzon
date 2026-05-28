@@ -1,5 +1,8 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import 'listing_cover_image.dart';
 
 const Duration _fullscreenIndicatorAnimDuration = Duration(milliseconds: 220);
@@ -154,7 +157,9 @@ class _ListingDetailsFullscreenGalleryPageState
   @override
   Widget build(BuildContext context) {
     final urls = widget.urls;
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
     final closeTooltip = MaterialLocalizations.of(context).closeButtonTooltip;
 
     return Scaffold(
@@ -216,6 +221,26 @@ class _ListingDetailsFullscreenGalleryPageState
               );
             },
           ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.paddingOf(context).top + 80,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: isDark ? 0.58 : 0.48),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
@@ -226,22 +251,11 @@ class _ListingDetailsFullscreenGalleryPageState
                   child: Semantics(
                     button: true,
                     label: closeTooltip,
-                    child: Material(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () => Navigator.of(context).pop(),
-                        child: const SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 22,
-                          ),
-                        ),
-                      ),
+                    child: _FullscreenGalleryGlassButton(
+                      isDark: isDark,
+                      scheme: scheme,
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Icon(Icons.close, size: 22),
                     ),
                   ),
                 ),
@@ -256,11 +270,97 @@ class _ListingDetailsFullscreenGalleryPageState
               child: _FullscreenGalleryIndicator(
                 currentIndex: _currentPage,
                 imageCount: urls.length,
-                activeColor: scheme.primary.withValues(alpha: 0.9),
-                inactiveColor: Colors.white.withValues(alpha: 0.38),
+                isDark: isDark,
+                scheme: scheme,
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Frosted circular control for fullscreen gallery chrome.
+class _FullscreenGalleryGlassButton extends StatelessWidget {
+  const _FullscreenGalleryGlassButton({
+    required this.isDark,
+    required this.scheme,
+    required this.onTap,
+    required this.child,
+  });
+
+  final bool isDark;
+  final ColorScheme scheme;
+  final VoidCallback onTap;
+  final Widget child;
+
+  static const double _size = 44;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = Colors.white.withValues(alpha: isDark ? 0.96 : 0.94);
+    final borderColor = isDark
+        ? AppTheme.editorialAccentColor(scheme).withValues(alpha: 0.34)
+        : Colors.white.withValues(alpha: 0.42);
+    final fill = isDark
+        ? BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: borderColor, width: 0.5),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.alphaBlend(
+                  scheme.primary.withValues(alpha: 0.18),
+                  Colors.black.withValues(alpha: 0.55),
+                ),
+                Color.alphaBlend(
+                  scheme.onSurface.withValues(alpha: 0.08),
+                  Colors.black.withValues(alpha: 0.42),
+                ),
+              ],
+            ),
+          )
+        : BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withValues(alpha: 0.14),
+            border: Border.all(color: borderColor, width: 0.5),
+          );
+
+    return SizedBox(
+      width: _size,
+      height: _size,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.28),
+              blurRadius: isDark ? 14 : 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipOval(
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                child: Ink(
+                  decoration: fill,
+                  child: Center(
+                    child: IconTheme(
+                      data: IconThemeData(color: iconColor),
+                      child: child,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -270,14 +370,14 @@ class _FullscreenGalleryIndicator extends StatelessWidget {
   const _FullscreenGalleryIndicator({
     required this.currentIndex,
     required this.imageCount,
-    required this.activeColor,
-    required this.inactiveColor,
+    required this.isDark,
+    required this.scheme,
   });
 
   final int currentIndex;
   final int imageCount;
-  final Color activeColor;
-  final Color inactiveColor;
+  final bool isDark;
+  final ColorScheme scheme;
 
   static const double _dot = 5.5;
   static const double _pill = 18;
@@ -286,6 +386,10 @@ class _FullscreenGalleryIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final safe = currentIndex.clamp(0, imageCount - 1);
+    final activeColor = isDark
+        ? AppTheme.editorialAccentColor(scheme).withValues(alpha: 0.92)
+        : scheme.primary.withValues(alpha: 0.9);
+    final inactiveColor = Colors.white.withValues(alpha: isDark ? 0.34 : 0.38);
     final track = Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -305,6 +409,24 @@ class _FullscreenGalleryIndicator extends StatelessWidget {
       }),
     );
 
+    final indicator = isDark
+        ? DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              color: Colors.black.withValues(alpha: 0.42),
+              border: Border.all(
+                color: AppTheme.editorialAccentColor(
+                  scheme,
+                ).withValues(alpha: 0.22),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              child: track,
+            ),
+          )
+        : track;
+
     return Semantics(
       label: '${safe + 1} of $imageCount',
       child: SizedBox(
@@ -312,7 +434,7 @@ class _FullscreenGalleryIndicator extends StatelessWidget {
         child: FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.center,
-          child: track,
+          child: indicator,
         ),
       ),
     );

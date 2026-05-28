@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
@@ -14,6 +14,7 @@ import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../../shared/brands/brand_icon_resolver.dart';
+import '../../../../shared/brands/brand_logo_glyph.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/catalog/listing_brands.dart';
 import '../../data/local/last_applied_listing_discovery_repository.dart';
@@ -644,13 +645,13 @@ class _FeedHeaderLayer extends StatelessWidget {
     // the only thing separating the two is the soft bottom shadow.
     // Dark mode: a one-step-lifted surface so the shadow has
     // something to read against.
-    final layerColor = isDark ? scheme.surfaceContainer : Colors.white;
+    final layerColor = isDark ? scheme.surfaceContainerLow : Colors.white;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: layerColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.32 : 0.05),
+            color: scheme.shadow.withValues(alpha: isDark ? 0.28 : 0.05),
             blurRadius: 22,
             spreadRadius: 0,
             offset: const Offset(0, 8),
@@ -794,9 +795,9 @@ class _SearchAndFilterBar extends StatelessWidget {
     // almost flush on the canvas — a close-to-white fill with a
     // hairline border + whisper shadow reads as a premium elevated
     // pill, not a grey utility bar.
-    final fill = isDark ? scheme.surfaceContainerHighest : Colors.white;
+    final fill = isDark ? scheme.surfaceContainerHigh : Colors.white;
     final pillBorder = isDark
-        ? Colors.white.withValues(alpha: 0.06)
+        ? scheme.outline.withValues(alpha: 0.32)
         : scheme.outlineVariant.withValues(alpha: 0.45);
     // Slightly shorter, squarer controls than Pass 1.5 so the search
     // row reads as a compact utility bar (not a fluffy pill that
@@ -812,7 +813,7 @@ class _SearchAndFilterBar extends StatelessWidget {
     // hairline lift to read as distinct surfaces without stacking
     // visual noise.
     final searchShadow = BoxShadow(
-      color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.025),
+      color: scheme.shadow.withValues(alpha: isDark ? 0.22 : 0.025),
       blurRadius: 8,
       offset: const Offset(0, 2),
     );
@@ -833,12 +834,16 @@ class _SearchAndFilterBar extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: l10n.listingsSearchHint,
                   hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.65),
+                    color: scheme.onSurfaceVariant.withValues(
+                      alpha: isDark ? 0.72 : 0.65,
+                    ),
                   ),
                   prefixIcon: Icon(
                     CarzonIcons.search,
                     size: 20,
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    color: scheme.onSurfaceVariant.withValues(
+                      alpha: isDark ? 0.78 : 0.7,
+                    ),
                   ),
                   prefixIconConstraints: const BoxConstraints(
                     minWidth: 44,
@@ -925,21 +930,23 @@ class _SearchAndFilterBar extends StatelessWidget {
                             state,
                           );
                   final restingBg = isDark
-                      ? scheme.surfaceContainerHighest
+                      ? scheme.surfaceContainerHigh
                       : Colors.white;
                   final bg = active
-                      ? Color.alphaBlend(
-                          scheme.primary.withValues(
-                            alpha: isDark ? 0.26 : 0.14,
-                          ),
-                          restingBg,
-                        )
+                      ? (isDark
+                            ? AppTheme.selectedChipFill(scheme)
+                            : Color.alphaBlend(
+                                scheme.primary.withValues(alpha: 0.14),
+                                restingBg,
+                              ))
                       : restingBg;
                   final fg = active
-                      ? scheme.primary
-                      : scheme.onSurfaceVariant.withValues(alpha: 0.88);
+                      ? (isDark
+                            ? scheme.onSurface.withValues(alpha: 0.96)
+                            : scheme.primary)
+                      : AppTheme.chipForeground(scheme, selected: false);
                   final border = active
-                      ? scheme.primary.withValues(alpha: isDark ? 0.52 : 0.40)
+                      ? AppTheme.chipBorder(scheme, selected: true)
                       : pillBorder;
                   final badgeOutline = restingBg;
                   final semanticsLabel = bellBadge
@@ -1176,22 +1183,22 @@ class _BrandTile extends StatelessWidget {
 
     final bg = selected
         ? (isDark
-              ? scheme.primary.withValues(alpha: 0.22)
+              ? AppTheme.selectedChipFill(scheme)
               : Color.alphaBlend(
                   scheme.primary.withValues(alpha: 0.11),
                   Colors.white,
                 ))
-        : (isDark ? scheme.surfaceContainerHighest : Colors.white);
+        : (isDark ? AppTheme.unselectedChipFill(scheme) : Colors.white);
     final borderColor = selected
-        ? scheme.primary.withValues(alpha: isDark ? 0.72 : 0.58)
+        ? AppTheme.chipBorder(scheme, selected: true)
         : (isDark
-              ? Colors.white.withValues(alpha: 0.05)
+              ? scheme.outline.withValues(alpha: 0.28)
               : scheme.outlineVariant.withValues(alpha: 0.42));
     final borderWidth = selected ? 2.0 : 1.0;
     final shadow = BoxShadow(
       color: selected
-          ? scheme.primary.withValues(alpha: isDark ? 0.22 : 0.12)
-          : Colors.black.withValues(alpha: isDark ? 0.18 : 0.025),
+          ? scheme.primary.withValues(alpha: isDark ? 0.18 : 0.12)
+          : scheme.shadow.withValues(alpha: isDark ? 0.16 : 0.025),
       blurRadius: selected ? 12 : 6,
       spreadRadius: selected ? 0.5 : 0,
       offset: Offset(0, selected ? 3 : 2),
@@ -1203,12 +1210,7 @@ class _BrandTile extends StatelessWidget {
 
     Widget glyph;
     if (assetPath != null) {
-      glyph = SvgPicture.asset(
-        assetPath!,
-        width: 28,
-        height: 28,
-        fit: BoxFit.contain,
-      );
+      glyph = BrandLogoGlyph(assetPath: assetPath!, size: 28);
     } else if (monogram != null) {
       glyph = _BrandMonogramMark(monogram: monogram!, selected: selected);
     } else {
@@ -1217,7 +1219,7 @@ class _BrandTile extends StatelessWidget {
         size: 20,
         color: selected
             ? scheme.primary
-            : scheme.onSurfaceVariant.withValues(alpha: 0.72),
+            : AppTheme.chipForeground(scheme, selected: false),
       );
     }
 
@@ -1294,14 +1296,12 @@ class _BrandMonogramMark extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final ring = scheme.outlineVariant.withValues(alpha: isDark ? 0.42 : 0.38);
+    final ring = scheme.outline.withValues(alpha: isDark ? 0.38 : 0.38);
     final fill = Color.alphaBlend(
-      scheme.onSurface.withValues(alpha: isDark ? 0.08 : 0.05),
+      scheme.onSurface.withValues(alpha: isDark ? 0.12 : 0.05),
       isDark ? scheme.surfaceContainerHigh : scheme.surfaceContainerLowest,
     );
-    final textColor = scheme.onSurface.withValues(
-      alpha: selected ? (isDark ? 0.94 : 0.88) : (isDark ? 0.78 : 0.72),
-    );
+    final textColor = AppTheme.chipForeground(scheme, selected: selected);
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -1441,29 +1441,27 @@ class _ActiveDiscoveryChip extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final fill = isDark
-        ? scheme.surfaceContainerHighest.withValues(alpha: 0.42)
+        ? scheme.surfaceContainerHigh
         : Color.alphaBlend(
             scheme.onSurface.withValues(alpha: 0.025),
             scheme.surface,
           );
-    final stroke = scheme.outlineVariant.withValues(
-      alpha: isDark ? 0.38 : 0.32,
-    );
+    final stroke = scheme.outline.withValues(alpha: isDark ? 0.32 : 0.32);
 
     final valueStyle = theme.textTheme.labelMedium?.copyWith(
-      color: scheme.onSurface.withValues(alpha: 0.92),
+      color: scheme.onSurface.withValues(alpha: isDark ? 0.94 : 0.92),
       fontWeight: FontWeight.w600,
       letterSpacing: 0.05,
       height: 1.1,
     );
     final labelStyle = theme.textTheme.labelSmall?.copyWith(
-      color: scheme.onSurface.withValues(alpha: 0.52),
+      color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.82 : 0.52),
       fontWeight: FontWeight.w500,
       letterSpacing: 0.08,
       height: 1.1,
     );
     final dotStyle = theme.textTheme.labelMedium?.copyWith(
-      color: scheme.onSurface.withValues(alpha: 0.32),
+      color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.55 : 0.32),
       fontWeight: FontWeight.w500,
       height: 1.1,
     );

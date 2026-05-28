@@ -31,9 +31,9 @@ class CatalogBrowseFilterAlertSheetNotice extends StatelessWidget {
 
     final (title, body) = switch (notice) {
       CatalogBellInlineNotice.criteriaTooBroad => (
-          l10n.catalogBrowseFilterAlertTooBroadInlineTitle,
-          l10n.catalogBrowseFilterAlertTooBroadInlineBody,
-        ),
+        l10n.catalogBrowseFilterAlertTooBroadInlineTitle,
+        l10n.catalogBrowseFilterAlertTooBroadInlineBody,
+      ),
     };
 
     final accent = CatalogFilterAlertAccent.amber;

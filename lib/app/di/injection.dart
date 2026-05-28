@@ -2,6 +2,8 @@ import 'package:get_it/get_it.dart';
 
 import '../../core/services/auth_deep_link_service.dart';
 import '../../core/services/supabase_service.dart';
+import '../../core/theme/theme_mode_cubit.dart';
+import '../../core/theme/theme_mode_local_datasource.dart';
 import '../../features/auth/di/auth_injection.dart';
 import '../../features/compare/di/compare_injection.dart';
 import '../../features/create_listing/di/create_listing_injection.dart';
@@ -30,6 +32,12 @@ Future<void> configureDependencies(SupabaseService supabaseService) async {
   sl.registerSingleton<SupabaseService>(supabaseService);
   sl.registerLazySingleton<AuthDeepLinkService>(
     () => AuthDeepLinkService.forSupabase(sl<SupabaseService>()),
+  );
+  sl.registerLazySingleton<ThemeModeLocalDataSource>(
+    () => SharedPreferencesThemeModeLocalDataSource(),
+  );
+  sl.registerLazySingleton<ThemeModeCubit>(
+    () => ThemeModeCubit(localDataSource: sl<ThemeModeLocalDataSource>()),
   );
 
   // Feature registrations (order matters only if a feature depends on another).

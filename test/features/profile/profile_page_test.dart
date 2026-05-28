@@ -4,6 +4,9 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
 import 'package:carzon/app/router/app_router.dart';
 import 'package:carzon/core/errors/failures.dart';
+import 'package:carzon/core/theme/theme_mode_cubit.dart';
+import 'package:carzon/core/theme/theme_mode_local_datasource.dart';
+import 'package:carzon/core/theme/theme_mode_preference.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/core/widgets/app_back_button.dart';
 import 'package:carzon/core/widgets/floating_capsule_nav.dart';
@@ -39,16 +42,35 @@ class _MockMessagingRepository extends Mock implements MessagingRepository {}
 
 const _menuStubKey = ValueKey<String>('profile_test_menu_route_stub');
 
-const _profileTestMessagesStubKey = ValueKey<String>('profile_test_messages_stub');
+const _profileTestMessagesStubKey = ValueKey<String>(
+  'profile_test_messages_stub',
+);
 
-const _profileTestFilterAlertStubKey = ValueKey<String>('profile_test_filter_alert_stub');
+const _profileTestFilterAlertStubKey = ValueKey<String>(
+  'profile_test_filter_alert_stub',
+);
 
-const _profileTestNotificationSettingsStubKey =
-    ValueKey<String>('profile_test_notification_settings_stub');
+const _profileTestNotificationSettingsStubKey = ValueKey<String>(
+  'profile_test_notification_settings_stub',
+);
+
+final class _InMemoryThemeModeLocalDataSource
+    implements ThemeModeLocalDataSource {
+  ThemeModePreference _preference = ThemeModePreference.light;
+
+  @override
+  Future<ThemeModePreference> loadPreference() async => _preference;
+
+  @override
+  Future<void> savePreference(ThemeModePreference preference) async {
+    _preference = preference;
+  }
+}
 
 GoRouter _profileTestGoRouter({
   required AuthCubit cubit,
   required MessagingUnreadSummaryCubit messagingUnread,
+  required ThemeModeCubit themeModeCubit,
 }) {
   return GoRouter(
     initialLocation: AppRoutes.profile,
@@ -68,6 +90,7 @@ GoRouter _profileTestGoRouter({
             BlocProvider<MessagingUnreadSummaryCubit>.value(
               value: messagingUnread,
             ),
+            BlocProvider<ThemeModeCubit>.value(value: themeModeCubit),
           ],
           child: const ProfilePage(),
         ),
@@ -124,9 +147,17 @@ Widget _profileTestMaterial(GoRouter router) {
 Widget _profileTestApp({
   required AuthCubit cubit,
   required MessagingUnreadSummaryCubit messagingUnread,
+  ThemeModeCubit? themeModeCubit,
 }) {
+  final resolvedThemeModeCubit =
+      themeModeCubit ??
+      ThemeModeCubit(localDataSource: _InMemoryThemeModeLocalDataSource());
   return _profileTestMaterial(
-    _profileTestGoRouter(cubit: cubit, messagingUnread: messagingUnread),
+    _profileTestGoRouter(
+      cubit: cubit,
+      messagingUnread: messagingUnread,
+      themeModeCubit: resolvedThemeModeCubit,
+    ),
   );
 }
 
@@ -302,6 +333,12 @@ void main() {
       expect(find.text(l10n.profileLanguageTitle), findsOneWidget);
       expect(find.text(l10n.profileNotificationsTitle), findsOneWidget);
       expect(find.text(l10n.profileListingAlertsTitle), findsOneWidget);
+      expect(find.text(l10n.profileDarkThemeTitle), findsOneWidget);
+      expect(find.text(l10n.profileDarkThemeSubtitle), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey<String>('profile_dark_theme_switch')),
+        findsOneWidget,
+      );
       expect(find.text(l10n.filterAlertProfileRowSubtitle), findsOneWidget);
       expect(
         find.byKey(const ValueKey<String>('profile_filter_alert_row')),
@@ -351,38 +388,43 @@ void main() {
     },
   );
 
-  testWidgets('authenticated: notification settings row opens /notification-settings', (
-    tester,
-  ) async {
-    const user = AuthUser(
-      id: 'u1',
-      email: 'seller@example.com',
-      fullName: 'Ana Popescu',
-    );
-    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
-    whenListen(
-      cubit,
-      const Stream<AuthState>.empty(),
-      initialState: const AuthState.authenticated(user),
-    );
+  testWidgets(
+    'authenticated: notification settings row opens /notification-settings',
+    (tester) async {
+      const user = AuthUser(
+        id: 'u1',
+        email: 'seller@example.com',
+        fullName: 'Ana Popescu',
+      );
+      when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+      whenListen(
+        cubit,
+        const Stream<AuthState>.empty(),
+        initialState: const AuthState.authenticated(user),
+      );
 
-    await tester.pumpWidget(
-      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+      );
+      await tester.pumpAndSettle();
 
-    final row =
-        find.byKey(const ValueKey<String>('profile_notification_settings_row'));
-    await tester.scrollUntilVisible(
-      row,
-      80,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(row);
-    await tester.pumpAndSettle();
+      final row = find.byKey(
+        const ValueKey<String>('profile_notification_settings_row'),
+      );
+      await tester.scrollUntilVisible(
+        row,
+        80,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(row);
+      await tester.pumpAndSettle();
 
-    expect(find.byKey(_profileTestNotificationSettingsStubKey), findsOneWidget);
-  });
+      expect(
+        find.byKey(_profileTestNotificationSettingsStubKey),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('authenticated: filter alert row opens /filter-alert', (
     tester,
@@ -436,8 +478,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final row =
-          find.byKey(const ValueKey<String>('profile_filter_alert_row'));
+      final row = find.byKey(
+        const ValueKey<String>('profile_filter_alert_row'),
+      );
       await tester.scrollUntilVisible(
         row,
         80,
@@ -450,9 +493,60 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.byType(Switch), findsNothing);
+      expect(
+        find.descendant(of: row, matching: find.byType(Switch)),
+        findsNothing,
+      );
     },
   );
+
+  testWidgets('authenticated: dark theme switch toggles on and off', (
+    tester,
+  ) async {
+    const user = AuthUser(
+      id: 'u1',
+      email: 'seller@example.com',
+      fullName: 'Ana Popescu',
+    );
+    final themeModeCubit = ThemeModeCubit(
+      localDataSource: _InMemoryThemeModeLocalDataSource(),
+    );
+    addTearDown(themeModeCubit.close);
+    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(user),
+    );
+
+    await tester.pumpWidget(
+      _profileTestApp(
+        cubit: cubit,
+        messagingUnread: unreadSummaryCubit,
+        themeModeCubit: themeModeCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final switchFinder = find.byKey(
+      const ValueKey<String>('profile_dark_theme_switch'),
+    );
+    await tester.scrollUntilVisible(
+      switchFinder,
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(switchFinder, findsOneWidget);
+    expect(tester.widget<Switch>(switchFinder).value, isFalse);
+
+    await tester.tap(switchFinder);
+    await tester.pumpAndSettle();
+    expect(tester.widget<Switch>(switchFinder).value, isTrue);
+
+    await tester.tap(switchFinder);
+    await tester.pumpAndSettle();
+    expect(tester.widget<Switch>(switchFinder).value, isFalse);
+  });
 
   testWidgets('authenticated without full name: falls back to showing email', (
     tester,
@@ -717,9 +811,14 @@ void main() {
   testWidgets(
     'authenticated: Activity Messages row pushes route so stack returns to Account',
     (tester) async {
+      final themeModeCubit = ThemeModeCubit(
+        localDataSource: _InMemoryThemeModeLocalDataSource(),
+      );
+      addTearDown(themeModeCubit.close);
       final router = _profileTestGoRouter(
         cubit: cubit,
         messagingUnread: unreadSummaryCubit,
+        themeModeCubit: themeModeCubit,
       );
       const user = AuthUser(id: 'u1', email: 'seller@example.com');
       when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
@@ -859,9 +958,7 @@ void main() {
     'authenticated: Activity Messages omits no-unread subtitle when unread summary RPC fails with no prior count',
     (tester) async {
       await unreadSummaryCubit.close();
-      when(
-        () => messagingRepo.getUnreadConversationCount(),
-      ).thenAnswer(
+      when(() => messagingRepo.getUnreadConversationCount()).thenAnswer(
         (_) async => const FailureResult(NetworkFailure('temporary')),
       );
       unreadSummaryCubit = MessagingUnreadSummaryCubit(messagingRepo);

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../core/config/env.dart';
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_theme.dart';
+import '../core/theme/theme_mode_cubit.dart';
 import '../l10n/app_localizations.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/auth/presentation/bloc/auth_state.dart';
@@ -61,7 +62,8 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
     // APNs token may not have existed at cold-start bootstrap, so startup
     // sync no-ops; this path is cheap (returns early if still not eligible).
     unawaited(
-      sl<PushNotificationRegistrationService>().syncTokenWithBackendIfEligible(),
+      sl<PushNotificationRegistrationService>()
+          .syncTokenWithBackendIfEligible(),
     );
   }
 
@@ -82,6 +84,7 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
         BlocProvider<MessagingUnreadSummaryCubit>.value(
           value: sl<MessagingUnreadSummaryCubit>(),
         ),
+        BlocProvider<ThemeModeCubit>.value(value: sl<ThemeModeCubit>()),
       ],
       child: MultiBlocListener(
         listeners: [
@@ -103,8 +106,7 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
           ),
           BlocListener<AuthCubit, AuthState>(
             listenWhen: (prev, curr) =>
-                prev.user?.id != curr.user?.id ||
-                prev.status != curr.status,
+                prev.user?.id != curr.user?.id || prev.status != curr.status,
             listener: (context, state) {
               unawaited(context.read<SelfSellerVisualCubit>().prime(state));
               unawaited(
@@ -123,24 +125,24 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
             listener: (_, _) => sl<GoRouter>().go(AppRoutes.resetPassword),
           ),
         ],
-        child: MaterialApp.router(
-          title: AppConstants.appName,
-          theme: AppTheme.light(),
-          darkTheme: AppTheme.dark(),
-          themeMode: ThemeMode.system,
-          // Russian is the MVP product language. Romanian (`ro`) and
-          // English (`en`) are planned but intentionally not added yet;
-          // forcing `locale` to `ru` means unsupported device locales
-          // also render in Russian instead of falling back to English.
-          locale: const Locale('ru'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          routerConfig: sl<GoRouter>(),
-          builder: (context, child) => CompareTrayHost(
-            router: sl<GoRouter>(),
-            child: child,
+        child: BlocBuilder<ThemeModeCubit, ThemeModeState>(
+          builder: (context, themeState) => MaterialApp.router(
+            title: AppConstants.appName,
+            theme: AppTheme.light(),
+            darkTheme: AppTheme.dark(),
+            themeMode: themeState.themeMode,
+            // Russian is the MVP product language. Romanian (`ro`) and
+            // English (`en`) are planned but intentionally not added yet;
+            // forcing `locale` to `ru` means unsupported device locales
+            // also render in Russian instead of falling back to English.
+            locale: const Locale('ru'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: sl<GoRouter>(),
+            builder: (context, child) =>
+                CompareTrayHost(router: sl<GoRouter>(), child: child),
+            debugShowCheckedModeBanner: false,
           ),
-          debugShowCheckedModeBanner: false,
         ),
       ),
     );

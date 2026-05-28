@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../core/config/env.dart';
 import '../core/services/auth_deep_link_service.dart';
 import '../core/services/supabase_service.dart';
+import '../core/theme/theme_mode_cubit.dart';
 import '../core/utils/logger.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/compare/presentation/cubit/compare_cubit.dart';
@@ -87,6 +88,7 @@ Future<void> bootstrap() async {
 
       await configureDependencies(supabase);
       sl.registerSingleton<GoRouter>(AppRouter.build());
+      await sl<ThemeModeCubit>().load();
 
       final auth = sl<AuthCubit>();
       await auth.bootstrap();

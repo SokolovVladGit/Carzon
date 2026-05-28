@@ -1379,7 +1379,7 @@ class _PremiumPublishActionButton extends StatelessWidget {
     final canTap = !submitting;
 
     final baseFill = Color.alphaBlend(
-      cs.onSurface.withValues(alpha: br == Brightness.light ? 0.50 : 0.34),
+      cs.onSurface.withValues(alpha: br == Brightness.light ? 0.50 : 0.58),
       br == Brightness.light ? cs.surface : cs.surfaceContainerHigh,
     );
     final fill = submitting
