@@ -334,6 +334,59 @@ SUPABASE_ANON_KEY=anon
     },
   );
 
+  test('duplicate global enable while busy is ignored', () async {
+    client.permissionStatus = PushMessagingPermissionStatus.authorized;
+    client.permissionAfterRequest = PushMessagingPermissionStatus.authorized;
+    final updateGate = Completer<void>();
+    when(
+      () => repo.updateMyPreferences(
+        globalEnabled: any(named: 'globalEnabled'),
+        messagesEnabled: any(named: 'messagesEnabled'),
+        filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+      ),
+    ).thenAnswer((inv) async {
+      await updateGate.future;
+      return Success(
+        _prefs(
+          global: inv.namedArguments[#globalEnabled] as bool,
+          messages: inv.namedArguments[#messagesEnabled] as bool,
+          filterAlerts: inv.namedArguments[#filterAlertsEnabled] as bool,
+        ),
+      );
+    });
+
+    final cubit = buildCubit();
+    await cubit.load();
+    clearInteractions(repo);
+
+    final first = cubit.setGlobalEnabled(true);
+    await Future<void>.value();
+    expect(cubit.state.busy, isTrue);
+
+    final second = cubit.setGlobalEnabled(true);
+    updateGate.complete();
+    await first;
+    await second;
+
+    verify(
+      () => repo.updateMyPreferences(
+        globalEnabled: true,
+        messagesEnabled: false,
+        filterAlertsEnabled: false,
+      ),
+    ).called(1);
+    verify(
+      () => repo.registerPushToken(
+        token: 'test-fcm-token',
+        platform: any(named: 'platform'),
+        appVersion: any(named: 'appVersion'),
+        deviceId: any(named: 'deviceId'),
+        locale: any(named: 'locale'),
+      ),
+    ).called(1);
+    await cubit.close();
+  });
+
   blocTest<NotificationSettingsCubit, NotificationSettingsState>(
     'turning global off disables messages on server and revokes tokens',
     build: buildCubit,

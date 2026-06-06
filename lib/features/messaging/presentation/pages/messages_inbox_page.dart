@@ -9,7 +9,9 @@ import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/l10n/app_locale_cubit.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_back_button.dart';
+import '../../../../core/widgets/auth_required_prompt.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../shared/ui/carzon_icons.dart';
@@ -19,11 +21,37 @@ import '../bloc/messaging_unread_summary_cubit.dart';
 import '../../domain/repositories/messaging_repository.dart';
 import '../bloc/messages_inbox_cubit.dart';
 import '../bloc/messages_inbox_state.dart';
+import '../widgets/messages_inbox_conversation_tile.dart';
 
 String _shortListingLabel(String listingId) {
   final compact = listingId.replaceAll('-', '');
   if (compact.length >= 8) return compact.substring(0, 8);
   return listingId;
+}
+
+PreferredSizeWidget _inboxAppBarBottomEdge(ColorScheme cs) {
+  return PreferredSize(
+    preferredSize: const Size.fromHeight(1),
+    child: Divider(
+      height: 1,
+      thickness: 1,
+      color: cs.outlineVariant.withValues(alpha: 0.38),
+    ),
+  );
+}
+
+AppBar _inboxAppBar(BuildContext context, String title) {
+  final cs = Theme.of(context).colorScheme;
+  return AppBar(
+    title: Text(title),
+    leading: const AppBackButton(fallback: AppRoutes.menu),
+    backgroundColor: cs.surfaceContainerLow,
+    surfaceTintColor: Colors.transparent,
+    elevation: 0,
+    scrolledUnderElevation: 0,
+    shadowColor: Colors.transparent,
+    bottom: _inboxAppBarBottomEdge(cs),
+  );
 }
 
 /// Full-screen inbox; entry from Menu. Auth-required.
@@ -37,13 +65,28 @@ class MessagesInboxPage extends StatelessWidget {
       builder: (context, auth) {
         if (auth.status != AuthStatus.authenticated || auth.user == null) {
           return Scaffold(
-            appBar: AppBar(
-              title: Text(l10n.messagingTitle),
-              leading: const AppBackButton(fallback: AppRoutes.menu),
-            ),
-            body: _SignInBody(
-              message: l10n.messagingSignInRequired,
-              onSignIn: () => context.go(AppRoutes.signIn),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            appBar: _inboxAppBar(context, l10n.messagingTitle),
+            body: _InboxCanvas(
+              child: AuthRequiredPrompt(
+                icon: Icon(
+                  CarzonIcons.chat,
+                  size: 48,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.85),
+                ),
+                message: l10n.messagingSignInRequired,
+                messageStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.92),
+                ),
+                primaryButtonLabel: l10n.commonSignIn,
+                onPrimaryPressed: () => context.go(AppRoutes.signIn),
+                contentWrapper: (_, child) =>
+                    _InboxEditorialPanel(child: child),
+              ),
             ),
           );
         }
@@ -67,28 +110,70 @@ class MessagesInboxPage extends StatelessWidget {
   }
 }
 
-class _SignInBody extends StatelessWidget {
-  const _SignInBody({required this.message, required this.onSignIn});
+/// Page backdrop: editorial gradient in dark, calm surface in light.
+class _InboxCanvas extends StatelessWidget {
+  const _InboxCanvas({required this.child});
 
-  final String message;
-  final VoidCallback onSignIn;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Center(
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        if (isDark)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: AppTheme.editorialDarkFilterCanvasGradient(cs),
+                stops: const [0, 0.45, 1],
+              ),
+            ),
+          )
+        else
+          ColoredBox(
+            color: Color.alphaBlend(
+              cs.primary.withValues(alpha: 0.02),
+              cs.surface,
+            ),
+          ),
+        child,
+      ],
+    );
+  }
+}
+
+class _InboxEditorialPanel extends StatelessWidget {
+  const _InboxEditorialPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+
+    final decoration = light
+        ? BoxDecoration(
+            color: cs.surfaceContainerLow.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: cs.outlineVariant.withValues(alpha: 0.35),
+            ),
+          )
+        : AppTheme.editorialDarkSectionCard(cs, borderRadius: 18)!;
+
+    return DecoratedBox(
+      decoration: decoration,
       child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(CarzonIcons.chat, size: 48),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onSignIn, child: Text(l10n.commonSignIn)),
-          ],
-        ),
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+        child: child,
       ),
     );
   }
@@ -101,234 +186,147 @@ class _MessagesInboxView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.messagingTitle),
-        leading: const AppBackButton(fallback: AppRoutes.menu),
-      ),
-      body: BlocBuilder<MessagesInboxCubit, MessagesInboxState>(
-        builder: (context, state) {
-          switch (state.status) {
-            case MessagesInboxStatus.initial:
-            case MessagesInboxStatus.loading:
-              return const Center(child: LoadingView());
-            case MessagesInboxStatus.failure:
-              return Padding(
-                padding: const EdgeInsets.all(24),
-                child: ErrorView(
-                  message: l10n.messagingLoadFailed,
-                  onRetry: () => context.read<MessagesInboxCubit>().refresh(),
-                ),
-              );
-            case MessagesInboxStatus.success:
-              Future<void> onPullRefresh() =>
-                  context.read<MessagesInboxCubit>().silentRefresh();
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: _inboxAppBar(context, l10n.messagingTitle),
+      body: _InboxCanvas(
+        child: BlocBuilder<MessagesInboxCubit, MessagesInboxState>(
+          builder: (context, state) {
+            switch (state.status) {
+              case MessagesInboxStatus.initial:
+              case MessagesInboxStatus.loading:
+                return const Center(child: LoadingView());
+              case MessagesInboxStatus.failure:
+                return Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: ErrorView(
+                    message: l10n.messagingLoadFailed,
+                    onRetry: () => context.read<MessagesInboxCubit>().refresh(),
+                  ),
+                );
+              case MessagesInboxStatus.success:
+                Future<void> onPullRefresh() =>
+                    context.read<MessagesInboxCubit>().silentRefresh();
 
-              if (state.conversations.isEmpty) {
-                return RefreshIndicator(
-                  onRefresh: onPullRefresh,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight,
-                          ),
-                          child: Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(32),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.forum_outlined,
-                                    size: 56,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
+                if (state.conversations.isEmpty) {
+                  return RefreshIndicator(
+                    onRefresh: onPullRefresh,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(32),
+                                child: _InboxEditorialPanel(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        CarzonIcons.chat,
+                                        size: 56,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant
+                                            .withValues(alpha: 0.85),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        l10n.messagingEmptyTitle,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        l10n.messagingEmptyBody,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    l10n.messagingEmptyTitle,
-                                    textAlign: TextAlign.center,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w700),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    l10n.messagingEmptyBody,
-                                    textAlign: TextAlign.center,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                        ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        );
+                      },
+                    ),
+                  );
+                }
+                final intlTag = context
+                    .watch<AppLocaleCubit>()
+                    .state
+                    .intlLanguageTag;
+                final timeFormat = DateFormat('d MMM, HH:mm', intlTag);
+                final dividerColor = Theme.of(
+                  context,
+                ).colorScheme.outlineVariant.withValues(alpha: 0.32);
+                const dividerIndent =
+                    16 + MessagesInboxConversationTile.avatarSize + 12;
+                return RefreshIndicator(
+                  onRefresh: onPullRefresh,
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.only(top: 4, bottom: 8),
+                    itemCount: state.conversations.length,
+                    separatorBuilder: (context, index) => Divider(
+                      height: 1,
+                      thickness: 1,
+                      indent: dividerIndent,
+                      endIndent: 16,
+                      color: dividerColor,
+                    ),
+                    itemBuilder: (context, i) {
+                      final c = state.conversations[i];
+                      final listingFallback = l10n.messagingListingFallback(
+                        _shortListingLabel(c.listingId),
+                      );
+                      final preview =
+                          (c.lastMessagePreview != null &&
+                              c.lastMessagePreview!.trim().isNotEmpty)
+                          ? c.lastMessagePreview!.trim()
+                          : l10n.messagingNoPreview;
+                      final time = c.lastMessageAt != null
+                          ? timeFormat.format(c.lastMessageAt!.toLocal())
+                          : null;
+
+                      return MessagesInboxConversationTile(
+                        conversation: c,
+                        listingHeadlineFallback: listingFallback,
+                        messagePreview: preview,
+                        timeText: time,
+                        onTap: () async {
+                          await context.push<void>(
+                            AppRoutes.messagesThreadPath(c.id),
+                          );
+                          if (!context.mounted) return;
+                          await context
+                              .read<MessagesInboxCubit>()
+                              .silentRefresh();
+                        },
                       );
                     },
                   ),
                 );
-              }
-              final intlTag = context
-                  .watch<AppLocaleCubit>()
-                  .state
-                  .intlLanguageTag;
-              final timeFormat = DateFormat('d MMM, HH:mm', intlTag);
-              return RefreshIndicator(
-                onRefresh: onPullRefresh,
-                child: ListView.separated(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: state.conversations.length,
-                  separatorBuilder: (context, _) => const Divider(height: 1),
-                  itemBuilder: (context, i) {
-                    final c = state.conversations[i];
-                    final title =
-                        (c.listingTitle != null &&
-                            c.listingTitle!.trim().isNotEmpty)
-                        ? c.listingTitle!.trim()
-                        : l10n.messagingListingFallback(
-                            _shortListingLabel(c.listingId),
-                          );
-                    final preview =
-                        (c.lastMessagePreview != null &&
-                            c.lastMessagePreview!.trim().isNotEmpty)
-                        ? c.lastMessagePreview!.trim()
-                        : l10n.messagingNoPreview;
-                    final time = c.lastMessageAt != null
-                        ? timeFormat.format(c.lastMessageAt!.toLocal())
-                        : null;
-                    final theme = Theme.of(context);
-                    final scheme = theme.colorScheme;
-                    final onVar = scheme.onSurfaceVariant;
-                    final unread = c.hasUnread;
-                    final titleStyle = theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: unread ? FontWeight.w700 : FontWeight.w500,
-                      height: 1.25,
-                      color: scheme.onSurface,
-                      letterSpacing: unread ? -0.1 : -0.2,
-                    );
-                    final previewStyle = theme.textTheme.bodyMedium?.copyWith(
-                      color: unread
-                          ? scheme.onSurface.withValues(alpha: 0.88)
-                          : onVar,
-                      fontWeight: unread ? FontWeight.w500 : FontWeight.w400,
-                      height: 1.3,
-                    );
-                    final timeStyle = theme.textTheme.labelSmall?.copyWith(
-                      color: unread
-                          ? scheme.onSurface.withValues(alpha: 0.78)
-                          : onVar.withValues(alpha: 0.85),
-                      fontWeight: unread ? FontWeight.w600 : FontWeight.w500,
-                      letterSpacing: 0.1,
-                    );
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 6,
-                      ),
-                      title: Text(
-                        title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: titleStyle,
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          preview,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: previewStyle,
-                        ),
-                      ),
-                      trailing: _InboxRowTrailing(
-                        showUnreadDot: unread,
-                        conversationId: c.id,
-                        timeText: time,
-                        timeStyle: timeStyle,
-                      ),
-                      onTap: () async {
-                        await context.push<void>(
-                          AppRoutes.messagesThreadPath(c.id),
-                        );
-                        if (!context.mounted) return;
-                        await context
-                            .read<MessagesInboxCubit>()
-                            .silentRefresh();
-                      },
-                    );
-                  },
-                ),
-              );
-          }
-        },
+            }
+          },
+        ),
       ),
     );
-  }
-}
-
-/// Trailing inbox cell: optional unread dot plus timestamp.
-class _InboxRowTrailing extends StatelessWidget {
-  const _InboxRowTrailing({
-    required this.showUnreadDot,
-    required this.conversationId,
-    required this.timeText,
-    required this.timeStyle,
-  });
-
-  final bool showUnreadDot;
-  final String conversationId;
-  final String? timeText;
-  final TextStyle? timeStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    Widget? dot;
-    if (showUnreadDot) {
-      dot = Padding(
-        padding: const EdgeInsets.only(right: 10),
-        child: ExcludeSemantics(
-          child: SizedBox(
-            key: ValueKey<String>('messages_inbox_unread_dot_$conversationId'),
-            width: 9,
-            height: 9,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: scheme.error,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    final trimmedTime = timeText?.trim();
-
-    if (trimmedTime != null && trimmedTime.isNotEmpty) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (dot != null) dot,
-          Text(trimmedTime, style: timeStyle, textAlign: TextAlign.right),
-        ],
-      );
-    }
-    if (dot != null) return dot;
-    return const SizedBox.shrink();
   }
 }

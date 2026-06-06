@@ -75,16 +75,17 @@ class AuthDeepLinkService {
   /// tests without any platform channels or Supabase client.
   ///
   /// Accepted shapes:
-  /// * `carzon://…` — any URI using the app's own custom scheme. The
-  ///   OS only routes these to the app via our intent-filter / URL
-  ///   type, so by the time we see one it is implicitly an app
-  ///   callback.
+  /// * `carzon://auth-callback…` — the custom URI registered in
+  ///   Android's intent-filter and iOS's URL scheme configuration.
   /// * Any URI whose query/fragment carries Supabase auth tokens
   ///   (`access_token`, `code`, `error_description`, `error_code`).
   ///   This keeps the door open for a future web redirect or a
   ///   universal-link migration without touching the service.
   static bool isAuthCallback(Uri uri) {
-    if (uri.scheme.toLowerCase() == kCustomScheme) return true;
+    if (uri.scheme.toLowerCase() == kCustomScheme &&
+        uri.host.toLowerCase() == 'auth-callback') {
+      return true;
+    }
     final full = uri.toString();
     return full.contains('access_token=') ||
         full.contains('error_description=') ||
@@ -127,7 +128,7 @@ class AuthDeepLinkService {
 
   Future<bool> _handleUri(Uri uri) async {
     if (!isAuthCallback(uri)) {
-      _logger.debug('Ignoring non-auth URI: $uri');
+      _logger.debug('Ignoring non-auth URI');
       return false;
     }
     try {

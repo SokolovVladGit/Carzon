@@ -78,6 +78,32 @@ void main() {
       ],
     );
 
+    test('duplicate signIn while authenticating is ignored', () async {
+      final gate = Completer<void>();
+      when(
+        () => repo.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) async {
+        await gate.future;
+        return const Success(user);
+      });
+
+      final first = cubit.signIn(email: 'a@b.c', password: 'secret1');
+      await Future<void>.value();
+      expect(cubit.state.status, AuthStatus.authenticating);
+
+      final second = cubit.signIn(email: 'a@b.c', password: 'secret1');
+      gate.complete();
+      await first;
+      await second;
+
+      verify(
+        () => repo.signInWithPassword(email: 'a@b.c', password: 'secret1'),
+      ).called(1);
+    });
+
     blocTest<AuthCubit, AuthState>(
       'signUp: emits authenticated when repository returns a user '
       '(session issued)',
@@ -96,6 +122,32 @@ void main() {
         AuthState.authenticated(user),
       ],
     );
+
+    test('duplicate signUp while authenticating is ignored', () async {
+      final gate = Completer<void>();
+      when(
+        () => repo.signUpWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) async {
+        await gate.future;
+        return const Success<AuthUser?>(user);
+      });
+
+      final first = cubit.signUp(email: 'a@b.c', password: 'secret1');
+      await Future<void>.value();
+      expect(cubit.state.status, AuthStatus.authenticating);
+
+      final second = cubit.signUp(email: 'a@b.c', password: 'secret1');
+      gate.complete();
+      await first;
+      await second;
+
+      verify(
+        () => repo.signUpWithPassword(email: 'a@b.c', password: 'secret1'),
+      ).called(1);
+    });
 
     blocTest<AuthCubit, AuthState>(
       'signUp: emits needsEmailConfirmation when repository returns null '

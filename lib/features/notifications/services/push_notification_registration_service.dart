@@ -35,6 +35,8 @@ class PushNotificationRegistrationService {
   bool _firebaseReady = false;
   bool _tokenRefreshAttached = false;
   StreamSubscription<String>? _tokenRefreshSub;
+  Future<void>? _syncInFlight;
+  final Set<String> _tokensBeingRegistered = <String>{};
 
   /// Starts FCM listeners (when enabled by config) and syncs the token if
   /// the user is already signed in and permission was previously granted.
@@ -58,6 +60,22 @@ class PushNotificationRegistrationService {
   /// Syncs the device token with Supabase when config, auth, permission,
   /// and token availability allow (no permission prompt).
   Future<void> syncTokenWithBackendIfEligible() async {
+    final inFlight = _syncInFlight;
+    if (inFlight != null) {
+      return inFlight;
+    }
+    final sync = _syncTokenWithBackendIfEligible();
+    _syncInFlight = sync;
+    try {
+      await sync;
+    } finally {
+      if (identical(_syncInFlight, sync)) {
+        _syncInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _syncTokenWithBackendIfEligible() async {
     try {
       if (!Env.pushNotificationsEnabled) {
         return;
@@ -230,15 +248,23 @@ class PushNotificationRegistrationService {
   }
 
   Future<void> _registerWithRepository(String token) async {
+    if (!_tokensBeingRegistered.add(token)) {
+      return;
+    }
     final platform = detectClientPushTokenPlatform();
-    final result = await _notificationsRepository.registerPushToken(
-      token: token,
-      platform: platform,
-      locale: _pushTokenLocaleTag(),
-    );
-    result.fold(
-      (failure) => _logger.warn('registerPushToken failed: ${failure.message}'),
-      (_) => _logger.debug('registerPushToken success'),
-    );
+    try {
+      final result = await _notificationsRepository.registerPushToken(
+        token: token,
+        platform: platform,
+        locale: _pushTokenLocaleTag(),
+      );
+      result.fold(
+        (failure) =>
+            _logger.warn('registerPushToken failed: ${failure.message}'),
+        (_) => _logger.debug('registerPushToken success'),
+      );
+    } finally {
+      _tokensBeingRegistered.remove(token);
+    }
   }
 }

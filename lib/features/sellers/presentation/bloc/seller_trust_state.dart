@@ -12,7 +12,7 @@ class SellerTrustState extends Equatable {
 
   const SellerTrustState.hidden() : this._(status: SellerTrustUiStatus.hidden);
 
-  SellerTrustState.ready(SellerPublicProfile profile)
+  const SellerTrustState.ready(SellerPublicProfile profile)
     : this._(status: SellerTrustUiStatus.ready, profile: profile);
 
   final SellerTrustUiStatus status;

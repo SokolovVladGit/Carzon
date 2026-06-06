@@ -4,6 +4,7 @@ import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
+import 'package:carzon/features/compare/presentation/cubit/compare_cubit.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
@@ -18,6 +19,7 @@ import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
 import '../../helpers/seller_public_profile_test_mocks.dart';
+import '../../helpers/compare_cubit_test_helpers.dart';
 
 class _MockDetailsCubit extends MockCubit<ListingDetailsState>
     implements ListingDetailsCubit {}
@@ -61,6 +63,7 @@ void main() {
   late _MockDetailsCubit detailsCubit;
   late _MockAuthCubit authCubit;
   late _MockFavoritesCubit favoritesCubit;
+  late CompareCubit compareCubit;
   late MockGetSellerPublicProfile sellerProfileUseCase;
   final ru = ruStrings();
 
@@ -71,6 +74,7 @@ void main() {
     detailsCubit = _MockDetailsCubit();
     authCubit = _MockAuthCubit();
     favoritesCubit = _MockFavoritesCubit();
+    compareCubit = newInMemoryCompareCubit();
     sellerProfileUseCase = MockGetSellerPublicProfile();
     stubSellerPublicProfileHidden(sellerProfileUseCase);
 
@@ -95,6 +99,7 @@ void main() {
   });
 
   tearDown(() async {
+    await compareCubit.close();
     await sl.reset();
   });
 
@@ -122,6 +127,7 @@ void main() {
       providers: [
         BlocProvider<AuthCubit>.value(value: authCubit),
         BlocProvider<FavoritesCubit>.value(value: favoritesCubit),
+        BlocProvider<CompareCubit>.value(value: compareCubit),
       ],
       child: MaterialApp.router(
         locale: const Locale('ru'),

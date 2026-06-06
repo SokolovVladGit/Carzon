@@ -75,6 +75,9 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> signIn({required String email, required String password}) async {
+    if (state.status == AuthStatus.authenticating) {
+      return;
+    }
     emit(const AuthState.authenticating());
     final result = await _signInWithPassword(email: email, password: password);
     result.fold(
@@ -100,6 +103,9 @@ class AuthCubit extends Cubit<AuthState> {
   ///   * Failure → [AuthState.error] with a mapped [AuthErrorKind]
   ///     (network, duplicate email heuristic, generic, …).
   Future<void> signUp({required String email, required String password}) async {
+    if (state.status == AuthStatus.authenticating) {
+      return;
+    }
     emit(const AuthState.authenticating());
     final result = await _signUpWithPassword(email: email, password: password);
     result.fold((failure) => emit(AuthState.error(_signUpErrorKind(failure))), (

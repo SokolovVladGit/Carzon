@@ -84,4 +84,23 @@ void main() {
       expect(m.whatsappEnabled, false);
     });
   });
+
+  group('ListingModel.fromPublicJson — contact hardening', () {
+    test('ignores contact fields even when present in the payload', () {
+      final json = baseJson()
+        ..addAll({
+          'seller_id': 'seller-1',
+          'contact_phone': '+373 690 00001',
+          'telegram_username': 'carzon_dev',
+          'whatsapp_enabled': true,
+        });
+
+      final m = ListingModel.fromPublicJson(json);
+
+      expect(m.sellerId, 'seller-1');
+      expect(m.contactPhone, isNull);
+      expect(m.telegramUsername, isNull);
+      expect(m.whatsappEnabled, false);
+    });
+  });
 }

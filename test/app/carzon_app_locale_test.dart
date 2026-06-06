@@ -17,8 +17,6 @@ import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
 import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_state.dart';
-import 'package:carzon/features/compare/presentation/widgets/compare_fly_to_tray_controller.dart';
-import 'package:carzon/features/compare/presentation/widgets/compare_tray_feedback_controller.dart';
 import 'package:carzon/features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';

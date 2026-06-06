@@ -197,6 +197,16 @@ class ListingModel extends Listing {
     );
   }
 
+  /// Maps public listing/feed/detail rows. Contact fields are deliberately
+  /// ignored even if an old backend projection accidentally includes them.
+  factory ListingModel.fromPublicJson(Map<String, dynamic> json) {
+    final safeJson = Map<String, dynamic>.from(json)
+      ..remove('contact_phone')
+      ..remove('telegram_username')
+      ..remove('whatsapp_enabled');
+    return ListingModel.fromJson(safeJson);
+  }
+
   static ListingType _parseType(dynamic raw) {
     final key = _normalizedEnumKey(raw);
     switch (key) {

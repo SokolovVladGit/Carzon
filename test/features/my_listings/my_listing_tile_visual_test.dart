@@ -41,7 +41,7 @@ void main() {
       expect(find.byType(ListingCard), findsOneWidget);
       expect(find.text('BMW 320'), findsOneWidget);
       expect(find.text('€12 000'), findsOneWidget);
-      expect(find.text('80 000 km'), findsOneWidget);
+      expect(find.text('80 000 ${l10n.commonKilometersShort}'), findsOneWidget);
       expect(find.text('2018'), findsOneWidget);
       expect(find.text('Chișinău'), findsOneWidget);
       expect(find.text(l10n.regionMoldova), findsOneWidget);

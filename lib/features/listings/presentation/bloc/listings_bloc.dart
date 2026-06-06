@@ -88,7 +88,12 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         state.status == ListingsStatus.loadingMore) {
       return;
     }
-    emit(state.copyWith(status: ListingsStatus.loadingMore));
+    emit(
+      state.copyWith(
+        status: ListingsStatus.loadingMore,
+        clearLoadFailure: true,
+      ),
+    );
     await _load(emit, page: state.page + 1);
   }
 
@@ -266,6 +271,15 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     final result = await _getListings(query);
     switch (result) {
       case FailureResult(:final failure):
+        if (!replace && page > 0) {
+          emit(
+            source.copyWith(
+              status: ListingsStatus.paginationFailure,
+              loadFailure: failure,
+            ),
+          );
+          return;
+        }
         emit(
           source.copyWith(status: ListingsStatus.failure, loadFailure: failure),
         );

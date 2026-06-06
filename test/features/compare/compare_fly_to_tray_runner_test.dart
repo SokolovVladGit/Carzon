@@ -41,17 +41,17 @@ void main() {
   });
 
   testWidgets(
-    'requestCompareFlyToTray runs on listing details when tray is laid out',
+    'requestCompareFlyToTray runs on the discovery feed when tray is laid out',
     (tester) async {
       final controller = CompareFlyToTrayController();
       addTearDown(controller.cancel);
       final sourceKey = GlobalKey();
 
       final router = GoRouter(
-        initialLocation: '/listings/abc',
+        initialLocation: AppRoutes.listings,
         routes: [
           GoRoute(
-            path: '/listings/:id',
+            path: AppRoutes.listings,
             builder: (context, _) => MediaQuery(
               data: const MediaQueryData(disableAnimations: false),
               child: Scaffold(
@@ -85,7 +85,7 @@ void main() {
             child: SizedBox.expand(
               child: Stack(
                 children: [
-                  if (child != null) child!,
+                  ?child,
                   Positioned(
                     left: 18,
                     right: 18,

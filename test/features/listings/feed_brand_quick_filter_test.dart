@@ -1,13 +1,14 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
-import 'package:carzon/app/router/app_router.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
+import 'package:carzon/features/compare/presentation/cubit/compare_cubit.dart';
 import 'package:carzon/features/listings/data/local/last_applied_listing_discovery_repository.dart';
 import 'package:carzon/features/listings/domain/catalog/listing_brands.dart';
+import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_discovery_criteria.dart';
 import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:carzon/features/listings/domain/entities/listing_sort_option.dart';
@@ -31,6 +32,7 @@ import 'package:carzon/features/sellers/domain/usecases/get_my_seller_profile.da
 import 'package:carzon/features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 
 import '../../helpers/browse_catalog_filter_alerts_sl.dart';
+import '../../helpers/compare_cubit_test_helpers.dart';
 import '../../helpers/l10n_test_helpers.dart';
 import '../../helpers/noop_last_applied_listing_discovery_repository.dart';
 
@@ -45,6 +47,20 @@ class _MockFavoritesCubit extends MockCubit<FavoritesState>
 class _MockSellersRepository extends Mock implements SellersRepository {}
 
 class _MockMessagingRepository extends Mock implements MessagingRepository {}
+
+Listing _feedListing(String id) => Listing(
+  id: id,
+  title: 'VW Golf',
+  make: 'Volkswagen',
+  model: 'Golf',
+  year: 2018,
+  priceEur: 9000,
+  mileageKm: 100000,
+  type: ListingType.sale,
+  city: 'Tiraspol',
+  marketRegion: MarketRegion.transnistria,
+  createdAt: DateTime.utc(2026, 1, 1),
+);
 
 Widget _host({required ListingsBloc bloc}) {
   final router = GoRouter(
@@ -315,5 +331,60 @@ void main() {
         ),
       ).called(1);
     });
+
+    testWidgets(
+      'pagination failure keeps current listing visible and exposes retry',
+      (tester) async {
+        final l10n = ruStrings();
+        final compareCubit = newInMemoryCompareCubit();
+        addTearDown(compareCubit.close);
+        final state = ListingsState(
+          status: ListingsStatus.paginationFailure,
+          items: [_feedListing('l1')],
+          hasReachedEnd: false,
+        );
+        when(() => bloc.state).thenReturn(state);
+        whenListen(
+          bloc,
+          const Stream<ListingsState>.empty(),
+          initialState: state,
+        );
+
+        await tester.pumpWidget(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider<AuthCubit>.value(value: auth),
+              BlocProvider<FavoritesCubit>.value(value: favs),
+              BlocProvider<CompareCubit>.value(value: compareCubit),
+              BlocProvider(
+                create: (_) =>
+                    SelfSellerVisualCubit(GetMySellerProfile(sellersRepo)),
+              ),
+              BlocProvider(
+                create: (_) => MessagingUnreadSummaryCubit(messagingRepo),
+              ),
+            ],
+            child: _host(bloc: bloc),
+          ),
+        );
+        await tester.pump();
+
+        expect(find.text('Volkswagen Golf'), findsOneWidget);
+        await tester.scrollUntilVisible(
+          find.text(l10n.commonRetry),
+          300,
+          scrollable: find.byType(Scrollable).last,
+        );
+        await tester.pump();
+        expect(find.text(l10n.listingsLoadMoreFailed), findsOneWidget);
+        clearInteractions(bloc);
+        await tester.tap(find.text(l10n.commonRetry));
+        await tester.pump();
+
+        verify(
+          () => bloc.add(any(that: isA<ListingsNextPageRequested>())),
+        ).called(1);
+      },
+    );
   });
 }

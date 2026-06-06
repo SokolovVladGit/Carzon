@@ -266,6 +266,12 @@ abstract class AppLocalizations {
   /// **'Не удалось загрузить объявления.'**
   String get listingsLoadFailed;
 
+  /// No description provided for @listingsLoadMoreFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить ещё объявления.'**
+  String get listingsLoadMoreFailed;
+
   /// No description provided for @listingsEmpty.
   ///
   /// In ru, this message translates to:
@@ -2358,6 +2364,18 @@ abstract class AppLocalizations {
   /// **'Настройки'**
   String get profileSettingsSectionTitle;
 
+  /// No description provided for @profileChangePasswordTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить пароль'**
+  String get profileChangePasswordTitle;
+
+  /// No description provided for @profileChangePasswordSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновите пароль для входа в аккаунт.'**
+  String get profileChangePasswordSubtitle;
+
   /// No description provided for @profileDarkThemeTitle.
   ///
   /// In ru, this message translates to:
@@ -2418,6 +2436,12 @@ abstract class AppLocalizations {
   /// **'Уведомления'**
   String get notificationSettingsTitle;
 
+  /// No description provided for @notificationSettingsPageIntro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройте push на этом устройстве: сообщения в чатах и оповещения по сохранённому фильтру.'**
+  String get notificationSettingsPageIntro;
+
   /// No description provided for @notificationSettingsSignInRequired.
   ///
   /// In ru, this message translates to:
@@ -2445,25 +2469,103 @@ abstract class AppLocalizations {
   /// No description provided for @notificationSettingsPushUnavailableInBuild.
   ///
   /// In ru, this message translates to:
-  /// **'Push в этой сборке недоступен (PUSH_NOTIFICATIONS_ENABLED).'**
+  /// **'Push-уведомления недоступны в этой сборке.'**
   String get notificationSettingsPushUnavailableInBuild;
 
   /// No description provided for @notificationSettingsPushBuildDisabledBanner.
   ///
   /// In ru, this message translates to:
-  /// **'В этой сборке push-уведомления выключены на уровне конфигурации. Переключатели ниже недоступны.'**
+  /// **'Push-уведомления недоступны в этой сборке.'**
   String get notificationSettingsPushBuildDisabledBanner;
+
+  /// No description provided for @notificationSettingsPushBuildDisabledHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чтобы протестировать push, используйте сборку с включёнными уведомлениями.'**
+  String get notificationSettingsPushBuildDisabledHint;
+
+  /// No description provided for @notificationSettingsMasterOffHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Включите «Push на этом устройстве», чтобы настроить типы уведомлений ниже.'**
+  String get notificationSettingsMasterOffHint;
+
+  /// No description provided for @notificationSettingsStatusCardTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разрешение устройства'**
+  String get notificationSettingsStatusCardTitle;
+
+  /// No description provided for @notificationSettingsOsPillAllowed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разрешены'**
+  String get notificationSettingsOsPillAllowed;
+
+  /// No description provided for @notificationSettingsOsPillProvisional.
+  ///
+  /// In ru, this message translates to:
+  /// **'Временные'**
+  String get notificationSettingsOsPillProvisional;
+
+  /// No description provided for @notificationSettingsOsPillDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отклонены'**
+  String get notificationSettingsOsPillDenied;
+
+  /// No description provided for @notificationSettingsOsPillNotDetermined.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не запрошены'**
+  String get notificationSettingsOsPillNotDetermined;
+
+  /// No description provided for @notificationSettingsOsPillUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Недоступны'**
+  String get notificationSettingsOsPillUnavailable;
+
+  /// No description provided for @notificationSettingsOsDescriptionAuthorized.
+  ///
+  /// In ru, this message translates to:
+  /// **'Система разрешает показывать уведомления. Push можно включить ниже.'**
+  String get notificationSettingsOsDescriptionAuthorized;
+
+  /// No description provided for @notificationSettingsOsDescriptionProvisional.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления разрешены в ограниченном режиме. При необходимости подтвердите полный доступ в настройках системы.'**
+  String get notificationSettingsOsDescriptionProvisional;
+
+  /// No description provided for @notificationSettingsOsDescriptionDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления отключены в системе. Включите их в настройках телефона, затем вернитесь сюда.'**
+  String get notificationSettingsOsDescriptionDenied;
+
+  /// No description provided for @notificationSettingsOsDescriptionNotDetermined.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разрешение ещё не запрашивалось. Оно будет запрошено, когда вы включите push ниже.'**
+  String get notificationSettingsOsDescriptionNotDetermined;
+
+  /// No description provided for @notificationSettingsOsDescriptionUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'В этой сборке push недоступен, поэтому статус разрешения устройства не применяется.'**
+  String get notificationSettingsOsDescriptionUnavailable;
 
   /// No description provided for @notificationSettingsGlobalTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Уведомления в приложении'**
+  /// **'Push на этом устройстве'**
   String get notificationSettingsGlobalTitle;
 
   /// No description provided for @notificationSettingsGlobalSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Общий переключатель. При включении система может запросить разрешение на уведомления.'**
+  /// **'Включает доставку push на этом устройстве. При выключении отключаются сообщения и оповещения по фильтру.'**
   String get notificationSettingsGlobalSubtitle;
 
   /// No description provided for @notificationSettingsMessagesTitle.
@@ -2475,13 +2577,13 @@ abstract class AppLocalizations {
   /// No description provided for @notificationSettingsMessagesSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Push о новых сообщениях в чатах (когда доставка будет доступна).'**
+  /// **'Push о новых сообщениях в чатах по объявлениям.'**
   String get notificationSettingsMessagesSubtitle;
 
   /// No description provided for @notificationSettingsMessagesNeedsGlobal.
   ///
   /// In ru, this message translates to:
-  /// **'Сначала включите «Уведомления в приложении».'**
+  /// **'Сначала включите «Push на этом устройстве».'**
   String get notificationSettingsMessagesNeedsGlobal;
 
   /// No description provided for @notificationSettingsFilterAlertsTitle.
@@ -2493,19 +2595,37 @@ abstract class AppLocalizations {
   /// No description provided for @notificationSettingsFilterAlertsSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Разрешите уведомления, чтобы получать push при новых объявлениях по сохранённому фильтру. Доставка на устройстве всё ещё проверяется.'**
+  /// **'Push при новых объявлениях, подходящих под сохранённый фильтр.'**
   String get notificationSettingsFilterAlertsSubtitle;
 
   /// No description provided for @notificationSettingsFilterAlertsNeedsGlobal.
   ///
   /// In ru, this message translates to:
-  /// **'Сначала включите «Уведомления в приложении».'**
+  /// **'Сначала включите «Push на этом устройстве».'**
   String get notificationSettingsFilterAlertsNeedsGlobal;
+
+  /// No description provided for @notificationSettingsFilterAlertsSavedFilterNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нужен сохранённый фильтр и включённые оповещения на экране управления фильтром.'**
+  String get notificationSettingsFilterAlertsSavedFilterNote;
+
+  /// No description provided for @notificationSettingsFilterAlertsOpenCta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть оповещения по фильтру'**
+  String get notificationSettingsFilterAlertsOpenCta;
+
+  /// No description provided for @notificationSettingsDeliveryCardTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статус доставки'**
+  String get notificationSettingsDeliveryCardTitle;
 
   /// No description provided for @notificationSettingsDeliveryDisclaimer.
   ///
   /// In ru, this message translates to:
-  /// **'Функция реализована на сервере и в приложении; финальная доставка на устройство всё ещё проверяется.'**
+  /// **'Функция реализована на сервере и в приложении; финальная доставка на устройствах ещё проверяется.'**
   String get notificationSettingsDeliveryDisclaimer;
 
   /// No description provided for @notificationSettingsOsStatusAuthorized.
@@ -3119,6 +3239,66 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Пароли не совпадают.'**
   String get resetPasswordValidationMismatch;
+
+  /// No description provided for @changePasswordTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить пароль'**
+  String get changePasswordTitle;
+
+  /// No description provided for @changePasswordIntro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите текущий пароль и выберите новый.'**
+  String get changePasswordIntro;
+
+  /// No description provided for @changePasswordCurrentPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текущий пароль'**
+  String get changePasswordCurrentPassword;
+
+  /// No description provided for @changePasswordNewPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новый пароль'**
+  String get changePasswordNewPassword;
+
+  /// No description provided for @changePasswordConfirmPassword.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подтвердите новый пароль'**
+  String get changePasswordConfirmPassword;
+
+  /// No description provided for @changePasswordSubmit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранить пароль'**
+  String get changePasswordSubmit;
+
+  /// No description provided for @changePasswordSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пароль обновлён.'**
+  String get changePasswordSuccess;
+
+  /// No description provided for @changePasswordCurrentInvalid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текущий пароль неверный.'**
+  String get changePasswordCurrentInvalid;
+
+  /// No description provided for @changePasswordFailedRetry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось изменить пароль. Попробуйте ещё раз.'**
+  String get changePasswordFailedRetry;
+
+  /// No description provided for @changePasswordSecurityNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Используйте надёжный пароль, который вы не применяете в других сервисах.'**
+  String get changePasswordSecurityNote;
 
   /// No description provided for @phoneRequired.
   ///

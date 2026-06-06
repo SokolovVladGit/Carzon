@@ -1,5 +1,6 @@
 import '../../../../core/utils/result.dart';
 import '../../../listings/domain/entities/listing.dart';
+import '../../../listings/domain/entities/listing_image.dart';
 import '../entities/edit_listing_input.dart';
 import '../entities/owner_listing_vin_lookup_result.dart';
 import '../entities/owner_listing_vin_report_status.dart';
@@ -8,6 +9,16 @@ import '../entities/owner_listing_vin_source_result.dart';
 /// Narrow repository for owner-only listing edits. Backed by the
 /// `update_listing_details` (+ v2 currency) RPCs in the data layer.
 abstract interface class EditListingRepository {
+  /// Owner-only edit initialization row. Includes contact fields and is backed
+  /// by a SECURITY DEFINER RPC with `auth.uid()` ownership checks.
+  Future<Result<Listing>> fetchOwnerListingForEdit(String listingId);
+
+  /// Owner-only image metadata for edit cleanup/replacement. Includes
+  /// `storage_path`; public gallery reads must not use this path.
+  Future<Result<List<ListingImage>>> fetchOwnerListingImagesForEdit(
+    String listingId,
+  );
+
   /// Updates mutable fields of the caller's own listing. The RPC
   /// rejects non-owners, invalid input, and unauthenticated calls; a
   /// [Failure] is returned in those cases.

@@ -1,5 +1,8 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/features/auth/domain/entities/auth_user.dart';
+import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/edit_listing/domain/entities/edit_listing_input.dart';
 import 'package:carzon/features/edit_listing/domain/entities/owner_listing_vin_report_status.dart';
 import 'package:carzon/features/edit_listing/domain/entities/owner_listing_vin_source_result.dart';
@@ -15,6 +18,8 @@ import 'package:carzon/features/listings/domain/entities/listing_image.dart';
 import 'package:carzon/features/listings/presentation/widgets/public_contact_notice.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -22,6 +27,8 @@ import '../../helpers/l10n_test_helpers.dart';
 
 class _MockEditCubit extends MockCubit<EditListingState>
     implements EditListingCubit {}
+
+class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
 Listing _listing({
   String? coverUrl,
@@ -48,6 +55,7 @@ Listing _listing({
 
 void main() {
   late _MockEditCubit cubit;
+  late _MockAuthCubit authCubit;
 
   setUpAll(() {
     registerFallbackValue(
@@ -74,7 +82,17 @@ void main() {
   setUp(() async {
     await sl.reset();
     cubit = _MockEditCubit();
-    when(() => cubit.load(any())).thenAnswer((_) async {});
+    authCubit = _MockAuthCubit();
+    when(
+      () => cubit.load(any(), ownerId: any(named: 'ownerId')),
+    ).thenAnswer((_) async {});
+    const user = AuthUser(id: 's1', email: 'seller@example.com');
+    when(() => authCubit.state).thenReturn(const AuthState.authenticated(user));
+    whenListen(
+      authCubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(user),
+    );
     sl.registerFactory<EditListingCubit>(() => cubit);
   });
 
@@ -84,17 +102,54 @@ void main() {
 
   final ru = ruStrings();
 
-  Widget app() => MaterialApp(
+  Widget app({EditListingImagePicker? imagePicker}) => MaterialApp(
     locale: const Locale('ru'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: const EditListingPage(listingId: 'l1'),
+    home: BlocProvider<AuthCubit>.value(
+      value: authCubit,
+      child: EditListingPage(listingId: 'l1', imagePicker: imagePicker),
+    ),
   );
 
   void stub(EditListingState s) {
     when(() => cubit.state).thenReturn(s);
     whenListen(cubit, const Stream<EditListingState>.empty(), initialState: s);
   }
+
+  testWidgets('signed-out direct route shows sign-in prompt and skips load', (
+    tester,
+  ) async {
+    when(() => authCubit.state).thenReturn(const AuthState.unauthenticated());
+    whenListen(
+      authCubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.unauthenticated(),
+    );
+
+    await tester.pumpWidget(app());
+    await tester.pump();
+
+    expect(find.text(ru.myListingsSignInRequired), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, ru.commonSignIn), findsOneWidget);
+    verifyNever(() => cubit.load(any(), ownerId: any(named: 'ownerId')));
+  });
+
+  testWidgets('not-allowed load failure renders permission error', (
+    tester,
+  ) async {
+    stub(
+      const EditListingState.loadFailure(
+        kind: EditListingFailureKind.notAllowed,
+      ),
+    );
+
+    await tester.pumpWidget(app());
+    await tester.pump();
+
+    expect(find.text(ru.notAllowedEdit), findsOneWidget);
+    expect(find.text(ru.editListingLoadFailed), findsNothing);
+  });
 
   testWidgets('renders gallery section keys, currency selector, brand, year, '
       'contact notice and save affordance', (tester) async {
@@ -380,5 +435,68 @@ void main() {
     await tester.pump();
 
     expect(find.text(ru.editListingGalleryReadOnlyHint), findsOneWidget);
+  });
+
+  testWidgets('picker cancellation is neutral on edit gallery', (tester) async {
+    final listing = _listing();
+    stub(
+      EditListingState.ready(
+        listing,
+        listingGalleryImages: const [],
+        galleryLoadSucceeded: true,
+        initialGallerySlots: <EditListingGallerySlot>[],
+      ),
+    );
+
+    await tester.pumpWidget(
+      app(
+        imagePicker:
+            ({
+              required source,
+              required maxWidth,
+              required imageQuality,
+            }) async => null,
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(EditListingGallerySection.widgetTestKey));
+    await tester.pumpAndSettle();
+
+    expect(find.text(ru.imagePickerLoadFailed), findsNothing);
+    expect(find.byKey(EditListingGallerySection.widgetTestKey), findsOneWidget);
+  });
+
+  testWidgets('picker failure shows localized edit gallery error', (
+    tester,
+  ) async {
+    final listing = _listing();
+    stub(
+      EditListingState.ready(
+        listing,
+        listingGalleryImages: const [],
+        galleryLoadSucceeded: true,
+        initialGallerySlots: <EditListingGallerySlot>[],
+      ),
+    );
+
+    await tester.pumpWidget(
+      app(
+        imagePicker:
+            ({
+              required source,
+              required maxWidth,
+              required imageQuality,
+            }) async {
+              throw PlatformException(code: 'photo_access_denied');
+            },
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(EditListingGallerySection.widgetTestKey));
+    await tester.pumpAndSettle();
+
+    expect(find.text(ru.imagePickerLoadFailed), findsOneWidget);
   });
 }

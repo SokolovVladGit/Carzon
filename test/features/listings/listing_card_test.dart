@@ -77,7 +77,10 @@ void main() {
 
       expect(find.text('Volkswagen Golf'), findsOneWidget);
       expect(find.text('€8 900'), findsOneWidget);
-      expect(find.text('120 000 km'), findsOneWidget);
+      expect(
+        find.text('120 000 ${l10n.commonKilometersShort}'),
+        findsOneWidget,
+      );
       expect(find.text('2016'), findsOneWidget);
       expect(find.text('Tiraspol'), findsOneWidget);
       expect(find.text(l10n.regionTransnistria), findsOneWidget);
@@ -233,7 +236,10 @@ void main() {
         // hierarchy is stronger, not poorer.
         expect(find.text('€8 900'), findsOneWidget);
         expect(find.text('Volkswagen Golf'), findsOneWidget);
-        expect(find.text('120 000 km'), findsOneWidget);
+        expect(
+        find.text('120 000 ${l10n.commonKilometersShort}'),
+        findsOneWidget,
+      );
         expect(find.text('2016'), findsOneWidget);
         expect(find.text('Tiraspol'), findsOneWidget);
       },

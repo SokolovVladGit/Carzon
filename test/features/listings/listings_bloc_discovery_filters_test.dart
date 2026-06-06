@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/listings/data/local/last_applied_listing_discovery_repository.dart';
 import 'package:carzon/features/listings/domain/entities/buyer_listing_vin_report_source_result.dart';
@@ -18,6 +19,20 @@ import 'package:mocktail/mocktail.dart';
 import '../../helpers/noop_last_applied_listing_discovery_repository.dart';
 
 class _MockListingsRepository extends Mock implements ListingsRepository {}
+
+Listing _listing(String id) => Listing(
+  id: id,
+  title: 'Listing $id',
+  make: 'Volkswagen',
+  model: 'Golf',
+  year: 2018,
+  priceEur: 9000,
+  mileageKm: 100000,
+  type: ListingType.sale,
+  city: 'Tiraspol',
+  marketRegion: MarketRegion.transnistria,
+  createdAt: DateTime.utc(2026, 1, 1),
+);
 
 final class _RecordingLastApplied
     implements LastAppliedListingDiscoveryRepository {
@@ -349,4 +364,215 @@ void main() {
       );
     },
   );
+
+  group('pagination failure handling', () {
+    final firstPage = List<Listing>.generate(
+      20,
+      (i) => _listing('page0-$i'),
+      growable: false,
+    );
+    final secondPage = [_listing('page1-0'), _listing('page1-1')];
+
+    blocTest<ListingsBloc, ListingsState>(
+      'initial load failure still emits full failure state',
+      setUp: () {
+        when(() => repo.getListings(any())).thenAnswer(
+          (_) async => const FailureResult(NetworkFailure('offline')),
+        );
+      },
+      build: () => ListingsBloc(
+        getListings: GetListings(repo),
+        lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      ),
+      act: (b) => b.add(const ListingsRequested()),
+      expect: () => [
+        const ListingsState(status: ListingsStatus.loading),
+        const ListingsState(
+          status: ListingsStatus.failure,
+          loadFailure: NetworkFailure('offline'),
+        ),
+      ],
+    );
+
+    blocTest<ListingsBloc, ListingsState>(
+      'next-page failure preserves loaded items and current page',
+      setUp: () {
+        var call = 0;
+        when(() => repo.getListings(any())).thenAnswer((_) async {
+          call += 1;
+          if (call == 1) return Success(firstPage);
+          return const FailureResult(NetworkFailure('next page down'));
+        });
+      },
+      build: () => ListingsBloc(
+        getListings: GetListings(repo),
+        lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      ),
+      act: (b) async {
+        b.add(const ListingsRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsNextPageRequested());
+      },
+      expect: () => [
+        const ListingsState(status: ListingsStatus.loading),
+        ListingsState(
+          status: ListingsStatus.success,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.loadingMore,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.paginationFailure,
+          items: firstPage,
+          hasReachedEnd: false,
+          loadFailure: const NetworkFailure('next page down'),
+        ),
+      ],
+    );
+
+    blocTest<ListingsBloc, ListingsState>(
+      'retry after next-page failure appends the failed page once',
+      setUp: () {
+        var call = 0;
+        when(() => repo.getListings(any())).thenAnswer((_) async {
+          call += 1;
+          if (call == 1) return Success(firstPage);
+          if (call == 2) {
+            return const FailureResult(NetworkFailure('next page down'));
+          }
+          return Success(secondPage);
+        });
+      },
+      build: () => ListingsBloc(
+        getListings: GetListings(repo),
+        lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      ),
+      act: (b) async {
+        b.add(const ListingsRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsNextPageRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsNextPageRequested());
+      },
+      expect: () => [
+        const ListingsState(status: ListingsStatus.loading),
+        ListingsState(
+          status: ListingsStatus.success,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.loadingMore,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.paginationFailure,
+          items: firstPage,
+          hasReachedEnd: false,
+          loadFailure: const NetworkFailure('next page down'),
+        ),
+        ListingsState(
+          status: ListingsStatus.loadingMore,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.success,
+          items: [...firstPage, ...secondPage],
+          page: 1,
+          hasReachedEnd: true,
+        ),
+      ],
+      verify: (_) {
+        final queries = verify(() => repo.getListings(captureAny())).captured;
+        expect(queries.map((q) => (q as ListingsQuery).page), [0, 1, 1]);
+      },
+    );
+
+    blocTest<ListingsBloc, ListingsState>(
+      'retry failure keeps loaded items and retry state',
+      setUp: () {
+        var call = 0;
+        when(() => repo.getListings(any())).thenAnswer((_) async {
+          call += 1;
+          if (call == 1) return Success(firstPage);
+          return FailureResult(NetworkFailure('next page down $call'));
+        });
+      },
+      build: () => ListingsBloc(
+        getListings: GetListings(repo),
+        lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      ),
+      act: (b) async {
+        b.add(const ListingsRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsNextPageRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsNextPageRequested());
+      },
+      expect: () => [
+        const ListingsState(status: ListingsStatus.loading),
+        ListingsState(
+          status: ListingsStatus.success,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.loadingMore,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.paginationFailure,
+          items: firstPage,
+          hasReachedEnd: false,
+          loadFailure: const NetworkFailure('next page down 2'),
+        ),
+        ListingsState(
+          status: ListingsStatus.loadingMore,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.paginationFailure,
+          items: firstPage,
+          hasReachedEnd: false,
+          loadFailure: const NetworkFailure('next page down 3'),
+        ),
+      ],
+    );
+
+    blocTest<ListingsBloc, ListingsState>(
+      'duplicate next-page requests do not overlap while loadingMore',
+      setUp: () {
+        when(() => repo.getListings(any())).thenAnswer((invocation) async {
+          final q = invocation.positionalArguments.single as ListingsQuery;
+          if (q.page == 0) return Success(firstPage);
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          return Success(secondPage);
+        });
+      },
+      build: () => ListingsBloc(
+        getListings: GetListings(repo),
+        lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      ),
+      act: (b) async {
+        b.add(const ListingsRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsNextPageRequested());
+        b.add(const ListingsNextPageRequested());
+        await Future<void>.delayed(Duration.zero);
+      },
+      wait: const Duration(milliseconds: 10),
+      verify: (_) {
+        final queries = verify(() => repo.getListings(captureAny())).captured;
+        expect(queries.map((q) => (q as ListingsQuery).page), [0, 1]);
+      },
+    );
+  });
 }

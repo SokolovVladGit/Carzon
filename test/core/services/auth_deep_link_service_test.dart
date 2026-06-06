@@ -32,16 +32,19 @@ void main() {
   });
 
   group('AuthDeepLinkService.isAuthCallback', () {
-    test('accepts the custom carzon:// scheme regardless of host', () {
+    test('accepts the registered custom carzon://auth-callback URI', () {
       expect(
         AuthDeepLinkService.isAuthCallback(
           Uri.parse('carzon://auth-callback#access_token=abc'),
         ),
         isTrue,
       );
+    });
+
+    test('rejects unknown custom-scheme links without auth params', () {
       expect(
         AuthDeepLinkService.isAuthCallback(Uri.parse('carzon://anything')),
-        isTrue,
+        isFalse,
       );
     });
 
@@ -109,6 +112,16 @@ void main() {
       expect(handled, isFalse);
       verifyNever(() => parser.handleAuthUrl(any()));
     });
+
+    test(
+      'ignores unknown carzon:// URIs without invoking the parser',
+      () async {
+        final handled = await service.handleUri(Uri.parse('carzon://unknown'));
+
+        expect(handled, isFalse);
+        verifyNever(() => parser.handleAuthUrl(any()));
+      },
+    );
 
     test('swallows AuthException from the parser without throwing', () async {
       when(

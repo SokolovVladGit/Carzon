@@ -5,7 +5,6 @@
 // pinned here (no regression in copy). The on-feed chips themselves
 // render through `listingsDiscoveryChips` so label/value can have
 // separate typographic weight (premium look).
-import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_sort_option.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
 import 'package:carzon/features/listings/presentation/utils/discovery_feed_chip_labels.dart';

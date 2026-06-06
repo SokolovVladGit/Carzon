@@ -4,7 +4,6 @@ import 'package:carzon/features/compare/domain/entities/compare_listing_snapshot
 import 'package:carzon/features/compare/domain/repositories/compare_repository.dart';
 import 'package:carzon/features/compare/presentation/cubit/compare_cubit.dart';
 import 'package:carzon/features/compare/presentation/widgets/compare_fly_to_tray_controller.dart';
-import 'package:carzon/features/compare/presentation/widgets/compare_fly_to_tray_layer.dart';
 import 'package:carzon/features/compare/presentation/widgets/compare_fly_to_tray_overlay.dart';
 import 'package:carzon/features/compare/presentation/widgets/compare_tray_feedback_controller.dart';
 import 'package:carzon/features/compare/presentation/widgets/compare_tray_host.dart';

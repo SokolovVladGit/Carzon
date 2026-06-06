@@ -15,8 +15,10 @@ import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/widgets/public_contact_notice.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
@@ -25,6 +27,76 @@ class _MockCreateCubit extends MockCubit<CreateListingState>
     implements CreateListingCubit {}
 
 class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
+
+const _transparentPng = <int>[
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0A,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
+];
 
 void main() {
   setUpAll(() {
@@ -84,15 +156,26 @@ void main() {
     await sl.reset();
   });
 
-  Widget wrap() => MaterialApp(
+  Widget wrap({CreateListingImagePicker? imagePicker}) => MaterialApp(
     locale: const Locale('ru'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: BlocProvider<AuthCubit>.value(
       value: authCubit,
-      child: const CreateListingPage(),
+      child: CreateListingPage(imagePicker: imagePicker),
     ),
   );
+
+  Future<void> tapEmptyPhotoHero(WidgetTester tester) async {
+    tester.testTextInput.hide();
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 600));
+    await tester.pumpAndSettle();
+    final media = find.byKey(CreateListingMediaSection.phase3TestKey);
+    await tester.ensureVisible(media);
+    await tester.pumpAndSettle();
+    await tester.tap(media);
+    await tester.pump();
+  }
 
   testWidgets(
     'Phase 3A form shell: media, currency, brand, year, publish, disclosure',
@@ -184,6 +267,96 @@ void main() {
       expect(find.textContaining('PostgREST'), findsNothing);
       expect(find.textContaining('listing-images'), findsNothing);
       expect(find.text('rls'), findsNothing);
+    },
+  );
+
+  testWidgets('picker cancellation is neutral and keeps form state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        imagePicker:
+            ({
+              required source,
+              required maxWidth,
+              required imageQuality,
+            }) async => null,
+      ),
+    );
+    await tester.pump();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, l10n.fieldModel),
+      'Golf',
+    );
+
+    await tapEmptyPhotoHero(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.imagePickerLoadFailed), findsNothing);
+    expect(find.text('Golf'), findsOneWidget);
+    expect(find.byType(Image), findsNothing);
+  });
+
+  testWidgets('picker failure shows localized recoverable error', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        imagePicker:
+            ({
+              required source,
+              required maxWidth,
+              required imageQuality,
+            }) async {
+              throw PlatformException(code: 'photo_access_denied');
+            },
+      ),
+    );
+    await tester.pump();
+
+    await tapEmptyPhotoHero(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.imagePickerLoadFailed), findsOneWidget);
+  });
+
+  testWidgets(
+    'upload failure keeps selected media preview available for retry',
+    (tester) async {
+      final states = Stream<CreateListingState>.fromIterable(const [
+        CreateListingState.submitting(),
+        CreateListingState.failure(CreateListingFailureKind.upload),
+      ]);
+      whenListen(
+        createCubit,
+        states,
+        initialState: const CreateListingState.idle(),
+      );
+      await tester.pumpWidget(
+        wrap(
+          imagePicker:
+              ({
+                required source,
+                required maxWidth,
+                required imageQuality,
+              }) async => XFile.fromData(
+                Uint8List.fromList(_transparentPng),
+                name: 'car.png',
+                mimeType: 'image/png',
+              ),
+        ),
+      );
+      await tester.pump();
+
+      await tapEmptyPhotoHero(tester);
+      await tester.pumpAndSettle();
+      expect(find.byType(Image), findsWidgets);
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text(l10n.createListingPhotosUploadFailed), findsOneWidget);
+      expect(find.byType(Image), findsWidgets);
     },
   );
 }

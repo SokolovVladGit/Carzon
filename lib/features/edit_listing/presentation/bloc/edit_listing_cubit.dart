@@ -9,11 +9,11 @@ import '../../../create_listing/domain/usecases/delete_uploaded_listing_images_b
 import '../../../create_listing/domain/usecases/upload_listing_images_sequential.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_image.dart';
-import '../../../listings/domain/usecases/get_listing_by_id.dart';
-import '../../../listings/domain/usecases/get_listing_images.dart';
 import '../../domain/entities/edit_listing_input.dart';
 import '../../domain/entities/owner_listing_vin_report_status.dart';
 import '../../domain/entities/owner_listing_vin_source_result.dart';
+import '../../domain/usecases/get_owner_listing_for_edit.dart';
+import '../../domain/usecases/get_owner_listing_images_for_edit.dart';
 import '../../domain/usecases/get_owner_listing_vin_for_edit.dart';
 import '../../domain/usecases/get_owner_listing_vin_report_status_for_edit.dart';
 import '../../domain/usecases/get_owner_listing_vin_source_results_for_edit.dart';
@@ -29,8 +29,8 @@ import 'edit_listing_state.dart';
 /// * optionally uploads new blobs sequentially and calls `replace_listing_images`
 class EditListingCubit extends Cubit<EditListingState> {
   EditListingCubit({
-    required GetListingById getListingById,
-    required GetListingImages getListingImages,
+    required GetOwnerListingForEdit getOwnerListingForEdit,
+    required GetOwnerListingImagesForEdit getOwnerListingImagesForEdit,
     required GetOwnerListingVinForEdit getOwnerListingVinForEdit,
     required GetOwnerListingVinReportStatusForEdit
     getOwnerListingVinReportStatusForEdit,
@@ -42,8 +42,8 @@ class EditListingCubit extends Cubit<EditListingState> {
     required DeleteUploadedListingImagesBestEffort
     deleteUploadedListingImagesBestEffort,
     required ListingImageRepository listingImageRepository,
-  }) : _getListingById = getListingById,
-       _getListingImages = getListingImages,
+  }) : _getOwnerListingForEdit = getOwnerListingForEdit,
+       _getOwnerListingImagesForEdit = getOwnerListingImagesForEdit,
        _getOwnerListingVinForEdit = getOwnerListingVinForEdit,
        _getOwnerListingVinReportStatusForEdit =
            getOwnerListingVinReportStatusForEdit,
@@ -56,8 +56,8 @@ class EditListingCubit extends Cubit<EditListingState> {
        _listingImageRepository = listingImageRepository,
        super(const EditListingState.initial());
 
-  final GetListingById _getListingById;
-  final GetListingImages _getListingImages;
+  final GetOwnerListingForEdit _getOwnerListingForEdit;
+  final GetOwnerListingImagesForEdit _getOwnerListingImagesForEdit;
   final GetOwnerListingVinForEdit _getOwnerListingVinForEdit;
   final GetOwnerListingVinReportStatusForEdit
   _getOwnerListingVinReportStatusForEdit;
@@ -69,18 +69,27 @@ class EditListingCubit extends Cubit<EditListingState> {
   final DeleteUploadedListingImagesBestEffort _deleteStagingUseCase;
   final ListingImageRepository _listingImageRepository;
 
-  Future<void> load(String id) async {
+  Future<void> load(String id, {String? ownerId}) async {
     emit(const EditListingState.loading());
 
-    switch (await _getListingById(id)) {
+    switch (await _getOwnerListingForEdit(id)) {
       case FailureResult():
         emit(EditListingState.loadFailure());
       case Success(:final value):
         final listing = value;
+        if (ownerId != null &&
+            (listing.sellerId == null || listing.sellerId != ownerId)) {
+          emit(
+            const EditListingState.loadFailure(
+              kind: EditListingFailureKind.notAllowed,
+            ),
+          );
+          return;
+        }
 
         var galleryLoadSucceeded = false;
         var galleryImages = const <ListingImage>[];
-        switch (await _getListingImages(id)) {
+        switch (await _getOwnerListingImagesForEdit(id)) {
           case FailureResult():
             galleryLoadSucceeded = false;
           case Success(:final value):

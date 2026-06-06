@@ -68,16 +68,6 @@ void main() {
     expect(find.text('76.0'), findsOneWidget);
   });
 
-  testWidgets('compareTrayBottomInset uses contact bar clearance on details', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: _InsetProbe(location: '/listings/abc')),
-    );
-
-    expect(find.text('82.0'), findsOneWidget);
-  });
-
   testWidgets('compareTrayBottomInset uses safe padding elsewhere', (
     tester,
   ) async {

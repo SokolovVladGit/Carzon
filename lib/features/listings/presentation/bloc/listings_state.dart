@@ -5,7 +5,14 @@ import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_currency.dart';
 import '../../domain/entities/listing_sort_option.dart';
 
-enum ListingsStatus { initial, loading, loadingMore, success, failure }
+enum ListingsStatus {
+  initial,
+  loading,
+  loadingMore,
+  success,
+  failure,
+  paginationFailure,
+}
 
 /// Presentation-level tri-state selector for the feed region filter.
 /// Maps to [MarketRegion]? via [asMarketRegion] — `both` means no region

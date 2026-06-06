@@ -1,5 +1,8 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/core/l10n/app_locale_cubit.dart';
+import 'package:carzon/core/l10n/app_locale_local_datasource.dart';
+import 'package:carzon/core/l10n/app_locale_preference.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
@@ -24,9 +27,19 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
 class _MockMessagingRepository extends Mock implements MessagingRepository {}
 
+final class _InMemoryAppLocaleLocalDataSource
+    implements AppLocaleLocalDataSource {
+  @override
+  Future<AppLocalePreference> loadPreference() async => AppLocalePreference.ru;
+
+  @override
+  Future<void> savePreference(AppLocalePreference preference) async {}
+}
+
 void main() {
   late _MockAuthCubit authCubit;
   late _MockMessagingRepository messagingRepo;
+  late AppLocaleCubit appLocaleCubit;
   final l10n = ruStrings();
 
   const user = AuthUser(id: 'u1', email: 'buyer@test.com');
@@ -39,6 +52,9 @@ void main() {
     await sl.reset();
     authCubit = _MockAuthCubit();
     messagingRepo = _MockMessagingRepository();
+    appLocaleCubit = AppLocaleCubit(
+      localDataSource: _InMemoryAppLocaleLocalDataSource(),
+    );
     sl.registerLazySingleton<MessagingRepository>(() => messagingRepo);
     sl.registerLazySingleton<MessagingUnreadSummaryCubit>(
       () => MessagingUnreadSummaryCubit(sl<MessagingRepository>()),
@@ -86,7 +102,29 @@ void main() {
       locale: const Locale('ru'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: BlocProvider<AuthCubit>.value(value: authCubit, child: child),
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthCubit>.value(value: authCubit),
+          BlocProvider<AppLocaleCubit>.value(value: appLocaleCubit),
+        ],
+        child: child,
+      ),
+    );
+  }
+
+  Widget testedInboxRouter(GoRouter router) {
+    return MaterialApp.router(
+      locale: const Locale('ru'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      routerConfig: router,
+      builder: (context, child) => MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthCubit>.value(value: authCubit),
+          BlocProvider<AppLocaleCubit>.value(value: appLocaleCubit),
+        ],
+        child: child ?? const SizedBox.shrink(),
+      ),
     );
   }
 
@@ -169,14 +207,7 @@ void main() {
       ],
     );
 
-    await tester.pumpWidget(
-      MaterialApp.router(
-        locale: const Locale('ru'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        routerConfig: router,
-      ),
-    );
+    await tester.pumpWidget(testedInboxRouter(router));
     await tester.pumpAndSettle();
 
     expect(find.text('Volkswagen Golf'), findsOneWidget);
@@ -437,7 +468,7 @@ void main() {
       final title = tester.widget<Text>(
         find.byWidgetPredicate((w) => w is Text && w.data == 'Volkswagen Golf'),
       );
-      expect(title.style?.fontWeight, FontWeight.w500);
+      expect(title.style?.fontWeight, FontWeight.w600);
     });
 
     testWidgets('mixed list shows unread dot only on unread thread', (
@@ -558,14 +589,7 @@ void main() {
           ],
         );
 
-        await tester.pumpWidget(
-          MaterialApp.router(
-            locale: const Locale('ru'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            routerConfig: router,
-          ),
-        );
+        await tester.pumpWidget(testedInboxRouter(router));
         await tester.pumpAndSettle();
 
         expect(
@@ -595,7 +619,7 @@ void main() {
             (w) => w is Text && w.data == 'Volkswagen Golf',
           ),
         );
-        expect(title.style?.fontWeight, FontWeight.w500);
+        expect(title.style?.fontWeight, FontWeight.w600);
       },
     );
   });

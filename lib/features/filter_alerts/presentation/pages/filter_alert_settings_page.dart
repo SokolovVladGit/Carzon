@@ -10,6 +10,7 @@ import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/app_back_button.dart';
+import '../../../../core/widgets/auth_required_prompt.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -72,24 +73,10 @@ class FilterAlertSettingsPage extends StatelessWidget {
                   ? SystemUiOverlayStyle.light
                   : SystemUiOverlayStyle.dark,
             ),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      l10n.filterAlertSignInRequired,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => context.go(AppRoutes.signIn),
-                      child: Text(l10n.commonSignIn),
-                    ),
-                  ],
-                ),
-              ),
+            body: AuthRequiredPrompt(
+              message: l10n.filterAlertSignInRequired,
+              primaryButtonLabel: l10n.commonSignIn,
+              onPrimaryPressed: () => context.go(AppRoutes.signIn),
             ),
           );
         }

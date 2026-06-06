@@ -23,17 +23,13 @@ import 'package:carzon/features/edit_listing/presentation/bloc/edit_listing_cubi
 import 'package:carzon/features/edit_listing/presentation/bloc/edit_listing_state.dart';
 import 'package:carzon/features/edit_listing/presentation/models/edit_listing_gallery_slot.dart';
 import 'package:carzon/features/edit_listing/presentation/utils/edit_listing_gallery_initializer.dart';
-import 'package:carzon/features/listings/domain/entities/buyer_listing_vin_report_source_result.dart';
+import 'package:carzon/features/edit_listing/domain/usecases/get_owner_listing_for_edit.dart';
+import 'package:carzon/features/edit_listing/domain/usecases/get_owner_listing_images_for_edit.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:carzon/features/listings/domain/entities/listing_image.dart';
-import 'package:carzon/features/listings/domain/repositories/listings_repository.dart';
-import 'package:carzon/features/listings/domain/usecases/get_listing_by_id.dart';
-import 'package:carzon/features/listings/domain/usecases/get_listing_images.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-
-class _MockListingsRepository extends Mock implements ListingsRepository {}
 
 class _MockEditListingRepository extends Mock
     implements EditListingRepository {}
@@ -46,6 +42,7 @@ Listing _seed({
   String make = 'Volkswagen',
   int year = 2016,
   ListingCurrency currency = ListingCurrency.eur,
+  String? sellerId = 's1',
 }) => Listing(
   id: id,
   title: 'VW Golf',
@@ -60,7 +57,7 @@ Listing _seed({
   marketRegion: MarketRegion.moldova,
   createdAt: DateTime.utc(2026, 4, 1),
   status: ListingStatus.active,
-  sellerId: 's1',
+  sellerId: sellerId,
   contactPhone: '+373 690 00001',
   telegramUsername: null,
   whatsappEnabled: false,
@@ -107,7 +104,6 @@ CoverImageUpload _upload({Uint8List? bytes}) => CoverImageUpload(
 );
 
 void main() {
-  late _MockListingsRepository listingsRepo;
   late _MockEditListingRepository editRepo;
   late _MockImageRepository imageRepo;
   late UploadListingImagesSequential uploadSeq;
@@ -115,8 +111,8 @@ void main() {
   late EditListingCubit cubit;
 
   EditListingCubit build() => EditListingCubit(
-    getListingById: GetListingById(listingsRepo),
-    getListingImages: GetListingImages(listingsRepo),
+    getOwnerListingForEdit: GetOwnerListingForEdit(editRepo),
+    getOwnerListingImagesForEdit: GetOwnerListingImagesForEdit(editRepo),
     getOwnerListingVinForEdit: GetOwnerListingVinForEdit(editRepo),
     getOwnerListingVinReportStatusForEdit:
         GetOwnerListingVinReportStatusForEdit(editRepo),
@@ -162,19 +158,14 @@ void main() {
   });
 
   setUp(() {
-    listingsRepo = _MockListingsRepository();
     editRepo = _MockEditListingRepository();
     imageRepo = _MockImageRepository();
     uploadSeq = UploadListingImagesSequential(imageRepo);
     deleteBatch = DeleteUploadedListingImagesBestEffort(imageRepo);
 
     when(
-      () => listingsRepo.getListingImages(any()),
+      () => editRepo.fetchOwnerListingImagesForEdit(any()),
     ).thenAnswer((_) async => const Success(<ListingImage>[]));
-
-    when(() => listingsRepo.fetchBuyerVinReportSources(any())).thenAnswer(
-      (_) async => const Success(BuyerListingVinReportLookupResult()),
-    );
 
     when(
       () => editRepo.fetchOwnerVin(any()),
@@ -227,7 +218,7 @@ void main() {
       'emits loading then ready with the fetched listing on success',
       setUp: () {
         when(
-          () => listingsRepo.getById('l1'),
+          () => editRepo.fetchOwnerListingForEdit('l1'),
         ).thenAnswer((_) async => Success(_seed()));
       },
       build: () => cubit,
@@ -252,15 +243,38 @@ void main() {
     );
 
     blocTest<EditListingCubit, EditListingState>(
+      'non-owner load fails before gallery and owner VIN lookups',
+      setUp: () {
+        when(
+          () => editRepo.fetchOwnerListingForEdit('l1'),
+        ).thenAnswer((_) async => Success(_seed(sellerId: 'owner-1')));
+      },
+      build: () => cubit,
+      act: (c) => c.load('l1', ownerId: 'other-user'),
+      expect: () => [
+        const EditListingState.loading(),
+        const EditListingState.loadFailure(
+          kind: EditListingFailureKind.notAllowed,
+        ),
+      ],
+      verify: (_) {
+        verifyNever(() => editRepo.fetchOwnerListingImagesForEdit(any()));
+        verifyNever(() => editRepo.fetchOwnerVin(any()));
+        verifyNever(() => editRepo.fetchOwnerVinReportStatus(any()));
+        verifyNever(() => editRepo.fetchOwnerVinSourceResults(any()));
+      },
+    );
+
+    blocTest<EditListingCubit, EditListingState>(
       'ready includes ordered listing rows in initialGallerySlots',
       setUp: () {
         final a = _img('i0', 'https://x/0.jpg', position: 0, storagePath: 'p0');
         final b = _img('i1', 'https://x/1.jpg', position: 1, storagePath: 'p1');
         when(
-          () => listingsRepo.getById('l1'),
+          () => editRepo.fetchOwnerListingForEdit('l1'),
         ).thenAnswer((_) async => Success(_seed()));
         when(
-          () => listingsRepo.getListingImages('l1'),
+          () => editRepo.fetchOwnerListingImagesForEdit('l1'),
         ).thenAnswer((_) async => Success(<ListingImage>[a, b]));
       },
       build: () => cubit,
@@ -293,10 +307,10 @@ void main() {
       setUp: () {
         final listing = _seed(coverImageUrl: 'https://cdn/cover-only.jpg');
         when(
-          () => listingsRepo.getById('l1'),
+          () => editRepo.fetchOwnerListingForEdit('l1'),
         ).thenAnswer((_) async => Success(listing));
         when(
-          () => listingsRepo.getListingImages('l1'),
+          () => editRepo.fetchOwnerListingImagesForEdit('l1'),
         ).thenAnswer((_) async => const Success(<ListingImage>[]));
       },
       build: () => cubit,
@@ -325,10 +339,10 @@ void main() {
       'gallery fetch failure disables replace flag and clears editable slots',
       setUp: () {
         when(
-          () => listingsRepo.getById('l1'),
+          () => editRepo.fetchOwnerListingForEdit('l1'),
         ).thenAnswer((_) async => Success(_seed()));
         when(
-          () => listingsRepo.getListingImages('l1'),
+          () => editRepo.fetchOwnerListingImagesForEdit('l1'),
         ).thenAnswer((_) async => const FailureResult(ServerFailure('boom')));
       },
       build: () => cubit,
@@ -351,7 +365,7 @@ void main() {
       'ready with ownerVinReportLookupFailed when VIN report RPC yields fetchFailed',
       setUp: () {
         when(
-          () => listingsRepo.getById('l1'),
+          () => editRepo.fetchOwnerListingForEdit('l1'),
         ).thenAnswer((_) async => Success(_seed()));
         when(() => editRepo.fetchOwnerVinReportStatus('l1')).thenAnswer(
           (_) async => const Success(
@@ -385,7 +399,7 @@ void main() {
       'ready with ownerVinReportLookupFailed when VIN report usecase returns failure',
       setUp: () {
         when(
-          () => listingsRepo.getById('l1'),
+          () => editRepo.fetchOwnerListingForEdit('l1'),
         ).thenAnswer((_) async => Success(_seed()));
         when(() => editRepo.fetchOwnerVinReportStatus('l1')).thenAnswer(
           (_) async => const FailureResult(ServerFailure('report rpc')),
@@ -417,7 +431,7 @@ void main() {
       'ready with ownerVinSourceResultsLookupFailed when source-results repo fails',
       setUp: () {
         when(
-          () => listingsRepo.getById('l1'),
+          () => editRepo.fetchOwnerListingForEdit('l1'),
         ).thenAnswer((_) async => Success(_seed()));
         when(() => editRepo.fetchOwnerVinSourceResults('l1')).thenAnswer(
           (_) async => const FailureResult(ServerFailure('source results rpc')),
@@ -449,7 +463,7 @@ void main() {
       'ready carries NHTSA source rows when repo succeeds',
       setUp: () {
         when(
-          () => listingsRepo.getById('l1'),
+          () => editRepo.fetchOwnerListingForEdit('l1'),
         ).thenAnswer((_) async => Success(_seed()));
         when(() => editRepo.fetchOwnerVinSourceResults('l1')).thenAnswer(
           (_) async => Success(

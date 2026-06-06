@@ -1,5 +1,8 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/core/l10n/app_locale_cubit.dart';
+import 'package:carzon/core/l10n/app_locale_local_datasource.dart';
+import 'package:carzon/core/l10n/app_locale_preference.dart';
 import 'package:carzon/core/theme/app_theme.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
@@ -11,6 +14,7 @@ import 'package:carzon/features/messaging/domain/repositories/messaging_reposito
 import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import 'package:carzon/features/messaging/presentation/pages/conversation_thread_page.dart';
 import 'package:carzon/features/messaging/presentation/pages/messages_inbox_page.dart';
+import 'package:carzon/features/messaging/presentation/widgets/messages_inbox_conversation_tile.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,9 +27,19 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
 class _MockMessagingRepository extends Mock implements MessagingRepository {}
 
+final class _InMemoryAppLocaleLocalDataSource
+    implements AppLocaleLocalDataSource {
+  @override
+  Future<AppLocalePreference> loadPreference() async => AppLocalePreference.ru;
+
+  @override
+  Future<void> savePreference(AppLocalePreference preference) async {}
+}
+
 void main() {
   late _MockAuthCubit authCubit;
   late _MockMessagingRepository messagingRepo;
+  late AppLocaleCubit appLocaleCubit;
   final l10n = ruStrings();
 
   const user = AuthUser(id: 'u1', email: 'buyer@test.com');
@@ -39,6 +53,9 @@ void main() {
     await sl.reset();
     authCubit = _MockAuthCubit();
     messagingRepo = _MockMessagingRepository();
+    appLocaleCubit = AppLocaleCubit(
+      localDataSource: _InMemoryAppLocaleLocalDataSource(),
+    );
     sl.registerLazySingleton<MessagingRepository>(() => messagingRepo);
     sl.registerLazySingleton<MessagingUnreadSummaryCubit>(
       () => MessagingUnreadSummaryCubit(sl<MessagingRepository>()),
@@ -79,7 +96,13 @@ void main() {
       locale: const Locale('ru'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: BlocProvider<AuthCubit>.value(value: authCubit, child: child),
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthCubit>.value(value: authCubit),
+          BlocProvider<AppLocaleCubit>.value(value: appLocaleCubit),
+        ],
+        child: child,
+      ),
     );
   }
 
@@ -92,6 +115,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.messagingTitle), findsOneWidget);
+    expect(find.byType(MessagesInboxConversationTile), findsOneWidget);
+    expect(find.text('BMW 3'), findsOneWidget);
+    expect(find.text('Hi'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(MessagesInboxConversationTile),
+        matching: find.byType(ClipOval),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('conversation thread renders composer in dark theme', (

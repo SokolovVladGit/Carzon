@@ -12,6 +12,7 @@ import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/l10n/app_locale_cubit.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_back_button.dart';
+import '../../../../core/widgets/auth_required_prompt.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../shared/ui/carzon_icons.dart';
@@ -150,26 +151,11 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
               shadowColor: Colors.transparent,
               bottom: _threadAppBarBottomEdge(csGuest),
             ),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(CarzonIcons.chat, size: 48),
-                    const SizedBox(height: 12),
-                    Text(
-                      l10n.messagingSignInRequired,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => context.go(AppRoutes.signIn),
-                      child: Text(l10n.commonSignIn),
-                    ),
-                  ],
-                ),
-              ),
+            body: AuthRequiredPrompt(
+              icon: const Icon(CarzonIcons.chat, size: 48),
+              message: l10n.messagingSignInRequired,
+              primaryButtonLabel: l10n.commonSignIn,
+              onPrimaryPressed: () => context.go(AppRoutes.signIn),
             ),
           );
         }

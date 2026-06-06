@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/widgets/auth_required_prompt.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/loading_view.dart';
@@ -34,8 +35,11 @@ class MyListingsPage extends StatelessWidget {
         builder: (context, authState) {
           if (authState.status != AuthStatus.authenticated ||
               authState.user == null) {
-            return _SignInRequired(
-              onSignIn: () => context.go(AppRoutes.signIn),
+            return AuthRequiredPrompt(
+              icon: const Icon(Icons.directions_car_filled_outlined, size: 48),
+              message: l10n.myListingsSignInRequired,
+              primaryButtonLabel: l10n.commonSignIn,
+              onPrimaryPressed: () => context.go(AppRoutes.signIn),
             );
           }
           return BlocProvider(
@@ -43,31 +47,6 @@ class MyListingsPage extends StatelessWidget {
             child: _MyListingsView(sellerId: authState.user!.id),
           );
         },
-      ),
-    );
-  }
-}
-
-class _SignInRequired extends StatelessWidget {
-  const _SignInRequired({required this.onSignIn});
-  final VoidCallback onSignIn;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.directions_car_filled_outlined, size: 48),
-            const SizedBox(height: 12),
-            Text(l10n.myListingsSignInRequired, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onSignIn, child: Text(l10n.commonSignIn)),
-          ],
-        ),
       ),
     );
   }
