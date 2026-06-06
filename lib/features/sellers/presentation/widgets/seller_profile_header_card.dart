@@ -9,13 +9,12 @@ import 'seller_avatar_badge.dart';
 
 /// Premium identity header for the public seller profile route.
 class SellerProfileHeaderCard extends StatelessWidget {
-  SellerProfileHeaderCard.loaded({
+  const SellerProfileHeaderCard.loaded({
     super.key,
-    required SellerPublicProfile profile,
-  }) : profile = profile,
-       unavailable = false;
+    required SellerPublicProfile this.profile,
+  }) : unavailable = false;
 
-  SellerProfileHeaderCard.unavailable({super.key})
+  const SellerProfileHeaderCard.unavailable({super.key})
     : profile = null,
       unavailable = true;
 

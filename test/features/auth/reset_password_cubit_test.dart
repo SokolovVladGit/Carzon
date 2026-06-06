@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
@@ -88,5 +90,32 @@ void main() {
         ResetPasswordState.failure(ResetPasswordFailureKind.emptyPassword),
       ],
     );
+
+    test('duplicate submit while update is in flight is ignored', () async {
+      final gate = Completer<void>();
+      when(() => repo.updatePassword(any())).thenAnswer((_) async {
+        await gate.future;
+        return const Success(null);
+      });
+      final cubit = ResetPasswordCubit(updatePassword: useCase);
+
+      final first = cubit.submit(
+        newPassword: 'newpass1',
+        confirmPassword: 'newpass1',
+      );
+      await Future<void>.value();
+      expect(cubit.state.status, ResetPasswordStatus.submitting);
+
+      final second = cubit.submit(
+        newPassword: 'newpass1',
+        confirmPassword: 'newpass1',
+      );
+      gate.complete();
+      await first;
+      await second;
+
+      verify(() => repo.updatePassword('newpass1')).called(1);
+      await cubit.close();
+    });
   });
 }

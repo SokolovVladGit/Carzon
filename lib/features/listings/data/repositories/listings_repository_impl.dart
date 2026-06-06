@@ -4,6 +4,7 @@ import '../../../../core/utils/logger.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
 import '../../domain/entities/listing.dart';
+import '../../domain/entities/listing_contact.dart';
 import '../../domain/entities/listing_image.dart';
 import '../../domain/repositories/listings_repository.dart';
 import '../datasources/listings_remote_datasource.dart';
@@ -80,6 +81,21 @@ class ListingsRepositoryImpl implements ListingsRepository {
       _logger.error('getListingImages unknown error', e, st);
       return const FailureResult(
         UnknownFailure('Failed to load listing images.'),
+      );
+    }
+  }
+
+  @override
+  Future<Result<ListingContact>> getPublicContact(String listingId) async {
+    try {
+      final contact = await _remote.fetchPublicContact(listingId);
+      return Success(contact);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('getPublicContact unknown error', e, st);
+      return const FailureResult(
+        UnknownFailure('Failed to load seller contact.'),
       );
     }
   }

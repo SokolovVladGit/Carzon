@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_theme.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
@@ -13,9 +12,6 @@ import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
-import '../../../../shared/brands/brand_icon_resolver.dart';
-import '../../../../shared/brands/brand_logo_glyph.dart';
-import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/catalog/listing_brands.dart';
 import '../../data/local/last_applied_listing_discovery_repository.dart';
 import '../bloc/listings_bloc.dart';
@@ -26,14 +22,16 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import '../cubit/browse_catalog_filter_alerts_cubit.dart';
 import '../widgets/filters/catalog_browse_filter_alert_sheet_bell.dart';
 import '../widgets/filters/catalog_browse_filter_alert_sheet_notice.dart';
-import '../widgets/filters/catalog_filter_alert_ui_constants.dart';
 import '../../../messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import '../../../sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import '../widgets/category_chip.dart';
-import '../widgets/feed_home_account_avatar_button.dart';
 import '../widgets/listing_card.dart';
 import '../widgets/listing_tile.dart';
+import '../widgets/listings_active_discovery_summary_strip.dart';
+import '../widgets/listings_brand_filter_row.dart';
+import '../widgets/listings_catalog_header.dart';
 import '../widgets/listings_feed_empty_state.dart';
+import '../widgets/listings_search_filter_bar.dart';
 import '../utils/feed_home_body_chips.dart';
 import '../widgets/filters/listings_filter_apply_result.dart';
 import '../widgets/filters/listings_filter_form.dart';
@@ -320,7 +318,7 @@ class _ListingsViewState extends State<_ListingsView> {
       backgroundColor: feedBackground,
       // Deliberately invisible AppBar: no title, no elevation, no
       // tint — it only exists so Scaffold keeps the correct status-bar
-      // inset. The editorial `_CatalogHeader` immediately below the
+      // inset. The editorial `ListingsCatalogHeader` immediately below the
       // status bar carries the brand. Its background tracks the
       // scaffold's so the header and feed read as one canvas.
       appBar: AppBar(
@@ -367,6 +365,7 @@ class _ListingsViewState extends State<_ListingsView> {
                       );
                     case ListingsStatus.success:
                     case ListingsStatus.loadingMore:
+                    case ListingsStatus.paginationFailure:
                       if (state.items.isEmpty) {
                         return ListingsFeedEmptyState(
                           hasFilters: state.hasActiveDiscoveryConstraints,
@@ -437,10 +436,10 @@ class _ListingsViewState extends State<_ListingsView> {
                           ),
                           itemBuilder: (context, index) {
                             if (index >= state.items.length) {
-                              return const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
+                              return _ListingsPaginationFooter(
+                                state: state,
+                                onRetry: () => context.read<ListingsBloc>().add(
+                                  const ListingsNextPageRequested(),
                                 ),
                               );
                             }
@@ -625,6 +624,52 @@ class _AppearAnimationState extends State<_AppearAnimation>
   }
 }
 
+class _ListingsPaginationFooter extends StatelessWidget {
+  const _ListingsPaginationFooter({required this.state, required this.onRetry});
+
+  final ListingsState state;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state.status != ListingsStatus.paginationFailure) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.72),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(
+              Icons.cloud_off_outlined,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                l10n.listingsLoadMoreFailed,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            TextButton(onPressed: onRetry, child: Text(l10n.commonRetry)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _FeedHeaderLayer extends StatelessWidget {
   const _FeedHeaderLayer({
     required this.searchCtrl,
@@ -661,21 +706,80 @@ class _FeedHeaderLayer extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const _CatalogHeader(),
+          const ListingsCatalogHeader(),
           // CARZON → search/filter: 4 (the wordmark already has 14
-          // of bottom padding inside _CatalogHeader, keep this tight
+          // of bottom padding inside ListingsCatalogHeader, keep this tight
           // so the wordmark reads as "of the" controls, not adrift
           // from them).
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-            child: _SearchAndFilterBar(
-              searchCtrl: searchCtrl,
-              onOpenFilters: onOpenFilters,
-            ),
+            child:
+                BlocBuilder<
+                  BrowseCatalogFilterAlertsCubit,
+                  BrowseCatalogFilterAlertsState
+                >(
+                  builder: (context, _) {
+                    return BlocBuilder<ListingsBloc, ListingsState>(
+                      buildWhen: (prev, curr) {
+                        final pActive =
+                            listingsDiscoveryActiveFilterGroupCount(prev) > 0;
+                        final qActive =
+                            listingsDiscoveryActiveFilterGroupCount(curr) > 0;
+                        final pCrit =
+                            listingDiscoveryCriteriaFromBrowseStateForAlert(
+                              prev,
+                            );
+                        final qCrit =
+                            listingDiscoveryCriteriaFromBrowseStateForAlert(
+                              curr,
+                            );
+                        return pActive != qActive || pCrit != qCrit;
+                      },
+                      builder: (context, state) {
+                        final alertsCubit = context
+                            .read<BrowseCatalogFilterAlertsCubit>();
+                        final active =
+                            listingsDiscoveryActiveFilterGroupCount(state) > 0;
+                        final bellBadge = alertsCubit
+                            .catalogBellBadgeVisibleForApplied(state);
+                        final savedNoDeliveryBadge =
+                            !bellBadge &&
+                            alertsCubit
+                                .catalogBellSavedWithoutDeliveryVisibleForApplied(
+                                  state,
+                                );
+                        return ListingsSearchFilterBar(
+                          searchCtrl: searchCtrl,
+                          onOpenFilters: onOpenFilters,
+                          onSearchSubmitted: (value) => context
+                              .read<ListingsBloc>()
+                              .add(ListingsSearchChanged(value)),
+                          onClearSearch: () {
+                            searchCtrl.clear();
+                            context.read<ListingsBloc>().add(
+                              const ListingsSearchChanged(null),
+                            );
+                          },
+                          active: active,
+                          bellBadge: bellBadge,
+                          savedNoDeliveryBadge: savedNoDeliveryBadge,
+                        );
+                      },
+                    );
+                  },
+                ),
           ),
           // search → brand row: 16
           const SizedBox(height: 16),
-          _BrandFilterRow(onBrandSelected: onBrandSelected),
+          BlocSelector<ListingsBloc, ListingsState, String?>(
+            selector: (state) => state.make,
+            builder: (context, currentMake) {
+              return ListingsBrandFilterRow(
+                currentMake: currentMake,
+                onBrandSelected: onBrandSelected,
+              );
+            },
+          ),
           // brand row → body chips: 4 (brand row already carries
           // its own 8 px vertical padding from the ListView).
           const SizedBox(height: 4),
@@ -705,7 +809,7 @@ class _FeedHeaderLayer extends StatelessWidget {
               if (!listState.hasActiveDiscoveryConstraints) {
                 return const SizedBox.shrink();
               }
-              return _ActiveDiscoverySummaryStrip(state: listState);
+              return ListingsActiveDiscoverySummaryStrip(state: listState);
             },
           ),
           // Tight bottom air inside the layer — the chip row's
@@ -714,799 +818,6 @@ class _FeedHeaderLayer extends StatelessWidget {
           // chip silhouette.
           const SizedBox(height: 2),
         ],
-      ),
-    );
-  }
-}
-
-/// Editorial wordmark header at the top of the feed.
-///
-/// Pass 1.8 simplifies the header to a single centered "CARZON"
-/// wordmark. The earlier large catalog title was pulling the page
-/// into "generic app" territory; the magazine masthead treatment
-/// lets the brand sit alone at the top and hands visual authority
-/// to the discovery controls and brand-logo row below.
-///
-/// The wordmark is deliberately compact (label-size, heavily
-/// letter-spaced, onSurface with moderate opacity) so it reads as
-/// identity, not as a loud title. It carries no tagline, no large
-/// heading, and no trailing controls.
-/// The wordmark stays centered; mirrored leading width keeps the masthead
-/// balanced with the trailing account control.
-class _CatalogHeader extends StatelessWidget {
-  const _CatalogHeader();
-
-  static const double _mastheadSideSlot =
-      FeedHomeAccountAvatarButton.avatarDiameter + 8;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final wordmark = Text(
-      'CARZON',
-      textAlign: TextAlign.center,
-      style: theme.textTheme.titleSmall?.copyWith(
-        color: scheme.onSurface.withValues(alpha: 0.82),
-        fontWeight: FontWeight.w700,
-        letterSpacing: 4.0,
-        height: 1.0,
-      ),
-    );
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 14, 10),
-      child: Row(
-        children: [
-          const SizedBox(width: _mastheadSideSlot),
-          Expanded(child: Center(child: wordmark)),
-          const SizedBox(
-            width: _mastheadSideSlot,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: FeedHomeAccountAvatarButton(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Pill-shaped search field next to a rounded filter button. Overrides
-/// the global `InputDecorationTheme` outlines so the search stays
-/// borderless and "settled" inside the feed surface, without changing
-/// how the filters sheet renders its own text fields.
-class _SearchAndFilterBar extends StatelessWidget {
-  const _SearchAndFilterBar({
-    required this.searchCtrl,
-    required this.onOpenFilters,
-  });
-
-  final TextEditingController searchCtrl;
-  final VoidCallback onOpenFilters;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final l10n = context.l10n;
-    final isDark = theme.brightness == Brightness.dark;
-    // Feed background is now pure white in light mode. Controls sit
-    // almost flush on the canvas — a close-to-white fill with a
-    // hairline border + whisper shadow reads as a premium elevated
-    // pill, not a grey utility bar.
-    final fill = isDark ? scheme.surfaceContainerHigh : Colors.white;
-    final pillBorder = isDark
-        ? scheme.outline.withValues(alpha: 0.32)
-        : scheme.outlineVariant.withValues(alpha: 0.45);
-    // Slightly shorter, squarer controls than Pass 1.5 so the search
-    // row reads as a compact utility bar (not a fluffy pill that
-    // competes with the editorial headline above it).
-    const barHeight = 50.0;
-    const searchRadius = 16.0;
-    // Locked to the brand-tile radius (14) so the filter button
-    // reads as part of the same control family as the brand row
-    // directly below it, rather than a separate form element.
-    const filterRadius = 14.0;
-    // Whisper shadow only — the header layer itself carries the
-    // main drop shadow now, so the individual controls need just a
-    // hairline lift to read as distinct surfaces without stacking
-    // visual noise.
-    final searchShadow = BoxShadow(
-      color: scheme.shadow.withValues(alpha: isDark ? 0.22 : 0.025),
-      blurRadius: 8,
-      offset: const Offset(0, 2),
-    );
-    return SizedBox(
-      height: barHeight,
-      child: Row(
-        children: [
-          Expanded(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(searchRadius),
-                boxShadow: [searchShadow],
-              ),
-              child: TextField(
-                controller: searchCtrl,
-                textInputAction: TextInputAction.search,
-                style: theme.textTheme.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: l10n.listingsSearchHint,
-                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(
-                      alpha: isDark ? 0.72 : 0.65,
-                    ),
-                  ),
-                  prefixIcon: Icon(
-                    CarzonIcons.search,
-                    size: 20,
-                    color: scheme.onSurfaceVariant.withValues(
-                      alpha: isDark ? 0.78 : 0.7,
-                    ),
-                  ),
-                  prefixIconConstraints: const BoxConstraints(
-                    minWidth: 44,
-                    minHeight: 44,
-                  ),
-                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: searchCtrl,
-                    builder: (context, value, _) {
-                      if (value.text.isEmpty) return const SizedBox.shrink();
-                      return IconButton(
-                        icon: const Icon(CarzonIcons.close, size: 18),
-                        tooltip: l10n.listingsSearchClearTooltip,
-                        onPressed: () {
-                          searchCtrl.clear();
-                          context.read<ListingsBloc>().add(
-                            const ListingsSearchChanged(null),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  filled: true,
-                  fillColor: fill,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 13,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(searchRadius),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(searchRadius),
-                    borderSide: BorderSide(color: pillBorder),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(searchRadius),
-                    borderSide: BorderSide(
-                      color: scheme.primary.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-                onSubmitted: (value) => context.read<ListingsBloc>().add(
-                  ListingsSearchChanged(value),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          BlocBuilder<
-            BrowseCatalogFilterAlertsCubit,
-            BrowseCatalogFilterAlertsState
-          >(
-            builder: (context, _) {
-              return BlocBuilder<ListingsBloc, ListingsState>(
-                buildWhen: (prev, curr) {
-                  final pActive =
-                      listingsDiscoveryActiveFilterGroupCount(prev) > 0;
-                  final qActive =
-                      listingsDiscoveryActiveFilterGroupCount(curr) > 0;
-                  final pCrit = listingDiscoveryCriteriaFromBrowseStateForAlert(
-                    prev,
-                  );
-                  final qCrit = listingDiscoveryCriteriaFromBrowseStateForAlert(
-                    curr,
-                  );
-                  return pActive != qActive || pCrit != qCrit;
-                },
-                builder: (context, state) {
-                  final alertsCubit = context
-                      .read<BrowseCatalogFilterAlertsCubit>();
-                  final active =
-                      listingsDiscoveryActiveFilterGroupCount(state) > 0;
-                  final bellBadge = alertsCubit
-                      .catalogBellBadgeVisibleForApplied(state);
-                  // Mutually exclusive with [bellBadge]: active delivery
-                  // wins. The helper itself guards `deliveryFullyEnabled`,
-                  // so both flags cannot be true simultaneously.
-                  final savedNoDeliveryBadge =
-                      !bellBadge &&
-                      alertsCubit
-                          .catalogBellSavedWithoutDeliveryVisibleForApplied(
-                            state,
-                          );
-                  final restingBg = isDark
-                      ? scheme.surfaceContainerHigh
-                      : Colors.white;
-                  final bg = active
-                      ? (isDark
-                            ? AppTheme.selectedChipFill(scheme)
-                            : Color.alphaBlend(
-                                scheme.primary.withValues(alpha: 0.14),
-                                restingBg,
-                              ))
-                      : restingBg;
-                  final fg = active
-                      ? (isDark
-                            ? scheme.onSurface.withValues(alpha: 0.96)
-                            : scheme.primary)
-                      : AppTheme.chipForeground(scheme, selected: false);
-                  final border = active
-                      ? AppTheme.chipBorder(scheme, selected: true)
-                      : pillBorder;
-                  final badgeOutline = restingBg;
-                  final semanticsLabel = bellBadge
-                      ? '${l10n.listingsFiltersTooltip}. '
-                            '${l10n.catalogBrowseFilterBellFilterChipSemantics}'
-                      : savedNoDeliveryBadge
-                      ? '${l10n.listingsFiltersTooltip}. '
-                            '${l10n.catalogBrowseFilterBellSavedDeliveryUnavailableTooltip}'
-                      : l10n.listingsFiltersTooltip;
-                  return Container(
-                    height: barHeight,
-                    width: barHeight,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(filterRadius),
-                      boxShadow: [searchShadow],
-                    ),
-                    child: Material(
-                      color: bg,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(filterRadius),
-                        side: BorderSide(
-                          color: border,
-                          width: active ? 1.25 : 1,
-                        ),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Tooltip(
-                        message: l10n.listingsFiltersTooltip,
-                        child: InkWell(
-                          onTap: onOpenFilters,
-                          child: Semantics(
-                            button: true,
-                            label: semanticsLabel,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              clipBehavior: Clip.none,
-                              children: [
-                                Icon(CarzonIcons.filter, size: 20, color: fg),
-                                // Two-corner badge system: filter-active
-                                // marker top-right, alert-state marker
-                                // bottom-right. Both are 16 dp circular
-                                // badges with the same outline weight so
-                                // they read as one polished component
-                                // rather than two stuck-on stickers.
-                                if (active)
-                                  Positioned(
-                                    top: 4,
-                                    right: 4,
-                                    child: _FilterFabCornerBadge(
-                                      background: scheme.primary,
-                                      outline: badgeOutline,
-                                      icon: Icons.check,
-                                      iconColor: scheme.onPrimary,
-                                      iconSize: 9,
-                                    ),
-                                  ),
-                                if (bellBadge)
-                                  Positioned(
-                                    bottom: 4,
-                                    right: 4,
-                                    child: _FilterFabCornerBadge(
-                                      ornamentKey: CatalogFilterAlertAccent
-                                          .discoveryFilterFABAlertBellKey,
-                                      background:
-                                          CatalogFilterAlertAccent.amber,
-                                      outline: badgeOutline,
-                                      icon: Icons.notifications,
-                                      iconColor: scheme.onPrimary,
-                                      iconSize: 9,
-                                    ),
-                                  )
-                                else if (savedNoDeliveryBadge)
-                                  Positioned(
-                                    bottom: 4,
-                                    right: 4,
-                                    child: _FilterFabCornerBadge(
-                                      ornamentKey: CatalogFilterAlertAccent
-                                          .discoveryFilterFABSavedNoDeliveryBellKey,
-                                      background: Color.alphaBlend(
-                                        CatalogFilterAlertAccent.amber
-                                            .withValues(alpha: 0.22),
-                                        restingBg,
-                                      ),
-                                      outline: CatalogFilterAlertAccent.amber
-                                          .withValues(alpha: 0.55),
-                                      icon: Icons.notifications,
-                                      iconColor: CatalogFilterAlertAccent.amber,
-                                      iconSize: 9,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Horizontal brand-logo quick filter rendered directly under the
-/// search/filter row on the feed.
-///
-/// Each brand is presented as an icon-only rounded tile. Tapping a
-/// tile drives the `make` filter through the existing
-/// [ListingsFiltersApplied] event (see [_ListingsViewState._onBrandSelected]);
-/// it never introduces a new bloc event or query parameter. The
-/// "All brands" tile at the front of the list is the unset state
-/// (dispatches a `null` make).
-///
-/// Brands come from [kListingBrandFeedQuickFilterCatalog] (full catalog
-/// except Other). Missing SVGs use a monogram fallback on Home only.
-class _BrandFilterRow extends StatelessWidget {
-  const _BrandFilterRow({required this.onBrandSelected});
-
-  final ValueChanged<String?> onBrandSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 68,
-      child: BlocSelector<ListingsBloc, ListingsState, String?>(
-        selector: (state) => state.make,
-        builder: (context, currentMake) {
-          return ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(20, 8, 24, 8),
-            itemCount: kListingBrandFeedQuickFilterCatalog.length + 1,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _BrandTile.all(
-                  selected: listingBrandFeedQuickFilterAllSelected(currentMake),
-                  onTap: () => onBrandSelected(null),
-                );
-              }
-              final brand = kListingBrandFeedQuickFilterCatalog[index - 1];
-              return _BrandTile.brand(
-                make: brand,
-                selected: listingBrandFeedQuickFilterIsSelected(
-                  currentMake,
-                  brand,
-                ),
-                onTap: () => onBrandSelected(brand),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// Single rounded-square tile in the brand filter row. Two flavors:
-///   * [_BrandTile.all] — the "All brands" entry at the head of the
-///     row, rendered as a neutral search icon;
-///   * [_BrandTile.brand] — a concrete brand, rendered from the
-///     resolver-provided SVG asset or a monogram when no SVG exists.
-class _BrandTile extends StatelessWidget {
-  const _BrandTile._({
-    required this.selected,
-    required this.onTap,
-    required this.semanticsLabel,
-    required this.assetPath,
-    required this.fallbackIcon,
-    this.monogram,
-  });
-
-  factory _BrandTile.all({
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return _BrandTile._(
-      selected: selected,
-      onTap: onTap,
-      semanticsLabel: null,
-      assetPath: null,
-      fallbackIcon: CarzonIcons.allBrands,
-    );
-  }
-
-  factory _BrandTile.brand({
-    required String make,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    final resolvedPath = getBrandIconPath(make);
-    final useMonogram = listingBrandFeedQuickFilterShouldUseMonogram(make);
-    return _BrandTile._(
-      selected: selected,
-      onTap: onTap,
-      semanticsLabel: make,
-      assetPath: useMonogram ? null : resolvedPath,
-      fallbackIcon: null,
-      monogram: useMonogram ? listingBrandFeedQuickFilterMonogram(make) : null,
-    );
-  }
-
-  final bool selected;
-  final VoidCallback onTap;
-
-  /// Raw brand string used for the semantics label. Null for the
-  /// "All brands" tile — [Widget.build] pulls the localized string
-  /// from the l10n bundle in that case.
-  final String? semanticsLabel;
-
-  /// SVG asset path for a concrete brand. Null for the "All" tile or
-  /// monogram fallback brands.
-  final String? assetPath;
-
-  /// Icon used when [assetPath] is null (i.e. the "All brands" head
-  /// tile).
-  final IconData? fallbackIcon;
-
-  /// Two-letter initials when no brand SVG is available on Home.
-  final String? monogram;
-
-  static const double _size = 48;
-  static const double _radius = 14;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final l10n = context.l10n;
-
-    final bg = selected
-        ? (isDark
-              ? AppTheme.selectedChipFill(scheme)
-              : Color.alphaBlend(
-                  scheme.primary.withValues(alpha: 0.11),
-                  Colors.white,
-                ))
-        : (isDark ? AppTheme.unselectedChipFill(scheme) : Colors.white);
-    final borderColor = selected
-        ? AppTheme.chipBorder(scheme, selected: true)
-        : (isDark
-              ? scheme.outline.withValues(alpha: 0.28)
-              : scheme.outlineVariant.withValues(alpha: 0.42));
-    final borderWidth = selected ? 2.0 : 1.0;
-    final shadow = BoxShadow(
-      color: selected
-          ? scheme.primary.withValues(alpha: isDark ? 0.18 : 0.12)
-          : scheme.shadow.withValues(alpha: isDark ? 0.16 : 0.025),
-      blurRadius: selected ? 12 : 6,
-      spreadRadius: selected ? 0.5 : 0,
-      offset: Offset(0, selected ? 3 : 2),
-    );
-
-    final label = semanticsLabel != null
-        ? l10n.brandFilterBrandSemantics(semanticsLabel!)
-        : l10n.brandFilterAllSemantics;
-
-    Widget glyph;
-    if (assetPath != null) {
-      glyph = BrandLogoGlyph(assetPath: assetPath!, size: 28);
-    } else if (monogram != null) {
-      glyph = _BrandMonogramMark(monogram: monogram!, selected: selected);
-    } else {
-      glyph = Icon(
-        fallbackIcon,
-        size: 20,
-        color: selected
-            ? scheme.primary
-            : AppTheme.chipForeground(scheme, selected: false),
-      );
-    }
-
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      container: true,
-      child: Tooltip(
-        message: semanticsLabel ?? l10n.brandFilterAllSemantics,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(_radius),
-            boxShadow: [shadow],
-          ),
-          child: Material(
-            color: bg,
-            clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_radius),
-              side: BorderSide(color: borderColor, width: borderWidth),
-            ),
-            child: InkWell(
-              onTap: onTap,
-              child: SizedBox(
-                width: _size,
-                height: _size,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    AnimatedScale(
-                      scale: selected ? 1.04 : 1.0,
-                      duration: const Duration(milliseconds: 160),
-                      curve: Curves.easeOutCubic,
-                      child: glyph,
-                    ),
-                    if (selected)
-                      Positioned(
-                        bottom: 5,
-                        child: Container(
-                          width: 5,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: scheme.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isDark ? scheme.surface : Colors.white,
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Home-only initials mark for catalog brands without a dedicated SVG.
-class _BrandMonogramMark extends StatelessWidget {
-  const _BrandMonogramMark({required this.monogram, required this.selected});
-
-  final String monogram;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final ring = scheme.outline.withValues(alpha: isDark ? 0.38 : 0.38);
-    final fill = Color.alphaBlend(
-      scheme.onSurface.withValues(alpha: isDark ? 0.12 : 0.05),
-      isDark ? scheme.surfaceContainerHigh : scheme.surfaceContainerLowest,
-    );
-    final textColor = AppTheme.chipForeground(scheme, selected: selected);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: fill,
-        border: Border.all(color: ring),
-      ),
-      child: SizedBox(
-        width: 30,
-        height: 30,
-        child: Center(
-          child: Text(
-            monogram,
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              fontSize: 11,
-              letterSpacing: 0.6,
-              color: textColor,
-              height: 1,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Unified corner badge used by the catalog filter FAB ornaments.
-///
-/// Renders a small circular chip in the same dimensions for the two
-/// corners of the filter button, so the filter-active marker and the
-/// alert-state marker (active delivery or saved-without-delivery) read
-/// as one polished status system rather than ad-hoc stickers.
-class _FilterFabCornerBadge extends StatelessWidget {
-  const _FilterFabCornerBadge({
-    this.ornamentKey,
-    required this.background,
-    required this.outline,
-    required this.icon,
-    required this.iconColor,
-    required this.iconSize,
-  });
-
-  final Key? ornamentKey;
-  final Color background;
-  final Color outline;
-  final IconData icon;
-  final Color iconColor;
-  final double iconSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: SizedBox(
-        width: 16,
-        height: 16,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: background,
-            shape: BoxShape.circle,
-            border: Border.all(color: outline, width: 1.25),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 2.5,
-                offset: const Offset(0, 1),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Icon(
-              icon,
-              key: ornamentKey,
-              size: iconSize,
-              color: iconColor,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActiveDiscoverySummaryStrip extends StatelessWidget {
-  const _ActiveDiscoverySummaryStrip({required this.state});
-
-  final ListingsState state;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final chips = listingsDiscoveryChips(state, l10n);
-    if (chips.isEmpty) return const SizedBox.shrink();
-    return Semantics(
-      container: true,
-      label: l10n.filtersTitle,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: [
-              for (var i = 0; i < chips.length; i++)
-                Padding(
-                  padding: EdgeInsets.only(
-                    right: i == chips.length - 1 ? 0 : 8,
-                  ),
-                  child: _ActiveDiscoveryChip(data: chips[i]),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Premium compact pill rendering a single active discovery dimension.
-///
-/// Renders a soft surface gradient with a hairline outline and a thin
-/// `label · value` typographic split (muted label, medium-weight value,
-/// faded mid-dot separator). Falls back to a single value-only line
-/// when the chip carries no [ListingsDiscoveryChip.label] (e.g.
-/// "Sale", region marker). Designed to scale gracefully when many
-/// chips are active without feeling like generic Material `Chip`s.
-class _ActiveDiscoveryChip extends StatelessWidget {
-  const _ActiveDiscoveryChip({required this.data});
-
-  final ListingsDiscoveryChip data;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-
-    final fill = isDark
-        ? scheme.surfaceContainerHigh
-        : Color.alphaBlend(
-            scheme.onSurface.withValues(alpha: 0.025),
-            scheme.surface,
-          );
-    final stroke = scheme.outline.withValues(alpha: isDark ? 0.32 : 0.32);
-
-    final valueStyle = theme.textTheme.labelMedium?.copyWith(
-      color: scheme.onSurface.withValues(alpha: isDark ? 0.94 : 0.92),
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.05,
-      height: 1.1,
-    );
-    final labelStyle = theme.textTheme.labelSmall?.copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.82 : 0.52),
-      fontWeight: FontWeight.w500,
-      letterSpacing: 0.08,
-      height: 1.1,
-    );
-    final dotStyle = theme.textTheme.labelMedium?.copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.55 : 0.32),
-      fontWeight: FontWeight.w500,
-      height: 1.1,
-    );
-
-    final hasLabel = data.label != null && data.label!.isNotEmpty;
-
-    return Semantics(
-      label: data.flat,
-      excludeSemantics: true,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: fill,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: stroke, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: scheme.shadow.withValues(alpha: isDark ? 0.18 : 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (hasLabel) ...[
-                Text(data.label!, style: labelStyle, maxLines: 1),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Text('·', style: dotStyle),
-                ),
-              ],
-              Flexible(
-                child: Text(
-                  data.value,
-                  style: valueStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

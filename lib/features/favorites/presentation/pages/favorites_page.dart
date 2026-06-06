@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/widgets/auth_required_prompt.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/loading_view.dart';
@@ -32,41 +33,19 @@ class FavoritesPage extends StatelessWidget {
       body: BlocBuilder<AuthCubit, AuthState>(
         builder: (context, authState) {
           if (authState.status != AuthStatus.authenticated) {
-            return _SignInRequired(
-              onSignIn: () => context.go(AppRoutes.signIn),
+            return AuthRequiredPrompt(
+              icon: Icon(
+                CarzonIcons.heartOutline,
+                size: 48,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              message: l10n.favoritesSignInRequired,
+              primaryButtonLabel: l10n.commonSignIn,
+              onPrimaryPressed: () => context.go(AppRoutes.signIn),
             );
           }
           return const _FavoritesList();
         },
-      ),
-    );
-  }
-}
-
-class _SignInRequired extends StatelessWidget {
-  const _SignInRequired({required this.onSignIn});
-  final VoidCallback onSignIn;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              CarzonIcons.heartOutline,
-              size: 48,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(height: 12),
-            Text(l10n.favoritesSignInRequired, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onSignIn, child: Text(l10n.commonSignIn)),
-          ],
-        ),
       ),
     );
   }

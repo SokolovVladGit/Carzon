@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/config/env.dart';
 import '../../core/l10n/app_localizations_x.dart';
 import '../../features/compare/presentation/pages/compare_page.dart';
+import '../../features/auth/presentation/pages/change_password_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
 import '../../features/auth/presentation/pages/sign_in_page.dart';
@@ -31,6 +32,7 @@ class AppRoutes {
   static const signUp = '/sign-up';
   static const forgotPassword = '/forgot-password';
   static const resetPassword = '/reset-password';
+  static const changePassword = '/change-password';
   static const listings = '/';
   static const listingDetails = '/listings/:id';
   static const editListing = '/listings/:id/edit';
@@ -115,6 +117,10 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.resetPassword,
           builder: (_, _) => const ResetPasswordPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.changePassword,
+          builder: (_, _) => const ChangePasswordPage(),
         ),
         GoRoute(
           path: AppRoutes.listings,

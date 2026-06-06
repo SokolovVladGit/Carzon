@@ -96,6 +96,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingsLoadFailed => 'Не удалось загрузить объявления.';
 
   @override
+  String get listingsLoadMoreFailed => 'Не удалось загрузить ещё объявления.';
+
+  @override
   String get listingsEmpty => 'Подходящих объявлений не найдено.';
 
   @override
@@ -1247,6 +1250,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get profileSettingsSectionTitle => 'Настройки';
 
   @override
+  String get profileChangePasswordTitle => 'Изменить пароль';
+
+  @override
+  String get profileChangePasswordSubtitle =>
+      'Обновите пароль для входа в аккаунт.';
+
+  @override
   String get profileDarkThemeTitle => 'Тёмная тема';
 
   @override
@@ -1279,6 +1289,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get notificationSettingsTitle => 'Уведомления';
 
   @override
+  String get notificationSettingsPageIntro =>
+      'Настройте push на этом устройстве: сообщения в чатах и оповещения по сохранённому фильтру.';
+
+  @override
   String get notificationSettingsSignInRequired =>
       'Войдите, чтобы настроить уведомления.';
 
@@ -1296,44 +1310,101 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationSettingsPushUnavailableInBuild =>
-      'Push в этой сборке недоступен (PUSH_NOTIFICATIONS_ENABLED).';
+      'Push-уведомления недоступны в этой сборке.';
 
   @override
   String get notificationSettingsPushBuildDisabledBanner =>
-      'В этой сборке push-уведомления выключены на уровне конфигурации. Переключатели ниже недоступны.';
+      'Push-уведомления недоступны в этой сборке.';
 
   @override
-  String get notificationSettingsGlobalTitle => 'Уведомления в приложении';
+  String get notificationSettingsPushBuildDisabledHint =>
+      'Чтобы протестировать push, используйте сборку с включёнными уведомлениями.';
+
+  @override
+  String get notificationSettingsMasterOffHint =>
+      'Включите «Push на этом устройстве», чтобы настроить типы уведомлений ниже.';
+
+  @override
+  String get notificationSettingsStatusCardTitle => 'Разрешение устройства';
+
+  @override
+  String get notificationSettingsOsPillAllowed => 'Разрешены';
+
+  @override
+  String get notificationSettingsOsPillProvisional => 'Временные';
+
+  @override
+  String get notificationSettingsOsPillDenied => 'Отклонены';
+
+  @override
+  String get notificationSettingsOsPillNotDetermined => 'Не запрошены';
+
+  @override
+  String get notificationSettingsOsPillUnavailable => 'Недоступны';
+
+  @override
+  String get notificationSettingsOsDescriptionAuthorized =>
+      'Система разрешает показывать уведомления. Push можно включить ниже.';
+
+  @override
+  String get notificationSettingsOsDescriptionProvisional =>
+      'Уведомления разрешены в ограниченном режиме. При необходимости подтвердите полный доступ в настройках системы.';
+
+  @override
+  String get notificationSettingsOsDescriptionDenied =>
+      'Уведомления отключены в системе. Включите их в настройках телефона, затем вернитесь сюда.';
+
+  @override
+  String get notificationSettingsOsDescriptionNotDetermined =>
+      'Разрешение ещё не запрашивалось. Оно будет запрошено, когда вы включите push ниже.';
+
+  @override
+  String get notificationSettingsOsDescriptionUnavailable =>
+      'В этой сборке push недоступен, поэтому статус разрешения устройства не применяется.';
+
+  @override
+  String get notificationSettingsGlobalTitle => 'Push на этом устройстве';
 
   @override
   String get notificationSettingsGlobalSubtitle =>
-      'Общий переключатель. При включении система может запросить разрешение на уведомления.';
+      'Включает доставку push на этом устройстве. При выключении отключаются сообщения и оповещения по фильтру.';
 
   @override
   String get notificationSettingsMessagesTitle => 'Сообщения';
 
   @override
   String get notificationSettingsMessagesSubtitle =>
-      'Push о новых сообщениях в чатах (когда доставка будет доступна).';
+      'Push о новых сообщениях в чатах по объявлениям.';
 
   @override
   String get notificationSettingsMessagesNeedsGlobal =>
-      'Сначала включите «Уведомления в приложении».';
+      'Сначала включите «Push на этом устройстве».';
 
   @override
   String get notificationSettingsFilterAlertsTitle => 'Оповещения по фильтру';
 
   @override
   String get notificationSettingsFilterAlertsSubtitle =>
-      'Разрешите уведомления, чтобы получать push при новых объявлениях по сохранённому фильтру. Доставка на устройстве всё ещё проверяется.';
+      'Push при новых объявлениях, подходящих под сохранённый фильтр.';
 
   @override
   String get notificationSettingsFilterAlertsNeedsGlobal =>
-      'Сначала включите «Уведомления в приложении».';
+      'Сначала включите «Push на этом устройстве».';
+
+  @override
+  String get notificationSettingsFilterAlertsSavedFilterNote =>
+      'Нужен сохранённый фильтр и включённые оповещения на экране управления фильтром.';
+
+  @override
+  String get notificationSettingsFilterAlertsOpenCta =>
+      'Открыть оповещения по фильтру';
+
+  @override
+  String get notificationSettingsDeliveryCardTitle => 'Статус доставки';
 
   @override
   String get notificationSettingsDeliveryDisclaimer =>
-      'Функция реализована на сервере и в приложении; финальная доставка на устройство всё ещё проверяется.';
+      'Функция реализована на сервере и в приложении; финальная доставка на устройствах ещё проверяется.';
 
   @override
   String get notificationSettingsOsStatusAuthorized =>
@@ -1681,6 +1752,38 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get resetPasswordValidationMismatch => 'Пароли не совпадают.';
+
+  @override
+  String get changePasswordTitle => 'Изменить пароль';
+
+  @override
+  String get changePasswordIntro => 'Введите текущий пароль и выберите новый.';
+
+  @override
+  String get changePasswordCurrentPassword => 'Текущий пароль';
+
+  @override
+  String get changePasswordNewPassword => 'Новый пароль';
+
+  @override
+  String get changePasswordConfirmPassword => 'Подтвердите новый пароль';
+
+  @override
+  String get changePasswordSubmit => 'Сохранить пароль';
+
+  @override
+  String get changePasswordSuccess => 'Пароль обновлён.';
+
+  @override
+  String get changePasswordCurrentInvalid => 'Текущий пароль неверный.';
+
+  @override
+  String get changePasswordFailedRetry =>
+      'Не удалось изменить пароль. Попробуйте ещё раз.';
+
+  @override
+  String get changePasswordSecurityNote =>
+      'Используйте надёжный пароль, который вы не применяете в других сервисах.';
 
   @override
   String get phoneRequired => 'Введите номер телефона.';

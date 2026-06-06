@@ -2,9 +2,11 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
+import 'package:carzon/features/listings/domain/entities/listing_contact.dart';
 import 'package:carzon/features/listings/domain/entities/listing_image.dart';
 import 'package:carzon/features/listings/domain/usecases/get_listing_by_id.dart';
 import 'package:carzon/features/listings/domain/usecases/get_listing_images.dart';
+import 'package:carzon/features/listings/domain/usecases/get_listing_public_contact.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
 import 'package:carzon/features/messaging/domain/usecases/get_or_create_conversation.dart';
@@ -14,6 +16,9 @@ import 'package:mocktail/mocktail.dart';
 class _MockGetListingById extends Mock implements GetListingById {}
 
 class _MockGetListingImages extends Mock implements GetListingImages {}
+
+class _MockGetListingPublicContact extends Mock
+    implements GetListingPublicContact {}
 
 class _MockGetOrCreateConversation extends Mock
     implements GetOrCreateConversation {}
@@ -36,6 +41,7 @@ Listing _listing({String? cover}) => Listing(
 void main() {
   late _MockGetListingById getById;
   late _MockGetListingImages getImages;
+  late _MockGetListingPublicContact getPublicContact;
   late _MockGetOrCreateConversation getOrCreateConversation;
 
   setUpAll(() => registerFallbackValue(''));
@@ -43,11 +49,20 @@ void main() {
   setUp(() {
     getById = _MockGetListingById();
     getImages = _MockGetListingImages();
+    getPublicContact = _MockGetListingPublicContact();
     getOrCreateConversation = _MockGetOrCreateConversation();
     reset(getById);
     reset(getImages);
+    reset(getPublicContact);
     reset(getOrCreateConversation);
   });
+
+  ListingDetailsCubit buildCubit() => ListingDetailsCubit(
+    getListingById: getById,
+    getListingImages: getImages,
+    getListingPublicContact: getPublicContact,
+    getOrCreateConversation: getOrCreateConversation,
+  );
 
   blocTest<ListingDetailsCubit, ListingDetailsState>(
     'gallery rows drive ordered heroImageUrls after fetchById succeeds',
@@ -73,11 +88,7 @@ void main() {
         ]),
       );
     },
-    build: () => ListingDetailsCubit(
-      getListingById: getById,
-      getListingImages: getImages,
-      getOrCreateConversation: getOrCreateConversation,
-    ),
+    build: buildCubit,
     act: (c) => c.load('l1'),
     expect: () => [
       const ListingDetailsState.loading(),
@@ -116,11 +127,7 @@ void main() {
         ]),
       );
     },
-    build: () => ListingDetailsCubit(
-      getListingById: getById,
-      getListingImages: getImages,
-      getOrCreateConversation: getOrCreateConversation,
-    ),
+    build: buildCubit,
     act: (c) =>
         c.load('l1', initialCoverImageUrl: 'https://cdn/cover-only.jpg'),
     expect: () => [
@@ -149,11 +156,7 @@ void main() {
         () => getImages('l1'),
       ).thenAnswer((_) async => FailureResult(ServerFailure('down')));
     },
-    build: () => ListingDetailsCubit(
-      getListingById: getById,
-      getListingImages: getImages,
-      getOrCreateConversation: getOrCreateConversation,
-    ),
+    build: buildCubit,
     act: (c) => c.load('l1'),
     expect: () => [
       const ListingDetailsState.loading(),
@@ -175,11 +178,7 @@ void main() {
         () => getById('l1'),
       ).thenAnswer((_) async => FailureResult(const NetworkFailure('offline')));
     },
-    build: () => ListingDetailsCubit(
-      getListingById: getById,
-      getListingImages: getImages,
-      getOrCreateConversation: getOrCreateConversation,
-    ),
+    build: buildCubit,
     act: (c) => c.load('l1'),
     expect: () => [
       const ListingDetailsState.loading(),
@@ -195,14 +194,22 @@ void main() {
     when(
       () => getOrCreateConversation('l1'),
     ).thenAnswer((_) async => const Success('conv-z'));
-    final cubit = ListingDetailsCubit(
-      getListingById: getById,
-      getListingImages: getImages,
-      getOrCreateConversation: getOrCreateConversation,
-    );
+    final cubit = buildCubit();
     final r = await cubit.startConversationForListing('l1');
     expect(r, const Success<String>('conv-z'));
     verify(() => getOrCreateConversation('l1')).called(1);
+    await cubit.close();
+  });
+
+  test('revealPublicContact delegates to explicit contact use case', () async {
+    const contact = ListingContact(phone: '+373 690 00001');
+    when(
+      () => getPublicContact('l1'),
+    ).thenAnswer((_) async => const Success(contact));
+    final cubit = buildCubit();
+    final r = await cubit.revealPublicContact('l1');
+    expect(r, const Success<ListingContact>(contact));
+    verify(() => getPublicContact('l1')).called(1);
     await cubit.close();
   });
 }

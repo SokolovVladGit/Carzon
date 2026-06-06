@@ -49,12 +49,12 @@ const _profileTestMessagesStubKey = ValueKey<String>(
   'profile_test_messages_stub',
 );
 
-const _profileTestFilterAlertStubKey = ValueKey<String>(
-  'profile_test_filter_alert_stub',
-);
-
 const _profileTestNotificationSettingsStubKey = ValueKey<String>(
   'profile_test_notification_settings_stub',
+);
+
+const _profileTestChangePasswordStubKey = ValueKey<String>(
+  'profile_test_change_password_stub',
 );
 
 final class _InMemoryThemeModeLocalDataSource
@@ -121,10 +121,10 @@ GoRouter _profileTestGoRouter({
         ),
       ),
       GoRoute(
-        path: AppRoutes.filterAlert,
+        path: AppRoutes.changePassword,
         builder: (_, _) => const Scaffold(
-          key: _profileTestFilterAlertStubKey,
-          body: Text('profile_test_filter_alert_placeholder'),
+          key: _profileTestChangePasswordStubKey,
+          body: Text('profile_test_change_password_placeholder'),
         ),
       ),
       GoRoute(
@@ -355,17 +355,23 @@ void main() {
       expect(find.text(l10n.profileSettingsSectionTitle), findsOneWidget);
       expect(find.text(l10n.profileLanguageTitle), findsOneWidget);
       expect(find.text(l10n.profileNotificationsTitle), findsOneWidget);
-      expect(find.text(l10n.profileListingAlertsTitle), findsOneWidget);
+      expect(find.text(l10n.profileChangePasswordTitle), findsOneWidget);
+      expect(find.text(l10n.profileChangePasswordSubtitle), findsOneWidget);
+      expect(find.text(l10n.profileListingAlertsTitle), findsNothing);
       expect(find.text(l10n.profileDarkThemeTitle), findsOneWidget);
       expect(find.text(l10n.profileDarkThemeSubtitle), findsOneWidget);
       expect(
         find.byKey(const ValueKey<String>('profile_dark_theme_switch')),
         findsOneWidget,
       );
-      expect(find.text(l10n.filterAlertProfileRowSubtitle), findsOneWidget);
+      expect(find.text(l10n.filterAlertProfileRowSubtitle), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('profile_change_password_row')),
+        findsOneWidget,
+      );
       expect(
         find.byKey(const ValueKey<String>('profile_filter_alert_row')),
-        findsOneWidget,
+        findsNothing,
       );
 
       expect(find.text(l10n.commonComingSoon), findsNothing);
@@ -446,7 +452,7 @@ void main() {
     },
   );
 
-  testWidgets('authenticated: filter alert row opens /filter-alert', (
+  testWidgets('authenticated: change password row opens /change-password', (
     tester,
   ) async {
     const user = AuthUser(
@@ -466,7 +472,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final row = find.byKey(const ValueKey<String>('profile_filter_alert_row'));
+    final row = find.byKey(
+      const ValueKey<String>('profile_change_password_row'),
+    );
     await tester.scrollUntilVisible(
       row,
       80,
@@ -475,11 +483,11 @@ void main() {
     await tester.tap(row);
     await tester.pumpAndSettle();
 
-    expect(find.byKey(_profileTestFilterAlertStubKey), findsOneWidget);
+    expect(find.byKey(_profileTestChangePasswordStubKey), findsOneWidget);
   });
 
   testWidgets(
-    'authenticated: filter alert row is a single navigation target (chevron)',
+    'authenticated: change password row is a single navigation target (chevron)',
     (tester) async {
       const user = AuthUser(
         id: 'u1',
@@ -499,7 +507,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final row = find.byKey(
-        const ValueKey<String>('profile_filter_alert_row'),
+        const ValueKey<String>('profile_change_password_row'),
       );
       await tester.scrollUntilVisible(
         row,

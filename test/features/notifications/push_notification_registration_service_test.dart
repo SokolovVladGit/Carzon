@@ -247,6 +247,78 @@ PUSH_NOTIFICATIONS_ENABLED=false
     },
   );
 
+  test('concurrent sync calls share one backend registration', () async {
+    final gate = Completer<void>();
+    when(
+      () => repo.registerPushToken(
+        token: any(named: 'token'),
+        platform: any(named: 'platform'),
+        appVersion: any(named: 'appVersion'),
+        deviceId: any(named: 'deviceId'),
+        locale: any(named: 'locale'),
+      ),
+    ).thenAnswer((_) async {
+      await gate.future;
+      return const Success<void>(null);
+    });
+
+    final first = sut.syncTokenWithBackendIfEligible();
+    await Future<void>.value();
+    final second = sut.syncTokenWithBackendIfEligible();
+    gate.complete();
+
+    await first;
+    await second;
+
+    verify(
+      () => repo.registerPushToken(
+        token: 'fake-token',
+        platform: any(named: 'platform'),
+        appVersion: null,
+        deviceId: null,
+        locale: 'ru',
+      ),
+    ).called(1);
+  });
+
+  test(
+    'concurrent direct token refresh for same token registers once',
+    () async {
+      await sut.start();
+      clearInteractions(repo);
+
+      final gate = Completer<void>();
+      when(
+        () => repo.registerPushToken(
+          token: any(named: 'token'),
+          platform: any(named: 'platform'),
+          appVersion: any(named: 'appVersion'),
+          deviceId: any(named: 'deviceId'),
+          locale: any(named: 'locale'),
+        ),
+      ).thenAnswer((_) async {
+        await gate.future;
+        return const Success<void>(null);
+      });
+
+      client.emitRefresh('refresh-token');
+      client.emitRefresh('refresh-token');
+      await Future<void>.delayed(Duration.zero);
+      gate.complete();
+      await Future<void>.delayed(Duration.zero);
+
+      verify(
+        () => repo.registerPushToken(
+          token: 'refresh-token',
+          platform: any(named: 'platform'),
+          appVersion: null,
+          deviceId: null,
+          locale: 'ru',
+        ),
+      ).called(1);
+    },
+  );
+
   test('sync passes ro locale when app preference is Romanian', () async {
     localePreference = AppLocalePreference.ro;
     await sut.syncTokenWithBackendIfEligible();

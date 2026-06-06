@@ -20,6 +20,9 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
   final RequestPasswordReset _requestPasswordReset;
 
   Future<void> submit(String email) async {
+    if (state.status == ForgotPasswordStatus.submitting) {
+      return;
+    }
     final normalized = email.trim();
     if (normalized.isEmpty) {
       emit(

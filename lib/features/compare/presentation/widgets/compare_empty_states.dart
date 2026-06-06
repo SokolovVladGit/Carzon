@@ -156,7 +156,7 @@ Widget _emptyContent({
           color: scheme.onSurfaceVariant.withValues(alpha: light ? 1 : 0.76),
         ),
       ),
-      if (child != null) child,
+      ?child,
       const SizedBox(height: 24),
       FilledButton(
         key: const ValueKey('compare_browse_listings_button'),

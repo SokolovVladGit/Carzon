@@ -4,6 +4,7 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
+import '../../domain/entities/listing_contact.dart';
 import '../../domain/entities/listing_currency.dart';
 import '../../domain/entities/listing_sort_option.dart';
 import '../../domain/repositories/listings_repository.dart';
@@ -14,6 +15,7 @@ abstract interface class ListingsRemoteDataSource {
   Future<List<ListingModel>> fetch(ListingsQuery query);
   Future<ListingModel> fetchById(String id);
   Future<List<ListingImageModel>> fetchListingImages(String listingId);
+  Future<ListingContact> fetchPublicContact(String listingId);
 
   /// Calls the `set_listing_status` SQL function. Ownership and the
   /// allowed status set are enforced in the function body; the client
@@ -41,6 +43,33 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
 
   static const String _table = 'listings';
   static const String _imagesTable = 'listing_images';
+  static const String _publicListingColumns = '''
+id,
+title,
+make,
+model,
+year,
+price_eur,
+price_currency,
+mileage_km,
+type,
+city,
+market_region,
+body_type,
+fuel_type,
+engine_displacement_liters,
+engine_power_hp,
+drivetrain,
+registration,
+description,
+created_at,
+status,
+cover_image_url,
+seller_id,
+vin_status
+''';
+  static const String _publicListingImageColumns =
+      'id, listing_id, public_url, position, created_at';
   static const String _rpcBuyerVinReport = 'get_listing_vin_report_for_buyer';
 
   @override
@@ -55,7 +84,7 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
       // PostgrestTransformBuilder is not a subtype of PostgrestFilterBuilder.
       sb.PostgrestFilterBuilder<sb.PostgrestList> filterQuery = _supabase.client
           .from(_table)
-          .select();
+          .select(_publicListingColumns);
       if (query.search != null && query.search!.trim().isNotEmpty) {
         filterQuery = filterQuery.ilike('title', '%${query.search!.trim()}%');
       }
@@ -168,7 +197,7 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
         rethrow;
       }
       try {
-        out.add(ListingModel.fromJson(json));
+        out.add(ListingModel.fromPublicJson(json));
       } on ServerException catch (e) {
         final idHint = _safeListingIdForLog(json);
         _logger.warn(
@@ -241,10 +270,10 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
     try {
       final row = await _supabase.client
           .from(_table)
-          .select()
+          .select(_publicListingColumns)
           .eq('id', id)
           .single();
-      return ListingModel.fromJson(_listingRowToJsonMap(row));
+      return ListingModel.fromPublicJson(_listingRowToJsonMap(row));
     } on sb.PostgrestException catch (e, st) {
       throw ServerException(e.message, cause: e, stackTrace: st);
     } catch (e, st) {
@@ -261,7 +290,7 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
     try {
       final rows = await _supabase.client
           .from(_imagesTable)
-          .select()
+          .select(_publicListingImageColumns)
           .eq('listing_id', listingId)
           .order('position', ascending: true);
       return rows
@@ -280,6 +309,45 @@ class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
         stackTrace: st,
       );
     }
+  }
+
+  @override
+  Future<ListingContact> fetchPublicContact(String listingId) async {
+    try {
+      final dynamic data = await _supabase.client.rpc(
+        'get_listing_public_contact',
+        params: <String, dynamic>{'p_listing_id': listingId},
+      );
+      Map<String, dynamic>? row;
+      if (data is Map<String, dynamic>) {
+        row = data;
+      } else if (data is List && data.isNotEmpty && data.first is Map) {
+        row = Map<String, dynamic>.from(data.first as Map);
+      }
+      if (row == null) {
+        throw ServerException('Seller contact is unavailable.');
+      }
+      return ListingContact(
+        phone: _nonEmptyString(row['contact_phone']),
+        telegramUsername: _nonEmptyString(row['telegram_username']),
+        whatsappEnabled: row['whatsapp_enabled'] == true,
+      );
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } on ServerException {
+      rethrow;
+    } catch (e, st) {
+      throw ServerException(
+        'Failed to fetch seller contact for $listingId',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  static String? _nonEmptyString(dynamic value) {
+    final text = value?.toString().trim();
+    return text == null || text.isEmpty ? null : text;
   }
 
   @override

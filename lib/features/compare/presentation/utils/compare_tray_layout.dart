@@ -19,12 +19,6 @@ bool compareTrayHiddenForRoute(String location) {
   return !compareTrayVisibleForRoute(location);
 }
 
-/// Listing details (`/listings/:id`) with sticky contact bar.
-bool compareTrayIsListingDetails(String location) {
-  final path = Uri.parse(location).path;
-  return RegExp(r'^/listings/[^/]+$').hasMatch(path);
-}
-
 /// Top-level surfaces that render [FloatingCapsuleNav] under the tray.
 bool compareTrayUsesBottomNavClearance(String location) {
   final path = Uri.parse(location).path;
@@ -38,12 +32,6 @@ bool compareTrayUsesBottomNavClearance(String location) {
   return withNav.contains(path);
 }
 
-/// Contact bar body: vertical padding + 50px buttons (see listing details).
-const double kListingDetailsContactBarBodyHeight = 70;
-
-/// Gap between compare tray and listing-details contact bar.
-const double kListingDetailsTrayGapAboveContact = 12;
-
 /// Extra offset between tray bottom and [kFloatingCapsuleNavClearance].
 ///
 /// Negative values move the tray closer to the floating nav (small slit).
@@ -55,11 +43,6 @@ double compareTrayBottomInset(BuildContext context, String location) {
   if (compareTrayUsesBottomNavClearance(location)) {
     return kFloatingCapsuleNavClearance +
         kCompareTrayGapAboveBottomNav +
-        MediaQuery.paddingOf(context).bottom;
-  }
-  if (compareTrayIsListingDetails(location)) {
-    return kListingDetailsContactBarBodyHeight +
-        kListingDetailsTrayGapAboveContact +
         MediaQuery.paddingOf(context).bottom;
   }
   return 16 + MediaQuery.paddingOf(context).bottom;

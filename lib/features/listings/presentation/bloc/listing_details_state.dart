@@ -29,10 +29,10 @@ class ListingDetailsState extends Equatable {
   const ListingDetailsState.loading()
     : this(status: ListingDetailsStatus.loading);
 
-  ListingDetailsState.failure(Failure failure)
+  const ListingDetailsState.failure(Failure failure)
     : this(status: ListingDetailsStatus.failure, loadFailure: failure);
 
-  ListingDetailsState.success(
+  const ListingDetailsState.success(
     Listing listing, {
     List<String> heroImageUrls = const [],
   }) : this(

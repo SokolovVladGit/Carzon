@@ -12,6 +12,7 @@ import '../domain/usecases/sign_out.dart';
 import '../domain/usecases/sign_up_with_password.dart';
 import '../domain/usecases/update_password.dart';
 import '../presentation/bloc/auth_cubit.dart';
+import '../presentation/bloc/change_password_cubit.dart';
 import '../presentation/bloc/forgot_password_cubit.dart';
 import '../presentation/bloc/reset_password_cubit.dart';
 
@@ -62,5 +63,11 @@ void registerAuthFeature(GetIt sl) {
   );
   sl.registerFactory<ResetPasswordCubit>(
     () => ResetPasswordCubit(updatePassword: sl<UpdatePassword>()),
+  );
+  sl.registerFactory<ChangePasswordCubit>(
+    () => ChangePasswordCubit(
+      signInWithPassword: sl<SignInWithPassword>(),
+      updatePassword: sl<UpdatePassword>(),
+    ),
   );
 }

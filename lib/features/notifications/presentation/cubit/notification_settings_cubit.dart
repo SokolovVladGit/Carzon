@@ -107,6 +107,9 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
   }
 
   Future<void> setGlobalEnabled(bool enabled) async {
+    if (state.busy) {
+      return;
+    }
     final prefs = state.preferences;
     if (prefs == null || state.phase != NotificationSettingsLoadPhase.ready) {
       return;
@@ -197,6 +200,9 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
   }
 
   Future<void> setMessagesEnabled(bool enabled) async {
+    if (state.busy) {
+      return;
+    }
     final prefs = state.preferences;
     if (prefs == null || state.phase != NotificationSettingsLoadPhase.ready) {
       return;
@@ -284,6 +290,9 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
   }
 
   Future<void> setFilterAlertsEnabled(bool enabled) async {
+    if (state.busy) {
+      return;
+    }
     final prefs = state.preferences;
     if (prefs == null || state.phase != NotificationSettingsLoadPhase.ready) {
       return;

@@ -178,14 +178,15 @@ class EditListingState extends Equatable {
          ownerVinSourceResultsLookupFailed: ownerVinSourceResultsLookupFailed,
        );
 
-  const EditListingState.loadFailure()
-    : this(
-        status: EditListingStatus.failure,
-        failureKind: EditListingFailureKind.load,
-        listingGalleryImages: const <ListingImage>[],
-        galleryLoadSucceeded: false,
-        initialGallerySlots: const <EditListingGallerySlot>[],
-      );
+  const EditListingState.loadFailure({
+    EditListingFailureKind kind = EditListingFailureKind.load,
+  }) : this(
+         status: EditListingStatus.failure,
+         failureKind: kind,
+         listingGalleryImages: const <ListingImage>[],
+         galleryLoadSucceeded: false,
+         initialGallerySlots: const <EditListingGallerySlot>[],
+       );
 
   const EditListingState.saveFailure(
     Listing listing,

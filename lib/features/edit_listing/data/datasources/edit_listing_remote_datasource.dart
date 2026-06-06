@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
+import '../../../listings/data/models/listing_image_model.dart';
 import '../../../listings/data/models/listing_model.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
@@ -34,6 +35,11 @@ String? _nullableTrimListingField(String? value) {
 
 /// Only this class talks to Supabase for edit-listing.
 abstract interface class EditListingRemoteDataSource {
+  Future<ListingModel> fetchOwnerListingForEdit(String listingId);
+  Future<List<ListingImageModel>> fetchOwnerListingImagesForEdit(
+    String listingId,
+  );
+
   /// Calls `public.update_listing_details`.
   Future<ListingModel> updateDetails(EditListingInput input);
 
@@ -77,6 +83,9 @@ class SupabaseEditListingRemoteDataSource
   static const String _rpcV2 = 'update_listing_details_v2';
   static const String _rpcCover = 'update_listing_cover_image';
   static const String _rpcReplaceImages = 'replace_listing_images';
+  static const String _rpcOwnerListingForEdit = 'get_my_listing_for_edit';
+  static const String _rpcOwnerListingImagesForEdit =
+      'get_my_listing_images_for_edit';
 
   Future<ListingModel> _rpcListingRow(
     Future<dynamic> call,
@@ -91,6 +100,60 @@ class SupabaseEditListingRemoteDataSource
       rethrow;
     } catch (e, st) {
       throw ServerException('Failed $rpcName', cause: e, stackTrace: st);
+    }
+  }
+
+  @override
+  Future<ListingModel> fetchOwnerListingForEdit(String listingId) async {
+    try {
+      final dynamic data = await _supabase.client.rpc(
+        _rpcOwnerListingForEdit,
+        params: <String, dynamic>{'p_listing_id': listingId},
+      );
+      return _parseListingMutationRpcResponse(data, _rpcOwnerListingForEdit);
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } on ServerException {
+      rethrow;
+    } catch (e, st) {
+      throw ServerException(
+        'Failed to load owner listing for edit',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<List<ListingImageModel>> fetchOwnerListingImagesForEdit(
+    String listingId,
+  ) async {
+    try {
+      final dynamic data = await _supabase.client.rpc(
+        _rpcOwnerListingImagesForEdit,
+        params: <String, dynamic>{'p_listing_id': listingId},
+      );
+      if (data is! List) {
+        throw ServerException(
+          'Unexpected response from $_rpcOwnerListingImagesForEdit RPC.',
+        );
+      }
+      return data
+          .whereType<Map>()
+          .map(
+            (row) => ListingImageModel.fromJson(Map<String, dynamic>.from(row)),
+          )
+          .toList(growable: false);
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } on ServerException {
+      rethrow;
+    } catch (e, st) {
+      throw ServerException(
+        'Failed to load owner listing images for edit',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 

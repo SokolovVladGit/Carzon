@@ -95,6 +95,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingsLoadFailed => 'Nu s-au încărcat anunțurile.';
 
   @override
+  String get listingsLoadMoreFailed => 'Nu s-au încărcat mai multe anunțuri.';
+
+  @override
   String get listingsEmpty => 'Nu s-au găsit reclame adecvate.';
 
   @override
@@ -1249,6 +1252,13 @@ class AppLocalizationsRo extends AppLocalizations {
   String get profileSettingsSectionTitle => 'Setări';
 
   @override
+  String get profileChangePasswordTitle => 'Schimbă parola';
+
+  @override
+  String get profileChangePasswordSubtitle =>
+      'Actualizează parola pentru autentificarea în cont.';
+
+  @override
   String get profileDarkThemeTitle => 'Tema întunecată';
 
   @override
@@ -1281,6 +1291,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get notificationSettingsTitle => 'Notificări';
 
   @override
+  String get notificationSettingsPageIntro =>
+      'Configurați push pe acest dispozitiv: mesaje în chat și alerte pentru filtrul salvat.';
+
+  @override
   String get notificationSettingsSignInRequired =>
       'Conectați-vă pentru a configura notificările.';
 
@@ -1294,48 +1308,106 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get notificationSettingsOsPermissionDenied =>
-      'Permisiunea de notificare nu a primit. Activați-l în setările sistemului dacă aveți nevoie de push.';
+      'Permisiunea de notificare nu a fost acordată. Activați-o în setările sistemului dacă aveți nevoie de push.';
 
   @override
   String get notificationSettingsPushUnavailableInBuild =>
-      'Push nu este disponibil în această versiune (PUSH_NOTIFICATIONS_ENABLED).';
+      'Notificările push nu sunt disponibile în această versiune.';
 
   @override
   String get notificationSettingsPushBuildDisabledBanner =>
-      'În această versiune, notificările push sunt dezactivate la nivel de configurare. Comutatoarele de mai jos nu sunt disponibile.';
+      'Notificările push nu sunt disponibile în această versiune.';
 
   @override
-  String get notificationSettingsGlobalTitle => 'Notificări în aplicație';
+  String get notificationSettingsPushBuildDisabledHint =>
+      'Pentru a testa push, folosiți o versiune cu notificările activate.';
+
+  @override
+  String get notificationSettingsMasterOffHint =>
+      'Activați „Push pe acest dispozitiv” pentru a configura tipurile de notificări de mai jos.';
+
+  @override
+  String get notificationSettingsStatusCardTitle =>
+      'Permisiunea dispozitivului';
+
+  @override
+  String get notificationSettingsOsPillAllowed => 'Permise';
+
+  @override
+  String get notificationSettingsOsPillProvisional => 'Provizorii';
+
+  @override
+  String get notificationSettingsOsPillDenied => 'Respinse';
+
+  @override
+  String get notificationSettingsOsPillNotDetermined => 'Nesolicitate';
+
+  @override
+  String get notificationSettingsOsPillUnavailable => 'Indisponibile';
+
+  @override
+  String get notificationSettingsOsDescriptionAuthorized =>
+      'Sistemul permite afișarea notificărilor. Puteți activa push mai jos.';
+
+  @override
+  String get notificationSettingsOsDescriptionProvisional =>
+      'Notificările sunt permise în mod limitat. Confirmați accesul complet în setările sistemului, dacă e nevoie.';
+
+  @override
+  String get notificationSettingsOsDescriptionDenied =>
+      'Notificările sunt dezactivate în sistem. Activați-le în setările telefonului, apoi reveniți aici.';
+
+  @override
+  String get notificationSettingsOsDescriptionNotDetermined =>
+      'Permisiunea nu a fost încă solicitată. Va fi cerută când activați push mai jos.';
+
+  @override
+  String get notificationSettingsOsDescriptionUnavailable =>
+      'În această versiune push nu este disponibil; statusul permisiunii nu se aplică.';
+
+  @override
+  String get notificationSettingsGlobalTitle => 'Push pe acest dispozitiv';
 
   @override
   String get notificationSettingsGlobalSubtitle =>
-      'Comutator general. Când este activat, sistemul poate solicita permisiunea pentru notificări.';
+      'Activează livrarea push pe acest dispozitiv. La dezactivare, mesajele și alertele de filtru se opresc.';
 
   @override
   String get notificationSettingsMessagesTitle => 'Mesaje';
 
   @override
   String get notificationSettingsMessagesSubtitle =>
-      'Împingeți mesajele noi în chat-uri (când livrarea este disponibilă).';
+      'Push pentru mesaje noi în chat-urile anunțurilor.';
 
   @override
   String get notificationSettingsMessagesNeedsGlobal =>
-      'Mai întâi, activați Notificările în aplicație.';
+      'Mai întâi activați „Push pe acest dispozitiv”.';
 
   @override
-  String get notificationSettingsFilterAlertsTitle => 'Filtrați alertele';
+  String get notificationSettingsFilterAlertsTitle => 'Alerte după filtru';
 
   @override
   String get notificationSettingsFilterAlertsSubtitle =>
-      'Permite notificărilor să primească notificări push atunci când există anunțuri noi bazate pe filtrul salvat. Livrarea pe dispozitiv este încă în curs de verificare.';
+      'Push când apar anunțuri noi care se potrivesc filtrului salvat.';
 
   @override
   String get notificationSettingsFilterAlertsNeedsGlobal =>
-      'Mai întâi, activați Notificările în aplicație.';
+      'Mai întâi activați „Push pe acest dispozitiv”.';
+
+  @override
+  String get notificationSettingsFilterAlertsSavedFilterNote =>
+      'Este nevoie de un filtru salvat și alerte activate pe ecranul de gestionare a filtrului.';
+
+  @override
+  String get notificationSettingsFilterAlertsOpenCta =>
+      'Deschide alertele după filtru';
+
+  @override
+  String get notificationSettingsDeliveryCardTitle => 'Starea livrării';
 
   @override
   String get notificationSettingsDeliveryDisclaimer =>
-      'Funcția este implementată pe server și în aplicație; livrarea finală către dispozitiv este încă în curs de verificare.';
+      'Funcția este implementată pe server și în aplicație; livrarea finală pe dispozitive este încă în curs de verificare.';
 
   @override
   String get notificationSettingsOsStatusAuthorized =>
@@ -1683,6 +1755,38 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get resetPasswordValidationMismatch => 'Parolele nu se potrivesc.';
+
+  @override
+  String get changePasswordTitle => 'Schimbă parola';
+
+  @override
+  String get changePasswordIntro => 'Introdu parola actuală și alege una nouă.';
+
+  @override
+  String get changePasswordCurrentPassword => 'Parola actuală';
+
+  @override
+  String get changePasswordNewPassword => 'Parola nouă';
+
+  @override
+  String get changePasswordConfirmPassword => 'Confirmă parola nouă';
+
+  @override
+  String get changePasswordSubmit => 'Salvează parola';
+
+  @override
+  String get changePasswordSuccess => 'Parola a fost actualizată.';
+
+  @override
+  String get changePasswordCurrentInvalid => 'Parola actuală este incorectă.';
+
+  @override
+  String get changePasswordFailedRetry =>
+      'Nu s-a putut schimba parola. Încearcă din nou.';
+
+  @override
+  String get changePasswordSecurityNote =>
+      'Folosește o parolă sigură, pe care nu o utilizezi în alte servicii.';
 
   @override
   String get phoneRequired => 'Introduceți numărul dvs. de telefon.';

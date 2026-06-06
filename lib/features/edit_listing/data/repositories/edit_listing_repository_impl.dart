@@ -3,6 +3,7 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/utils/result.dart';
 import '../../../listings/domain/entities/listing.dart';
+import '../../../listings/domain/entities/listing_image.dart';
 import '../../domain/entities/edit_listing_input.dart';
 import '../../domain/entities/owner_listing_vin_lookup_result.dart';
 import '../../domain/entities/owner_listing_vin_report_status.dart';
@@ -16,6 +17,36 @@ class EditListingRepositoryImpl implements EditListingRepository {
 
   final EditListingRemoteDataSource _remote;
   final AppLogger _logger;
+
+  @override
+  Future<Result<Listing>> fetchOwnerListingForEdit(String listingId) async {
+    try {
+      final listing = await _remote.fetchOwnerListingForEdit(listingId);
+      return Success(listing);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('fetchOwnerListingForEdit unknown error', e, st);
+      return const FailureResult(UnknownFailure('Failed to load listing.'));
+    }
+  }
+
+  @override
+  Future<Result<List<ListingImage>>> fetchOwnerListingImagesForEdit(
+    String listingId,
+  ) async {
+    try {
+      final images = await _remote.fetchOwnerListingImagesForEdit(listingId);
+      return Success(images);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('fetchOwnerListingImagesForEdit unknown error', e, st);
+      return const FailureResult(
+        UnknownFailure('Failed to load listing images.'),
+      );
+    }
+  }
 
   @override
   Future<Result<Listing>> updateDetails(EditListingInput input) async {

@@ -10,6 +10,7 @@ import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/app_back_button.dart';
+import '../../../../core/widgets/auth_required_prompt.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -33,6 +34,18 @@ import '../bloc/create_listing_state.dart';
 import '../models/create_listing_photo_draft.dart';
 import '../widgets/create_listing_compose_layout.dart';
 import '../widgets/create_listing_media_section.dart';
+import '../widgets/listing_body_type_pick_sheet.dart';
+import '../widgets/listing_type_deal_selector.dart';
+import '../widgets/market_placement_selector.dart';
+import '../widgets/premium_listing_controls.dart';
+
+@visibleForTesting
+typedef CreateListingImagePicker =
+    Future<XFile?> Function({
+      required ImageSource source,
+      required double maxWidth,
+      required int imageQuality,
+    });
 
 /// Extra scroll padding below the publish section beyond the device bottom inset.
 const double _kCreateListingScrollBottomExtra = 30;
@@ -40,29 +53,28 @@ const double _kCreateListingScrollBottomExtra = 30;
 /// Minimum bottom inset for scroll padding when the OS reports no bottom safe area.
 const double _kCreateListingScrollBottomInsetFloor = 14;
 
-/// Wraps a concrete body-type choice so sheet dismissal (`null`) stays distinct.
-class _BodyTypeSelection {
-  const _BodyTypeSelection(this.value);
-  final ListingBodyType? value;
-}
-
 /// English catalog sentinel — persisted in `make` when the seller picks «Other» without text.
 final String _kListingBrandCatalogOther = kListingBrandCatalog.last; // "Other"
 
 class CreateListingPage extends StatelessWidget {
-  const CreateListingPage({super.key});
+  const CreateListingPage({super.key, @visibleForTesting this.imagePicker});
+
+  @visibleForTesting
+  final CreateListingImagePicker? imagePicker;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<CreateListingCubit>(),
-      child: const _CreateListingView(),
+      child: _CreateListingView(imagePicker: imagePicker),
     );
   }
 }
 
 class _CreateListingView extends StatelessWidget {
-  const _CreateListingView();
+  const _CreateListingView({this.imagePicker});
+
+  final CreateListingImagePicker? imagePicker;
 
   @override
   Widget build(BuildContext context) {
@@ -92,47 +104,28 @@ class _CreateListingView extends StatelessWidget {
         builder: (context, authState) {
           if (authState.status != AuthStatus.authenticated ||
               authState.user == null) {
-            return _SignInRequired(
-              onSignIn: () => context.go(AppRoutes.signIn),
+            return AuthRequiredPrompt(
+              icon: const Icon(Icons.lock_outline_rounded, size: 48),
+              message: l10n.createListingSignInRequired,
+              primaryButtonLabel: l10n.commonSignIn,
+              onPrimaryPressed: () => context.go(AppRoutes.signIn),
             );
           }
-          return _CreateListingForm(sellerId: authState.user!.id);
+          return _CreateListingForm(
+            sellerId: authState.user!.id,
+            imagePicker: imagePicker,
+          );
         },
       ),
     );
   }
 }
 
-class _SignInRequired extends StatelessWidget {
-  const _SignInRequired({required this.onSignIn});
-
-  final VoidCallback onSignIn;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.lock_outline_rounded, size: 48),
-            const SizedBox(height: 12),
-            Text(l10n.createListingSignInRequired, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onSignIn, child: Text(l10n.commonSignIn)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _CreateListingForm extends StatefulWidget {
-  const _CreateListingForm({required this.sellerId});
+  const _CreateListingForm({required this.sellerId, this.imagePicker});
 
   final String sellerId;
+  final CreateListingImagePicker? imagePicker;
 
   @override
   State<_CreateListingForm> createState() => _CreateListingFormState();
@@ -230,7 +223,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
 
     setState(() => _pickingImage = true);
     try {
-      final picked = await _picker.pickImage(
+      final picker = widget.imagePicker ?? _picker.pickImage;
+      final picked = await picker(
         source: ImageSource.gallery,
         maxWidth: 1920,
         imageQuality: 85,
@@ -298,7 +292,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
 
   Future<void> _openBodyTypeSheet() async {
     final l10n = context.l10n;
-    final picked = await showModalBottomSheet<_BodyTypeSelection>(
+    final picked = await showModalBottomSheet<ListingBodyTypeSelection>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
@@ -307,7 +301,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
           padding: EdgeInsets.only(
             bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
           ),
-          child: _ListingBodyTypePickSheet(appL10n: l10n, selected: _bodyType),
+          child: ListingBodyTypePickSheet(appL10n: l10n, selected: _bodyType),
         );
       },
     );
@@ -921,7 +915,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                     children: [
                       CreateListingFieldLabel(l10n.fieldType),
                       const SizedBox(height: 12),
-                      _ListingTypeDealSelector(
+                      ListingTypeDealSelector(
                         l10n: l10n,
                         theme: theme,
                         value: _type,
@@ -931,7 +925,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                       const SizedBox(height: 24),
                       CreateListingFieldLabel(l10n.fieldRegion),
                       const SizedBox(height: 12),
-                      _MarketPlacementSelector(
+                      MarketPlacementSelector(
                         l10n: l10n,
                         theme: theme,
                         value: _marketRegion,
@@ -954,7 +948,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                     children: [
                       CreateListingFieldLabel(l10n.createListingCurrency),
                       const SizedBox(height: 10),
-                      _PremiumListingCurrencyBar(
+                      PremiumListingCurrencyBar(
                         key: const ValueKey('create_listing_currency_selector'),
                         theme: theme,
                         enabled: !submitting,
@@ -1032,7 +1026,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         enabled: !submitting,
                       ),
                       const SizedBox(height: 4),
-                      _PremiumWhatsAppToggleRow(
+                      PremiumWhatsAppToggleRow(
                         theme: theme,
                         l10n: l10n,
                         value: _whatsappEnabled,
@@ -1040,7 +1034,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         onChanged: (v) => setState(() => _whatsappEnabled = v),
                       ),
                       const SizedBox(height: 24),
-                      _PremiumPublishActionButton(
+                      PremiumPublishActionButton(
                         theme: theme,
                         l10n: l10n,
                         submitting: submitting,
@@ -1052,597 +1046,6 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                 const SizedBox(height: 12),
               ],
             ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Modal picker for optional listing body type; pops [_BodyTypeSelection] on tap.
-class _ListingBodyTypePickSheet extends StatelessWidget {
-  const _ListingBodyTypePickSheet({
-    required this.appL10n,
-    required this.selected,
-  });
-
-  final AppLocalizations appL10n;
-  final ListingBodyType? selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final br = theme.brightness;
-    final items = <({ListingBodyType? value, String label})>[
-      (value: null, label: appL10n.listingBodyTypeNotSpecified),
-      ...ListingBodyType.values.map(
-        (e) => (value: e, label: formatListingBodyType(appL10n, e)),
-      ),
-    ];
-
-    return SafeArea(
-      child: SizedBox(
-        height: MediaQuery.sizeOf(context).height * 0.62,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 6, 8, 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      appL10n.listingBodyTypeSectionTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: appL10n.commonCancel,
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
-                itemCount: items.length,
-                separatorBuilder: (context, _) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  final isSel = item.value == selected;
-                  return Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      splashColor: cs.onSurface.withValues(alpha: 0.038),
-                      highlightColor: cs.onSurface.withValues(alpha: 0.018),
-                      onTap: () => Navigator.pop(
-                        context,
-                        _BodyTypeSelection(item.value),
-                      ),
-                      child: Ink(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isSel
-                                ? cs.onSurface.withValues(
-                                    alpha: br == Brightness.light ? 0.26 : 0.34,
-                                  )
-                                : cs.outlineVariant.withValues(alpha: 0.30),
-                          ),
-                          color: isSel
-                              ? Color.alphaBlend(
-                                  cs.onSurface.withValues(
-                                    alpha: br == Brightness.light
-                                        ? 0.065
-                                        : 0.11,
-                                  ),
-                                  cs.surfaceContainerLowest,
-                                )
-                              : Color.alphaBlend(
-                                  cs.outlineVariant.withValues(alpha: 0.035),
-                                  cs.surfaceContainerLowest,
-                                ),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 15,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                item.label,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: isSel
-                                      ? FontWeight.w700
-                                      : FontWeight.w600,
-                                  letterSpacing: -0.12,
-                                  color: cs.onSurface.withValues(
-                                    alpha: isSel ? 1 : 0.82,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            if (isSel)
-                              Icon(
-                                Icons.check_rounded,
-                                size: 21,
-                                color: cs.onSurface.withValues(alpha: 0.58),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Capsule-style EUR / USD control replacing Material [SegmentedButton].
-class _PremiumListingCurrencyBar extends StatelessWidget {
-  const _PremiumListingCurrencyBar({
-    super.key,
-    required this.theme,
-    required this.selected,
-    required this.enabled,
-    required this.eurLabel,
-    required this.usdLabel,
-    required this.onChanged,
-  });
-
-  final ThemeData theme;
-  final ListingCurrency selected;
-  final bool enabled;
-  final String eurLabel;
-  final String usdLabel;
-  final ValueChanged<ListingCurrency> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = theme.colorScheme;
-    final br = theme.brightness;
-    final trackFill = Color.alphaBlend(
-      cs.outlineVariant.withValues(
-        alpha: br == Brightness.light ? 0.028 : 0.052,
-      ),
-      cs.surface,
-    );
-    final trackBorder = cs.outlineVariant.withValues(
-      alpha: br == Brightness.light ? 0.28 : 0.34,
-    );
-
-    Widget segment(ListingCurrency currency, String label) {
-      final on = selected == currency;
-      final thumbFill = on
-          ? Color.alphaBlend(
-              cs.onSurface.withValues(
-                alpha: br == Brightness.light ? 0.068 : 0.11,
-              ),
-              cs.surface,
-            )
-          : Colors.transparent;
-
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(15),
-          splashColor: cs.onSurface.withValues(alpha: 0.038),
-          highlightColor: cs.onSurface.withValues(alpha: 0.018),
-          onTap: enabled && !on ? () => onChanged(currency) : null,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            curve: Curves.easeOutCubic,
-            margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              color: thumbFill,
-              border: on
-                  ? Border.all(
-                      color: cs.onSurface.withValues(
-                        alpha: br == Brightness.light ? 0.18 : 0.26,
-                      ),
-                      width: 1,
-                    )
-                  : null,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: on ? FontWeight.w700 : FontWeight.w600,
-                letterSpacing: -0.08,
-                color: cs.onSurface.withValues(alpha: on ? 1 : 0.70),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Opacity(
-      opacity: enabled ? 1 : 0.45,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: trackBorder),
-          color: trackFill,
-        ),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: segment(ListingCurrency.eur, eurLabel)),
-              VerticalDivider(
-                width: 1,
-                thickness: 1,
-                indent: 12,
-                endIndent: 12,
-                color: cs.outlineVariant.withValues(alpha: 0.34),
-              ),
-              Expanded(child: segment(ListingCurrency.usd, usdLabel)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// WhatsApp availability toggle styled as a calm editorial row.
-class _PremiumWhatsAppToggleRow extends StatelessWidget {
-  const _PremiumWhatsAppToggleRow({
-    required this.theme,
-    required this.l10n,
-    required this.value,
-    required this.submitting,
-    required this.onChanged,
-  });
-
-  final ThemeData theme;
-  final AppLocalizations l10n;
-  final bool value;
-  final bool submitting;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = theme.colorScheme;
-    final enabled = !submitting;
-
-    return Material(
-      color: Colors.transparent,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                splashColor: cs.onSurface.withValues(alpha: 0.038),
-                highlightColor: cs.onSurface.withValues(alpha: 0.018),
-                onTap: enabled ? () => onChanged(!value) : null,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(
-                    l10n.whatsappToggle,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      height: 1.25,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Switch.adaptive(
-              value: value,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              onChanged: enabled ? onChanged : null,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Full-width publish control — inverted editorial emphasis without loud chrome.
-class _PremiumPublishActionButton extends StatelessWidget {
-  const _PremiumPublishActionButton({
-    required this.theme,
-    required this.l10n,
-    required this.submitting,
-    required this.onPressed,
-  });
-
-  final ThemeData theme;
-  final AppLocalizations l10n;
-  final bool submitting;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = theme.colorScheme;
-    final br = theme.brightness;
-    final canTap = !submitting;
-
-    final baseFill = Color.alphaBlend(
-      cs.onSurface.withValues(alpha: br == Brightness.light ? 0.50 : 0.58),
-      br == Brightness.light ? cs.surface : cs.surfaceContainerHigh,
-    );
-    final fill = submitting
-        ? Color.alphaBlend(
-            cs.surface.withValues(alpha: br == Brightness.light ? 0.22 : 0.14),
-            baseFill,
-          )
-        : baseFill;
-    final onFill = br == Brightness.light
-        ? cs.surface
-        : cs.surface.withValues(alpha: 0.97);
-
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: Material(
-        color: fill,
-        elevation: br == Brightness.light ? (submitting ? 1 : 2) : 0,
-        shadowColor: Colors.black.withValues(
-          alpha: br == Brightness.light ? (submitting ? 0.06 : 0.085) : 0,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: canTap ? onPressed : null,
-          splashColor: onFill.withValues(alpha: 0.09),
-          highlightColor: onFill.withValues(alpha: 0.05),
-          child: Center(
-            child: submitting
-                ? SizedBox.square(
-                    dimension: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.2,
-                      color: onFill.withValues(alpha: 0.82),
-                    ),
-                  )
-                : Text(
-                    l10n.publishListing,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.18,
-                      color: onFill,
-                    ),
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Single selectable card for deal type and market — consistent premium control.
-class _ComposeChoiceCard extends StatelessWidget {
-  const _ComposeChoiceCard({
-    required this.label,
-    required this.selected,
-    required this.enabled,
-    required this.onTap,
-    required this.theme,
-    this.compact = false,
-    this.labelTextAlign = TextAlign.start,
-  });
-
-  final String label;
-  final bool selected;
-  final bool enabled;
-  final VoidCallback onTap;
-  final ThemeData theme;
-  final bool compact;
-  final TextAlign labelTextAlign;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = theme.colorScheme;
-    final br = theme.brightness;
-    final bg = selected
-        ? Color.alphaBlend(
-            cs.onSurface.withValues(
-              alpha: br == Brightness.light ? 0.07 : 0.11,
-            ),
-            cs.surfaceContainerLowest,
-          )
-        : Color.alphaBlend(
-            cs.outlineVariant.withValues(alpha: 0.045),
-            cs.surfaceContainerLowest,
-          );
-
-    return Opacity(
-      opacity: enabled ? 1 : 0.48,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: enabled ? onTap : null,
-          borderRadius: BorderRadius.circular(14),
-          splashColor: cs.onSurface.withValues(alpha: 0.038),
-          highlightColor: cs.onSurface.withValues(alpha: 0.018),
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: bg,
-              border: Border.all(
-                color: selected
-                    ? cs.onSurface.withValues(
-                        alpha: br == Brightness.light ? 0.26 : 0.34,
-                      )
-                    : cs.outlineVariant.withValues(alpha: 0.30),
-                width: selected ? 1.15 : 1,
-              ),
-            ),
-            padding: EdgeInsets.symmetric(
-              horizontal: compact ? 12 : 14,
-              vertical: compact ? 11 : 15,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    label,
-                    textAlign: labelTextAlign,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                      height: 1.2,
-                      letterSpacing: -0.12,
-                      color: cs.onSurface.withValues(
-                        alpha: selected ? 1 : 0.82,
-                      ),
-                    ),
-                  ),
-                ),
-                if (selected)
-                  Icon(
-                    Icons.check_rounded,
-                    size: 22,
-                    color: cs.onSurface.withValues(alpha: 0.62),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ListingTypeDealSelector extends StatelessWidget {
-  const _ListingTypeDealSelector({
-    required this.l10n,
-    required this.theme,
-    required this.value,
-    required this.submitting,
-    required this.onChanged,
-  });
-
-  final AppLocalizations l10n;
-  final ThemeData theme;
-  final ListingType value;
-  final bool submitting;
-  final ValueChanged<ListingType> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final disabled = submitting;
-    return LayoutBuilder(
-      builder: (context, c) {
-        final gap = 10.0;
-        final maxW = c.maxWidth;
-        final half = (maxW - gap) / 2;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    width: half,
-                    child: _ComposeChoiceCard(
-                      label: l10n.formatTypeSale,
-                      selected: value == ListingType.sale,
-                      enabled: !disabled,
-                      onTap: () => onChanged(ListingType.sale),
-                      theme: theme,
-                    ),
-                  ),
-                  SizedBox(width: gap),
-                  SizedBox(
-                    width: half,
-                    child: _ComposeChoiceCard(
-                      label: l10n.formatTypeExchange,
-                      selected: value == ListingType.exchange,
-                      enabled: !disabled,
-                      onTap: () => onChanged(ListingType.exchange),
-                      theme: theme,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: gap),
-            _ComposeChoiceCard(
-              label: l10n.formatTypeBoth,
-              selected: value == ListingType.both,
-              enabled: !disabled,
-              onTap: () => onChanged(ListingType.both),
-              theme: theme,
-              compact: true,
-              labelTextAlign: TextAlign.center,
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _MarketPlacementSelector extends StatelessWidget {
-  const _MarketPlacementSelector({
-    required this.l10n,
-    required this.theme,
-    required this.value,
-    required this.submitting,
-    required this.onChanged,
-  });
-
-  final AppLocalizations l10n;
-  final ThemeData theme;
-  final MarketRegion value;
-  final bool submitting;
-  final ValueChanged<MarketRegion> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final disabled = submitting;
-    return LayoutBuilder(
-      builder: (context, c) {
-        final gap = 10.0;
-        final half = (c.maxWidth - gap) / 2;
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                width: half,
-                child: _ComposeChoiceCard(
-                  label: l10n.regionTransnistria,
-                  selected: value == MarketRegion.transnistria,
-                  enabled: !disabled,
-                  onTap: () => onChanged(MarketRegion.transnistria),
-                  theme: theme,
-                ),
-              ),
-              SizedBox(width: gap),
-              SizedBox(
-                width: half,
-                child: _ComposeChoiceCard(
-                  label: l10n.regionMoldova,
-                  selected: value == MarketRegion.moldova,
-                  enabled: !disabled,
-                  onTap: () => onChanged(MarketRegion.moldova),
-                  theme: theme,
-                ),
-              ),
-            ],
           ),
         );
       },

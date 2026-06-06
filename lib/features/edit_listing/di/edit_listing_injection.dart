@@ -4,11 +4,11 @@ import '../../../core/services/supabase_service.dart';
 import '../../create_listing/domain/repositories/create_listing_repository.dart';
 import '../../create_listing/domain/usecases/delete_uploaded_listing_images_best_effort.dart';
 import '../../create_listing/domain/usecases/upload_listing_images_sequential.dart';
-import '../../listings/domain/usecases/get_listing_by_id.dart';
-import '../../listings/domain/usecases/get_listing_images.dart';
 import '../data/datasources/edit_listing_remote_datasource.dart';
 import '../data/repositories/edit_listing_repository_impl.dart';
 import '../domain/repositories/edit_listing_repository.dart';
+import '../domain/usecases/get_owner_listing_for_edit.dart';
+import '../domain/usecases/get_owner_listing_images_for_edit.dart';
 import '../domain/usecases/replace_listing_images.dart';
 import '../domain/usecases/update_listing_details_v2.dart';
 import '../domain/usecases/get_owner_listing_vin_for_edit.dart';
@@ -22,6 +22,10 @@ void registerEditListingFeature(GetIt sl) {
   );
   sl.registerLazySingleton<EditListingRepository>(
     () => EditListingRepositoryImpl(sl<EditListingRemoteDataSource>()),
+  );
+  sl.registerFactory(() => GetOwnerListingForEdit(sl<EditListingRepository>()));
+  sl.registerFactory(
+    () => GetOwnerListingImagesForEdit(sl<EditListingRepository>()),
   );
   sl.registerFactory(() => UpdateListingDetailsV2(sl<EditListingRepository>()));
   sl.registerFactory(
@@ -38,8 +42,8 @@ void registerEditListingFeature(GetIt sl) {
   // Reuses sequential upload + best-effort deletes from create-listing DI.
   sl.registerFactory<EditListingCubit>(
     () => EditListingCubit(
-      getListingById: sl<GetListingById>(),
-      getListingImages: sl<GetListingImages>(),
+      getOwnerListingForEdit: sl<GetOwnerListingForEdit>(),
+      getOwnerListingImagesForEdit: sl<GetOwnerListingImagesForEdit>(),
       getOwnerListingVinForEdit: sl<GetOwnerListingVinForEdit>(),
       getOwnerListingVinReportStatusForEdit:
           sl<GetOwnerListingVinReportStatusForEdit>(),

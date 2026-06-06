@@ -1,6 +1,7 @@
 import '../../../../core/utils/result.dart';
 import '../entities/buyer_listing_vin_report_source_result.dart';
 import '../entities/listing.dart';
+import '../entities/listing_contact.dart';
 import '../entities/listing_currency.dart';
 import '../entities/listing_image.dart';
 import '../entities/listing_sort_option.dart';
@@ -103,6 +104,10 @@ abstract interface class ListingsRepository {
   /// Ordered gallery rows (`listing_images`). Read-only; INSERT/UPDATE/DELETE
   /// stay RPC-only in later phases.
   Future<Result<List<ListingImage>>> getListingImages(String listingId);
+
+  /// Explicit public contact reveal path. Public listing/feed/detail payloads
+  /// must stay contact-free until this is called by a user action.
+  Future<Result<ListingContact>> getPublicContact(String listingId);
 
   /// Buyer-safe `public_summary` source rows via `get_listing_vin_report_for_buyer`.
   Future<Result<BuyerListingVinReportLookupResult>> fetchBuyerVinReportSources(

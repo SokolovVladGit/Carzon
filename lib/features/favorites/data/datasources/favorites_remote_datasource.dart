@@ -16,6 +16,31 @@ class SupabaseFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
 
   final SupabaseService _supabase;
   static const String _table = 'favorites';
+  static const String _publicListingColumns = '''
+id,
+title,
+make,
+model,
+year,
+price_eur,
+price_currency,
+mileage_km,
+type,
+city,
+market_region,
+body_type,
+fuel_type,
+engine_displacement_liters,
+engine_power_hp,
+drivetrain,
+registration,
+description,
+created_at,
+status,
+cover_image_url,
+seller_id,
+vin_status
+''';
 
   String get _uid {
     final user = _supabase.client.auth.currentUser;
@@ -53,7 +78,7 @@ class SupabaseFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
     try {
       final rows = await _supabase.client
           .from(_table)
-          .select('created_at, listings(*)')
+          .select('created_at, listings($_publicListingColumns)')
           .eq('user_id', _uid)
           .order('created_at', ascending: false);
 
@@ -61,7 +86,7 @@ class SupabaseFavoritesRemoteDataSource implements FavoritesRemoteDataSource {
           .map<ListingModel?>((r) {
             final listing = r['listings'];
             if (listing is! Map<String, dynamic>) return null;
-            return ListingModel.fromJson(listing);
+            return ListingModel.fromPublicJson(listing);
           })
           .whereType<ListingModel>()
           .toList(growable: false);

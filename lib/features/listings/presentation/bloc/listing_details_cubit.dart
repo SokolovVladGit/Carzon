@@ -2,8 +2,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/utils/result.dart';
 import '../../../messaging/domain/usecases/get_or_create_conversation.dart';
+import '../../domain/entities/listing_contact.dart';
 import '../../domain/usecases/get_listing_by_id.dart';
 import '../../domain/usecases/get_listing_images.dart';
+import '../../domain/usecases/get_listing_public_contact.dart';
 import '../utils/listing_details_hero_urls.dart';
 import 'listing_details_state.dart';
 
@@ -12,14 +14,17 @@ class ListingDetailsCubit extends Cubit<ListingDetailsState> {
   ListingDetailsCubit({
     required GetListingById getListingById,
     required GetListingImages getListingImages,
+    required GetListingPublicContact getListingPublicContact,
     required GetOrCreateConversation getOrCreateConversation,
   }) : _getListingById = getListingById,
        _getListingImages = getListingImages,
+       _getListingPublicContact = getListingPublicContact,
        _getOrCreateConversation = getOrCreateConversation,
        super(const ListingDetailsState.initial());
 
   final GetListingById _getListingById;
   final GetListingImages _getListingImages;
+  final GetListingPublicContact _getListingPublicContact;
   final GetOrCreateConversation _getOrCreateConversation;
 
   Future<void> load(String id, {String? initialCoverImageUrl}) async {
@@ -45,4 +50,7 @@ class ListingDetailsCubit extends Cubit<ListingDetailsState> {
   /// Callers enforce auth and seller/buyer rules before invoking.
   Future<Result<String>> startConversationForListing(String listingId) =>
       _getOrCreateConversation(listingId);
+
+  Future<Result<ListingContact>> revealPublicContact(String listingId) =>
+      _getListingPublicContact(listingId);
 }
