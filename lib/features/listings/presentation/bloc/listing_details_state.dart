@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/listing.dart';
+import '../../domain/entities/listing_view_stats.dart';
 
 enum ListingDetailsStatus { initial, loading, success, failure }
 
@@ -11,6 +12,7 @@ class ListingDetailsState extends Equatable {
     this.listing,
     this.heroImageUrls = const [],
     this.loadFailure,
+    this.viewStats,
   });
 
   final ListingDetailsStatus status;
@@ -24,6 +26,9 @@ class ListingDetailsState extends Equatable {
   /// as raw [.message] in UI — map via [localizedUserFailureMessage].
   final Failure? loadFailure;
 
+  /// Fresh totals from `record_listing_view` after a successful details load.
+  final ListingViewStats? viewStats;
+
   const ListingDetailsState.initial() : this();
 
   const ListingDetailsState.loading()
@@ -35,12 +40,37 @@ class ListingDetailsState extends Equatable {
   const ListingDetailsState.success(
     Listing listing, {
     List<String> heroImageUrls = const [],
+    ListingViewStats? viewStats,
   }) : this(
          status: ListingDetailsStatus.success,
          listing: listing,
          heroImageUrls: heroImageUrls,
+         viewStats: viewStats,
        );
 
+  ListingDetailsState copyWith({
+    ListingDetailsStatus? status,
+    Listing? listing,
+    List<String>? heroImageUrls,
+    Failure? loadFailure,
+    ListingViewStats? viewStats,
+    bool clearViewStats = false,
+  }) {
+    return ListingDetailsState(
+      status: status ?? this.status,
+      listing: listing ?? this.listing,
+      heroImageUrls: heroImageUrls ?? this.heroImageUrls,
+      loadFailure: loadFailure ?? this.loadFailure,
+      viewStats: clearViewStats ? null : (viewStats ?? this.viewStats),
+    );
+  }
+
   @override
-  List<Object?> get props => [status, listing, heroImageUrls, loadFailure];
+  List<Object?> get props => [
+    status,
+    listing,
+    heroImageUrls,
+    loadFailure,
+    viewStats,
+  ];
 }

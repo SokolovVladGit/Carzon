@@ -54,13 +54,28 @@ class CompareVehicleColumnHeader extends StatelessWidget {
 
     final decoration = light
         ? BoxDecoration(
-            color: scheme.surfaceContainerHighest.withValues(
-              alpha: isMuted ? 0.24 : 0.34,
-            ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: scheme.outlineVariant.withValues(alpha: 0.26),
+              color: scheme.outlineVariant.withValues(alpha: 0.32),
             ),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withValues(alpha: isMuted ? 0.72 : 1),
+                const Color(0xFFF6F8FB).withValues(alpha: isMuted ? 0.72 : 1),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(
+                  0xFF243447,
+                ).withValues(alpha: isMuted ? 0.032 : 0.085),
+                blurRadius: 26,
+                offset: const Offset(0, 14),
+                spreadRadius: -14,
+              ),
+            ],
           )
         : AppTheme.editorialDarkCompareVehicleCard(scheme, muted: isMuted)!;
 
@@ -68,30 +83,41 @@ class CompareVehicleColumnHeader extends StatelessWidget {
       width: width,
       child: Material(
         color: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         clipBehavior: Clip.antiAlias,
         child: DecoratedBox(
           decoration: decoration,
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 15),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: light
-                                ? scheme.outlineVariant.withValues(alpha: 0.2)
-                                : scheme.outline.withValues(alpha: 0.28),
-                          ),
-                          borderRadius: BorderRadius.circular(12),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(17),
+                        border: Border.all(
+                          color: light
+                              ? Colors.white.withValues(alpha: 0.82)
+                              : scheme.outline.withValues(alpha: 0.28),
+                          width: 1.2,
                         ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: scheme.shadow.withValues(
+                              alpha: light ? 0.08 : 0.18,
+                            ),
+                            blurRadius: 18,
+                            offset: const Offset(0, 9),
+                            spreadRadius: -10,
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
                         child: AspectRatio(
-                          aspectRatio: 16 / 11,
+                          aspectRatio: 16 / 10,
                           child: ListingCoverImage(
                             imageUrl:
                                 listing?.coverImageUrl ??
@@ -100,7 +126,7 @@ class CompareVehicleColumnHeader extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 11),
                     if (title != null)
                       Text(
                         title,
@@ -108,7 +134,8 @@ class CompareVehicleColumnHeader extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w800,
-                          letterSpacing: -0.1,
+                          letterSpacing: -0.18,
+                          height: 1.12,
                           color: scheme.onSurface.withValues(
                             alpha: light ? 1 : 0.98,
                           ),
@@ -122,33 +149,48 @@ class CompareVehicleColumnHeader extends StatelessWidget {
                           color: scheme.onSurfaceVariant.withValues(
                             alpha: light ? 1 : 0.78,
                           ),
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 7),
                     Text(
                       price,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
-                        letterSpacing: -0.15,
+                        letterSpacing: -0.22,
                         color: scheme.onSurface.withValues(
                           alpha: light ? 1 : 0.98,
                         ),
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Container(
+                      width: 36,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(999),
+                        color: light
+                            ? scheme.primary.withValues(alpha: 0.34)
+                            : AppTheme.editorialAccentColor(
+                                scheme,
+                              ).withValues(alpha: 0.42),
+                      ),
+                    ),
                     if (location != null &&
                         location != CompareSpecFormatters.missing) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 9),
                       Text(
                         location,
-                        maxLines: 2,
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant.withValues(
-                            alpha: light ? 1 : 0.76,
+                            alpha: light ? 0.84 : 0.78,
                           ),
-                          height: 1.25,
+                          height: 1.22,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 11.5,
                         ),
                       ),
                     ],
@@ -188,30 +230,52 @@ class CompareVehicleColumnHeader extends StatelessWidget {
                 ),
               ),
               Positioned(
-                top: 8,
-                right: 8,
+                top: 12,
+                right: 12,
                 child: Tooltip(
                   message: l10n.compareRemoveVehicle,
-                  child: Material(
-                    color: light
-                        ? scheme.surface.withValues(alpha: 0.86)
-                        : Color.alphaBlend(
-                            scheme.surfaceContainerHigh.withValues(alpha: 0.92),
-                            scheme.surface,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: scheme.shadow.withValues(
+                            alpha: light ? 0.16 : 0.24,
                           ),
-                    elevation: light ? 0 : 2,
-                    shadowColor: scheme.shadow.withValues(alpha: 0.25),
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: onRemove,
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Icon(
-                          Icons.close_rounded,
-                          size: 16,
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: light ? 1 : 0.88,
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
+                          spreadRadius: -5,
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: light
+                          ? Colors.white.withValues(alpha: 0.94)
+                          : Color.alphaBlend(
+                              scheme.surfaceContainerHigh.withValues(
+                                alpha: 0.92,
+                              ),
+                              scheme.surface,
+                            ),
+                      elevation: 0,
+                      shape: CircleBorder(
+                        side: BorderSide(
+                          color: scheme.outlineVariant.withValues(
+                            alpha: light ? 0.36 : 0.24,
+                          ),
+                        ),
+                      ),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: onRemove,
+                        child: Padding(
+                          padding: const EdgeInsets.all(7),
+                          child: Icon(
+                            Icons.close_rounded,
+                            size: 15,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: light ? 0.92 : 0.88,
+                            ),
                           ),
                         ),
                       ),

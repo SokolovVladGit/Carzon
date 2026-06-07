@@ -7,7 +7,9 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../../../shared/brands/brand_icon_resolver.dart';
 import '../../../../shared/brands/brand_logo_glyph.dart';
 import '../../domain/entities/listing.dart';
+import '../../domain/entities/listing_view_stats.dart';
 import '../utils/listing_details_header_titles.dart';
+import 'listing_details_metadata_chips.dart';
 import '../utils/listing_details_uri_launcher.dart';
 import '../utils/listing_formatters.dart';
 import 'listing_details_body.dart';
@@ -36,9 +38,11 @@ class SuccessBelowHero extends StatelessWidget {
     required this.carouselPhotoCount,
     required this.reportEmail,
     required this.uriLauncher,
+    this.viewStats,
   });
 
   final Listing listing;
+  final ListingViewStats? viewStats;
   final int carouselPageZeroBased;
 
   /// Number of carousel photos from `listing_images` (+ cover fallback).
@@ -64,7 +68,11 @@ class SuccessBelowHero extends StatelessWidget {
     return Transform.translate(
       offset: const Offset(0, -_heroContentOverlap),
       child: _ListingContentPanel(
-        header: _ListingHeader(listing: listing, indicator: indicator),
+        header: _ListingHeader(
+          listing: listing,
+          viewStats: viewStats,
+          indicator: indicator,
+        ),
         body: BelowHeroContent(
           listing: listing,
           reportEmail: reportEmail,
@@ -239,9 +247,14 @@ class _ListingContentPanel extends StatelessWidget {
 ///   6. Secondary meta row (year • mileage • city),
 ///   7. Price in the primary accent colour.
 class _ListingHeader extends StatelessWidget {
-  const _ListingHeader({required this.listing, required this.indicator});
+  const _ListingHeader({
+    required this.listing,
+    required this.indicator,
+    this.viewStats,
+  });
 
   final Listing listing;
+  final ListingViewStats? viewStats;
   final Widget indicator;
 
   @override
@@ -290,6 +303,12 @@ class _ListingHeader extends StatelessWidget {
               _MetaBadge(label: formatMarketRegion(l10n, listing.marketRegion)),
               _MetaBadge(label: formatType(l10n, listing.type)),
             ],
+          ),
+          const SizedBox(height: 8),
+          ListingDetailsMetadataChips(
+            l10n: l10n,
+            listing: listing,
+            viewStats: viewStats,
           ),
           const SizedBox(height: 12),
           _FeatureCards(

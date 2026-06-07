@@ -1,5 +1,10 @@
 # Manual Supabase Contact Hardening Apply Guide
 
+> **Verify before apply.** Run read-only checks first:
+> `docs/supabase_contact_hardening_verification.md` (single-project fallback if no staging).
+> SQL Editor file: `supabase/maintenance/check_contact_hardening.sql`.
+> **STOP and ask the project owner** before running any SQL in this apply guide.
+
 ## 1. Before You Start
 
 This guide applies Phase 1 seller contact exposure hardening manually through the Supabase SQL Editor.
@@ -275,6 +280,104 @@ revoke all on function public.get_my_listing_images_for_edit(uuid) from anon;
 grant execute on function public.get_my_listing_images_for_edit(uuid)
     to authenticated;
 ```
+
+### 4A. Apply from repo file (preferred)
+
+Paste the **entire** repo migration file into SQL Editor — do not paste fragments:
+
+- `supabase/migrations/20260630120000_public_contact_projection_hardening.sql`
+
+The embedded SQL in section 4 above is identical; prefer the repo file to avoid drift.
+
+**Idempotency:** `REVOKE`, column `GRANT`, `COMMENT ON COLUMN`, and `CREATE OR REPLACE FUNCTION` are safe to rerun. Your hosted project may already have the RPCs (helper shows PASS) while grants/metadata are still missing — running the **whole file** is the correct fix.
+
+**Not included in the migration file:** a row in `supabase_migrations.schema_migrations`. SQL Editor apply does **not** record migration history automatically. Run section 4B after a successful apply.
+
+**Preflight (optional, read-only):** confirm columns referenced in the grant list exist:
+
+```sql
+select column_name
+  from information_schema.columns
+ where table_schema = 'public'
+   and table_name = 'listings'
+   and column_name in ('vin_status', 'contact_phone', 'telegram_username', 'whatsapp_enabled')
+ order by column_name;
+```
+
+Expect `contact_*` / `whatsapp_*` columns if contact features are live; expect `vin_status` if VIN Phase 1 migrations were applied. If `vin_status` is missing, **STOP** — prior migrations are incomplete; do not apply this hardening until the chain is resolved.
+
+### 4B. Record migration metadata (required second step)
+
+Run **only after** section 4 / repo migration SQL completes without error:
+
+```sql
+insert into supabase_migrations.schema_migrations (version, name)
+values (
+  '20260630120000',
+  'public_contact_projection_hardening'
+)
+on conflict (version) do nothing;
+```
+
+Then confirm:
+
+```sql
+select version
+  from supabase_migrations.schema_migrations
+ where version = '20260630120000';
+```
+
+Expect one row. Without this step, `check_contact_hardening.sql` will keep reporting `hardening_migration_applied` = STOP even if grants/RPCs are correct.
+
+## 4C. Production / single-project apply sequence
+
+Use when there is **no staging project** and the owner has explicitly approved apply to the current hosted Carzon project.
+
+#### A) Before apply
+
+1. Confirm Dashboard project **name** and **ref** match the intended Carzon project.
+2. Save a backup if the plan supports it (Dashboard backup or dump).
+3. Run `supabase/maintenance/check_contact_hardening.sql` → save screenshot of STOP summary (baseline).
+4. Avoid deploying a new app build during apply if possible.
+
+#### B) Apply
+
+1. SQL Editor → paste **whole file** `supabase/migrations/20260630120000_public_contact_projection_hardening.sql` → Run.
+2. On success → SQL Editor → run section **4B** metadata insert → confirm one row.
+
+Do **not** run metadata insert if step 1 failed or partially failed.
+
+#### C) Immediate post-apply SQL check
+
+1. Rerun `supabase/maintenance/check_contact_hardening.sql`.
+2. Expect `overall_sql_metadata_result` = **PASS** (all blocking rows PASS).
+
+**Interpreting `forbidden_direct_contact_grants`:** STOP applies only when **anon**, **authenticated**, or **PUBLIC** have direct SELECT on protected columns. **postgres** / **service_role** access (see `privileged_internal_grants` INFO row) is normal internal/admin access — not PostgREST client exposure. Do **not** run REVOKE against privileged roles.
+
+#### D) PostgREST/API checks (read-only)
+
+From `docs/supabase_contact_hardening_verification.md` sections C–F:
+
+- Anon forbidden `select=contact_phone,telegram_username,whatsapp_enabled` → must fail / no values.
+- Anon `get_listing_public_contact` + active listing → contact returned.
+- Anon same RPC + inactive listing → no contact.
+- Auth non-owner forbidden select → must fail.
+
+#### E) Flutter smoke (minimal)
+
+- Feed and listing detail load (initial payloads: no contact fields).
+- Contact reveal on active listing (RPC after tap).
+- Owner edit prefill (phone/Telegram/WhatsApp).
+- My listings status change.
+- Listing gallery images visible (`public_url` path).
+- Seller profile, favorites, compare, messaging inbox.
+
+#### F) Rollback / recovery
+
+- **Do not** re-grant broad `SELECT` on contact columns unless owner explicitly accepts re-exposure.
+- **Do not** rerun random SQL fragments after an error — capture the error, check which statements applied (grants vs RPCs vs metadata).
+- Rollback = restore from backup or a forward-fix migration written after review.
+- **STOP** and escalate if: feed/detail break, owner edit RPC fails for owner, active contact reveal fails, or forbidden column select still returns values after apply.
 
 ## 5. Immediate Verification SQL
 

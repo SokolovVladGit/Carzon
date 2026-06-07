@@ -6,6 +6,7 @@ import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
 import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_contact.dart';
 import '../../domain/entities/listing_image.dart';
+import '../../domain/entities/listing_view_stats.dart';
 import '../../domain/repositories/listings_repository.dart';
 import '../datasources/listings_remote_datasource.dart';
 
@@ -113,6 +114,27 @@ class ListingsRepositoryImpl implements ListingsRepository {
       _logger.error('fetchBuyerVinReportSources unknown error', e, st);
       return const Success(
         BuyerListingVinReportLookupResult(fetchFailed: true),
+      );
+    }
+  }
+
+  @override
+  Future<Result<ListingViewStats>> recordListingView(
+    String listingId,
+    String anonymousViewerId,
+  ) async {
+    try {
+      final stats = await _remote.recordListingView(
+        listingId,
+        anonymousViewerId,
+      );
+      return Success(stats);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('recordListingView unknown error', e, st);
+      return const FailureResult(
+        UnknownFailure('Failed to record listing view.'),
       );
     }
   }

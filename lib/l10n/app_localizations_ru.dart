@@ -491,6 +491,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingFieldPosted => 'Опубликовано';
 
   @override
+  String listingDetailsMetadataAddedOn(String date) {
+    return 'Добавлено $date';
+  }
+
+  @override
+  String listingDetailsMetadataViews(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count просмотров',
+      many: '$count просмотров',
+      few: '$count просмотра',
+      one: '$count просмотр',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String listingDetailsMetadataViewsToday(int count) {
+    return 'Сегодня +$count';
+  }
+
+  @override
   String get listingFuelType => 'Топливо';
 
   @override
@@ -1620,6 +1643,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get signInTitle => 'Вход';
+
+  @override
+  String get signInEyebrow => 'CARZON · ВХОД';
+
+  @override
+  String get signInSubtitle =>
+      'Войдите, чтобы управлять объявлениями и сообщениями';
 
   @override
   String get signInSubmit => 'Войти';

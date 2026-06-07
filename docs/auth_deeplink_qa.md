@@ -3,6 +3,8 @@
 Use this checklist before release for Supabase Auth, password recovery, and
 custom-scheme deep links.
 
+**Dashboard config first:** [`auth_site_url_redirect_configuration.md`](auth_site_url_redirect_configuration.md)
+
 Use test accounts only. Do not paste access tokens, refresh tokens, reset links,
 JWTs, or full callback URLs into issue reports or screenshots.
 

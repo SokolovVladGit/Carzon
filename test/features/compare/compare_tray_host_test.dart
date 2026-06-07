@@ -9,6 +9,7 @@ import 'package:carzon/features/compare/presentation/widgets/compare_tray_feedba
 import 'package:carzon/features/compare/presentation/widgets/compare_tray_dock_shield.dart'
     show CompareTrayCapsuleBackplate;
 import 'package:carzon/features/compare/presentation/widgets/compare_tray_host.dart';
+import 'package:carzon/features/compare/presentation/widgets/compare_tray_limit_feedback.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -147,6 +148,22 @@ void main() {
     await pumpHost(tester, router: router);
 
     expect(find.byType(CompareFloatingTray), findsNothing);
+  });
+
+  testWidgets('max-limit tray feedback hidden on compare route', (
+    tester,
+  ) async {
+    await cubit.addSnapshot(_snapshot('a'));
+    final router = buildRouter(initialLocation: AppRoutes.compare);
+    addTearDown(router.dispose);
+    await pumpHost(tester, router: router);
+
+    feedbackController.showMaxLimitFeedback();
+    await tester.pump();
+
+    expect(find.byType(CompareTrayLimitFeedback), findsNothing);
+    expect(find.byKey(CompareTrayCapsuleBackplate.backplateKey), findsNothing);
+    feedbackController.dismissMaxLimit();
   });
 
   testWidgets('tray hidden on listing details route', (tester) async {

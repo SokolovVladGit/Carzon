@@ -220,107 +220,253 @@ class _PublicSellerNameSectionState extends State<PublicSellerNameSection> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _AvatarPreview(
-                      profile: state.profile,
-                      diameter: 72,
-                      busy: state.avatarBusy || _pickingImage,
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _previewBuyerLabel(state, l10n),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.08,
-                              height: 1.22,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            l10n.profilePublicSellerBuyerPreviewCaption,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant.withValues(
-                                alpha: 0.88,
-                              ),
-                              height: 1.32,
-                            ),
-                          ),
-                        ],
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: scheme.primary.withValues(
+                        alpha: isDark ? 0.20 : 0.14,
                       ),
                     ),
-                  ],
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color.alphaBlend(
+                          scheme.primary.withValues(
+                            alpha: isDark ? 0.14 : 0.070,
+                          ),
+                          isDark
+                              ? scheme.surfaceContainerLow
+                              : scheme.surfaceContainerLowest,
+                        ),
+                        Color.alphaBlend(
+                          scheme.primary.withValues(
+                            alpha: isDark ? 0.05 : 0.022,
+                          ),
+                          isDark
+                              ? scheme.surfaceContainerLow
+                              : scheme.surfaceContainerLowest,
+                        ),
+                        Color.alphaBlend(
+                          scheme.onSurface.withValues(
+                            alpha: isDark ? 0.030 : 0.008,
+                          ),
+                          isDark
+                              ? scheme.surfaceContainerLow
+                              : scheme.surfaceContainerLowest,
+                        ),
+                      ],
+                      stops: const [0, 0.52, 1],
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _SellerAvatarFrame(
+                          diameter: 66,
+                          child: _AvatarPreview(
+                            profile: state.profile,
+                            diameter: 66,
+                            busy: state.avatarBusy || _pickingImage,
+                          ),
+                        ),
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _previewBuyerLabel(state, l10n),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.05,
+                                  height: 1.18,
+                                  color: scheme.onSurface.withValues(
+                                    alpha: 0.96,
+                                  ),
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                l10n.profilePublicSellerBuyerPreviewCaption,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: scheme.onSurfaceVariant.withValues(
+                                    alpha: isDark ? 0.78 : 0.80,
+                                  ),
+                                  height: 1.30,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 11),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
-                      child: OutlinedButton(
+                      child: _PremiumSecondaryActionButton(
+                        label: pickLabel,
+                        scheme: scheme,
+                        isDark: isDark,
                         onPressed: busyIdentity || _pickingImage
                             ? null
                             : () => _pickAvatar(context),
-                        child: Text(pickLabel),
                       ),
                     ),
                     if (hasAvatar) ...[
                       const SizedBox(width: 8),
-                      TextButton(
+                      _PremiumTextActionButton(
+                        label: l10n.profilePublicSellerAvatarRemovePhoto,
+                        scheme: scheme,
+                        isDark: isDark,
                         onPressed: busyIdentity
                             ? null
                             : () => context
                                   .read<PublicSellerIdentityCubit>()
                                   .removeAvatar(),
-                        child: Text(l10n.profilePublicSellerAvatarRemovePhoto),
                       ),
                     ],
                   ],
                 ),
-                const SizedBox(height: 14),
-                Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: scheme.outline.withValues(alpha: isDark ? 0.14 : 0.11),
+                const SizedBox(height: 13),
+                Padding(
+                  padding: const EdgeInsets.only(left: 2),
+                  child: Divider(
+                    height: 1,
+                    thickness: 1,
+                    endIndent: 2,
+                    color: scheme.outline.withValues(
+                      alpha: isDark ? 0.080 : 0.045,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 13),
                 TextField(
                   controller: _controller,
                   maxLength: SellerDisplayNameConstraints.maxLength,
                   maxLines: 1,
                   textInputAction: TextInputAction.done,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: scheme.onSurface.withValues(alpha: 0.94),
+                  ),
                   decoration: InputDecoration(
                     labelText: l10n.profilePublicSellerNameFieldLabel,
                     hintText: l10n.profilePublicSellerNameFieldHint,
                     filled: true,
                     counterText: '',
+                    labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(
+                        alpha: isDark ? 0.86 : 0.88,
+                      ),
+                    ),
+                    hintStyle: theme.textTheme.bodyLarge?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(
+                        alpha: isDark ? 0.52 : 0.58,
+                      ),
+                    ),
+                    fillColor: isDark
+                        ? Color.alphaBlend(
+                            scheme.primary.withValues(alpha: 0.05),
+                            scheme.surfaceContainerHigh.withValues(alpha: 0.32),
+                          )
+                        : Color.alphaBlend(
+                            scheme.primary.withValues(alpha: 0.028),
+                            scheme.surface,
+                          ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: scheme.primary.withValues(
+                          alpha: isDark ? 0.22 : 0.16,
+                        ),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: scheme.primary.withValues(
+                          alpha: isDark ? 0.78 : 0.68,
+                        ),
+                        width: 1.5,
+                      ),
+                    ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: scheme.primary.withValues(
+                          alpha: isDark ? 0.22 : 0.16,
+                        ),
+                      ),
                     ),
                   ),
                   onSubmitted: (_) => _trySave(context),
                 ),
-                const SizedBox(height: 14),
-                FilledButton(
-                  onPressed: state.saving || state.avatarBusy
-                      ? null
-                      : () => _trySave(context),
-                  child: state.saving
-                      ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: scheme.onPrimary,
+                const SizedBox(height: 11),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: isDark
+                        ? const <BoxShadow>[]
+                        : [
+                            BoxShadow(
+                              color: scheme.primary.withValues(alpha: 0.20),
+                              blurRadius: 14,
+                              offset: const Offset(0, 5),
+                            ),
+                            BoxShadow(
+                              color: scheme.shadow.withValues(alpha: 0.045),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                  ),
+                  child: FilledButton(
+                    onPressed: state.saving || state.avatarBusy
+                        ? null
+                        : () => _trySave(context),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      backgroundColor: scheme.primary,
+                      foregroundColor: scheme.onPrimary,
+                      disabledBackgroundColor: scheme.primary.withValues(
+                        alpha: isDark ? 0.32 : 0.40,
+                      ),
+                      disabledForegroundColor: scheme.onPrimary.withValues(
+                        alpha: 0.62,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                    ),
+                    child: state.saving
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: scheme.onPrimary,
+                            ),
+                          )
+                        : Text(
+                            l10n.profilePublicSellerNameSave,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.02,
+                              color: scheme.onPrimary,
+                            ),
                           ),
-                        )
-                      : Text(l10n.profilePublicSellerNameSave),
+                  ),
                 ),
               ],
             );
@@ -359,10 +505,13 @@ class _PublicSellerNameSectionState extends State<PublicSellerNameSection> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      _AvatarPreview(
-                        profile: state.profile,
+                      _SellerAvatarFrame(
                         diameter: 72,
-                        busy: state.avatarBusy || _pickingImage,
+                        child: _AvatarPreview(
+                          profile: state.profile,
+                          diameter: 72,
+                          busy: state.avatarBusy || _pickingImage,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -651,6 +800,171 @@ class _AvatarPreview extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _PremiumSecondaryActionButton extends StatelessWidget {
+  const _PremiumSecondaryActionButton({
+    required this.label,
+    required this.scheme,
+    required this.isDark,
+    required this.onPressed,
+  });
+
+  final String label;
+  final ColorScheme scheme;
+  final bool isDark;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final enabled = onPressed != null;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(14),
+        splashFactory: InkRipple.splashFactory,
+        splashColor: scheme.primary.withValues(alpha: 0.10),
+        highlightColor: Colors.transparent,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            color: enabled
+                ? Color.alphaBlend(
+                    scheme.primary.withValues(alpha: isDark ? 0.07 : 0.040),
+                    isDark
+                        ? scheme.surfaceContainerLow
+                        : scheme.surfaceContainerLowest,
+                  )
+                : Color.alphaBlend(
+                    scheme.onSurface.withValues(alpha: 0.04),
+                    scheme.surfaceContainerLow.withValues(
+                      alpha: isDark ? 0.55 : 0.70,
+                    ),
+                  ),
+            border: Border.all(
+              color: enabled
+                  ? scheme.primary.withValues(alpha: isDark ? 0.30 : 0.24)
+                  : scheme.outlineVariant.withValues(
+                      alpha: isDark ? 0.20 : 0.26,
+                    ),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 11.5),
+            child: Center(
+              child: Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: enabled
+                      ? scheme.primary.withValues(alpha: isDark ? 0.94 : 0.90)
+                      : scheme.onSurfaceVariant.withValues(
+                          alpha: isDark ? 0.48 : 0.52,
+                        ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PremiumTextActionButton extends StatelessWidget {
+  const _PremiumTextActionButton({
+    required this.label,
+    required this.scheme,
+    required this.isDark,
+    required this.onPressed,
+  });
+
+  final String label;
+  final ColorScheme scheme;
+  final bool isDark;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final enabled = onPressed != null;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(14),
+        splashFactory: InkRipple.splashFactory,
+        splashColor: scheme.onSurface.withValues(alpha: 0.028),
+        highlightColor: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11.5),
+          child: Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: enabled
+                  ? scheme.onSurfaceVariant.withValues(
+                      alpha: isDark ? 0.84 : 0.76,
+                    )
+                  : scheme.onSurfaceVariant.withValues(
+                      alpha: isDark ? 0.44 : 0.48,
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SellerAvatarFrame extends StatelessWidget {
+  const _SellerAvatarFrame({required this.diameter, required this.child});
+
+  final double diameter;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: diameter + 14,
+      height: diameter + 14,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color.alphaBlend(
+              scheme.primary.withValues(alpha: isDark ? 0.24 : 0.15),
+              scheme.surfaceContainerHighest,
+            ),
+            Color.alphaBlend(
+              scheme.primary.withValues(alpha: isDark ? 0.08 : 0.04),
+              scheme.surfaceContainerLow,
+            ),
+          ],
+        ),
+        border: Border.all(
+          color: scheme.primary.withValues(alpha: isDark ? 0.28 : 0.18),
+        ),
+        boxShadow: isDark
+            ? const <BoxShadow>[]
+            : [
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+      ),
+      child: child,
     );
   }
 }

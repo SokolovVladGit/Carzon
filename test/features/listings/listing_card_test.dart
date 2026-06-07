@@ -237,9 +237,9 @@ void main() {
         expect(find.text('€8 900'), findsOneWidget);
         expect(find.text('Volkswagen Golf'), findsOneWidget);
         expect(
-        find.text('120 000 ${l10n.commonKilometersShort}'),
-        findsOneWidget,
-      );
+          find.text('120 000 ${l10n.commonKilometersShort}'),
+          findsOneWidget,
+        );
         expect(find.text('2016'), findsOneWidget);
         expect(find.text('Tiraspol'), findsOneWidget);
       },

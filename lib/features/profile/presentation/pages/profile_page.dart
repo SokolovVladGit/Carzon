@@ -41,13 +41,13 @@ class ProfilePage extends StatelessWidget {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: _profilePageBackground(context),
       appBar: AppBar(
         leading: const AppBackButton(fallback: AppRoutes.menu),
         title: Text(l10n.profileTitle),
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: scheme.surface,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         foregroundColor: scheme.onSurface,
         systemOverlayStyle: scheme.brightness == Brightness.dark
@@ -69,16 +69,96 @@ class ProfilePage extends StatelessWidget {
           if (state.status == AuthStatus.authenticated && state.user != null) {
             return BlocProvider(
               create: (_) => sl<PublicSellerIdentityCubit>()..load(),
-              child: _AccountView(user: state.user!),
+              child: _ProfileShowroomBackground(
+                child: _AccountView(user: state.user!),
+              ),
             );
           }
-          return ProfileSignInRequiredPrompt(
-            onSignIn: () => context.go(AppRoutes.signIn),
+          return _ProfileShowroomBackground(
+            child: ProfileSignInRequiredPrompt(
+              onSignIn: () => context.go(AppRoutes.signIn),
+            ),
           );
         },
       ),
     );
   }
+}
+
+class _ProfileShowroomBackground extends StatelessWidget {
+  const _ProfileShowroomBackground({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: _profileCanvasGradient(context),
+          stops: const [0, 0.42, 1],
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+Color _profilePageBackground(BuildContext context) {
+  final scheme = Theme.of(context).colorScheme;
+  final isDark = scheme.brightness == Brightness.dark;
+  if (isDark) {
+    return Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.050),
+      scheme.surface,
+    );
+  }
+  return Color.alphaBlend(
+    scheme.primary.withValues(alpha: 0.018),
+    scheme.surface,
+  );
+}
+
+List<Color> _profileCanvasGradient(BuildContext context) {
+  final scheme = Theme.of(context).colorScheme;
+  final isDark = scheme.brightness == Brightness.dark;
+  if (isDark) {
+    final top = Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.075),
+      scheme.surfaceContainerLow,
+    );
+    final mid = Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.030),
+      scheme.surface,
+    );
+    final bottom = Color.alphaBlend(
+      scheme.onSurface.withValues(alpha: 0.026),
+      Color.alphaBlend(
+        scheme.primary.withValues(alpha: 0.080),
+        scheme.surfaceContainerLow,
+      ),
+    );
+    return [top, mid, bottom];
+  }
+
+  final top = Color.alphaBlend(
+    scheme.surfaceTint.withValues(alpha: 0.008),
+    scheme.surface,
+  );
+  final mid = Color.alphaBlend(
+    scheme.primary.withValues(alpha: 0.032),
+    scheme.surfaceContainerLowest,
+  );
+  final bottom = Color.alphaBlend(
+    scheme.onSurface.withValues(alpha: 0.024),
+    Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.070),
+      scheme.surfaceContainerLow,
+    ),
+  );
+  return [top, mid, bottom];
 }
 
 class _AccountView extends StatefulWidget {
@@ -113,15 +193,15 @@ class _AccountViewState extends State<_AccountView> {
       physics: const AlwaysScrollableScrollPhysics(
         parent: BouncingScrollPhysics(),
       ),
-      padding: EdgeInsets.fromLTRB(16, 10, 16, 20 + bottomInset),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + bottomInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ProfileAccountHeaderCard(user: user),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           ProfileGroupedCard(
             title: l10n.profileActivitySectionTitle,
-            childPadding: EdgeInsets.zero,
+            childPadding: const EdgeInsets.symmetric(vertical: 6),
             child:
                 BlocBuilder<
                   MessagingUnreadSummaryCubit,
@@ -144,15 +224,15 @@ class _AccountViewState extends State<_AccountView> {
                   },
                 ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           ProfileSellerIdentitySection(
             title: l10n.profilePublicSellerProfileSectionTitle,
             subtitle: l10n.profilePublicSellerProfileSectionSubtitle,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           ProfileGroupedCard(
             title: l10n.profileSettingsSectionTitle,
-            childPadding: EdgeInsets.zero,
+            childPadding: const EdgeInsets.symmetric(vertical: 6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
@@ -185,8 +265,12 @@ class _AccountViewState extends State<_AccountView> {
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           ProfileGroupedCard(
+            childPadding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 6,
+            ),
             child: ProfileSignOutButton(
               onPressed: () => context.read<AuthCubit>().signOut(),
             ),
@@ -276,60 +360,78 @@ class _ProfileLanguageRow extends StatelessWidget {
     final l10n = context.l10n;
     return BlocBuilder<AppLocaleCubit, AppLocaleState>(
       builder: (context, localeState) {
+        final isDark = theme.brightness == Brightness.dark;
         return Padding(
-          padding: const EdgeInsets.only(
-            left: 16,
-            right: 10,
-            top: 6,
-            bottom: 6,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 7),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               key: const ValueKey('profile_future_row_language'),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(18),
+              splashFactory: InkRipple.splashFactory,
+              splashColor: scheme.onSurface.withValues(alpha: 0.038),
+              highlightColor: Colors.transparent,
               onTap: () => _showLanguageSheet(context),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.language_outlined,
-                      size: 22,
-                      color: scheme.primary.withValues(alpha: 0.92),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.profileLanguageTitle,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.06,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _currentLanguageLabel(l10n, localeState.preference),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant.withValues(
-                                alpha: 0.82,
-                              ),
-                              height: 1.32,
-                            ),
-                          ),
-                        ],
+              child: Ink(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(11, 12.5, 6, 12.5),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _ProfileSettingsIconCapsule(
+                        icon: Icons.language_outlined,
+                        scheme: scheme,
+                        isDark: isDark,
                       ),
-                    ),
-                    Icon(
-                      CarzonIcons.chevronRight,
-                      size: 19,
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
-                    ),
-                  ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.profileLanguageTitle,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.04,
+                                height: 1.28,
+                                color: scheme.onSurface.withValues(alpha: 0.94),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _currentLanguageLabel(
+                                l10n,
+                                localeState.preference,
+                              ),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant.withValues(
+                                  alpha: 0.82,
+                                ),
+                                height: 1.32,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: SizedBox(
+                          width: 26,
+                          height: 32,
+                          child: Icon(
+                            CarzonIcons.chevronRight,
+                            size: 18,
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: isDark ? 0.56 : 0.42,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -349,54 +451,107 @@ class _ProfileDarkThemeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final isDark = theme.brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 12, top: 6, bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            CarzonIcons.darkTheme,
-            size: 22,
-            color: scheme.primary.withValues(alpha: 0.92),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.profileDarkThemeTitle,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.06,
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(11, 12.5, 10, 12.5),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ProfileSettingsIconCapsule(
+              icon: CarzonIcons.darkTheme,
+              scheme: scheme,
+              isDark: isDark,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.profileDarkThemeTitle,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.04,
+                        height: 1.28,
+                        color: scheme.onSurface.withValues(alpha: 0.94),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    l10n.profileDarkThemeSubtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
-                      height: 1.32,
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.profileDarkThemeSubtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+                        height: 1.32,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          BlocBuilder<ThemeModeCubit, ThemeModeState>(
-            builder: (context, state) {
-              return Switch.adaptive(
-                key: const ValueKey<String>('profile_dark_theme_switch'),
-                value: state.themeMode == ThemeMode.dark,
-                onChanged: (enabled) {
-                  context.read<ThemeModeCubit>().setDarkEnabled(enabled);
-                },
-              );
-            },
-          ),
-        ],
+            BlocBuilder<ThemeModeCubit, ThemeModeState>(
+              builder: (context, state) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 1),
+                  child: Switch.adaptive(
+                    key: const ValueKey<String>('profile_dark_theme_switch'),
+                    value: state.themeMode == ThemeMode.dark,
+                    onChanged: (enabled) {
+                      context.read<ThemeModeCubit>().setDarkEnabled(enabled);
+                    },
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileSettingsIconCapsule extends StatelessWidget {
+  const _ProfileSettingsIconCapsule({
+    required this.icon,
+    required this.scheme,
+    required this.isDark,
+  });
+
+  final IconData icon;
+  final ColorScheme scheme;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Color.alphaBlend(
+          scheme.primary.withValues(alpha: isDark ? 0.14 : 0.085),
+          scheme.surfaceContainerLowest,
+        ),
+        border: Border.all(
+          color: scheme.primary.withValues(alpha: isDark ? 0.26 : 0.18),
+        ),
+        boxShadow: isDark
+            ? const <BoxShadow>[]
+            : [
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+      ),
+      child: Icon(
+        icon,
+        size: 19,
+        color: scheme.primary.withValues(alpha: isDark ? 0.90 : 0.84),
       ),
     );
   }

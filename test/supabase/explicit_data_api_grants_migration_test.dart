@@ -80,6 +80,9 @@ void main() {
     'listing_vin_report_snapshot',
     // Phase 2E: per-source normalized outcomes (service_role / workers only).
     'listing_vin_source_results',
+    // Listing view analytics (RPC-only writes; hashed dedupe store).
+    'listing_view_daily',
+    'listing_view_dedupe',
   };
 
   /// `public` tables created by this repo: must match migrations exactly.
@@ -103,6 +106,8 @@ void main() {
     'vin_decode_cache',
     'listing_vin_report_snapshot',
     'listing_vin_source_results',
+    'listing_view_daily',
+    'listing_view_dedupe',
   };
 
   setUpAll(() {

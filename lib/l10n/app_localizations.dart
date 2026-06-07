@@ -984,6 +984,24 @@ abstract class AppLocalizations {
   /// **'Опубликовано'**
   String get listingFieldPosted;
 
+  /// No description provided for @listingDetailsMetadataAddedOn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавлено {date}'**
+  String listingDetailsMetadataAddedOn(String date);
+
+  /// No description provided for @listingDetailsMetadataViews.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} просмотр} few{{count} просмотра} many{{count} просмотров} other{{count} просмотров}}'**
+  String listingDetailsMetadataViews(int count);
+
+  /// No description provided for @listingDetailsMetadataViewsToday.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сегодня +{count}'**
+  String listingDetailsMetadataViewsToday(int count);
+
   /// No description provided for @listingFuelType.
   ///
   /// In ru, this message translates to:
@@ -2993,6 +3011,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Вход'**
   String get signInTitle;
+
+  /// No description provided for @signInEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'CARZON · ВХОД'**
+  String get signInEyebrow;
+
+  /// No description provided for @signInSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите, чтобы управлять объявлениями и сообщениями'**
+  String get signInSubtitle;
 
   /// No description provided for @signInSubmit.
   ///

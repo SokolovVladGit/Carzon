@@ -18,9 +18,9 @@ class ProfileSellerIdentitySection extends StatelessWidget {
     return ProfileGroupedCard(
       title: title,
       subtitle: subtitle,
-      childPadding: EdgeInsets.zero,
+      childPadding: const EdgeInsets.only(bottom: 2),
       child: const Padding(
-        padding: EdgeInsets.fromLTRB(16, 6, 16, 14),
+        padding: EdgeInsets.fromLTRB(18, 8, 18, 12),
         child: PublicSellerNameSection(embeddedInSection: true),
       ),
     );

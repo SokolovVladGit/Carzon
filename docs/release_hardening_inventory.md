@@ -1,5 +1,23 @@
 # Carzon Release Hardening Inventory
 
+## Current release hardening status (hosted Carzon — closed 2026-06)
+
+| Area | Status | Evidence |
+|------|--------|----------|
+| **Seller contact exposure hardening** | **Closed** | Migration `20260630120000` applied; `check_contact_hardening.sql` → `overall_sql_metadata_result` PASS; simulator smoke PASS |
+| **Hosted migration parity** | **Closed** | `check_hosted_migration_parity.sql` → 45/45 repo migrations recorded (`hosted_migration_parity_result` PASS) |
+| **Hosted runtime contracts** | **Closed** | `check_hosted_runtime_contracts.sql` → `overall_runtime_contract_result` PASS (no STOP/WARN) |
+| **Metadata reconciliation** | **Closed** | Resolved prior parity STOP (33 missing metadata rows) after runtime PASS — metadata inserts only, no migration re-apply |
+| **Pagination failure UX** | **Implemented / tested** | `ListingsStatus.paginationFailure` + retry footer; not a release priority unless QA finds regression |
+
+**Optional / not independently confirmed:** anon-only PostgREST contact curls (Phase 3 minimal) — extra API-layer proof; SQL metadata + app smoke are complete.
+
+**Product decision (open):** `get_listing_public_contact` remains callable by **anon** — future rate limiting / auth / audit review if needed.
+
+**Remaining release gates:** Auth Site URL (HTTPS), structured end-to-end release smoke, real-device QA (push if enabled, media picker, auth deep links). See §6 and §4 below.
+
+---
+
 ## 1. Scope
 
 This inventory covers the current working-tree hardening changes for:
@@ -12,7 +30,7 @@ This inventory covers the current working-tree hardening changes for:
 - Auth deep-link, password reset, and session recovery reliability.
 - Release readiness docs and manual QA checklists.
 
-This document is an inventory only. It does not prove that hosted Supabase already matches the local SQL contract.
+Hosted Supabase parity, runtime contracts, and contact hardening are **closed** on the current hosted project (see status table above). Re-run maintenance helpers before future releases or after any hosted SQL change.
 
 ## 2. Files To Commit By Area
 
@@ -78,6 +96,8 @@ Contact hardening tests:
 - `test/features/listings/listing_details_specs_region_description_test.dart`
 
 ### B. Pagination Failure UX
+
+**Status: implemented and tested** — not an open release priority unless manual QA finds a regression.
 
 Bloc/state/page:
 
@@ -229,33 +249,51 @@ These files are changed or untracked but do not map cleanly to one hardening pha
 
 ## 3. Supabase Files / SQL Apply
 
+### Contact hardening — **closed on hosted**
+
 Migration file:
 
 - `supabase/migrations/20260630120000_public_contact_projection_hardening.sql`
 
-Status:
+**Resolved (2026-06):** Applied on hosted Supabase. Direct public/client SELECT on protected contact columns and `listing_images.storage_path` is blocked. Contact reveal for active listings uses `get_listing_public_contact` RPC only. Verification:
 
-- The local migration contains corrected owner image RPC syntax:
-  - `"position" integer`
-  - `li."position" as "position"`
-  - `order by li."position" asc`
-- This SQL must be applied to the real Supabase project before releasing an app build that depends on contact-free public listing projections and owner-only edit RPCs.
-- Manual apply guide: `docs/manual_supabase_contact_hardening_apply.md`
-- Hosted/staging verification guide: `docs/supabase_contact_hardening_verification.md`
-- Staging setup status: deferred until the Supabase plan allows another project or a confirmed staging project exists.
+- `supabase/maintenance/check_contact_hardening.sql` → `overall_sql_metadata_result` PASS
+- Simulator smoke after apply: PASS
+- Apply runbook (historical): `docs/manual_supabase_contact_hardening_apply.md`
+- Verification runbook: `docs/supabase_contact_hardening_verification.md`
+- Post-apply closure: `docs/supabase_contact_hardening_post_apply_checklist.md`
+
+### Hosted migration parity — **closed on hosted**
+
+**Resolved (2026-06):** `check_hosted_migration_parity.sql` → **45/45** repo migrations recorded. Prior STOP (33 missing metadata rows) was metadata drift; runtime contracts PASS; reconciliation completed without re-applying migration SQL.
+
+Authoritative pre-release helpers (re-run after any hosted change):
+
+- Parity: `supabase/maintenance/check_hosted_migration_parity.sql` — `docs/hosted_migration_parity_verification.md`
+- Runtime contracts: `supabase/maintenance/check_hosted_runtime_contracts.sql`
+- Metadata reconciliation (if parity STOP + runtime PASS): `docs/hosted_migration_metadata_reconciliation.md` + `generate_missing_migration_metadata_inserts.sql`
+
+Staging preferred when a separate project exists; single-project read-only checks are safe.
+
+Verification workflow (for **future** hosted changes):
 
 ## 4. Manual QA Required Before Release
 
-- [ ] Apply and verify seller contact hardening in Supabase SQL Editor.
-- [ ] Confirm public listing reads do not expose `contact_phone`, `telegram_username`, `whatsapp_enabled`.
-- [ ] Confirm public listing image reads do not expose `storage_path`.
-- [ ] Confirm `get_listing_public_contact` only reveals active listing contact through the explicit RPC.
-- [ ] Confirm owner edit RPCs work for the owner and reject non-owner calls.
-- [ ] Feed pagination offline/throttled test: existing items stay visible and retry works.
-- [ ] Run `docs/media_picker_upload_qa.md` on Android and iOS.
-- [ ] Run `docs/notifications_qa.md` on Android and iOS with a push-enabled build.
-- [ ] Run `docs/auth_deeplink_qa.md` on Android and iOS with a real reset email.
-- [ ] Basic smoke: feed, details, create, edit, favorites, compare, messages, profile, notification settings, auth sign-in/sign-out.
+### Contact hardening verification — **closed on hosted (2026-06)**
+
+- [x] SQL Editor: **`check_contact_hardening.sql`** → `overall_sql_metadata_result` PASS
+- [x] Migration `20260630120000` applied on hosted; simulator smoke PASS
+- [x] Hosted migration parity 45/45; runtime contracts PASS
+- [ ] **Optional:** anon-only PostgREST curls — `docs/supabase_contact_hardening_post_apply_checklist.md` § Minimal anon-only Phase 3 (independent API proof; not required if SQL + smoke accepted)
+
+### Remaining manual QA before release
+
+- [ ] Auth **Site URL** HTTPS (not localhost) — Supabase Dashboard; see **`docs/auth_site_url_redirect_configuration.md`**
+- [ ] Feed pagination offline/throttled test: existing items stay visible and retry works (regression check; feature implemented)
+- [ ] Run `docs/media_picker_upload_qa.md` on Android and iOS
+- [ ] Run `docs/notifications_qa.md` on Android and iOS **if** `PUSH_NOTIFICATIONS_ENABLED=true`
+- [ ] Run `docs/auth_deeplink_qa.md` on Android and iOS with a real reset email
+- [ ] Structured end-to-end smoke: feed, details, create, edit, favorites, compare, messages, profile, notification settings, auth sign-in/sign-out
 
 ## 5. Validation Commands To Run Before Commit
 
@@ -280,10 +318,26 @@ flutter test test/supabase/
 
 ## 6. Release Blockers
 
-- Supabase contact hardening migration has not yet been applied and verified on the hosted project.
-- No separate staging project is available yet because of the Supabase free project limit.
-- Real-device QA is still required for media picker/upload, notifications, and auth deep links.
-- Unknown/unrelated working-tree changes listed in section 2.H require review before committing/release.
+**Closed (2026-06 — do not re-open without new hosted evidence):**
+
+- ~~Contact hardening unapplied~~ → applied; SQL metadata PASS; simulator smoke PASS
+- ~~Hosted migration parity unknown~~ → 45/45 PASS; metadata reconciliation complete
+- ~~Runtime backend contract gaps~~ → runtime helper PASS
+
+**Still open before public release:**
+
+- [ ] Auth **Site URL** set to real **HTTPS** (not `localhost`) — [mvp_release_checklist.md](mvp_release_checklist.md) §C
+- [ ] Structured **end-to-end release smoke** on target project (device/simulator)
+- [ ] Real-device QA: media picker/upload (`docs/media_picker_upload_qa.md`)
+- [ ] Real-device QA: auth deep links / password reset (`docs/auth_deeplink_qa.md`)
+- [ ] Real-device push QA **if** shipping with `PUSH_NOTIFICATIONS_ENABLED=true` (`docs/notifications_qa.md`)
+- [ ] Working-tree files in section 2.H reviewed before commit (if still applicable)
+
+**Product / optional (not code blockers):**
+
+- Anon-callable `get_listing_public_contact` — accept or plan future rate limiting
+- Optional anon-only PostgREST contact curls for independent API proof
+- Separate **staging** Supabase project when plan slot available
 
 ## 7. Commit Strategy Recommendation
 

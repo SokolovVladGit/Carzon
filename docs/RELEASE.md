@@ -151,6 +151,22 @@ Local **last-applied listing filters** persist on-device (`ListingDiscoveryCrite
 - `20260528120000_message_notification_delivery_pipeline.sql`
 - `20260529120000_schedule_process_message_notifications_cron.sql`
 
+**June 2026 migrations (repo — full inventory through contact hardening)**
+
+Later migrations add **filter-alert notification queue/cron**, **VIN decode/report phases** (`20260616120000` … `20260629120000`), and **public contact projection hardening** (`20260630120000`). **Hosted Carzon (2026-06):** all **45** repo versions recorded; runtime contracts PASS; contact hardening closed.
+
+**Authoritative pre-release verification** (re-run after any hosted SQL change):
+
+| Helper | Purpose |
+|--------|---------|
+| `supabase/maintenance/check_hosted_migration_parity.sql` | 45/45 `schema_migrations` metadata |
+| `supabase/maintenance/check_hosted_runtime_contracts.sql` | App-critical tables/RPCs exist |
+| `supabase/maintenance/check_contact_hardening.sql` | Contact column grants + RPC metadata |
+
+Runbooks: `docs/hosted_migration_parity_verification.md`, `docs/hosted_migration_metadata_reconciliation.md` (if parity STOP + runtime PASS).
+
+**Full repo migration range:** `20260423120000_create_listings.sql` … `20260630120000_public_contact_projection_hardening.sql` (45 files under `supabase/migrations/`).
+
 **Important**
 
 - Migrations targeting staging/prod must be **applied before** releasing an app build that relies on those RPCs/columns/buckets.

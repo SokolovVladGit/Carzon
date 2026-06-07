@@ -134,6 +134,51 @@ void main() {
     );
   }
 
+  testWidgets('menu compare row hides badge when compare set is empty', (
+    tester,
+  ) async {
+    await tester.pumpWidget(menuApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text(ru.menuCompare), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('menu_count_badge_circle_0')),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('menu_count_badge_pill_0')), findsNothing);
+
+    final compareRow = find.ancestor(
+      of: find.text(ru.menuCompare),
+      matching: find.byType(InkWell),
+    );
+    expect(
+      find.descendant(of: compareRow, matching: find.text('0')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('menu compare row shows circle badge for count 1', (
+    tester,
+  ) async {
+    await compareCubit.addSnapshot(
+      CompareListingSnapshot(
+        listingId: 'm1',
+        addedAt: DateTime.utc(2026, 5, 22),
+        make: 'VW',
+        priceCurrency: ListingCurrency.eur,
+      ),
+    );
+
+    await tester.pumpWidget(menuApp());
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('menu_count_badge_circle_1')),
+      findsOneWidget,
+    );
+    expect(find.text('1'), findsOneWidget);
+  });
+
   testWidgets('menu shows Сравнение row with count badge', (tester) async {
     await compareCubit.addSnapshot(
       CompareListingSnapshot(
@@ -156,7 +201,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(ru.menuCompare), findsOneWidget);
-    expect(find.byKey(const ValueKey('menu_count_badge_2')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('menu_count_badge_circle_2')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('tapping menu compare row navigates to compare page', (

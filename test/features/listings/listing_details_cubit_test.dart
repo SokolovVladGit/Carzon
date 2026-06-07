@@ -6,7 +6,9 @@ import 'package:carzon/features/listings/domain/entities/listing_contact.dart';
 import 'package:carzon/features/listings/domain/entities/listing_image.dart';
 import 'package:carzon/features/listings/domain/usecases/get_listing_by_id.dart';
 import 'package:carzon/features/listings/domain/usecases/get_listing_images.dart';
+import 'package:carzon/features/listings/domain/entities/listing_view_stats.dart';
 import 'package:carzon/features/listings/domain/usecases/get_listing_public_contact.dart';
+import 'package:carzon/features/listings/domain/usecases/record_listing_view.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
 import 'package:carzon/features/messaging/domain/usecases/get_or_create_conversation.dart';
@@ -22,6 +24,8 @@ class _MockGetListingPublicContact extends Mock
 
 class _MockGetOrCreateConversation extends Mock
     implements GetOrCreateConversation {}
+
+class _MockRecordListingView extends Mock implements RecordListingView {}
 
 Listing _listing({String? cover}) => Listing(
   id: 'l1',
@@ -43,6 +47,7 @@ void main() {
   late _MockGetListingImages getImages;
   late _MockGetListingPublicContact getPublicContact;
   late _MockGetOrCreateConversation getOrCreateConversation;
+  late _MockRecordListingView recordListingView;
 
   setUpAll(() => registerFallbackValue(''));
 
@@ -51,10 +56,15 @@ void main() {
     getImages = _MockGetListingImages();
     getPublicContact = _MockGetListingPublicContact();
     getOrCreateConversation = _MockGetOrCreateConversation();
+    recordListingView = _MockRecordListingView();
     reset(getById);
     reset(getImages);
     reset(getPublicContact);
     reset(getOrCreateConversation);
+    reset(recordListingView);
+    when(() => recordListingView(any())).thenAnswer(
+      (_) async => const FailureResult(UnknownFailure('skipped in test')),
+    );
   });
 
   ListingDetailsCubit buildCubit() => ListingDetailsCubit(
@@ -62,6 +72,7 @@ void main() {
     getListingImages: getImages,
     getListingPublicContact: getPublicContact,
     getOrCreateConversation: getOrCreateConversation,
+    recordListingView: recordListingView,
   );
 
   blocTest<ListingDetailsCubit, ListingDetailsState>(
@@ -200,6 +211,56 @@ void main() {
     verify(() => getOrCreateConversation('l1')).called(1);
     await cubit.close();
   });
+
+  blocTest<ListingDetailsCubit, ListingDetailsState>(
+    'successful view record updates viewStats without failure state',
+    setUp: () {
+      final listing = _listing();
+      when(() => getById('l1')).thenAnswer((_) async => Success(listing));
+      when(
+        () => getImages('l1'),
+      ).thenAnswer((_) async => const Success(<ListingImage>[]));
+      when(() => recordListingView('l1')).thenAnswer(
+        (_) async =>
+            const Success(ListingViewStats(totalViews: 3, todayViews: 1)),
+      );
+    },
+    build: buildCubit,
+    act: (c) => c.load('l1'),
+    wait: const Duration(milliseconds: 20),
+    expect: () => [
+      const ListingDetailsState.loading(),
+      ListingDetailsState.success(_listing()),
+      ListingDetailsState.success(
+        _listing(),
+        viewStats: const ListingViewStats(totalViews: 3, todayViews: 1),
+      ),
+    ],
+    verify: (_) {
+      verify(() => recordListingView('l1')).called(1);
+    },
+  );
+
+  blocTest<ListingDetailsCubit, ListingDetailsState>(
+    'failed view record leaves success state unchanged',
+    setUp: () {
+      final listing = _listing();
+      when(() => getById('l1')).thenAnswer((_) async => Success(listing));
+      when(
+        () => getImages('l1'),
+      ).thenAnswer((_) async => const Success(<ListingImage>[]));
+      when(
+        () => recordListingView('l1'),
+      ).thenAnswer((_) async => FailureResult(ServerFailure('rpc down')));
+    },
+    build: buildCubit,
+    act: (c) => c.load('l1'),
+    wait: const Duration(milliseconds: 20),
+    expect: () => [
+      const ListingDetailsState.loading(),
+      ListingDetailsState.success(_listing()),
+    ],
+  );
 
   test('revealPublicContact delegates to explicit contact use case', () async {
     const contact = ListingContact(phone: '+373 690 00001');

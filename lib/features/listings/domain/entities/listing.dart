@@ -64,6 +64,7 @@ class Listing extends Equatable {
     this.telegramUsername,
     this.whatsappEnabled = false,
     this.vinStatus = ListingVinStatus.notProvided,
+    this.viewCount = 0,
   });
 
   final String id;
@@ -119,6 +120,9 @@ class Listing extends Equatable {
   /// Public column only — never contains full VIN text.
   final ListingVinStatus vinStatus;
 
+  /// Public aggregate from `listings.view_count` (RPC-maintained).
+  final int viewCount;
+
   /// Semantic alias until the backing column outgrows its historical name.
   num get priceAmount => priceEur;
 
@@ -150,6 +154,7 @@ class Listing extends Equatable {
     telegramUsername,
     whatsappEnabled,
     vinStatus,
+    viewCount,
   ];
 }
 

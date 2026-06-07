@@ -251,6 +251,24 @@
   "listingFieldRegion": "Регион",
   "listingFieldBodyType": "Кузов",
   "listingFieldPosted": "Опубликовано",
+  "listingDetailsMetadataAddedOn": "Добавлено {date}",
+  "@listingDetailsMetadataAddedOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "listingDetailsMetadataViews": "{count, plural, one{{count} просмотр} few{{count} просмотра} many{{count} просмотров} other{{count} просмотров}}",
+  "@listingDetailsMetadataViews": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "listingDetailsMetadataViewsToday": "Сегодня +{count}",
+  "@listingDetailsMetadataViewsToday": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
 
   "listingFuelType": "Топливо",
   "listingEngineDisplacement": "Объём двигателя",
@@ -701,6 +719,8 @@
   "@profilePublicSellerAvatarUnsupportedType": {},
 
   "signInTitle": "Вход",
+  "signInEyebrow": "CARZON · ВХОД",
+  "signInSubtitle": "Войдите, чтобы управлять объявлениями и сообщениями",
   "signInSubmit": "Войти",
   "signInError": "Ошибка входа",
   "signInInvalidCredentials": "Неверный email или пароль.",

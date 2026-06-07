@@ -215,6 +215,7 @@ class _ListingDetailsViewState extends State<_ListingDetailsView> {
                                 : 0;
                             return SuccessBelowHero(
                               listing: state.listing!,
+                              viewStats: state.viewStats,
                               carouselPageZeroBased: clipped,
                               carouselPhotoCount: n,
                               reportEmail: widget.reportEmail,

@@ -31,7 +31,6 @@ class CreateListingMediaSection extends StatelessWidget {
   static const phase3TestKey = ValueKey('create_listing_media_section');
 
   static const double _frameRadius = 20;
-  static const double _wellRadius = 18;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +40,9 @@ class CreateListingMediaSection extends StatelessWidget {
     final l10n = context.l10n;
     final canMutate = !disabled && !pickingImage;
     final quiet = cs.onSurfaceVariant.withValues(alpha: light ? 0.62 : 0.82);
+    final premiumAccent = light
+        ? cs.primary.withValues(alpha: 0.78)
+        : AppTheme.editorialAccentColor(cs).withValues(alpha: 0.95);
 
     final heroBytes = photos.isNotEmpty ? photos.first.bytes : null;
 
@@ -68,52 +70,79 @@ class CreateListingMediaSection extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         DecoratedBox(
-          decoration:
-              AppTheme.editorialDarkPhotoFrame(cs) ??
-              BoxDecoration(
-                borderRadius: BorderRadius.circular(_frameRadius),
-                border: Border.all(
-                  color: cs.outlineVariant.withValues(alpha: 0.34),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(_frameRadius + 6),
+            border: Border.all(
+              color: light
+                  ? cs.primary.withValues(alpha: 0.24)
+                  : AppTheme.editorialAccentColor(cs).withValues(alpha: 0.30),
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.alphaBlend(
+                  cs.primary.withValues(alpha: light ? 0.075 : 0.16),
+                  light ? cs.surfaceContainerLowest : cs.surfaceContainerHigh,
                 ),
-                color: Color.alphaBlend(
-                  cs.outlineVariant.withValues(alpha: 0.025),
-                  cs.surfaceContainerLowest,
+                Color.alphaBlend(
+                  cs.onSurface.withValues(alpha: light ? 0.012 : 0.035),
+                  light ? cs.surface : cs.surfaceContainerLow,
                 ),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: cs.shadow.withValues(alpha: light ? 0.070 : 0.24),
+                blurRadius: 28,
+                offset: const Offset(0, 12),
               ),
+              BoxShadow(
+                color: cs.primary.withValues(alpha: light ? 0.055 : 0.08),
+                blurRadius: 22,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
           child: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.zero,
             child: AspectRatio(
               aspectRatio: 16 / 9,
               child: Material(
                 color: Colors.transparent,
-                borderRadius: BorderRadius.circular(_wellRadius),
+                borderRadius: BorderRadius.circular(_frameRadius + 6),
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   onTap: (heroBytes == null && canMutate) ? onAddPhoto : null,
-                  borderRadius: BorderRadius.circular(_wellRadius),
+                  borderRadius: BorderRadius.circular(_frameRadius + 6),
                   splashColor: cs.onSurface.withValues(alpha: 0.04),
                   highlightColor: cs.onSurface.withValues(alpha: 0.02),
                   child: Ink(
-                    decoration: light
-                        ? BoxDecoration(
-                            borderRadius: BorderRadius.circular(_wellRadius),
-                            border: Border.all(
-                              color: cs.outlineVariant.withValues(
-                                alpha: heroBytes != null ? 0.2 : 0.3,
-                              ),
-                              strokeAlign: BorderSide.strokeAlignInside,
-                            ),
-                            color: heroBytes != null
-                                ? cs.surfaceContainerLow
-                                : Color.alphaBlend(
-                                    cs.onSurface.withValues(alpha: 0.03),
-                                    cs.surface,
+                    decoration: BoxDecoration(
+                      gradient: heroBytes != null
+                          ? null
+                          : LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Color.alphaBlend(
+                                  cs.primary.withValues(
+                                    alpha: light ? 0.030 : 0.10,
                                   ),
-                          )
-                        : AppTheme.editorialDarkPhotoWell(
-                            cs,
-                            hasPhoto: heroBytes != null,
-                          ),
+                                  light
+                                      ? cs.surfaceContainerLowest
+                                      : cs.surfaceContainerHigh,
+                                ),
+                                Color.alphaBlend(
+                                  cs.onSurface.withValues(
+                                    alpha: light ? 0.018 : 0.040,
+                                  ),
+                                  light ? cs.surface : cs.surfaceContainerLow,
+                                ),
+                              ],
+                            ),
+                      color: heroBytes != null ? cs.surfaceContainerLow : null,
+                    ),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -150,9 +179,23 @@ class CreateListingMediaSection extends StatelessWidget {
                                       children: [
                                         DecoratedBox(
                                           decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
                                             gradient: light
-                                                ? null
+                                                ? LinearGradient(
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                    colors: [
+                                                      Color.alphaBlend(
+                                                        cs.primary.withValues(
+                                                          alpha: 0.10,
+                                                        ),
+                                                        cs.surface,
+                                                      ),
+                                                      cs.surface,
+                                                    ],
+                                                  )
                                                 : RadialGradient(
                                                     colors: [
                                                       Color.alphaBlend(
@@ -164,40 +207,38 @@ class CreateListingMediaSection extends StatelessWidget {
                                                       cs.surfaceContainerLow,
                                                     ],
                                                   ),
-                                            color: light ? cs.surface : null,
                                             border: Border.all(
                                               color: light
-                                                  ? cs.outlineVariant
-                                                        .withValues(alpha: 0.32)
+                                                  ? cs.primary.withValues(
+                                                      alpha: 0.28,
+                                                    )
                                                   : AppTheme.editorialAccentColor(
                                                       cs,
                                                     ).withValues(alpha: 0.40),
                                             ),
-                                            boxShadow: light
-                                                ? null
-                                                : [
-                                                    BoxShadow(
-                                                      color: cs.primary
-                                                          .withValues(
-                                                            alpha: 0.14,
-                                                          ),
-                                                      blurRadius: 18,
-                                                      spreadRadius: -2,
-                                                    ),
-                                                  ],
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color:
+                                                    (light
+                                                            ? cs.shadow
+                                                            : cs.primary)
+                                                        .withValues(
+                                                          alpha: light
+                                                              ? 0.065
+                                                              : 0.14,
+                                                        ),
+                                                blurRadius: 20,
+                                                offset: const Offset(0, 7),
+                                                spreadRadius: -2,
+                                              ),
+                                            ],
                                           ),
                                           child: Padding(
-                                            padding: const EdgeInsets.all(12),
+                                            padding: const EdgeInsets.all(13),
                                             child: Icon(
                                               CarzonIcons.addPhoto,
-                                              size: 26,
-                                              color: light
-                                                  ? cs.onSurface.withValues(
-                                                      alpha: 0.62,
-                                                    )
-                                                  : AppTheme.editorialAccentColor(
-                                                      cs,
-                                                    ).withValues(alpha: 0.95),
+                                              size: 27,
+                                              color: premiumAccent,
                                             ),
                                           ),
                                         ),
@@ -209,12 +250,12 @@ class CreateListingMediaSection extends StatelessWidget {
                                           overflow: TextOverflow.ellipsis,
                                           style: theme.textTheme.titleMedium
                                               ?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                letterSpacing: -0.2,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: -0.24,
                                                 height: 1.12,
                                                 fontSize: 16,
                                                 color: cs.onSurface.withValues(
-                                                  alpha: 0.9,
+                                                  alpha: 0.93,
                                                 ),
                                               ),
                                         ),
@@ -237,18 +278,24 @@ class CreateListingMediaSection extends StatelessWidget {
                                         DecoratedBox(
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(
-                                              11,
+                                              14,
                                             ),
                                             border: Border.all(
                                               color: light
-                                                  ? cs.outlineVariant
-                                                        .withValues(alpha: 0.36)
+                                                  ? cs.primary.withValues(
+                                                      alpha: 0.30,
+                                                    )
                                                   : AppTheme.editorialAccentColor(
                                                       cs,
                                                     ).withValues(alpha: 0.38),
                                             ),
                                             color: light
-                                                ? cs.surface
+                                                ? Color.alphaBlend(
+                                                    cs.primary.withValues(
+                                                      alpha: 0.050,
+                                                    ),
+                                                    cs.surface,
+                                                  )
                                                 : Color.alphaBlend(
                                                     cs.primary.withValues(
                                                       alpha: 0.12,
@@ -259,23 +306,20 @@ class CreateListingMediaSection extends StatelessWidget {
                                           child: Padding(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 14,
-                                              vertical: 8,
+                                              vertical: 8.5,
                                             ),
                                             child: Text(
                                               l10n.createListingAddPhoto,
                                               style: theme.textTheme.labelMedium
                                                   ?.copyWith(
-                                                    fontWeight: FontWeight.w600,
+                                                    fontWeight: FontWeight.w700,
                                                     letterSpacing: 0.04,
-                                                    color: light
-                                                        ? cs.onSurface
-                                                              .withValues(
-                                                                alpha: 0.78,
-                                                              )
-                                                        : cs.onSurface
-                                                              .withValues(
-                                                                alpha: 0.92,
-                                                              ),
+                                                    color: cs.onSurface
+                                                        .withValues(
+                                                          alpha: light
+                                                              ? 0.82
+                                                              : 0.92,
+                                                        ),
                                                   ),
                                             ),
                                           ),
@@ -335,11 +379,14 @@ class _CoverHintChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(7),
         border: Border.all(
           color: light
-              ? cs.outlineVariant.withValues(alpha: 0.32)
+              ? cs.primary.withValues(alpha: 0.20)
               : AppTheme.editorialAccentColor(cs).withValues(alpha: 0.28),
         ),
         color: light
-            ? cs.surface.withValues(alpha: 0.92)
+            ? Color.alphaBlend(
+                cs.primary.withValues(alpha: 0.030),
+                cs.surface.withValues(alpha: 0.94),
+              )
             : Color.alphaBlend(
                 cs.primary.withValues(alpha: 0.08),
                 cs.surfaceContainerHigh,

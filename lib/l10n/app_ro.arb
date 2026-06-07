@@ -147,6 +147,24 @@
   "listingFieldRegion": "Regiune",
   "listingFieldBodyType": "Corp",
   "listingFieldPosted": "Publicat",
+  "listingDetailsMetadataAddedOn": "Adăugat pe {date}",
+  "@listingDetailsMetadataAddedOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+  "listingDetailsMetadataViews": "{count, plural, one{{count} vizualizare} few{{count} vizualizări} other{{count} de vizualizări}}",
+  "@listingDetailsMetadataViews": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "listingDetailsMetadataViewsToday": "Astăzi +{count}",
+  "@listingDetailsMetadataViewsToday": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "listingFuelType": "Combustibil",
   "listingEngineDisplacement": "Capacitatea motorului",
   "listingEnginePower": "Putere",
@@ -482,6 +500,8 @@
   "profilePublicSellerAvatarRemoveFailed": "Nu s-a șters fotografia. Încearcă din nou.",
   "profilePublicSellerAvatarUnsupportedType": "Sunt acceptate numai JPEG, PNG sau WebP.",
   "signInTitle": "Intrare",
+  "signInEyebrow": "CARZON · CONECTARE",
+  "signInSubtitle": "Conectați-vă pentru a gestiona anunțurile și mesajele",
   "signInSubmit": "Log in",
   "signInError": "Eroare de conectare",
   "signInInvalidCredentials": "E-mail sau parolă nevalidă.",

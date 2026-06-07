@@ -26,23 +26,20 @@ class PremiumListingCurrencyBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = theme.colorScheme;
     final br = theme.brightness;
+    final light = br == Brightness.light;
     final trackFill = Color.alphaBlend(
-      cs.outlineVariant.withValues(
-        alpha: br == Brightness.light ? 0.028 : 0.052,
-      ),
+      cs.primary.withValues(alpha: light ? 0.052 : 0.095),
       cs.surface,
     );
     final trackBorder = cs.outlineVariant.withValues(
-      alpha: br == Brightness.light ? 0.28 : 0.34,
+      alpha: light ? 0.30 : 0.34,
     );
 
     Widget segment(ListingCurrency currency, String label) {
       final on = selected == currency;
       final thumbFill = on
           ? Color.alphaBlend(
-              cs.onSurface.withValues(
-                alpha: br == Brightness.light ? 0.068 : 0.11,
-              ),
+              cs.primary.withValues(alpha: light ? 0.145 : 0.24),
               cs.surface,
             )
           : Colors.transparent;
@@ -61,12 +58,23 @@ class PremiumListingCurrencyBar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
-              color: thumbFill,
+              gradient: on
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color.alphaBlend(
+                          cs.primary.withValues(alpha: light ? 0.055 : 0.10),
+                          thumbFill,
+                        ),
+                        thumbFill,
+                      ],
+                    )
+                  : null,
+              color: on ? null : thumbFill,
               border: on
                   ? Border.all(
-                      color: cs.onSurface.withValues(
-                        alpha: br == Brightness.light ? 0.18 : 0.26,
-                      ),
+                      color: cs.primary.withValues(alpha: light ? 0.34 : 0.44),
                       width: 1,
                     )
                   : null,
@@ -75,7 +83,7 @@ class PremiumListingCurrencyBar extends StatelessWidget {
             child: Text(
               label,
               style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: on ? FontWeight.w700 : FontWeight.w600,
+                fontWeight: on ? FontWeight.w800 : FontWeight.w600,
                 letterSpacing: -0.08,
                 color: cs.onSurface.withValues(alpha: on ? 1 : 0.70),
               ),
@@ -92,6 +100,15 @@ class PremiumListingCurrencyBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: trackBorder),
           color: trackFill,
+          boxShadow: light
+              ? [
+                  BoxShadow(
+                    color: cs.shadow.withValues(alpha: 0.038),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
+                  ),
+                ]
+              : const <BoxShadow>[],
         ),
         child: IntrinsicHeight(
           child: Row(
@@ -134,38 +151,53 @@ class PremiumWhatsAppToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
     final enabled = !submitting;
 
     return Material(
       color: Colors.transparent,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                splashColor: cs.onSurface.withValues(alpha: 0.038),
-                highlightColor: cs.onSurface.withValues(alpha: 0.018),
-                onTap: enabled ? () => onChanged(!value) : null,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        splashColor: cs.onSurface.withValues(alpha: 0.038),
+        highlightColor: cs.onSurface.withValues(alpha: 0.018),
+        onTap: enabled ? () => onChanged(!value) : null,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: value
+                  ? cs.primary.withValues(alpha: light ? 0.28 : 0.40)
+                  : cs.outlineVariant.withValues(alpha: light ? 0.24 : 0.32),
+            ),
+            color: Color.alphaBlend(
+              (value ? cs.primary : cs.outlineVariant).withValues(
+                alpha: value ? (light ? 0.060 : 0.10) : (light ? 0.020 : 0.040),
+              ),
+              cs.surface,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+            child: Row(
+              children: [
+                Expanded(
                   child: Text(
                     l10n.whatsappToggle,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       height: 1.25,
+                      color: cs.onSurface.withValues(alpha: 0.90),
                     ),
                   ),
                 ),
-              ),
+                Switch.adaptive(
+                  value: value,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  onChanged: enabled ? onChanged : null,
+                ),
+              ],
             ),
-            Switch.adaptive(
-              value: value,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              onChanged: enabled ? onChanged : null,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -192,10 +224,11 @@ class PremiumPublishActionButton extends StatelessWidget {
     final cs = theme.colorScheme;
     final br = theme.brightness;
     final canTap = !submitting;
+    final light = br == Brightness.light;
 
     final baseFill = Color.alphaBlend(
-      cs.onSurface.withValues(alpha: br == Brightness.light ? 0.50 : 0.58),
-      br == Brightness.light ? cs.surface : cs.surfaceContainerHigh,
+      cs.primary.withValues(alpha: light ? 0.62 : 0.50),
+      light ? cs.onSurface : cs.surfaceContainerHigh,
     );
     final fill = submitting
         ? Color.alphaBlend(
@@ -209,14 +242,14 @@ class PremiumPublishActionButton extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
-      height: 54,
+      height: 56,
       child: Material(
         color: fill,
-        elevation: br == Brightness.light ? (submitting ? 1 : 2) : 0,
+        elevation: br == Brightness.light ? (submitting ? 1 : 3) : 0,
         shadowColor: Colors.black.withValues(
-          alpha: br == Brightness.light ? (submitting ? 0.06 : 0.085) : 0,
+          alpha: br == Brightness.light ? (submitting ? 0.06 : 0.12) : 0,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: canTap ? onPressed : null,

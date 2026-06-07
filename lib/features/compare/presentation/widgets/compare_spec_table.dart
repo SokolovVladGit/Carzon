@@ -20,8 +20,8 @@ class CompareSpecTable extends StatelessWidget {
   final bool showSkeleton;
   final bool emphasizeDifferences;
 
-  static const double labelWidth = 118;
-  static const double rowMinHeight = 48;
+  static const double labelWidth = 142;
+  static const double rowMinHeight = 52;
 
   @override
   Widget build(BuildContext context) {
@@ -37,27 +37,43 @@ class CompareSpecTable extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var s = 0; s < sections.length; s++) ...[
-          if (s > 0) const SizedBox(height: 14),
+          if (s > 0) const SizedBox(height: 18),
           Material(
             color: Colors.transparent,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(24),
             ),
             clipBehavior: Clip.antiAlias,
             child: DecoratedBox(
               decoration: light
                   ? BoxDecoration(
-                      color: scheme.surfaceContainerHighest.withValues(
-                        alpha: 0.2,
-                      ),
+                      borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: scheme.outlineVariant.withValues(alpha: 0.2),
+                        color: scheme.outlineVariant.withValues(alpha: 0.26),
                       ),
-                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFFFFFFFF),
+                          Color(0xFFFAFBFD),
+                          Color(0xFFF6F8FB),
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF243447,
+                          ).withValues(alpha: 0.07),
+                          blurRadius: 32,
+                          offset: const Offset(0, 16),
+                          spreadRadius: -18,
+                        ),
+                      ],
                     )
                   : AppTheme.editorialDarkSectionCard(
                       scheme,
-                      borderRadius: 16,
+                      borderRadius: 24,
                     )!,
               child: Column(
                 children: [
@@ -95,32 +111,86 @@ class _SectionHeader extends StatelessWidget {
     final light = theme.brightness == Brightness.light;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+      padding: const EdgeInsets.fromLTRB(15, 14, 15, 13),
       decoration: BoxDecoration(
-        color: light
-            ? scheme.surfaceContainerHighest.withValues(alpha: 0.34)
-            : Color.alphaBlend(
-                scheme.primary.withValues(alpha: 0.10),
-                scheme.surfaceContainerHigh,
-              ),
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: light
+              ? [const Color(0xFFF3F7FA), const Color(0xFFFAFBFD)]
+              : [
+                  Color.alphaBlend(
+                    scheme.primary.withValues(alpha: 0.12),
+                    scheme.surfaceContainerHigh,
+                  ),
+                  Color.alphaBlend(
+                    scheme.onSurface.withValues(alpha: 0.03),
+                    scheme.surfaceContainerLow,
+                  ),
+                ],
+        ),
         border: Border(
           bottom: BorderSide(
             color: light
-                ? scheme.outlineVariant.withValues(alpha: 0.16)
-                : scheme.outline.withValues(alpha: 0.26),
+                ? scheme.outlineVariant.withValues(alpha: 0.09)
+                : scheme.outline.withValues(alpha: 0.18),
           ),
         ),
       ),
-      child: Text(
-        title,
-        style: theme.textTheme.labelLarge?.copyWith(
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.05,
-          color: light
-              ? scheme.onSurfaceVariant
-              : scheme.onSurface.withValues(alpha: 0.92),
-        ),
-        textAlign: TextAlign.left,
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: light
+                    ? scheme.primary.withValues(alpha: 0.12)
+                    : AppTheme.editorialAccentColor(
+                        scheme,
+                      ).withValues(alpha: 0.30),
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: light
+                    ? [
+                        scheme.primary.withValues(alpha: 0.11),
+                        scheme.primary.withValues(alpha: 0.035),
+                      ]
+                    : [
+                        Color.alphaBlend(
+                          scheme.primary.withValues(alpha: 0.18),
+                          scheme.surfaceContainerHigh,
+                        ),
+                        scheme.surfaceContainerLow,
+                      ],
+              ),
+            ),
+            child: Icon(
+              Icons.view_week_rounded,
+              size: 15,
+              color: light
+                  ? scheme.primary
+                  : AppTheme.editorialAccentColor(scheme),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.04,
+                color: light
+                    ? scheme.onSurface.withValues(alpha: 0.82)
+                    : scheme.onSurface.withValues(alpha: 0.92),
+              ),
+              textAlign: TextAlign.left,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -151,7 +221,10 @@ class _SpecRowLine extends StatelessWidget {
 
     final rowTint = showDifferenceTint
         ? (light
-              ? scheme.primary.withValues(alpha: 0.05)
+              ? Color.alphaBlend(
+                  scheme.primary.withValues(alpha: 0.048),
+                  const Color(0xFFFAFCFE),
+                )
               : AppTheme.editorialDarkCompareDifferenceRowTint(scheme))
         : Colors.transparent;
 
@@ -165,8 +238,8 @@ class _SpecRowLine extends StatelessWidget {
             ? Border(
                 bottom: BorderSide(
                   color: light
-                      ? scheme.outlineVariant.withValues(alpha: 0.18)
-                      : scheme.outline.withValues(alpha: 0.24),
+                      ? scheme.outlineVariant.withValues(alpha: 0.075)
+                      : scheme.outline.withValues(alpha: 0.14),
                 ),
               )
             : null,
@@ -177,18 +250,36 @@ class _SpecRowLine extends StatelessWidget {
           children: [
             SizedBox(
               width: CompareSpecTable.labelWidth,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 11, 8, 11),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    row.label,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(
-                        alpha: light ? 1 : 0.82,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: light
+                        ? [
+                            const Color(0xFFF8FAFC).withValues(alpha: 0.70),
+                            const Color(0xFFF8FAFC).withValues(alpha: 0.16),
+                          ]
+                        : [
+                            scheme.surfaceContainerHigh.withValues(alpha: 0.20),
+                            scheme.surfaceContainerHigh.withValues(alpha: 0.04),
+                          ],
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(15, 13, 12, 13),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      row.label,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant.withValues(
+                          alpha: light ? 0.82 : 0.82,
+                        ),
+                        fontWeight: FontWeight.w700,
+                        height: 1.22,
+                        letterSpacing: -0.05,
                       ),
-                      fontWeight: FontWeight.w600,
-                      height: 1.25,
                     ),
                   ),
                 ),
@@ -201,22 +292,12 @@ class _SpecRowLine extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     for (var i = 0; i < row.values.length; i++)
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          border: i == 0
-                              ? null
-                              : Border(
-                                  left: BorderSide(
-                                    color: scheme.outlineVariant.withValues(
-                                      alpha: light ? 0.16 : 0.22,
-                                    ),
-                                  ),
-                                ),
-                        ),
+                      Padding(
+                        padding: EdgeInsets.only(left: i == 0 ? 0 : 6),
                         child: SizedBox(
                           width: columnWidth,
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(10, 11, 10, 11),
+                            padding: const EdgeInsets.fromLTRB(12, 13, 12, 13),
                             child: showSkeleton
                                 ? _SkeletonBar(scheme: scheme)
                                 : _ValueCell(
@@ -229,6 +310,7 @@ class _SpecRowLine extends StatelessWidget {
                           ),
                         ),
                       ),
+                    const SizedBox(width: 12),
                   ],
                 ),
               ),
@@ -266,6 +348,7 @@ class _ValueCell extends StatelessWidget {
             ? scheme.onSurfaceVariant.withValues(alpha: light ? 0.55 : 0.62)
             : scheme.onSurface.withValues(alpha: light ? 1 : 0.94),
         height: 1.3,
+        letterSpacing: -0.05,
       ),
     );
 
@@ -273,21 +356,30 @@ class _ValueCell extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppTheme.editorialDarkCompareValueHighlight(
-          scheme,
-          emphasize: emphasizeDifferences,
-        ),
-        borderRadius: BorderRadius.circular(8),
-        border: !light && emphasizeDifferences
-            ? Border.all(
-                color: AppTheme.editorialAccentColor(
-                  scheme,
-                ).withValues(alpha: 0.22),
+        color: light
+            ? Color.alphaBlend(
+                scheme.primary.withValues(
+                  alpha: emphasizeDifferences ? 0.095 : 0.055,
+                ),
+                const Color(0xFFF9FBFD),
               )
-            : null,
+            : AppTheme.editorialDarkCompareValueHighlight(
+                scheme,
+                emphasize: emphasizeDifferences,
+              ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: light
+              ? scheme.primary.withValues(
+                  alpha: emphasizeDifferences ? 0.15 : 0.06,
+                )
+              : AppTheme.editorialAccentColor(
+                  scheme,
+                ).withValues(alpha: emphasizeDifferences ? 0.22 : 0.10),
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         child: text,
       ),
     );

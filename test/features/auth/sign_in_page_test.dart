@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/auth/presentation/pages/sign_in_page.dart';
+import 'package:carzon/features/auth/presentation/widgets/auth_editorial_header.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -30,11 +31,42 @@ void main() {
 
   setUp(() {
     cubit = _MockAuthCubit();
+    when(
+      () => cubit.signIn(
+        email: any(named: 'email'),
+        password: any(named: 'password'),
+      ),
+    ).thenAnswer((_) async {});
     when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
     whenListen(
       cubit,
       const Stream<AuthState>.empty(),
       initialState: const AuthState.unauthenticated(),
+    );
+  });
+
+  testWidgets('renders editorial auth header branding block', (tester) async {
+    await tester.pumpWidget(_wrap(cubit));
+
+    expect(find.byType(AuthEditorialHeader), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('auth_editorial_eyebrow')),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.signInEyebrow), findsOneWidget);
+    expect(find.text(l10n.signInTitle), findsOneWidget);
+    expect(find.text(l10n.signInSubtitle), findsOneWidget);
+  });
+
+  testWidgets('renders email and password fields with primary sign-in action', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(cubit));
+
+    expect(find.byType(TextFormField), findsNWidgets(2));
+    expect(
+      find.widgetWithText(FilledButton, l10n.signInSubmit),
+      findsOneWidget,
     );
   });
 
@@ -68,6 +100,22 @@ void main() {
     );
   });
 
+  testWidgets('auth fields and primary button remain tappable', (tester) async {
+    await tester.pumpWidget(_wrap(cubit));
+
+    await tester.enterText(
+      find.byType(TextFormField).first,
+      'user@example.com',
+    );
+    await tester.enterText(find.byType(TextFormField).last, 'secret12');
+    await tester.tap(find.widgetWithText(FilledButton, l10n.signInSubmit));
+    await tester.pump();
+
+    verify(
+      () => cubit.signIn(email: 'user@example.com', password: 'secret12'),
+    ).called(1);
+  });
+
   testWidgets('no layout exceptions on compact viewport (320×568 logical)', (
     tester,
   ) async {
@@ -80,5 +128,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
   });
 }
