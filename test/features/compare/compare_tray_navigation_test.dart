@@ -126,6 +126,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('compare-screen')), findsOneWidget);
+    expect(find.byType(CompareFloatingTray), findsNothing);
     expect(router.canPop(), isTrue);
 
     await tester.tap(find.byType(AppBackButton));
@@ -176,6 +177,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('compare-screen')), findsOneWidget);
+    expect(find.byType(CompareFloatingTray), findsNothing);
 
     await tester.tap(find.byType(AppBackButton));
     await tester.pumpAndSettle();

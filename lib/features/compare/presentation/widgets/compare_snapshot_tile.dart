@@ -13,25 +13,40 @@ class CompareSnapshotTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
     final title = _titleLine();
     final subtitle = _subtitleLine();
 
     return Material(
-      color: scheme.surfaceContainerHighest.withValues(alpha: 0.35),
+      color: light
+          ? Colors.white.withValues(alpha: 0.86)
+          : scheme.surfaceContainerHigh.withValues(alpha: 0.72),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.35)),
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: scheme.outlineVariant.withValues(alpha: light ? 0.42 : 0.30),
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: light
+                      ? Colors.white.withValues(alpha: 0.82)
+                      : scheme.outline.withValues(alpha: 0.28),
+                ),
+              ),
               child: SizedBox(
                 width: 72,
                 height: 54,
-                child: ListingCoverImage(imageUrl: snapshot.coverImageUrl),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(13),
+                  child: ListingCoverImage(imageUrl: snapshot.coverImageUrl),
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -43,7 +58,8 @@ class CompareSnapshotTile extends StatelessWidget {
                     Text(
                       title,
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.1,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

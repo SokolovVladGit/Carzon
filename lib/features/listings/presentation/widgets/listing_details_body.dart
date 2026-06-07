@@ -162,7 +162,6 @@ class _DetailsList extends StatelessWidget {
       if (listing.registration != null &&
           listing.registration!.trim().isNotEmpty)
         _DetailsRowData(l10n.listingRegistration, listing.registration!.trim()),
-      _DetailsRowData(l10n.listingFieldPosted, formatDate(listing.createdAt)),
     ];
 
     return Column(

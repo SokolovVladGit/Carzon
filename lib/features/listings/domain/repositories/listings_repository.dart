@@ -5,6 +5,7 @@ import '../entities/listing_contact.dart';
 import '../entities/listing_currency.dart';
 import '../entities/listing_image.dart';
 import '../entities/listing_sort_option.dart';
+import '../entities/listing_view_stats.dart';
 
 class ListingsQuery {
   const ListingsQuery({
@@ -112,5 +113,11 @@ abstract interface class ListingsRepository {
   /// Buyer-safe `public_summary` source rows via `get_listing_vin_report_for_buyer`.
   Future<Result<BuyerListingVinReportLookupResult>> fetchBuyerVinReportSources(
     String listingId,
+  );
+
+  /// Records a listing detail view via `record_listing_view` RPC.
+  Future<Result<ListingViewStats>> recordListingView(
+    String listingId,
+    String anonymousViewerId,
   );
 }

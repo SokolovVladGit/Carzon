@@ -8,7 +8,7 @@ one-command check or a manual dashboard/device step.
 This document is the source of truth for release prep. If something
 is missing here, the release is not ready.
 
-**Supabase ↔ client alignment:** Before staging/prod cuts, also follow [`docs/RELEASE.md`](RELEASE.md) for migration apply order, RPC/backend parity with the app binary, storage bucket verification (`listing-images`, `seller-avatars`), and suggested read-only SQL/RPC smoke checks in the Supabase SQL Editor.
+**Supabase ↔ client alignment:** Before staging/prod cuts, follow [`docs/RELEASE.md`](RELEASE.md) for migration inventory, RPC/backend parity, storage buckets, and hosted verification helpers. **Hosted Carzon (2026-06):** migration parity 45/45 PASS, runtime contracts PASS, contact hardening closed — re-run helpers after any future hosted SQL change.
 
 ## A. Code verification
 
@@ -52,7 +52,8 @@ migrations (Supabase Data API / PostgREST requires explicit **`GRANT`** on new *
 
 - [ ] **Auth → URL Configuration → Redirect URLs**: add
       `carzon://auth-callback`. Without this, password-reset and
-      email-confirmation links will not open the app.
+      email-confirmation links will not open the app. Full dashboard checklist:
+      [`docs/auth_site_url_redirect_configuration.md`](auth_site_url_redirect_configuration.md).
 - [ ] **Auth → URL Configuration → Site URL**: set to the
       production/staging web URL (**HTTPS**) so confirmation and reset emails
       carry a sane fallback when native deep links fail. **`http://localhost:3000`**
@@ -61,25 +62,7 @@ migrations (Supabase Data API / PostgREST requires explicit **`GRANT`** on new *
 - [ ] **Auth → Email Templates**: sanity-check the sign-up
       confirmation and password-reset templates for wording and for
       the correct action link placeholder.
-- [ ] **Database → Migrations**: confirm all
-      `supabase/migrations/*.sql` files from this repo are applied
-      and no extra ad-hoc migrations exist in the project. Spot-check
-      that **`public.listings.updated_at`** exists (added by
-      `20260524120000_listings_updated_at.sql`) so parity checks do not
-      regress on fresh databases, and that the chain includes
-      **`20260525120000_explicit_data_api_grants.sql`** and
-      **`20260526120000_revoke_internal_trigger_function_execute.sql`**
-      (explicit table/RPC **`GRANT`**s plus **`REVOKE`** of trigger-only helpers
-      from client roles on fresh projects), and
-      **`20260527120000_notification_preferences_and_push_tokens.sql`**
-      (**Notifications Phase 1** — preference/token schema + RPCs only).
-      **`20260528120000_message_notification_delivery_pipeline.sql`**
-      (**Notifications Phase 3A** — internal message notification queue + enqueue
-      trigger; Edge **`process-message-notifications`** + secrets required for live FCM).
-      **`20260529120000_schedule_process_message_notifications_cron.sql`**
-      (**Phase 3E** — minute cron + Vault-backed invoke; create Vault URL + secret after apply — [ops_message_notifications.md](ops_message_notifications.md)).
-      **`20260601120000_filter_alert_notifications_queue_and_cron.sql`**
-      (**Phase 4A** — filter-alert enqueue/claim + second cron + Vault for **`process-filter-alert-notifications`** — [ops_message_notifications.md](ops_message_notifications.md)).
+- [ ] **Database → Migrations**: confirm all repo migrations are applied. **Authoritative check:** run `supabase/maintenance/check_hosted_migration_parity.sql` → expect **45/45 PASS** (through `20260630120000_public_contact_projection_hardening`). **Hosted Carzon (2026-06): closed.** Re-run after any new migration or manual SQL. Spot-check that **`public.listings.updated_at`** exists and the chain includes grants, notifications, filter-alert queue, VIN phases, and contact hardening migrations listed in [RELEASE.md](RELEASE.md) §3.
 - [ ] **Storage → Buckets**: confirm **`listing-images`** and
       **`seller-avatars`** exist after migrations (both created by
       migrations). Public read is intentional for MVP listing photos
@@ -172,8 +155,9 @@ Run on a real device against the release project before each build.
 - [ ] Listing **details fullscreen gallery**: swipe between images, pinch-zoom,
       dismiss/close; then back navigation.
 - [ ] Filter **alert** (single saved criteria via `filter_alert_settings`): save /
-      reset; confirm **profile “alert notifications” UX is local/visual only** —
-      backend **`notifications_enabled`** stays **false** until real notifications exist.
+      reset; notification toggles persist when backend push is enabled.
+- [ ] Feed **pagination retry**: throttle/offline load-more shows retry footer with
+      existing items preserved (implemented — regression check only).
 - [ ] Slow network / **upload failure paths** during create/edit (multi-image):
       spinner or disabled submit remains clear; **localized** messaging only (no raw
       PostgREST codes, RPC names, or bucket identifiers).
@@ -217,21 +201,22 @@ Ship with these clearly communicated, not hidden:
   runs when appropriate on the thread; there is no separate
   delivery/read-receipt UI beyond unread indicators. The client **polls**
   for thread updates (timer-based), **not** Supabase **Realtime**.
-- **Messaging (push / attachments / realtime):** **Message attachments**,
-  Realtime subscriptions, and richer delivery/read-receipt UX beyond the unread
-  foundation above remain **deferred**. **Phase 2:** optional **client** FCM +
-  **`register_push_token`**. **Phase 3A (messages only):** when migration +
-  Edge **`process-message-notifications`** + FCM secrets + scheduling are in
-  place, **inbound chat** can trigger **generic** FCM notifications (no message
-  body in payload); **filter-alert notifications are not implemented.**
-- Buyer-seller contact **also** includes **phone / Telegram / WhatsApp**
-  from listing details, launched **externally** (alongside in-app chat
-  when the listing has a seller and the viewer is not the seller).
-- Active listings and their cover images are publicly readable by
-  design (public feed + public `listing-images` bucket).
-- Seller contact details are publicly readable on active listings
-  by design; the app surfaces a notice and a phone-reveal step but
-  does not attempt strong anti-scraping.
+- **Messaging (push / attachments / realtime):** **Message attachments** and
+  Realtime subscriptions remain **deferred**. **Phase 2–4:** client FCM registration,
+  message + filter-alert push pipelines (DB queue, Edge workers, cron) are **implemented
+  on hosted**; **real-device FCM/APNs smoke is pending** before declaring notifications live
+  ([RELEASE.md](RELEASE.md), [ops_message_notifications.md](ops_message_notifications.md)).
+- Buyer-seller contact includes **phone / Telegram / WhatsApp** from listing details
+  (tap-to-reveal for phone), launched **externally** alongside in-app chat when applicable.
+- **Contact exposure (2026-06 hardening):** Direct PostgREST/table SELECT on
+  `contact_phone`, `telegram_username`, `whatsapp_enabled`, and `listing_images.storage_path`
+  is **blocked** for anon/authenticated client roles. Active listing contact is available
+  only via **`get_listing_public_contact`** RPC after user action in the app. **Product note:**
+  the RPC remains callable by anon (by design) — not strong anti-scraping; future rate
+  limiting/auth review is a product decision.
+- Active listings and **public** cover/gallery URLs are readable by design (public feed +
+  public `listing-images` bucket). Seller **profile** reads use RPC projections without
+  private email/contact values.
 - Deep links use the `carzon://` custom scheme only; no domain
   verification via Universal Links / App Links yet.
 - **Listing photos (MVP):** **Multi-photo** listings are implemented —

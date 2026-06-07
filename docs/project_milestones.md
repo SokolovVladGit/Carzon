@@ -18,7 +18,7 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 ## 2. Current stage
 
 - **Stage 1 / Foundation** — largely implemented.
-- **Focus now:** release hardening, hosted parity, manual smoke QA — **not** feature expansion.
+- **Focus now:** release hardening closure on hosted backend **complete** (2026-06); remaining gates are Auth config, structured manual QA, and optional product decisions — **not** feature expansion.
 
 ---
 
@@ -42,14 +42,20 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 - [x] **Notifications Phase 4A (filter alert backend):** matching, enqueue, dedup, **`process-filter-alert-notifications`**, second cron + Vault — migration **`20260601120000_...`**. Real-device smoke pending.
 - [x] **Notifications Phase 4B (filter alert client):** filter editor + notification settings toggles, explicit OS permission, `notifications_enabled` persistence, tap + foreground generic copy — real-device smoke pending.
 - [x] Release docs: [RELEASE.md](RELEASE.md), [mvp_release_checklist.md](mvp_release_checklist.md)
+- [x] **Seller contact exposure hardening** — migration `20260630120000`; hosted SQL metadata PASS; simulator smoke PASS
+- [x] **Hosted migration parity** — 45/45 repo migrations recorded; metadata reconciliation complete (2026-06)
+- [x] **Hosted runtime contract audit** — all app-critical objects PASS
+- [x] **Listings pagination failure UX** — retry footer implemented and tested
+- [x] **VIN Phase 1–2** — optional VIN entry, owner/buyer report surfaces (repo + hosted runtime)
 
 ---
 
 ## 4. Recently completed fixes / audits
 
+- **Hosted backend hardening closure (2026-06)** — contact hardening applied; `check_contact_hardening.sql` PASS; migration parity 45/45 PASS (after metadata reconciliation — prior STOP was drift only, not missing objects); `check_hosted_runtime_contracts.sql` PASS; simulator smoke PASS. No bulk migration re-apply needed.
 - **Feed → listing details Hero** — cold flicker addressed: first-image continuity, stable `PageView`, Hero-bound path skips `AnimatedOpacity`, `gaplessPlayback` on Hero-bound images.
 - **Listing details dark mode** — removed forced-light scaffold/panels; theme-aware surfaces (see listing details page).
-- **Supabase hosted parity** — live verification: tables/RLS, storage buckets/policies, RPCs/grants/signatures, `filter_alert_settings`; Auth redirect allow-list includes **`carzon://auth-callback`** (with env-driven `SUPABASE_PASSWORD_RESET_REDIRECT_URL` pattern).
+- **Supabase hosted parity** — **closed (2026-06):** parity 45/45, runtime contracts PASS, contact hardening closed. Re-run maintenance helpers after future hosted changes. Auth redirect allow-list includes **`carzon://auth-callback`**.
 - **`listings.updated_at`** — drift closed: fixed on hosted DB; repo migration **`20260524120000_listings_updated_at.sql`**; release docs updated.
 - **Layout / listing details** — small-phone + keyboard + sticky-footer hardening on high-traffic surfaces; fullscreen details gallery (**swipe / pinch-zoom / dismiss**).
 - **Create/edit gallery uploads** — best-effort **partial-batch** Storage cleanup when a later photo fails mid-sequence; RPC failure-after-upload cleanup unchanged.
@@ -59,8 +65,12 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 
 ## 5. Current release blockers / remaining before launch
 
+**Closed (2026-06):** ~~contact hardening unapplied~~, ~~hosted migration parity unknown~~, ~~pagination failure UX open~~.
+
+**Still open:**
+
 - [ ] Replace Supabase Auth **Site URL** (`localhost` unacceptable for public release) with a real **HTTPS** fallback/domain per [mvp_release_checklist.md](mvp_release_checklist.md) / [RELEASE.md](RELEASE.md).
-- [ ] **Manual smoke QA** against the **target** Supabase project:
+- [ ] **Structured manual smoke QA** against the **target** Supabase project:
   - Sign up / sign in
   - Password reset deep link (`carzon://auth-callback`)
   - Browse feed
@@ -87,10 +97,11 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 - No payments / escrow
 - No dealer cabinets
 - No ratings / reviews / “verified” as enforceable claims
-- No VIN / history / price intelligence
+- **VIN decode/report:** implemented in app + hosted runtime; external provider depth and anti-abuse remain future work — not “no VIN”
+- No price intelligence
 - No web client
 - No admin moderation console (reports via mailto where configured)
-- **Public** listing + avatar media scrapable by design
+- **Public** listing cover/gallery URLs and seller avatars scrapable by design; **direct** contact column SELECT hardened (2026-06); contact via RPC remains anon-callable (product decision)
 - Seed/demo listings may use **`seller_id = null`** (not editable as owner in app)
 
 ---
@@ -99,7 +110,7 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 
 *(Future — only after Foundation stable and product decision.)*
 
-- Real filter-alert **backend matching** + delivery strategy
+- Filter-alert delivery polish / scaling (backend queue exists — Phase 4A)
 - Push beyond **message** notifications (**Phase 3B+:** filter alerts, richer routing, foreground display, etc.)
 - Stronger seller tools, richer **exchange** flow
 - Honest trust signals (without fake badges)
@@ -130,7 +141,7 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 - Keep **feature-first** layout; avoid unrelated refactors / broad format churn.
 - No heavy dependencies without clear need.
 - **No saved searches UI** in MVP.
-- Flutter must **not** write **`notifications_enabled = true`** until backend matching + push exists (today writes keep it **false**).
+- Filter-alert **`notifications_enabled`** is user-controlled when push infrastructure is deployed; defaults remain **false** until the user opts in.
 - Public seller profile must **not** expose private email.
 - Future private chat media → **dedicated** private bucket — **not** `listing-images` / `seller-avatars`.
 - **Supabase Data API / PostgREST:** any new **`public`** table or client-called function added in a migration must ship explicit **`GRANT`** / **`GRANT EXECUTE`** (same migration or paired grants migration). **`GRANT`** gates object access; **RLS** gates rows — both are required. Internal trigger helpers must not retain unnecessary **`EXECUTE`** for **`anon` / `authenticated`** — document exemptions in **`test/supabase/explicit_data_api_grants_migration_test.dart`**. **`service_role`** is not bundled in Flutter.
@@ -139,10 +150,11 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 
 ## 10. Suggested next task order
 
-1. Manual smoke QA on **target** Supabase project  
-2. Auth / password-reset deep link smoke (`carzon://auth-callback` + dashboard allow-list)  
-3. Dark mode / small phone / keyboard QA  
-4. Image upload failure / slow network QA  
-5. Copy / error-state audit — no raw backend errors to users  
-6. Final pass: [mvp_release_checklist.md](mvp_release_checklist.md) + [RELEASE.md](RELEASE.md)  
-7. Only then — Stage 2 planning (explicit product decision)
+1. Auth **Site URL** / production HTTPS config audit — [`docs/auth_site_url_redirect_configuration.md`](auth_site_url_redirect_configuration.md), then [`docs/auth_deeplink_qa.md`](auth_deeplink_qa.md)
+2. Structured end-to-end release smoke on target project (device)
+3. Auth / password-reset deep link device QA (`docs/auth_deeplink_qa.md`)
+4. Media picker / upload device QA (`docs/media_picker_upload_qa.md`)
+5. Push device QA **if** `PUSH_NOTIFICATIONS_ENABLED=true` (`docs/notifications_qa.md`)
+6. Dark mode / small phone / keyboard regression pass
+7. Final pass: [mvp_release_checklist.md](mvp_release_checklist.md) + [RELEASE.md](RELEASE.md)
+8. Only then — Stage 2 planning (explicit product decision)

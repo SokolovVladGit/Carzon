@@ -25,17 +25,21 @@ class ComposeChoiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = theme.colorScheme;
     final br = theme.brightness;
+    final light = br == Brightness.light;
     final bg = selected
         ? Color.alphaBlend(
-            cs.onSurface.withValues(
-              alpha: br == Brightness.light ? 0.07 : 0.11,
-            ),
+            cs.primary.withValues(alpha: light ? 0.13 : 0.22),
             cs.surfaceContainerLowest,
           )
         : Color.alphaBlend(
-            cs.outlineVariant.withValues(alpha: 0.045),
+            (light ? cs.primary : cs.outlineVariant).withValues(
+              alpha: light ? 0.042 : 0.070,
+            ),
             cs.surfaceContainerLowest,
           );
+    final borderColor = selected
+        ? cs.primary.withValues(alpha: light ? 0.38 : 0.48)
+        : cs.outlineVariant.withValues(alpha: light ? 0.30 : 0.34);
 
     return Opacity(
       opacity: enabled ? 1 : 0.48,
@@ -48,20 +52,40 @@ class ComposeChoiceCard extends StatelessWidget {
           highlightColor: cs.onSurface.withValues(alpha: 0.018),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: bg,
+              borderRadius: BorderRadius.circular(18),
+              gradient: selected
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color.alphaBlend(
+                          cs.primary.withValues(alpha: light ? 0.060 : 0.10),
+                          bg,
+                        ),
+                        bg,
+                      ],
+                    )
+                  : null,
+              color: selected ? null : bg,
               border: Border.all(
-                color: selected
-                    ? cs.onSurface.withValues(
-                        alpha: br == Brightness.light ? 0.26 : 0.34,
-                      )
-                    : cs.outlineVariant.withValues(alpha: 0.30),
+                color: borderColor,
                 width: selected ? 1.15 : 1,
               ),
+              boxShadow: light
+                  ? [
+                      BoxShadow(
+                        color: cs.shadow.withValues(
+                          alpha: selected ? 0.060 : 0.030,
+                        ),
+                        blurRadius: selected ? 18 : 12,
+                        offset: const Offset(0, 5),
+                      ),
+                    ]
+                  : const <BoxShadow>[],
             ),
             padding: EdgeInsets.symmetric(
-              horizontal: compact ? 12 : 14,
-              vertical: compact ? 11 : 15,
+              horizontal: compact ? 14 : 16,
+              vertical: compact ? 12 : 15,
             ),
             child: Row(
               children: [
@@ -70,20 +94,29 @@ class ComposeChoiceCard extends StatelessWidget {
                     label,
                     textAlign: labelTextAlign,
                     style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                       height: 1.2,
                       letterSpacing: -0.12,
                       color: cs.onSurface.withValues(
-                        alpha: selected ? 1 : 0.82,
+                        alpha: selected ? 0.96 : 0.82,
                       ),
                     ),
                   ),
                 ),
                 if (selected)
-                  Icon(
-                    Icons.check_rounded,
-                    size: 22,
-                    color: cs.onSurface.withValues(alpha: 0.62),
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: cs.primary.withValues(alpha: light ? 0.12 : 0.22),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.check_rounded,
+                      size: 17,
+                      color: cs.primary.withValues(alpha: light ? 0.90 : 0.98),
+                    ),
                   ),
               ],
             ),

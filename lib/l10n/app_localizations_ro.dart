@@ -491,6 +491,28 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingFieldPosted => 'Publicat';
 
   @override
+  String listingDetailsMetadataAddedOn(String date) {
+    return 'Adăugat pe $date';
+  }
+
+  @override
+  String listingDetailsMetadataViews(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de vizualizări',
+      few: '$count vizualizări',
+      one: '$count vizualizare',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String listingDetailsMetadataViewsToday(int count) {
+    return 'Astăzi +$count';
+  }
+
+  @override
   String get listingFuelType => 'Combustibil';
 
   @override
@@ -1623,6 +1645,13 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get signInTitle => 'Intrare';
+
+  @override
+  String get signInEyebrow => 'CARZON · CONECTARE';
+
+  @override
+  String get signInSubtitle =>
+      'Conectați-vă pentru a gestiona anunțurile și mesajele';
 
   @override
   String get signInSubmit => 'Log in';

@@ -22,9 +22,17 @@ class ComparePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
 
     final page = Scaffold(
+      backgroundColor: light ? const Color(0xFFF7F9FC) : scheme.surface,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: Text(l10n.compareTitle),
         leading: const AppBackButton(fallback: AppRoutes.menu),
       ),

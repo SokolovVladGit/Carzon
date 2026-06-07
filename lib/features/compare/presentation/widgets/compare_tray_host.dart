@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -65,17 +64,19 @@ class _CompareTrayHostState extends State<CompareTrayHost> {
   }
 
   void _onRouteChanged() {
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    final next = _readLocation();
+    if (next == _location) return;
+    _location = next;
+    _flyController().cancel();
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final next = _readLocation();
-      if (next == _location) return;
-      _flyController().cancel();
-      setState(() => _location = next);
+      setState(() {});
     });
   }
 
   void _onCompareStateChanged(CompareState state) {
-    final hiddenByRoute = compareTrayHiddenForRoute(_location);
+    final hiddenByRoute = compareTrayHiddenForRoute(_readLocation());
     final trayVisible = state.count >= 1 && !hiddenByRoute;
     if (_trayWasVisible && !trayVisible) {
       _flyController().cancel();
@@ -83,8 +84,17 @@ class _CompareTrayHostState extends State<CompareTrayHost> {
     _trayWasVisible = trayVisible;
   }
 
-  String _readLocation() =>
-      widget.router.routerDelegate.currentConfiguration.uri.toString();
+  String _readLocation() {
+    final configuration = widget.router.routerDelegate.currentConfiguration;
+    if (configuration.matches.isEmpty) {
+      return configuration.uri.toString();
+    }
+    final lastMatch = configuration.last;
+    final uri = lastMatch is ImperativeRouteMatch
+        ? lastMatch.matches.uri
+        : configuration.uri;
+    return uri.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +102,7 @@ class _CompareTrayHostState extends State<CompareTrayHost> {
     final feedbackController =
         widget.feedbackController ?? sl<CompareTrayFeedbackController>();
     final policy = widget.visualPolicy;
+    final location = _readLocation();
 
     return CompareTrayFeedbackScope(
       controller: feedbackController,
@@ -102,7 +113,7 @@ class _CompareTrayHostState extends State<CompareTrayHost> {
           children: [
             if (widget.child != null) widget.child!,
             _CompareTrayOverlay(
-              location: _location,
+              location: location,
               flyController: flyController,
               feedbackController: feedbackController,
               visualPolicy: policy,
@@ -146,7 +157,7 @@ class _CompareTrayOverlay extends StatelessWidget {
             final hasItems = state.count >= 1;
             final showMaxLimit = feedbackController.isShowingMaxLimit;
             final showNormalTray = hasItems && !hiddenByRoute && !showMaxLimit;
-            final showLimitAtTray = showMaxLimit && hasItems;
+            final showLimitAtTray = showMaxLimit && hasItems && !hiddenByRoute;
             final showPositioned = showNormalTray || showLimitAtTray;
 
             if (!showPositioned) {

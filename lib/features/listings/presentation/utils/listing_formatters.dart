@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_currency.dart';
@@ -154,6 +156,11 @@ String formatDate(DateTime dt) {
   final m = local.month.toString().padLeft(2, '0');
   final d = local.day.toString().padLeft(2, '0');
   return '$y-$m-$d';
+}
+
+/// Locale-aware added-date for listing details header metadata (e.g. `14 янв. 2026`).
+String formatListingAddedDate(AppLocalizations l10n, DateTime date) {
+  return DateFormat('d MMM y', l10n.localeName).format(date.toLocal());
 }
 
 String _thousands(String digits) {

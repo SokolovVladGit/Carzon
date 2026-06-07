@@ -7,6 +7,7 @@ import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
 import '../../domain/entities/listing_contact.dart';
 import '../../domain/entities/listing_currency.dart';
 import '../../domain/entities/listing_sort_option.dart';
+import '../../domain/entities/listing_view_stats.dart';
 import '../../domain/repositories/listings_repository.dart';
 import '../models/listing_image_model.dart';
 import '../models/listing_model.dart';
@@ -32,6 +33,11 @@ abstract interface class ListingsRemoteDataSource {
   /// Calls `get_listing_vin_report_for_buyer` (Phase 2J; buyer-safe summaries).
   Future<BuyerListingVinReportLookupResult> fetchBuyerListingVinReportSources(
     String listingId,
+  );
+
+  Future<ListingViewStats> recordListingView(
+    String listingId,
+    String anonymousViewerId,
   );
 }
 
@@ -66,8 +72,10 @@ created_at,
 status,
 cover_image_url,
 seller_id,
-vin_status
+vin_status,
+view_count
 ''';
+  static const String _rpcRecordListingView = 'record_listing_view';
   static const String _publicListingImageColumns =
       'id, listing_id, public_url, position, created_at';
   static const String _rpcBuyerVinReport = 'get_listing_vin_report_for_buyer';
@@ -409,6 +417,51 @@ vin_status
     } catch (_) {
       return const BuyerListingVinReportLookupResult(fetchFailed: true);
     }
+  }
+
+  @override
+  Future<ListingViewStats> recordListingView(
+    String listingId,
+    String anonymousViewerId,
+  ) async {
+    try {
+      final dynamic data = await _supabase.client.rpc(
+        _rpcRecordListingView,
+        params: <String, dynamic>{
+          'p_listing_id': listingId,
+          'p_anonymous_viewer_id': anonymousViewerId,
+        },
+      );
+      final row = _rpcRowToJsonMap(data);
+      return ListingViewStats(
+        totalViews: _intFromRpc(row['total_views']),
+        todayViews: _intFromRpc(row['today_views']),
+      );
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      throw ServerException(
+        'Failed to record listing view for $listingId',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  static Map<String, dynamic> _rpcRowToJsonMap(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    if (data is List && data.isNotEmpty && data.first is Map) {
+      return Map<String, dynamic>.from(data.first as Map);
+    }
+    throw ServerException('Unexpected response from record_listing_view RPC.');
+  }
+
+  static int _intFromRpc(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim()) ?? 0;
+    return 0;
   }
 
   @override

@@ -100,22 +100,25 @@ class _CreateListingView extends StatelessWidget {
             ? SystemUiOverlayStyle.light
             : SystemUiOverlayStyle.dark,
       ),
-      body: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, authState) {
-          if (authState.status != AuthStatus.authenticated ||
-              authState.user == null) {
-            return AuthRequiredPrompt(
-              icon: const Icon(Icons.lock_outline_rounded, size: 48),
-              message: l10n.createListingSignInRequired,
-              primaryButtonLabel: l10n.commonSignIn,
-              onPrimaryPressed: () => context.go(AppRoutes.signIn),
+      body: DecoratedBox(
+        decoration: createListingCanvasDecoration(theme),
+        child: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, authState) {
+            if (authState.status != AuthStatus.authenticated ||
+                authState.user == null) {
+              return AuthRequiredPrompt(
+                icon: const Icon(Icons.lock_outline_rounded, size: 48),
+                message: l10n.createListingSignInRequired,
+                primaryButtonLabel: l10n.commonSignIn,
+                onPrimaryPressed: () => context.go(AppRoutes.signIn),
+              );
+            }
+            return _CreateListingForm(
+              sellerId: authState.user!.id,
+              imagePicker: imagePicker,
             );
-          }
-          return _CreateListingForm(
-            sellerId: authState.user!.id,
-            imagePicker: imagePicker,
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -502,7 +505,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(
             16,
-            12,
+            16,
             16,
             math.max(
                   MediaQuery.paddingOf(context).bottom,
@@ -710,26 +713,24 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                           onTap: submitting ? null : _openBodyTypeSheet,
                           child: Ink(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(18),
                               border: Border.all(
-                                color: theme.colorScheme.outlineVariant
-                                    .withValues(
-                                      alpha:
-                                          theme.brightness == Brightness.light
-                                          ? 0.32
-                                          : 0.38,
-                                    ),
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: theme.brightness == Brightness.light
+                                      ? 0.18
+                                      : 0.34,
+                                ),
                               ),
                               color: Color.alphaBlend(
-                                theme.colorScheme.outlineVariant.withValues(
+                                theme.colorScheme.primary.withValues(
                                   alpha: theme.brightness == Brightness.light
-                                      ? 0.042
-                                      : 0.078,
+                                      ? 0.036
+                                      : 0.085,
                                 ),
                                 theme.colorScheme.surface,
                               ),
                             ),
-                            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+                            padding: const EdgeInsets.fromLTRB(17, 15, 12, 15),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -755,13 +756,17 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(10),
                                     color: Color.alphaBlend(
-                                      theme.colorScheme.outlineVariant
-                                          .withValues(alpha: 0.11),
+                                      theme.colorScheme.primary.withValues(
+                                        alpha:
+                                            theme.brightness == Brightness.light
+                                            ? 0.070
+                                            : 0.16,
+                                      ),
                                       theme.colorScheme.surface,
                                     ),
                                     border: Border.all(
-                                      color: theme.colorScheme.outlineVariant
-                                          .withValues(alpha: 0.26),
+                                      color: theme.colorScheme.primary
+                                          .withValues(alpha: 0.18),
                                     ),
                                   ),
                                   child: Padding(
