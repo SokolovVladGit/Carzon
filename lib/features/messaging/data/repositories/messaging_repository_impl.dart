@@ -30,6 +30,21 @@ class MessagingRepositoryImpl implements MessagingRepository {
   }
 
   @override
+  Future<Result<String>> getOrCreateSupportConversation() async {
+    try {
+      final id = await _remote.getOrCreateSupportConversation();
+      return Success(id);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('getOrCreateSupportConversation unknown error', e, st);
+      return const FailureResult(
+        UnknownFailure('Failed to open support conversation.'),
+      );
+    }
+  }
+
+  @override
   Future<Result<List<Conversation>>> getConversations() async {
     try {
       final list = await _remote.fetchConversations();

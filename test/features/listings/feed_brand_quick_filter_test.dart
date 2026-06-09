@@ -118,18 +118,23 @@ void main() {
   });
 
   group('feed brand icon / monogram policy', () {
-    test('each quick-filter brand has SVG or explicit monogram fallback', () {
+    test('each quick-filter brand has packaged SVG or monogram fallback', () {
       for (final brand in kListingBrandFeedQuickFilterCatalog) {
         final usesMonogram = listingBrandFeedQuickFilterShouldUseMonogram(
           brand,
         );
-        final inFallbackSet = kListingBrandFeedQuickFilterMonogramFallback
+        final hasPackagedSvg = !isBrandIconDefaultAssetPath(
+          getBrandIconPath(brand),
+        );
+        final forcedMonogram = kListingBrandFeedQuickFilterMonogramFallback
             .contains(brand);
-        if (inFallbackSet) {
-          expect(usesMonogram, isTrue, reason: '$brand uses Home monogram');
+
+        if (forcedMonogram) {
+          expect(usesMonogram, isTrue, reason: '$brand forced monogram');
+        } else if (hasPackagedSvg) {
+          expect(usesMonogram, isFalse, reason: '$brand has packaged SVG');
         } else {
-          expect(usesMonogram, isFalse, reason: '$brand uses dedicated SVG');
-          expect(isBrandIconDefaultAssetPath(getBrandIconPath(brand)), isFalse);
+          expect(usesMonogram, isTrue, reason: '$brand missing SVG monogram');
         }
       }
     });
@@ -149,6 +154,23 @@ void main() {
       expect(listingBrandFeedQuickFilterMonogram('Porsche'), 'PO');
       expect(listingBrandFeedQuickFilterMonogram('Lada'), 'LA');
       expect(listingBrandFeedQuickFilterMonogram('Land Rover'), 'LR');
+    });
+
+    test('catalog brand without logo asset uses monogram on feed', () {
+      expect(listingBrandFeedQuickFilterShouldUseMonogram('BYD'), isTrue);
+      expect(listingBrandFeedQuickFilterMonogram('BYD'), 'BY');
+      expect(listingBrandFeedQuickFilterShouldUseMonogram('Cupra'), isTrue);
+      expect(listingBrandFeedQuickFilterMonogram('Great Wall'), 'GW');
+      expect(
+        isBrandIconDefaultAssetPath(getBrandIconPath('BYD')),
+        isTrue,
+      );
+    });
+
+    test('newly added brands appear in feed quick-filter catalog', () {
+      for (final brand in ['Subaru', 'Cupra', 'BYD', 'Zeekr', 'Li Auto']) {
+        expect(kListingBrandFeedQuickFilterCatalog, contains(brand));
+      }
     });
   });
 
@@ -382,9 +404,61 @@ void main() {
         await tester.pump();
 
         verify(
-          () => bloc.add(any(that: isA<ListingsNextPageRequested>())),
+          () => bloc.add(
+            any(
+              that: predicate<ListingsNextPageRequested>(
+                (event) => event.isExplicitRetry,
+              ),
+            ),
+          ),
         ).called(1);
       },
     );
+
+    testWidgets('loading-more footer shows localized label', (tester) async {
+      final l10n = ruStrings();
+      final compareCubit = newInMemoryCompareCubit();
+      addTearDown(compareCubit.close);
+      final state = ListingsState(
+        status: ListingsStatus.loadingMore,
+        items: [_feedListing('l1')],
+        hasReachedEnd: false,
+      );
+      when(() => bloc.state).thenReturn(state);
+      whenListen(
+        bloc,
+        const Stream<ListingsState>.empty(),
+        initialState: state,
+      );
+
+      await tester.pumpWidget(
+        MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthCubit>.value(value: auth),
+            BlocProvider<FavoritesCubit>.value(value: favs),
+            BlocProvider<CompareCubit>.value(value: compareCubit),
+            BlocProvider(
+              create: (_) =>
+                  SelfSellerVisualCubit(GetMySellerProfile(sellersRepo)),
+            ),
+            BlocProvider(
+              create: (_) => MessagingUnreadSummaryCubit(messagingRepo),
+            ),
+          ],
+          child: _host(bloc: bloc),
+        ),
+      );
+      await tester.pump();
+
+      await tester.scrollUntilVisible(
+        find.text(l10n.listingsLoadingMore),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text(l10n.listingsLoadingMore), findsOneWidget);
+    });
   });
 }

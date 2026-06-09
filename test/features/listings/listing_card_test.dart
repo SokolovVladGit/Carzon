@@ -14,6 +14,7 @@ import 'package:carzon/features/listings/presentation/widgets/listing_card.dart'
 import 'package:carzon/shared/brands/brand_logo_glyph.dart';
 import 'package:carzon/features/listings/presentation/widgets/listing_cover_image.dart';
 import 'package:carzon/features/listings/presentation/widgets/listing_tile.dart';
+import 'package:carzon/features/listings/presentation/widgets/vin_present_latin_badge.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -43,22 +44,26 @@ Listing _seed({
   ListingType type = ListingType.sale,
   MarketRegion region = MarketRegion.transnistria,
   String make = 'Volkswagen',
+  String model = 'Golf',
+  String city = 'Tiraspol',
+  ListingVinStatus vinStatus = ListingVinStatus.notProvided,
 }) {
   return Listing(
     id: 'l1',
     title: 'VW Golf',
     make: make,
-    model: 'Golf',
+    model: model,
     year: 2016,
     priceEur: 8900,
     mileageKm: 120000,
     type: type,
-    city: 'Tiraspol',
+    city: city,
     marketRegion: region,
     createdAt: DateTime.utc(2026, 4, 1),
     status: ListingStatus.active,
     coverImageUrl: coverImageUrl,
     sellerId: 's1',
+    vinStatus: vinStatus,
   );
 }
 
@@ -244,6 +249,193 @@ void main() {
         expect(find.text('Tiraspol'), findsOneWidget);
       },
     );
+  });
+
+  group('ListingCard VIN badge', () {
+    testWidgets('hides VIN badge when vinStatus is notProvided', (
+      tester,
+    ) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: SingleChildScrollView(
+            child: ListingCard(
+              listing: _seed(),
+              trailing: const Icon(Icons.favorite_border),
+              trailingWide: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const ValueKey('vin_present_latin_badge')), findsNothing);
+    });
+
+    testWidgets('shows card-stamp VIN badge when vinStatus is formatValid', (
+      tester,
+    ) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: SingleChildScrollView(
+            child: ListingCard(
+              listing: _seed(vinStatus: ListingVinStatus.formatValid),
+              trailing: const Icon(Icons.favorite_border),
+              trailingWide: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const ValueKey('vin_present_latin_badge')), findsOneWidget);
+      expect(find.byType(VinPresentLatinBadge), findsOneWidget);
+      expect(find.byKey(const ValueKey('vin_present_latin_badge_v')), findsOneWidget);
+    });
+
+    testWidgets('VIN stamp anchors top-right above trailing actions', (
+      tester,
+    ) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: SingleChildScrollView(
+            child: ListingCard(
+              listing: _seed(vinStatus: ListingVinStatus.formatValid),
+              trailing: const Icon(Icons.favorite_border),
+              trailingWide: true,
+            ),
+          ),
+        ),
+      );
+
+      final badgeRect = tester.getRect(
+        find.byKey(const ValueKey('vin_present_latin_badge')),
+      );
+      final actionRect = tester.getRect(find.byIcon(Icons.favorite_border));
+      expect(badgeRect.top, lessThan(actionRect.top));
+      expect(badgeRect.right, greaterThan(actionRect.left));
+    });
+
+    Future<double> metaRowWidth(
+      WidgetTester tester, {
+      required bool withVin,
+      double cardWidth = 360,
+    }) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: cardWidth,
+              child: ListingCard(
+                listing: _seed(
+                  vinStatus: withVin
+                      ? ListingVinStatus.formatValid
+                      : ListingVinStatus.notProvided,
+                  city: 'Bender / Tighina — Pridnestrovie',
+                ),
+                trailing: const Icon(Icons.favorite_border),
+                trailingWide: true,
+              ),
+            ),
+          ),
+        ),
+      );
+      final rowFinder = find.byWidgetPredicate((w) {
+        if (w is! Row) return false;
+        var hasYear = false;
+        var hasFlexibleChild = false;
+        for (final child in w.children) {
+          if (child is Text && child.data == '2016') hasYear = true;
+          if (child is Flexible) hasFlexibleChild = true;
+        }
+        return hasYear && hasFlexibleChild;
+      });
+      return tester.getSize(rowFinder).width;
+    }
+
+    testWidgets('VIN badge does not reserve inline width for metadata', (
+      tester,
+    ) async {
+      final withoutVin = await metaRowWidth(tester, withVin: false);
+      final withVin = await metaRowWidth(tester, withVin: true);
+      expect(withVin, equals(withoutVin));
+    });
+
+    testWidgets('metadata stays visible with VIN on narrow card', (
+      tester,
+    ) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 375,
+              child: ListingCard(
+                listing: _seed(
+                  vinStatus: ListingVinStatus.formatValid,
+                  make: 'Mercedes-Benz',
+                  model: 'E-Class AMG Line Premium Plus',
+                  city: 'Bender / Tighina — Pridnestrovie',
+                ),
+                trailing: const Icon(Icons.favorite_border),
+                trailingWide: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('2016'), findsOneWidget);
+      expect(find.text('120 000 ${l10n.commonKilometersShort}'), findsOneWidget);
+      expect(find.textContaining('Bender'), findsOneWidget);
+    });
+
+    testWidgets('VIN badge does not overlap compare/favorite hit targets', (
+      tester,
+    ) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: SingleChildScrollView(
+            child: ListingCard(
+              listing: _seed(vinStatus: ListingVinStatus.formatValid),
+              trailing: const Icon(Icons.favorite_border),
+              trailingWide: true,
+            ),
+          ),
+        ),
+      );
+
+      final badgeRect = tester.getRect(
+        find.byKey(const ValueKey('vin_present_latin_badge')),
+      );
+      final actionRect = tester.getRect(find.byIcon(Icons.favorite_border));
+      expect(badgeRect.bottom, lessThanOrEqualTo(actionRect.top + 2));
+    });
+
+    testWidgets('VIN badge sits in info panel, not on cover image', (
+      tester,
+    ) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: SingleChildScrollView(
+            child: ListingCard(
+              listing: _seed(vinStatus: ListingVinStatus.formatValid),
+              trailing: const Icon(Icons.favorite_border),
+              trailingWide: true,
+            ),
+          ),
+        ),
+      );
+
+      final badgeRect = tester.getRect(
+        find.byKey(const ValueKey('vin_present_latin_badge')),
+      );
+      final coverRect = tester.getRect(find.byType(ListingCoverImage));
+      expect(badgeRect.top, greaterThan(coverRect.bottom - 40));
+    });
   });
 
   group('ListingTile compare and favorite actions', () {

@@ -23,11 +23,13 @@ import '../bloc/conversation_thread_cubit.dart';
 import '../bloc/conversation_thread_state.dart';
 import '../bloc/messaging_unread_summary_cubit.dart';
 import '../utils/messaging_user_messages.dart';
+import '../utils/thread_app_bar_title.dart';
 import '../utils/thread_date_label.dart';
 import '../utils/thread_list_entries.dart';
 import '../widgets/chat_message_bubble.dart';
 import '../widgets/thread_date_separator.dart';
 import '../widgets/thread_listing_context_card.dart';
+import '../widgets/thread_support_context_card.dart';
 import '../widgets/thread_quick_reply_chips.dart';
 
 String _shortListingLabel(String listingId) {
@@ -428,7 +430,27 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: Text(l10n.messagingThreadTitle),
+        title: BlocBuilder<ConversationThreadCubit, ConversationThreadState>(
+          builder: (context, state) {
+            final conv = state.conversation;
+            final title = conv == null
+                ? l10n.messagingThreadTitle
+                : threadAppBarTitle(
+                    conv,
+                    _shortListingLabel(conv.listingId ?? ''),
+                    l10n,
+                  );
+            return Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.25,
+              ),
+            );
+          },
+        ),
         leading: const AppBackButton(fallback: AppRoutes.messages),
         backgroundColor: cs.surfaceContainerLow,
         surfaceTintColor: Colors.transparent,
@@ -502,14 +524,28 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                               child: Text(l10n.messagingThreadTitle),
                             );
                           }
-                          final card = ThreadListingContextCard(
-                            conversation: conv,
-                            listingIdShortFallback: l10n
-                                .messagingListingFallback(
-                                  _shortListingLabel(conv.listingId),
-                                ),
-                          );
+                          final card = conv.isSupportConversation
+                              ? const ThreadSupportContextCard()
+                              : ThreadListingContextCard(
+                                  conversation: conv,
+                                  listingIdShortFallback: l10n
+                                      .messagingListingFallback(
+                                        _shortListingLabel(conv.listingId!),
+                                      ),
+                                );
                           if (state.messages.isEmpty) {
+                            final isSupport = conv.isSupportConversation;
+                            final emptyPrompt = _ThreadEmptyPrompt(
+                              title: isSupport
+                                  ? l10n.messagingSupportThreadEmptyTitle
+                                  : null,
+                              body: isSupport
+                                  ? l10n.messagingSupportThreadEmptyBody
+                                  : l10n.messagingThreadEmptyBody,
+                              theme: theme,
+                              cs: cs,
+                              isDark: isDark,
+                            );
                             return RefreshIndicator(
                               onRefresh: () async {
                                 await context
@@ -531,40 +567,16 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         const SizedBox(height: 24),
-                                        if (isDark)
-                                          DecoratedBox(
-                                            decoration:
-                                                AppTheme.editorialDarkSectionCard(
-                                                  cs,
-                                                  borderRadius: 18,
-                                                )!,
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.fromLTRB(
-                                                    20,
-                                                    22,
-                                                    20,
-                                                    18,
-                                                  ),
-                                              child: _ThreadEmptyPrompt(
-                                                body: l10n
-                                                    .messagingThreadEmptyBody,
-                                                theme: theme,
-                                                cs: cs,
-                                                isDark: isDark,
-                                              ),
-                                            ),
-                                          )
-                                        else
-                                          _ThreadEmptyPrompt(
-                                            body: l10n.messagingThreadEmptyBody,
-                                            theme: theme,
-                                            cs: cs,
-                                            isDark: isDark,
-                                          ),
-                                        ThreadQuickReplyChips(
-                                          textController: widget.textController,
+                                        _ThreadEmptyPromptCard(
+                                          cs: cs,
+                                          isDark: isDark,
+                                          child: emptyPrompt,
                                         ),
+                                        if (!isSupport)
+                                          ThreadQuickReplyChips(
+                                            textController:
+                                                widget.textController,
+                                          ),
                                       ],
                                     ),
                                   ),
@@ -609,6 +621,8 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                                     message: m,
                                     isOutgoing: outgoing,
                                     timeLabel: label,
+                                    groupPosition: e.groupPosition,
+                                    showTimestamp: e.showTimestamp,
                                     onLongPress: () {
                                       final messenger = ScaffoldMessenger.of(
                                         threadHostContext,
@@ -639,7 +653,17 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
           ),
           DecoratedBox(
             decoration:
-                composerFooter ?? BoxDecoration(color: cs.surfaceContainer),
+                composerFooter ??
+                BoxDecoration(
+                  color: isDark ? cs.surfaceContainerLow : cs.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: cs.shadow.withValues(alpha: isDark ? 0.22 : 0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -653,10 +677,10 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                   top: false,
                   child: Padding(
                     padding: const EdgeInsets.only(
-                      left: 12,
-                      right: 4,
-                      top: 8,
-                      bottom: 8,
+                      left: 14,
+                      right: 6,
+                      top: 10,
+                      bottom: 10,
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -668,25 +692,33 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                             maxLines: 5,
                             maxLength: 4000,
                             textInputAction: TextInputAction.newline,
+                            style: theme.textTheme.bodyLarge,
                             decoration: InputDecoration(
                               isDense: true,
                               filled: true,
-                              fillColor: cs.surfaceContainerHigh,
+                              fillColor: isDark
+                                  ? cs.surfaceContainerHigh
+                                  : cs.surfaceContainerLow,
                               hintText: l10n.messagingComposerHint,
+                              hintStyle: theme.textTheme.bodyLarge?.copyWith(
+                                color: cs.onSurfaceVariant.withValues(
+                                  alpha: isDark ? 0.78 : 0.68,
+                                ),
+                              ),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(26),
+                                borderRadius: BorderRadius.circular(24),
                                 borderSide: BorderSide.none,
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(26),
+                                borderRadius: BorderRadius.circular(24),
                                 borderSide: BorderSide(
                                   color: cs.outlineVariant.withValues(
-                                    alpha: 0.45,
+                                    alpha: isDark ? 0.42 : 0.34,
                                   ),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(26),
+                                borderRadius: BorderRadius.circular(24),
                                 borderSide: BorderSide(
                                   color: isDark
                                       ? AppTheme.editorialDarkFieldFocusBorder(
@@ -725,10 +757,20 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                                 style: FilledButton.styleFrom(
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
-                                  minimumSize: const Size(48, 48),
-                                  maximumSize: const Size(48, 48),
+                                  minimumSize: const Size(46, 46),
+                                  maximumSize: const Size(46, 46),
                                   padding: EdgeInsets.zero,
                                   shape: const CircleBorder(),
+                                  backgroundColor: cs.primary,
+                                  foregroundColor: cs.onPrimary,
+                                  disabledBackgroundColor:
+                                      cs.surfaceContainerHighest,
+                                  disabledForegroundColor: cs.onSurfaceVariant
+                                      .withValues(alpha: isDark ? 0.42 : 0.45),
+                                  elevation: canSend ? 1 : 0,
+                                  shadowColor: cs.primary.withValues(
+                                    alpha: 0.35,
+                                  ),
                                 ),
                                 child: sending
                                     ? SizedBox(
@@ -740,9 +782,8 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                                         ),
                                       )
                                     : Icon(
-                                        Icons.send_rounded,
-                                        size: 22,
-                                        color: cs.onPrimary,
+                                        CarzonIcons.send,
+                                        size: 20,
                                       ),
                               ),
                             );
@@ -761,14 +802,49 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
   }
 }
 
+class _ThreadEmptyPromptCard extends StatelessWidget {
+  const _ThreadEmptyPromptCard({
+    required this.cs,
+    required this.isDark,
+    required this.child,
+  });
+
+  final ColorScheme cs;
+  final bool isDark;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final decoration = isDark
+        ? AppTheme.editorialDarkSectionCard(cs, borderRadius: 18)!
+        : BoxDecoration(
+            color: cs.surfaceContainerLow.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: cs.outlineVariant.withValues(alpha: 0.35),
+            ),
+          );
+
+    return DecoratedBox(
+      decoration: decoration,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+        child: child,
+      ),
+    );
+  }
+}
+
 class _ThreadEmptyPrompt extends StatelessWidget {
   const _ThreadEmptyPrompt({
+    this.title,
     required this.body,
     required this.theme,
     required this.cs,
     required this.isDark,
   });
 
+  final String? title;
   final String body;
   final ThemeData theme;
   final ColorScheme cs;
@@ -787,6 +863,18 @@ class _ThreadEmptyPrompt extends StatelessWidget {
               : cs.primary.withValues(alpha: 0.35),
         ),
         const SizedBox(height: 16),
+        if (title != null) ...[
+          Text(
+            title!,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+              color: cs.onSurface.withValues(alpha: isDark ? 0.96 : 0.92),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
         Text(
           body,
           textAlign: TextAlign.center,

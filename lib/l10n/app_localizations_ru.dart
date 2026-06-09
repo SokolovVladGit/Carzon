@@ -99,6 +99,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingsLoadMoreFailed => 'Не удалось загрузить ещё объявления.';
 
   @override
+  String get listingsLoadingMore => 'Загружаем ещё объявления…';
+
+  @override
   String get listingsEmpty => 'Подходящих объявлений не найдено.';
 
   @override
@@ -705,6 +708,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Начните переписку: задайте вопрос по объявлению или договоритесь о просмотре.';
 
   @override
+  String get messagingSupportThreadEmptyTitle => 'Напишите в поддержку Carzon';
+
+  @override
+  String get messagingSupportThreadEmptyBody =>
+      'Опишите вопрос, и мы ответим вам в этом чате.';
+
+  @override
   String get messagingThreadTitle => 'Чат';
 
   @override
@@ -1307,6 +1317,23 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get profileNotificationsSubtitle =>
       'Push, сообщения и статус доставки (тестирование).';
+
+  @override
+  String get contactSupport => 'Связаться с поддержкой';
+
+  @override
+  String get contactSupportSubtitle => 'Напишите нам по вопросам приложения';
+
+  @override
+  String get supportConversationTitle => 'Поддержка Carzon';
+
+  @override
+  String get contactSupportOpenFailure =>
+      'Не удалось открыть чат с поддержкой. Попробуйте позже.';
+
+  @override
+  String get contactSupportSelfFailure =>
+      'Аккаунт поддержки не может открыть этот чат.';
 
   @override
   String get notificationSettingsTitle => 'Уведомления';
@@ -2377,7 +2404,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingBuyerVinReportBasicDecodeNotOfficialLine =>
-      'Это не официальная проверка регистрации, владельца, истории ДТП, страховки или пробега.';
+      'Базовая расшифровка VIN, не юридическая или историческая проверка.';
 
   @override
   String get listingBuyerVinReportNhtsaCatalogSourceLine =>
@@ -2385,18 +2412,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingBuyerVinReportNotVerifiedSectionTitle =>
-      'Что этот отчёт пока не проверяет';
+      'Что Carzon пока не проверяет';
 
   @override
-  String get listingBuyerVinReportLimitationRegistrationMdPmr =>
-      'Регистрацию автомобиля в Молдове или ПМР';
+  String get listingBuyerVinReportLimitationRegistrationMdPmr => 'Регистрацию';
 
   @override
-  String get listingBuyerVinReportLimitationOwner => 'Владельца автомобиля';
+  String get listingBuyerVinReportLimitationOwner => 'Владельца';
 
   @override
   String get listingBuyerVinReportLimitationAccidentHistory =>
-      'Историю ДТП и повреждений';
+      'ДТП и повреждения';
 
   @override
   String get listingBuyerVinReportLimitationInsurance => 'Страховку';
@@ -2422,7 +2448,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingBuyerVinReportCompareMismatch =>
-      'Есть расхождения между данными по VIN и объявлением. Проверьте документы и автомобиль перед покупкой.';
+      'Данные по VIN не совпадают с объявлением.';
 
   @override
   String get listingBuyerVinReportDecodedEngineLabel => 'Двигатель';
@@ -2485,7 +2511,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingBuyerVinReportManualSourcesIntro =>
-      'Carzon пока не получает эти данные автоматически. Ниже — источники, которые можно проверить отдельно.';
+      'Источники для отдельной проверки.';
 
   @override
   String get listingBuyerVinReportManualStatusExternalCheck =>

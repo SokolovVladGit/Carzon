@@ -102,6 +102,204 @@ const Map<String, String> _aliases = {
   // Seat
   'seat': 'seat',
 
+  // Cupra
+  'cupra': 'cupra',
+
+  // Smart
+  'smart': 'smart',
+  'смарт': 'smart',
+
+  // Chrysler
+  'chrysler': 'chrysler',
+  'крайслер': 'chrysler',
+
+  // Dodge
+  'dodge': 'dodge',
+  'додж': 'dodge',
+
+  // Infiniti
+  'infiniti': 'infiniti',
+  'инфинити': 'infiniti',
+
+  // Acura
+  'acura': 'acura',
+  'акура': 'acura',
+
+  // Lada
+  'lada': 'lada',
+  'лада': 'lada',
+
+  // BYD
+  'byd': 'byd',
+
+  // Chery
+  'chery': 'chery',
+  'чери': 'chery',
+
+  // Geely
+  'geely': 'geely',
+  'джили': 'geely',
+
+  // Haval
+  'haval': 'haval',
+  'хавал': 'haval',
+
+  // Great Wall
+  'great wall': 'great-wall',
+  'great-wall': 'great-wall',
+
+  // MG
+  'mg': 'mg',
+
+  // Omoda
+  'omoda': 'omoda',
+
+  // Jaecoo
+  'jaecoo': 'jaecoo',
+
+  // Exeed
+  'exeed': 'exeed',
+
+  // Changan
+  'changan': 'changan',
+
+  // Dongfeng
+  'dongfeng': 'dongfeng',
+
+  // BAIC
+  'baic': 'baic',
+
+  // GAC
+  'gac': 'gac',
+
+  // FAW
+  'faw': 'faw',
+
+  // JAC
+  'jac': 'jac',
+
+  // Jetour
+  'jetour': 'jetour',
+
+  // Hongqi
+  'hongqi': 'hongqi',
+
+  // Tank
+  'tank': 'tank',
+
+  // Wey
+  'wey': 'wey',
+
+  // Lynk & Co
+  'lynk co': 'lynk-co',
+  'lynk & co': 'lynk-co',
+  'lynk-co': 'lynk-co',
+
+  // Zeekr
+  'zeekr': 'zeekr',
+
+  // NIO
+  'nio': 'nio',
+
+  // XPeng
+  'xpeng': 'xpeng',
+
+  // Leapmotor
+  'leapmotor': 'leapmotor',
+
+  // Li Auto
+  'li auto': 'li-auto',
+  'li-auto': 'li-auto',
+
+  // DS Automobiles
+  'ds automobiles': 'ds-automobiles',
+  'ds-automobiles': 'ds-automobiles',
+
+  // Genesis
+  'genesis': 'genesis',
+  'дженезис': 'genesis',
+
+  // Polestar
+  'polestar': 'polestar',
+
+  // SsangYong
+  'ssangyong': 'ssangyong',
+  'ssang yong': 'ssangyong',
+
+  // KGM
+  'kgm': 'kgm',
+
+  // Isuzu
+  'isuzu': 'isuzu',
+  'исузу': 'isuzu',
+
+  // Daihatsu
+  'daihatsu': 'daihatsu',
+
+  // Daewoo
+  'daewoo': 'daewoo',
+  'дэу': 'daewoo',
+
+  // Datsun
+  'datsun': 'datsun',
+  'датсун': 'datsun',
+
+  // Abarth
+  'abarth': 'abarth',
+
+  // Lancia
+  'lancia': 'lancia',
+
+  // Ram
+  'ram': 'ram',
+
+  // GMC
+  'gmc': 'gmc',
+
+  // Lincoln
+  'lincoln': 'lincoln',
+
+  // Buick
+  'buick': 'buick',
+
+  // Hummer
+  'hummer': 'hummer',
+
+  // ORA
+  'ora': 'ora',
+
+  // Maxus
+  'maxus': 'maxus',
+
+  // Seres
+  'seres': 'seres',
+
+  // Voyah
+  'voyah': 'voyah',
+
+  // Aion
+  'aion': 'aion',
+
+  // Bestune
+  'bestune': 'bestune',
+
+  // DFSK
+  'dfsk': 'dfsk',
+
+  // Foton
+  'foton': 'foton',
+
+  // VinFast
+  'vinfast': 'vinfast',
+
+  // UAZ
+  'uaz': 'uaz',
+  'уаз': 'uaz',
+
+  // Moskvich
+  'moskvich': 'moskvich',
+  'москвич': 'moskvich',
+
   // Opel
   'opel': 'opel',
   'опель': 'opel',
@@ -176,6 +374,54 @@ const Map<String, String> _aliases = {
   'роллс ройс': 'rolls-royce',
 };
 
+/// Bundled brand SVG slugs under `assets/brands/svg/`.
+///
+/// Aliases may resolve to slugs not yet packaged; those yield [default.svg]
+/// until a logo is added manually.
+///
+/// **Manual logo add flow**
+/// 1. Place `assets/brands/svg/{slug}.svg` (kebab-case slug from [_aliases]).
+/// 2. Append `{slug}` to [kPackagedBrandIconSlugs] below.
+/// 3. Run `brand_logo_glyph_test.dart` and `feed_brand_quick_filter_test.dart`.
+///
+/// Only list slugs whose SVG file exists in the repo; orphaned entries cause
+/// missing-asset errors at runtime.
+const Set<String> kPackagedBrandIconSlugs = {
+  'acura',
+  'alfa-romeo',
+  'audi',
+  'bmw',
+  'cadillac',
+  'chevrolet',
+  'dacia',
+  'fiat',
+  'ford',
+  'honda',
+  'hyundai',
+  'infiniti',
+  'isuzu',
+  'jaguar',
+  'jeep',
+  'kia',
+  'land-rover',
+  'lexus',
+  'mazda',
+  'mercedes-benz',
+  'mini',
+  'mitsubishi',
+  'nissan',
+  'opel',
+  'peugeot',
+  'renault',
+  'skoda',
+  'subaru',
+  'suzuki',
+  'tesla',
+  'toyota',
+  'volkswagen',
+  'volvo',
+};
+
 /// Returns the asset path of the brand SVG matching [make].
 ///
 /// Total function: never throws, always returns a valid asset string.
@@ -195,7 +441,10 @@ String getBrandIconPath(String? make) {
   if (normalized.isEmpty) return _pathFor(_defaultSlug);
 
   final slug = _aliases[normalized];
-  return _pathFor(slug ?? _defaultSlug);
+  if (slug == null || !kPackagedBrandIconSlugs.contains(slug)) {
+    return _pathFor(_defaultSlug);
+  }
+  return _pathFor(slug);
 }
 
 String _pathFor(String slug) => '$_assetDir/$slug.svg';

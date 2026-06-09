@@ -15,6 +15,13 @@ Future<void> pickListingFilterBrand(
   );
   await tester.tap(trigger);
   await tester.pumpAndSettle();
-  await tester.tap(find.text(catalogEnglish));
+  final brandTile = find.text(catalogEnglish);
+  await tester.scrollUntilVisible(
+    brandTile,
+    120,
+    scrollable: find.byType(Scrollable).last,
+  );
+  await tester.pumpAndSettle();
+  await tester.tap(brandTile);
   await tester.pumpAndSettle();
 }

@@ -292,7 +292,7 @@ void main() {
         const ValueKey('buyer_vin_report_sheet_close'),
       );
       expect(closeBtn, findsOneWidget);
-      expect(find.text('16.05.2026'), findsOneWidget);
+      expect(find.textContaining('16.05.2026'), findsOneWidget);
       expect(find.text('2026-05-16'), findsNothing);
       for (final raw in [
         'basic_decode_only',
@@ -369,38 +369,44 @@ void main() {
       );
       expect(
         find.text(ru.listingBuyerVinReportManualSourcesSectionTitle),
-        findsOneWidget,
-      );
-      expect(
-        find.text(ru.listingBuyerVinReportManualMdRcaTitle),
-        findsOneWidget,
-      );
-      expect(
-        find.text(ru.listingBuyerVinReportManualMdAspTitle),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const ValueKey('buyer_vin_manual_card_md_rca_damage')),
-        findsOneWidget,
+        findsNothing,
       );
       expect(
         find.text(ru.listingBuyerVinReportNotVerifiedSectionTitle),
         findsOneWidget,
       );
 
+      final scrollable = find.descendant(
+        of: find.byKey(const ValueKey('buyer_vin_report_sheet_scroll')),
+        matching: find.byType(Scrollable),
+      );
       await tester.scrollUntilVisible(
         find.text(ru.listingBuyerVinReportNotVerifiedSectionTitle),
         120,
-        scrollable: find.descendant(
-          of: find.byKey(const ValueKey('buyer_vin_report_sheet_scroll')),
-          matching: find.byType(Scrollable),
-        ),
+        scrollable: scrollable,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.text(ru.listingBuyerVinReportNotVerifiedSectionTitle),
       );
       await tester.pumpAndSettle();
 
       expect(
         find.text(ru.listingBuyerVinReportLimitationRegistrationMdPmr),
         findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportLimitationOwner),
+        findsOneWidget,
+      );
+      expect(
+        find.text(ru.listingBuyerVinReportLimitationAccidentHistory),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('buyer_vin_manual_card_md_rca_damage')),
+        findsNothing,
       );
       for (final phrase in [
         'VIN проверен',
@@ -415,7 +421,7 @@ void main() {
   );
 
   testWidgets(
-    'buyer report empty public data still shows manual source cards',
+    'buyer report empty public data omits manual source cards and NHTSA footer',
     (tester) async {
       when(() => listingsRepo.fetchBuyerVinReportSources('l1')).thenAnswer(
         (_) async => const Success(BuyerListingVinReportLookupResult()),
@@ -433,16 +439,17 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         find.text(ru.listingBuyerVinReportManualSourcesSectionTitle),
-        findsOneWidget,
+        findsNothing,
       );
       expect(
-        find.text(ru.listingBuyerVinReportManualCommercialTitle),
-        findsOneWidget,
+        find.text(ru.listingBuyerVinReportNotVerifiedSectionTitle),
+        findsNothing,
       );
       expect(
         find.text(ru.listingBuyerVinReportNhtsaCatalogSourceLine),
         findsNothing,
       );
+      expect(find.text(ru.listingVinReportNoDataTitle), findsWidgets);
     },
   );
 
@@ -594,10 +601,6 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.text(ru.listingBuyerVinReportBasicDecodeCatalogLine),
-        findsOneWidget,
-      );
-      expect(
         find.text(ru.listingBuyerVinReportBasicDecodeNotOfficialLine),
         findsOneWidget,
       );
@@ -605,12 +608,18 @@ void main() {
         find.text(ru.listingBuyerVinReportNotVerifiedSectionTitle),
         findsOneWidget,
       );
+
+      await tester.tap(
+        find.text(ru.listingBuyerVinReportNotVerifiedSectionTitle),
+      );
+      await tester.pumpAndSettle();
+
       expect(
         find.text(ru.listingBuyerVinReportLimitationOwner),
         findsOneWidget,
       );
       expect(find.text('HONDA'), findsOneWidget);
-      expect(find.text('16.05.2026'), findsOneWidget);
+      expect(find.textContaining('16.05.2026'), findsOneWidget);
       expect(find.text('2026-05-16'), findsNothing);
       expect(
         find.text(ru.listingBuyerVinReportSourcesSectionTitle),

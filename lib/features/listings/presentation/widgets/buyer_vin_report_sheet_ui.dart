@@ -14,8 +14,9 @@ TextStyle buyerVinReportMicrocopyStyle(ThemeData theme) {
   final isDark = theme.brightness == Brightness.dark;
   return theme.textTheme.bodySmall!.copyWith(
     height: 1.45,
-    fontWeight: FontWeight.w500,
-    color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.82 : 0.9),
+    fontWeight: FontWeight.w400,
+    fontSize: (theme.textTheme.bodySmall?.fontSize ?? 12) - 0.5,
+    color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.68 : 0.72),
   );
 }
 
@@ -28,43 +29,9 @@ BoxDecoration _buyerVinReportEditorialCard(
 
 BoxDecoration _buyerVinReportDarkDataInset(ColorScheme scheme) {
   return BoxDecoration(
-    borderRadius: BorderRadius.circular(12),
-    border: Border.all(color: scheme.outline.withValues(alpha: 0.28)),
-    gradient: LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        Color.alphaBlend(
-          scheme.primary.withValues(alpha: 0.08),
-          scheme.surfaceContainerHigh,
-        ),
-        scheme.surfaceContainerLow,
-      ],
-    ),
-  );
-}
-
-BoxDecoration _buyerVinReportDarkCompareInset(
-  ColorScheme scheme, {
-  required bool isMatch,
-}) {
-  final accent = AppTheme.editorialAccentColor(scheme);
-  return BoxDecoration(
-    borderRadius: BorderRadius.circular(12),
-    border: Border.all(
-      color: (isMatch ? accent : scheme.tertiary).withValues(alpha: 0.32),
-    ),
-    gradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        Color.alphaBlend(
-          (isMatch ? accent : scheme.tertiary).withValues(alpha: 0.14),
-          scheme.surfaceContainerHigh,
-        ),
-        scheme.surfaceContainerLow.withValues(alpha: 0.92),
-      ],
-    ),
+    borderRadius: BorderRadius.circular(10),
+    color: scheme.surfaceContainerHigh.withValues(alpha: 0.42),
+    border: Border.all(color: scheme.outline.withValues(alpha: 0.22)),
   );
 }
 
@@ -112,7 +79,7 @@ BoxDecoration buyerVinReportSectionDecoration(
     }
   }
 
-  final radius = BorderRadius.circular(16);
+  final radius = BorderRadius.circular(14);
   switch (tone) {
     case BuyerVinReportSectionTone.summary:
       return BoxDecoration(
@@ -140,33 +107,25 @@ BoxDecoration buyerVinReportSectionDecoration(
     case BuyerVinReportSectionTone.dataCore:
       return BoxDecoration(
         borderRadius: radius,
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.34),
+        color: scheme.surface.withValues(alpha: 0.72),
         border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.36),
+          color: scheme.outlineVariant.withValues(alpha: 0.28),
         ),
       );
     case BuyerVinReportSectionTone.dataSpecs:
       return BoxDecoration(
         borderRadius: radius,
-        color: scheme.surface.withValues(alpha: 0.92),
+        color: scheme.surface.withValues(alpha: 0.68),
         border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.48),
+          color: scheme.outlineVariant.withValues(alpha: 0.26),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: scheme.shadow.withValues(alpha: 0.035),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-            spreadRadius: -3,
-          ),
-        ],
       );
     case BuyerVinReportSectionTone.dataOrigin:
       return BoxDecoration(
         borderRadius: radius,
-        color: scheme.surfaceContainerLow.withValues(alpha: 0.5),
+        color: scheme.surface.withValues(alpha: 0.62),
         border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.32),
+          color: scheme.outlineVariant.withValues(alpha: 0.24),
         ),
       );
     case BuyerVinReportSectionTone.sourceMeta:
@@ -216,7 +175,7 @@ class BuyerVinReportSectionCard extends StatelessWidget {
     required this.child,
     this.subtitle,
     this.leadingIcon,
-    this.padding = const EdgeInsets.fromLTRB(16, 14, 16, 14),
+    this.padding = const EdgeInsets.fromLTRB(14, 12, 14, 12),
   });
 
   final ThemeData theme;
@@ -260,12 +219,12 @@ class BuyerVinReportSectionCard extends StatelessWidget {
                       Text(
                         title,
                         style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.15,
-                          height: 1.25,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -0.1,
+                          height: 1.2,
                           color: isDark
-                              ? scheme.onSurface.withValues(alpha: 0.96)
-                              : null,
+                              ? scheme.onSurface.withValues(alpha: 0.92)
+                              : scheme.onSurface.withValues(alpha: 0.88),
                         ),
                       ),
                       if (subtitle != null) ...[
@@ -285,7 +244,7 @@ class BuyerVinReportSectionCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             child,
           ],
         ),
@@ -294,7 +253,7 @@ class BuyerVinReportSectionCard extends StatelessWidget {
   }
 }
 
-/// Hero header: title, Latin VIN badge, summary, optional compare, source metadata.
+/// Compact hero: title, VIN badge, seller/privacy lines, optional compare result.
 class BuyerVinReportHeroHeader extends StatelessWidget {
   const BuyerVinReportHeroHeader({
     super.key,
@@ -302,16 +261,8 @@ class BuyerVinReportHeroHeader extends StatelessWidget {
     required this.reportTitle,
     required this.vinAddedLine,
     required this.vinPrivateLine,
-    this.compareHint,
     this.compareResult,
     this.compareIsMatch,
-    this.sourceLine,
-    this.updatedLabel,
-    this.updatedDate,
-    this.basicDecodeLine,
-    this.notOfficialLine,
-    this.cautionLine,
-    this.compareAvailableHint,
     this.showSuccessVinBadge = false,
   });
 
@@ -319,18 +270,8 @@ class BuyerVinReportHeroHeader extends StatelessWidget {
   final String reportTitle;
   final String vinAddedLine;
   final String vinPrivateLine;
-  final String? compareHint;
   final String? compareResult;
   final bool? compareIsMatch;
-  final String? sourceLine;
-  final String? updatedLabel;
-  final String? updatedDate;
-  final String? basicDecodeLine;
-  final String? notOfficialLine;
-  final String? cautionLine;
-
-  /// Shown when decode exists but listing compare fields are incomplete.
-  final String? compareAvailableHint;
 
   /// Green Latin V badge only when [BuyerVinReportUiState.reportAvailable].
   final bool showSuccessVinBadge;
@@ -340,36 +281,19 @@ class BuyerVinReportHeroHeader extends StatelessWidget {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final decoration = isDark
-        ? _buyerVinReportEditorialCard(scheme, borderRadius: 18)
+        ? _buyerVinReportEditorialCard(scheme, borderRadius: 14)
         : BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                scheme.surfaceContainerHigh.withValues(alpha: 0.62),
-                scheme.surfaceContainerHighest.withValues(alpha: 0.4),
-                scheme.surface.withValues(alpha: 0.85),
-              ],
-              stops: const [0, 0.55, 1],
-            ),
+            borderRadius: BorderRadius.circular(14),
+            color: scheme.surface.withValues(alpha: 0.82),
             border: Border.all(
-              color: scheme.outlineVariant.withValues(alpha: 0.4),
+              color: scheme.outlineVariant.withValues(alpha: 0.28),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: scheme.shadow.withValues(alpha: 0.05),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-                spreadRadius: -6,
-              ),
-            ],
           );
     return DecoratedBox(
       key: const ValueKey('buyer_vin_report_hero_header'),
       decoration: decoration,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -382,118 +306,54 @@ class BuyerVinReportHeroHeader extends StatelessWidget {
                     children: [
                       Text(
                         reportTitle,
-                        style: theme.textTheme.headlineSmall?.copyWith(
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          letterSpacing: -0.35,
-                          height: 1.12,
+                          letterSpacing: -0.3,
+                          height: 1.15,
                           color: isDark
-                              ? scheme.onSurface.withValues(alpha: 0.98)
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        vinAddedLine,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          height: 1.4,
-                          fontWeight: FontWeight.w600,
-                          color: scheme.onSurface.withValues(
-                            alpha: isDark ? 0.92 : 0.9,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                showSuccessVinBadge
-                    ? const VinPresentLatinBadge(heroSize: true)
-                    : const VinNeutralLatinBadge(heroSize: true),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _HeroSummaryLine(
-              theme: theme,
-              icon: Icons.lock_outline_rounded,
-              text: vinPrivateLine,
-            ),
-            if (compareAvailableHint != null &&
-                compareHint == null &&
-                compareResult == null) ...[
-              const SizedBox(height: 8),
-              _HeroSummaryLine(
-                theme: theme,
-                icon: Icons.compare_arrows_rounded,
-                text: compareAvailableHint!,
-              ),
-            ],
-            if (compareHint != null && compareResult != null) ...[
-              const SizedBox(height: 12),
-              DecoratedBox(
-                decoration: isDark
-                    ? _buyerVinReportDarkCompareInset(
-                        scheme,
-                        isMatch: compareIsMatch == true,
-                      )
-                    : BoxDecoration(
-                        color:
-                            (compareIsMatch == true
-                                    ? scheme.primaryContainer
-                                    : scheme.tertiaryContainer)
-                                .withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: scheme.outlineVariant.withValues(alpha: 0.35),
-                        ),
-                      ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        compareHint!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          height: 1.35,
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: isDark ? 0.82 : 1,
-                          ),
+                              ? scheme.onSurface.withValues(alpha: 0.96)
+                              : scheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        compareResult!,
+                        vinAddedLine,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          height: 1.4,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? scheme.onSurface.withValues(alpha: 0.94)
-                              : null,
+                          height: 1.35,
+                          fontWeight: FontWeight.w500,
+                          color: scheme.onSurface.withValues(
+                            alpha: isDark ? 0.88 : 0.82,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 10),
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: showSuccessVinBadge
+                      ? const VinPresentLatinBadge(heroSize: true)
+                      : const VinNeutralLatinBadge(heroSize: true),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              vinPrivateLine,
+              style: theme.textTheme.bodySmall?.copyWith(
+                height: 1.4,
+                color: scheme.onSurfaceVariant.withValues(
+                  alpha: isDark ? 0.84 : 0.95,
+                ),
               ),
-            ],
-            if (sourceLine != null ||
-                updatedDate != null ||
-                basicDecodeLine != null) ...[
-              const SizedBox(height: 12),
-              BuyerVinReportMetadataStrip(
-                theme: theme,
-                sourceLine: sourceLine,
-                updatedLabel: updatedLabel,
-                updatedDate: updatedDate,
-                basicDecodeLine: basicDecodeLine,
-                cautionLine: cautionLine,
-              ),
-            ],
-            if (notOfficialLine != null) ...[
+            ),
+            if (compareResult != null) ...[
               const SizedBox(height: 10),
-              Text(
-                notOfficialLine!,
-                style: buyerVinReportMicrocopyStyle(theme),
+              _HeroCompareResultLine(
+                theme: theme,
+                text: compareResult!,
+                isMatch: compareIsMatch == true,
               ),
             ],
           ],
@@ -503,44 +363,116 @@ class BuyerVinReportHeroHeader extends StatelessWidget {
   }
 }
 
-class _HeroSummaryLine extends StatelessWidget {
-  const _HeroSummaryLine({
+class _HeroCompareResultLine extends StatelessWidget {
+  const _HeroCompareResultLine({
     required this.theme,
-    required this.icon,
     required this.text,
+    required this.isMatch,
   });
 
   final ThemeData theme;
-  final IconData icon;
   final String text;
+  final bool isMatch;
 
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final accent = isMatch ? scheme.primary : scheme.tertiary;
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Icon(
-          icon,
+          isMatch ? Icons.check_circle_outline : Icons.info_outline_rounded,
           size: 16,
-          color: isDark
-              ? scheme.onSurfaceVariant.withValues(alpha: 0.78)
-              : scheme.onSurfaceVariant,
+          color: accent.withValues(alpha: isDark ? 0.88 : 0.82),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Expanded(
           child: Text(
             text,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              height: 1.45,
-              color: scheme.onSurfaceVariant.withValues(
-                alpha: isDark ? 0.84 : 1,
-              ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: (isMatch
+                    ? theme.textTheme.bodySmall
+                    : theme.textTheme.bodyMedium)
+                ?.copyWith(
+              height: 1.35,
+              fontWeight: FontWeight.w600,
+              color: isMatch
+                  ? accent.withValues(alpha: isDark ? 0.92 : 0.88)
+                  : scheme.onSurface.withValues(alpha: isDark ? 0.9 : 0.86),
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Lightweight source/disclaimer footer below decoded data.
+class BuyerVinReportFooterStrip extends StatelessWidget {
+  const BuyerVinReportFooterStrip({
+    super.key,
+    required this.theme,
+    this.sourceLine,
+    this.updatedDate,
+    this.disclaimerLine,
+    this.cautionLine,
+  });
+
+  final ThemeData theme;
+  final String? sourceLine;
+  final String? updatedDate;
+  final String? disclaimerLine;
+  final String? cautionLine;
+
+  @override
+  Widget build(BuildContext context) {
+    if (sourceLine == null &&
+        updatedDate == null &&
+        disclaimerLine == null &&
+        cautionLine == null) {
+      return const SizedBox.shrink();
+    }
+
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final muted = scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.58 : 0.62);
+    final noteStyle = theme.textTheme.labelSmall?.copyWith(
+      height: 1.35,
+      fontWeight: FontWeight.w400,
+      fontSize: (theme.textTheme.labelSmall?.fontSize ?? 11) - 0.5,
+      color: muted,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: scheme.outlineVariant.withValues(alpha: isDark ? 0.14 : 0.18),
+          ),
+          const SizedBox(height: 8),
+          if (sourceLine != null) Text(sourceLine!, style: noteStyle),
+          if (updatedDate != null) ...[
+            if (sourceLine != null) const SizedBox(height: 2),
+            Text(updatedDate!, style: noteStyle),
+          ],
+          if (disclaimerLine != null) ...[
+            if (sourceLine != null || updatedDate != null)
+              const SizedBox(height: 3),
+            Text(disclaimerLine!, style: noteStyle),
+          ],
+          if (cautionLine != null) ...[
+            const SizedBox(height: 3),
+            Text(cautionLine!, style: noteStyle),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -673,12 +605,10 @@ class BuyerVinReportIdentityPanel extends StatelessWidget {
             decoration: isDark
                 ? _buyerVinReportDarkDataInset(scheme)
                 : BoxDecoration(
-                    color: scheme.surfaceContainerHighest.withValues(
-                      alpha: 0.22,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
+                    color: scheme.surface.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: scheme.outlineVariant.withValues(alpha: 0.3),
+                      color: scheme.outlineVariant.withValues(alpha: 0.22),
                     ),
                   ),
             child: Padding(
@@ -1082,7 +1012,7 @@ class BuyerVinReportNhtsaGroupSection extends StatelessWidget {
       tone: tone,
       title: group.title,
       leadingIcon: buyerVinReportIconForGroupIndex(groupIndex),
-      padding: EdgeInsets.fromLTRB(16, 14, 16, isSpecs ? 10 : 14),
+      padding: EdgeInsets.fromLTRB(14, 12, 14, isSpecs ? 10 : 12),
       child: body,
     );
   }
@@ -1109,16 +1039,14 @@ class BuyerVinReportSpecTable extends StatelessWidget {
       decoration: isDark
           ? _buyerVinReportDarkDataInset(scheme)
           : BoxDecoration(
-              color: scheme.surfaceContainerHighest.withValues(
-                alpha: compact ? 0.18 : 0.24,
-              ),
-              borderRadius: BorderRadius.circular(12),
+              color: scheme.surface.withValues(alpha: compact ? 0.5 : 0.58),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: scheme.outlineVariant.withValues(alpha: 0.32),
+                color: scheme.outlineVariant.withValues(alpha: 0.22),
               ),
             ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: Column(
           children: [
             for (var i = 0; i < fields.length; i++) ...[
@@ -1135,7 +1063,7 @@ class BuyerVinReportSpecTable extends StatelessWidget {
                   height: 1,
                   thickness: 1,
                   color: scheme.outlineVariant.withValues(
-                    alpha: isDark ? 0.22 : 0.28,
+                    alpha: isDark ? 0.18 : 0.22,
                   ),
                 ),
             ],
@@ -1165,7 +1093,7 @@ class BuyerVinReportSpecRow extends StatelessWidget {
   final bool striped;
   final bool isLast;
 
-  static const int _stackedCharThreshold = 30;
+  static const int _stackedCharThreshold = 24;
 
   bool get _useStacked =>
       forceStacked || value.characters.length > _stackedCharThreshold;
@@ -1175,7 +1103,7 @@ class BuyerVinReportSpecRow extends StatelessWidget {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final bg = striped
-        ? scheme.onSurface.withValues(alpha: isDark ? 0.045 : 0.028)
+        ? scheme.onSurface.withValues(alpha: isDark ? 0.03 : 0.018)
         : Colors.transparent;
 
     return ColoredBox(

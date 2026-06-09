@@ -54,7 +54,7 @@ class ThreadListingContextCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () => context.push(
-            AppRoutes.listingDetailsPath(conversation.listingId),
+            AppRoutes.listingDetailsPath(conversation.listingId!),
             extra: ListingDetailsExtra(
               coverImageUrl: cover != null && cover.isNotEmpty ? cover : null,
             ),

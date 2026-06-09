@@ -272,6 +272,12 @@ abstract class AppLocalizations {
   /// **'Не удалось загрузить ещё объявления.'**
   String get listingsLoadMoreFailed;
 
+  /// No description provided for @listingsLoadingMore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Загружаем ещё объявления…'**
+  String get listingsLoadingMore;
+
   /// No description provided for @listingsEmpty.
   ///
   /// In ru, this message translates to:
@@ -1349,6 +1355,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Начните переписку: задайте вопрос по объявлению или договоритесь о просмотре.'**
   String get messagingThreadEmptyBody;
+
+  /// No description provided for @messagingSupportThreadEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напишите в поддержку Carzon'**
+  String get messagingSupportThreadEmptyTitle;
+
+  /// No description provided for @messagingSupportThreadEmptyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Опишите вопрос, и мы ответим вам в этом чате.'**
+  String get messagingSupportThreadEmptyBody;
 
   /// No description provided for @messagingThreadTitle.
   ///
@@ -2447,6 +2465,36 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Push, сообщения и статус доставки (тестирование).'**
   String get profileNotificationsSubtitle;
+
+  /// No description provided for @contactSupport.
+  ///
+  /// In ru, this message translates to:
+  /// **'Связаться с поддержкой'**
+  String get contactSupport;
+
+  /// No description provided for @contactSupportSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Напишите нам по вопросам приложения'**
+  String get contactSupportSubtitle;
+
+  /// No description provided for @supportConversationTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поддержка Carzon'**
+  String get supportConversationTitle;
+
+  /// No description provided for @contactSupportOpenFailure.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось открыть чат с поддержкой. Попробуйте позже.'**
+  String get contactSupportOpenFailure;
+
+  /// No description provided for @contactSupportSelfFailure.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт поддержки не может открыть этот чат.'**
+  String get contactSupportSelfFailure;
 
   /// No description provided for @notificationSettingsTitle.
   ///
@@ -4323,7 +4371,7 @@ abstract class AppLocalizations {
   /// No description provided for @listingBuyerVinReportBasicDecodeNotOfficialLine.
   ///
   /// In ru, this message translates to:
-  /// **'Это не официальная проверка регистрации, владельца, истории ДТП, страховки или пробега.'**
+  /// **'Базовая расшифровка VIN, не юридическая или историческая проверка.'**
   String get listingBuyerVinReportBasicDecodeNotOfficialLine;
 
   /// No description provided for @listingBuyerVinReportNhtsaCatalogSourceLine.
@@ -4335,25 +4383,25 @@ abstract class AppLocalizations {
   /// No description provided for @listingBuyerVinReportNotVerifiedSectionTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Что этот отчёт пока не проверяет'**
+  /// **'Что Carzon пока не проверяет'**
   String get listingBuyerVinReportNotVerifiedSectionTitle;
 
   /// No description provided for @listingBuyerVinReportLimitationRegistrationMdPmr.
   ///
   /// In ru, this message translates to:
-  /// **'Регистрацию автомобиля в Молдове или ПМР'**
+  /// **'Регистрацию'**
   String get listingBuyerVinReportLimitationRegistrationMdPmr;
 
   /// No description provided for @listingBuyerVinReportLimitationOwner.
   ///
   /// In ru, this message translates to:
-  /// **'Владельца автомобиля'**
+  /// **'Владельца'**
   String get listingBuyerVinReportLimitationOwner;
 
   /// No description provided for @listingBuyerVinReportLimitationAccidentHistory.
   ///
   /// In ru, this message translates to:
-  /// **'Историю ДТП и повреждений'**
+  /// **'ДТП и повреждения'**
   String get listingBuyerVinReportLimitationAccidentHistory;
 
   /// No description provided for @listingBuyerVinReportLimitationInsurance.
@@ -4395,7 +4443,7 @@ abstract class AppLocalizations {
   /// No description provided for @listingBuyerVinReportCompareMismatch.
   ///
   /// In ru, this message translates to:
-  /// **'Есть расхождения между данными по VIN и объявлением. Проверьте документы и автомобиль перед покупкой.'**
+  /// **'Данные по VIN не совпадают с объявлением.'**
   String get listingBuyerVinReportCompareMismatch;
 
   /// No description provided for @listingBuyerVinReportDecodedEngineLabel.
@@ -4515,7 +4563,7 @@ abstract class AppLocalizations {
   /// No description provided for @listingBuyerVinReportManualSourcesIntro.
   ///
   /// In ru, this message translates to:
-  /// **'Carzon пока не получает эти данные автоматически. Ниже — источники, которые можно проверить отдельно.'**
+  /// **'Источники для отдельной проверки.'**
   String get listingBuyerVinReportManualSourcesIntro;
 
   /// No description provided for @listingBuyerVinReportManualStatusExternalCheck.

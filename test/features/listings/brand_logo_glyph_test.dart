@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:carzon/core/theme/app_theme.dart';
 import 'package:carzon/shared/brands/brand_icon_resolver.dart';
 import 'package:carzon/shared/brands/brand_logo_glyph.dart';
@@ -6,6 +8,45 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('kPackagedBrandIconSlugs', () {
+    test('every packaged slug has a matching SVG file on disk', () {
+      for (final slug in kPackagedBrandIconSlugs) {
+        expect(
+          File('assets/brands/svg/$slug.svg').existsSync(),
+          isTrue,
+          reason: slug,
+        );
+      }
+    });
+  });
+
+  group('getBrandIconPath', () {
+    test('packaged slug resolves to brand SVG', () {
+      expect(getBrandIconPath('Toyota'), endsWith('/toyota.svg'));
+    });
+
+    test('known alias without bundled SVG falls back to default', () {
+      expect(getBrandIconPath('BYD'), endsWith('/default.svg'));
+      expect(getBrandIconPath('Cupra'), endsWith('/default.svg'));
+    });
+
+    test('second-wave brands without bundled SVG fall back to default', () {
+      for (final brand in ['Genesis', 'VinFast', 'UAZ', 'Ram', 'DS Automobiles']) {
+        expect(
+          getBrandIconPath(brand),
+          endsWith('/default.svg'),
+          reason: brand,
+        );
+      }
+    });
+
+    test('Isuzu resolves to packaged SVG slug', () {
+      expect(getBrandIconPath('Isuzu'), endsWith('/isuzu.svg'));
+      expect(brandIconSlugFromAssetPath(getBrandIconPath('Isuzu')), 'isuzu');
+      expect(isBrandIconDefaultAssetPath(getBrandIconPath('Isuzu')), isFalse);
+    });
+  });
+
   group('isBrandIconMonochromeAssetPath', () {
     test('Toyota is monochrome', () {
       expect(

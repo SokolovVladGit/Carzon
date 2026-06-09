@@ -7,6 +7,9 @@ abstract class MessagingRepository {
   /// RPC `get_or_create_conversation` — returns conversation id.
   Future<Result<String>> getOrCreateConversation(String listingId);
 
+  /// RPC `get_or_create_support_conversation` — returns conversation id.
+  Future<Result<String>> getOrCreateSupportConversation();
+
   /// RLS-scoped listing of threads for the current user, newest activity first.
   Future<Result<List<Conversation>>> getConversations();
 

@@ -4,10 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
-import '../../../../core/widgets/app_back_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
+import '../widgets/auth_editorial_header.dart';
+import '../widgets/auth_page_scaffold.dart';
 
 /// Minimal email + password sign-up.
 ///
@@ -73,11 +74,9 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(fallback: AppRoutes.signIn),
-        title: Text(l10n.signUpTitle),
-      ),
+
+    return AuthPageScaffold(
+      fallbackRoute: AppRoutes.signIn,
       body: BlocConsumer<AuthCubit, AuthState>(
         listenWhen: (prev, curr) => prev.status != curr.status,
         listener: (context, state) {
@@ -109,75 +108,100 @@ class _SignUpPageState extends State<SignUpPage> {
         },
         builder: (context, state) {
           final loading = state.status == AuthStatus.authenticating;
-          return SafeArea(
-            child: SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextFormField(
-                      controller: _emailCtrl,
-                      decoration: InputDecoration(
-                        labelText: l10n.authFieldEmail,
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [AutofillHints.email],
-                      enabled: !loading,
-                      validator: (v) => _validateEmail(l10n, v),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _passwordCtrl,
-                      decoration: InputDecoration(
-                        labelText: l10n.authFieldPassword,
-                      ),
-                      obscureText: true,
-                      autofillHints: const [AutofillHints.newPassword],
-                      enabled: !loading,
-                      validator: (v) => _validatePassword(l10n, v),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _confirmCtrl,
-                      decoration: InputDecoration(
-                        labelText: l10n.authFieldConfirmPassword,
-                      ),
-                      obscureText: true,
-                      autofillHints: const [AutofillHints.newPassword],
-                      enabled: !loading,
-                      validator: (v) => _validateConfirm(l10n, v),
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: loading ? null : _submit,
-                      child: loading
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(l10n.signUpSubmit),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: loading
-                          ? null
-                          : () => context.go(AppRoutes.signIn),
-                      child: Text(l10n.signUpHaveAccount),
-                    ),
-                    const SizedBox(height: 4),
-                    TextButton(
-                      onPressed: loading
-                          ? null
-                          : () => context.go(AppRoutes.legal),
-                      child: Text(l10n.legalLink),
-                    ),
-                  ],
+          return AuthPageBody(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AuthEditorialHeader(
+                  eyebrow: l10n.signInCreateAccount,
+                  title: l10n.signUpTitle,
                 ),
-              ),
+                const SizedBox(height: 28),
+                AuthFormSection(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextFormField(
+                          controller: _emailCtrl,
+                          decoration: AuthFormStyles.fieldDecoration(
+                            context,
+                            l10n.authFieldEmail,
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.email],
+                          enabled: !loading,
+                          validator: (v) => _validateEmail(l10n, v),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _passwordCtrl,
+                          decoration: AuthFormStyles.fieldDecoration(
+                            context,
+                            l10n.authFieldPassword,
+                          ),
+                          obscureText: true,
+                          autofillHints: const [AutofillHints.newPassword],
+                          enabled: !loading,
+                          validator: (v) => _validatePassword(l10n, v),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _confirmCtrl,
+                          decoration: AuthFormStyles.fieldDecoration(
+                            context,
+                            l10n.authFieldConfirmPassword,
+                          ),
+                          obscureText: true,
+                          autofillHints: const [AutofillHints.newPassword],
+                          enabled: !loading,
+                          validator: (v) => _validateConfirm(l10n, v),
+                        ),
+                        const SizedBox(height: 22),
+                        FilledButton(
+                          onPressed: loading ? null : _submit,
+                          style: AuthFormStyles.primaryButtonStyle(context),
+                          child: loading
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(l10n.signUpSubmit),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AuthFormSection.formMaxWidth,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AuthLinkButton(
+                        label: l10n.signUpHaveAccount,
+                        loading: loading,
+                        accent: true,
+                        onPressed: () => context.go(AppRoutes.signIn),
+                      ),
+                      const SizedBox(height: 18),
+                      AuthLinkButton(
+                        label: l10n.legalLink,
+                        loading: loading,
+                        muted: true,
+                        onPressed: () => context.go(AppRoutes.legal),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           );
         },

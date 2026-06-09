@@ -21,6 +21,7 @@ import '../bloc/messaging_unread_summary_cubit.dart';
 import '../../domain/repositories/messaging_repository.dart';
 import '../bloc/messages_inbox_cubit.dart';
 import '../bloc/messages_inbox_state.dart';
+import '../utils/conversation_display_copy.dart';
 import '../widgets/messages_inbox_conversation_tile.dart';
 
 String _shortListingLabel(String listingId) {
@@ -42,8 +43,15 @@ PreferredSizeWidget _inboxAppBarBottomEdge(ColorScheme cs) {
 
 AppBar _inboxAppBar(BuildContext context, String title) {
   final cs = Theme.of(context).colorScheme;
+  final theme = Theme.of(context);
   return AppBar(
-    title: Text(title),
+    title: Text(
+      title,
+      style: theme.textTheme.titleLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.35,
+      ),
+    ),
     leading: const AppBackButton(fallback: AppRoutes.menu),
     backgroundColor: cs.surfaceContainerLow,
     surfaceTintColor: Colors.transparent,
@@ -277,12 +285,12 @@ class _MessagesInboxView extends StatelessWidget {
                   context,
                 ).colorScheme.outlineVariant.withValues(alpha: 0.32);
                 const dividerIndent =
-                    16 + MessagesInboxConversationTile.avatarSize + 12;
+                    18 + MessagesInboxConversationTile.avatarSize + 14;
                 return RefreshIndicator(
                   onRefresh: onPullRefresh,
                   child: ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.only(top: 4, bottom: 8),
+                    padding: const EdgeInsets.only(top: 6, bottom: 12),
                     itemCount: state.conversations.length,
                     separatorBuilder: (context, index) => Divider(
                       height: 1,
@@ -293,14 +301,21 @@ class _MessagesInboxView extends StatelessWidget {
                     ),
                     itemBuilder: (context, i) {
                       final c = state.conversations[i];
-                      final listingFallback = l10n.messagingListingFallback(
-                        _shortListingLabel(c.listingId),
+                      final listingFallback = c.listingId == null
+                          ? ''
+                          : l10n.messagingListingFallback(
+                              _shortListingLabel(c.listingId!),
+                            );
+                      final headline = conversationPrimaryLine(
+                        c,
+                        listingFallback,
+                        l10n,
                       );
                       final preview =
                           (c.lastMessagePreview != null &&
                               c.lastMessagePreview!.trim().isNotEmpty)
                           ? c.lastMessagePreview!.trim()
-                          : l10n.messagingNoPreview;
+                          : conversationEmptyPreviewLine(c, l10n);
                       final time = c.lastMessageAt != null
                           ? timeFormat.format(c.lastMessageAt!.toLocal())
                           : null;
@@ -308,6 +323,7 @@ class _MessagesInboxView extends StatelessWidget {
                       return MessagesInboxConversationTile(
                         conversation: c,
                         listingHeadlineFallback: listingFallback,
+                        headline: headline,
                         messagePreview: preview,
                         timeText: time,
                         onTap: () async {

@@ -22,7 +22,15 @@ class ListingsRefreshed extends ListingsEvent {
 }
 
 class ListingsNextPageRequested extends ListingsEvent {
-  const ListingsNextPageRequested();
+  const ListingsNextPageRequested({this.isExplicitRetry = false});
+
+  /// When `true`, retries the failed next page after
+  /// [ListingsStatus.paginationFailure]. Scroll-triggered requests leave
+  /// this `false` so accidental auto-retries are ignored.
+  final bool isExplicitRetry;
+
+  @override
+  List<Object?> get props => [isExplicitRetry];
 }
 
 class ListingsRegionFilterChanged extends ListingsEvent {

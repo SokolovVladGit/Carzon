@@ -39,6 +39,13 @@ import '../widgets/filters/listings_filter_host.dart';
 import '../../domain/browse_state_for_alert_criteria.dart';
 import '../utils/discovery_feed_chip_labels.dart';
 
+Future<void> _awaitListingsFeedRefresh(ListingsBloc bloc) async {
+  bloc.add(const ListingsRefreshed());
+  await bloc.stream.firstWhere(
+    (state) => state.status != ListingsStatus.loading,
+  );
+}
+
 bool _listingsFilterChromeChanged(ListingsState p, ListingsState q) {
   return p.search != q.search ||
       p.make != q.make ||
@@ -377,19 +384,15 @@ class _ListingsViewState extends State<_ListingsView> {
                               const ListingsFiltersCleared(),
                             );
                           },
-                          onRefresh: () async {
-                            context.read<ListingsBloc>().add(
-                              const ListingsRefreshed(),
-                            );
-                          },
+                          onRefresh: () => _awaitListingsFeedRefresh(
+                            context.read<ListingsBloc>(),
+                          ),
                         );
                       }
                       return RefreshIndicator(
-                        onRefresh: () async {
-                          context.read<ListingsBloc>().add(
-                            const ListingsRefreshed(),
-                          );
-                        },
+                        onRefresh: () => _awaitListingsFeedRefresh(
+                          context.read<ListingsBloc>(),
+                        ),
                         child: ListView.separated(
                           controller: _scrollCtrl,
                           // iOS-style bounce on both platforms so the
@@ -439,7 +442,9 @@ class _ListingsViewState extends State<_ListingsView> {
                               return _ListingsPaginationFooter(
                                 state: state,
                                 onRetry: () => context.read<ListingsBloc>().add(
-                                  const ListingsNextPageRequested(),
+                                  const ListingsNextPageRequested(
+                                    isExplicitRetry: true,
+                                  ),
                                 ),
                               );
                             }
@@ -632,15 +637,29 @@ class _ListingsPaginationFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (state.status != ListingsStatus.paginationFailure) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     final theme = Theme.of(context);
     final l10n = context.l10n;
+
+    if (state.status != ListingsStatus.paginationFailure) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 10),
+              Text(
+                l10n.listingsLoadingMore,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Card(
       elevation: 0,
       color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.72),

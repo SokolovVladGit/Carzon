@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/auth/presentation/pages/sign_up_page.dart';
+import 'package:carzon/features/auth/presentation/widgets/auth_editorial_header.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -47,7 +48,15 @@ void main() {
     (tester) async {
       await tester.pumpWidget(_wrap(cubit));
 
-      expect(find.text(l10n.signUpTitle), findsWidgets); // AppBar + button
+      expect(find.byType(AuthEditorialHeader), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('auth_editorial_title')),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(FilledButton, l10n.signUpSubmit),
+        findsOneWidget,
+      );
       expect(
         find.widgetWithText(TextFormField, l10n.authFieldEmail),
         findsOneWidget,

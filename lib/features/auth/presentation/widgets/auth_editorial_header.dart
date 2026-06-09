@@ -8,12 +8,12 @@ class AuthEditorialHeader extends StatelessWidget {
     super.key,
     required this.eyebrow,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
   });
 
   final String eyebrow;
   final String title;
-  final String subtitle;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -68,19 +68,21 @@ class AuthEditorialHeader extends StatelessWidget {
             color: scheme.onSurface.withValues(alpha: 0.96),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          subtitle,
-          key: const ValueKey('auth_editorial_subtitle'),
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-            height: 1.4,
-            color: scheme.onSurfaceVariant.withValues(
-              alpha: light ? 0.82 : 0.88,
+        if (subtitle != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            subtitle!,
+            key: const ValueKey('auth_editorial_subtitle'),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+              color: scheme.onSurfaceVariant.withValues(
+                alpha: light ? 0.82 : 0.88,
+              ),
             ),
           ),
-        ),
+        ],
       ],
     );
   }

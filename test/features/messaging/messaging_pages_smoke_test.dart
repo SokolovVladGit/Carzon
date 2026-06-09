@@ -9,10 +9,12 @@ import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/messaging/domain/entities/chat_message.dart';
 import 'package:carzon/features/messaging/domain/entities/conversation.dart';
+import 'package:carzon/features/messaging/domain/entities/conversation_kind.dart';
 import 'package:carzon/features/messaging/domain/repositories/messaging_repository.dart';
 import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import 'package:carzon/features/messaging/presentation/pages/conversation_thread_page.dart';
 import 'package:carzon/features/messaging/presentation/pages/messages_inbox_page.dart';
+import 'package:carzon/features/messaging/presentation/widgets/chat_message_bubble.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -95,6 +97,15 @@ void main() {
     lastMessagePreview: 'Last',
     listingTitle: listingTitle,
     hasUnread: hasUnread,
+  );
+
+  Conversation sampleSupportConversation() => Conversation(
+    id: 'conv-support',
+    buyerId: 'u1',
+    sellerId: 'support-1',
+    createdAt: t0,
+    updatedAt: t0,
+    conversationKind: ConversationKind.support,
   );
 
   Widget testedInbox(Widget child) {
@@ -233,6 +244,174 @@ void main() {
 
     expect(find.text(l10n.messagingThreadEmptyBody), findsOneWidget);
     expect(find.text(l10n.messagingQuickReplyHint), findsOneWidget);
+    expect(
+      find.text(l10n.messagingQuickReplyStillAvailable),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'support thread empty state shows support copy without quick replies',
+    (tester) async {
+      final conv = sampleSupportConversation();
+      when(
+        () => messagingRepo.getConversation('conv-support'),
+      ).thenAnswer((_) async => Success(conv));
+      when(
+        () => messagingRepo.getMessages('conv-support'),
+      ).thenAnswer((_) async => const Success<List<ChatMessage>>([]));
+
+      await tester.pumpWidget(
+        testedInbox(
+          const ConversationThreadPage(conversationId: 'conv-support'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(l10n.messagingSupportThreadEmptyTitle),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.messagingSupportThreadEmptyBody), findsOneWidget);
+      expect(find.text(l10n.messagingThreadEmptyBody), findsNothing);
+      expect(find.text(l10n.messagingQuickReplyHint), findsNothing);
+      expect(
+        find.text(l10n.messagingQuickReplyStillAvailable),
+        findsNothing,
+      );
+      expect(find.text(l10n.supportConversationTitle), findsNWidgets(2));
+    },
+  );
+
+  testWidgets('support thread AppBar shows support title', (tester) async {
+    final conv = sampleSupportConversation();
+    when(
+      () => messagingRepo.getConversation('conv-support'),
+    ).thenAnswer((_) async => Success(conv));
+    when(
+      () => messagingRepo.getMessages('conv-support'),
+    ).thenAnswer((_) async => const Success<List<ChatMessage>>([]));
+
+    await tester.pumpWidget(
+      testedInbox(
+        const ConversationThreadPage(conversationId: 'conv-support'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text(l10n.supportConversationTitle),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text(l10n.messagingThreadTitle),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('listing thread AppBar shows listing headline', (tester) async {
+    final conv = sampleConversation(listingTitle: 'Volkswagen Golf');
+    when(
+      () => messagingRepo.getConversation('conv-1'),
+    ).thenAnswer((_) async => Success(conv));
+    when(
+      () => messagingRepo.getMessages('conv-1'),
+    ).thenAnswer((_) async => const Success<List<ChatMessage>>([]));
+
+    await tester.pumpWidget(
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('Volkswagen Golf'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('listing thread AppBar falls back to generic chat title', (
+    tester,
+  ) async {
+    final conv = Conversation(
+      id: 'conv-1',
+      listingId: 'list-1',
+      buyerId: 'u1',
+      sellerId: 's1',
+      createdAt: t0,
+      updatedAt: t0,
+    );
+    when(
+      () => messagingRepo.getConversation('conv-1'),
+    ).thenAnswer((_) async => Success(conv));
+    when(
+      () => messagingRepo.getMessages('conv-1'),
+    ).thenAnswer((_) async => const Success<List<ChatMessage>>([]));
+
+    await tester.pumpWidget(
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text(l10n.messagingThreadTitle),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('grouped consecutive messages still render bodies', (
+    tester,
+  ) async {
+    final conv = sampleConversation();
+    when(
+      () => messagingRepo.getConversation('conv-1'),
+    ).thenAnswer((_) async => Success(conv));
+    when(() => messagingRepo.getMessages('conv-1')).thenAnswer(
+      (_) async => Success<List<ChatMessage>>([
+        ChatMessage(
+          id: 'm1',
+          conversationId: 'conv-1',
+          senderId: 'u1',
+          body: 'First grouped',
+          createdAt: t0,
+        ),
+        ChatMessage(
+          id: 'm2',
+          conversationId: 'conv-1',
+          senderId: 'u1',
+          body: 'Second grouped',
+          createdAt: t0.add(const Duration(minutes: 1)),
+        ),
+        ChatMessage(
+          id: 'm3',
+          conversationId: 'conv-1',
+          senderId: 's1',
+          body: 'Reply',
+          createdAt: t0.add(const Duration(minutes: 2)),
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('First grouped'), findsOneWidget);
+    expect(find.text('Second grouped'), findsOneWidget);
+    expect(find.text('Reply'), findsOneWidget);
+    expect(find.byType(ChatMessageBubble), findsNWidgets(3));
   });
 
   testWidgets('thread quick reply inserts text and does not send', (

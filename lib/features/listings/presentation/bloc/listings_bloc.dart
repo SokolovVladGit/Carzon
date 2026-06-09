@@ -85,7 +85,9 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
   ) async {
     if (state.hasReachedEnd ||
         state.status == ListingsStatus.loading ||
-        state.status == ListingsStatus.loadingMore) {
+        state.status == ListingsStatus.loadingMore ||
+        (state.status == ListingsStatus.paginationFailure &&
+            !event.isExplicitRetry)) {
       return;
     }
     emit(
