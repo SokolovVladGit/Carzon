@@ -17,6 +17,7 @@ import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/messaging/domain/repositories/messaging_repository.dart';
+import 'package:carzon/features/messaging/domain/usecases/get_or_create_support_conversation.dart';
 import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import 'package:carzon/features/profile/presentation/pages/profile_page.dart';
 import 'package:carzon/features/sellers/data/models/my_seller_profile_model.dart';
@@ -55,6 +56,10 @@ const _profileTestNotificationSettingsStubKey = ValueKey<String>(
 
 const _profileTestChangePasswordStubKey = ValueKey<String>(
   'profile_test_change_password_stub',
+);
+
+const _profileTestSupportThreadStubKey = ValueKey<String>(
+  'profile_test_support_thread_stub',
 );
 
 final class _InMemoryThemeModeLocalDataSource
@@ -132,6 +137,13 @@ GoRouter _profileTestGoRouter({
         builder: (_, _) => const Scaffold(
           key: _profileTestNotificationSettingsStubKey,
           body: Text('profile_test_notification_settings_placeholder'),
+        ),
+      ),
+      GoRoute(
+        path: '/messages/:conversationId',
+        builder: (_, state) => Scaffold(
+          key: _profileTestSupportThreadStubKey,
+          body: Text('thread:${state.pathParameters['conversationId']}'),
         ),
       ),
       GoRoute(
@@ -255,6 +267,10 @@ void main() {
         uploadSellerAvatar: sl<UploadSellerAvatar>(),
         clearSellerAvatar: sl<ClearSellerAvatar>(),
       ),
+    );
+    sl.registerLazySingleton<MessagingRepository>(() => messagingRepo);
+    sl.registerFactory(
+      () => GetOrCreateSupportConversation(sl<MessagingRepository>()),
     );
   });
 
@@ -451,6 +467,48 @@ void main() {
       );
     },
   );
+
+  testWidgets('authenticated: contact support row opens support thread', (
+    tester,
+  ) async {
+    const user = AuthUser(
+      id: 'u1',
+      email: 'seller@example.com',
+      fullName: 'Ana Popescu',
+    );
+    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(user),
+    );
+    when(() => messagingRepo.getOrCreateSupportConversation()).thenAnswer(
+      (_) async => const Success('support-conv-42'),
+    );
+
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
+    await tester.pumpAndSettle();
+
+    final row = find.byKey(
+      const ValueKey<String>('profile_contact_support_row'),
+    );
+    await tester.scrollUntilVisible(
+      row,
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text(l10n.contactSupport), findsOneWidget);
+    expect(find.text(l10n.contactSupportSubtitle), findsOneWidget);
+
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+
+    verify(() => messagingRepo.getOrCreateSupportConversation()).called(1);
+    expect(find.byKey(_profileTestSupportThreadStubKey), findsOneWidget);
+    expect(find.text('thread:support-conv-42'), findsOneWidget);
+  });
 
   testWidgets('authenticated: change password row opens /change-password', (
     tester,

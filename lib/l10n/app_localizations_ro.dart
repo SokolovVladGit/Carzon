@@ -98,6 +98,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingsLoadMoreFailed => 'Nu s-au încărcat mai multe anunțuri.';
 
   @override
+  String get listingsLoadingMore => 'Se încarcă mai multe anunțuri…';
+
+  @override
   String get listingsEmpty => 'Nu s-au găsit reclame adecvate.';
 
   @override
@@ -704,6 +707,13 @@ class AppLocalizationsRo extends AppLocalizations {
       'Începeți o corespondență: puneți o întrebare despre anunț sau aranjați o vizionare.';
 
   @override
+  String get messagingSupportThreadEmptyTitle => 'Scrieți asistenței Carzon';
+
+  @override
+  String get messagingSupportThreadEmptyBody =>
+      'Descrieți întrebarea, iar noi vă vom răspunde în acest chat.';
+
+  @override
   String get messagingThreadTitle => 'Chat';
 
   @override
@@ -1308,6 +1318,24 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get profileNotificationsSubtitle =>
       'Push, mesaje și starea livrării (testare).';
+
+  @override
+  String get contactSupport => 'Contactați asistența';
+
+  @override
+  String get contactSupportSubtitle =>
+      'Scrieți-ne despre întrebări legate de aplicație';
+
+  @override
+  String get supportConversationTitle => 'Asistență Carzon';
+
+  @override
+  String get contactSupportOpenFailure =>
+      'Nu s-a putut deschide chatul cu asistența. Încercați mai târziu.';
+
+  @override
+  String get contactSupportSelfFailure =>
+      'Contul de asistență nu poate deschide acest chat.';
 
   @override
   String get notificationSettingsTitle => 'Notificări';
@@ -2385,7 +2413,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get listingBuyerVinReportBasicDecodeNotOfficialLine =>
-      'Nu este o verificare oficială a înmatriculării, proprietarului, istoricului de accidente, asigurării sau kilometrajului.';
+      'Decodare VIN de bază, nu verificare juridică sau istorică.';
 
   @override
   String get listingBuyerVinReportNhtsaCatalogSourceLine =>
@@ -2393,18 +2421,18 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get listingBuyerVinReportNotVerifiedSectionTitle =>
-      'Ce nu verifică încă acest raport';
+      'Ce nu verifică încă Carzon';
 
   @override
   String get listingBuyerVinReportLimitationRegistrationMdPmr =>
-      'Înmatricularea unui autoturism în Moldova sau PMR';
+      'Înmatricularea';
 
   @override
-  String get listingBuyerVinReportLimitationOwner => 'Proprietar de mașină';
+  String get listingBuyerVinReportLimitationOwner => 'Proprietarul';
 
   @override
   String get listingBuyerVinReportLimitationAccidentHistory =>
-      'Istoricul accidentelor și pagubelor';
+      'Accidente și daune';
 
   @override
   String get listingBuyerVinReportLimitationInsurance => 'Asigurare';
@@ -2430,7 +2458,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get listingBuyerVinReportCompareMismatch =>
-      'Există discrepanțe între datele VIN și anunț. Verificați documentele și mașina înainte de a cumpăra.';
+      'Datele VIN nu coincid cu anunțul.';
 
   @override
   String get listingBuyerVinReportDecodedEngineLabel => 'Motor';
@@ -2493,7 +2521,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get listingBuyerVinReportManualSourcesIntro =>
-      'Carzon nu primește încă aceste date automat. Mai jos sunt surse pe care le puteți verifica separat.';
+      'Surse pentru verificare separată.';
 
   @override
   String get listingBuyerVinReportManualStatusExternalCheck =>

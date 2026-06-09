@@ -1,13 +1,15 @@
 import '../../domain/entities/conversation.dart';
+import '../../domain/entities/conversation_kind.dart';
 
 class ConversationModel extends Conversation {
   const ConversationModel({
     required super.id,
-    required super.listingId,
     required super.buyerId,
     required super.sellerId,
     required super.createdAt,
     required super.updatedAt,
+    super.conversationKind = ConversationKind.listing,
+    super.listingId,
     super.lastMessageAt,
     super.lastMessagePreview,
     super.listingTitle,
@@ -47,10 +49,16 @@ class ConversationModel extends Conversation {
 
     final rawUnread = json['has_unread'];
     final unread = rawUnread == true || rawUnread == 1;
+    final rawListingId = json['listing_id'] as String?;
 
     return ConversationModel(
       id: json['id'] as String,
-      listingId: json['listing_id'] as String,
+      conversationKind: ConversationKind.fromDb(
+        json['conversation_kind'] as String?,
+      ),
+      listingId: rawListingId != null && rawListingId.isNotEmpty
+          ? rawListingId
+          : null,
       buyerId: json['buyer_id'] as String,
       sellerId: json['seller_id'] as String,
       createdAt:

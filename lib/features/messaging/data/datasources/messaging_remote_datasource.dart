@@ -8,6 +8,8 @@ import '../models/conversation_model.dart';
 abstract interface class MessagingRemoteDataSource {
   Future<String> getOrCreateConversation(String listingId);
 
+  Future<String> getOrCreateSupportConversation();
+
   Future<List<ConversationModel>> fetchConversations();
 
   Future<ConversationModel> fetchConversation(String conversationId);
@@ -26,7 +28,7 @@ class SupabaseMessagingRemoteDataSource implements MessagingRemoteDataSource {
 
   final SupabaseService _supabase;
   static const _convSelect =
-      'id, listing_id, buyer_id, seller_id, created_at, '
+      'id, listing_id, conversation_kind, buyer_id, seller_id, created_at, '
       'updated_at, last_message_at, last_message_preview, '
       'listings(id, title, make, model, city, cover_image_url, price_eur, price_currency)';
 
@@ -56,6 +58,25 @@ class SupabaseMessagingRemoteDataSource implements MessagingRemoteDataSource {
       if (e is ServerException) rethrow;
       throw ServerException(
         'Failed to open conversation',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<String> getOrCreateSupportConversation() async {
+    try {
+      final dynamic data = await _supabase.client.rpc(
+        'get_or_create_support_conversation',
+      );
+      return _asConversationId(data);
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is ServerException) rethrow;
+      throw ServerException(
+        'Failed to open support conversation',
         cause: e,
         stackTrace: st,
       );

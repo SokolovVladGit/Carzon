@@ -5,6 +5,7 @@ import '../data/datasources/messaging_remote_datasource.dart';
 import '../data/repositories/messaging_repository_impl.dart';
 import '../domain/repositories/messaging_repository.dart';
 import '../domain/usecases/get_or_create_conversation.dart';
+import '../domain/usecases/get_or_create_support_conversation.dart';
 import '../presentation/bloc/messaging_unread_summary_cubit.dart';
 
 void registerMessagingFeature(GetIt sl) {
@@ -15,6 +16,9 @@ void registerMessagingFeature(GetIt sl) {
     () => MessagingRepositoryImpl(sl<MessagingRemoteDataSource>()),
   );
   sl.registerFactory(() => GetOrCreateConversation(sl<MessagingRepository>()));
+  sl.registerFactory(
+    () => GetOrCreateSupportConversation(sl<MessagingRepository>()),
+  );
 
   sl.registerLazySingleton<MessagingUnreadSummaryCubit>(
     () => MessagingUnreadSummaryCubit(sl<MessagingRepository>()),

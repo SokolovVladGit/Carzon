@@ -11,6 +11,7 @@ import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/entities/listing.dart';
 import '../utils/listing_formatters.dart';
 import 'listing_cover_image.dart';
+import 'vin_present_latin_badge.dart';
 
 /// Visual rhythm for a [ListingCard].
 ///
@@ -143,6 +144,8 @@ class _ListingCardState extends State<ListingCard> {
     final imageRadius = ListingCard._imageRadiusFor(isFeatured);
     final panelRadius = ListingCard._panelRadiusFor(isFeatured);
 
+    final showVinBadge = listing.vinStatus == ListingVinStatus.formatValid;
+
     final badges = <Widget>[
       if (widget.statusBadge != null) widget.statusBadge!,
       if (!isFeatured)
@@ -205,6 +208,7 @@ class _ListingCardState extends State<ListingCard> {
                 badges: badges,
                 trailing: widget.trailing,
                 trailingWide: widget.trailingWide,
+                showVinBadge: showVinBadge,
                 radius: panelRadius,
               ),
             ],
@@ -413,6 +417,7 @@ class _InfoPanel extends StatelessWidget {
     required this.radius,
     this.trailing,
     this.trailingWide = false,
+    this.showVinBadge = false,
   });
 
   final String priceLabel;
@@ -430,6 +435,7 @@ class _InfoPanel extends StatelessWidget {
   final List<Widget> badges;
   final Widget? trailing;
   final bool trailingWide;
+  final bool showVinBadge;
   final double radius;
 
   @override
@@ -557,135 +563,149 @@ class _InfoPanel extends StatelessWidget {
               // outside the IntrinsicHeight box: it must stay vertically
               // centered against the content column without being stretched
               // to the column's full height.
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              child: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Expanded(
-                    child: IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(
-                            width: 48,
-                            child: Center(
-                              child: _BrandIconTile(assetPath: brandIconAsset),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            child: SizedBox(
-                              height: double.infinity,
-                              child: Center(
-                                child: Container(
-                                  width: 1,
-                                  // 4 px (was 8) — extends the visible span
-                                  // of the divider for a longer, more
-                                  // elegant fade while still leaving a small
-                                  // breathing gap at the very top / bottom.
-                                  margin: const EdgeInsets.symmetric(
-                                    vertical: 4,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              SizedBox(
+                                width: 48,
+                                child: Center(
+                                  child: _BrandIconTile(
+                                    assetPath: brandIconAsset,
                                   ),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: isDark
-                                          ? [
-                                              Colors.white.withValues(
-                                                alpha: 0.55,
-                                              ),
-                                              Colors.white.withValues(
-                                                alpha: 0.30,
-                                              ),
-                                              Colors.white.withValues(
-                                                alpha: 0.12,
-                                              ),
-                                              Colors.transparent,
-                                            ]
-                                          : [
-                                              scheme.onSurface.withValues(
-                                                alpha: 0.14,
-                                              ),
-                                              scheme.onSurface.withValues(
-                                                alpha: 0.09,
-                                              ),
-                                              scheme.onSurface.withValues(
-                                                alpha: 0.04,
-                                              ),
-                                              Colors.transparent,
-                                            ],
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                child: SizedBox(
+                                  height: double.infinity,
+                                  child: Center(
+                                    child: Container(
+                                      width: 1,
+                                      margin: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: isDark
+                                              ? [
+                                                  Colors.white.withValues(
+                                                    alpha: 0.55,
+                                                  ),
+                                                  Colors.white.withValues(
+                                                    alpha: 0.30,
+                                                  ),
+                                                  Colors.white.withValues(
+                                                    alpha: 0.12,
+                                                  ),
+                                                  Colors.transparent,
+                                                ]
+                                              : [
+                                                  scheme.onSurface.withValues(
+                                                    alpha: 0.14,
+                                                  ),
+                                                  scheme.onSurface.withValues(
+                                                    alpha: 0.09,
+                                                  ),
+                                                  scheme.onSurface.withValues(
+                                                    alpha: 0.04,
+                                                  ),
+                                                  Colors.transparent,
+                                                ],
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  priceLabel,
-                                  style: priceStyle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  titleLabel,
-                                  style: titleStyle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                DefaultTextStyle.merge(
-                                  style: metaStyle ?? const TextStyle(),
-                                  child: Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          mileageLabel,
-                                          overflow: TextOverflow.ellipsis,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                      Text(
+                                        priceLabel,
+                                        style: priceStyle,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        titleLabel,
+                                        style: titleStyle,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      DefaultTextStyle.merge(
+                                        style: metaStyle ?? const TextStyle(),
+                                        child: Row(
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                mileageLabel,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            _MetaSeparator(
+                                              color: scheme.onSurfaceVariant,
+                                            ),
+                                            Text(yearLabel),
+                                            _MetaSeparator(
+                                              color: scheme.onSurfaceVariant,
+                                            ),
+                                            Flexible(
+                                              child: Text(
+                                                city,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      _MetaSeparator(
-                                        color: scheme.onSurfaceVariant,
-                                      ),
-                                      Text(yearLabel),
-                                      _MetaSeparator(
-                                        color: scheme.onSurfaceVariant,
-                                      ),
-                                      Flexible(
-                                        child: Text(
-                                          city,
-                                          overflow: TextOverflow.ellipsis,
+                                      if (badges.isNotEmpty) ...[
+                                        const SizedBox(height: 6),
+                                        Wrap(
+                                          spacing: 6,
+                                          runSpacing: 4,
+                                          crossAxisAlignment:
+                                              WrapCrossAlignment.center,
+                                          children: badges,
                                         ),
-                                      ),
+                                      ],
                                     ],
-                                  ),
                                 ),
-                                if (badges.isNotEmpty) ...[
-                                  const SizedBox(height: 6),
-                                  Wrap(
-                                    spacing: 6,
-                                    runSpacing: 4,
-                                    crossAxisAlignment:
-                                        WrapCrossAlignment.center,
-                                    children: badges,
-                                  ),
-                                ],
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+                      if (trailing != null) ...[
+                        const SizedBox(width: 8),
+                        _PanelActionSlot(
+                          wide: trailingWide,
+                          child: trailing!,
+                        ),
+                      ],
+                    ],
                   ),
-                  if (trailing != null) ...[
-                    const SizedBox(width: 8),
-                    _PanelActionSlot(wide: trailingWide, child: trailing!),
-                  ],
+                  if (showVinBadge)
+                    const Positioned(
+                      top: 0,
+                      right: 0,
+                      child: VinPresentLatinBadge(cardStamp: true),
+                    ),
                 ],
               ),
             ),

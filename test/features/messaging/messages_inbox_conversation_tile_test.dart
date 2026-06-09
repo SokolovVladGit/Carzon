@@ -1,5 +1,6 @@
 import 'package:carzon/core/theme/app_theme.dart';
 import 'package:carzon/features/messaging/domain/entities/conversation.dart';
+import 'package:carzon/features/messaging/domain/entities/conversation_kind.dart';
 import 'package:carzon/features/messaging/presentation/widgets/messages_inbox_conversation_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -52,6 +53,7 @@ void main() {
         MessagesInboxConversationTile(
           conversation: conversation(hasUnread: true),
           listingHeadlineFallback: 'Fallback',
+          headline: 'Volkswagen Golf',
           messagePreview: 'Preview text',
           timeText: '2 мая, 10:00',
           onTap: () {},
@@ -76,6 +78,7 @@ void main() {
         MessagesInboxConversationTile(
           conversation: conversation(hasUnread: false),
           listingHeadlineFallback: 'Fallback',
+          headline: 'Volkswagen Golf',
           messagePreview: 'Preview text',
           timeText: '2 мая, 10:00',
           onTap: () {},
@@ -99,6 +102,7 @@ void main() {
         MessagesInboxConversationTile(
           conversation: conversation(price: 12500, city: 'Chișinău'),
           listingHeadlineFallback: 'Fallback',
+          headline: 'Volkswagen Golf',
           messagePreview: 'Preview text',
           timeText: null,
           onTap: () {},
@@ -127,6 +131,7 @@ void main() {
             hasUnread: true,
           ),
           listingHeadlineFallback: 'Fallback',
+          headline: longTitle,
           messagePreview: longPreview,
           timeText: '2 мая, 10:00',
           onTap: () {},
@@ -143,12 +148,81 @@ void main() {
     expect(preview.overflow, TextOverflow.ellipsis);
   });
 
+  testWidgets('support conversation uses official support avatar', (
+    tester,
+  ) async {
+    final support = Conversation(
+      id: 'conv-support',
+      buyerId: 'u1',
+      sellerId: 'support-1',
+      createdAt: t0,
+      updatedAt: t0,
+      lastMessagePreview: 'How can we help?',
+      conversationKind: ConversationKind.support,
+    );
+
+    await tester.pumpWidget(
+      wrap(
+        MessagesInboxConversationTile(
+          conversation: support,
+          listingHeadlineFallback: '',
+          headline: 'Поддержка Carzon',
+          messagePreview: 'How can we help?',
+          timeText: '2 мая, 10:00',
+          onTap: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('Поддержка Carzon'), findsOneWidget);
+    expect(find.byIcon(Icons.support_agent_rounded), findsOneWidget);
+  });
+
+  testWidgets('unread support row shows title and unread indicator', (
+    tester,
+  ) async {
+    final support = Conversation(
+      id: 'conv-support',
+      buyerId: 'u1',
+      sellerId: 'support-1',
+      createdAt: t0,
+      updatedAt: t0,
+      lastMessagePreview: 'We will reply soon',
+      hasUnread: true,
+      conversationKind: ConversationKind.support,
+    );
+
+    await tester.pumpWidget(
+      wrap(
+        MessagesInboxConversationTile(
+          conversation: support,
+          listingHeadlineFallback: '',
+          headline: 'Поддержка Carzon',
+          messagePreview: 'We will reply soon',
+          timeText: '2 мая, 10:00',
+          onTap: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('Поддержка Carzon'), findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey<String>('messages_inbox_unread_dot_conv-support'),
+      ),
+      findsOneWidget,
+    );
+    final title = tester.widget<Text>(find.text('Поддержка Carzon'));
+    expect(title.style?.fontWeight, FontWeight.w700);
+  });
+
   testWidgets('dark theme renders messenger row', (tester) async {
     await tester.pumpWidget(
       wrap(
         MessagesInboxConversationTile(
           conversation: conversation(hasUnread: true),
           listingHeadlineFallback: 'Fallback',
+          headline: 'Volkswagen Golf',
           messagePreview: 'Preview text',
           timeText: '2 мая, 10:00',
           onTap: () {},

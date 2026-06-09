@@ -288,6 +288,50 @@ void main() {
     expect(find.byType(ListingsFilterSummaryStrip), findsNothing);
   });
 
+  testWidgets('apply passes canonical multi-word catalog make', (tester) async {
+    final l10n = ruStrings();
+    ListingsFilterApplyResult? received;
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: ListingsFilterHost(
+          seed: ListingsFilterFormSeed.fromListingsState(const ListingsState()),
+          onDismiss: () {},
+          onApply: (r) => received = r,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await pickListingFilterBrand(tester, 'Mercedes-Benz');
+    await tester.tap(find.text(l10n.filterShowCars));
+    await tester.pumpAndSettle();
+    expect(received?.make, 'Mercedes-Benz');
+  });
+
+  testWidgets('apply passes newly added Chinese catalog make', (tester) async {
+    final l10n = ruStrings();
+    ListingsFilterApplyResult? received;
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: ListingsFilterHost(
+          seed: ListingsFilterFormSeed.fromListingsState(const ListingsState()),
+          onDismiss: () {},
+          onApply: (r) => received = r,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await pickListingFilterBrand(tester, 'Lynk & Co');
+    await tester.tap(find.text(l10n.filterShowCars));
+    await tester.pumpAndSettle();
+    expect(received?.make, 'Lynk & Co');
+  });
+
   testWidgets('apply passes picked catalog make into apply result', (
     tester,
   ) async {

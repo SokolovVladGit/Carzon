@@ -19,8 +19,11 @@ import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/domain/entities/auth_user.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../../core/utils/result.dart';
+import '../../../messaging/domain/usecases/get_or_create_support_conversation.dart';
 import '../../../messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import '../../../messaging/presentation/bloc/messaging_unread_summary_state.dart';
+import '../../../messaging/presentation/utils/support_conversation_user_messages.dart';
 import '../../../sellers/presentation/bloc/public_seller_identity_cubit.dart';
 import '../widgets/profile_account_header_card.dart';
 import '../widgets/profile_activity_messages_row.dart';
@@ -171,6 +174,31 @@ class _AccountView extends StatefulWidget {
 }
 
 class _AccountViewState extends State<_AccountView> {
+  bool _openingSupport = false;
+
+  Future<void> _onContactSupportTap(BuildContext context) async {
+    if (_openingSupport) return;
+    setState(() => _openingSupport = true);
+    try {
+      final result = await sl<GetOrCreateSupportConversation>().call();
+      if (!context.mounted) return;
+      switch (result) {
+        case Success(:final value):
+          await context.push(AppRoutes.messagesThreadPath(value));
+        case FailureResult(:final failure):
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                supportConversationOpenFailureMessage(context.l10n, failure),
+              ),
+            ),
+          );
+      }
+    } finally {
+      if (mounted) setState(() => _openingSupport = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -261,6 +289,18 @@ class _AccountViewState extends State<_AccountView> {
                   theme: theme,
                   scheme: scheme,
                   onTap: () => context.push(AppRoutes.notificationSettings),
+                ),
+                ProfileMutedDivider(scheme: scheme, isDark: isDark),
+                ProfileSettingsNavigationRow(
+                  rowKey: const ValueKey<String>('profile_contact_support_row'),
+                  icon: CarzonIcons.chat,
+                  title: l10n.contactSupport,
+                  subtitle: l10n.contactSupportSubtitle,
+                  theme: theme,
+                  scheme: scheme,
+                  onTap: _openingSupport
+                      ? () {}
+                      : () => _onContactSupportTap(context),
                 ),
               ],
             ),

@@ -3,6 +3,7 @@ import 'package:carzon/app/di/injection.dart';
 import 'package:carzon/features/auth/presentation/bloc/forgot_password_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/forgot_password_state.dart';
 import 'package:carzon/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:carzon/features/auth/presentation/widgets/auth_editorial_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -37,6 +38,8 @@ void main() {
   ) async {
     await pumpLocalizedWidget(tester, const ForgotPasswordPage());
 
+    expect(find.byType(AuthEditorialHeader), findsOneWidget);
+    expect(find.text(l10n.forgotPasswordTitle), findsOneWidget);
     expect(
       find.widgetWithText(TextFormField, l10n.authFieldEmail),
       findsOneWidget,

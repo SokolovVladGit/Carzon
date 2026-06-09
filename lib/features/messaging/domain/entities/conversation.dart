@@ -1,14 +1,17 @@
 import 'package:equatable/equatable.dart';
 
-/// In-app thread between a buyer and seller for one listing.
+import 'conversation_kind.dart';
+
+/// In-app thread between participants (listing-scoped or support).
 class Conversation extends Equatable {
   const Conversation({
     required this.id,
-    required this.listingId,
     required this.buyerId,
     required this.sellerId,
     required this.createdAt,
     required this.updatedAt,
+    this.conversationKind = ConversationKind.listing,
+    this.listingId,
     this.lastMessageAt,
     this.lastMessagePreview,
     this.listingTitle,
@@ -22,7 +25,10 @@ class Conversation extends Equatable {
   });
 
   final String id;
-  final String listingId;
+  final ConversationKind conversationKind;
+
+  /// Null for [ConversationKind.support] threads.
+  final String? listingId;
   final String buyerId;
   final String sellerId;
   final DateTime createdAt;
@@ -49,9 +55,14 @@ class Conversation extends Equatable {
   /// (see `list_inbox_conversations`; single-conversation loads omit this).
   final bool hasUnread;
 
+  bool get isSupportConversation => conversationKind == ConversationKind.support;
+
+  bool get isListingConversation => conversationKind == ConversationKind.listing;
+
   @override
   List<Object?> get props => [
     id,
+    conversationKind,
     listingId,
     buyerId,
     sellerId,

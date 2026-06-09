@@ -50,10 +50,8 @@ void main() {
               reportTitle: ru.listingBuyerVinReportTitle,
               vinAddedLine: ru.listingBuyerVinReportVinAddedBySeller,
               vinPrivateLine: ru.listingBuyerVinReportFullVinPrivate,
-              sourceLine: ru.listingBuyerVinReportNhtsaCatalogSourceLine,
-              basicDecodeLine: ru.listingBuyerVinReportBasicDecodeCatalogLine,
-              notOfficialLine:
-                  ru.listingBuyerVinReportBasicDecodeNotOfficialLine,
+              compareResult: ru.listingBuyerVinReportCompareMatch,
+              compareIsMatch: true,
               showSuccessVinBadge: true,
             ),
           ),
@@ -70,10 +68,7 @@ void main() {
       find.byKey(const ValueKey('vin_present_latin_badge')),
       findsOneWidget,
     );
-    expect(
-      find.text(ru.listingBuyerVinReportNhtsaCatalogSourceLine),
-      findsOneWidget,
-    );
+    expect(find.text(ru.listingBuyerVinReportCompareMatch), findsOneWidget);
     expect(find.textContaining('verified', findRichText: true), findsNothing);
     expect(
       find.textContaining('официально проверен', findRichText: true),

@@ -10,7 +10,6 @@ import '../../domain/repositories/listings_repository.dart';
 import '../utils/buyer_vin_report_date_format.dart';
 import '../utils/buyer_vin_report_ui_state.dart';
 import '../utils/nhtsa_vin_summary_display.dart';
-import 'buyer_vin_manual_source_cards_section.dart';
 import 'buyer_vin_report_limitation_section.dart';
 import 'buyer_vin_report_sheet_ui.dart';
 
@@ -173,45 +172,22 @@ class _BuyerVinReportSheetContentState
     required ThemeData theme,
     required _VinListingCompare compare,
     required bool hasDisplayableDecode,
-    BuyerListingVinReportSourceResult? nhtsa,
     required bool showSuccessVinBadge,
   }) {
     final hasCompare =
         hasDisplayableDecode && compare != _VinListingCompare.uncertain;
-    final when = nhtsa?.fetchedAt ?? nhtsa?.updatedAt;
-    final m = nhtsa?.normalizedSummary;
 
     return BuyerVinReportHeroHeader(
       theme: theme,
       reportTitle: l10n.listingBuyerVinReportTitle,
       vinAddedLine: l10n.listingBuyerVinReportVinAddedBySeller,
       vinPrivateLine: l10n.listingBuyerVinReportFullVinPrivate,
-      compareHint: hasCompare ? l10n.listingBuyerVinReportCompareHint : null,
       compareResult: hasCompare
           ? (compare == _VinListingCompare.match
                 ? l10n.listingBuyerVinReportCompareMatch
                 : l10n.listingBuyerVinReportCompareMismatch)
           : null,
       compareIsMatch: hasCompare ? compare == _VinListingCompare.match : null,
-      compareAvailableHint: hasDisplayableDecode && !hasCompare
-          ? l10n.listingBuyerVinReportCompareHint
-          : null,
-      sourceLine: hasDisplayableDecode
-          ? l10n.listingBuyerVinReportNhtsaCatalogSourceLine
-          : null,
-      updatedLabel: when != null
-          ? l10n.listingBuyerVinReportUpdatedLabel
-          : null,
-      updatedDate: when != null ? formatBuyerVinReportDate(when) : null,
-      basicDecodeLine: hasDisplayableDecode
-          ? l10n.listingBuyerVinReportBasicDecodeCatalogLine
-          : null,
-      notOfficialLine: hasDisplayableDecode
-          ? l10n.listingBuyerVinReportBasicDecodeNotOfficialLine
-          : null,
-      cautionLine: nhtsaVinSummaryShowsCatalogCaution(m)
-          ? l10n.listingBuyerVinReportNhtsaCatalogDecodeCaution
-          : null,
       showSuccessVinBadge: showSuccessVinBadge,
     );
   }
@@ -284,8 +260,6 @@ class _BuyerVinReportSheetContentState
           theme: theme,
           title: l10n.listingVinReportPendingTitle,
           body: l10n.listingVinReportPendingBody,
-          showManualSources: true,
-          l10n: l10n,
         ),
         BuyerVinReportUiState.noPublicData => _BuyerVinReportStateBody(
           key: const ValueKey('buyer_vin_report_no_data'),
@@ -293,15 +267,12 @@ class _BuyerVinReportSheetContentState
           title: l10n.listingVinReportNoDataTitle,
           body: l10n.listingVinReportNoDataBody,
           note: l10n.listingVinReportNoDataNote,
-          showManualSources: true,
-          l10n: l10n,
         ),
         BuyerVinReportUiState.unavailableOrError => _BuyerVinReportStateBody(
           key: const ValueKey('buyer_vin_report_unavailable'),
           theme: theme,
           title: l10n.listingVinReportUnavailableTitle,
           body: l10n.listingVinReportUnavailableBody,
-          l10n: l10n,
         ),
         _ => const SizedBox.shrink(),
       };
@@ -339,7 +310,6 @@ class _BuyerVinReportSheetContentState
                           theme: theme,
                           compare: compare,
                           hasDisplayableDecode: hasDisplayableDecode,
-                          nhtsa: nhtsa,
                           showSuccessVinBadge: showSuccessBadge,
                         ),
                         const SizedBox(height: 16),
@@ -370,43 +340,28 @@ class _BuyerVinReportStateBody extends StatelessWidget {
     required this.title,
     required this.body,
     this.note,
-    this.showManualSources = false,
-    required this.l10n,
   });
 
   final ThemeData theme;
   final String title;
   final String body;
   final String? note;
-  final bool showManualSources;
-  final AppLocalizations l10n;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        BuyerVinReportStateMessageCard(
-          theme: theme,
-          title: title,
-          body: body,
-          note: note,
-        ),
-        if (showManualSources) ...[
-          const SizedBox(height: 18),
-          BuyerVinManualSourceCardsSection(l10n: l10n, theme: theme),
-          const SizedBox(height: 12),
-          Text(
-            l10n.editListingVinReportLimitationNote,
-            style: buyerVinReportMicrocopyStyle(theme),
-          ),
-        ],
-      ],
+    return BuyerVinReportStateMessageCard(
+      theme: theme,
+      title: title,
+      body: body,
+      note: note,
     );
   }
 }
 
-/// Premium spec-sheet sections below the hero (NHTSA groups, limitations, manual).
+/// Standard buyer limitation bullets — always the same concise set in the report.
+const List<String> kBuyerVinReportStandardLimitationCodes = ['basic_decode_only'];
+
+/// Premium spec-sheet sections below the hero (NHTSA groups, limitations, footer).
 class _BuyerVinReportSpecSheetBody extends StatelessWidget {
   const _BuyerVinReportSpecSheetBody({
     super.key,
@@ -424,45 +379,35 @@ class _BuyerVinReportSpecSheetBody extends StatelessWidget {
     final nhtsa = results
         .where((r) => r.sourceId == 'nhtsa_vpic')
         .toList(growable: false);
-    final other = results
-        .where((r) => r.sourceId != 'nhtsa_vpic')
-        .toList(growable: false);
+
+    final nhtsaPrimary = nhtsa.isNotEmpty ? nhtsa.first : null;
+    final footer = BuyerVinReportFooterStrip(
+      theme: theme,
+      sourceLine: l10n.listingBuyerVinReportNhtsaCatalogSourceLine,
+      updatedDate: () {
+        final when = nhtsaPrimary?.fetchedAt ?? nhtsaPrimary?.updatedAt;
+        if (when == null) return null;
+        return '${l10n.listingBuyerVinReportUpdatedLabel}: ${formatBuyerVinReportDate(when)}';
+      }(),
+      disclaimerLine: l10n.listingBuyerVinReportBasicDecodeNotOfficialLine,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (nhtsa.isNotEmpty) ...[
-          Text(
-            l10n.editListingVinReportBasicInfoHeading,
-            style: theme.textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
-              color: theme.brightness == Brightness.dark
-                  ? theme.colorScheme.onSurface.withValues(alpha: 0.88)
-                  : theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 10),
-          for (final r in nhtsa) ...[
-            _NhtsaSpecSheetSection(l10n: l10n, theme: theme, result: r),
-            const SizedBox(height: 12),
+        if (nhtsa.isNotEmpty)
+          for (var i = 0; i < nhtsa.length; i++) ...[
+            _NhtsaSpecSheetSection(l10n: l10n, theme: theme, result: nhtsa[i]),
+            if (i < nhtsa.length - 1) const SizedBox(height: 10),
           ],
-        ],
-        BuyerVinManualSourceCardsSection(l10n: l10n, theme: theme),
-        if (other.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(
-            l10n.listingBuyerVinReportSourcesSectionTitle,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          for (final r in other) ...[
-            _GenericSourceResultCard(l10n: l10n, theme: theme, result: r),
-            const SizedBox(height: 12),
-          ],
-        ],
+        const SizedBox(height: 12),
+        BuyerVinReportLimitationSection(
+          l10n: l10n,
+          theme: theme,
+          limitationCodes: kBuyerVinReportStandardLimitationCodes,
+        ),
+        const SizedBox(height: 10),
+        footer,
       ],
     );
   }
@@ -495,114 +440,8 @@ class _NhtsaSpecSheetSection extends StatelessWidget {
           ),
           if (i < groups.length - 1) const SizedBox(height: 10),
         ],
-        if (result.limitationCodes.isNotEmpty) ...[
-          if (groups.isNotEmpty) const SizedBox(height: 10),
-          BuyerVinReportLimitationSection(
-            l10n: l10n,
-            theme: theme,
-            limitationCodes: result.limitationCodes,
-          ),
-        ],
       ],
     );
   }
 }
 
-class _GenericSourceResultCard extends StatelessWidget {
-  const _GenericSourceResultCard({
-    required this.l10n,
-    required this.theme,
-    required this.result,
-  });
-
-  final AppLocalizations l10n;
-  final ThemeData theme;
-  final BuyerListingVinReportSourceResult result;
-
-  static String? _str(dynamic v) {
-    if (v == null) return null;
-    final s = v.toString().trim();
-    return s.isEmpty ? null : s;
-  }
-
-  static int? _year(dynamic v) {
-    if (v == null) return null;
-    if (v is int) return v;
-    if (v is num) return v.toInt();
-    return int.tryParse(v.toString().trim());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final label = result.sourceLabel ?? result.sourceId;
-    final when = result.fetchedAt ?? result.updatedAt;
-    final fields = _summaryFields(l10n, result.normalizedSummary);
-    if (fields.isEmpty && when == null) return const SizedBox.shrink();
-
-    return BuyerVinReportSectionCard(
-      theme: theme,
-      tone: BuyerVinReportSectionTone.dataCore,
-      title: label,
-      subtitle: l10n.listingBuyerVinReportSourceHeading,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (when != null) ...[
-            BuyerVinReportMetaRow(
-              theme: theme,
-              label: l10n.listingBuyerVinReportUpdatedLabel,
-              value: formatBuyerVinReportDate(when),
-            ),
-            if (fields.isNotEmpty) const SizedBox(height: 12),
-          ],
-          if (fields.isNotEmpty)
-            BuyerVinReportIdentityPanel(theme: theme, fields: fields),
-          BuyerVinReportLimitationSection(
-            l10n: l10n,
-            theme: theme,
-            limitationCodes: result.limitationCodes,
-            wrapInCard: false,
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<NhtsaVinSummaryField> _summaryFields(
-    AppLocalizations l10n,
-    Map<String, dynamic>? m,
-  ) {
-    if (m == null || m.isEmpty) return const [];
-    final make = _str(m['make']);
-    final model = _str(m['model']);
-    final year = _year(m['year']);
-    final body = _str(m['body_type']);
-    final fuel = _str(m['fuel_type']);
-    final out = <NhtsaVinSummaryField>[];
-    void add(String key, String label, String? value, {bool stack = false}) {
-      if (value == null) return;
-      out.add(
-        NhtsaVinSummaryField(
-          label: label,
-          value: value,
-          stackValue: stack,
-          fieldKey: key,
-        ),
-      );
-    }
-
-    add('make', l10n.editListingVinReportDecodedMakeLabel, make);
-    add('model', l10n.editListingVinReportDecodedModelLabel, model);
-    if (year != null) {
-      add('year', l10n.editListingVinReportDecodedYearLabel, '$year');
-    }
-    add(
-      'body_type',
-      l10n.editListingVinReportDecodedBodyLabel,
-      body,
-      stack: true,
-    );
-    add('fuel_type', l10n.editListingVinReportDecodedFuelLabel, fuel);
-    return out;
-  }
-}

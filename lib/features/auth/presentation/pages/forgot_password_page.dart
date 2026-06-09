@@ -5,11 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
-import '../../../../core/widgets/app_back_button.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../bloc/forgot_password_cubit.dart';
 import '../bloc/forgot_password_state.dart';
+import '../widgets/auth_editorial_header.dart';
+import '../widgets/auth_page_scaffold.dart';
 
 /// Request-reset-email screen.
 ///
@@ -61,11 +62,9 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(fallback: AppRoutes.signIn),
-        title: Text(l10n.forgotPasswordTitle),
-      ),
+
+    return AuthPageScaffold(
+      fallbackRoute: AppRoutes.signIn,
       body: BlocConsumer<ForgotPasswordCubit, ForgotPasswordState>(
         listenWhen: (prev, curr) =>
             prev.status != curr.status &&
@@ -85,51 +84,69 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
           final loading = state.status == ForgotPasswordStatus.submitting;
 
           if (state.status == ForgotPasswordStatus.success) {
-            return _SuccessView(onBack: () => context.go(AppRoutes.signIn));
+            return _SuccessView(
+              onBack: () => context.go(AppRoutes.signIn),
+            );
           }
 
-          return SafeArea(
-            child: SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(l10n.forgotPasswordIntro),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _emailCtrl,
-                      decoration: InputDecoration(
-                        labelText: l10n.authFieldEmail,
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [AutofillHints.email],
-                      enabled: !loading,
-                      validator: (v) => _validateEmail(l10n, v),
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: loading ? null : _submit,
-                      child: loading
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(l10n.forgotPasswordSubmit),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: loading
-                          ? null
-                          : () => context.go(AppRoutes.signIn),
-                      child: Text(l10n.backToSignIn),
-                    ),
-                  ],
+          return AuthPageBody(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AuthEditorialHeader(
+                  eyebrow: l10n.signInForgotPassword,
+                  title: l10n.forgotPasswordTitle,
+                  subtitle: l10n.forgotPasswordIntro,
                 ),
-              ),
+                const SizedBox(height: 28),
+                AuthFormSection(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextFormField(
+                          controller: _emailCtrl,
+                          decoration: AuthFormStyles.fieldDecoration(
+                            context,
+                            l10n.authFieldEmail,
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.email],
+                          enabled: !loading,
+                          validator: (v) => _validateEmail(l10n, v),
+                        ),
+                        const SizedBox(height: 22),
+                        FilledButton(
+                          onPressed: loading ? null : _submit,
+                          style: AuthFormStyles.primaryButtonStyle(context),
+                          child: loading
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(l10n.forgotPasswordSubmit),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AuthFormSection.formMaxWidth,
+                  ),
+                  child: AuthLinkButton(
+                    label: l10n.backToSignIn,
+                    loading: loading,
+                    onPressed: () => context.go(AppRoutes.signIn),
+                  ),
+                ),
+              ],
             ),
           );
         },
@@ -146,18 +163,47 @@ class _SuccessView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Padding(
-      padding: const EdgeInsets.all(24),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return AuthPageBody(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 24),
-          const Icon(CarzonIcons.mailCheck, size: 48),
-          const SizedBox(height: 16),
-          Text(l10n.forgotPasswordSuccess, textAlign: TextAlign.center),
-          const SizedBox(height: 24),
-          FilledButton(onPressed: onBack, child: Text(l10n.backToSignIn)),
+          AuthEditorialHeader(
+            eyebrow: l10n.signInForgotPassword,
+            title: l10n.forgotPasswordTitle,
+          ),
+          const SizedBox(height: 28),
+          AuthFormSection(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Icon(
+                  CarzonIcons.mailCheck,
+                  size: 48,
+                  color: scheme.onSurface.withValues(alpha: 0.88),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.forgotPasswordSuccess,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    height: 1.45,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                FilledButton(
+                  onPressed: onBack,
+                  style: AuthFormStyles.primaryButtonStyle(context),
+                  child: Text(l10n.backToSignIn),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -33,6 +33,23 @@ void main() {
       expect(readSameJson.hasUnread, isFalse);
     });
 
+    test('parses support conversation with null listing_id and kind', () {
+      final support = ConversationModel.fromJson({
+        'id': 'support-cid',
+        'listing_id': null,
+        'conversation_kind': 'support',
+        'buyer_id': 'b',
+        'seller_id': 'support-user',
+        'created_at': '2026-07-02T12:00:00.000Z',
+        'updated_at': '2026-07-02T12:00:00.000Z',
+        'has_unread': false,
+      });
+
+      expect(support.isSupportConversation, isTrue);
+      expect(support.listingId, isNull);
+      expect(support.conversationKind.name, 'support');
+    });
+
     test(
       'defaults hasUnread false when RPC omits has_unread (single-thread fetch)',
       () {

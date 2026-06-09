@@ -456,7 +456,9 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         b.add(const ListingsNextPageRequested());
         await Future<void>.delayed(Duration.zero);
-        b.add(const ListingsNextPageRequested());
+        b.add(
+          const ListingsNextPageRequested(isExplicitRetry: true),
+        );
       },
       expect: () => [
         const ListingsState(status: ListingsStatus.loading),
@@ -513,7 +515,9 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         b.add(const ListingsNextPageRequested());
         await Future<void>.delayed(Duration.zero);
-        b.add(const ListingsNextPageRequested());
+        b.add(
+          const ListingsNextPageRequested(isExplicitRetry: true),
+        );
       },
       expect: () => [
         const ListingsState(status: ListingsStatus.loading),
@@ -543,6 +547,176 @@ void main() {
           items: firstPage,
           hasReachedEnd: false,
           loadFailure: const NetworkFailure('next page down 3'),
+        ),
+      ],
+    );
+
+    blocTest<ListingsBloc, ListingsState>(
+      'next-page request is ignored while paginationFailure',
+      setUp: () {
+        var call = 0;
+        when(() => repo.getListings(any())).thenAnswer((_) async {
+          call += 1;
+          if (call == 1) return Success(firstPage);
+          return const FailureResult(NetworkFailure('next page down'));
+        });
+      },
+      build: () => ListingsBloc(
+        getListings: GetListings(repo),
+        lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      ),
+      act: (b) async {
+        b.add(const ListingsRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsNextPageRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsNextPageRequested());
+        await Future<void>.delayed(Duration.zero);
+      },
+      expect: () => [
+        const ListingsState(status: ListingsStatus.loading),
+        ListingsState(
+          status: ListingsStatus.success,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.loadingMore,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.paginationFailure,
+          items: firstPage,
+          hasReachedEnd: false,
+          loadFailure: const NetworkFailure('next page down'),
+        ),
+      ],
+      verify: (_) {
+        final queries = verify(() => repo.getListings(captureAny())).captured;
+        expect(queries.map((q) => (q as ListingsQuery).page), [0, 1]);
+      },
+    );
+
+    blocTest<ListingsBloc, ListingsState>(
+      'explicit retry after paginationFailure loads the failed next page',
+      setUp: () {
+        var call = 0;
+        when(() => repo.getListings(any())).thenAnswer((_) async {
+          call += 1;
+          if (call == 1) return Success(firstPage);
+          if (call == 2) {
+            return const FailureResult(NetworkFailure('next page down'));
+          }
+          return Success(secondPage);
+        });
+      },
+      build: () => ListingsBloc(
+        getListings: GetListings(repo),
+        lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      ),
+      act: (b) async {
+        b.add(const ListingsRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsNextPageRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsNextPageRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(
+          const ListingsNextPageRequested(isExplicitRetry: true),
+        );
+      },
+      expect: () => [
+        const ListingsState(status: ListingsStatus.loading),
+        ListingsState(
+          status: ListingsStatus.success,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.loadingMore,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.paginationFailure,
+          items: firstPage,
+          hasReachedEnd: false,
+          loadFailure: const NetworkFailure('next page down'),
+        ),
+        ListingsState(
+          status: ListingsStatus.loadingMore,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.success,
+          items: [...firstPage, ...secondPage],
+          page: 1,
+          hasReachedEnd: true,
+        ),
+      ],
+      verify: (_) {
+        final queries = verify(() => repo.getListings(captureAny())).captured;
+        expect(queries.map((q) => (q as ListingsQuery).page), [0, 1, 1]);
+      },
+    );
+
+    blocTest<ListingsBloc, ListingsState>(
+      'search change after paginationFailure resets pagination state',
+      setUp: () {
+        var call = 0;
+        when(() => repo.getListings(any())).thenAnswer((_) async {
+          call += 1;
+          if (call == 1) return Success(firstPage);
+          if (call == 2) {
+            return const FailureResult(NetworkFailure('next page down'));
+          }
+          return Success([_listing('search-0')]);
+        });
+      },
+      build: () => ListingsBloc(
+        getListings: GetListings(repo),
+        lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      ),
+      act: (b) async {
+        b.add(const ListingsRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsNextPageRequested());
+        await Future<void>.delayed(Duration.zero);
+        b.add(const ListingsSearchChanged('bmw'));
+      },
+      expect: () => [
+        const ListingsState(status: ListingsStatus.loading),
+        ListingsState(
+          status: ListingsStatus.success,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.loadingMore,
+          items: firstPage,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.paginationFailure,
+          items: firstPage,
+          hasReachedEnd: false,
+          loadFailure: const NetworkFailure('next page down'),
+        ),
+        const ListingsState(
+          status: ListingsStatus.loading,
+          search: 'bmw',
+          items: [],
+          page: 0,
+          hasReachedEnd: false,
+        ),
+        ListingsState(
+          status: ListingsStatus.success,
+          search: 'bmw',
+          items: [_listing('search-0')],
+          page: 0,
+          hasReachedEnd: true,
         ),
       ],
     );
