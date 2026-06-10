@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/ui/carzon_logo.dart';
 import 'feed_home_account_avatar_button.dart';
 
 /// Editorial wordmark header at the top of the feed.
@@ -14,24 +15,16 @@ class ListingsCatalogHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final wordmark = Text(
-      'CARZON',
-      textAlign: TextAlign.center,
-      style: theme.textTheme.titleSmall?.copyWith(
-        color: scheme.onSurface.withValues(alpha: 0.82),
-        fontWeight: FontWeight.w700,
-        letterSpacing: 4.0,
-        height: 1.0,
-      ),
+    const wordmark = CarzonLogo(
+      key: Key('listingsHeaderCarzonLogo'),
+      height: 18,
     );
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 14, 10),
       child: Row(
         children: [
           const SizedBox(width: _mastheadSideSlot),
-          Expanded(child: Center(child: wordmark)),
+          const Expanded(child: Center(child: wordmark)),
           const SizedBox(
             width: _mastheadSideSlot,
             child: Align(
