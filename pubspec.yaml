@@ -63,6 +63,7 @@ dev_dependencies:
   bloc_test: ^10.0.0
   mocktail: ^1.0.4
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -71,4 +72,12 @@ flutter:
     - assets/brands/svg/
     - assets/categories/svg/
     - assets/contact/whatsapp.svg
+    - assets/icons/carzon_logo.svg
+    - assets/animation/
     - assets/bg/bg_chat.jpg
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icons/icon.png
+  remove_alpha_ios: true

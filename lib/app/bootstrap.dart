@@ -17,6 +17,7 @@ import '../features/messaging/presentation/bloc/messaging_unread_summary_cubit.d
 import '../features/notifications/services/push_notification_registration_service.dart';
 import '../features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import 'app.dart';
+import 'bootstrap_splash_app.dart';
 import 'di/injection.dart';
 import 'router/app_router.dart';
 import 'startup_error_app.dart';
@@ -24,12 +25,13 @@ import 'startup_error_app.dart';
 /// App entry point. Strict order:
 ///   1. Bind Flutter
 ///   2. Validate required compile-time client config (fail fast → config error)
-///   3. When push is enabled, await [Firebase.initializeApp] (non-fatal if it
+///   3. Mount [BootstrapSplashApp] while async init continues
+///   4. When push is enabled, await [Firebase.initializeApp] (non-fatal if it
 ///      fails — FCM registration retries later)
-///   4. Initialize Supabase (fail fast → config error screen)
-///   5. Configure DI
-///   6. Restore auth session before first frame
-///   7. Mount widget tree
+///   5. Initialize Supabase (fail fast → config error screen)
+///   6. Configure DI
+///   7. Restore auth session before main app mount
+///   8. Mount [CarzonApp]
 ///
 /// Client config is supplied via `--dart-define-from-file=.env.client` (see
 /// `.env.client.example`). No `.env` asset is loaded at runtime.
@@ -56,6 +58,8 @@ Future<void> bootstrap() async {
         );
         return;
       }
+
+      runApp(const BootstrapSplashApp());
 
       if (Env.pushNotificationsEnabled) {
         try {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../shared/ui/carzon_logo.dart';
 import '../../../auth/domain/entities/auth_user.dart';
 import '../../../sellers/presentation/bloc/public_seller_identity_cubit.dart';
 import '../../../sellers/presentation/bloc/public_seller_identity_state.dart';
@@ -147,7 +148,6 @@ class _ProfileBrandPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
@@ -158,18 +158,11 @@ class _ProfileBrandPill extends StatelessWidget {
           color: scheme.outline.withValues(alpha: isDark ? 0.18 : 0.12),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        child: Text(
-          'CARZON',
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(
-              alpha: isDark ? 0.72 : 0.62,
-            ),
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.8,
-            height: 1,
-          ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        child: CarzonLogo(
+          key: Key('profileCarzonLogo'),
+          height: 15,
         ),
       ),
     );

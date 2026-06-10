@@ -10,6 +10,7 @@ import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../../shared/ui/carzon_icons.dart';
+import '../../../../shared/ui/carzon_logo.dart';
 import '../../../compare/presentation/cubit/compare_cubit.dart';
 import '../../../compare/presentation/cubit/compare_state.dart';
 import '../widgets/menu_count_badge.dart';
@@ -815,8 +816,7 @@ class _MenuBrandPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -828,18 +828,11 @@ class _MenuBrandPill extends StatelessWidget {
           color: scheme.outline.withValues(alpha: isDark ? 0.18 : 0.12),
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        child: Text(
-          'CARZON',
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: scheme.onSurfaceVariant.withValues(
-              alpha: isDark ? 0.72 : 0.62,
-            ),
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.8,
-            height: 1,
-          ),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        child: CarzonLogo(
+          key: Key('menuCarzonLogo'),
+          height: 15,
         ),
       ),
     );
