@@ -1,4 +1,5 @@
 import 'package:carzon/features/listings/domain/catalog/listing_brands.dart';
+import 'package:carzon/shared/brands/brand_icon_resolver.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Second-wave brands added in catalog expansion pass.
@@ -169,15 +170,23 @@ void main() {
         }
       });
 
-      test('second-wave brands without SVG use monogram on feed', () {
-        for (final brand in ['Genesis', 'VinFast', 'UAZ', 'Ram']) {
+      test('all feed catalog brands use packaged SVG on feed', () {
+        for (final brand in kListingBrandFeedQuickFilterCatalog) {
           expect(
             listingBrandFeedQuickFilterShouldUseMonogram(brand),
-            isTrue,
+            isFalse,
+            reason: brand,
+          );
+          expect(
+            isBrandIconDefaultAssetPath(getBrandIconPath(brand)),
+            isFalse,
             reason: brand,
           );
         }
-        expect(listingBrandFeedQuickFilterShouldUseMonogram('Isuzu'), isFalse);
+        expect(listingBrandFeedQuickFilterShouldUseMonogram('Bestune'), isFalse);
+        expect(listingBrandFeedQuickFilterShouldUseMonogram('FAW'), isFalse);
+        expect(getBrandIconPath('Bestune'), endsWith('/bestune.svg'));
+        expect(getBrandIconPath('FAW'), endsWith('/faw.svg'));
       });
     });
 

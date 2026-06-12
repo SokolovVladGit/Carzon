@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="760" viewBox="132 132 760 760" fill="none">
+  <defs>
+    <linearGradient id="metalStroke" x1="262" y1="230" x2="779" y2="807" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E8EDF2"/>
+      <stop offset="0.22" stop-color="#151719"/>
+      <stop offset="0.48" stop-color="#676B70"/>
+      <stop offset="0.78" stop-color="#030405"/>
+      <stop offset="1" stop-color="#C9D0D8"/>
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="370" y1="352" x2="666" y2="686" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#91979D"/>
+      <stop offset="0.23" stop-color="#0B0C0D"/>
+      <stop offset="0.52" stop-color="#44484D"/>
+      <stop offset="0.78" stop-color="#050607"/>
+      <stop offset="1" stop-color="#B8C0C8"/>
+    </linearGradient>
+    <radialGradient id="innerDisc" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(470 442) rotate(50) scale(205 190)">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.63" stop-color="#F4F6F8"/>
+      <stop offset="1" stop-color="#CCD4DD"/>
+    </radialGradient>
+    <radialGradient id="silverNode" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(488 238) rotate(45) scale(72 72)">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.33" stop-color="#D9DEE3"/>
+      <stop offset="0.58" stop-color="#80868C"/>
+      <stop offset="0.76" stop-color="#F5F7F9"/>
+      <stop offset="1" stop-color="#1D2023"/>
+    </radialGradient>
+    <radialGradient id="darkNode" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(397 338) rotate(45) scale(78 78)">
+      <stop offset="0" stop-color="#636A70"/>
+      <stop offset="0.30" stop-color="#1D2024"/>
+      <stop offset="0.72" stop-color="#050607"/>
+      <stop offset="1" stop-color="#020303"/>
+    </radialGradient>
+    <filter id="softShadow" x="220" y="170" width="600" height="650" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#1D2430" flood-opacity="0.20"/>
+    </filter>
+    <filter id="nodeShadow" x="180" y="170" width="680" height="700" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#1B2026" flood-opacity="0.28"/>
+      <feDropShadow dx="0" dy="-2" stdDeviation="2" flood-color="#FFFFFF" flood-opacity="0.75"/>
+    </filter>
+  </defs>
+
+  <!-- Orbit arcs -->
+  <g filter="url(#softShadow)" stroke="url(#metalStroke)" stroke-width="10" stroke-linecap="butt" opacity="0.98">
+    <path d="M 547.3 244.3 A 270 270 0 0 1 705.5 323.9"/>
+    <path d="M 743.7 375.4 A 270 270 0 0 1 765.8 604.3"/>
+    <path d="M 741.9 653.6 A 270 270 0 0 1 624.3 757.5"/>
+    <path d="M 571.6 775.3 A 270 270 0 0 1 452.4 775.3"/>
+    <path d="M 399.7 757.5 A 270 270 0 0 1 282.1 653.6"/>
+    <path d="M 258.2 604.3 A 270 270 0 0 1 280.3 375.4"/>
+    <path d="M 318.5 323.9 A 270 270 0 0 1 476.7 244.3"/>
+  </g>
+  <g stroke="#F7FAFD" stroke-width="2" stroke-linecap="butt" opacity="0.65">
+    <path d="M 547.3 238.4 A 276 276 0 0 1 709.8 319.7"/>
+    <path d="M 749.0 372.5 A 276 276 0 0 1 771.4 606.4"/>
+    <path d="M 747.0 656.5 A 276 276 0 0 1 626.8 763.0"/>
+    <path d="M 572.9 781.2 A 276 276 0 0 1 451.1 781.2"/>
+    <path d="M 397.2 763.0 A 276 276 0 0 1 277.0 656.5"/>
+    <path d="M 252.6 606.4 A 276 276 0 0 1 275.0 372.5"/>
+    <path d="M 314.2 319.7 A 276 276 0 0 1 476.7 238.4"/>
+  </g>
+
+  <!-- Central ring -->
+  <g filter="url(#softShadow)">
+    <circle cx="512" cy="512" r="140" fill="none" stroke="url(#ringGrad)" stroke-width="42"/>
+    <circle cx="512" cy="512" r="118" fill="none" stroke="#050607" stroke-width="3" opacity="0.80"/>
+    <circle cx="512" cy="512" r="98" fill="url(#innerDisc)"/>
+    <circle cx="512" cy="512" r="98" stroke="#F9FBFD" stroke-width="3" opacity="0.9"/>
+  </g>
+
+  <!-- Metallic nodes -->
+  <g filter="url(#nodeShadow)">
+    <g transform="translate(512 242)">
+      <circle r="44" fill="url(#silverNode)"/>
+      <circle r="44" stroke="#0C0E10" stroke-width="4" opacity="0.85"/>
+      <circle r="35" stroke="#FFFFFF" stroke-width="2" opacity="0.70"/>
+      <path d="M -28 -18 C -5 -43, 34 -30, 35 2" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
+    </g>
+    <g transform="translate(733 357)">
+      <circle r="44" fill="url(#darkNode)"/>
+      <circle r="44" stroke="#DDE4EB" stroke-width="3" opacity="0.60"/>
+      <path d="M -27 -20 C -1 -42, 32 -29, 35 2" stroke="#6C747D" stroke-width="5" stroke-linecap="round" opacity="0.42"/>
+    </g>
+    <g transform="translate(766 637)">
+      <circle r="44" fill="url(#silverNode)"/>
+      <circle r="44" stroke="#0C0E10" stroke-width="4" opacity="0.80"/>
+      <circle r="35" stroke="#FFFFFF" stroke-width="2" opacity="0.70"/>
+      <path d="M -28 -18 C -5 -43, 34 -30, 35 2" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
+    </g>
+    <g transform="translate(582 773)">
+      <circle r="44" fill="url(#darkNode)"/>
+      <circle r="44" stroke="#DDE4EB" stroke-width="3" opacity="0.55"/>
+      <path d="M -27 -20 C -1 -42, 32 -29, 35 2" stroke="#6C747D" stroke-width="5" stroke-linecap="round" opacity="0.42"/>
+    </g>
+    <g transform="translate(442 773)">
+      <circle r="44" fill="url(#darkNode)"/>
+      <circle r="44" stroke="#DDE4EB" stroke-width="3" opacity="0.55"/>
+      <path d="M -27 -20 C -1 -42, 32 -29, 35 2" stroke="#6C747D" stroke-width="5" stroke-linecap="round" opacity="0.42"/>
+    </g>
+    <g transform="translate(258 637)">
+      <circle r="44" fill="url(#silverNode)"/>
+      <circle r="44" stroke="#0C0E10" stroke-width="4" opacity="0.80"/>
+      <circle r="35" stroke="#FFFFFF" stroke-width="2" opacity="0.70"/>
+      <path d="M -28 -18 C -5 -43, 34 -30, 35 2" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
+    </g>
+    <g transform="translate(291 357)">
+      <circle r="44" fill="url(#darkNode)"/>
+      <circle r="44" stroke="#DDE4EB" stroke-width="3" opacity="0.60"/>
+      <path d="M -27 -20 C -1 -42, 32 -29, 35 2" stroke="#6C747D" stroke-width="5" stroke-linecap="round" opacity="0.42"/>
+    </g>
+  </g>
+</svg>

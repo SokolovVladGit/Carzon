@@ -361,7 +361,8 @@ void main() {
 
       expect(find.bySemanticsLabel(l10n.listingBodyTypeSuv), findsOneWidget);
       expect(find.text(l10n.listingBodyTypeSuv), findsOneWidget);
-      expect(find.text(l10n.listingsBodyChipAll), findsOneWidget);
+      expect(find.bySemanticsLabel(l10n.listingsBodyChipAll), findsOneWidget);
+      expect(find.text(l10n.listingsBodyChipAll), findsNothing);
 
       await tester.tap(find.text(l10n.listingBodyTypeSuv));
       await tester.pump();

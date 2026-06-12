@@ -139,37 +139,130 @@ void main() {
       }
     });
 
-    test('monogram fallback set matches brands without dedicated SVG', () {
-      expect(kListingBrandFeedQuickFilterMonogramFallback, {
-        'Citroen',
-        'Seat',
-        'Porsche',
-        'Lada',
-      });
+    test('forced monogram fallback set is empty when all SVGs are enabled', () {
+      expect(kListingBrandFeedQuickFilterMonogramFallback, isEmpty);
     });
 
-    test('monogram labels for fallback brands', () {
-      expect(listingBrandFeedQuickFilterMonogram('Citroen'), 'CI');
-      expect(listingBrandFeedQuickFilterMonogram('Seat'), 'SE');
-      expect(listingBrandFeedQuickFilterMonogram('Porsche'), 'PO');
-      expect(listingBrandFeedQuickFilterMonogram('Lada'), 'LA');
+    test('monogram label helper derives initials from catalog names', () {
+      expect(listingBrandFeedQuickFilterMonogram('Ram'), 'RA');
+      expect(listingBrandFeedQuickFilterMonogram('GMC'), 'GM');
+      expect(listingBrandFeedQuickFilterMonogram('DS Automobiles'), 'DA');
       expect(listingBrandFeedQuickFilterMonogram('Land Rover'), 'LR');
     });
 
-    test('catalog brand without logo asset uses monogram on feed', () {
-      expect(listingBrandFeedQuickFilterShouldUseMonogram('BYD'), isTrue);
-      expect(listingBrandFeedQuickFilterMonogram('BYD'), 'BY');
-      expect(listingBrandFeedQuickFilterShouldUseMonogram('Cupra'), isTrue);
-      expect(listingBrandFeedQuickFilterMonogram('Great Wall'), 'GW');
+    test('packaged brands use SVG on feed; missing assets use monogram', () {
+      expect(listingBrandFeedQuickFilterShouldUseMonogram('BYD'), isFalse);
+      expect(listingBrandFeedQuickFilterShouldUseMonogram('Cupra'), isFalse);
+      expect(listingBrandFeedQuickFilterShouldUseMonogram('Citroen'), isFalse);
       expect(
         isBrandIconDefaultAssetPath(getBrandIconPath('BYD')),
-        isTrue,
+        isFalse,
       );
+    });
+
+    test('cleaned packaged brands use SVG not monogram on feed', () {
+      for (final brand in [
+        'Seres',
+        'Voyah',
+        'Foton',
+        'GMC',
+        'Ram',
+        'Cadillac',
+        'Porsche',
+        'Wey',
+        'KGM',
+        'Li Auto',
+        'Fiat',
+        'Hyundai',
+        'Nissan',
+        'MG',
+        'Omoda',
+        'Daihatsu',
+        'Chevrolet',
+        'Hongqi',
+        'Subaru',
+        'Tank',
+        'VinFast',
+        'DS Automobiles',
+        'Bestune',
+        'FAW',
+      ]) {
+        expect(
+          listingBrandFeedQuickFilterShouldUseMonogram(brand),
+          isFalse,
+          reason: brand,
+        );
+        expect(
+          isBrandIconDefaultAssetPath(getBrandIconPath(brand)),
+          isFalse,
+          reason: brand,
+        );
+      }
+    });
+
+    test('no feed catalog brand uses monogram fallback', () {
+      for (final brand in kListingBrandFeedQuickFilterCatalog) {
+        expect(
+          listingBrandFeedQuickFilterShouldUseMonogram(brand),
+          isFalse,
+          reason: brand,
+        );
+      }
     });
 
     test('newly added brands appear in feed quick-filter catalog', () {
       for (final brand in ['Subaru', 'Cupra', 'BYD', 'Zeekr', 'Li Auto']) {
         expect(kListingBrandFeedQuickFilterCatalog, contains(brand));
+      }
+    });
+  });
+
+  group('feed quick-filter logo optical scale', () {
+    test('balanced brands use default scale 1.0', () {
+      for (final brand in ['Toyota', 'BMW', 'Volkswagen', 'Ford', 'Honda']) {
+        expect(
+          listingBrandFeedQuickFilterLogoScale(brand),
+          1.0,
+          reason: brand,
+        );
+      }
+    });
+
+    test('undersized marks receive modest optical boost', () {
+      const boosted = {
+        'Datsun': 1.22,
+        'Abarth': 1.15,
+        'Cadillac': 1.40,
+        'Lancia': 1.12,
+        'Acura': 1.20,
+        'DS Automobiles': 1.18,
+        'Genesis': 1.22,
+        'Polestar': 1.12,
+        'Jaecoo': 1.30,
+        'Omoda': 1.28,
+        'UAZ': 1.24,
+        'Moskvich': 1.26,
+        'Land Rover': 1.46,
+        'Mini': 1.40,
+        'Fiat': 1.28,
+        'Jaguar': 1.30,
+        'Hummer': 1.32,
+        'Isuzu': 1.30,
+        'Ram': 1.30,
+        'Haval': 1.30,
+      };
+      for (final entry in boosted.entries) {
+        expect(
+          listingBrandFeedQuickFilterLogoScale(entry.key),
+          entry.value,
+          reason: entry.key,
+        );
+      }
+    });
+
+    test('override map keys match packaged slugs', () {
+      for (final slug in kListingBrandFeedQuickFilterLogoOpticalScaleBySlug.keys) {
+        expect(kPackagedBrandIconSlugs, contains(slug), reason: slug);
       }
     });
   });
