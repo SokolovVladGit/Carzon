@@ -123,12 +123,7 @@ final List<String> kListingBrandFeedQuickFilterCatalog = List.unmodifiable([
 ]);
 
 /// Catalog makes that always use initials on Home even when an SVG slug exists.
-const Set<String> kListingBrandFeedQuickFilterMonogramFallback = {
-  'Citroen',
-  'Seat',
-  'Porsche',
-  'Lada',
-};
+const Set<String> kListingBrandFeedQuickFilterMonogramFallback = {};
 
 /// Whether [catalogBrand] uses the Home monogram fallback (no dedicated SVG).
 bool listingBrandFeedQuickFilterUsesMonogramFallback(String catalogBrand) =>
@@ -138,6 +133,45 @@ bool listingBrandFeedQuickFilterUsesMonogramFallback(String catalogBrand) =>
 bool listingBrandFeedQuickFilterShouldUseMonogram(String catalogBrand) =>
     listingBrandFeedQuickFilterUsesMonogramFallback(catalogBrand) ||
     isBrandIconDefaultAssetPath(getBrandIconPath(catalogBrand));
+
+/// Per-slug optical scale for Home feed brand chips.
+///
+/// Most brands use the default [BrandLogoGlyph] size (1.0). Listed slugs have
+/// wide marks, heavy viewBox padding, or compact emblems that read too small
+/// inside the square chip — a modest boost normalizes perceived size only.
+const Map<String, double> kListingBrandFeedQuickFilterLogoOpticalScaleBySlug = {
+  'abarth': 1.15,
+  'acura': 1.20,
+  'cadillac': 1.40,
+  'datsun': 1.22,
+  'ds-automobiles': 1.18,
+  'genesis': 1.22,
+  'jaecoo': 1.30,
+  'lancia': 1.12,
+  'land-rover': 1.46,
+  'mini': 1.40,
+  'moskvich': 1.26,
+  'omoda': 1.28,
+  'polestar': 1.12,
+  'uaz': 1.24,
+  'fiat': 1.28,
+  'jaguar': 1.30,
+  'hummer': 1.32,
+  'isuzu': 1.30,
+  'ram': 1.30,
+  'haval': 1.30
+};
+
+/// Optical size multiplier for feed quick-filter brand SVG logos (default 1.0).
+double listingBrandFeedQuickFilterLogoScale(String catalogBrand) {
+  final assetPath = getBrandIconPath(catalogBrand);
+  if (isBrandIconDefaultAssetPath(assetPath)) return 1.0;
+
+  final slug = brandIconSlugFromAssetPath(assetPath);
+  if (slug == null) return 1.0;
+
+  return kListingBrandFeedQuickFilterLogoOpticalScaleBySlug[slug] ?? 1.0;
+}
 
 /// Two-letter monogram for Home fallback tiles (e.g. Land Rover → LR).
 String listingBrandFeedQuickFilterMonogram(String catalogBrand) {

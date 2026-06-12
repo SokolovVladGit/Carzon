@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="341" height="604" viewBox="0 0 341 604" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="silver" x1="32" y1="43" x2="313" y2="574" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.15" stop-color="#c9c9c9"/>
+      <stop offset="0.43" stop-color="#f7f7f7"/>
+      <stop offset="0.68" stop-color="#777777"/>
+      <stop offset="1" stop-color="#2c2c2c"/>
+    </linearGradient>
+    <linearGradient id="innerBlack" x1="170" y1="62" x2="170" y2="579" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#090909"/>
+      <stop offset="0.52" stop-color="#10100f"/>
+      <stop offset="1" stop-color="#020202"/>
+    </linearGradient>
+    <radialGradient id="redFacet" cx="145" cy="180" r="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f53b4d"/>
+      <stop offset="0.44" stop-color="#b50019"/>
+      <stop offset="1" stop-color="#47000b"/>
+    </radialGradient>
+    <radialGradient id="redFacetR" cx="211" cy="190" r="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff3847"/>
+      <stop offset="0.45" stop-color="#b40016"/>
+      <stop offset="1" stop-color="#3a0009"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="158" y1="78" x2="184" y2="565" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff5cb"/>
+      <stop offset="0.12" stop-color="#ff8e28"/>
+      <stop offset="0.47" stop-color="#fbe0a6"/>
+      <stop offset="0.77" stop-color="#a64f12"/>
+      <stop offset="1" stop-color="#ffd285"/>
+    </linearGradient>
+    <linearGradient id="redEdge" x1="73" y1="80" x2="267" y2="565" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff2be"/>
+      <stop offset="0.2" stop-color="#ffb36c"/>
+      <stop offset="0.72" stop-color="#ffb46f"/>
+      <stop offset="1" stop-color="#ffe3a6"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="60" y1="220" x2="282" y2="322" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.15"/>
+    </linearGradient>
+    <path id="outerShape" d="M43,36 C89,24 251,24 300,35 C315,38 321,47 322,65 C329,210 326,388 286,487 C263,545 217,578 177,591 C132,577 85,543 60,486 C19,391 17,209 24,65 C25,48 30,39 43,36 Z"/>
+    <path id="innerShape" d="M52,61 C101,52 241,52 290,61 C300,63 305,68 306,80 C313,224 306,397 272,474 C250,522 207,552 171,570 C135,552 92,522 69,474 C35,398 28,224 35,80 C36,68 42,63 52,61 Z"/>
+    <clipPath id="badgeClip"><use href="#innerShape"/></clipPath>
+    <clipPath id="leftClip"><path d="M75,89 C83,80 111,78 129,78 L166,78 L166,565 L154,565 C151,510 139,452 119,419 C96,381 84,361 76,307 C68,250 68,112 75,89 Z"/></clipPath>
+    <clipPath id="rightClip"><path d="M176,78 L214,78 C236,78 263,81 269,89 C276,112 273,251 264,308 C255,362 244,382 222,418 C201,453 187,511 184,565 L176,565 Z"/></clipPath>
+  </defs>
+
+  <use href="#outerShape" fill="url(#silver)"/>
+  <path d="M43,36 C89,24 251,24 300,35 C315,38 321,47 322,65 C329,210 326,388 286,487 C263,545 217,578 177,591 C132,577 85,543 60,486 C19,391 17,209 24,65 C25,48 30,39 43,36 Z" fill="none" stroke="#111" stroke-width="2.2" opacity="0.45"/>
+  <use href="#innerShape" fill="url(#innerBlack)"/>
+
+  <g clip-path="url(#badgeClip)">
+    <rect x="31" y="58" width="280" height="520" fill="#050505"/>
+    <g stroke="#805537" stroke-width="2" opacity="0.43">
+      <line x1="-260" y1="60" x2="20" y2="570"/>
+      <line x1="-242" y1="60" x2="38" y2="570"/>
+      <line x1="-224" y1="60" x2="56" y2="570"/>
+      <line x1="-206" y1="60" x2="74" y2="570"/>
+      <line x1="-188" y1="60" x2="92" y2="570"/>
+      <line x1="-170" y1="60" x2="110" y2="570"/>
+      <line x1="-152" y1="60" x2="128" y2="570"/>
+      <line x1="-134" y1="60" x2="146" y2="570"/>
+      <line x1="-116" y1="60" x2="164" y2="570"/>
+      <line x1="-98" y1="60" x2="182" y2="570"/>
+      <line x1="-80" y1="60" x2="200" y2="570"/>
+      <line x1="-62" y1="60" x2="218" y2="570"/>
+      <line x1="-44" y1="60" x2="236" y2="570"/>
+      <line x1="-26" y1="60" x2="254" y2="570"/>
+      <line x1="-8" y1="60" x2="272" y2="570"/>
+      <line x1="10" y1="60" x2="290" y2="570"/>
+      <line x1="28" y1="60" x2="308" y2="570"/>
+      <line x1="46" y1="60" x2="326" y2="570"/>
+      <line x1="64" y1="60" x2="344" y2="570"/>
+      <line x1="82" y1="60" x2="362" y2="570"/>
+      <line x1="100" y1="60" x2="380" y2="570"/>
+      <line x1="118" y1="60" x2="398" y2="570"/>
+      <line x1="136" y1="60" x2="416" y2="570"/>
+      <line x1="154" y1="60" x2="434" y2="570"/>
+      <line x1="172" y1="60" x2="452" y2="570"/>
+      <line x1="190" y1="60" x2="470" y2="570"/>
+      <line x1="208" y1="60" x2="488" y2="570"/>
+      <line x1="226" y1="60" x2="506" y2="570"/>
+      <line x1="244" y1="60" x2="524" y2="570"/>
+      <line x1="262" y1="60" x2="542" y2="570"/>
+      <line x1="280" y1="60" x2="560" y2="570"/>
+      <line x1="298" y1="60" x2="578" y2="570"/>
+      <line x1="316" y1="60" x2="596" y2="570"/>
+      <line x1="334" y1="60" x2="614" y2="570"/>
+      <line x1="352" y1="60" x2="632" y2="570"/>
+      <line x1="40" y1="60" x2="-240" y2="570"/>
+      <line x1="58" y1="60" x2="-222" y2="570"/>
+      <line x1="76" y1="60" x2="-204" y2="570"/>
+      <line x1="94" y1="60" x2="-186" y2="570"/>
+      <line x1="112" y1="60" x2="-168" y2="570"/>
+      <line x1="130" y1="60" x2="-150" y2="570"/>
+      <line x1="148" y1="60" x2="-132" y2="570"/>
+      <line x1="166" y1="60" x2="-114" y2="570"/>
+      <line x1="184" y1="60" x2="-96" y2="570"/>
+      <line x1="202" y1="60" x2="-78" y2="570"/>
+      <line x1="220" y1="60" x2="-60" y2="570"/>
+      <line x1="238" y1="60" x2="-42" y2="570"/>
+      <line x1="256" y1="60" x2="-24" y2="570"/>
+      <line x1="274" y1="60" x2="-6" y2="570"/>
+      <line x1="292" y1="60" x2="12" y2="570"/>
+      <line x1="310" y1="60" x2="30" y2="570"/>
+      <line x1="328" y1="60" x2="48" y2="570"/>
+      <line x1="346" y1="60" x2="66" y2="570"/>
+      <line x1="364" y1="60" x2="84" y2="570"/>
+      <line x1="382" y1="60" x2="102" y2="570"/>
+      <line x1="400" y1="60" x2="120" y2="570"/>
+      <line x1="418" y1="60" x2="138" y2="570"/>
+      <line x1="436" y1="60" x2="156" y2="570"/>
+      <line x1="454" y1="60" x2="174" y2="570"/>
+      <line x1="472" y1="60" x2="192" y2="570"/>
+      <line x1="490" y1="60" x2="210" y2="570"/>
+      <line x1="508" y1="60" x2="228" y2="570"/>
+      <line x1="526" y1="60" x2="246" y2="570"/>
+      <line x1="544" y1="60" x2="264" y2="570"/>
+      <line x1="562" y1="60" x2="282" y2="570"/>
+      <line x1="580" y1="60" x2="300" y2="570"/>
+      <line x1="598" y1="60" x2="318" y2="570"/>
+      <line x1="616" y1="60" x2="336" y2="570"/>
+      <line x1="634" y1="60" x2="354" y2="570"/>
+      <line x1="652" y1="60" x2="372" y2="570"/>
+    </g>
+    <g stroke="#1d120d" stroke-width="4" opacity="0.42">
+      <line x1="-260" y1="60" x2="20" y2="570"/>
+      <line x1="-242" y1="60" x2="38" y2="570"/>
+      <line x1="-224" y1="60" x2="56" y2="570"/>
+      <line x1="-206" y1="60" x2="74" y2="570"/>
+      <line x1="-188" y1="60" x2="92" y2="570"/>
+      <line x1="-170" y1="60" x2="110" y2="570"/>
+      <line x1="-152" y1="60" x2="128" y2="570"/>
+      <line x1="-134" y1="60" x2="146" y2="570"/>
+      <line x1="-116" y1="60" x2="164" y2="570"/>
+      <line x1="-98" y1="60" x2="182" y2="570"/>
+      <line x1="-80" y1="60" x2="200" y2="570"/>
+      <line x1="-62" y1="60" x2="218" y2="570"/>
+      <line x1="-44" y1="60" x2="236" y2="570"/>
+      <line x1="-26" y1="60" x2="254" y2="570"/>
+      <line x1="-8" y1="60" x2="272" y2="570"/>
+      <line x1="10" y1="60" x2="290" y2="570"/>
+      <line x1="28" y1="60" x2="308" y2="570"/>
+      <line x1="46" y1="60" x2="326" y2="570"/>
+      <line x1="64" y1="60" x2="344" y2="570"/>
+      <line x1="82" y1="60" x2="362" y2="570"/>
+      <line x1="100" y1="60" x2="380" y2="570"/>
+      <line x1="118" y1="60" x2="398" y2="570"/>
+      <line x1="136" y1="60" x2="416" y2="570"/>
+      <line x1="154" y1="60" x2="434" y2="570"/>
+      <line x1="172" y1="60" x2="452" y2="570"/>
+      <line x1="190" y1="60" x2="470" y2="570"/>
+      <line x1="208" y1="60" x2="488" y2="570"/>
+      <line x1="226" y1="60" x2="506" y2="570"/>
+      <line x1="244" y1="60" x2="524" y2="570"/>
+      <line x1="262" y1="60" x2="542" y2="570"/>
+      <line x1="280" y1="60" x2="560" y2="570"/>
+      <line x1="298" y1="60" x2="578" y2="570"/>
+      <line x1="316" y1="60" x2="596" y2="570"/>
+      <line x1="334" y1="60" x2="614" y2="570"/>
+      <line x1="352" y1="60" x2="632" y2="570"/>
+      <line x1="40" y1="60" x2="-240" y2="570"/>
+      <line x1="58" y1="60" x2="-222" y2="570"/>
+      <line x1="76" y1="60" x2="-204" y2="570"/>
+      <line x1="94" y1="60" x2="-186" y2="570"/>
+      <line x1="112" y1="60" x2="-168" y2="570"/>
+      <line x1="130" y1="60" x2="-150" y2="570"/>
+      <line x1="148" y1="60" x2="-132" y2="570"/>
+      <line x1="166" y1="60" x2="-114" y2="570"/>
+      <line x1="184" y1="60" x2="-96" y2="570"/>
+      <line x1="202" y1="60" x2="-78" y2="570"/>
+      <line x1="220" y1="60" x2="-60" y2="570"/>
+      <line x1="238" y1="60" x2="-42" y2="570"/>
+      <line x1="256" y1="60" x2="-24" y2="570"/>
+      <line x1="274" y1="60" x2="-6" y2="570"/>
+      <line x1="292" y1="60" x2="12" y2="570"/>
+      <line x1="310" y1="60" x2="30" y2="570"/>
+      <line x1="328" y1="60" x2="48" y2="570"/>
+      <line x1="346" y1="60" x2="66" y2="570"/>
+      <line x1="364" y1="60" x2="84" y2="570"/>
+      <line x1="382" y1="60" x2="102" y2="570"/>
+      <line x1="400" y1="60" x2="120" y2="570"/>
+      <line x1="418" y1="60" x2="138" y2="570"/>
+      <line x1="436" y1="60" x2="156" y2="570"/>
+      <line x1="454" y1="60" x2="174" y2="570"/>
+      <line x1="472" y1="60" x2="192" y2="570"/>
+      <line x1="490" y1="60" x2="210" y2="570"/>
+      <line x1="508" y1="60" x2="228" y2="570"/>
+      <line x1="526" y1="60" x2="246" y2="570"/>
+      <line x1="544" y1="60" x2="264" y2="570"/>
+      <line x1="562" y1="60" x2="282" y2="570"/>
+      <line x1="580" y1="60" x2="300" y2="570"/>
+      <line x1="598" y1="60" x2="318" y2="570"/>
+      <line x1="616" y1="60" x2="336" y2="570"/>
+      <line x1="634" y1="60" x2="354" y2="570"/>
+      <line x1="652" y1="60" x2="372" y2="570"/>
+    </g>
+  </g>
+
+  <path d="M75,89 C83,80 111,78 129,78 L166,78 L166,565 L154,565 C151,510 139,452 119,419 C96,381 84,361 76,307 C68,250 68,112 75,89 Z" fill="url(#redFacet)" stroke="url(#redEdge)" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M176,78 L214,78 C236,78 263,81 269,89 C276,112 273,251 264,308 C255,362 244,382 222,418 C201,453 187,511 184,565 L176,565 Z" fill="url(#redFacetR)" stroke="url(#redEdge)" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M165,78 C168,82 171,83 176,78 L178,565 C175,570 168,570 165,565 Z" fill="url(#gold)" stroke="#7b3b10" stroke-width="2"/>
+  <path d="M170,86 C174,151 173,476 171,557" fill="none" stroke="#fff4d8" stroke-width="3.2" opacity="0.72"/>
+
+  <g clip-path="url(#leftClip)">
+    <path d="M89,86 L150,203 L79,174 Z" fill="#ff5d73" opacity="0.24"/>
+    <path d="M112,84 L164,163 L166,263 L105,113 Z" fill="#6e0010" opacity="0.42"/>
+    <path d="M82,274 L165,358 L166,565 L139,452 Z" fill="#6d000d" opacity="0.34"/>
+    <path d="M132,118 L165,181 L164,546 L151,501 Z" fill="#ff102a" opacity="0.25"/>
+  </g>
+  <g clip-path="url(#rightClip)">
+    <path d="M176,92 L254,80 L225,167 L176,184 Z" fill="#ff1f32" opacity="0.28"/>
+    <path d="M176,170 L264,124 L226,214 L176,244 Z" fill="#230007" opacity="0.38"/>
+    <path d="M176,278 L264,330 L222,420 L176,566 Z" fill="#72000d" opacity="0.34"/>
+    <path d="M214,85 L176,248 L176,565 L190,508 Z" fill="#ff0c27" opacity="0.23"/>
+  </g>
+
+  <g clip-path="url(#badgeClip)">
+    <path d="M38,224 C106,246 237,235 308,215 L309,290 C227,318 98,309 32,285 Z" fill="url(#shine)" opacity="0.66"/>
+    <path d="M44,64 C102,58 244,58 299,65" fill="none" stroke="#f4f4f4" stroke-width="8" stroke-linecap="round" opacity="0.55"/>
+    <path d="M38,472 C63,530 118,573 176,586 C224,574 265,536 287,486" fill="none" stroke="#ffffff" stroke-width="7" opacity="0.62"/>
+  </g>
+
+  <path d="M52,61 C101,52 241,52 290,61 C300,63 305,68 306,80 C313,224 306,397 272,474 C250,522 207,552 171,570 C135,552 92,522 69,474 C35,398 28,224 35,80 C36,68 42,63 52,61 Z" fill="none" stroke="#e9e9e9" stroke-width="5" opacity="0.9"/>
+  <path d="M55,72 C102,65 241,65 286,72 C292,73 295,76 296,84 C301,218 297,390 264,465 C242,509 203,540 171,557 C139,540 100,509 78,465 C45,389 40,218 45,84 C46,76 49,73 55,72 Z" fill="none" stroke="#101010" stroke-width="5" opacity="0.75"/>
+</svg>

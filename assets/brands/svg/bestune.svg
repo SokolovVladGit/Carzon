@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     version="1.1"
+     width="420"
+     height="780"
+     viewBox="0 0 108 201"
+     preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <linearGradient id="outerMetal" x1="8" y1="16" x2="100" y2="190" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.18" stop-color="#8d919a"/>
+      <stop offset="0.42" stop-color="#f2f3f5"/>
+      <stop offset="0.68" stop-color="#747985"/>
+      <stop offset="1" stop-color="#252936"/>
+    </linearGradient>
+    <linearGradient id="innerMetal" x1="31" y1="44" x2="78" y2="181" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f9fafb"/>
+      <stop offset="0.28" stop-color="#b7bac1"/>
+      <stop offset="0.55" stop-color="#f3f4f6"/>
+      <stop offset="0.82" stop-color="#777c87"/>
+      <stop offset="1" stop-color="#262b37"/>
+    </linearGradient>
+    <linearGradient id="brightMetal" x1="50" y1="20" x2="92" y2="170" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.42" stop-color="#f3f4f7"/>
+      <stop offset="0.75" stop-color="#a8acb4"/>
+      <stop offset="1" stop-color="#3c414d"/>
+    </linearGradient>
+    <linearGradient id="blackGlass" x1="22" y1="28" x2="90" y2="187" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#11131a"/>
+      <stop offset="0.45" stop-color="#030406"/>
+      <stop offset="1" stop-color="#151923"/>
+    </linearGradient>
+    <linearGradient id="blueEdge" x1="24" y1="28" x2="88" y2="185" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1e2d60"/>
+      <stop offset="0.5" stop-color="#101730"/>
+      <stop offset="1" stop-color="#07090e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- outer metallic badge -->
+  <path d="M25.8 13.2
+           C43.5 10.9 71.5 11.1 86.2 13.9
+           C96.3 15.9 101.2 24.3 100.4 37.3
+           L94.4 171.8
+           C93.8 187.2 83.0 197.1 67.4 198.2
+           L41.2 198.2
+           C25.2 197.1 15.5 187.2 14.6 171.8
+           L8.8 37.1
+           C8.2 24.9 14.0 15.4 25.8 13.2 Z"
+        fill="url(#outerMetal)"/>
+
+  <!-- dark inset -->
+  <path d="M29.8 28.9
+           C45.6 26.8 71.2 27.2 82.5 29.7
+           C88.0 31.0 90.5 35.7 90.1 43.0
+           L84.7 166.2
+           C84.1 179.2 77.0 188.0 65.2 188.7
+           L43.0 188.7
+           C31.0 188.0 24.0 179.2 23.4 166.2
+           L17.9 43.0
+           C17.5 35.4 22.0 30.1 29.8 28.9 Z"
+        fill="url(#blackGlass)"/>
+
+  <!-- thin blue inner rim -->
+  <path d="M31.2 33.3
+           C47.0 31.4 70.4 31.8 80.0 33.8
+           C84.0 34.6 85.8 38.2 85.6 44.2
+           L80.4 163.4
+           C80.0 174.2 74.4 181.4 64.4 182.0
+           L44.0 182.0
+           C34.4 181.4 29.2 174.2 28.7 163.4
+           L23.4 44.2
+           C23.1 38.4 25.8 34.0 31.2 33.3 Z"
+        fill="none" stroke="#17205a" stroke-width="2.2"/>
+
+  <!-- left/chrome inner D shape shadow -->
+  <path d="M42.4 67.8
+           C43.4 55.7 51.7 49.5 63.0 49.1
+           L76.4 49.1
+           L76.4 72.1
+           L62.0 72.1
+           C57.3 72.1 54.2 75.7 53.8 82.1
+           L49.2 157.0
+           C48.8 164.0 52.0 167.8 58.0 167.8
+           L70.4 167.8
+           C74.0 167.8 76.0 164.9 76.2 159.8
+           L81.6 78.2
+           L96.5 78.2
+           L90.9 164.8
+           C89.8 181.3 80.7 190.1 65.3 190.1
+           L48.8 190.1
+           C34.4 190.1 27.8 181.0 28.6 164.6
+           L34.2 82.2
+           C34.7 76.0 37.4 71.1 42.4 67.8 Z"
+        fill="#050609" opacity="0.9"/>
+
+  <!-- left/chrome inner D shape -->
+  <path d="M39.7 65.1
+           C41.0 54.8 49.2 47.6 61.2 47.4
+           L74.8 47.4
+           L74.8 69.2
+           L60.4 69.2
+           C54.4 69.2 50.7 74.0 50.4 81.0
+           L45.7 158.5
+           C45.3 167.8 50.1 172.8 58.5 172.8
+           L68.5 172.8
+           C75.1 172.8 79.2 167.4 79.6 158.0
+           L84.9 74.5
+           L98.2 74.5
+           L92.4 164.0
+           C91.1 184.0 81.1 194.4 64.4 194.4
+           L46.4 194.4
+           C31.2 194.4 22.8 184.0 23.8 164.0
+           L29.4 82.0
+           C29.9 74.1 33.6 68.2 39.7 65.1 Z"
+        fill="url(#innerMetal)" stroke="#1c2130" stroke-width="1.5"/>
+
+  <!-- black hollow over inner D for depth -->
+  <path d="M57.0 77.5
+           L72.5 77.5
+           L68.0 158.0
+           C67.8 161.5 66.2 163.5 63.5 163.5
+           L57.8 163.5
+           C54.8 163.5 53.4 161.4 53.6 157.7
+           L58.2 83.2
+           C58.4 80.8 58.0 79.0 57.0 77.5 Z"
+        fill="url(#blackGlass)" opacity="0.8"/>
+
+  <!-- right vertical chrome bar -->
+  <path d="M70.2 25.4 L78.5 25.4 L78.5 174.8 L69.3 174.8 Z"
+        fill="#050609" opacity="0.9"/>
+  <path d="M72.6 24.1 L79.3 24.1 L79.3 171.7 L71.9 171.7 Z"
+        fill="url(#brightMetal)" stroke="#2b303a" stroke-width="1.1"/>
+
+  <!-- top horizontal chrome cap -->
+  <path d="M50.8 71.2 L99.2 71.2 L99.2 86.3 L50.8 86.3 Z"
+        fill="#050609" opacity="0.9"/>
+  <path d="M51.5 68.7 L100.3 68.7 L100.3 82.3 L51.5 82.3 Z"
+        fill="url(#brightMetal)" stroke="#2b303a" stroke-width="1.1"/>
+
+  <!-- bottom small chrome foot -->
+  <path d="M34.1 168.3 L42.8 168.3 L42.8 194.3 L34.1 194.3 Z"
+        fill="#050609" opacity="0.75"/>
+  <path d="M35.7 166.8 L42.4 166.8 L42.4 191.4 L35.7 191.4 Z"
+        fill="url(#brightMetal)" stroke="#2b303a" stroke-width="0.9"/>
+
+  <!-- metallic highlights -->
+  <path d="M28.5 19.0
+           C45.0 16.4 70.8 16.9 85.6 19.3
+           C92.0 20.3 95.1 24.8 95.5 32.1
+           C76.4 28.6 45.6 28.2 22.2 31.3
+           C22.8 24.9 24.8 20.1 28.5 19.0 Z"
+        fill="#ffffff" opacity="0.72"/>
+  <path d="M17.5 45.0
+           C19.7 33.4 24.6 27.9 34.3 27.0
+           C27.2 40.1 25.5 112.8 27.4 160.5
+           C22.3 126.2 18.5 76.5 17.5 45.0 Z"
+        fill="#ffffff" opacity="0.22"/>
+  <path d="M86.4 36.4
+           C90.3 40.9 89.5 75.4 87.5 122.8
+           C85.4 159.2 81.2 180.5 70.8 186.7
+           C76.6 169.4 82.5 91.4 86.4 36.4 Z"
+        fill="#ffffff" opacity="0.14"/>
+</svg>

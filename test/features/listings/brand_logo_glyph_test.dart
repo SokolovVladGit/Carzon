@@ -18,6 +18,26 @@ void main() {
         );
       }
     });
+
+    test('active packaged SVGs avoid flutter_svg risky constructs', () {
+      const forbiddenPatterns = [
+        '<image',
+        'data:image',
+        'base64',
+        '<style',
+        'class=',
+      ];
+      for (final slug in kPackagedBrandIconSlugs) {
+        final svg = File('assets/brands/svg/$slug.svg').readAsStringSync();
+        for (final pattern in forbiddenPatterns) {
+          expect(
+            svg.contains(pattern),
+            isFalse,
+            reason: '$slug.svg contains $pattern',
+          );
+        }
+      }
+    });
   });
 
   group('getBrandIconPath', () {
@@ -25,17 +45,74 @@ void main() {
       expect(getBrandIconPath('Toyota'), endsWith('/toyota.svg'));
     });
 
-    test('known alias without bundled SVG falls back to default', () {
-      expect(getBrandIconPath('BYD'), endsWith('/default.svg'));
-      expect(getBrandIconPath('Cupra'), endsWith('/default.svg'));
+    test('newly packaged aliases resolve to brand SVG', () {
+      expect(getBrandIconPath('BYD'), endsWith('/byd.svg'));
+      expect(getBrandIconPath('Cupra'), endsWith('/cupra.svg'));
+      expect(getBrandIconPath('Citroen'), endsWith('/citroen.svg'));
     });
 
-    test('second-wave brands without bundled SVG fall back to default', () {
-      for (final brand in ['Genesis', 'VinFast', 'UAZ', 'Ram', 'DS Automobiles']) {
+    test('Daihatsu resolves to packaged SVG slug', () {
+      expect(getBrandIconPath('Daihatsu'), endsWith('/daihatsu.svg'));
+      expect(isBrandIconDefaultAssetPath(getBrandIconPath('Daihatsu')), isFalse);
+    });
+
+    test('newly activated vector brands resolve to packaged SVG slugs', () {
+      const cases = {
+        'Chevrolet': '/chevrolet.svg',
+        'Hongqi': '/hongqi.svg',
+        'Subaru': '/subaru.svg',
+        'Tank': '/tank.svg',
+        'VinFast': '/vinfast.svg',
+        'DS Automobiles': '/ds-automobiles.svg',
+        'Bestune': '/bestune.svg',
+        'FAW': '/faw.svg',
+      };
+      for (final entry in cases.entries) {
         expect(
-          getBrandIconPath(brand),
-          endsWith('/default.svg'),
-          reason: brand,
+          getBrandIconPath(entry.key),
+          endsWith(entry.value),
+          reason: entry.key,
+        );
+        expect(
+          isBrandIconDefaultAssetPath(getBrandIconPath(entry.key)),
+          isFalse,
+          reason: entry.key,
+        );
+      }
+    });
+
+    test('GMC and Ram resolve to packaged SVG slugs', () {
+      expect(getBrandIconPath('GMC'), endsWith('/gmc.svg'));
+      expect(getBrandIconPath('Ram'), endsWith('/ram.svg'));
+    });
+
+    test('cleaned feed brands resolve to packaged SVG slugs', () {
+      const cases = {
+        'Seres': '/seres.svg',
+        'Voyah': '/voyah.svg',
+        'Foton': '/foton.svg',
+        'Cadillac': '/cadillac.svg',
+        'Porsche': '/porsche.svg',
+        'Wey': '/wey.svg',
+        'KGM': '/kgm.svg',
+        'Ram': '/ram.svg',
+        'Li Auto': '/li-auto.svg',
+        'Fiat': '/fiat.svg',
+        'Hyundai': '/hyundai.svg',
+        'Nissan': '/nissan.svg',
+        'MG': '/mg.svg',
+        'Omoda': '/omoda.svg',
+      };
+      for (final entry in cases.entries) {
+        expect(
+          getBrandIconPath(entry.key),
+          endsWith(entry.value),
+          reason: entry.key,
+        );
+        expect(
+          isBrandIconDefaultAssetPath(getBrandIconPath(entry.key)),
+          isFalse,
+          reason: entry.key,
         );
       }
     });
