@@ -345,8 +345,8 @@ void main() {
       },
     );
 
-    testWidgets('body type chips show localized labels; tapping SUV dispatches '
-        'ListingsBodyTypeFilterChanged(suv)', (tester) async {
+    testWidgets('body type chips are icon-only with semantics labels; tapping SUV '
+        'dispatches ListingsBodyTypeFilterChanged(suv)', (tester) async {
       await tester.pumpWidget(
         _host(
           bloc: bloc,
@@ -360,11 +360,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.bySemanticsLabel(l10n.listingBodyTypeSuv), findsOneWidget);
-      expect(find.text(l10n.listingBodyTypeSuv), findsOneWidget);
+      expect(find.text(l10n.listingBodyTypeSuv), findsNothing);
       expect(find.bySemanticsLabel(l10n.listingsBodyChipAll), findsOneWidget);
       expect(find.text(l10n.listingsBodyChipAll), findsNothing);
 
-      await tester.tap(find.text(l10n.listingBodyTypeSuv));
+      await tester.tap(find.bySemanticsLabel(l10n.listingBodyTypeSuv));
       await tester.pump();
 
       verify(

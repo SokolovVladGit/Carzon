@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
+import 'package:carzon/features/messaging/domain/entities/chat_attachment_upload.dart';
 import 'package:carzon/features/messaging/domain/entities/chat_message.dart';
 import 'package:carzon/features/messaging/domain/entities/conversation.dart';
 import 'package:carzon/features/messaging/domain/messaging_failure_kind.dart';
@@ -52,6 +54,13 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue('');
+    registerFallbackValue(
+      ChatAttachmentUpload(
+        conversationId: 'c1',
+        bytes: Uint8List(0),
+        mimeType: 'image/png',
+      ),
+    );
   });
 
   group('ConversationThreadCubit', () {
@@ -267,6 +276,40 @@ void main() {
           MessagingFailureKind.messageValidation,
         );
         expect(c.state.sending, isFalse);
+      },
+    );
+
+    blocTest<ConversationThreadCubit, ConversationThreadState>(
+      'sendMessageWithAttachment calls repository and reloads',
+      build: () {
+        when(
+          () => repository.getConversation('c1'),
+        ).thenAnswer((_) async => Success(conversation));
+        when(
+          () => repository.getMessages('c1'),
+        ).thenAnswer((_) async => Success<List<ChatMessage>>([message]));
+        when(
+          () => repository.sendMessageWithAttachment(any()),
+        ).thenAnswer((_) async => const Success<String>('m3'));
+        return ConversationThreadCubit(
+          repository: repository,
+          conversationId: 'c1',
+        );
+      },
+      act: (c) async {
+        await c.load();
+        await c.sendMessageWithAttachment(
+          ChatAttachmentUpload(
+            conversationId: 'c1',
+            bytes: Uint8List.fromList([1, 2, 3]),
+            mimeType: 'image/png',
+          ),
+        );
+      },
+      verify: (_) {
+        verify(() => repository.sendMessageWithAttachment(any())).called(1);
+        verify(() => repository.getConversation('c1')).called(2);
+        verify(() => repository.getMessages('c1')).called(2);
       },
     );
 

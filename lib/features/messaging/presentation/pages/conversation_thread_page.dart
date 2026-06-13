@@ -26,7 +26,10 @@ import '../utils/messaging_user_messages.dart';
 import '../utils/thread_app_bar_title.dart';
 import '../utils/thread_date_label.dart';
 import '../utils/thread_list_entries.dart';
+import '../widgets/chat_attachment_fullscreen_viewer.dart';
+import '../widgets/chat_image_message_bubble.dart';
 import '../widgets/chat_message_bubble.dart';
+import '../widgets/thread_composer_bar.dart';
 import '../widgets/thread_date_separator.dart';
 import '../widgets/thread_listing_context_card.dart';
 import '../widgets/thread_support_context_card.dart';
@@ -246,18 +249,9 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
                         );
                       },
                     ),
-                    BlocListener<
-                      ConversationThreadCubit,
-                      ConversationThreadState
-                    >(
-                      listenWhen: (p, c) =>
-                          p.sending &&
-                          !c.sending &&
-                          c.lastSendFailureKind == null,
-                      listener: (context, _) => _text.clear(),
-                    ),
                   ],
                   child: _ThreadScaffold(
+                    conversationId: widget.conversationId,
                     scrollController: _scroll,
                     textController: _text,
                     currentUserId: uid,
@@ -369,12 +363,14 @@ class _ThreadPollingHostState extends State<_ThreadPollingHost>
 
 class _ThreadScaffold extends StatefulWidget {
   const _ThreadScaffold({
+    required this.conversationId,
     required this.scrollController,
     required this.textController,
     required this.currentUserId,
     required this.onSuccessfulPullRefreshScroll,
   });
 
+  final String conversationId;
   final ScrollController scrollController;
   final TextEditingController textController;
   final String currentUserId;
@@ -389,30 +385,20 @@ class _ThreadScaffold extends StatefulWidget {
 }
 
 class _ThreadScaffoldState extends State<_ThreadScaffold> {
-  @override
-  void initState() {
-    super.initState();
-    widget.textController.addListener(_onComposerTextChanged);
+  final Map<String, Future<Uint8List?>> _attachmentByteFutures = {};
+
+  Future<Uint8List?> _loadAttachmentBytes(String storagePath) {
+    return _attachmentByteFutures.putIfAbsent(storagePath, () {
+      return context
+          .read<ConversationThreadCubit>()
+          .downloadAttachmentBytes(storagePath);
+    });
   }
 
-  @override
-  void didUpdateWidget(covariant _ThreadScaffold oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.textController != widget.textController) {
-      oldWidget.textController.removeListener(_onComposerTextChanged);
-      widget.textController.addListener(_onComposerTextChanged);
-    }
+  void _invalidateAttachmentBytes(String storagePath) {
+    _attachmentByteFutures.remove(storagePath);
+    setState(() {});
   }
-
-  @override
-  void dispose() {
-    widget.textController.removeListener(_onComposerTextChanged);
-    super.dispose();
-  }
-
-  void _onComposerTextChanged() => setState(() {});
-
-  bool get _hasSendableText => widget.textController.text.trim().isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -425,7 +411,6 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
     final isDark = theme.brightness == Brightness.dark;
     final overlayTop = cs.surface.withValues(alpha: isDark ? 0.72 : 0.74);
     final overlayBottom = cs.surface.withValues(alpha: isDark ? 0.88 : 0.82);
-    final composerFooter = AppTheme.editorialDarkFilterFooter(cs);
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -617,6 +602,46 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                                   final label = timeFormat.format(
                                     m.createdAt.toLocal(),
                                   );
+                                  if (m.hasAttachments) {
+                                    final attachment = m.attachments.first;
+                                    return ChatImageMessageBubble(
+                                      message: m,
+                                      attachment: attachment,
+                                      isOutgoing: outgoing,
+                                      timeLabel: label,
+                                      groupPosition: e.groupPosition,
+                                      showTimestamp: e.showTimestamp,
+                                      loadFailedLabel:
+                                          l10n.messagingAttachmentLoadFailed,
+                                      loadBytes: _loadAttachmentBytes,
+                                      onOpenFullscreen: (bytes) {
+                                        ChatAttachmentFullscreenViewer.open(
+                                          threadHostContext,
+                                          bytes: bytes,
+                                        );
+                                      },
+                                      onRetryLoad: () => _invalidateAttachmentBytes(
+                                        attachment.storagePath,
+                                      ),
+                                      onLongPress: () {
+                                        final caption = m.body.trim();
+                                        if (caption.isEmpty) return;
+                                        final messenger = ScaffoldMessenger.of(
+                                          threadHostContext,
+                                        );
+                                        Clipboard.setData(
+                                          ClipboardData(text: caption),
+                                        );
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              l10n.messagingMessageCopied,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  }
                                   return ChatMessageBubble(
                                     message: m,
                                     isOutgoing: outgoing,
@@ -624,11 +649,13 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                                     groupPosition: e.groupPosition,
                                     showTimestamp: e.showTimestamp,
                                     onLongPress: () {
+                                      final body = m.body.trim();
+                                      if (body.isEmpty) return;
                                       final messenger = ScaffoldMessenger.of(
                                         threadHostContext,
                                       );
                                       Clipboard.setData(
-                                        ClipboardData(text: m.body),
+                                        ClipboardData(text: body),
                                       );
                                       messenger.showSnackBar(
                                         SnackBar(
@@ -651,150 +678,10 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
               ),
             ),
           ),
-          DecoratedBox(
-            decoration:
-                composerFooter ??
-                BoxDecoration(
-                  color: isDark ? cs.surfaceContainerLow : cs.surface,
-                  boxShadow: [
-                    BoxShadow(
-                      color: cs.shadow.withValues(alpha: isDark ? 0.22 : 0.06),
-                      blurRadius: 12,
-                      offset: const Offset(0, -4),
-                    ),
-                  ],
-                ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (composerFooter == null)
-                  Divider(
-                    height: 1,
-                    thickness: 1,
-                    color: cs.outlineVariant.withValues(alpha: 0.42),
-                  ),
-                SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      left: 14,
-                      right: 6,
-                      top: 10,
-                      bottom: 10,
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: widget.textController,
-                            minLines: 1,
-                            maxLines: 5,
-                            maxLength: 4000,
-                            textInputAction: TextInputAction.newline,
-                            style: theme.textTheme.bodyLarge,
-                            decoration: InputDecoration(
-                              isDense: true,
-                              filled: true,
-                              fillColor: isDark
-                                  ? cs.surfaceContainerHigh
-                                  : cs.surfaceContainerLow,
-                              hintText: l10n.messagingComposerHint,
-                              hintStyle: theme.textTheme.bodyLarge?.copyWith(
-                                color: cs.onSurfaceVariant.withValues(
-                                  alpha: isDark ? 0.78 : 0.68,
-                                ),
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide(
-                                  color: cs.outlineVariant.withValues(
-                                    alpha: isDark ? 0.42 : 0.34,
-                                  ),
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide(
-                                  color: isDark
-                                      ? AppTheme.editorialDarkFieldFocusBorder(
-                                          cs,
-                                        )
-                                      : cs.primary.withValues(alpha: 0.88),
-                                  width: 1.5,
-                                ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 18,
-                                vertical: 12,
-                              ),
-                              counterText: '',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        BlocBuilder<
-                          ConversationThreadCubit,
-                          ConversationThreadState
-                        >(
-                          builder: (context, state) {
-                            final sending = state.sending;
-                            final canSend = _hasSendableText && !sending;
-                            return Tooltip(
-                              message: l10n.messagingSend,
-                              child: FilledButton(
-                                onPressed: !canSend
-                                    ? null
-                                    : () {
-                                        context
-                                            .read<ConversationThreadCubit>()
-                                            .send(widget.textController.text);
-                                      },
-                                style: FilledButton.styleFrom(
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  minimumSize: const Size(46, 46),
-                                  maximumSize: const Size(46, 46),
-                                  padding: EdgeInsets.zero,
-                                  shape: const CircleBorder(),
-                                  backgroundColor: cs.primary,
-                                  foregroundColor: cs.onPrimary,
-                                  disabledBackgroundColor:
-                                      cs.surfaceContainerHighest,
-                                  disabledForegroundColor: cs.onSurfaceVariant
-                                      .withValues(alpha: isDark ? 0.42 : 0.45),
-                                  elevation: canSend ? 1 : 0,
-                                  shadowColor: cs.primary.withValues(
-                                    alpha: 0.35,
-                                  ),
-                                ),
-                                child: sending
-                                    ? SizedBox(
-                                        width: 22,
-                                        height: 22,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: cs.onPrimary,
-                                        ),
-                                      )
-                                    : Icon(
-                                        CarzonIcons.send,
-                                        size: 20,
-                                      ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          ThreadComposerBar(
+            conversationId: widget.conversationId,
+            textController: widget.textController,
+            onSendSucceeded: () => widget.textController.clear(),
           ),
         ],
       ),

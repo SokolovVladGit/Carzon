@@ -311,11 +311,15 @@ class _MessagesInboxView extends StatelessWidget {
                         listingFallback,
                         l10n,
                       );
-                      final preview =
+                      final previewRaw =
                           (c.lastMessagePreview != null &&
                               c.lastMessagePreview!.trim().isNotEmpty)
                           ? c.lastMessagePreview!.trim()
                           : conversationEmptyPreviewLine(c, l10n);
+                      final preview = conversationMessagePreviewLine(
+                        previewRaw,
+                        l10n,
+                      );
                       final time = c.lastMessageAt != null
                           ? timeFormat.format(c.lastMessageAt!.toLocal())
                           : null;

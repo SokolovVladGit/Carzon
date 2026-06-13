@@ -18,6 +18,16 @@ abstract interface class MessagingRemoteDataSource {
 
   Future<String> sendMessage(String conversationId, String body);
 
+  Future<String> sendMessageWithAttachment({
+    required String conversationId,
+    required String storagePath,
+    required String mimeType,
+    required int sizeBytes,
+    String? caption,
+    int? width,
+    int? height,
+  });
+
   Future<void> markConversationReadRpc(String conversationId);
 
   Future<int> fetchUnreadConversationCountRpc();
@@ -31,6 +41,11 @@ class SupabaseMessagingRemoteDataSource implements MessagingRemoteDataSource {
       'id, listing_id, conversation_kind, buyer_id, seller_id, created_at, '
       'updated_at, last_message_at, last_message_preview, '
       'listings(id, title, make, model, city, cover_image_url, price_eur, price_currency)';
+
+  static const _messagesSelect =
+      'id, conversation_id, sender_id, body, created_at, '
+      'message_attachments(id, message_id, conversation_id, storage_bucket, '
+      'storage_path, mime_type, size_bytes, width, height, created_at)';
 
   static String _asConversationId(dynamic raw) {
     if (raw is String && raw.isNotEmpty) return raw;
@@ -141,7 +156,7 @@ class SupabaseMessagingRemoteDataSource implements MessagingRemoteDataSource {
     try {
       final rows = await _supabase.client
           .from('messages')
-          .select()
+          .select(_messagesSelect)
           .eq('conversation_id', conversationId)
           .order('created_at', ascending: true);
       return rows
@@ -175,6 +190,47 @@ class SupabaseMessagingRemoteDataSource implements MessagingRemoteDataSource {
     } catch (e, st) {
       if (e is ServerException) rethrow;
       throw ServerException('Failed to send message', cause: e, stackTrace: st);
+    }
+  }
+
+  @override
+  Future<String> sendMessageWithAttachment({
+    required String conversationId,
+    required String storagePath,
+    required String mimeType,
+    required int sizeBytes,
+    String? caption,
+    int? width,
+    int? height,
+  }) async {
+    try {
+      final params = <String, dynamic>{
+        'p_conversation_id': conversationId,
+        'p_storage_path': storagePath,
+        'p_mime_type': mimeType,
+        'p_size_bytes': sizeBytes,
+      };
+      final trimmedCaption = caption?.trim();
+      if (trimmedCaption != null && trimmedCaption.isNotEmpty) {
+        params['p_body'] = trimmedCaption;
+      }
+      if (width != null) params['p_width'] = width;
+      if (height != null) params['p_height'] = height;
+
+      final dynamic data = await _supabase.client.rpc(
+        'send_message_with_attachment',
+        params: params,
+      );
+      return _asMessageId(data);
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is ServerException) rethrow;
+      throw ServerException(
+        'Failed to send attachment message',
+        cause: e,
+        stackTrace: st,
+      );
     }
   }
 

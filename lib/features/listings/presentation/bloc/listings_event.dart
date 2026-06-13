@@ -4,6 +4,7 @@ import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_discovery_criteria.dart';
 import '../../domain/entities/listing_currency.dart';
 import '../../domain/entities/listing_sort_option.dart';
+import '../utils/discovery_feed_chip_labels.dart';
 import 'listings_state.dart';
 
 sealed class ListingsEvent extends Equatable {
@@ -131,4 +132,13 @@ class ListingsHydratedFromDiscovery extends ListingsEvent {
 
   @override
   List<Object?> get props => [criteria];
+}
+
+/// Removes one active discovery chip / filter dimension from the feed.
+class ListingsDiscoveryFilterRemoved extends ListingsEvent {
+  const ListingsDiscoveryFilterRemoved(this.kind);
+  final ListingsDiscoveryChipKind kind;
+
+  @override
+  List<Object?> get props => [kind];
 }

@@ -24,3 +24,11 @@ String conversationEmptyPreviewLine(
   }
   return l10n.messagingNoPreview;
 }
+
+/// Maps backend preview tokens to localized inbox copy.
+String conversationMessagePreviewLine(String preview, AppLocalizations l10n) {
+  if (preview.trim() == '[photo]') {
+    return l10n.messagingAttachmentPhotoPreview;
+  }
+  return preview;
+}

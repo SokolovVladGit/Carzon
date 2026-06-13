@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/utils/result.dart';
+import '../../domain/entities/chat_attachment_upload.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/repositories/messaging_repository.dart';
 import '../utils/messaging_failure_mapper.dart';
@@ -246,6 +248,41 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
         } finally {
           _sendReloadInFlight = false;
         }
+    }
+  }
+
+  Future<void> sendMessageWithAttachment(ChatAttachmentUpload upload) async {
+    if (state.sending) return;
+
+    emit(state.copyWith(sending: true, clearLastSendFailure: true));
+    final result = await _repository.sendMessageWithAttachment(upload);
+    switch (result) {
+      case FailureResult(:final failure):
+        emit(
+          state.copyWith(
+            sending: false,
+            lastSendFailureKind: messagingFailureKindFrom(failure),
+            clearLastSendFailure: false,
+          ),
+        );
+      case Success<String>():
+        emit(state.copyWith(sending: false));
+        _sendReloadInFlight = true;
+        try {
+          await load(showLoadingIndicator: false);
+        } finally {
+          _sendReloadInFlight = false;
+        }
+    }
+  }
+
+  Future<Uint8List?> downloadAttachmentBytes(String storagePath) async {
+    final result = await _repository.downloadChatAttachmentBytes(storagePath);
+    switch (result) {
+      case Success(:final value):
+        return Uint8List.fromList(value);
+      case FailureResult():
+        return null;
     }
   }
 }

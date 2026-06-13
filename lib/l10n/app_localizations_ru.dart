@@ -111,6 +111,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingsSearchClearTooltip => 'Очистить поиск';
 
   @override
+  String get listingsDiscoveryFilterRemoveTooltip => 'Убрать фильтр';
+
+  @override
   String get listingsFiltersTooltip => 'Фильтры';
 
   @override
@@ -725,6 +728,36 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get messagingSend => 'Отправить';
+
+  @override
+  String get messagingAttachImage => 'Прикрепить фото';
+
+  @override
+  String get messagingAttachmentSourceTitle => 'Добавить фото';
+
+  @override
+  String get messagingAttachmentGallery => 'Галерея';
+
+  @override
+  String get messagingAttachmentCamera => 'Камера';
+
+  @override
+  String get messagingAttachmentRemove => 'Убрать';
+
+  @override
+  String get messagingAttachmentUnsupportedType =>
+      'Поддерживаются только JPEG и PNG.';
+
+  @override
+  String get messagingAttachmentTooLarge =>
+      'Изображение должно быть не больше 10 МБ.';
+
+  @override
+  String get messagingAttachmentLoadFailed =>
+      'Не удалось загрузить изображение.';
+
+  @override
+  String get messagingAttachmentPhotoPreview => 'Фото';
 
   @override
   String get messagingDateToday => 'Сегодня';

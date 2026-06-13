@@ -110,6 +110,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingsSearchClearTooltip => 'Ștergeți căutarea';
 
   @override
+  String get listingsDiscoveryFilterRemoveTooltip => 'Elimină filtrul';
+
+  @override
   String get listingsFiltersTooltip => 'Filtre';
 
   @override
@@ -724,6 +727,35 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get messagingSend => 'Trimite';
+
+  @override
+  String get messagingAttachImage => 'Atașează fotografie';
+
+  @override
+  String get messagingAttachmentSourceTitle => 'Adaugă fotografie';
+
+  @override
+  String get messagingAttachmentGallery => 'Galerie';
+
+  @override
+  String get messagingAttachmentCamera => 'Cameră';
+
+  @override
+  String get messagingAttachmentRemove => 'Elimină';
+
+  @override
+  String get messagingAttachmentUnsupportedType =>
+      'Sunt acceptate doar JPEG și PNG.';
+
+  @override
+  String get messagingAttachmentTooLarge =>
+      'Imaginea trebuie să fie de maximum 10 MB.';
+
+  @override
+  String get messagingAttachmentLoadFailed => 'Nu s-a putut încărca imaginea.';
+
+  @override
+  String get messagingAttachmentPhotoPreview => 'Fotografie';
 
   @override
   String get messagingDateToday => 'Astăzi';

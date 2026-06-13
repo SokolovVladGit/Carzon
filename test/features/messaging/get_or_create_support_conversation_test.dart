@@ -1,6 +1,7 @@
 import 'package:carzon/core/errors/exceptions.dart';
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
+import 'package:carzon/features/messaging/data/datasources/chat_attachment_remote_datasource.dart';
 import 'package:carzon/features/messaging/data/datasources/messaging_remote_datasource.dart';
 import 'package:carzon/features/messaging/data/repositories/messaging_repository_impl.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,13 +9,17 @@ import 'package:mocktail/mocktail.dart';
 
 class _MockRemote extends Mock implements MessagingRemoteDataSource {}
 
+class _MockAttachments extends Mock implements ChatAttachmentRemoteDataSource {}
+
 void main() {
   late _MockRemote remote;
+  late _MockAttachments attachments;
   late MessagingRepositoryImpl repository;
 
   setUp(() {
     remote = _MockRemote();
-    repository = MessagingRepositoryImpl(remote);
+    attachments = _MockAttachments();
+    repository = MessagingRepositoryImpl(remote, attachments);
   });
 
   test('getOrCreateSupportConversation returns conversation id on success', () async {

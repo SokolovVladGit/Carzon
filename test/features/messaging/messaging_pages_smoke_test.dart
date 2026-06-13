@@ -7,6 +7,7 @@ import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
+import 'package:carzon/features/messaging/domain/entities/chat_attachment.dart';
 import 'package:carzon/features/messaging/domain/entities/chat_message.dart';
 import 'package:carzon/features/messaging/domain/entities/conversation.dart';
 import 'package:carzon/features/messaging/domain/entities/conversation_kind.dart';
@@ -14,6 +15,7 @@ import 'package:carzon/features/messaging/domain/repositories/messaging_reposito
 import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import 'package:carzon/features/messaging/presentation/pages/conversation_thread_page.dart';
 import 'package:carzon/features/messaging/presentation/pages/messages_inbox_page.dart';
+import 'package:carzon/features/messaging/presentation/widgets/chat_image_message_bubble.dart';
 import 'package:carzon/features/messaging/presentation/widgets/chat_message_bubble.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -82,6 +84,76 @@ void main() {
   });
 
   final t0 = DateTime.utc(2026, 5, 2, 10);
+
+  const _kTinyPng = <int>[
+    0x89,
+    0x50,
+    0x4E,
+    0x47,
+    0x0D,
+    0x0A,
+    0x1A,
+    0x0A,
+    0x00,
+    0x00,
+    0x00,
+    0x0D,
+    0x49,
+    0x48,
+    0x44,
+    0x52,
+    0x00,
+    0x00,
+    0x00,
+    0x01,
+    0x00,
+    0x00,
+    0x00,
+    0x01,
+    0x08,
+    0x06,
+    0x00,
+    0x00,
+    0x00,
+    0x1F,
+    0x15,
+    0xC4,
+    0x89,
+    0x00,
+    0x00,
+    0x00,
+    0x0A,
+    0x49,
+    0x44,
+    0x41,
+    0x54,
+    0x78,
+    0x9C,
+    0x63,
+    0x00,
+    0x01,
+    0x00,
+    0x00,
+    0x05,
+    0x00,
+    0x01,
+    0x0D,
+    0x0A,
+    0x2D,
+    0xB4,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+    0x49,
+    0x45,
+    0x4E,
+    0x44,
+    0xAE,
+    0x42,
+    0x60,
+    0x82,
+  ];
 
   Conversation sampleConversation({
     String listingTitle = 'Volkswagen Golf',
@@ -582,6 +654,49 @@ void main() {
     expect(tester.widget<FilledButton>(sendButton).onPressed, isNotNull);
   });
 
+  testWidgets('thread renders image bubble for attachment message', (
+    tester,
+  ) async {
+    final conv = sampleConversation();
+    final attachment = ChatAttachment(
+      id: 'a1',
+      messageId: 'm-img',
+      conversationId: 'conv-1',
+      storageBucket: 'chat-attachments',
+      storagePath: 'conversations/conv-1/u1/photo.jpg',
+      mimeType: 'image/jpeg',
+      sizeBytes: 100,
+      createdAt: t0,
+    );
+    when(
+      () => messagingRepo.getConversation('conv-1'),
+    ).thenAnswer((_) async => Success(conv));
+    when(() => messagingRepo.getMessages('conv-1')).thenAnswer(
+      (_) async => Success<List<ChatMessage>>([
+        ChatMessage(
+          id: 'm-img',
+          conversationId: 'conv-1',
+          senderId: 'u1',
+          body: '',
+          createdAt: t0,
+          attachments: [attachment],
+        ),
+      ]),
+    );
+    when(
+      () => messagingRepo.downloadChatAttachmentBytes(any()),
+    ).thenAnswer((_) async => Success(_kTinyPng));
+
+    await tester.pumpWidget(
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ChatImageMessageBubble), findsOneWidget);
+    expect(find.byType(ChatMessageBubble), findsNothing);
+    expect(find.byType(Image), findsOneWidget);
+  });
+
   testWidgets('thread polls conversation on a timer while open', (
     tester,
   ) async {
@@ -783,7 +898,14 @@ void main() {
 
         expect(find.byType(ConversationThreadPage), findsOneWidget);
 
-        await tester.tap(find.byType(IconButton).first);
+        await tester.tap(
+          find.descendant(
+            of: find.byType(ConversationThreadPage),
+            matching: find.byWidgetPredicate(
+              (w) => w is IconButton && w.icon is BackButtonIcon,
+            ),
+          ),
+        );
         await tester.pumpAndSettle();
 
         expect(convFetchPass, greaterThanOrEqualTo(2));
