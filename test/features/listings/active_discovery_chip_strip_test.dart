@@ -24,6 +24,7 @@ void main() {
       final chips = listingsDiscoveryChips(state, l10n);
 
       expect(chips, hasLength(1));
+      expect(chips.single.kind, ListingsDiscoveryChipKind.make);
       expect(chips.single.label, l10n.filterMake);
       expect(chips.single.value, 'Opel');
       expect(chips.single.flat, '${l10n.filterMake}: Opel');

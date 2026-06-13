@@ -1,4 +1,5 @@
 import '../../../../core/utils/result.dart';
+import '../entities/chat_attachment_upload.dart';
 import '../entities/chat_message.dart';
 import '../entities/conversation.dart';
 
@@ -21,6 +22,12 @@ abstract class MessagingRepository {
 
   /// Sends a participant message ([body] already validated upstream).
   Future<Result<String>> sendMessage(String conversationId, String body);
+
+  /// Uploads a private chat image and commits via `send_message_with_attachment`.
+  Future<Result<String>> sendMessageWithAttachment(ChatAttachmentUpload upload);
+
+  /// Authenticated download of a private attachment object (for future UI).
+  Future<Result<List<int>>> downloadChatAttachmentBytes(String storagePath);
 
   /// Participant marks the thread read (RPC-only).
   Future<Result<bool>> markConversationRead(String conversationId);

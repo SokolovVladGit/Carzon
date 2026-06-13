@@ -33,7 +33,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Универсал'), findsOneWidget);
+    expect(find.text('Универсал'), findsNothing);
+    expect(find.bySemanticsLabel('Универсал'), findsOneWidget);
   });
 
   testWidgets('CategoryChip selected builds without throwing', (tester) async {
@@ -49,7 +50,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Минивэн'), findsOneWidget);
+    expect(find.text('Минивэн'), findsNothing);
+    expect(find.bySemanticsLabel('Минивэн'), findsOneWidget);
   });
 
   testWidgets('CategoryChip tap invokes onTap', (tester) async {
@@ -140,7 +142,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Хэтчбек'), findsOneWidget);
+    expect(find.text('Хэтчбек'), findsNothing);
+    expect(find.bySemanticsLabel('Хэтчбек'), findsOneWidget);
   });
 
   testWidgets('CategoryChip unselected icon uses readable foreground in dark', (
@@ -221,11 +224,11 @@ void main() {
     }
   });
 
-  testWidgets('CategoryChip long labels render without overflow', (
+  testWidgets('CategoryChip icon-only chips hide labels but keep semantics', (
     tester,
   ) async {
-    const longLabels = ['Универсал', 'Минивэн', 'Хэтчбек'];
-    for (final label in longLabels) {
+    const labels = ['Универсал', 'Минивэн', 'Хэтчбек'];
+    for (final label in labels) {
       await tester.pumpWidget(
         _chipHarness(
           child: CategoryChip(
@@ -243,11 +246,12 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: label);
-      expect(find.text(label), findsOneWidget);
+      expect(find.text(label), findsNothing);
+      expect(find.bySemanticsLabel(label), findsOneWidget);
     }
   });
 
-  testWidgets('CategoryChip label font size stays fixed across icon scales', (
+  testWidgets('CategoryChip icon-only chips render without overflow', (
     tester,
   ) async {
     const chips = [
@@ -271,8 +275,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final text = tester.widget<Text>(find.text(chip.label));
-      expect(text.style?.fontSize, CategoryChip.labelFontSize, reason: chip.chipId);
+      expect(tester.takeException(), isNull, reason: chip.chipId);
+      expect(find.text(chip.label), findsNothing);
+      expect(find.bySemanticsLabel(chip.label), findsOneWidget);
     }
   });
 
@@ -303,6 +308,41 @@ void main() {
     expect(svgs.first.width, CategoryChip.allIconSize);
     expect(svgs.first.height, CategoryChip.allIconSize);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('CategoryChip All chip selected preserves semantics without dot', (
+    tester,
+  ) async {
+    const allBodiesAsset = 'assets/categories/svg/all_bodies.svg';
+
+    await tester.pumpWidget(
+      _chipHarness(
+        child: CategoryChip(
+          chipId: 'all',
+          label: 'Все',
+          icon: Icons.directions_car_outlined,
+          svgAssetPath: allBodiesAsset,
+          isSelected: true,
+          onTap: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getSemantics(find.byType(CategoryChip)),
+      matchesSemantics(
+        label: 'Все',
+        isButton: true,
+        isFocusable: true,
+        hasSelectedState: true,
+        isSelected: true,
+        hasTapAction: true,
+        hasFocusAction: true,
+      ),
+    );
+    expect(find.byType(Icon), findsNothing);
+    expect(find.byType(SvgPicture), findsOneWidget);
   });
 
   testWidgets('CategoryChip vehicle silhouettes use width-based SVG sizing', (
@@ -345,7 +385,7 @@ void main() {
     expect(svgs.last.height, isNull);
   });
 
-  testWidgets('CategoryChip icon slot stays fixed while vehicle width varies', (
+  testWidgets('CategoryChip icon-only chips keep fixed layout box', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -372,21 +412,21 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final iconSlots = tester.widgetList<SizedBox>(
+    final chipBoxes = tester.widgetList<SizedBox>(
       find.descendant(
         of: find.byType(CategoryChip),
         matching: find.byWidgetPredicate(
           (widget) =>
               widget is SizedBox &&
-              widget.width == CategoryChip.iconSlotWidth &&
-              widget.height == CategoryChip.iconSlotHeight,
+              widget.width == CategoryChip.chipWidth &&
+              widget.height == CategoryChip.chipHeight,
         ),
       ),
     );
-    expect(iconSlots.length, 2);
-    for (final slot in iconSlots) {
-      expect(slot.width, CategoryChip.iconSlotWidth);
-      expect(slot.height, CategoryChip.iconSlotHeight);
+    expect(chipBoxes.length, 2);
+    for (final box in chipBoxes) {
+      expect(box.width, CategoryChip.chipWidth);
+      expect(box.height, CategoryChip.chipHeight);
     }
 
     final icons = tester.widgetList<Icon>(find.byType(Icon));

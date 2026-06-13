@@ -43,15 +43,14 @@ class CategoryChip extends StatelessWidget {
   final VoidCallback onTap;
   final String? svgAssetPath;
 
-  /// Square render size for the All body-type chip SVG only.
-  static const double _allBodiesIconSize = 48;
+  static const double _allBodiesIconSize = 42;
+
+  static const double _normalChipSelectedPillWidth = 24;
+  static const double _normalChipSelectedPillHeight = 3;
+  static const double _normalChipSelectedPillBottomInset = 4;
 
   /// Fallback [IconData] size when SVG decode fails (vehicle + All chips).
   static const double _fallbackIconSize = 36;
-
-  /// Optical nudge for [all_bodies.svg] viewBox whitespace (All chip only).
-  static const double _allBodiesIconOpticalOffsetX = 2;
-  static const double _allBodiesIconOpticalOffsetY = 1;
 
   /// Width for wide vehicle silhouette SVGs; height follows asset aspect ratio.
   static const double _vehicleIconWidth = 56;
@@ -72,6 +71,14 @@ class CategoryChip extends StatelessWidget {
   static double get _iconSlotWidth => _chipWidth - (_chipHorizontalPadding * 2);
 
   @visibleForTesting
+  static bool isAllBodyChip({
+    required String chipId,
+    required String? svgAssetPath,
+  }) =>
+      chipId == 'all' &&
+      (svgAssetPath?.endsWith('all_bodies.svg') ?? false);
+
+  @visibleForTesting
   static double get allIconSize => _allBodiesIconSize;
 
   @visibleForTesting
@@ -85,6 +92,12 @@ class CategoryChip extends StatelessWidget {
 
   @visibleForTesting
   static double get iconSlotHeight => _iconSlotHeight;
+
+  @visibleForTesting
+  static double get chipWidth => _chipWidth;
+
+  @visibleForTesting
+  static double get chipHeight => _chipHeight;
 
   @visibleForTesting
   static double get labelFontSize => _labelFontSize;
@@ -118,9 +131,13 @@ class CategoryChip extends StatelessWidget {
 
     final Color fg = AppTheme.categoryIconColor(scheme, selected: isSelected);
 
-    final Color borderColor = AppTheme.chipBorder(scheme, selected: isSelected);
+    final Color borderColor = isSelected
+        ? (isDark
+              ? scheme.primary.withValues(alpha: 0.48)
+              : scheme.primary.withValues(alpha: 0.34))
+        : AppTheme.chipBorder(scheme, selected: false);
 
-    final borderWidth = isSelected ? 1.15 : 1.0;
+    final borderWidth = isSelected ? 1.25 : 1.0;
     final radius = BorderRadius.circular(_cornerRadius);
 
     final List<BoxShadow> elevationShadow = isDark
@@ -130,13 +147,6 @@ class CategoryChip extends StatelessWidget {
     final isAllChip = chipId == 'all';
     final iconScale = listingBodyTypeQuickFilterIconScale(chipId);
     final vehicleRenderWidth = _vehicleIconWidth * iconScale;
-    final labelStyle = theme.textTheme.labelSmall?.copyWith(
-      fontSize: _labelFontSize,
-      color: fg,
-      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-      height: 1.05,
-      letterSpacing: 0.06,
-    );
 
     final chipGlyph = _chipGlyph(
       assetPath: svgAssetPath,
@@ -152,28 +162,7 @@ class CategoryChip extends StatelessWidget {
       child: SizedBox(
         width: _chipWidth,
         height: _chipHeight,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(5, 1, 5, 1),
-          child: isAllChip
-              ? Center(child: chipGlyph)
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: _iconSlotWidth,
-                      height: _iconSlotHeight,
-                      child: Center(child: chipGlyph),
-                    ),
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: labelStyle,
-                    ),
-                  ],
-                ),
-        ),
+        child: Center(child: chipGlyph),
       ),
     );
 
@@ -201,7 +190,20 @@ class CategoryChip extends StatelessWidget {
                 borderRadius: radius,
                 border: Border.all(color: borderColor, width: borderWidth),
               ),
-              child: inner,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  inner,
+                  if (isSelected)
+                    _selectedBottomAccentPill(
+                      scheme: scheme,
+                      isDark: isDark,
+                      width: _normalChipSelectedPillWidth,
+                      height: _normalChipSelectedPillHeight,
+                      bottomInset: _normalChipSelectedPillBottomInset,
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -222,19 +224,13 @@ Widget _chipGlyph({
   final path = assetPath;
   if (isAllChip) {
     if (path != null) {
-      return Transform.translate(
-        offset: const Offset(
-          CategoryChip._allBodiesIconOpticalOffsetX,
-          CategoryChip._allBodiesIconOpticalOffsetY,
-        ),
-        child: SvgPicture.asset(
-          path,
-          width: allBodiesIconSize,
-          height: allBodiesIconSize,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, _) =>
-              Icon(fallbackIcon, color: fg, size: fallbackIconSize),
-        ),
+      return SvgPicture.asset(
+        path,
+        width: allBodiesIconSize,
+        height: allBodiesIconSize,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, _) =>
+            Icon(fallbackIcon, color: fg, size: fallbackIconSize),
       );
     }
     return Icon(fallbackIcon, color: fg, size: fallbackIconSize);
@@ -251,6 +247,30 @@ Widget _chipGlyph({
     );
   }
   return Icon(fallbackIcon, color: fg, size: fallbackIconSize);
+}
+
+Positioned _selectedBottomAccentPill({
+  required ColorScheme scheme,
+  required bool isDark,
+  required double width,
+  required double height,
+  required double bottomInset,
+}) {
+  return Positioned(
+    bottom: bottomInset,
+    left: 0,
+    right: 0,
+    child: Center(
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(height / 2),
+          color: scheme.primary.withValues(alpha: isDark ? 0.70 : 0.62),
+        ),
+      ),
+    ),
+  );
 }
 
 /// Horizontal scrollable row of body-type [CategoryChip]s.

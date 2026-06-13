@@ -48,4 +48,21 @@ void main() {
       l10n.contactSupportSubtitle,
     );
   });
+
+  test('conversationMessagePreviewLine maps [photo] to localized text', () {
+    expect(
+      conversationMessagePreviewLine('[photo]', l10n),
+      l10n.messagingAttachmentPhotoPreview,
+    );
+    expect(conversationMessagePreviewLine('Hello', l10n), 'Hello');
+  });
+
+  test('conversationMessagePreviewLine maps [photo] to RO localized text', () {
+    final ro = roStrings();
+    expect(
+      conversationMessagePreviewLine('[photo]', ro),
+      ro.messagingAttachmentPhotoPreview,
+    );
+    expect(ro.messagingAttachmentPhotoPreview, 'Fotografie');
+  });
 }

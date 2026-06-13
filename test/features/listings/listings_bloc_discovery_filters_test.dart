@@ -95,6 +95,28 @@ void main() {
   );
 
   blocTest<ListingsBloc, ListingsState>(
+    'ListingsSearchChanged passes trimmed search without setting make',
+    setUp: () {
+      when(
+        () => repo.getListings(any()),
+      ).thenAnswer((_) async => const Success([]));
+    },
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
+    act: (b) => b.add(const ListingsSearchChanged('  Audi  ')),
+    verify: (_) {
+      final q =
+          verify(() => repo.getListings(captureAny())).captured.single
+              as ListingsQuery;
+      expect(q.search, 'Audi');
+      expect(q.make, isNull);
+      expect(q.model, isNull);
+    },
+  );
+
+  blocTest<ListingsBloc, ListingsState>(
     'ListingsFiltersApplied maps model, price, mileage, city, and sort into query',
     setUp: () {
       when(

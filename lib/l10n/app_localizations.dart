@@ -296,6 +296,12 @@ abstract class AppLocalizations {
   /// **'Очистить поиск'**
   String get listingsSearchClearTooltip;
 
+  /// No description provided for @listingsDiscoveryFilterRemoveTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать фильтр'**
+  String get listingsDiscoveryFilterRemoveTooltip;
+
   /// No description provided for @listingsFiltersTooltip.
   ///
   /// In ru, this message translates to:
@@ -1391,6 +1397,60 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Отправить'**
   String get messagingSend;
+
+  /// No description provided for @messagingAttachImage.
+  ///
+  /// In ru, this message translates to:
+  /// **'Прикрепить фото'**
+  String get messagingAttachImage;
+
+  /// No description provided for @messagingAttachmentSourceTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить фото'**
+  String get messagingAttachmentSourceTitle;
+
+  /// No description provided for @messagingAttachmentGallery.
+  ///
+  /// In ru, this message translates to:
+  /// **'Галерея'**
+  String get messagingAttachmentGallery;
+
+  /// No description provided for @messagingAttachmentCamera.
+  ///
+  /// In ru, this message translates to:
+  /// **'Камера'**
+  String get messagingAttachmentCamera;
+
+  /// No description provided for @messagingAttachmentRemove.
+  ///
+  /// In ru, this message translates to:
+  /// **'Убрать'**
+  String get messagingAttachmentRemove;
+
+  /// No description provided for @messagingAttachmentUnsupportedType.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поддерживаются только JPEG и PNG.'**
+  String get messagingAttachmentUnsupportedType;
+
+  /// No description provided for @messagingAttachmentTooLarge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изображение должно быть не больше 10 МБ.'**
+  String get messagingAttachmentTooLarge;
+
+  /// No description provided for @messagingAttachmentLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить изображение.'**
+  String get messagingAttachmentLoadFailed;
+
+  /// No description provided for @messagingAttachmentPhotoPreview.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото'**
+  String get messagingAttachmentPhotoPreview;
 
   /// No description provided for @messagingDateToday.
   ///

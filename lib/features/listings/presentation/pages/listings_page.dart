@@ -828,7 +828,17 @@ class _FeedHeaderLayer extends StatelessWidget {
               if (!listState.hasActiveDiscoveryConstraints) {
                 return const SizedBox.shrink();
               }
-              return ListingsActiveDiscoverySummaryStrip(state: listState);
+              return ListingsActiveDiscoverySummaryStrip(
+                state: listState,
+                onFilterRemoved: (kind) {
+                  if (kind == ListingsDiscoveryChipKind.search) {
+                    searchCtrl.clear();
+                  }
+                  context.read<ListingsBloc>().add(
+                    ListingsDiscoveryFilterRemoved(kind),
+                  );
+                },
+              );
             },
           ),
           // Tight bottom air inside the layer — the chip row's

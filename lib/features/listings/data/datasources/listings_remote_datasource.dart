@@ -11,6 +11,7 @@ import '../../domain/entities/listing_view_stats.dart';
 import '../../domain/repositories/listings_repository.dart';
 import '../models/listing_image_model.dart';
 import '../models/listing_model.dart';
+import 'listings_discovery_search_filter.dart';
 
 abstract interface class ListingsRemoteDataSource {
   Future<List<ListingModel>> fetch(ListingsQuery query);
@@ -93,8 +94,11 @@ view_count
       sb.PostgrestFilterBuilder<sb.PostgrestList> filterQuery = _supabase.client
           .from(_table)
           .select(_publicListingColumns);
-      if (query.search != null && query.search!.trim().isNotEmpty) {
-        filterQuery = filterQuery.ilike('title', '%${query.search!.trim()}%');
+      final trimmedSearch = query.search?.trim();
+      if (trimmedSearch != null && trimmedSearch.isNotEmpty) {
+        filterQuery = filterQuery.or(
+          listingsDiscoverySearchPostgrestOrFilter(trimmedSearch),
+        );
       }
       // `make` is defensively trimmed here as well so any caller that forgets
       // to normalize (or leading/trailing spaces that slip through the UI)

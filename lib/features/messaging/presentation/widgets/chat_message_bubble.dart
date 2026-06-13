@@ -71,18 +71,19 @@ class ChatMessageBubble extends StatelessWidget {
                       : CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      message.body,
-                      softWrap: true,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: fg,
-                        height: 1.42,
-                        fontSize: 16,
-                        letterSpacing: 0.1,
+                    if (message.body.isNotEmpty)
+                      Text(
+                        message.body,
+                        softWrap: true,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: fg,
+                          height: 1.42,
+                          fontSize: 16,
+                          letterSpacing: 0.1,
+                        ),
                       ),
-                    ),
                     if (displayTimeLabel) ...[
-                      const SizedBox(height: 4),
+                      if (message.body.isNotEmpty) const SizedBox(height: 4),
                       Text(
                         timeLabel!,
                         style: theme.textTheme.labelSmall?.copyWith(

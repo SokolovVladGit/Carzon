@@ -30,6 +30,9 @@ class ListingsQuery {
   });
 
   final String? search;
+
+  /// Case-insensitive partial match on `listings.title`, `listings.make`, and
+  /// `listings.model` (OR). Distinct from [make] / [model] sheet filters.
   final String? make;
 
   /// Case-insensitive partial match on `listings.model`.

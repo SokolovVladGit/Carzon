@@ -105,7 +105,10 @@ class _BrandTile extends StatelessWidget {
 
   static const double _size = 54;
   static const double _logoSize = 34;
-  static const double _allBrandsIconSize = 38;
+  static const double _allBrandsIconSize = 36;
+  static const double _brandTileSelectedPillWidth = 20;
+  static const double _brandTileSelectedPillHeight = 3;
+  static const double _brandTileSelectedPillBottomInset = 5;
   static const double _radius = 16;
 
   @override
@@ -114,6 +117,10 @@ class _BrandTile extends StatelessWidget {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final l10n = context.l10n;
+
+    final label = semanticsLabel != null
+        ? l10n.brandFilterBrandSemantics(semanticsLabel!)
+        : l10n.brandFilterAllSemantics;
 
     final bg = selected
         ? (isDark
@@ -124,7 +131,9 @@ class _BrandTile extends StatelessWidget {
                 ))
         : (isDark ? AppTheme.unselectedChipFill(scheme) : Colors.white);
     final borderColor = selected
-        ? AppTheme.chipBorder(scheme, selected: true)
+        ? (isDark
+              ? scheme.primary.withValues(alpha: 0.55)
+              : scheme.primary.withValues(alpha: 0.38))
         : (isDark
               ? scheme.outline.withValues(alpha: 0.28)
               : scheme.outlineVariant.withValues(alpha: 0.42));
@@ -138,27 +147,26 @@ class _BrandTile extends StatelessWidget {
       offset: Offset(0, selected ? 3 : 2),
     );
 
-    final label = semanticsLabel != null
-        ? l10n.brandFilterBrandSemantics(semanticsLabel!)
-        : l10n.brandFilterAllSemantics;
-
     Widget glyph;
-    if (assetPath != null) {
+    if (allBrandsAssetPath != null) {
+      glyph = SvgPicture.asset(
+        allBrandsAssetPath!,
+        width: _allBrandsIconSize,
+        height: _allBrandsIconSize,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, _) => Icon(
+          Icons.apps_rounded,
+          size: _logoSize,
+          color: scheme.primary,
+        ),
+      );
+    } else if (assetPath != null) {
       glyph = BrandLogoGlyph(
         assetPath: assetPath!,
         size: _logoSize * logoOpticalScale,
       );
     } else if (monogram != null) {
       glyph = _BrandMonogramMark(monogram: monogram!, selected: selected);
-    } else if (allBrandsAssetPath != null) {
-      glyph = SvgPicture.asset(
-        allBrandsAssetPath!,
-        width: _allBrandsIconSize,
-        height: _allBrandsIconSize,
-        fit: BoxFit.contain,
-        placeholderBuilder: (_) =>
-            SizedBox(width: _allBrandsIconSize, height: _allBrandsIconSize),
-      );
     } else if (fallbackIcon != null) {
       glyph = Icon(fallbackIcon, size: _logoSize, color: scheme.primary);
     } else {
@@ -200,20 +208,9 @@ class _BrandTile extends StatelessWidget {
                       child: glyph,
                     ),
                     if (selected)
-                      Positioned(
-                        bottom: 6,
-                        child: Container(
-                          width: 5,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: scheme.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isDark ? scheme.surface : Colors.white,
-                              width: 1,
-                            ),
-                          ),
-                        ),
+                      _brandTileSelectedBottomAccentPill(
+                        scheme: scheme,
+                        isDark: isDark,
                       ),
                   ],
                 ),
@@ -224,6 +221,29 @@ class _BrandTile extends StatelessWidget {
       ),
     );
   }
+}
+
+Positioned _brandTileSelectedBottomAccentPill({
+  required ColorScheme scheme,
+  required bool isDark,
+}) {
+  return Positioned(
+    bottom: _BrandTile._brandTileSelectedPillBottomInset,
+    left: 0,
+    right: 0,
+    child: Center(
+      child: Container(
+        width: _BrandTile._brandTileSelectedPillWidth,
+        height: _BrandTile._brandTileSelectedPillHeight,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(
+            _BrandTile._brandTileSelectedPillHeight / 2,
+          ),
+          color: scheme.primary.withValues(alpha: isDark ? 0.70 : 0.62),
+        ),
+      ),
+    ),
+  );
 }
 
 class _BrandMonogramMark extends StatelessWidget {

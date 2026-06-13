@@ -9,6 +9,7 @@ import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_discovery_criteria.dart';
 import '../../domain/listing_discovery_state_sync.dart';
 import '../../domain/usecases/get_listings.dart';
+import '../utils/discovery_feed_chip_labels.dart';
 import 'listings_event.dart';
 import 'listings_state.dart';
 
@@ -28,6 +29,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     on<ListingsFiltersApplied>(_onFiltersApplied);
     on<ListingsFiltersCleared>(_onFiltersCleared);
     on<ListingsHydratedFromDiscovery>(_onHydratedFromDiscovery);
+    on<ListingsDiscoveryFilterRemoved>(_onDiscoveryFilterRemoved);
   }
 
   final GetListings _getListings;
@@ -228,6 +230,24 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         clearBodyType: true,
         clearSort: true,
         clearPriceCurrencyFilter: true,
+        clearLoadFailure: true,
+      ),
+    );
+    await _load(emit, page: 0, replace: true);
+  }
+
+  Future<void> _onDiscoveryFilterRemoved(
+    ListingsDiscoveryFilterRemoved event,
+    Emitter<ListingsState> emit,
+  ) async {
+    final cleared = listingsStateAfterDiscoveryChipRemoved(state, event.kind);
+    if (cleared == state) return;
+    emit(
+      cleared.copyWith(
+        status: ListingsStatus.loading,
+        page: 0,
+        hasReachedEnd: false,
+        items: const [],
         clearLoadFailure: true,
       ),
     );

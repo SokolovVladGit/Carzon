@@ -127,6 +127,34 @@ void main() {
     );
   });
 
+  testWidgets('messages inbox maps [photo] preview in dark theme', (
+    tester,
+  ) async {
+    when(
+      () => messagingRepo.getConversations(),
+    ).thenAnswer(
+      (_) async => Success([
+        Conversation(
+          id: 'conv-photo',
+          listingId: 'list-1',
+          buyerId: 'u1',
+          sellerId: 's1',
+          createdAt: t0,
+          updatedAt: t0,
+          lastMessageAt: t0,
+          lastMessagePreview: '[photo]',
+          listingTitle: 'BMW 3',
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(testedDark(const MessagesInboxPage()));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.messagingAttachmentPhotoPreview), findsOneWidget);
+    expect(find.text('[photo]'), findsNothing);
+  });
+
   testWidgets('conversation thread renders composer in dark theme', (
     tester,
   ) async {

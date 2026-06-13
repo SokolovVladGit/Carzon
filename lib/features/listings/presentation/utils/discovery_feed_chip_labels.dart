@@ -5,6 +5,23 @@ import '../../domain/entities/listing_sort_option.dart';
 import '../bloc/listings_state.dart';
 import '../widgets/filters/listings_filter_labels.dart';
 
+/// Identifies which discovery dimension an active chip represents so the
+/// feed can remove one filter without clearing the rest.
+enum ListingsDiscoveryChipKind {
+  search,
+  make,
+  model,
+  year,
+  priceRange,
+  priceCurrency,
+  maxMileage,
+  city,
+  region,
+  bodyType,
+  listingType,
+  sort,
+}
+
 /// Structured representation of a single active-discovery chip.
 ///
 /// Used by the feed's active-filter strip so chips can render label
@@ -13,14 +30,54 @@ import '../widgets/filters/listings_filter_labels.dart';
 /// fully encoded in the value (e.g. "Sale", region name) carry only a
 /// [value] and no [label].
 class ListingsDiscoveryChip {
-  const ListingsDiscoveryChip({required this.value, this.label});
+  const ListingsDiscoveryChip({
+    required this.kind,
+    required this.value,
+    this.label,
+  });
 
+  final ListingsDiscoveryChipKind kind;
   final String? label;
   final String value;
 
   /// Flat "Label: Value" form, preserved for backwards-compatible
   /// callers and accessibility labels.
   String get flat => label == null ? value : '$label: $value';
+}
+
+/// Clears exactly one discovery dimension; other filters stay intact.
+ListingsState listingsStateAfterDiscoveryChipRemoved(
+  ListingsState state,
+  ListingsDiscoveryChipKind kind,
+) {
+  return switch (kind) {
+    ListingsDiscoveryChipKind.search => state.copyWith(clearSearch: true),
+    ListingsDiscoveryChipKind.make => state.copyWith(clearMake: true),
+    ListingsDiscoveryChipKind.model => state.copyWith(clearModel: true),
+    ListingsDiscoveryChipKind.year => state.copyWith(
+      clearMinYear: true,
+      clearMaxYear: true,
+    ),
+    ListingsDiscoveryChipKind.priceRange => state.copyWith(
+      clearMinPrice: true,
+      clearMaxPrice: true,
+    ),
+    ListingsDiscoveryChipKind.priceCurrency => state.copyWith(
+      clearPriceCurrencyFilter: true,
+    ),
+    ListingsDiscoveryChipKind.maxMileage => state.copyWith(
+      clearMaxMileage: true,
+    ),
+    ListingsDiscoveryChipKind.city => state.copyWith(clearCity: true),
+    ListingsDiscoveryChipKind.region => state.copyWith(
+      regionFilter: MarketRegionFilter.transnistria,
+    ),
+    ListingsDiscoveryChipKind.bodyType => state.copyWith(clearBodyType: true),
+    ListingsDiscoveryChipKind.listingType => state.copyWith(
+      typeFilter: ListingTypeFilter.any,
+    ),
+    ListingsDiscoveryChipKind.sort => state.copyWith(clearSort: true),
+  };
 }
 
 /// Structured chips for the feed's active-filter strip and for shared
@@ -37,6 +94,7 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
   if (s.search != null && s.search!.trim().isNotEmpty) {
     out.add(
       ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.search,
         label: l10n.listingsSearchHint,
         value: s.search!.trim(),
       ),
@@ -44,28 +102,45 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
   }
   if (s.make != null && s.make!.trim().isNotEmpty) {
     out.add(
-      ListingsDiscoveryChip(label: l10n.filterMake, value: s.make!.trim()),
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.make,
+        label: l10n.filterMake,
+        value: s.make!.trim(),
+      ),
     );
   }
   if (s.model != null && s.model!.trim().isNotEmpty) {
     out.add(
-      ListingsDiscoveryChip(label: l10n.filterModel, value: s.model!.trim()),
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.model,
+        label: l10n.filterModel,
+        value: s.model!.trim(),
+      ),
     );
   }
   if (s.minYear != null && s.maxYear != null) {
     out.add(
       ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.year,
         label: l10n.listingFieldYear,
         value: '${s.minYear}–${s.maxYear}',
       ),
     );
   } else if (s.minYear != null) {
     out.add(
-      ListingsDiscoveryChip(label: l10n.filterMinYear, value: '${s.minYear}'),
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.year,
+        label: l10n.filterMinYear,
+        value: '${s.minYear}',
+      ),
     );
   } else if (s.maxYear != null) {
     out.add(
-      ListingsDiscoveryChip(label: l10n.filterMaxYear, value: '${s.maxYear}'),
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.year,
+        label: l10n.filterMaxYear,
+        value: '${s.maxYear}',
+      ),
     );
   }
   if (s.minPrice != null || s.maxPrice != null) {
@@ -76,14 +151,25 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
       case ListingPriceCurrencyFilter.any:
         out.add(
           ListingsDiscoveryChip(
+            kind: ListingsDiscoveryChipKind.priceRange,
             label: l10n.filterPriceChipPrefix,
             value: range,
           ),
         );
       case ListingPriceCurrencyFilter.usd:
-        out.add(ListingsDiscoveryChip(value: '\$ $range'));
+        out.add(
+          ListingsDiscoveryChip(
+            kind: ListingsDiscoveryChipKind.priceRange,
+            value: '\$ $range',
+          ),
+        );
       case ListingPriceCurrencyFilter.eur:
-        out.add(ListingsDiscoveryChip(value: '€ $range'));
+        out.add(
+          ListingsDiscoveryChip(
+            kind: ListingsDiscoveryChipKind.priceRange,
+            value: '€ $range',
+          ),
+        );
     }
   } else {
     switch (s.priceCurrencyFilter) {
@@ -91,46 +177,79 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
         break;
       case ListingPriceCurrencyFilter.usd:
         out.add(
-          ListingsDiscoveryChip(value: l10n.filterPriceCurrencyActiveUsd),
+          ListingsDiscoveryChip(
+            kind: ListingsDiscoveryChipKind.priceCurrency,
+            value: l10n.filterPriceCurrencyActiveUsd,
+          ),
         );
       case ListingPriceCurrencyFilter.eur:
         out.add(
-          ListingsDiscoveryChip(value: l10n.filterPriceCurrencyActiveEur),
+          ListingsDiscoveryChip(
+            kind: ListingsDiscoveryChipKind.priceCurrency,
+            value: l10n.filterPriceCurrencyActiveEur,
+          ),
         );
     }
   }
   if (s.maxMileage != null) {
     out.add(
       ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.maxMileage,
         value: '≤ ${s.maxMileage} ${l10n.commonKilometersShort}',
       ),
     );
   }
   if (s.city != null && s.city!.trim().isNotEmpty) {
     out.add(
-      ListingsDiscoveryChip(label: l10n.filterCity, value: s.city!.trim()),
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.city,
+        label: l10n.filterCity,
+        value: s.city!.trim(),
+      ),
     );
   }
   if (s.regionFilter == MarketRegionFilter.moldova) {
-    out.add(ListingsDiscoveryChip(value: l10n.regionMoldova));
+    out.add(
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.region,
+        value: l10n.regionMoldova,
+      ),
+    );
   } else if (s.regionFilter == MarketRegionFilter.both) {
-    out.add(ListingsDiscoveryChip(value: l10n.regionBoth));
+    out.add(
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.region,
+        value: l10n.regionBoth,
+      ),
+    );
   }
   if (s.bodyTypeFilter != null) {
     out.add(
       ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.bodyType,
         value: listingFilterBodyTypeLabel(l10n, s.bodyTypeFilter!),
       ),
     );
   }
   if (s.typeFilter == ListingTypeFilter.sale) {
-    out.add(ListingsDiscoveryChip(value: l10n.typeSale));
+    out.add(
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.listingType,
+        value: l10n.typeSale,
+      ),
+    );
   } else if (s.typeFilter == ListingTypeFilter.exchange) {
-    out.add(ListingsDiscoveryChip(value: l10n.typeExchange));
+    out.add(
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.listingType,
+        value: l10n.typeExchange,
+      ),
+    );
   }
   if (s.sortOption != ListingSortOption.newestFirst) {
     out.add(
       ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.sort,
         value: listingFilterSortOptionLabel(l10n, s.sortOption),
       ),
     );
