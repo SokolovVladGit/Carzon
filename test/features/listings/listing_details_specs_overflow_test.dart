@@ -19,6 +19,7 @@ import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/seller_public_profile_test_mocks.dart';
 import '../../helpers/compare_cubit_test_helpers.dart';
+import '../../helpers/listing_details_self_fetch_stubs.dart';
 
 class _MockDetailsCubit extends MockCubit<ListingDetailsState>
     implements ListingDetailsCubit {}
@@ -78,6 +79,7 @@ void main() {
       initialState: const FavoritesState(),
     );
 
+    registerListingDetailsSelfFetchStubs(sl);
     sl.registerFactory<ListingDetailsCubit>(() => detailsCubit);
     sl.registerFactory<GetSellerPublicProfile>(() => sellerProfileUseCase);
   });

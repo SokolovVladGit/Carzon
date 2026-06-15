@@ -8,6 +8,8 @@ import '../utils/listing_details_uri_launcher.dart';
 import '../utils/listing_formatters.dart';
 import '../utils/report_listing_mailto.dart';
 import 'listing_details_vin_entry.dart';
+import '../../../vehicle_model_data/presentation/widgets/listing_details_model_passport_section.dart';
+import '../../../vehicle_recall_data/presentation/widgets/listing_details_recall_section.dart';
 
 String? _nonEmptyTrimmedDescription(Listing listing) {
   final raw = listing.description;
@@ -44,6 +46,8 @@ class BelowHeroContent extends StatelessWidget {
       children: [
         const SizedBox(height: 24),
         _DetailsList(listing: listing),
+        ListingDetailsModelPassportSection(listingId: listing.id),
+        ListingDetailsRecallSection(listingId: listing.id),
         if (_nonEmptyTrimmedDescription(listing) case final desc?) ...[
           const SizedBox(height: 28),
           _ListingDescriptionBlock(text: desc),

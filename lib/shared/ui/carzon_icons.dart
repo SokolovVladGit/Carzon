@@ -84,6 +84,9 @@ class CarzonIcons {
   static const IconData addPhoto = LucideIcons.camera;
   static const IconData photoLibrary = LucideIcons.image;
   static const IconData attach = LucideIcons.paperclip;
+  static const IconData switchCamera = LucideIcons.switchCamera;
+  static const IconData flashOn = LucideIcons.zap;
+  static const IconData flashOff = LucideIcons.zapOff;
   static const IconData brokenImage = LucideIcons.imageOff;
   static const IconData delete = LucideIcons.trash2;
   static const IconData undo = LucideIcons.rotateCcw;

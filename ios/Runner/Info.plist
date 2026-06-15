@@ -47,6 +47,8 @@
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Carzon needs access to your photos so you can attach a cover photo to your car listing.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Carzon needs camera access so you can take photos to send in chat.</string>
 	<!--
 		Supabase auth callback deep link (password recovery / email
 		confirmation). Keep in sync with the Android intent-filter and

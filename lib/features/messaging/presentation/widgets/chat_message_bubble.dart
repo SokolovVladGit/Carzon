@@ -66,15 +66,14 @@ class ChatMessageBubble extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(15, 10, 15, 8),
                 child: Column(
-                  crossAxisAlignment: isOutgoing
-                      ? CrossAxisAlignment.end
-                      : CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (message.body.isNotEmpty)
                       Text(
                         message.body,
                         softWrap: true,
+                        textAlign: TextAlign.start,
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: fg,
                           height: 1.42,
@@ -84,13 +83,18 @@ class ChatMessageBubble extends StatelessWidget {
                       ),
                     if (displayTimeLabel) ...[
                       if (message.body.isNotEmpty) const SizedBox(height: 4),
-                      Text(
-                        timeLabel!,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: fg.withValues(alpha: isDark ? 0.58 : 0.52),
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.2,
+                      Align(
+                        alignment: isOutgoing
+                            ? AlignmentDirectional.centerEnd
+                            : AlignmentDirectional.centerStart,
+                        child: Text(
+                          timeLabel!,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: fg.withValues(alpha: isDark ? 0.58 : 0.52),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.2,
+                          ),
                         ),
                       ),
                     ],

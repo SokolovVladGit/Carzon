@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/ui/carzon_icons.dart';
+import '../utils/thread_attachment_source.dart';
 
 /// Opens the chat attachment source picker (gallery or camera).
-Future<ImageSource?> showThreadAttachmentSourceSheet(BuildContext context) {
-  return showModalBottomSheet<ImageSource>(
+Future<ThreadAttachmentSource?> showThreadAttachmentSourceSheet(
+  BuildContext context,
+) {
+  return showModalBottomSheet<ThreadAttachmentSource>(
     context: context,
     showDragHandle: true,
     builder: (sheetContext) => const ThreadAttachmentSourceSheet(),
@@ -51,13 +53,14 @@ class ThreadAttachmentSourceSheet extends StatelessWidget {
             _SourceActionRow(
               icon: CarzonIcons.photoLibrary,
               label: l10n.messagingAttachmentGallery,
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
+              onTap: () =>
+                  Navigator.pop(context, ThreadAttachmentSource.gallery),
             ),
             const SizedBox(height: _rowSpacing),
             _SourceActionRow(
               icon: CarzonIcons.addPhoto,
               label: l10n.messagingAttachmentCamera,
-              onTap: () => Navigator.pop(context, ImageSource.camera),
+              onTap: () => Navigator.pop(context, ThreadAttachmentSource.camera),
             ),
           ],
         ),
@@ -157,7 +160,10 @@ class _SourceIconCapsule extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: isDark
-            ? Color.alphaBlend(accent.withValues(alpha: 0.16), scheme.surfaceContainerHighest)
+            ? Color.alphaBlend(
+                accent.withValues(alpha: 0.16),
+                scheme.surfaceContainerHighest,
+              )
             : scheme.primaryContainer.withValues(alpha: 0.55),
         border: Border.all(
           color: accent.withValues(alpha: isDark ? 0.28 : 0.18),

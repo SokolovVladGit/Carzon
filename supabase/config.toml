@@ -16,3 +16,15 @@ verify_jwt = false
 # `20260621120000_schedule_process_vin_decode_jobs_cron.sql` and docs/ops_vin_decode_jobs.md
 [functions.process-vin-decode-jobs]
 verify_jwt = false
+
+# Model Passport Phase 1 worker (internal secret only; no user JWT).
+# Automatic invoke: pg_cron + pg_net + Vault — migration
+# `20260706123000_schedule_process_model_data_jobs_cron.sql` and docs/ops_model_data_jobs.md
+[functions.process-model-data-jobs]
+verify_jwt = false
+
+# Recall / Safety Campaigns Phase 2 worker (internal secret only; no user JWT).
+# Automatic invoke: pg_cron + pg_net + Vault — migration
+# `20260707123000_schedule_process_recall_data_jobs_cron.sql` and docs/ops_recall_data_jobs.md
+[functions.process-recall-data-jobs]
+verify_jwt = false
