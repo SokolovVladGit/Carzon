@@ -1452,6 +1452,30 @@ abstract class AppLocalizations {
   /// **'Фото'**
   String get messagingAttachmentPhotoPreview;
 
+  /// No description provided for @messagingCameraInitializing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключение камеры…'**
+  String get messagingCameraInitializing;
+
+  /// No description provided for @messagingCameraPermissionDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет доступа к камере. Разрешите доступ в настройках устройства.'**
+  String get messagingCameraPermissionDenied;
+
+  /// No description provided for @messagingCameraUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Камера недоступна на этом устройстве.'**
+  String get messagingCameraUnavailable;
+
+  /// No description provided for @messagingCameraCaptureFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сделать снимок. Попробуйте ещё раз.'**
+  String get messagingCameraCaptureFailed;
+
   /// No description provided for @messagingDateToday.
   ///
   /// In ru, this message translates to:
@@ -4805,6 +4829,360 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Источник: базовая расшифровка NHTSA vPIC.'**
   String get editListingVinReportSourceLine;
+
+  /// No description provided for @listingModelPassportSectionTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Официальные данные модели'**
+  String get listingModelPassportSectionTitle;
+
+  /// No description provided for @listingModelPassportFuelEconomyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Расход по источнику'**
+  String get listingModelPassportFuelEconomyTitle;
+
+  /// No description provided for @listingModelPassportCombinedConsumption.
+  ///
+  /// In ru, this message translates to:
+  /// **'Расход смешанный'**
+  String get listingModelPassportCombinedConsumption;
+
+  /// No description provided for @listingModelPassportCityConsumption.
+  ///
+  /// In ru, this message translates to:
+  /// **'Расход в городе'**
+  String get listingModelPassportCityConsumption;
+
+  /// No description provided for @listingModelPassportHighwayConsumption.
+  ///
+  /// In ru, this message translates to:
+  /// **'Расход на трассе'**
+  String get listingModelPassportHighwayConsumption;
+
+  /// No description provided for @listingModelPassportFuelType.
+  ///
+  /// In ru, this message translates to:
+  /// **'Топливо по источнику'**
+  String get listingModelPassportFuelType;
+
+  /// No description provided for @listingModelPassportCo2Emissions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбросы CO₂'**
+  String get listingModelPassportCo2Emissions;
+
+  /// No description provided for @listingModelPassportSource.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник'**
+  String get listingModelPassportSource;
+
+  /// No description provided for @listingModelPassportLastUpdated.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновлено:'**
+  String get listingModelPassportLastUpdated;
+
+  /// No description provided for @listingModelPassportLoading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Загрузка данных модели…'**
+  String get listingModelPassportLoading;
+
+  /// No description provided for @listingModelPassportLimitationsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ограничения'**
+  String get listingModelPassportLimitationsTitle;
+
+  /// No description provided for @listingModelPassportSourceEpa.
+  ///
+  /// In ru, this message translates to:
+  /// **'EPA · FuelEconomy.gov'**
+  String get listingModelPassportSourceEpa;
+
+  /// No description provided for @listingModelPassportUnitLPer100km.
+  ///
+  /// In ru, this message translates to:
+  /// **'л/100 км'**
+  String get listingModelPassportUnitLPer100km;
+
+  /// No description provided for @listingModelPassportUnitGPerKm.
+  ///
+  /// In ru, this message translates to:
+  /// **'г/км'**
+  String get listingModelPassportUnitGPerKm;
+
+  /// No description provided for @listingModelPassportLimitationUsMarketOnly.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные относятся к рынку США и могут не совпадать с вашим регионом.'**
+  String get listingModelPassportLimitationUsMarketOnly;
+
+  /// No description provided for @listingModelPassportLimitationTrimEngineMarket.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показатели могут отличаться в зависимости от двигателя, комплектации, рынка и точной конфигурации.'**
+  String get listingModelPassportLimitationTrimEngineMarket;
+
+  /// No description provided for @listingModelPassportLimitationModelLevel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные на уровне модели, а не конкретного автомобиля из объявления.'**
+  String get listingModelPassportLimitationModelLevel;
+
+  /// No description provided for @listingModelPassportLimitationSourceUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Часть данных источника сейчас недоступна.'**
+  String get listingModelPassportLimitationSourceUnavailable;
+
+  /// No description provided for @listingModelPassportLimitationOpenData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открытые данные источника не проверялись Carzon и могут содержать неточности.'**
+  String get listingModelPassportLimitationOpenData;
+
+  /// No description provided for @listingModelPassportLimitationNotHistory.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это не история автомобиля, регистрации, ДТП или пробега.'**
+  String get listingModelPassportLimitationNotHistory;
+
+  /// No description provided for @listingModelPassportLimitationNotRecall.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это не данные об отзывах или кампаниях безопасности.'**
+  String get listingModelPassportLimitationNotRecall;
+
+  /// No description provided for @listingModelPassportLimitationMultipleConfigurations.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для модели возможны несколько конфигураций — показаны усреднённые или типовые значения.'**
+  String get listingModelPassportLimitationMultipleConfigurations;
+
+  /// No description provided for @listingModelPassportLimitationBasicCatalogOnly.
+  ///
+  /// In ru, this message translates to:
+  /// **'Справочные каталожные данные без привязки к конкретному экземпляру.'**
+  String get listingModelPassportLimitationBasicCatalogOnly;
+
+  /// No description provided for @listingModelPassportLimitationGeneric.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные носят справочный характер и могут не совпадать с конкретным автомобилем.'**
+  String get listingModelPassportLimitationGeneric;
+
+  /// No description provided for @listingModelPassportFuelRegularGasoline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бензин обычный'**
+  String get listingModelPassportFuelRegularGasoline;
+
+  /// No description provided for @listingModelPassportFuelPremiumGasoline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бензин премиум'**
+  String get listingModelPassportFuelPremiumGasoline;
+
+  /// No description provided for @listingModelPassportFuelMidgradeGasoline.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бензин средний'**
+  String get listingModelPassportFuelMidgradeGasoline;
+
+  /// No description provided for @listingModelPassportFuelDiesel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дизель'**
+  String get listingModelPassportFuelDiesel;
+
+  /// No description provided for @listingModelPassportFuelElectricity.
+  ///
+  /// In ru, this message translates to:
+  /// **'Электричество'**
+  String get listingModelPassportFuelElectricity;
+
+  /// No description provided for @listingModelPassportFuelHybrid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Гибрид'**
+  String get listingModelPassportFuelHybrid;
+
+  /// No description provided for @listingModelPassportFuelPlugInHybrid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключаемый гибрид'**
+  String get listingModelPassportFuelPlugInHybrid;
+
+  /// No description provided for @listingModelPassportFuelTypeGeneric.
+  ///
+  /// In ru, this message translates to:
+  /// **'Топливо по данным источника'**
+  String get listingModelPassportFuelTypeGeneric;
+
+  /// No description provided for @listingRecallTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кампании отзыва'**
+  String get listingRecallTitle;
+
+  /// No description provided for @listingRecallSourceBadge.
+  ///
+  /// In ru, this message translates to:
+  /// **'NHTSA'**
+  String get listingRecallSourceBadge;
+
+  /// No description provided for @listingRecallCampaignsFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найдены кампании отзыва для этой модели и года выпуска'**
+  String get listingRecallCampaignsFound;
+
+  /// No description provided for @listingRecallCampaignCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кампаний'**
+  String get listingRecallCampaignCount;
+
+  /// No description provided for @listingRecallLastUpdated.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновлено:'**
+  String get listingRecallLastUpdated;
+
+  /// No description provided for @listingRecallComponent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Компонент'**
+  String get listingRecallComponent;
+
+  /// No description provided for @listingRecallCampaignNumber.
+  ///
+  /// In ru, this message translates to:
+  /// **'Номер кампании'**
+  String get listingRecallCampaignNumber;
+
+  /// No description provided for @listingRecallManufacturer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Производитель'**
+  String get listingRecallManufacturer;
+
+  /// No description provided for @listingRecallSummary.
+  ///
+  /// In ru, this message translates to:
+  /// **'Описание'**
+  String get listingRecallSummary;
+
+  /// No description provided for @listingRecallConsequence.
+  ///
+  /// In ru, this message translates to:
+  /// **'Последствия'**
+  String get listingRecallConsequence;
+
+  /// No description provided for @listingRecallRemedy.
+  ///
+  /// In ru, this message translates to:
+  /// **'Устранение'**
+  String get listingRecallRemedy;
+
+  /// No description provided for @listingRecallNotes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Примечания'**
+  String get listingRecallNotes;
+
+  /// No description provided for @listingRecallReportReceivedDate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дата получения отчёта'**
+  String get listingRecallReportReceivedDate;
+
+  /// No description provided for @listingRecallParkIt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рекомендация не эксплуатировать'**
+  String get listingRecallParkIt;
+
+  /// No description provided for @listingRecallParkOutside.
+  ///
+  /// In ru, this message translates to:
+  /// **'Рекомендация не парковать в помещении'**
+  String get listingRecallParkOutside;
+
+  /// No description provided for @listingRecallOverTheAirUpdate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновление по воздуху (OTA)'**
+  String get listingRecallOverTheAirUpdate;
+
+  /// No description provided for @listingRecallFlagYes.
+  ///
+  /// In ru, this message translates to:
+  /// **'Да'**
+  String get listingRecallFlagYes;
+
+  /// No description provided for @listingRecallLimitationsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ограничения'**
+  String get listingRecallLimitationsTitle;
+
+  /// No description provided for @listingRecallLimitationUsMarketDataOnly.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные относятся к рынку США и могут не совпадать с вашим регионом.'**
+  String get listingRecallLimitationUsMarketDataOnly;
+
+  /// No description provided for @listingRecallLimitationModelLevelNotExactVehicle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные на уровне модели и года, а не конкретного автомобиля из объявления.'**
+  String get listingRecallLimitationModelLevelNotExactVehicle;
+
+  /// No description provided for @listingRecallLimitationNotVinVerifiedRecallStatus.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статус отзыва не проверялся по VIN — данные справочные.'**
+  String get listingRecallLimitationNotVinVerifiedRecallStatus;
+
+  /// No description provided for @listingRecallLimitationMayDifferByTrimEngineMarket.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кампании могут отличаться в зависимости от комплектации, двигателя и рынка.'**
+  String get listingRecallLimitationMayDifferByTrimEngineMarket;
+
+  /// No description provided for @listingRecallLimitationVerifyWithOfficialDealerOrNhtsa.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточните статус отзыва у официального дилера, производителя или на сайте NHTSA.'**
+  String get listingRecallLimitationVerifyWithOfficialDealerOrNhtsa;
+
+  /// No description provided for @listingRecallLimitationMultipleCampaignsListed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показаны не все кампании — список может быть неполным.'**
+  String get listingRecallLimitationMultipleCampaignsListed;
+
+  /// No description provided for @listingRecallLimitationGeneric.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные носят справочный характер и могут не совпадать с конкретным автомобилем.'**
+  String get listingRecallLimitationGeneric;
+
+  /// No description provided for @listingRecallShowDetails.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подробнее'**
+  String get listingRecallShowDetails;
+
+  /// No description provided for @listingRecallHideDetails.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скрыть'**
+  String get listingRecallHideDetails;
 
   /// No description provided for @notificationMessageTitle.
   ///

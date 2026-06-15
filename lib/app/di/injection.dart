@@ -19,6 +19,8 @@ import '../../features/my_listings/di/my_listings_injection.dart';
 import '../../features/notifications/di/notifications_injection.dart';
 import '../../features/profile/di/profile_injection.dart';
 import '../../features/sellers/di/sellers_injection.dart';
+import '../../features/vehicle_model_data/di/vehicle_model_data_injection.dart';
+import '../../features/vehicle_recall_data/di/vehicle_recall_data_injection.dart';
 
 /// Single global service locator used across the app.
 ///
@@ -53,6 +55,8 @@ Future<void> configureDependencies(SupabaseService supabaseService) async {
   registerNotificationsFeature(sl);
   registerAuthFeature(sl);
   registerListingsFeature(sl);
+  registerVehicleModelDataFeature(sl);
+  registerVehicleRecallDataFeature(sl);
   registerSellersFeature(sl);
   registerMessagingFeature(sl);
   registerProfileFeature(sl);

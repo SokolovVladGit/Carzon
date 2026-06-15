@@ -760,6 +760,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get messagingAttachmentPhotoPreview => 'Фото';
 
   @override
+  String get messagingCameraInitializing => 'Подключение камеры…';
+
+  @override
+  String get messagingCameraPermissionDenied =>
+      'Нет доступа к камере. Разрешите доступ в настройках устройства.';
+
+  @override
+  String get messagingCameraUnavailable =>
+      'Камера недоступна на этом устройстве.';
+
+  @override
+  String get messagingCameraCaptureFailed =>
+      'Не удалось сделать снимок. Попробуйте ещё раз.';
+
+  @override
   String get messagingDateToday => 'Сегодня';
 
   @override
@@ -2657,6 +2672,203 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get editListingVinReportSourceLine =>
       'Источник: базовая расшифровка NHTSA vPIC.';
+
+  @override
+  String get listingModelPassportSectionTitle => 'Официальные данные модели';
+
+  @override
+  String get listingModelPassportFuelEconomyTitle => 'Расход по источнику';
+
+  @override
+  String get listingModelPassportCombinedConsumption => 'Расход смешанный';
+
+  @override
+  String get listingModelPassportCityConsumption => 'Расход в городе';
+
+  @override
+  String get listingModelPassportHighwayConsumption => 'Расход на трассе';
+
+  @override
+  String get listingModelPassportFuelType => 'Топливо по источнику';
+
+  @override
+  String get listingModelPassportCo2Emissions => 'Выбросы CO₂';
+
+  @override
+  String get listingModelPassportSource => 'Источник';
+
+  @override
+  String get listingModelPassportLastUpdated => 'Обновлено:';
+
+  @override
+  String get listingModelPassportLoading => 'Загрузка данных модели…';
+
+  @override
+  String get listingModelPassportLimitationsTitle => 'Ограничения';
+
+  @override
+  String get listingModelPassportSourceEpa => 'EPA · FuelEconomy.gov';
+
+  @override
+  String get listingModelPassportUnitLPer100km => 'л/100 км';
+
+  @override
+  String get listingModelPassportUnitGPerKm => 'г/км';
+
+  @override
+  String get listingModelPassportLimitationUsMarketOnly =>
+      'Данные относятся к рынку США и могут не совпадать с вашим регионом.';
+
+  @override
+  String get listingModelPassportLimitationTrimEngineMarket =>
+      'Показатели могут отличаться в зависимости от двигателя, комплектации, рынка и точной конфигурации.';
+
+  @override
+  String get listingModelPassportLimitationModelLevel =>
+      'Данные на уровне модели, а не конкретного автомобиля из объявления.';
+
+  @override
+  String get listingModelPassportLimitationSourceUnavailable =>
+      'Часть данных источника сейчас недоступна.';
+
+  @override
+  String get listingModelPassportLimitationOpenData =>
+      'Открытые данные источника не проверялись Carzon и могут содержать неточности.';
+
+  @override
+  String get listingModelPassportLimitationNotHistory =>
+      'Это не история автомобиля, регистрации, ДТП или пробега.';
+
+  @override
+  String get listingModelPassportLimitationNotRecall =>
+      'Это не данные об отзывах или кампаниях безопасности.';
+
+  @override
+  String get listingModelPassportLimitationMultipleConfigurations =>
+      'Для модели возможны несколько конфигураций — показаны усреднённые или типовые значения.';
+
+  @override
+  String get listingModelPassportLimitationBasicCatalogOnly =>
+      'Справочные каталожные данные без привязки к конкретному экземпляру.';
+
+  @override
+  String get listingModelPassportLimitationGeneric =>
+      'Данные носят справочный характер и могут не совпадать с конкретным автомобилем.';
+
+  @override
+  String get listingModelPassportFuelRegularGasoline => 'Бензин обычный';
+
+  @override
+  String get listingModelPassportFuelPremiumGasoline => 'Бензин премиум';
+
+  @override
+  String get listingModelPassportFuelMidgradeGasoline => 'Бензин средний';
+
+  @override
+  String get listingModelPassportFuelDiesel => 'Дизель';
+
+  @override
+  String get listingModelPassportFuelElectricity => 'Электричество';
+
+  @override
+  String get listingModelPassportFuelHybrid => 'Гибрид';
+
+  @override
+  String get listingModelPassportFuelPlugInHybrid => 'Подключаемый гибрид';
+
+  @override
+  String get listingModelPassportFuelTypeGeneric =>
+      'Топливо по данным источника';
+
+  @override
+  String get listingRecallTitle => 'Кампании отзыва';
+
+  @override
+  String get listingRecallSourceBadge => 'NHTSA';
+
+  @override
+  String get listingRecallCampaignsFound =>
+      'Найдены кампании отзыва для этой модели и года выпуска';
+
+  @override
+  String get listingRecallCampaignCount => 'Кампаний';
+
+  @override
+  String get listingRecallLastUpdated => 'Обновлено:';
+
+  @override
+  String get listingRecallComponent => 'Компонент';
+
+  @override
+  String get listingRecallCampaignNumber => 'Номер кампании';
+
+  @override
+  String get listingRecallManufacturer => 'Производитель';
+
+  @override
+  String get listingRecallSummary => 'Описание';
+
+  @override
+  String get listingRecallConsequence => 'Последствия';
+
+  @override
+  String get listingRecallRemedy => 'Устранение';
+
+  @override
+  String get listingRecallNotes => 'Примечания';
+
+  @override
+  String get listingRecallReportReceivedDate => 'Дата получения отчёта';
+
+  @override
+  String get listingRecallParkIt => 'Рекомендация не эксплуатировать';
+
+  @override
+  String get listingRecallParkOutside =>
+      'Рекомендация не парковать в помещении';
+
+  @override
+  String get listingRecallOverTheAirUpdate => 'Обновление по воздуху (OTA)';
+
+  @override
+  String get listingRecallFlagYes => 'Да';
+
+  @override
+  String get listingRecallLimitationsTitle => 'Ограничения';
+
+  @override
+  String get listingRecallLimitationUsMarketDataOnly =>
+      'Данные относятся к рынку США и могут не совпадать с вашим регионом.';
+
+  @override
+  String get listingRecallLimitationModelLevelNotExactVehicle =>
+      'Данные на уровне модели и года, а не конкретного автомобиля из объявления.';
+
+  @override
+  String get listingRecallLimitationNotVinVerifiedRecallStatus =>
+      'Статус отзыва не проверялся по VIN — данные справочные.';
+
+  @override
+  String get listingRecallLimitationMayDifferByTrimEngineMarket =>
+      'Кампании могут отличаться в зависимости от комплектации, двигателя и рынка.';
+
+  @override
+  String get listingRecallLimitationVerifyWithOfficialDealerOrNhtsa =>
+      'Уточните статус отзыва у официального дилера, производителя или на сайте NHTSA.';
+
+  @override
+  String get listingRecallLimitationMultipleCampaignsListed =>
+      'Показаны не все кампании — список может быть неполным.';
+
+  @override
+  String get listingRecallLimitationGeneric =>
+      'Данные носят справочный характер и могут не совпадать с конкретным автомобилем.';
+
+  @override
+  String get listingRecallShowDetails => 'Подробнее';
+
+  @override
+  String get listingRecallHideDetails => 'Скрыть';
 
   @override
   String get notificationMessageTitle => 'Новое сообщение';

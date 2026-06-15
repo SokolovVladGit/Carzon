@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,9 +12,12 @@ import '../../domain/entities/chat_attachment_upload.dart';
 import '../bloc/conversation_thread_cubit.dart';
 import '../bloc/conversation_thread_state.dart';
 import '../utils/thread_attachment_mime.dart';
+import '../utils/thread_attachment_source.dart';
+import '../utils/thread_camera_capture_normalizer.dart';
 import '../utils/thread_composer_attachment_draft.dart';
-import 'thread_composer_attachment_preview.dart';
 import 'thread_attachment_source_sheet.dart';
+import 'thread_camera_capture_sheet.dart';
+import 'thread_composer_attachment_preview.dart';
 
 typedef ThreadImagePicker =
     Future<XFile?> Function({
@@ -20,6 +25,11 @@ typedef ThreadImagePicker =
       double? maxWidth,
       int? imageQuality,
     });
+
+typedef ThreadCameraCapture = Future<XFile?> Function(BuildContext context);
+
+typedef ThreadCameraCaptureNormalizerFn =
+    Future<ThreadCameraCaptureNormalized?> Function(XFile file);
 
 /// Thread composer: attachment pick/preview, caption field, send button.
 class ThreadComposerBar extends StatefulWidget {
@@ -29,12 +39,16 @@ class ThreadComposerBar extends StatefulWidget {
     required this.textController,
     required this.onSendSucceeded,
     this.imagePicker,
+    this.cameraCapture,
+    this.cameraNormalizer,
   });
 
   final String conversationId;
   final TextEditingController textController;
   final VoidCallback onSendSucceeded;
   final ThreadImagePicker? imagePicker;
+  final ThreadCameraCapture? cameraCapture;
+  final ThreadCameraCaptureNormalizerFn? cameraNormalizer;
 
   @override
   State<ThreadComposerBar> createState() => _ThreadComposerBarState();
@@ -44,6 +58,9 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
   final ImagePicker _defaultPicker = ImagePicker();
   ThreadComposerAttachmentDraft? _attachmentDraft;
   bool _pickingAttachment = false;
+
+  static const double _galleryMaxWidth = 1920;
+  static const int _galleryImageQuality = 85;
 
   @override
   void initState() {
@@ -79,19 +96,53 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
     if (_pickingAttachment) return;
     final source = await showThreadAttachmentSourceSheet(context);
     if (!mounted || source == null) return;
-    await _pickAttachment(source);
+
+    switch (source) {
+      case ThreadAttachmentSource.gallery:
+        await _pickGalleryAttachment();
+      case ThreadAttachmentSource.camera:
+        await _captureCameraAttachment();
+    }
   }
 
-  Future<void> _pickAttachment(ImageSource source) async {
+  void _applyAttachmentDraft({
+    required Uint8List bytes,
+    required String mimeType,
+    String? filename,
+  }) {
+    final l10n = context.l10n;
+    if (!ChatAttachmentLimits.allowedMimeTypes.contains(mimeType)) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(l10n.messagingAttachmentUnsupportedType)),
+      );
+      return;
+    }
+    if (bytes.length > ChatAttachmentLimits.maxBytes) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(l10n.messagingAttachmentTooLarge)),
+      );
+      return;
+    }
+
+    setState(
+      () => _attachmentDraft = ThreadComposerAttachmentDraft(
+        bytes: bytes,
+        mimeType: mimeType,
+        filename: filename,
+      ),
+    );
+  }
+
+  Future<void> _pickGalleryAttachment() async {
     if (_pickingAttachment) return;
     setState(() => _pickingAttachment = true);
     final l10n = context.l10n;
     try {
       final picker = widget.imagePicker ?? _defaultPicker.pickImage;
       final picked = await picker(
-        source: source,
-        maxWidth: 1920,
-        imageQuality: 85,
+        source: ImageSource.gallery,
+        maxWidth: _galleryMaxWidth,
+        imageQuality: _galleryImageQuality,
       );
       if (picked == null || !mounted) return;
 
@@ -105,24 +156,50 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
 
       final bytes = await picked.readAsBytes();
       if (!mounted) return;
-      if (bytes.length > ChatAttachmentLimits.maxBytes) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(content: Text(l10n.messagingAttachmentTooLarge)),
-        );
-        return;
-      }
-
-      setState(
-        () => _attachmentDraft = ThreadComposerAttachmentDraft(
-          bytes: bytes,
-          mimeType: mimeType,
-          filename: picked.name,
-        ),
+      _applyAttachmentDraft(
+        bytes: bytes,
+        mimeType: mimeType,
+        filename: picked.name,
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(content: Text(l10n.imagePickerLoadFailed)),
+      );
+    } finally {
+      if (mounted) setState(() => _pickingAttachment = false);
+    }
+  }
+
+  Future<void> _captureCameraAttachment() async {
+    if (_pickingAttachment) return;
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _pickingAttachment = true);
+    final l10n = context.l10n;
+    try {
+      final capture = widget.cameraCapture ?? showThreadCameraCaptureSheet;
+      final captured = await capture(context);
+      if (captured == null || !mounted) return;
+
+      final normalizer = widget.cameraNormalizer ?? normalizeThreadCameraCapture;
+      final normalized = await normalizer(captured);
+      if (!mounted) return;
+      if (normalized == null) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text(l10n.messagingCameraCaptureFailed)),
+        );
+        return;
+      }
+
+      _applyAttachmentDraft(
+        bytes: normalized.bytes,
+        mimeType: normalized.mimeType,
+        filename: normalized.filename,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(l10n.messagingCameraCaptureFailed)),
       );
     } finally {
       if (mounted) setState(() => _pickingAttachment = false);

@@ -758,6 +758,21 @@ class AppLocalizationsRo extends AppLocalizations {
   String get messagingAttachmentPhotoPreview => 'Fotografie';
 
   @override
+  String get messagingCameraInitializing => 'Se conectează camera…';
+
+  @override
+  String get messagingCameraPermissionDenied =>
+      'Accesul la cameră este refuzat. Permiteți accesul în setările dispozitivului.';
+
+  @override
+  String get messagingCameraUnavailable =>
+      'Camera nu este disponibilă pe acest dispozitiv.';
+
+  @override
+  String get messagingCameraCaptureFailed =>
+      'Nu s-a putut face fotografia. Încercați din nou.';
+
+  @override
   String get messagingDateToday => 'Astăzi';
 
   @override
@@ -2665,6 +2680,203 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get editListingVinReportSourceLine =>
       'Sursa: NHTSA vPIC Base Transcript.';
+
+  @override
+  String get listingModelPassportSectionTitle => 'Date oficiale despre model';
+
+  @override
+  String get listingModelPassportFuelEconomyTitle => 'Consum conform sursei';
+
+  @override
+  String get listingModelPassportCombinedConsumption => 'Consum mixt';
+
+  @override
+  String get listingModelPassportCityConsumption => 'Consum în oraș';
+
+  @override
+  String get listingModelPassportHighwayConsumption => 'Consum pe drum';
+
+  @override
+  String get listingModelPassportFuelType => 'Combustibil conform sursei';
+
+  @override
+  String get listingModelPassportCo2Emissions => 'Emisii CO₂';
+
+  @override
+  String get listingModelPassportSource => 'Sursă';
+
+  @override
+  String get listingModelPassportLastUpdated => 'Actualizat:';
+
+  @override
+  String get listingModelPassportLoading => 'Se încarcă datele modelului…';
+
+  @override
+  String get listingModelPassportLimitationsTitle => 'Limitări';
+
+  @override
+  String get listingModelPassportSourceEpa => 'EPA · FuelEconomy.gov';
+
+  @override
+  String get listingModelPassportUnitLPer100km => 'l/100 km';
+
+  @override
+  String get listingModelPassportUnitGPerKm => 'g/km';
+
+  @override
+  String get listingModelPassportLimitationUsMarketOnly =>
+      'Datele se referă la piața SUA și pot diferi de regiunea dvs.';
+
+  @override
+  String get listingModelPassportLimitationTrimEngineMarket =>
+      'Valorile pot diferi în funcție de motor, echipare, piață și configurația exactă.';
+
+  @override
+  String get listingModelPassportLimitationModelLevel =>
+      'Date la nivel de model, nu pentru vehiculul exact din anunț.';
+
+  @override
+  String get listingModelPassportLimitationSourceUnavailable =>
+      'Unele date ale sursei nu sunt disponibile momentan.';
+
+  @override
+  String get listingModelPassportLimitationOpenData =>
+      'Datele deschise ale sursei nu au fost verificate de Carzon și pot conține inexactități.';
+
+  @override
+  String get listingModelPassportLimitationNotHistory =>
+      'Aceasta nu este istoria vehiculului, înmatriculărilor, accidentelor sau kilometrajului.';
+
+  @override
+  String get listingModelPassportLimitationNotRecall =>
+      'Acestea nu sunt date despre rechemări sau campanii de siguranță.';
+
+  @override
+  String get listingModelPassportLimitationMultipleConfigurations =>
+      'Pentru model pot exista mai multe configurații — sunt afișate valori medii sau tipice.';
+
+  @override
+  String get listingModelPassportLimitationBasicCatalogOnly =>
+      'Date de catalog de referință, fără legătură cu un exemplar concret.';
+
+  @override
+  String get listingModelPassportLimitationGeneric =>
+      'Datele sunt orientative și pot să nu corespundă vehiculului concret.';
+
+  @override
+  String get listingModelPassportFuelRegularGasoline => 'Benzină obișnuită';
+
+  @override
+  String get listingModelPassportFuelPremiumGasoline => 'Benzină premium';
+
+  @override
+  String get listingModelPassportFuelMidgradeGasoline => 'Benzină medie';
+
+  @override
+  String get listingModelPassportFuelDiesel => 'Motorină';
+
+  @override
+  String get listingModelPassportFuelElectricity => 'Electricitate';
+
+  @override
+  String get listingModelPassportFuelHybrid => 'Hibrid';
+
+  @override
+  String get listingModelPassportFuelPlugInHybrid => 'Hibrid plug-in';
+
+  @override
+  String get listingModelPassportFuelTypeGeneric =>
+      'Combustibil conform datelor sursei';
+
+  @override
+  String get listingRecallTitle => 'Campanii de rechemare';
+
+  @override
+  String get listingRecallSourceBadge => 'NHTSA';
+
+  @override
+  String get listingRecallCampaignsFound =>
+      'Campanii de rechemare găsite pentru acest model și an';
+
+  @override
+  String get listingRecallCampaignCount => 'Campanii';
+
+  @override
+  String get listingRecallLastUpdated => 'Actualizat:';
+
+  @override
+  String get listingRecallComponent => 'Componentă';
+
+  @override
+  String get listingRecallCampaignNumber => 'Număr campanie';
+
+  @override
+  String get listingRecallManufacturer => 'Producător';
+
+  @override
+  String get listingRecallSummary => 'Descriere';
+
+  @override
+  String get listingRecallConsequence => 'Consecințe';
+
+  @override
+  String get listingRecallRemedy => 'Remediere';
+
+  @override
+  String get listingRecallNotes => 'Note';
+
+  @override
+  String get listingRecallReportReceivedDate => 'Data primirii raportului';
+
+  @override
+  String get listingRecallParkIt => 'Recomandare de a nu utiliza vehiculul';
+
+  @override
+  String get listingRecallParkOutside =>
+      'Recomandare de a nu parca în interior';
+
+  @override
+  String get listingRecallOverTheAirUpdate => 'Actualizare over-the-air (OTA)';
+
+  @override
+  String get listingRecallFlagYes => 'Da';
+
+  @override
+  String get listingRecallLimitationsTitle => 'Limitări';
+
+  @override
+  String get listingRecallLimitationUsMarketDataOnly =>
+      'Datele se referă la piața SUA și pot să nu corespundă regiunii dvs.';
+
+  @override
+  String get listingRecallLimitationModelLevelNotExactVehicle =>
+      'Date la nivel de model și an, nu pentru vehiculul exact din anunț.';
+
+  @override
+  String get listingRecallLimitationNotVinVerifiedRecallStatus =>
+      'Statusul rechemării nu a fost verificat după VIN — date orientative.';
+
+  @override
+  String get listingRecallLimitationMayDifferByTrimEngineMarket =>
+      'Campaniile pot diferi în funcție de echipare, motor și piață.';
+
+  @override
+  String get listingRecallLimitationVerifyWithOfficialDealerOrNhtsa =>
+      'Verificați statusul rechemării la dealerul oficial, producător sau pe site-ul NHTSA.';
+
+  @override
+  String get listingRecallLimitationMultipleCampaignsListed =>
+      'Nu sunt afișate toate campaniile — lista poate fi incompletă.';
+
+  @override
+  String get listingRecallLimitationGeneric =>
+      'Datele sunt orientative și pot să nu corespundă vehiculului concret.';
+
+  @override
+  String get listingRecallShowDetails => 'Detalii';
+
+  @override
+  String get listingRecallHideDetails => 'Ascunde';
 
   @override
   String get notificationMessageTitle => 'Mesaj nou';

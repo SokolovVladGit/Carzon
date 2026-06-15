@@ -13,6 +13,7 @@ import 'package:carzon/features/messaging/domain/repositories/messaging_reposito
 import 'package:carzon/features/messaging/presentation/bloc/conversation_thread_cubit.dart';
 import 'package:carzon/features/messaging/presentation/bloc/conversation_thread_state.dart';
 import 'package:carzon/features/messaging/presentation/utils/conversation_display_copy.dart';
+import 'package:carzon/features/messaging/presentation/utils/thread_camera_capture_normalizer.dart';
 import 'package:carzon/features/messaging/presentation/widgets/chat_image_message_bubble.dart';
 import 'package:carzon/features/messaging/presentation/widgets/chat_message_bubble.dart';
 import 'package:carzon/features/messaging/presentation/widgets/thread_composer_bar.dart';
@@ -144,6 +145,8 @@ void main() {
     required ConversationThreadCubit cubit,
     required TextEditingController controller,
     ThreadImagePicker? imagePicker,
+    ThreadCameraCapture? cameraCapture,
+    ThreadCameraCaptureNormalizerFn? cameraNormalizer,
   }) {
     return MaterialApp(
       locale: const Locale('ru'),
@@ -157,6 +160,8 @@ void main() {
             textController: controller,
             onSendSucceeded: () => controller.clear(),
             imagePicker: imagePicker,
+            cameraCapture: cameraCapture,
+            cameraNormalizer: cameraNormalizer,
           ),
         ),
       ),
@@ -476,6 +481,70 @@ void main() {
     expect(find.byType(Image), findsOneWidget);
   });
 
+  testWidgets('outgoing image caption aligns text to start', (tester) async {
+    final message = ChatMessage(
+      id: 'm-img-cap-out',
+      conversationId: 'c1',
+      senderId: 'b1',
+      body: 'Look at this',
+      createdAt: t0,
+      attachments: [attachment],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ChatImageMessageBubble(
+            message: message,
+            attachment: attachment,
+            isOutgoing: true,
+            timeLabel: '12:05',
+            loadFailedLabel: l10n.messagingAttachmentLoadFailed,
+            loadBytes: (_) async => Uint8List.fromList(_kTinyPng),
+            onOpenFullscreen: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final caption = tester.widget<Text>(find.text('Look at this'));
+    expect(caption.textAlign, TextAlign.start);
+
+    final bubbleAlign = tester.widget<Align>(
+      find.descendant(
+        of: find.byType(ChatImageMessageBubble),
+        matching: find.byType(Align),
+      ).first,
+    );
+    expect(bubbleAlign.alignment, Alignment.centerRight);
+  });
+
+  testWidgets('outgoing text bubble aligns body to start', (tester) async {
+    final message = ChatMessage(
+      id: 'm-text-out',
+      conversationId: 'c1',
+      senderId: 'b1',
+      body: 'Plain text',
+      createdAt: t0,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ChatMessageBubble(
+            message: message,
+            isOutgoing: true,
+            timeLabel: '12:10',
+          ),
+        ),
+      ),
+    );
+
+    final body = tester.widget<Text>(find.text('Plain text'));
+    expect(body.textAlign, TextAlign.start);
+  });
+
   testWidgets('download failure shows placeholder not blank bubble', (
     tester,
   ) async {
@@ -661,5 +730,216 @@ void main() {
 
     gate.complete();
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('gallery source uses image_picker gallery path only', (tester) async {
+    final cubit = readyCubit();
+    addTearDown(cubit.close);
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    ImageSource? pickedSource;
+    var pickerCalls = 0;
+
+    await tester.pumpWidget(
+      wrapComposer(
+        cubit: cubit,
+        controller: controller,
+        imagePicker:
+            ({
+              required source,
+              maxWidth,
+              imageQuality,
+            }) async {
+              pickerCalls++;
+              pickedSource = source;
+              return XFile.fromData(
+                Uint8List.fromList(_kTinyPng),
+                name: 'photo.png',
+                mimeType: 'image/png',
+              );
+            },
+        cameraCapture: (_) async {
+          fail('camera capture should not run for gallery selection');
+        },
+      ),
+    );
+    await cubit.load();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.messagingAttachImage));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.messagingAttachmentGallery));
+    await tester.pumpAndSettle();
+
+    expect(pickerCalls, 1);
+    expect(pickedSource, ImageSource.gallery);
+  });
+
+  testWidgets('camera source uses injected capture path and shows preview', (
+    tester,
+  ) async {
+    final cubit = readyCubit();
+    addTearDown(cubit.close);
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    var pickerCalls = 0;
+    var cameraCalls = 0;
+
+    await tester.pumpWidget(
+      wrapComposer(
+        cubit: cubit,
+        controller: controller,
+        imagePicker:
+            ({
+              required source,
+              maxWidth,
+              imageQuality,
+            }) async {
+              pickerCalls++;
+              return null;
+            },
+        cameraCapture: (_) async {
+          cameraCalls++;
+          return XFile.fromData(
+            Uint8List.fromList(_kTinyPng),
+            name: 'capture.jpg',
+            mimeType: 'image/jpeg',
+          );
+        },
+        cameraNormalizer: (file) async {
+          final bytes = await file.readAsBytes();
+          return ThreadCameraCaptureNormalized(
+            bytes: bytes,
+            mimeType: 'image/jpeg',
+            filename: 'chat_camera_test.jpg',
+          );
+        },
+      ),
+    );
+    await cubit.load();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.messagingAttachImage));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.messagingAttachmentCamera));
+    await tester.pumpAndSettle();
+
+    expect(pickerCalls, 0);
+    expect(cameraCalls, 1);
+    expect(find.byType(Image), findsOneWidget);
+  });
+
+  testWidgets('cancelled camera capture leaves composer without attachment draft', (
+    tester,
+  ) async {
+    final cubit = readyCubit();
+    addTearDown(cubit.close);
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      wrapComposer(
+        cubit: cubit,
+        controller: controller,
+        cameraCapture: (_) async => null,
+      ),
+    );
+    await cubit.load();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.messagingAttachImage));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.messagingAttachmentCamera));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Image), findsNothing);
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNull,
+    );
+  });
+
+  testWidgets('oversize camera result shows localized oversize snackbar', (
+    tester,
+  ) async {
+    final cubit = readyCubit();
+    addTearDown(cubit.close);
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      wrapComposer(
+        cubit: cubit,
+        controller: controller,
+        cameraCapture: (_) async => XFile.fromData(
+          Uint8List.fromList(_kTinyPng),
+          name: 'capture.jpg',
+          mimeType: 'image/jpeg',
+        ),
+        cameraNormalizer: (_) async => ThreadCameraCaptureNormalized(
+          bytes: Uint8List(ChatAttachmentLimits.maxBytes + 1),
+          mimeType: 'image/jpeg',
+          filename: 'chat_camera_big.jpg',
+        ),
+      ),
+    );
+    await cubit.load();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.messagingAttachImage));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.messagingAttachmentCamera));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.messagingAttachmentTooLarge), findsOneWidget);
+    expect(find.byType(Image), findsNothing);
+  });
+
+  testWidgets('send after camera capture uses ChatAttachmentUpload path', (
+    tester,
+  ) async {
+    final cubit = readyCubit();
+    addTearDown(cubit.close);
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+
+    when(
+      () => repository.sendMessageWithAttachment(any()),
+    ).thenAnswer((_) async => const Success<String>('m2'));
+
+    await tester.pumpWidget(
+      wrapComposer(
+        cubit: cubit,
+        controller: controller,
+        cameraCapture: (_) async => XFile.fromData(
+          Uint8List.fromList(_kTinyPng),
+          name: 'capture.jpg',
+          mimeType: 'image/jpeg',
+        ),
+        cameraNormalizer: (file) async {
+          final bytes = await file.readAsBytes();
+          return ThreadCameraCaptureNormalized(
+            bytes: bytes,
+            mimeType: 'image/jpeg',
+            filename: 'chat_camera_test.jpg',
+          );
+        },
+      ),
+    );
+    await cubit.load();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip(l10n.messagingAttachImage));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.messagingAttachmentCamera));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(FilledButton));
+    await tester.pumpAndSettle();
+
+    final captured = verify(
+      () => repository.sendMessageWithAttachment(captureAny()),
+    ).captured.single as ChatAttachmentUpload;
+    expect(captured.mimeType, 'image/jpeg');
+    expect(captured.filename, 'chat_camera_test.jpg');
   });
 }
