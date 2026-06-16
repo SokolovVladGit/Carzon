@@ -35,6 +35,7 @@ Listing _listing({
   double? liters,
   int? hp,
   ListingDrivetrain? drivetrain,
+  ListingTransmissionType? transmissionType,
   String? registration,
   String? description,
   String city = 'Chișinău',
@@ -53,6 +54,7 @@ Listing _listing({
   engineDisplacementLiters: liters,
   enginePowerHp: hp,
   drivetrain: drivetrain,
+  transmissionType: transmissionType,
   registration: registration,
   description: description,
   createdAt: DateTime.utc(2026, 4, 1),
@@ -176,6 +178,27 @@ void main() {
       expect(find.text('Chișinău'), findsOneWidget);
     },
   );
+
+  testWidgets('transmission row appears when set and uses short label', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      app(
+        _listing(transmissionType: ListingTransmissionType.automatic),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(ru.compareRowTransmission), findsOneWidget);
+    expect(find.text(ru.listingTransmissionAutomatic), findsOneWidget);
+  });
+
+  testWidgets('transmission row hidden when null', (tester) async {
+    await tester.pumpWidget(app(_listing()));
+    await tester.pumpAndSettle();
+
+    expect(find.text(ru.compareRowTransmission), findsNothing);
+  });
 
   testWidgets('description section is hidden when description empty', (
     tester,

@@ -142,4 +142,42 @@ void main() {
     expect(readModelPassportDouble('-1'), isNull);
     expect(readModelPassportDouble('7.4'), 7.4);
   });
+
+  group('buildModelPassportPrimaryMetricTiles', () {
+    test('returns consumption and fuel type tiles without CO2', () {
+      final tiles = buildModelPassportPrimaryMetricTiles(
+        ru,
+        const {
+          'combined_l_per_100km': 7.35,
+          'city_l_per_100km': 8.12,
+          'highway_l_per_100km': 6.78,
+          'co2_g_per_km': 175.6,
+          'fuel_type': 'Regular Gasoline',
+        },
+      );
+
+      expect(tiles, hasLength(4));
+      expect(tiles.first.isPrimaryHighlight, isTrue);
+      expect(tiles.skip(1).every((t) => !t.isPrimaryHighlight), isTrue);
+      expect(tiles.map((t) => t.label), [
+        ru.listingModelPassportCombinedConsumption,
+        ru.listingModelPassportCityConsumption,
+        ru.listingModelPassportHighwayConsumption,
+        ru.listingModelPassportFuelType,
+      ]);
+    });
+  });
+
+  group('buildModelPassportCo2MetricTile', () {
+    test('returns separate CO2 tile when present', () {
+      final tile = buildModelPassportCo2MetricTile(
+        ru,
+        const {'co2_g_per_km': 175.6},
+      );
+
+      expect(tile, isNotNull);
+      expect(tile!.label, ru.listingModelPassportCo2Emissions);
+      expect(tile.value, '176');
+    });
+  });
 }

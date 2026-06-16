@@ -18,9 +18,9 @@ import 'vin_present_latin_badge.dart';
 ///   * [regular] — the default feed/grid variant: 16:9 cover with a
 ///     light info panel overlapping the image's bottom edge.
 ///   * [featured] — the "feature listing" variant used for the first
-///     card of the home feed: taller 4:3 cover, slightly larger price
-///     type in the panel, and region/type badges intentionally
-///     dropped so the image drives the hierarchy.
+///     card of the home feed: taller 4:3 cover and slightly larger
+///     price type in the panel. Exchange/type badges stay regular-only;
+///     the market region badge is shown on both variants.
 enum ListingCardVariant { regular, featured }
 
 /// Visual listing card shared by the public feed, favorites, and
@@ -34,8 +34,8 @@ enum ListingCardVariant { regular, featured }
 ///     row (mileage · year · city), and — on the right — the
 ///     context-specific action (favorite toggle on public/favorites,
 ///     owner overflow menu on My Listings),
-///   * optional region/type/status badges below the meta row on the
-///     regular variant.
+///   * optional region/type/status badges below the meta row (region on
+///     all variants; exchange/type on regular only).
 ///
 /// A [trailing] slot is exposed so callers can attach context-specific
 /// actions without the card needing to know about either. The slot is
@@ -148,12 +148,11 @@ class _ListingCardState extends State<ListingCard> {
 
     final badges = <Widget>[
       if (widget.statusBadge != null) widget.statusBadge!,
-      if (!isFeatured)
-        ListingBadge(
-          label: formatMarketRegion(l10n, listing.marketRegion),
-          icon: CarzonIcons.map,
-          tone: ListingBadgeTone.neutral,
-        ),
+      ListingBadge(
+        label: formatMarketRegion(l10n, listing.marketRegion),
+        icon: CarzonIcons.map,
+        tone: ListingBadgeTone.neutral,
+      ),
       if (!isFeatured && listing.type != ListingType.sale)
         ListingBadge(
           label: formatType(l10n, listing.type),

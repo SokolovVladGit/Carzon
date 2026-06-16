@@ -532,7 +532,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingDrivetrain => 'Привод';
 
   @override
-  String get listingRegistration => 'Регистрация';
+  String get listingRegistration => 'Место регистрации авто';
 
   @override
   String get listingDescription => 'Описание';
@@ -544,7 +544,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingEnginePowerHint => 'Мощность в л.с.';
 
   @override
-  String get listingRegistrationHint => 'Где оформлена регистрация';
+  String get listingRegistrationHint => 'Например: Тирасполь, Кишинёв';
+
+  @override
+  String get listingRegistrationHelper =>
+      'По документам автомобиля. Не влияет на регион показа объявления.';
 
   @override
   String get listingEngineDisplacementLitersSuffix => 'л';
@@ -587,6 +591,27 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingDrivetrainFourWheel => '4×4';
+
+  @override
+  String get listingTransmission => 'Коробка передач';
+
+  @override
+  String get listingTransmissionManual => 'Механика';
+
+  @override
+  String get listingTransmissionAutomatic => 'Автомат';
+
+  @override
+  String get listingTransmissionCvt => 'Вариатор';
+
+  @override
+  String get listingTransmissionRobotic => 'Робот';
+
+  @override
+  String get listingTransmissionDualClutch => 'Робот DCT';
+
+  @override
+  String get listingTransmissionOther => 'Другое';
 
   @override
   String get listingDetailsDescriptionSection => 'Описание';
@@ -876,7 +901,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createListingSectionDeal => 'Сделка и рынок';
 
   @override
-  String get createListingSectionDealSubtitle => 'Тип сделки и регион показа.';
+  String get createListingSectionDealSubtitle =>
+      'Тип сделки и регион, где объявление будет видно.';
 
   @override
   String get createListingSectionPrice => 'Цена и пробег';
@@ -1003,7 +1029,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get fieldType => 'Тип';
 
   @override
-  String get fieldRegion => 'Регион';
+  String get fieldRegion => 'Регион показа';
+
+  @override
+  String get fieldRegionHelper => 'Где будет показываться объявление.';
 
   @override
   String get fieldCity => 'Город';
@@ -2331,7 +2360,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingVinReportPendingBody =>
-      'VIN добавлен продавцом. Данные расшифровки появятся после обработки.';
+      'Обычно это занимает несколько минут. Данные появятся автоматически после проверки.';
 
   @override
   String get listingVinReportNoDataTitle => 'Данные по VIN не найдены';
@@ -2704,6 +2733,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingModelPassportLoading => 'Загрузка данных модели…';
 
   @override
+  String get listingModelPassportPendingTitle =>
+      'Официальные данные модели загружаются';
+
+  @override
+  String get listingModelPassportPendingBody =>
+      'Обычно это занимает до 30 минут после публикации. Данные появятся автоматически, если официальный источник найдёт информацию по этой модели.';
+
+  @override
   String get listingModelPassportLimitationsTitle => 'Ограничения';
 
   @override
@@ -2784,20 +2821,74 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingRecallTitle => 'Кампании отзыва';
 
   @override
+  String get listingRecallPendingTitle => 'Проверяем кампании безопасности';
+
+  @override
+  String get listingRecallPendingBody =>
+      'Проверка выполняется по марке, модели и году. Обычно это занимает до 30 минут после публикации.';
+
+  @override
+  String get listingRecallPendingLimitationNote =>
+      'Это не VIN-проверка. Для точного статуса проверяйте VIN у официального дилера, производителя или NHTSA.';
+
+  @override
   String get listingRecallSourceBadge => 'NHTSA';
 
   @override
-  String get listingRecallCampaignsFound =>
-      'Найдены кампании отзыва для этой модели и года выпуска';
+  String get listingRecallCampaignsFound => 'Проверка по модели и году выпуска';
 
   @override
   String get listingRecallCampaignCount => 'Кампаний';
+
+  @override
+  String listingRecallCampaignCountStat(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count кампаний найдено',
+      many: '$count кампаний найдено',
+      few: '$count кампании найдено',
+      one: '$count кампания найдена',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get listingRecallLastUpdated => 'Обновлено:';
 
   @override
   String get listingRecallComponent => 'Компонент';
+
+  @override
+  String get listingRecallSourceComponent => 'Компонент (источник)';
+
+  @override
+  String get listingRecallComponentSuspensionFront =>
+      'Подвеска · передняя часть';
+
+  @override
+  String get listingRecallComponentSeatBeltsRear =>
+      'Ремни безопасности · задний ряд';
+
+  @override
+  String get listingRecallComponentEquipmentManual =>
+      'Оборудование · руководство/сервис';
+
+  @override
+  String get listingRecallComponentBackOverPreventionDisplay =>
+      'Камера/обзор назад · дисплей';
+
+  @override
+  String get listingRecallComponentElectricalPropulsionBattery =>
+      'Электросистема · тяговая батарея';
+
+  @override
+  String get listingRecallComponentServiceBrakesAirSupply =>
+      'Тормозная система · магистрали';
+
+  @override
+  String get listingRecallComponentAirbagsFrontal =>
+      'Подушки безопасности · передние';
 
   @override
   String get listingRecallCampaignNumber => 'Номер кампании';
@@ -2809,10 +2900,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingRecallSummary => 'Описание';
 
   @override
-  String get listingRecallConsequence => 'Последствия';
+  String get listingRecallConsequence => 'Риск';
 
   @override
-  String get listingRecallRemedy => 'Устранение';
+  String get listingRecallRemedy => 'Решение';
 
   @override
   String get listingRecallNotes => 'Примечания';
@@ -2869,6 +2960,20 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingRecallHideDetails => 'Скрыть';
+
+  @override
+  String listingRecallShowAllCampaigns(int count) {
+    return 'Показать все $count кампаний';
+  }
+
+  @override
+  String get listingRecallChipParkIt => 'Не эксплуатировать';
+
+  @override
+  String get listingRecallChipParkOutside => 'Не парковать в помещении';
+
+  @override
+  String get listingRecallChipOverTheAirUpdate => 'OTA';
 
   @override
   String get notificationMessageTitle => 'Новое сообщение';

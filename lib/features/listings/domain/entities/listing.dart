@@ -33,6 +33,16 @@ enum ListingFuelType { petrol, diesel, hybrid, electric, lpg, cng, other }
 /// Stored as `listings.drivetrain`; `fourWheel` ↔ DB `four_wheel`.
 enum ListingDrivetrain { fwd, rwd, awd, fourWheel }
 
+/// Stored as `listings.transmission_type`; `dualClutch` ↔ DB `dual_clutch`.
+enum ListingTransmissionType {
+  manual,
+  automatic,
+  cvt,
+  robotic,
+  dualClutch,
+  other,
+}
+
 /// Public-only VIN hint from `listings.vin_status` (Phase 1).
 enum ListingVinStatus { notProvided, formatValid }
 
@@ -54,6 +64,7 @@ class Listing extends Equatable {
     this.engineDisplacementLiters,
     this.enginePowerHp,
     this.drivetrain,
+    this.transmissionType,
     this.registration,
     this.description,
     required this.createdAt,
@@ -93,6 +104,10 @@ class Listing extends Equatable {
   final int? enginePowerHp;
 
   final ListingDrivetrain? drivetrain;
+
+  /// Seller-entered gearbox type (`transmission_type`). Distinct from drivetrain
+  /// and VIN decode metadata.
+  final ListingTransmissionType? transmissionType;
 
   /// Where the car is registered (distinct from marketplace [marketRegion]).
   final String? registration;
@@ -144,6 +159,7 @@ class Listing extends Equatable {
     engineDisplacementLiters,
     enginePowerHp,
     drivetrain,
+    transmissionType,
     registration,
     description,
     createdAt,
@@ -173,6 +189,33 @@ ListingDrivetrain? listingDrivetrainFromDb(String? raw) {
   if (v == kListingFourWheelDbValue) return ListingDrivetrain.fourWheel;
   for (final e in ListingDrivetrain.values) {
     if (e != ListingDrivetrain.fourWheel && e.name == v) return e;
+  }
+  return null;
+}
+
+/// DB value for [ListingTransmissionType.dualClutch] (`dual_clutch`).
+const String kListingDualClutchDbValue = 'dual_clutch';
+
+String listingTransmissionTypeToDbValue(ListingTransmissionType value) {
+  return switch (value) {
+    ListingTransmissionType.manual => 'manual',
+    ListingTransmissionType.automatic => 'automatic',
+    ListingTransmissionType.cvt => 'cvt',
+    ListingTransmissionType.robotic => 'robotic',
+    ListingTransmissionType.dualClutch => kListingDualClutchDbValue,
+    ListingTransmissionType.other => 'other',
+  };
+}
+
+ListingTransmissionType? listingTransmissionTypeFromDb(String? raw) {
+  if (raw == null) return null;
+  final v = raw.trim().toLowerCase();
+  if (v.isEmpty) return null;
+  if (v == kListingDualClutchDbValue) {
+    return ListingTransmissionType.dualClutch;
+  }
+  for (final e in ListingTransmissionType.values) {
+    if (e != ListingTransmissionType.dualClutch && e.name == v) return e;
   }
   return null;
 }

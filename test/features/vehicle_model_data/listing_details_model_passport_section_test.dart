@@ -65,6 +65,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('listing_model_passport_section')), findsOneWidget);
+    expect(find.byKey(const ValueKey('listing_model_passport_metric_tiles')), findsOneWidget);
     expect(find.text(ru.listingModelPassportSectionTitle), findsOneWidget);
     expect(find.text('EPA · FuelEconomy.gov'), findsOneWidget);
     expect(find.textContaining('7.4 ${ru.listingModelPassportUnitLPer100km}'), findsOneWidget);
@@ -74,6 +75,33 @@ void main() {
     expect(find.text(ru.listingModelPassportFuelRegularGasoline), findsOneWidget);
     expect(find.text('Regular Gasoline'), findsNothing);
     expect(find.text('regular_gasoline'), findsNothing);
+  });
+
+  testWidgets('shows pending card for pending EPA row', (tester) async {
+    await _registerUseCase(
+      Success([
+        BuyerListingModelDataSourceResult(
+          sourceId: 'epa_fueleconomy',
+          status: 'pending',
+          sourceLabel: 'EPA · FuelEconomy.gov',
+        ),
+      ]),
+    );
+
+    await tester.pumpWidget(
+      localizedApp(
+        home: const Scaffold(
+          body: ListingDetailsModelPassportSection(listingId: 'l1'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('listing_model_passport_pending')), findsOneWidget);
+    expect(find.text(ru.listingModelPassportSectionTitle), findsOneWidget);
+    expect(find.text(ru.listingModelPassportPendingTitle), findsOneWidget);
+    expect(find.text(ru.listingModelPassportPendingBody), findsOneWidget);
+    expect(find.text(ru.listingModelPassportSourceEpa), findsOneWidget);
   });
 
   testWidgets('hides on empty success', (tester) async {

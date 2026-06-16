@@ -1,6 +1,7 @@
 import 'package:carzon/features/compare/domain/entities/compare_item.dart';
 import 'package:carzon/features/compare/domain/entities/compare_listing_snapshot.dart';
 import 'package:carzon/features/compare/domain/entities/compare_resolved_slot.dart';
+import 'package:carzon/features/compare/presentation/models/compare_spec_models.dart';
 import 'package:carzon/features/compare/presentation/utils/compare_spec_builder.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +14,7 @@ CompareResolvedSlot _slot({
   required int mileage,
   required int year,
   ListingVinStatus vin = ListingVinStatus.notProvided,
+  ListingTransmissionType? transmissionType,
 }) {
   final listing = Listing(
     id: id,
@@ -25,6 +27,7 @@ CompareResolvedSlot _slot({
     type: ListingType.sale,
     city: 'City',
     marketRegion: MarketRegion.moldova,
+    transmissionType: transmissionType,
     createdAt: DateTime.utc(2026, 4, 1),
     status: ListingStatus.active,
     vinStatus: vin,
@@ -93,5 +96,25 @@ void main() {
       expect(v.toLowerCase(), isNot(contains('verify')));
       expect(v.toLowerCase(), isNot(contains('отчёт')));
     }
+  });
+
+  test('transmission row uses formatted label when set', () {
+    final slots = [
+      _slot(
+        id: 'a',
+        price: 1,
+        mileage: 1,
+        year: 2018,
+        transmissionType: ListingTransmissionType.manual,
+      ),
+      _slot(id: 'b', price: 2, mileage: 2, year: 2019),
+    ];
+    final sections = CompareSpecBuilder(ru, slots).buildSections();
+    final row = sections
+        .expand((s) => s.rows)
+        .firstWhere((r) => r.id == 'transmission');
+    expect(row.label, ru.compareRowTransmission);
+    expect(row.values.first, ru.listingTransmissionManual);
+    expect(row.values.last, CompareSpecRow.missingToken);
   });
 }

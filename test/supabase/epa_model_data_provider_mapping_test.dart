@@ -92,6 +92,19 @@ void main() {
       expect(providerTs, contains('EpaFuelEconomyProvider'));
     });
 
+    test('model alias fallback module is wired into provider', () {
+      final aliasTs = File(
+        'supabase/functions/process-model-data-jobs/providers/epa_model_candidates.ts',
+      ).readAsStringSync();
+      expect(aliasTs, contains('buildEpaModelMenuCandidates'));
+      expect(aliasTs, contains('seller_identity'));
+      expect(aliasTs, contains('vin_decoded_identity'));
+      expect(aliasTs, contains('M340i Sedan'));
+      expect(providerTs, contains('buildEpaModelMenuCandidates'));
+      expect(providerTs, contains('resolveMenuOptions'));
+      expect(aliasTs, contains('identity_candidate_source'));
+    });
+
     test('no-data and multiple-option strategies are explicit', () {
       expect(mappingTs, contains('buildEpaNoDataResult'));
       expect(mappingTs, contains('aggregateEpaVehicleDetails'));

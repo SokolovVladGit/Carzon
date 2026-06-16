@@ -67,4 +67,47 @@ void main() {
     final titleStyle = tester.widget<Text>(find.text(ru.listingRecallTitle)).style;
     expect(titleStyle?.color, isNotNull);
   });
+
+  testWidgets('renders pending card in dark mode', (tester) async {
+    await sl.reset();
+    sl.registerFactory<GetListingRecallsForBuyer>(
+      () => GetListingRecallsForBuyer(_PendingRecallRepository()),
+    );
+
+    final ru = ruStrings();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const Scaffold(
+          body: SingleChildScrollView(
+            padding: EdgeInsets.all(16),
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('listing_recall_pending')), findsOneWidget);
+    expect(find.text(ru.listingRecallPendingTitle), findsOneWidget);
+  });
+}
+
+class _PendingRecallRepository implements RecallDataRepository {
+  @override
+  Future<Result<BuyerListingRecallSourceResult>> getListingRecallsForBuyer(
+    String listingId,
+  ) async {
+    return const Success(
+      BuyerListingRecallSourceResult(
+        sourceId: 'nhtsa_recalls',
+        status: 'pending',
+        sourceLabel: 'NHTSA',
+      ),
+    );
+  }
 }

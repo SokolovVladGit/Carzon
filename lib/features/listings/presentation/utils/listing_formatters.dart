@@ -87,6 +87,26 @@ String formatListingDrivetrain(AppLocalizations l10n, ListingDrivetrain type) {
   }
 }
 
+String formatListingTransmissionType(
+  AppLocalizations l10n,
+  ListingTransmissionType type,
+) {
+  switch (type) {
+    case ListingTransmissionType.manual:
+      return l10n.listingTransmissionManual;
+    case ListingTransmissionType.automatic:
+      return l10n.listingTransmissionAutomatic;
+    case ListingTransmissionType.cvt:
+      return l10n.listingTransmissionCvt;
+    case ListingTransmissionType.robotic:
+      return l10n.listingTransmissionRobotic;
+    case ListingTransmissionType.dualClutch:
+      return l10n.listingTransmissionDualClutch;
+    case ListingTransmissionType.other:
+      return l10n.listingTransmissionOther;
+  }
+}
+
 /// Formats liters for details (stored as liters in `engine_displacement_liters`).
 ///
 /// Values >= [kCcDisplacementThreshold] are treated as cubic centimeters for

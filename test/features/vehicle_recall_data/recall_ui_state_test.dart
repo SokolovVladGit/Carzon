@@ -107,5 +107,16 @@ void main() {
         RecallUiState.partial,
       );
     });
+
+    test('returns pendingOrNotReady for pending status without campaigns', () {
+      expect(
+        resolveRecallUiState(
+          loading: false,
+          fetchFailed: false,
+          result: _result(status: 'pending'),
+        ),
+        RecallUiState.pendingOrNotReady,
+      );
+    });
   });
 }

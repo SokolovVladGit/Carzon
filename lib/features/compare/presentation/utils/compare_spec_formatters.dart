@@ -130,6 +130,14 @@ class CompareSpecFormatters {
     return listing_fmt.formatListingDrivetrain(l10n, listing!.drivetrain!);
   }
 
+  String formatTransmission(Listing? listing) {
+    if (listing?.transmissionType == null) return missing;
+    return listing_fmt.formatListingTransmissionType(
+      l10n,
+      listing!.transmissionType!,
+    );
+  }
+
   String formatDisplacement(Listing? listing) {
     if (listing?.engineDisplacementLiters == null) return missing;
     return listing_fmt.formatEngineDisplacementForDisplay(

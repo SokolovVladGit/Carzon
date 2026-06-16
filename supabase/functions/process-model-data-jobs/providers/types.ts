@@ -2,6 +2,16 @@
  * Shared types for Model Passport fetch providers (Phase 1: fake only).
  */
 
+export type VinModelFetchHints = {
+  make?: string | null;
+  model?: string | null;
+  year?: number | null;
+  body_type?: string | null;
+  series?: string | null;
+  trim?: string | null;
+  drive_type?: string | null;
+};
+
 export type ModelDataFetchInput = {
   lookupMake: string;
   lookupModel: string;
@@ -9,6 +19,8 @@ export type ModelDataFetchInput = {
   sourceId: string;
   jobId: string;
   cacheKey: string;
+  listingId?: string | null;
+  vinHints?: VinModelFetchHints | null;
 };
 
 export type EpaCompatibleSummary = {

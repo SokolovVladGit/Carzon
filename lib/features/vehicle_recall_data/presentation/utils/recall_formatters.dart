@@ -1,4 +1,5 @@
 import '../../../../l10n/app_localizations.dart';
+import 'recall_component_display_labels.dart';
 import '../../domain/entities/buyer_listing_recall_campaign.dart';
 import '../../domain/entities/buyer_listing_recall_source_result.dart';
 
@@ -14,6 +15,7 @@ class RecallCampaignFieldDisplay {
 }
 
 const int kRecallMaxDisplayedCampaigns = 10;
+const int kRecallInitialVisibleCampaigns = 3;
 
 bool recallResultHasDisplayableCampaigns(BuyerListingRecallSourceResult result) {
   return result.campaigns.any(recallCampaignHasUiDisplayableContent);
@@ -78,6 +80,10 @@ DateTime? resolveRecallLastUpdated({
 
 String formatRecallCampaignCountLabel(AppLocalizations l10n, int count) {
   return '${l10n.listingRecallCampaignCount}: $count';
+}
+
+String formatRecallCampaignCountStat(AppLocalizations l10n, int count) {
+  return l10n.listingRecallCampaignCountStat(count);
 }
 
 String? formatRecallCampaignNumber(String? raw) => readRecallText(raw);
@@ -180,20 +186,142 @@ List<RecallCampaignFieldDisplay> buildRecallCampaignDetailRows(
 }
 
 String? recallCampaignPreviewText(BuyerListingRecallCampaign campaign) {
-  final summary = readRecallText(campaign.summary);
-  if (summary == null) return null;
-
-  final headline = recallCampaignHeadline(campaign);
-  if (headline != null && summary == headline) return null;
-
-  if (summary.length <= kRecallCampaignPreviewMaxLength) return summary;
-
-  final truncated = summary.substring(0, kRecallCampaignPreviewMaxLength).trimRight();
-  return '$truncated…';
+  // Collapsed rows no longer show source preview; kept for tests/compatibility.
+  return null;
 }
 
-String? recallCampaignHeadline(BuyerListingRecallCampaign campaign) {
-  return readRecallText(campaign.component) ??
-      readRecallText(campaign.summary) ??
-      formatRecallCampaignNumber(campaign.campaignNumber);
+/// Compact metadata for collapsed recall campaign rows.
+class RecallCampaignCollapsedMeta {
+  const RecallCampaignCollapsedMeta({
+    this.campaignNumber,
+    this.reportDate,
+    this.manufacturer,
+  });
+
+  final String? campaignNumber;
+  final String? reportDate;
+  final String? manufacturer;
+
+  bool get isEmpty =>
+      campaignNumber == null && reportDate == null && manufacturer == null;
+}
+
+RecallCampaignCollapsedMeta buildRecallCampaignCollapsedMeta(
+  BuyerListingRecallCampaign campaign,
+) {
+  return RecallCampaignCollapsedMeta(
+    campaignNumber: formatRecallCampaignNumber(campaign.campaignNumber),
+    reportDate: formatRecallDateString(campaign.reportReceivedDate),
+    manufacturer: readRecallText(campaign.manufacturer),
+  );
+}
+
+String? buildRecallCampaignCollapsedMetaLine(
+  RecallCampaignCollapsedMeta meta,
+) {
+  final parts = <String>[];
+  if (meta.campaignNumber != null) parts.add(meta.campaignNumber!);
+  if (meta.reportDate != null) parts.add(meta.reportDate!);
+  if (meta.manufacturer != null) parts.add(meta.manufacturer!);
+  if (parts.isEmpty) return null;
+  return parts.join(' · ');
+}
+
+/// Formats raw NHTSA component strings (fallback title case, no l10n).
+String formatRecallComponentDisplay(String raw) {
+  return formatRecallComponentDisplayFallback(raw);
+}
+
+String? recallCampaignDisplayTitle(
+  AppLocalizations l10n,
+  BuyerListingRecallCampaign campaign,
+) {
+  final component = readRecallText(campaign.component);
+  if (component != null) {
+    return resolveRecallComponentDisplayLabel(l10n, component);
+  }
+  return recallCampaignHeadline(l10n, campaign);
+}
+
+String? recallCampaignHeadline(
+  AppLocalizations l10n,
+  BuyerListingRecallCampaign campaign,
+) {
+  final component = readRecallText(campaign.component);
+  if (component != null) {
+    return resolveRecallComponentDisplayLabel(l10n, component);
+  }
+  return formatRecallCampaignNumber(campaign.campaignNumber);
+}
+
+List<String> buildRecallCampaignSafetyFlagChipLabels(
+  AppLocalizations l10n,
+  BuyerListingRecallCampaign campaign,
+) {
+  final chips = <String>[];
+  if (campaign.parkIt == true) chips.add(l10n.listingRecallChipParkIt);
+  if (campaign.parkOutside == true) {
+    chips.add(l10n.listingRecallChipParkOutside);
+  }
+  if (campaign.overTheAirUpdate == true) {
+    chips.add(l10n.listingRecallChipOverTheAirUpdate);
+  }
+  return chips;
+}
+
+List<String> summarizeRecallComponentCategories(
+  AppLocalizations l10n,
+  List<BuyerListingRecallCampaign> campaigns, {
+  int max = 4,
+}) {
+  final seen = <String>{};
+  final categories = <String>[];
+
+  for (final campaign in campaigns) {
+    final component = readRecallText(campaign.component);
+    if (component == null) continue;
+
+    final display = resolveRecallComponentCategoryLabel(l10n, component);
+    if (display.isEmpty) continue;
+
+    final key = display.toLowerCase();
+    if (seen.contains(key)) continue;
+    seen.add(key);
+    categories.add(display);
+    if (categories.length >= max) break;
+  }
+
+  return categories;
+}
+
+List<RecallCampaignDetailSection> buildRecallCampaignExpandedSections(
+  AppLocalizations l10n,
+  BuyerListingRecallCampaign campaign,
+) {
+  final sections = <RecallCampaignDetailSection>[];
+
+  void add(String title, String? value) {
+    final text = readRecallText(value);
+    if (text == null) return;
+    sections.add(RecallCampaignDetailSection(title: title, body: text));
+  }
+
+  add(l10n.listingRecallSummary, campaign.summary);
+  add(l10n.listingRecallConsequence, campaign.consequence);
+  add(l10n.listingRecallRemedy, campaign.remedy);
+  add(l10n.listingRecallNotes, campaign.notes);
+  add(l10n.listingRecallSourceComponent, campaign.component);
+
+  return sections;
+}
+
+/// One titled block inside an expanded recall campaign row.
+class RecallCampaignDetailSection {
+  const RecallCampaignDetailSection({
+    required this.title,
+    required this.body,
+  });
+
+  final String title;
+  final String body;
 }

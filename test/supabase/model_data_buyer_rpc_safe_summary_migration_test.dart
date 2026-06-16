@@ -137,6 +137,30 @@ void main() {
       );
     });
 
+    test('does not expose provider alias metadata through buyer RPC', () {
+      final pendingSql = File(
+        'supabase/migrations/20260709120000_buyer_official_data_pending_signals.sql',
+      ).readAsStringSync().toLowerCase();
+      final pendingStart = pendingSql.indexOf(
+        'create or replace function public.get_listing_model_data_for_buyer',
+      );
+      final pendingEnd = pendingSql.indexOf(
+        'comment on function public.get_listing_model_data_for_buyer',
+      );
+      expect(pendingStart, greaterThan(-1));
+      expect(pendingEnd, greaterThan(pendingStart));
+      final pendingBuyerBlock = pendingSql.substring(pendingStart, pendingEnd);
+
+      for (final block in [buyerBlock, pendingBuyerBlock]) {
+        expect(block, isNot(contains('source_metadata,')));
+        expect(block, isNot(contains('provider_model_query_original')));
+        expect(block, isNot(contains('provider_model_query_matched')));
+        expect(block, isNot(contains('provider_model_alias_used')));
+        expect(block, isNot(contains('identity_candidate_source')));
+        expect(block, isNot(contains('attempted_provider_models')));
+      }
+    });
+
     test('does not touch VIN or Recall objects', () {
       expect(lower, isNot(contains('listing_vin')));
       expect(lower, isNot(contains('vin_processing')));

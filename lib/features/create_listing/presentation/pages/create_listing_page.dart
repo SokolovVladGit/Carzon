@@ -165,6 +165,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
 
   ListingFuelType? _fuelType;
   ListingDrivetrain? _drivetrain;
+  ListingTransmissionType? _transmissionType;
   final _engineDisplacement = TextEditingController();
   final _enginePower = TextEditingController();
   final _registration = TextEditingController();
@@ -336,6 +337,17 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     setState(() => _drivetrain = picked);
   }
 
+  Future<void> _openTransmissionSheet() async {
+    final l10n = context.l10n;
+    final picked = await showListingTransmissionTypePickerSheet(
+      context: context,
+      l10n: l10n,
+      selected: _transmissionType,
+    );
+    if (!mounted) return;
+    setState(() => _transmissionType = picked);
+  }
+
   void _submit() {
     FocusScope.of(context).unfocus();
     final formValid = _formKey.currentState?.validate() ?? false;
@@ -365,6 +377,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       engineDisplacementLiters: _engineDisplacementFromField(),
       enginePowerHp: _enginePowerFromField(),
       drivetrain: _drivetrain,
+      transmissionType: _transmissionType,
       registration: _registration.text.trim().isEmpty
           ? null
           : _registration.text.trim(),
@@ -843,12 +856,31 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         ),
                       ),
                       const SizedBox(height: 16),
+                      CreateListingFieldLabel(l10n.listingTransmission),
+                      const SizedBox(height: 8),
+                      ListingVehicleSpecPickerRow(
+                        valueText: _transmissionType == null
+                            ? l10n.listingBodyTypeNotSpecified
+                            : formatListingTransmissionType(
+                                l10n,
+                                _transmissionType!,
+                              ),
+                        enabled: !submitting,
+                        onTap: submitting
+                            ? null
+                            : () => _openTransmissionSheet(),
+                        fieldKey: const ValueKey(
+                          'create_listing_transmission_field',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       TextFormField(
                         controller: _registration,
                         decoration: createListingFieldDecoration(
                           theme,
                           labelText: l10n.listingRegistration,
                           hintText: l10n.listingRegistrationHint,
+                          helperText: l10n.listingRegistrationHelper,
                         ),
                         maxLength: kListingRegistrationMaxLength,
                         maxLines: 1,
@@ -929,6 +961,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                       ),
                       const SizedBox(height: 24),
                       CreateListingFieldLabel(l10n.fieldRegion),
+                      const SizedBox(height: 6),
+                      CreateListingHelperText(l10n.fieldRegionHelper),
                       const SizedBox(height: 12),
                       MarketPlacementSelector(
                         l10n: l10n,
