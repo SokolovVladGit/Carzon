@@ -50,6 +50,41 @@ select vault.create_secret(
 );
 ```
 
+## Hosted verification checklist (project owner)
+
+Before relying on autonomous VIN decode for new listings, confirm all of the following on hosted:
+
+- [ ] **Vault URL** — secret name **`carzon_process_vin_decode_jobs_url`** value ends with **`/functions/v1/process-vin-decode-jobs`** (not another worker such as message notifications).
+- [ ] **Vault secret non-empty** — secret name **`carzon_process_vin_decode_jobs_secret`** has a non-empty value (`length(decrypted_secret) > 0`). An empty Vault secret causes **`carzon_invoke_process_vin_decode_jobs_worker()`** to **skip the HTTP POST** (Postgres **WARNING** only; **no `net._http_response` row** for VIN).
+- [ ] **Vault ↔ Edge match** — Vault **`carzon_process_vin_decode_jobs_secret`** value **equals** Edge env **`CARZON_PROCESS_VIN_DECODE_JOBS_SECRET`** (same string; never commit values).
+- [ ] **Edge env** — **`SUPABASE_URL`**, **`SUPABASE_SERVICE_ROLE_KEY`**, **`CARZON_PROCESS_VIN_DECODE_JOBS_SECRET`**, and intended **`CARZON_VIN_DECODER_MODE`** (`nhtsa` for production vPIC) are set on **`process-vin-decode-jobs`**.
+- [ ] **Cron active** — **`carzon_process_vin_decode_jobs_5m`** exists and is active (every 5 minutes).
+- [ ] **Create RPC enqueue** — migration **`20260708120000_vin_create_rpc_explicit_enqueue.sql`** applied; **`create_listing_v2`** / **`update_listing_details_v2`** bodies contain **`carzon_enqueue_vin_decode_from_identity`**.
+
+**Quick Vault sanity SQL** (paths/lengths only; no secret values):
+
+```sql
+select name,
+       regexp_replace(decrypted_secret, '^https://[^/]+', '') as url_path,
+       length(decrypted_secret) as secret_len
+  from vault.decrypted_secrets
+ where name in (
+   'carzon_process_vin_decode_jobs_url',
+   'carzon_process_vin_decode_jobs_secret'
+ );
+```
+
+Expect **`url_path = '/functions/v1/process-vin-decode-jobs'`** and **`secret_len > 0`**.
+
+**pg_net response shapes (do not confuse workers):**
+
+| Worker | Typical 200 JSON body |
+|--------|------------------------|
+| **`process-vin-decode-jobs`** | **`{"ok":true,"claimed":N,"succeeded":N,"failed":N}`** (always includes **`succeeded`** and **`failed`**) |
+| **`process-message-notifications`** / **`process-filter-alert-notifications`** | **`{"ok":true,"claimed":N}`** only (24 bytes when `claimed=0`) |
+
+Notification crons run **every minute**; VIN cron runs **every 5 minutes**. When debugging, filter **`net._http_response`** by body size or by correlating invoke time — do not treat 24-byte **`claimed=0`** notification responses as VIN worker outcomes.
+
 ## Hosted verification SQL
 
 **Cron job:**

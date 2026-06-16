@@ -173,6 +173,9 @@ class SupabaseCreateListingRemoteDataSource
       params['p_drivetrain'] = input.drivetrain == null
           ? null
           : listingDrivetrainToDbValue(input.drivetrain!);
+      params['p_transmission_type'] = input.transmissionType == null
+          ? null
+          : listingTransmissionTypeToDbValue(input.transmissionType!);
       params['p_registration'] = _nullableTrim(input.registration);
       params['p_description'] = _nullableTrim(input.description);
       applyOptionalVinToCreateListingV2Params(params, input.vin);

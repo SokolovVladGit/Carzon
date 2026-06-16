@@ -217,8 +217,8 @@ void main() {
     );
 
     testWidgets(
-      'featured variant renders a 4:3 cover and drops the region/type '
-      'badges so the image drives the hierarchy',
+      'featured variant renders a 4:3 cover, keeps the region badge, '
+      'and still drops the exchange/type badge',
       (tester) async {
         await pumpLocalizedWidget(
           tester,
@@ -233,9 +233,7 @@ void main() {
         );
 
         expect(coverAspectRatio(tester), closeTo(4 / 3, 1e-9));
-        // The region + "exchange" badges belong to the regular rhythm;
-        // the feature card trades them for empty air + bigger type.
-        expect(find.text(l10n.regionTransnistria), findsNothing);
+        expect(find.text(l10n.regionTransnistria), findsOneWidget);
         expect(find.text(l10n.formatTypeExchange), findsNothing);
         // Price, title and meta (mileage + city) still render — the
         // hierarchy is stronger, not poorer.
@@ -247,6 +245,34 @@ void main() {
         );
         expect(find.text('2016'), findsOneWidget);
         expect(find.text('Tiraspol'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'featured variant with VIN shows market region badge and VIN stamp',
+      (tester) async {
+        await pumpLocalizedWidget(
+          tester,
+          Scaffold(
+            body: SingleChildScrollView(
+              child: ListingCard(
+                listing: _seed(vinStatus: ListingVinStatus.formatValid),
+                variant: ListingCardVariant.featured,
+                trailing: const Icon(Icons.favorite_border),
+                trailingWide: true,
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text(l10n.regionTransnistria), findsOneWidget);
+        expect(find.byKey(const ValueKey('vin_present_latin_badge')), findsOneWidget);
+
+        final vinRect = tester.getRect(
+          find.byKey(const ValueKey('vin_present_latin_badge')),
+        );
+        final actionRect = tester.getRect(find.byIcon(Icons.favorite_border));
+        expect(vinRect.top, lessThan(actionRect.top));
       },
     );
   });

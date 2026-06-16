@@ -29,6 +29,7 @@ class NewListingInput extends Equatable {
     this.engineDisplacementLiters,
     this.enginePowerHp,
     this.drivetrain,
+    this.transmissionType,
     this.registration,
     this.description,
     this.vin,
@@ -70,6 +71,7 @@ class NewListingInput extends Equatable {
   final double? engineDisplacementLiters;
   final int? enginePowerHp;
   final ListingDrivetrain? drivetrain;
+  final ListingTransmissionType? transmissionType;
   final String? registration;
   final String? description;
 
@@ -88,6 +90,7 @@ class NewListingInput extends Equatable {
     double? engineDisplacementLiters,
     int? enginePowerHp,
     ListingDrivetrain? drivetrain,
+    ListingTransmissionType? transmissionType,
     String? registration,
     String? description,
     String? vin,
@@ -114,6 +117,7 @@ class NewListingInput extends Equatable {
         engineDisplacementLiters ?? this.engineDisplacementLiters,
     enginePowerHp: enginePowerHp ?? this.enginePowerHp,
     drivetrain: drivetrain ?? this.drivetrain,
+    transmissionType: transmissionType ?? this.transmissionType,
     registration: registration ?? this.registration,
     description: description ?? this.description,
     vin: vin ?? this.vin,
@@ -137,6 +141,7 @@ class NewListingInput extends Equatable {
     engineDisplacementLiters,
     enginePowerHp,
     drivetrain,
+    transmissionType,
     registration,
     description,
     vin,

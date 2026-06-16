@@ -32,6 +32,7 @@ class EditListingInput extends Equatable {
     this.engineDisplacementLiters,
     this.enginePowerHp,
     this.drivetrain,
+    this.transmissionType,
     this.registration,
     this.description,
     this.submitVinParameterToRpc = false,
@@ -69,6 +70,7 @@ class EditListingInput extends Equatable {
   final double? engineDisplacementLiters;
   final int? enginePowerHp;
   final ListingDrivetrain? drivetrain;
+  final ListingTransmissionType? transmissionType;
   final String? registration;
   final String? description;
 
@@ -97,6 +99,7 @@ class EditListingInput extends Equatable {
     engineDisplacementLiters,
     enginePowerHp,
     drivetrain,
+    transmissionType,
     registration,
     description,
     submitVinParameterToRpc,

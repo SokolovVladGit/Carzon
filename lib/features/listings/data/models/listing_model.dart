@@ -146,6 +146,7 @@ class ListingModel extends Listing {
     super.engineDisplacementLiters,
     super.enginePowerHp,
     super.drivetrain,
+    super.transmissionType,
     super.registration,
     super.description,
     required super.createdAt,
@@ -184,6 +185,9 @@ class ListingModel extends Listing {
       enginePowerHp: _intFromDynamicNullable(json['engine_power_hp']),
       drivetrain: listingDrivetrainFromDb(
         _stringFromDynamic(json['drivetrain'])?.trim(),
+      ),
+      transmissionType: listingTransmissionTypeFromDb(
+        _stringFromDynamic(json['transmission_type'])?.trim(),
       ),
       registration: _nonEmptyTrimmedOptional(json['registration']),
       description: _nonEmptyTrimmedOptional(json['description']),
@@ -305,6 +309,9 @@ class ListingModel extends Listing {
     'drivetrain': drivetrain == null
         ? null
         : listingDrivetrainToDbValue(drivetrain!),
+    'transmission_type': transmissionType == null
+        ? null
+        : listingTransmissionTypeToDbValue(transmissionType!),
     'registration': registration,
     'description': description,
     'created_at': createdAt.toIso8601String(),

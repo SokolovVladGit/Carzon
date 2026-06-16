@@ -67,6 +67,11 @@ class CompareSpecBuilder {
           _row('power', l10n.compareRowPower, _powerValues()),
           _row('drivetrain', l10n.compareRowDrivetrain, _drivetrainValues()),
           _row(
+            'transmission',
+            l10n.compareRowTransmission,
+            _transmissionValues(),
+          ),
+          _row(
             'displacement',
             l10n.compareRowDisplacement,
             _displacementValues(),
@@ -167,6 +172,9 @@ class CompareSpecBuilder {
 
   List<String> _drivetrainValues() =>
       _listingOnly((slot) => _fmt.formatDrivetrain(slot.listing));
+
+  List<String> _transmissionValues() =>
+      _listingOnly((slot) => _fmt.formatTransmission(slot.listing));
 
   List<String> _displacementValues() =>
       _listingOnly((slot) => _fmt.formatDisplacement(slot.listing));

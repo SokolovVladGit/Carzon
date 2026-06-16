@@ -117,5 +117,18 @@ void main() {
         ModelPassportUiState.hidden,
       );
     });
+
+    test('returns pendingOrNotReady for pending EPA row', () {
+      expect(
+        resolveModelPassportUiState(
+          loading: false,
+          fetchFailed: false,
+          rows: [
+            _epaRow(status: 'pending'),
+          ],
+        ),
+        ModelPassportUiState.pendingOrNotReady,
+      );
+    });
   });
 }

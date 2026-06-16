@@ -12,17 +12,14 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/l10n_test_helpers.dart';
 
 class _FakeModelDataRepository implements ModelDataRepository {
+  _FakeModelDataRepository(this._rows);
+
+  final List<BuyerListingModelDataSourceResult> _rows;
+
   @override
   Future<Result<List<BuyerListingModelDataSourceResult>>>
   getListingModelDataForBuyer(String listingId) async {
-    return Success([
-      BuyerListingModelDataSourceResult(
-        sourceId: 'epa_fueleconomy',
-        status: 'succeeded',
-        sourceLabel: 'EPA · FuelEconomy.gov',
-        normalizedSummary: const {'combined_l_per_100km': 7.35},
-      ),
-    ]);
+    return Success(_rows);
   }
 }
 
@@ -30,7 +27,16 @@ void main() {
   setUp(() async {
     await sl.reset();
     sl.registerFactory<GetListingModelDataForBuyer>(
-      () => GetListingModelDataForBuyer(_FakeModelDataRepository()),
+      () => GetListingModelDataForBuyer(
+        _FakeModelDataRepository([
+          BuyerListingModelDataSourceResult(
+            sourceId: 'epa_fueleconomy',
+            status: 'succeeded',
+            sourceLabel: 'EPA · FuelEconomy.gov',
+            normalizedSummary: const {'combined_l_per_100km': 7.35},
+          ),
+        ]),
+      ),
     );
   });
 
@@ -59,5 +65,41 @@ void main() {
 
     final titleStyle = tester.widget<Text>(find.text(ru.listingModelPassportSectionTitle)).style;
     expect(titleStyle?.color, isNotNull);
+  });
+
+  testWidgets('renders pending card in dark mode', (tester) async {
+    await sl.reset();
+    sl.registerFactory<GetListingModelDataForBuyer>(
+      () => GetListingModelDataForBuyer(
+        _FakeModelDataRepository([
+          BuyerListingModelDataSourceResult(
+            sourceId: 'epa_fueleconomy',
+            status: 'pending',
+            sourceLabel: 'EPA · FuelEconomy.gov',
+          ),
+        ]),
+      ),
+    );
+
+    final ru = ruStrings();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const Scaffold(
+          body: SingleChildScrollView(
+            padding: EdgeInsets.all(16),
+            child: ListingDetailsModelPassportSection(listingId: 'l1'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('listing_model_passport_pending')), findsOneWidget);
+    expect(find.text(ru.listingModelPassportPendingTitle), findsOneWidget);
   });
 }
