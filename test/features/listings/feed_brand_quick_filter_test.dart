@@ -93,6 +93,8 @@ void main() {
         sort: ListingSortOption.newestFirst,
         regionFilter: MarketRegionFilter.transnistria,
         bodyType: null,
+        fuelType: null,
+        transmissionType: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.any,
       ),
     );

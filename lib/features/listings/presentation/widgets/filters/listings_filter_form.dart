@@ -9,14 +9,19 @@ import '../../../domain/entities/listing_currency.dart';
 import '../../../domain/entities/listing_sort_option.dart';
 import '../../../domain/catalog/listing_brands.dart';
 import '../../bloc/listings_state.dart';
+import '../../utils/listing_formatters.dart';
 import 'listing_filter_summary_presenter.dart';
 import 'listings_filter_apply_result.dart';
 import 'listings_filter_form_seed.dart';
 import 'listings_filter_labels.dart';
 import 'listings_filter_section.dart';
 import 'listings_filter_segmented_control.dart';
+import 'listings_filter_sort_pick_sheet.dart';
 import 'listings_filter_summary_strip.dart';
+import 'listings_filter_vehicle_spec_selector_field.dart';
+import '../../../../create_listing/presentation/widgets/listing_body_type_pick_sheet.dart';
 import '../listing_brand_pick_sheet.dart';
+import '../listing_vehicle_spec_pickers.dart';
 import '../listing_year_pick_sheet.dart';
 
 export 'listings_filter_form_seed.dart';
@@ -70,6 +75,8 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
   late MarketRegionFilter _region;
   late ListingSortOption _sort;
   ListingBodyType? _bodyType;
+  ListingFuelType? _fuelType;
+  ListingTransmissionType? _transmissionType;
   late ListingPriceCurrencyFilter _priceCurrency;
 
   String? _catalogMake;
@@ -107,6 +114,8 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     _region = w.region;
     _sort = w.sort;
     _bodyType = w.bodyType;
+    _fuelType = w.fuelType;
+    _transmissionType = w.transmissionType;
     _priceCurrency = w.priceCurrencyFilter;
     _model.addListener(_onDraftChanged);
     _customBrand.addListener(_onDraftChanged);
@@ -189,6 +198,8 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     region: _region,
     sort: _sort,
     bodyType: _bodyType,
+    fuelType: _fuelType,
+    transmissionType: _transmissionType,
     priceCurrencyFilter: _priceCurrency,
   );
 
@@ -205,9 +216,11 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     _city.clear();
     setState(() {
       _type = ListingTypeFilter.any;
-      _region = MarketRegionFilter.transnistria;
+      _region = MarketRegionFilter.both;
       _sort = ListingSortOption.newestFirst;
       _bodyType = null;
+      _fuelType = null;
+      _transmissionType = null;
       _priceCurrency = ListingPriceCurrencyFilter.any;
       _minYearError = null;
       _maxYearError = null;
@@ -302,6 +315,62 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     );
     if (!mounted || picked == null) return;
     _assignCatalogMake(picked);
+  }
+
+  Future<void> _openBodyTypeSheet() async {
+    final l10n = context.l10n;
+    final picked = await showModalBottomSheet<ListingBodyTypeSelection>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(sheetContext).bottom,
+          ),
+          child: ListingBodyTypePickSheet(appL10n: l10n, selected: _bodyType),
+        );
+      },
+    );
+    if (!mounted || picked == null) return;
+    setState(() => _bodyType = picked.value);
+    _notifyDraftMutated();
+  }
+
+  Future<void> _openFuelTypeSheet() async {
+    final l10n = context.l10n;
+    final picked = await showListingFuelTypePickerSheet(
+      context: context,
+      l10n: l10n,
+      selected: _fuelType,
+    );
+    if (!mounted) return;
+    setState(() => _fuelType = picked);
+    _notifyDraftMutated();
+  }
+
+  Future<void> _openTransmissionTypeSheet() async {
+    final l10n = context.l10n;
+    final picked = await showListingTransmissionTypePickerSheet(
+      context: context,
+      l10n: l10n,
+      selected: _transmissionType,
+    );
+    if (!mounted) return;
+    setState(() => _transmissionType = picked);
+    _notifyDraftMutated();
+  }
+
+  Future<void> _openSortSheet() async {
+    final l10n = context.l10n;
+    final picked = await showListingsFilterSortPickSheet(
+      context: context,
+      l10n: l10n,
+      selected: _sort,
+    );
+    if (!mounted || picked == null) return;
+    setState(() => _sort = picked);
+    _notifyDraftMutated();
   }
 
   /// Notifies the host that the draft has been mutated through a
@@ -807,91 +876,57 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
       sort: _sort,
       region: _region,
       bodyType: _bodyType,
+      fuelType: _fuelType,
+      transmissionType: _transmissionType,
       priceCurrencyFilter: _priceCurrency,
     );
   }
 
-  Widget _editorialFilterChip({
-    required ThemeData theme,
-    required bool selected,
-    required String label,
-    required ValueChanged<bool> onSelected,
-  }) {
-    final scheme = theme.colorScheme;
-    final selectedFill = Color.alphaBlend(
-      scheme.primaryContainer.withValues(alpha: 0.68),
-      scheme.surfaceContainerHighest.withValues(alpha: 0.04),
-    );
-    return FilterChip(
-      label: Text(label),
-      selected: selected,
-      showCheckmark: selected,
-      checkmarkColor: scheme.primary.withValues(alpha: 0.72),
-      pressElevation: 0,
-      selectedColor: selectedFill,
-      backgroundColor: scheme.surfaceContainerHighest.withValues(alpha: 0.05),
-      side: BorderSide(
-        color: selected
-            ? scheme.primary.withValues(alpha: 0.26)
-            : scheme.outlineVariant.withValues(alpha: 0.24),
-        width: selected ? 1.2 : 1,
-      ),
-      labelStyle: theme.textTheme.labelLarge?.copyWith(
-        color: selected
-            ? scheme.onPrimaryContainer.withValues(alpha: 0.92)
-            : scheme.onSurface.withValues(alpha: 0.76),
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-      ),
-      onSelected: onSelected,
-    );
-  }
-
-  Widget _regionChips(AppLocalizations l10n, ThemeData theme) {
-    Widget chip(MarketRegionFilter value, String label) {
-      final selected = _region == value;
-      return _editorialFilterChip(
-        theme: theme,
-        selected: selected,
-        label: label,
-        onSelected: (_) {
-          setState(() => _region = value);
-          _notifyDraftMutated();
-        },
-      );
-    }
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        chip(MarketRegionFilter.transnistria, l10n.regionTransnistria),
-        chip(MarketRegionFilter.moldova, l10n.regionMoldova),
-        chip(MarketRegionFilter.both, l10n.regionBoth),
+  Widget _regionSelector(AppLocalizations l10n) {
+    return ListingsFilterSegmentedControl<MarketRegionFilter>(
+      key: const ValueKey<String>('listings_filter_region_segmented'),
+      value: _region,
+      onChanged: (v) {
+        setState(() => _region = v);
+        _notifyDraftMutated();
+      },
+      entries: [
+        ListingsFilterSegmentEntry(
+          value: MarketRegionFilter.transnistria,
+          label: Text(l10n.regionTransnistria),
+        ),
+        ListingsFilterSegmentEntry(
+          value: MarketRegionFilter.moldova,
+          label: Text(l10n.regionMoldova),
+        ),
+        ListingsFilterSegmentEntry(
+          value: MarketRegionFilter.both,
+          label: Text(l10n.regionBoth),
+        ),
       ],
     );
   }
 
-  Widget _typeChips(AppLocalizations l10n, ThemeData theme) {
-    Widget chip(ListingTypeFilter value, String label) {
-      final selected = _type == value;
-      return _editorialFilterChip(
-        theme: theme,
-        selected: selected,
-        label: label,
-        onSelected: (_) {
-          setState(() => _type = value);
-          _notifyDraftMutated();
-        },
-      );
-    }
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        chip(ListingTypeFilter.any, l10n.typeAny),
-        chip(ListingTypeFilter.sale, l10n.typeSale),
-        chip(ListingTypeFilter.exchange, l10n.typeExchange),
+  Widget _listingTypeSelector(AppLocalizations l10n) {
+    return ListingsFilterSegmentedControl<ListingTypeFilter>(
+      value: _type,
+      onChanged: (v) {
+        setState(() => _type = v);
+        _notifyDraftMutated();
+      },
+      entries: [
+        ListingsFilterSegmentEntry(
+          value: ListingTypeFilter.any,
+          label: Text(l10n.typeAny),
+        ),
+        ListingsFilterSegmentEntry(
+          value: ListingTypeFilter.sale,
+          label: Text(l10n.typeSale),
+        ),
+        ListingsFilterSegmentEntry(
+          value: ListingTypeFilter.exchange,
+          label: Text(l10n.typeExchange),
+        ),
       ],
     );
   }
@@ -902,17 +937,6 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final light = theme.brightness == Brightness.light;
-
-    final bodyDropdownDecoration =
-        _fieldDeco(theme, label: l10n.listingBodyTypeSectionTitle).copyWith(
-          alignLabelWithHint: true,
-          fillColor: light
-              ? scheme.surface.withValues(alpha: 0.36)
-              : Color.alphaBlend(
-                  scheme.primary.withValues(alpha: 0.04),
-                  scheme.surfaceContainerLow,
-                ),
-        );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1201,7 +1225,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                 ),
               ),
               const SizedBox(height: 8),
-              _regionChips(l10n, theme),
+              _regionSelector(l10n),
             ],
           ),
         ),
@@ -1211,31 +1235,37 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              InputDecorator(
-                decoration: bodyDropdownDecoration,
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<ListingBodyType?>(
-                    value: _bodyType,
-                    isExpanded: true,
-                    borderRadius: BorderRadius.circular(12),
-                    hint: Text(l10n.listingsBodyChipAll),
-                    items: [
-                      DropdownMenuItem<ListingBodyType?>(
-                        value: null,
-                        child: Text(l10n.listingsBodyChipAll),
-                      ),
-                      for (final b in ListingBodyType.values)
-                        DropdownMenuItem<ListingBodyType?>(
-                          value: b,
-                          child: Text(listingFilterBodyTypeLabel(l10n, b)),
-                        ),
-                    ],
-                    onChanged: (v) {
-                      setState(() => _bodyType = v);
-                      _notifyDraftMutated();
-                    },
-                  ),
+              ListingsFilterVehicleSpecSelectorField(
+                fieldKey: const ValueKey<String>(
+                  'listings_filter_body_type_pick_trigger',
                 ),
+                label: l10n.listingBodyTypeSectionTitle,
+                valueText: _bodyType == null
+                    ? l10n.listingsBodyChipAll
+                    : listingFilterBodyTypeLabel(l10n, _bodyType!),
+                onTap: _openBodyTypeSheet,
+              ),
+              const SizedBox(height: 16),
+              ListingsFilterVehicleSpecSelectorField(
+                fieldKey: const ValueKey<String>(
+                  'listings_filter_fuel_type_pick_trigger',
+                ),
+                label: l10n.listingFuelType,
+                valueText: _fuelType == null
+                    ? l10n.listingsBodyChipAll
+                    : formatListingFuelType(l10n, _fuelType!),
+                onTap: _openFuelTypeSheet,
+              ),
+              const SizedBox(height: 16),
+              ListingsFilterVehicleSpecSelectorField(
+                fieldKey: const ValueKey<String>(
+                  'listings_filter_transmission_type_pick_trigger',
+                ),
+                label: l10n.listingTransmission,
+                valueText: _transmissionType == null
+                    ? l10n.listingsBodyChipAll
+                    : formatListingTransmissionType(l10n, _transmissionType!),
+                onTap: _openTransmissionTypeSheet,
               ),
               const SizedBox(height: 16),
               Text(
@@ -1246,31 +1276,18 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                 ),
               ),
               const SizedBox(height: 8),
-              _typeChips(l10n, theme),
+              _listingTypeSelector(l10n),
             ],
           ),
         ),
         ListingsFilterSection(
           sectionIndex: '05',
           title: l10n.filterSortLabel,
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<ListingSortOption>(
-              value: _sort,
-              isExpanded: true,
-              borderRadius: BorderRadius.circular(12),
-              items: [
-                for (final o in ListingSortOption.values)
-                  DropdownMenuItem(
-                    value: o,
-                    child: Text(listingFilterSortOptionLabel(l10n, o)),
-                  ),
-              ],
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _sort = v);
-                _notifyDraftMutated();
-              },
-            ),
+          child: ListingVehicleSpecPickerRow(
+            fieldKey: const ValueKey<String>('listings_filter_sort_pick_trigger'),
+            valueText: listingFilterSortOptionLabel(l10n, _sort),
+            enabled: true,
+            onTap: _openSortSheet,
           ),
         ),
         const SizedBox(height: 14),

@@ -54,6 +54,8 @@ bool listingDiscoveryCriteriaEqualIgnoringSort(
   final br = b.marketRegion?.name.trim();
   if (ar != br) return false;
   if (a.bodyType != b.bodyType) return false;
+  if (a.fuelType != b.fuelType) return false;
+  if (a.transmissionType != b.transmissionType) return false;
   if (a.priceCurrencyFilter != b.priceCurrencyFilter) return false;
   if (!_listingTypeSemanticsEqual(a.typeIn, b.typeIn)) return false;
   return true;

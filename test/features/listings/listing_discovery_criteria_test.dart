@@ -31,8 +31,10 @@ void main() {
         expect(q.maxMileage, isNull);
         expect(q.city, isNull);
         expect(q.marketRegion, isNull);
-        expect(q.bodyType, isNull);
-        expect(q.typeIn, isNull);
+      expect(q.bodyType, isNull);
+      expect(q.fuelType, isNull);
+      expect(q.transmissionType, isNull);
+      expect(q.typeIn, isNull);
         expect(q.sort, ListingSortOption.newestFirst);
         expect(q.page, 2);
         expect(q.pageSize, AppConstants.defaultPageSize);
@@ -125,6 +127,25 @@ void main() {
       expect(q.marketRegion, MarketRegion.moldova);
       expect(q.bodyType, ListingBodyType.suv);
       expect(q.priceCurrency, isNull);
+    });
+
+    test('maps fuel and transmission into query', () {
+      const c = ListingDiscoveryCriteria(
+        fuelType: ListingFuelType.diesel,
+        transmissionType: ListingTransmissionType.dualClutch,
+      );
+      final q = c.toListingsQuery(
+        page: 0,
+        pageSize: 20,
+        status: ListingStatus.active,
+      );
+      expect(q.fuelType, ListingFuelType.diesel);
+      expect(q.transmissionType, ListingTransmissionType.dualClutch);
+    });
+
+    test('hasNonRegionConstraints is true when fuel is set', () {
+      const c = ListingDiscoveryCriteria(fuelType: ListingFuelType.petrol);
+      expect(c.hasNonRegionConstraints(), isTrue);
     });
   });
 }

@@ -21,6 +21,8 @@ ListingsQuery _queryFromListingsState(ListingsState state) {
     city: state.city,
     marketRegion: state.regionFilter.asMarketRegion,
     bodyType: state.bodyTypeFilter,
+    fuelType: state.fuelTypeFilter,
+    transmissionType: state.transmissionTypeFilter,
     typeIn: state.typeFilter.asListingTypes,
     sort: state.sortOption,
     priceCurrencyFilter: state.priceCurrencyFilter,
@@ -34,12 +36,13 @@ ListingsQuery _queryFromListingsState(ListingsState state) {
 void main() {
   group('Default listings feed query', () {
     test(
-      'initial ListingsState applies only active + default region + sort',
+      'initial ListingsState applies only active + default sort (no region)',
       () {
         const state = ListingsState();
         final q = _queryFromListingsState(state);
+        expect(state.regionFilter, MarketRegionFilter.both);
         expect(q.status, ListingStatus.active);
-        expect(q.marketRegion, MarketRegion.transnistria);
+        expect(q.marketRegion, isNull);
         expect(q.sort, ListingSortOption.newestFirst);
         expect(q.search, isNull);
         expect(q.make, isNull);
@@ -51,6 +54,8 @@ void main() {
         expect(q.maxMileage, isNull);
         expect(q.city, isNull);
         expect(q.bodyType, isNull);
+        expect(q.fuelType, isNull);
+        expect(q.transmissionType, isNull);
         expect(q.typeIn, isNull);
         expect(q.sellerId, isNull);
         expect(q.page, 0);

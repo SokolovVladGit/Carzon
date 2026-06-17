@@ -123,6 +123,28 @@ ListingBodyType? listingBodyTypeFromWire(String? raw) {
 
 String? listingBodyTypeToWire(ListingBodyType? t) => t?.name;
 
+ListingFuelType? listingFuelTypeFromWire(String? raw) {
+  if (raw == null) return null;
+  final v = raw.trim().toLowerCase();
+  if (v.isEmpty) return null;
+  for (final e in ListingFuelType.values) {
+    if (e.name == v) return e;
+  }
+  return null;
+}
+
+String? listingFuelTypeToWire(ListingFuelType? t) => t?.name;
+
+ListingTransmissionType? listingTransmissionTypeFromWire(String? raw) {
+  if (raw == null) return null;
+  return listingTransmissionTypeFromDb(raw.trim());
+}
+
+String? listingTransmissionTypeToWire(ListingTransmissionType? t) {
+  if (t == null) return null;
+  return listingTransmissionTypeToDbValue(t);
+}
+
 ListingType? listingTypeFromWire(String? raw) {
   switch (raw?.trim().toLowerCase()) {
     case 'sale':
@@ -165,6 +187,10 @@ Map<String, dynamic> listingDiscoveryCriteriaToJson(
     'city': c.city,
     'marketRegion': marketRegionToWireNullable(c.marketRegion),
     'bodyType': c.bodyType == null ? null : listingBodyTypeToWire(c.bodyType!),
+    'fuelType': c.fuelType == null ? null : listingFuelTypeToWire(c.fuelType!),
+    'transmissionType': c.transmissionType == null
+        ? null
+        : listingTransmissionTypeToWire(c.transmissionType!),
     'typeIn': typeStrings.isEmpty ? <String>[] : typeStrings,
     'priceCurrencyFilter': listingPriceCurrencyFilterToWire(
       c.priceCurrencyFilter,
@@ -218,6 +244,10 @@ ListingDiscoveryCriteria? listingDiscoveryCriteriaFromJson(dynamic raw) {
     city: map['city']?.toString(),
     marketRegion: marketRegionFromWire(map['marketRegion']?.toString()),
     bodyType: listingBodyTypeFromWire(map['bodyType']?.toString()),
+    fuelType: listingFuelTypeFromWire(map['fuelType']?.toString()),
+    transmissionType: listingTransmissionTypeFromWire(
+      map['transmissionType']?.toString(),
+    ),
     typeIn: typeInDecoded,
     priceCurrencyFilter: listingPriceCurrencyFilterFromWire(
       map['priceCurrencyFilter']?.toString(),

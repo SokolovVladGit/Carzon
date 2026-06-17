@@ -1,3 +1,4 @@
+import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_sort_option.dart';
 import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
@@ -112,6 +113,8 @@ void main() {
       region: MarketRegionFilter.moldova,
       sort: ListingSortOption.priceLowToHigh,
       bodyType: null,
+      fuelType: null,
+      transmissionType: null,
       priceCurrencyFilter: ListingPriceCurrencyFilter.any,
     );
 
@@ -576,4 +579,289 @@ void main() {
     await tester.pump();
     expect(calls, 0);
   });
+
+  testWidgets('vehicle spec selectors use premium pick sheets', (tester) async {
+    final l10n = ruStrings();
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ListingsFilterForm(
+              seed: ListingsFilterFormSeed.fromListingsState(
+                const ListingsState(
+                  fuelTypeFilter: ListingFuelType.hybrid,
+                  transmissionTypeFilter: ListingTransmissionType.automatic,
+                  bodyTypeFilter: ListingBodyType.suv,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DropdownButton<ListingBodyType?>), findsNothing);
+    expect(find.byType(DropdownButton<ListingFuelType?>), findsNothing);
+    expect(find.byType(DropdownButton<ListingTransmissionType?>), findsNothing);
+    expect(find.byType(DropdownButton<ListingSortOption>), findsNothing);
+
+    final bodyTrigger = find.byKey(
+      const ValueKey<String>('listings_filter_body_type_pick_trigger'),
+    );
+    final fuelTrigger = find.byKey(
+      const ValueKey<String>('listings_filter_fuel_type_pick_trigger'),
+    );
+    final transmissionTrigger = find.byKey(
+      const ValueKey<String>('listings_filter_transmission_type_pick_trigger'),
+    );
+
+    expect(
+      find.descendant(
+        of: bodyTrigger,
+        matching: find.text(l10n.listingBodyTypeSuv),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: fuelTrigger,
+        matching: find.text(l10n.listingFuelTypeHybrid),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: transmissionTrigger,
+        matching: find.text(l10n.listingTransmissionAutomatic),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.scrollUntilVisible(
+      fuelTrigger,
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(fuelTrigger);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.listingFuelTypeDiesel).last);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: fuelTrigger,
+        matching: find.text(l10n.listingFuelTypeDiesel),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.scrollUntilVisible(
+      transmissionTrigger,
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(transmissionTrigger);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.listingTransmissionManual).last);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: transmissionTrigger,
+        matching: find.text(l10n.listingTransmissionManual),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.scrollUntilVisible(
+      bodyTrigger,
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(bodyTrigger);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.listingBodyTypeNotSpecified).last);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: bodyTrigger,
+        matching: find.text(l10n.listingsBodyChipAll),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('sort selector uses premium pick sheet', (tester) async {
+    final l10n = ruStrings();
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ListingsFilterForm(
+              seed: ListingsFilterFormSeed.fromListingsState(
+                const ListingsState(
+                  sortOption: ListingSortOption.priceLowToHigh,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DropdownButton<ListingSortOption>), findsNothing);
+
+    final sortTrigger = find.byKey(
+      const ValueKey<String>('listings_filter_sort_pick_trigger'),
+    );
+    expect(
+      find.descendant(
+        of: sortTrigger,
+        matching: find.text(l10n.filterSortPriceLowHigh),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.scrollUntilVisible(
+      sortTrigger,
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(sortTrigger);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.filterSortPriceHighLow).last);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: sortTrigger,
+        matching: find.text(l10n.filterSortPriceHighLow),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('premium segmented selectors update region and listing type', (
+    tester,
+  ) async {
+    final l10n = ruStrings();
+    final formKey = GlobalKey<ListingsFilterFormState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ListingsFilterForm(
+              key: formKey,
+              seed: ListingsFilterFormSeed.fromListingsState(
+                const ListingsState(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FilterChip), findsNothing);
+
+    await tester.scrollUntilVisible(
+      find.text(l10n.regionMoldova),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text(l10n.regionMoldova));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text(l10n.typeSale),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text(l10n.typeSale));
+    await tester.pumpAndSettle();
+
+    final result = formKey.currentState!.submit();
+    expect(result, isNotNull);
+    expect(result!.region, MarketRegionFilter.moldova);
+    expect(result.typeFilter, ListingTypeFilter.sale);
+  });
+
+  testWidgets(
+    'region segmented labels stay fully readable for each selection',
+    (tester) async {
+      final l10n = ruStrings();
+      await tester.binding.setSurfaceSize(const Size(360, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      for (final region in [
+        MarketRegionFilter.transnistria,
+        MarketRegionFilter.moldova,
+        MarketRegionFilter.both,
+      ]) {
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: const Locale('ru'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: ListingsFilterForm(
+                  seed: ListingsFilterFormSeed.fromListingsState(
+                    ListingsState(regionFilter: region),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final regionControl = find.byKey(
+          const ValueKey<String>('listings_filter_region_segmented'),
+        );
+
+        await tester.scrollUntilVisible(
+          regionControl,
+          120,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+
+        for (final label in [
+          l10n.regionTransnistria,
+          l10n.regionMoldova,
+          l10n.regionBoth,
+        ]) {
+          expect(
+            find.descendant(
+              of: regionControl,
+              matching: find.text(label),
+            ),
+            findsOneWidget,
+          );
+        }
+
+        expect(
+          find.descendant(
+            of: regionControl,
+            matching: find.textContaining('...'),
+          ),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+      }
+    },
+  );
 }

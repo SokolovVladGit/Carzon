@@ -26,6 +26,8 @@ class ListingDiscoveryCriteria extends Equatable {
     this.city,
     this.marketRegion,
     this.bodyType,
+    this.fuelType,
+    this.transmissionType,
     this.typeIn,
     this.priceCurrencyFilter = ListingPriceCurrencyFilter.any,
     this.sort = ListingSortOption.newestFirst,
@@ -42,6 +44,8 @@ class ListingDiscoveryCriteria extends Equatable {
   final String? city;
   final MarketRegion? marketRegion;
   final ListingBodyType? bodyType;
+  final ListingFuelType? fuelType;
+  final ListingTransmissionType? transmissionType;
   final List<ListingType>? typeIn;
 
   /// When not [ListingPriceCurrencyFilter.any], restricts rows by
@@ -68,6 +72,8 @@ class ListingDiscoveryCriteria extends Equatable {
         maxMileage != null ||
         (tCity != null && tCity.isNotEmpty) ||
         bodyType != null ||
+        fuelType != null ||
+        transmissionType != null ||
         (typeIn != null && typeIn!.isNotEmpty) ||
         sort != defaultSort ||
         priceCurrencyFilter != ListingPriceCurrencyFilter.any;
@@ -90,6 +96,8 @@ class ListingDiscoveryCriteria extends Equatable {
       city: _nullIfBlank(city),
       marketRegion: marketRegion,
       bodyType: bodyType,
+      fuelType: fuelType,
+      transmissionType: transmissionType,
       status: status,
       typeIn: typeIn,
       priceCurrency: priceCurrencyFilter.asListingCurrencyOrNull,
@@ -118,6 +126,8 @@ class ListingDiscoveryCriteria extends Equatable {
     city,
     marketRegion,
     bodyType,
+    fuelType,
+    transmissionType,
     typeIn,
     priceCurrencyFilter,
     sort,

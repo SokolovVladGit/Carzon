@@ -221,4 +221,64 @@ void main() {
       expect(bloc.state.hasActiveDiscoveryConstraints, isFalse);
     },
   );
+
+  blocTest<ListingsBloc, ListingsState>(
+    'ListingsDiscoveryFilterRemoved fuel clears fuel only',
+    setUp: () {
+      when(
+        () => repo.getListings(any()),
+      ).thenAnswer((_) async => const Success([]));
+    },
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
+    seed: () => const ListingsState(
+      status: ListingsStatus.success,
+      fuelTypeFilter: ListingFuelType.hybrid,
+      transmissionTypeFilter: ListingTransmissionType.automatic,
+      make: 'Toyota',
+    ),
+    act: (b) => b.add(
+      const ListingsDiscoveryFilterRemoved(ListingsDiscoveryChipKind.fuelType),
+    ),
+    verify: (_) {
+      final q =
+          verify(() => repo.getListings(captureAny())).captured.single
+              as ListingsQuery;
+      expect(q.fuelType, isNull);
+      expect(q.transmissionType, ListingTransmissionType.automatic);
+      expect(q.make, 'Toyota');
+    },
+  );
+
+  blocTest<ListingsBloc, ListingsState>(
+    'ListingsDiscoveryFilterRemoved transmission clears transmission only',
+    setUp: () {
+      when(
+        () => repo.getListings(any()),
+      ).thenAnswer((_) async => const Success([]));
+    },
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
+    seed: () => const ListingsState(
+      status: ListingsStatus.success,
+      fuelTypeFilter: ListingFuelType.hybrid,
+      transmissionTypeFilter: ListingTransmissionType.automatic,
+    ),
+    act: (b) => b.add(
+      const ListingsDiscoveryFilterRemoved(
+        ListingsDiscoveryChipKind.transmissionType,
+      ),
+    ),
+    verify: (_) {
+      final q =
+          verify(() => repo.getListings(captureAny())).captured.single
+              as ListingsQuery;
+      expect(q.fuelType, ListingFuelType.hybrid);
+      expect(q.transmissionType, isNull);
+    },
+  );
 }

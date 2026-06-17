@@ -264,40 +264,14 @@ class _ModelPassportStatTile extends StatelessWidget {
         : '${metric.value} ${metric.unit}';
 
     return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: isPrimary
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [
-                        scheme.primary.withValues(alpha: 0.18),
-                        scheme.surfaceContainerHigh.withValues(alpha: 0.42),
-                      ]
-                    : [
-                        scheme.primaryContainer.withValues(alpha: 0.55),
-                        scheme.surface.withValues(alpha: 0.95),
-                      ],
-              )
-            : null,
-        color: isPrimary
-            ? null
-            : (isDark
-                  ? scheme.surfaceContainerHigh.withValues(alpha: 0.24)
-                  : scheme.surfaceContainerHighest.withValues(alpha: 0.32)),
-        boxShadow: isPrimary && !isDark
-            ? [
-                BoxShadow(
-                  color: scheme.primary.withValues(alpha: 0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ]
-            : null,
+      decoration: modelPassportMetricSurfaceDecoration(theme).copyWith(
+        boxShadow: modelPassportMetricPrimaryShadow(
+          theme,
+          isPrimaryHighlight: isPrimary,
+        ),
       ),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(12, isPrimary ? 11 : 9, 12, isPrimary ? 11 : 9),
+        padding: EdgeInsets.fromLTRB(12, isPrimary ? 11 : 10, 12, isPrimary ? 11 : 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -347,31 +321,30 @@ class _ModelPassportCo2Tile extends StatelessWidget {
 
     return DecoratedBox(
       key: const ValueKey('listing_model_passport_co2_tile'),
-      decoration: BoxDecoration(
-        color: isDark
-            ? scheme.surfaceContainerHigh.withValues(alpha: 0.2)
-            : scheme.surfaceContainerHighest.withValues(alpha: 0.24),
-        borderRadius: BorderRadius.circular(10),
-      ),
+      decoration: modelPassportMetricSurfaceDecoration(theme),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
             Expanded(
               child: Text(
                 metric.label,
                 style: theme.textTheme.labelSmall?.copyWith(
+                  height: 1.2,
+                  fontWeight: FontWeight.w500,
                   color: scheme.onSurfaceVariant.withValues(
-                    alpha: isDark ? 0.82 : 0.88,
+                    alpha: isDark ? 0.84 : 0.86,
                   ),
                 ),
               ),
             ),
             Text(
               valueText,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: scheme.onSurface.withValues(alpha: isDark ? 0.92 : 0.9),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
+                height: 1.1,
+                color: scheme.onSurface.withValues(alpha: isDark ? 0.96 : 1),
               ),
             ),
           ],
