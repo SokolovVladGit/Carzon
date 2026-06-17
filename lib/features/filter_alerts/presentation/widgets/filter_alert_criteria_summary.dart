@@ -114,6 +114,19 @@ class FilterAlertCriteriaSummary extends StatelessWidget {
       ));
     }
 
+    final fuelType = criteria.fuelType;
+    if (fuelType != null) {
+      rows.add((l10n.listingFuelType, formatListingFuelType(l10n, fuelType)));
+    }
+
+    final transmissionType = criteria.transmissionType;
+    if (transmissionType != null) {
+      rows.add((
+        l10n.listingTransmission,
+        formatListingTransmissionType(l10n, transmissionType),
+      ));
+    }
+
     final typeLabel = _formatListingTypeIn(l10n, criteria.typeIn);
     if (typeLabel != null) {
       rows.add((l10n.filterType, typeLabel));

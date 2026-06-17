@@ -83,6 +83,8 @@ class ListingsFiltersApplied extends ListingsEvent {
     required this.sort,
     required this.regionFilter,
     required this.bodyType,
+    required this.fuelType,
+    required this.transmissionType,
     required this.priceCurrencyFilter,
   });
 
@@ -98,6 +100,8 @@ class ListingsFiltersApplied extends ListingsEvent {
   final ListingSortOption sort;
   final MarketRegionFilter regionFilter;
   final ListingBodyType? bodyType;
+  final ListingFuelType? fuelType;
+  final ListingTransmissionType? transmissionType;
   final ListingPriceCurrencyFilter priceCurrencyFilter;
 
   @override
@@ -114,6 +118,8 @@ class ListingsFiltersApplied extends ListingsEvent {
     sort,
     regionFilter,
     bodyType,
+    fuelType,
+    transmissionType,
     priceCurrencyFilter,
   ];
 }

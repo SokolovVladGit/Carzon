@@ -3,6 +3,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/listing_currency.dart';
 import '../../domain/entities/listing_sort_option.dart';
 import '../bloc/listings_state.dart';
+import '../utils/listing_formatters.dart';
 import '../widgets/filters/listings_filter_labels.dart';
 
 /// Identifies which discovery dimension an active chip represents so the
@@ -18,6 +19,8 @@ enum ListingsDiscoveryChipKind {
   city,
   region,
   bodyType,
+  fuelType,
+  transmissionType,
   listingType,
   sort,
 }
@@ -70,9 +73,13 @@ ListingsState listingsStateAfterDiscoveryChipRemoved(
     ),
     ListingsDiscoveryChipKind.city => state.copyWith(clearCity: true),
     ListingsDiscoveryChipKind.region => state.copyWith(
-      regionFilter: MarketRegionFilter.transnistria,
+      regionFilter: MarketRegionFilter.both,
     ),
     ListingsDiscoveryChipKind.bodyType => state.copyWith(clearBodyType: true),
+    ListingsDiscoveryChipKind.fuelType => state.copyWith(clearFuelType: true),
+    ListingsDiscoveryChipKind.transmissionType => state.copyWith(
+      clearTransmissionType: true,
+    ),
     ListingsDiscoveryChipKind.listingType => state.copyWith(
       typeFilter: ListingTypeFilter.any,
     ),
@@ -215,11 +222,11 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
         value: l10n.regionMoldova,
       ),
     );
-  } else if (s.regionFilter == MarketRegionFilter.both) {
+  } else if (s.regionFilter == MarketRegionFilter.transnistria) {
     out.add(
       ListingsDiscoveryChip(
         kind: ListingsDiscoveryChipKind.region,
-        value: l10n.regionBoth,
+        value: l10n.regionTransnistria,
       ),
     );
   }
@@ -228,6 +235,24 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
       ListingsDiscoveryChip(
         kind: ListingsDiscoveryChipKind.bodyType,
         value: listingFilterBodyTypeLabel(l10n, s.bodyTypeFilter!),
+      ),
+    );
+  }
+  if (s.fuelTypeFilter != null) {
+    out.add(
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.fuelType,
+        label: l10n.listingFuelType,
+        value: formatListingFuelType(l10n, s.fuelTypeFilter!),
+      ),
+    );
+  }
+  if (s.transmissionTypeFilter != null) {
+    out.add(
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.transmissionType,
+        label: l10n.listingTransmission,
+        value: formatListingTransmissionType(l10n, s.transmissionTypeFilter!),
       ),
     );
   }
@@ -302,10 +327,16 @@ int listingsDiscoveryActiveFilterGroupCount(ListingsState s) {
     n++;
   }
   if (s.regionFilter == MarketRegionFilter.moldova ||
-      s.regionFilter == MarketRegionFilter.both) {
+      s.regionFilter == MarketRegionFilter.transnistria) {
     n++;
   }
   if (s.bodyTypeFilter != null) {
+    n++;
+  }
+  if (s.fuelTypeFilter != null) {
+    n++;
+  }
+  if (s.transmissionTypeFilter != null) {
     n++;
   }
   if (s.typeFilter == ListingTypeFilter.sale ||

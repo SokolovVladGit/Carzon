@@ -8,6 +8,7 @@ import '../../../domain/entities/listing_sort_option.dart';
 import '../../bloc/listings_state.dart';
 import 'listings_filter_form_seed.dart';
 import 'listings_filter_labels.dart';
+import '../../utils/listing_formatters.dart';
 
 /// Presentation output for the filter summary strip (browse filter sheet).
 @immutable
@@ -50,9 +51,11 @@ bool isListingsFilterDraftVanilla(ListingsFilterFormSeed draft) {
       draft.maxPrice == null &&
       draft.maxMileage == null &&
       (city == null || city.isEmpty) &&
-      draft.region == MarketRegionFilter.transnistria &&
+      draft.region == MarketRegionFilter.both &&
       draft.typeFilter == ListingTypeFilter.any &&
       draft.bodyType == null &&
+      draft.fuelType == null &&
+      draft.transmissionType == null &&
       draft.priceCurrencyFilter == ListingPriceCurrencyFilter.any &&
       draft.sort == ListingSortOption.newestFirst;
 }
@@ -142,25 +145,22 @@ ListingsFilterSummaryView buildListingsFilterSummaryView(
   switch (draft.region) {
     case MarketRegionFilter.moldova:
       parts.add(l10n.regionMoldova);
-    case MarketRegionFilter.both:
-      parts.add(l10n.regionBoth);
     case MarketRegionFilter.transnistria:
-      final hasOther =
-          mm != null ||
-          price != null ||
-          draft.minYear != null ||
-          draft.maxYear != null ||
-          draft.maxMileage != null ||
-          (city != null && city.isNotEmpty) ||
-          draft.bodyType != null ||
-          draft.typeFilter != ListingTypeFilter.any;
-      if (hasOther) {
-        parts.add(l10n.regionTransnistria);
-      }
+      parts.add(l10n.regionTransnistria);
+    case MarketRegionFilter.both:
+      break;
   }
 
   if (draft.bodyType != null) {
     parts.add(listingFilterBodyTypeLabel(l10n, draft.bodyType!));
+  }
+
+  if (draft.fuelType != null) {
+    parts.add(formatListingFuelType(l10n, draft.fuelType!));
+  }
+
+  if (draft.transmissionType != null) {
+    parts.add(formatListingTransmissionType(l10n, draft.transmissionType!));
   }
 
   switch (draft.typeFilter) {

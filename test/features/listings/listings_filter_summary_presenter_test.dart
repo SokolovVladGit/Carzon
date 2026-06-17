@@ -1,3 +1,4 @@
+import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:carzon/features/listings/domain/entities/listing_sort_option.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
@@ -34,6 +35,8 @@ void main() {
         region: MarketRegionFilter.transnistria,
         sort: ListingSortOption.newestFirst,
         bodyType: null,
+        fuelType: null,
+        transmissionType: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.any,
       ),
     );
@@ -61,6 +64,8 @@ void main() {
         region: MarketRegionFilter.moldova,
         sort: ListingSortOption.newestFirst,
         bodyType: null,
+        fuelType: null,
+        transmissionType: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.eur,
       ),
     );
@@ -68,5 +73,31 @@ void main() {
     expect(view.activeLine, contains('€'));
     expect(view.activeLine, contains(l10n.regionMoldova));
     expect(view.activeLine, contains(l10n.typeExchange));
+  });
+
+  test('fuel and transmission appear in active summary', () {
+    final view = buildListingsFilterSummaryView(
+      l10n,
+      const ListingsFilterFormSeed(
+        make: null,
+        model: null,
+        minYear: null,
+        maxYear: null,
+        minPrice: null,
+        maxPrice: null,
+        maxMileage: null,
+        city: null,
+        typeFilter: ListingTypeFilter.any,
+        region: MarketRegionFilter.both,
+        sort: ListingSortOption.newestFirst,
+        bodyType: null,
+        fuelType: ListingFuelType.hybrid,
+        transmissionType: ListingTransmissionType.automatic,
+        priceCurrencyFilter: ListingPriceCurrencyFilter.any,
+      ),
+    );
+    expect(view.useDefaultLayout, isFalse);
+    expect(view.activeLine, contains(l10n.listingFuelTypeHybrid));
+    expect(view.activeLine, contains(l10n.listingTransmissionAutomatic));
   });
 }

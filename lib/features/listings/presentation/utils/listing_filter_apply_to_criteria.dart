@@ -35,8 +35,10 @@ ListingDiscoveryCriteria listingDiscoveryCriteriaFromFilterApply(
       city: result.city,
       typeFilter: result.typeFilter,
       sortOption: result.sort,
-      regionFilter: result.region ?? MarketRegionFilter.transnistria,
+      regionFilter: result.region ?? MarketRegionFilter.both,
       bodyTypeFilter: result.bodyType,
+      fuelTypeFilter: result.fuelType,
+      transmissionTypeFilter: result.transmissionType,
       priceCurrencyFilter: result.priceCurrencyFilter,
     ),
   );

@@ -101,5 +101,46 @@ void main() {
         const ListingDiscoveryCriteria(typeIn: [ListingType.exchange]),
       );
     });
+
+    test('fuel and transmission round-trip with dual_clutch wire', () {
+      assertRoundTrip(
+        const ListingDiscoveryCriteria(
+          fuelType: ListingFuelType.hybrid,
+          transmissionType: ListingTransmissionType.dualClutch,
+        ),
+      );
+      final encoded = listingDiscoveryCriteriaToJson(
+        const ListingDiscoveryCriteria(
+          transmissionType: ListingTransmissionType.dualClutch,
+        ),
+      );
+      expect(encoded['transmissionType'], 'dual_clutch');
+    });
+
+    test('old JSON without fuel/transmission keys decodes with nulls', () {
+      final decoded = listingDiscoveryCriteriaFromJson(<String, dynamic>{
+        ListingDiscoveryCriteriaJsonSchema.schemaVersionKey: 1,
+        'make': 'Toyota',
+      });
+      expect(decoded!.fuelType, isNull);
+      expect(decoded.transmissionType, isNull);
+      expect(decoded.make, 'Toyota');
+    });
+
+    test('unknown fuelType wire becomes null (safe)', () {
+      final decoded = listingDiscoveryCriteriaFromJson(<String, dynamic>{
+        ListingDiscoveryCriteriaJsonSchema.schemaVersionKey: 1,
+        'fuelType': 'nuclear',
+      });
+      expect(decoded!.fuelType, isNull);
+    });
+
+    test('unknown transmissionType wire becomes null (safe)', () {
+      final decoded = listingDiscoveryCriteriaFromJson(<String, dynamic>{
+        ListingDiscoveryCriteriaJsonSchema.schemaVersionKey: 1,
+        'transmissionType': 'flux_capacitor',
+      });
+      expect(decoded!.transmissionType, isNull);
+    });
   });
 }

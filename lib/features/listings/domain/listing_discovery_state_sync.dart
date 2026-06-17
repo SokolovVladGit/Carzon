@@ -3,7 +3,7 @@ import 'entities/listing_discovery_criteria.dart';
 
 import '../presentation/bloc/listings_state.dart';
 
-/// Default feed semantics: Приднестровье + no extra discovery dimensions.
+/// Default feed semantics: all supported regions + no extra discovery dimensions.
 bool isDefaultListingsDiscoveryState(ListingsState s) =>
     !s.hasActiveDiscoveryConstraints;
 
@@ -22,6 +22,8 @@ ListingsState listingsStateFromDiscoveryCriteria(ListingDiscoveryCriteria c) {
     typeFilter: listingTypeFilterFromTypeIn(c.typeIn),
     regionFilter: marketRegionFilterFromNullable(c.marketRegion),
     bodyTypeFilter: c.bodyType,
+    fuelTypeFilter: c.fuelType,
+    transmissionTypeFilter: c.transmissionType,
     sortOption: c.sort,
     priceCurrencyFilter: c.priceCurrencyFilter,
   );
@@ -42,6 +44,8 @@ ListingDiscoveryCriteria listingDiscoveryCriteriaFromListingsState(
     city: s.city,
     marketRegion: s.regionFilter.asMarketRegion,
     bodyType: s.bodyTypeFilter,
+    fuelType: s.fuelTypeFilter,
+    transmissionType: s.transmissionTypeFilter,
     typeIn: s.typeFilter.asListingTypes,
     sort: s.sortOption,
     priceCurrencyFilter: s.priceCurrencyFilter,
