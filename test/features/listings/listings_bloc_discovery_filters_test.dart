@@ -80,7 +80,7 @@ void main() {
           verify(() => repo.getListings(captureAny())).captured.single
               as ListingsQuery;
       expect(q.status, ListingStatus.active);
-      expect(q.marketRegion, MarketRegion.transnistria);
+      expect(q.marketRegion, isNull);
       expect(q.sort, ListingSortOption.newestFirst);
       expect(q.search, isNull);
       expect(q.make, isNull);
@@ -90,6 +90,8 @@ void main() {
       expect(q.maxMileage, isNull);
       expect(q.typeIn, isNull);
       expect(q.bodyType, isNull);
+      expect(q.fuelType, isNull);
+      expect(q.transmissionType, isNull);
       expect(q.priceCurrency, isNull);
     },
   );
@@ -141,6 +143,8 @@ void main() {
         sort: ListingSortOption.priceLowToHigh,
         regionFilter: MarketRegionFilter.transnistria,
         bodyType: null,
+        fuelType: null,
+        transmissionType: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.any,
       ),
     ),
@@ -185,6 +189,8 @@ void main() {
         sort: ListingSortOption.newestFirst,
         regionFilter: MarketRegionFilter.transnistria,
         bodyType: null,
+        fuelType: null,
+        transmissionType: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.usd,
       ),
     ),
@@ -224,6 +230,8 @@ void main() {
           sort: ListingSortOption.priceHighToLow,
           regionFilter: MarketRegionFilter.transnistria,
           bodyType: null,
+          fuelType: null,
+          transmissionType: null,
           priceCurrencyFilter: ListingPriceCurrencyFilter.eur,
         ),
       )
@@ -264,6 +272,8 @@ void main() {
           sort: ListingSortOption.newestFirst,
           regionFilter: MarketRegionFilter.transnistria,
           bodyType: null,
+          fuelType: null,
+          transmissionType: null,
           priceCurrencyFilter: ListingPriceCurrencyFilter.any,
         ),
       )
@@ -305,6 +315,8 @@ void main() {
           sort: ListingSortOption.newestFirst,
           regionFilter: MarketRegionFilter.transnistria,
           bodyType: null,
+          fuelType: null,
+          transmissionType: null,
           priceCurrencyFilter: ListingPriceCurrencyFilter.any,
         ),
       );
@@ -343,7 +355,7 @@ void main() {
       final last =
           verify(() => repo.getListings(captureAny())).captured.last
               as ListingsQuery;
-      expect(last.marketRegion, MarketRegion.transnistria);
+      expect(last.marketRegion, isNull);
     },
   );
 
@@ -770,5 +782,69 @@ void main() {
         expect(queries.map((q) => (q as ListingsQuery).page), [0, 1]);
       },
     );
+
+  blocTest<ListingsBloc, ListingsState>(
+    'ListingsFiltersApplied maps fuel and transmission into query',
+    setUp: () {
+      when(
+        () => repo.getListings(any()),
+      ).thenAnswer((_) async => const Success([]));
+    },
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
+    act: (b) => b.add(
+      const ListingsFiltersApplied(
+        make: null,
+        model: null,
+        minYear: null,
+        maxYear: null,
+        minPrice: null,
+        maxPrice: null,
+        maxMileage: null,
+        city: null,
+        typeFilter: ListingTypeFilter.any,
+        sort: ListingSortOption.newestFirst,
+        regionFilter: MarketRegionFilter.both,
+        bodyType: null,
+        fuelType: ListingFuelType.hybrid,
+        transmissionType: ListingTransmissionType.dualClutch,
+        priceCurrencyFilter: ListingPriceCurrencyFilter.any,
+      ),
+    ),
+    verify: (_) {
+      final q =
+          verify(() => repo.getListings(captureAny())).captured.single
+              as ListingsQuery;
+      expect(q.fuelType, ListingFuelType.hybrid);
+      expect(q.transmissionType, ListingTransmissionType.dualClutch);
+    },
+  );
+
+  blocTest<ListingsBloc, ListingsState>(
+    'ListingsFiltersCleared resets fuel and transmission filters',
+    setUp: () {
+      when(
+        () => repo.getListings(any()),
+      ).thenAnswer((_) async => const Success([]));
+    },
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+    ),
+    seed: () => const ListingsState(
+      fuelTypeFilter: ListingFuelType.diesel,
+      transmissionTypeFilter: ListingTransmissionType.manual,
+    ),
+    act: (b) => b.add(const ListingsFiltersCleared()),
+    verify: (_) {
+      final q =
+          verify(() => repo.getListings(captureAny())).captured.single
+              as ListingsQuery;
+      expect(q.fuelType, isNull);
+      expect(q.transmissionType, isNull);
+    },
+  );
   });
 }

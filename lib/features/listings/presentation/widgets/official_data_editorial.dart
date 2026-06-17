@@ -412,3 +412,43 @@ class OfficialDataShowMoreAction extends StatelessWidget {
     );
   }
 }
+
+/// Subtle premium gradient/tint for Model Passport metric tiles (light + dark).
+BoxDecoration modelPassportMetricSurfaceDecoration(ThemeData theme) {
+  final scheme = theme.colorScheme;
+  final isDark = theme.brightness == Brightness.dark;
+
+  return BoxDecoration(
+    borderRadius: BorderRadius.circular(12),
+    gradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: isDark
+          ? [
+              scheme.primary.withValues(alpha: 0.18),
+              scheme.surfaceContainerHigh.withValues(alpha: 0.42),
+            ]
+          : [
+              scheme.primaryContainer.withValues(alpha: 0.55),
+              scheme.surface.withValues(alpha: 0.95),
+            ],
+    ),
+  );
+}
+
+/// Optional light-theme elevation for the primary combined-consumption tile.
+List<BoxShadow>? modelPassportMetricPrimaryShadow(
+  ThemeData theme, {
+  required bool isPrimaryHighlight,
+}) {
+  if (!isPrimaryHighlight || theme.brightness == Brightness.dark) {
+    return null;
+  }
+  return [
+    BoxShadow(
+      color: theme.colorScheme.primary.withValues(alpha: 0.06),
+      blurRadius: 10,
+      offset: const Offset(0, 3),
+    ),
+  ];
+}

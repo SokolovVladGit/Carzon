@@ -72,8 +72,10 @@ class ListingsState extends Equatable {
     this.maxMileage,
     this.city,
     this.typeFilter = ListingTypeFilter.any,
-    this.regionFilter = MarketRegionFilter.transnistria,
+    this.regionFilter = MarketRegionFilter.both,
     this.bodyTypeFilter,
+    this.fuelTypeFilter,
+    this.transmissionTypeFilter,
     this.sortOption = ListingSortOption.newestFirst,
     this.priceCurrencyFilter = ListingPriceCurrencyFilter.any,
     this.loadFailure,
@@ -100,6 +102,12 @@ class ListingsState extends Equatable {
   /// Home feed body-style filter. Null means all body types.
   final ListingBodyType? bodyTypeFilter;
 
+  /// Fuel category filter. Null means all fuel types.
+  final ListingFuelType? fuelTypeFilter;
+
+  /// Transmission filter. Null means all transmission types.
+  final ListingTransmissionType? transmissionTypeFilter;
+
   /// Optional constraint on `listings.price_currency`. [any] does not filter
   /// by currency; amount bounds still use `price_eur` only.
   final ListingPriceCurrencyFilter priceCurrencyFilter;
@@ -121,14 +129,17 @@ class ListingsState extends Equatable {
       (city != null && city!.isNotEmpty) ||
       typeFilter != ListingTypeFilter.any ||
       bodyTypeFilter != null ||
+      fuelTypeFilter != null ||
+      transmissionTypeFilter != null ||
       sortOption != ListingSortOption.newestFirst ||
       priceCurrencyFilter != ListingPriceCurrencyFilter.any;
 
-  /// Includes the region picker: the default feed is Transnistria-only; Moldova
-  /// or "all regions" counts as an active choice for empty states and chrome.
+  /// Includes an explicit region picker choice (Moldova or Transnistria).
+  /// Default [MarketRegionFilter.both] does not constrain regions.
   bool get hasActiveDiscoveryConstraints =>
       hasActiveNonRegionFilters ||
-      regionFilter != MarketRegionFilter.transnistria;
+      regionFilter == MarketRegionFilter.moldova ||
+      regionFilter == MarketRegionFilter.transnistria;
 
   ListingsState copyWith({
     ListingsStatus? status,
@@ -147,6 +158,8 @@ class ListingsState extends Equatable {
     ListingTypeFilter? typeFilter,
     MarketRegionFilter? regionFilter,
     ListingBodyType? bodyTypeFilter,
+    ListingFuelType? fuelTypeFilter,
+    ListingTransmissionType? transmissionTypeFilter,
     ListingSortOption? sortOption,
     ListingPriceCurrencyFilter? priceCurrencyFilter,
     Failure? loadFailure,
@@ -160,6 +173,8 @@ class ListingsState extends Equatable {
     bool clearMaxMileage = false,
     bool clearCity = false,
     bool clearBodyType = false,
+    bool clearFuelType = false,
+    bool clearTransmissionType = false,
     bool clearSort = false,
     bool clearPriceCurrencyFilter = false,
     bool clearLoadFailure = false,
@@ -183,6 +198,12 @@ class ListingsState extends Equatable {
       bodyTypeFilter: clearBodyType
           ? null
           : (bodyTypeFilter ?? this.bodyTypeFilter),
+      fuelTypeFilter: clearFuelType
+          ? null
+          : (fuelTypeFilter ?? this.fuelTypeFilter),
+      transmissionTypeFilter: clearTransmissionType
+          ? null
+          : (transmissionTypeFilter ?? this.transmissionTypeFilter),
       sortOption: clearSort
           ? ListingSortOption.newestFirst
           : (sortOption ?? this.sortOption),
@@ -211,6 +232,8 @@ class ListingsState extends Equatable {
     typeFilter,
     regionFilter,
     bodyTypeFilter,
+    fuelTypeFilter,
+    transmissionTypeFilter,
     priceCurrencyFilter,
     sortOption,
     loadFailure,

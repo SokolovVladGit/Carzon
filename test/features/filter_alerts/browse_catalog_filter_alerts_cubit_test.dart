@@ -54,6 +54,8 @@ ListingDiscoveryCriteria _discoveryCriteriaWithSortOnly(
   city: base.city,
   marketRegion: base.marketRegion,
   bodyType: base.bodyType,
+  fuelType: base.fuelType,
+  transmissionType: base.transmissionType,
   typeIn: base.typeIn,
   priceCurrencyFilter: base.priceCurrencyFilter,
   sort: sort,

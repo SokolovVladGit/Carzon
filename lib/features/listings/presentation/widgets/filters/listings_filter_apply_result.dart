@@ -21,6 +21,8 @@ class ListingsFilterApplyResult {
     required this.sort,
     required this.region,
     required this.bodyType,
+    required this.fuelType,
+    required this.transmissionType,
     required this.priceCurrencyFilter,
   }) : cleared = false;
 
@@ -38,6 +40,8 @@ class ListingsFilterApplyResult {
       sort = ListingSortOption.newestFirst,
       region = null,
       bodyType = null,
+      fuelType = null,
+      transmissionType = null,
       priceCurrencyFilter = ListingPriceCurrencyFilter.any;
 
   final bool cleared;
@@ -53,5 +57,7 @@ class ListingsFilterApplyResult {
   final ListingSortOption sort;
   final MarketRegionFilter? region;
   final ListingBodyType? bodyType;
+  final ListingFuelType? fuelType;
+  final ListingTransmissionType? transmissionType;
   final ListingPriceCurrencyFilter priceCurrencyFilter;
 }

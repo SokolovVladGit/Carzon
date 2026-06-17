@@ -8,9 +8,9 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../helpers/l10n_test_helpers.dart';
 
 void main() {
-  ListingsState vanillaTransnistria() => const ListingsState(
+  ListingsState vanillaAllRegions() => const ListingsState(
     status: ListingsStatus.success,
-    regionFilter: MarketRegionFilter.transnistria,
+    regionFilter: MarketRegionFilter.both,
   );
 
   test(
@@ -18,27 +18,33 @@ void main() {
     () {
       final l10n = ruStrings();
       final states = [
-        vanillaTransnistria(),
-        vanillaTransnistria().copyWith(make: 'Skoda'),
-        vanillaTransnistria().copyWith(make: 'Skoda', model: ' Octavia '),
-        vanillaTransnistria().copyWith(minYear: 2018, maxYear: 2022),
-        vanillaTransnistria().copyWith(minYear: null, maxYear: 2024),
-        vanillaTransnistria().copyWith(minPrice: 1000, maxPrice: null),
-        vanillaTransnistria().copyWith(
+        vanillaAllRegions(),
+        vanillaAllRegions().copyWith(make: 'Skoda'),
+        vanillaAllRegions().copyWith(make: 'Skoda', model: ' Octavia '),
+        vanillaAllRegions().copyWith(minYear: 2018, maxYear: 2022),
+        vanillaAllRegions().copyWith(minYear: null, maxYear: 2024),
+        vanillaAllRegions().copyWith(minPrice: 1000, maxPrice: null),
+        vanillaAllRegions().copyWith(
           priceCurrencyFilter: ListingPriceCurrencyFilter.usd,
         ),
-        vanillaTransnistria().copyWith(maxMileage: 150000),
-        vanillaTransnistria().copyWith(city: '  Tiraspol  '),
-        vanillaTransnistria().copyWith(
+        vanillaAllRegions().copyWith(maxMileage: 150000),
+        vanillaAllRegions().copyWith(city: '  Tiraspol  '),
+        vanillaAllRegions().copyWith(
           regionFilter: MarketRegionFilter.moldova,
         ),
-        vanillaTransnistria().copyWith(regionFilter: MarketRegionFilter.both),
-        vanillaTransnistria().copyWith(bodyTypeFilter: ListingBodyType.suv),
-        vanillaTransnistria().copyWith(typeFilter: ListingTypeFilter.exchange),
-        vanillaTransnistria().copyWith(
+        vanillaAllRegions().copyWith(
+          regionFilter: MarketRegionFilter.transnistria,
+        ),
+        vanillaAllRegions().copyWith(bodyTypeFilter: ListingBodyType.suv),
+        vanillaAllRegions().copyWith(fuelTypeFilter: ListingFuelType.hybrid),
+        vanillaAllRegions().copyWith(
+          transmissionTypeFilter: ListingTransmissionType.automatic,
+        ),
+        vanillaAllRegions().copyWith(typeFilter: ListingTypeFilter.exchange),
+        vanillaAllRegions().copyWith(
           sortOption: ListingSortOption.priceLowToHigh,
         ),
-        vanillaTransnistria().copyWith(
+        vanillaAllRegions().copyWith(
           search: ' diesel ',
           make: 'VW',
           minPrice: 1,
@@ -58,13 +64,13 @@ void main() {
   );
 
   test('defaults yield 0 groups', () {
-    expect(listingsDiscoveryActiveFilterGroupCount(vanillaTransnistria()), 0);
+    expect(listingsDiscoveryActiveFilterGroupCount(vanillaAllRegions()), 0);
   });
 
   test('single make yields 1', () {
     expect(
       listingsDiscoveryActiveFilterGroupCount(
-        vanillaTransnistria().copyWith(make: 'Skoda'),
+        vanillaAllRegions().copyWith(make: 'Skoda'),
       ),
       1,
     );
@@ -72,7 +78,7 @@ void main() {
 
   test('concurrent groups count exceeds 9 (parity with chip cardinality)', () {
     final l10n = ruStrings();
-    final s = vanillaTransnistria().copyWith(
+    final s = vanillaAllRegions().copyWith(
       search: 't',
       make: 'Toyota',
       model: 'Corolla',
@@ -82,7 +88,7 @@ void main() {
       maxPrice: 15000,
       maxMileage: 90000,
       city: 'Bender',
-      regionFilter: MarketRegionFilter.both,
+      regionFilter: MarketRegionFilter.transnistria,
       bodyTypeFilter: ListingBodyType.sedan,
       typeFilter: ListingTypeFilter.sale,
       sortOption: ListingSortOption.lowestMileageFirst,

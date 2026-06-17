@@ -301,8 +301,10 @@ class _ListingsViewState extends State<_ListingsView> {
           city: result.city,
           typeFilter: result.typeFilter,
           sort: result.sort,
-          regionFilter: result.region ?? MarketRegionFilter.transnistria,
+          regionFilter: result.region ?? MarketRegionFilter.both,
           bodyType: result.bodyType,
+          fuelType: result.fuelType,
+          transmissionType: result.transmissionType,
           priceCurrencyFilter: result.priceCurrencyFilter,
         ),
       );
@@ -536,6 +538,8 @@ class _ListingsViewState extends State<_ListingsView> {
         sort: s.sortOption,
         regionFilter: s.regionFilter,
         bodyType: s.bodyTypeFilter,
+        fuelType: s.fuelTypeFilter,
+        transmissionType: s.transmissionTypeFilter,
         priceCurrencyFilter: s.priceCurrencyFilter,
       ),
     );

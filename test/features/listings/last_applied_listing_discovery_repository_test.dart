@@ -28,9 +28,7 @@ void main() {
     await repo.persistIfNeeded(
       const ListingDiscoveryCriteria(marketRegion: MarketRegion.moldova),
     );
-    await repo.persistIfNeeded(
-      const ListingDiscoveryCriteria(marketRegion: MarketRegion.transnistria),
-    );
+    await repo.persistIfNeeded(const ListingDiscoveryCriteria());
 
     expect(await repo.load(), isNull);
   });

@@ -22,6 +22,8 @@ class ListingsFilterFormSeed {
     required this.region,
     required this.sort,
     required this.bodyType,
+    required this.fuelType,
+    required this.transmissionType,
     required this.priceCurrencyFilter,
   });
 
@@ -39,6 +41,8 @@ class ListingsFilterFormSeed {
       region: state.regionFilter,
       sort: state.sortOption,
       bodyType: state.bodyTypeFilter,
+      fuelType: state.fuelTypeFilter,
+      transmissionType: state.transmissionTypeFilter,
       priceCurrencyFilter: state.priceCurrencyFilter,
     );
   }
@@ -55,5 +59,7 @@ class ListingsFilterFormSeed {
   final MarketRegionFilter region;
   final ListingSortOption sort;
   final ListingBodyType? bodyType;
+  final ListingFuelType? fuelType;
+  final ListingTransmissionType? transmissionType;
   final ListingPriceCurrencyFilter priceCurrencyFilter;
 }

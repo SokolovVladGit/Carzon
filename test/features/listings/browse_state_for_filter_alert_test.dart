@@ -42,6 +42,8 @@ void main() {
         isNull,
       ); // Both → unconstrained regions in SQL JSON
       expect(c.bodyType, ListingBodyType.hatchback);
+      expect(c.fuelType, isNull);
+      expect(c.transmissionType, isNull);
       expect(
         c.typeIn,
         containsAll(<ListingType>[ListingType.exchange, ListingType.both]),
@@ -115,10 +117,19 @@ void main() {
       );
     });
 
-    test('allows region picker change Moldova-only with no extra filters', () {
+    test('allows region picker change Transnistria-only with no extra filters', () {
       expect(
         browseStateEligibleForFilterAlertSnapshot(
-          const ListingsState(regionFilter: MarketRegionFilter.moldova),
+          const ListingsState(regionFilter: MarketRegionFilter.transnistria),
+        ),
+        isTrue,
+      );
+    });
+
+    test('allows fuel-only constraint with default sort option', () {
+      expect(
+        browseStateEligibleForFilterAlertSnapshot(
+          const ListingsState(fuelTypeFilter: ListingFuelType.electric),
         ),
         isTrue,
       );

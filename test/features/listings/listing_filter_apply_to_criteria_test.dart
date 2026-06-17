@@ -21,6 +21,8 @@ void main() {
       sort: ListingSortOption.newestFirst,
       region: MarketRegionFilter.moldova,
       bodyType: ListingBodyType.suv,
+      fuelType: ListingFuelType.hybrid,
+      transmissionType: ListingTransmissionType.automatic,
       priceCurrencyFilter: ListingPriceCurrencyFilter.usd,
     );
     final c = listingDiscoveryCriteriaFromFilterApply(
@@ -32,6 +34,8 @@ void main() {
     expect(c.city, 'Кишинёв');
     expect(c.marketRegion, MarketRegion.moldova);
     expect(c.bodyType, ListingBodyType.suv);
+    expect(c.fuelType, ListingFuelType.hybrid);
+    expect(c.transmissionType, ListingTransmissionType.automatic);
     expect(c.maxPrice, 20000);
     expect(c.priceCurrencyFilter, ListingPriceCurrencyFilter.usd);
   });

@@ -5,6 +5,7 @@ import '../../../../core/services/supabase_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
 import '../../domain/entities/listing_contact.dart';
+import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_currency.dart';
 import '../../domain/entities/listing_sort_option.dart';
 import '../../domain/entities/listing_view_stats.dart';
@@ -126,6 +127,15 @@ view_count
       }
       if (query.bodyType != null) {
         filterQuery = filterQuery.eq('body_type', query.bodyType!.name);
+      }
+      if (query.fuelType != null) {
+        filterQuery = filterQuery.eq('fuel_type', query.fuelType!.name);
+      }
+      if (query.transmissionType != null) {
+        filterQuery = filterQuery.eq(
+          'transmission_type',
+          listingTransmissionTypeToDbValue(query.transmissionType!),
+        );
       }
       // Explicit status filter: callers (e.g. the public feed) must pass
       // `active` so owners do not see their own non-active listings mixed in
