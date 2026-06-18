@@ -76,10 +76,21 @@ class ListingsPage extends StatelessWidget {
         BlocProvider(create: (_) => sl<ListingsBloc>()),
         BlocProvider(create: (_) => sl<BrowseCatalogFilterAlertsCubit>()),
       ],
-      child: BlocListener<AuthCubit, AuthState>(
-        listener: (context, auth) {
-          context.read<BrowseCatalogFilterAlertsCubit>().onAuthChanged(auth);
-        },
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<AuthCubit, AuthState>(
+            listener: (context, auth) {
+              context.read<BrowseCatalogFilterAlertsCubit>().onAuthChanged(auth);
+            },
+          ),
+          BlocListener<AuthCubit, AuthState>(
+            listenWhen: (prev, curr) =>
+                curr.publicFeedRefreshNonce > prev.publicFeedRefreshNonce,
+            listener: (context, _) {
+              context.read<ListingsBloc>().add(const ListingsRequested());
+            },
+          ),
+        ],
         child: _ListingsDiscoveryBootstrap(
           feedLaunch: feedLaunch,
           child: _ListingsView(

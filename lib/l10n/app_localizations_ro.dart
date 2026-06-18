@@ -92,6 +92,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get menuAccount => 'Cont';
 
   @override
+  String get menuSettings => 'Setări';
+
+  @override
   String get listingsLoadFailed => 'Nu s-au încărcat anunțurile.';
 
   @override
@@ -1358,6 +1361,103 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get profileSettingsSectionTitle => 'Setări';
+
+  @override
+  String get profileOpenSettingsTitle => 'Setările aplicației';
+
+  @override
+  String get profileOpenSettingsSubtitle => 'Limbă, temă, notificări și altele';
+
+  @override
+  String get settingsTitle => 'Setări';
+
+  @override
+  String get settingsIntro =>
+      'Gestionați contul, interfața și notificările într-un singur loc.';
+
+  @override
+  String get settingsSectionAccount => 'Cont';
+
+  @override
+  String get settingsSectionPreferences => 'Preferințe';
+
+  @override
+  String get settingsSectionNotifications => 'Notificări';
+
+  @override
+  String get settingsSectionPrivacySafety => 'Confidențialitate și siguranță';
+
+  @override
+  String get settingsSectionSupportLegal => 'Asistență și informații legale';
+
+  @override
+  String get settingsAccountProfileTitle => 'Profilul contului';
+
+  @override
+  String get settingsAccountProfileSubtitle =>
+      'Nume, email și profilul public al vânzătorului';
+
+  @override
+  String get settingsSignInForAccountSubtitle =>
+      'Conectați-vă pentru a gestiona parola și notificările';
+
+  @override
+  String get settingsPrivacyLegalLinkTitle => 'Termeni și siguranță';
+
+  @override
+  String get settingsPrivacyLegalLinkSubtitle =>
+      'Informații legale și recomandări pentru tranzacții sigure';
+
+  @override
+  String get settingsLegalLinkSubtitle =>
+      'Termeni de utilizare și politica de confidențialitate';
+
+  @override
+  String get settingsRequestDataTitle => 'Solicită datele mele';
+
+  @override
+  String get settingsRequestDataSubtitle =>
+      'Contactează suportul pentru întrebări despre datele personale';
+
+  @override
+  String get settingsDeleteAccountTitle => 'Șterge contul';
+
+  @override
+  String get settingsDeleteAccountSubtitle =>
+      'Elimină definitiv contul și datele asociate';
+
+  @override
+  String get deleteAccountTitle => 'Ștergere cont';
+
+  @override
+  String get deleteAccountWarningTitle => 'Această acțiune este ireversibilă';
+
+  @override
+  String get deleteAccountWarningBody =>
+      'Contul și accesul la aplicație vor fi eliminate.\n\n• Anunțurile active vor dispărea de pe vitrina publică\n• Favoritele, alertele de filtre, profilul vânzătorului și setările push vor fi șterse\n• Conversațiile și istoricul mesajelor pot fi șterse\n\nDupă confirmare, contul nu poate fi recuperat.';
+
+  @override
+  String get deleteAccountConfirmationKeyword => 'ȘTERGE';
+
+  @override
+  String deleteAccountConfirmationPrompt(String keyword) {
+    return 'Pentru confirmare, tastați «$keyword»';
+  }
+
+  @override
+  String get deleteAccountSubmit => 'Șterge contul definitiv';
+
+  @override
+  String get deleteAccountErrorGeneric =>
+      'Nu s-a putut șterge contul. Încercați din nou sau contactați suportul.';
+
+  @override
+  String get deleteAccountErrorNetwork =>
+      'Fără conexiune. Verificați internetul și încercați din nou.';
+
+  @override
+  String get deleteAccountErrorSession =>
+      'Sesiunea a expirat. Autentificați-vă din nou și repetați ștergerea.';
 
   @override
   String get profileChangePasswordTitle => 'Schimbă parola';

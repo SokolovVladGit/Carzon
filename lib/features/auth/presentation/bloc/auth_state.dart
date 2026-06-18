@@ -62,10 +62,15 @@ class AuthState extends Equatable {
     this.user,
     this.errorKind,
     this.infoKind,
+    this.publicFeedRefreshNonce = 0,
   });
 
   final AuthStatus status;
   final AuthUser? user;
+
+  /// Incremented when account deletion completes so the listings feed can
+  /// drop stale in-memory results before the user returns to Home.
+  final int publicFeedRefreshNonce;
 
   /// Set together with [AuthStatus.error]. Widgets resolve the final
   /// user-visible message via `AppLocalizations`.
@@ -80,7 +85,11 @@ class AuthState extends Equatable {
   const AuthState.authenticating() : this(status: AuthStatus.authenticating);
   const AuthState.authenticated(AuthUser user)
     : this(status: AuthStatus.authenticated, user: user);
-  const AuthState.unauthenticated() : this(status: AuthStatus.unauthenticated);
+  const AuthState.unauthenticated({int publicFeedRefreshNonce = 0})
+    : this(
+        status: AuthStatus.unauthenticated,
+        publicFeedRefreshNonce: publicFeedRefreshNonce,
+      );
   const AuthState.error(AuthErrorKind kind)
     : this(status: AuthStatus.error, errorKind: kind);
   const AuthState.needsEmailConfirmation([
@@ -90,5 +99,11 @@ class AuthState extends Equatable {
     : this(status: AuthStatus.passwordRecovery, user: user);
 
   @override
-  List<Object?> get props => [status, user, errorKind, infoKind];
+  List<Object?> get props => [
+    status,
+    user,
+    errorKind,
+    infoKind,
+    publicFeedRefreshNonce,
+  ];
 }

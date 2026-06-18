@@ -6,10 +6,50 @@ import '../../../../../shared/ui/carzon_icons.dart';
 import 'listing_filter_summary_presenter.dart';
 
 /// Premium contextual strip above filter sections (defaults + live draft line).
+///
+/// Uses a fixed inner height so switching between default and active summary
+/// layouts does not change form / scroll extent (layout-stable selection UX).
 class ListingsFilterSummaryStrip extends StatelessWidget {
   const ListingsFilterSummaryStrip({super.key, required this.view});
 
   final ListingsFilterSummaryView view;
+
+  static const double _iconGap = 9;
+  static const double _headlineHintsGap = 11;
+  static const EdgeInsets _innerPadding = EdgeInsets.symmetric(
+    horizontal: 20,
+    vertical: 18,
+  );
+  static const EdgeInsets _outerPadding = EdgeInsets.only(bottom: 6);
+
+  /// Dark-mode icon anchor is taller than the light flat icon.
+  static double iconSlotHeight({required bool light}) => light ? 18 : 38;
+
+  /// Headline slot fits default title (2 lines) and active summary (3 lines).
+  static double headlineSlotHeight(ThemeData theme) {
+    final style = theme.textTheme.titleMedium!.copyWith(height: 1.3);
+    final lineHeight = (style.fontSize ?? 16) * (style.height ?? 1.3);
+    return lineHeight * 3;
+  }
+
+  /// Hints slot always reserved; only populated in default layout.
+  static double hintsSlotHeight(ThemeData theme) {
+    final style = theme.textTheme.bodySmall!.copyWith(height: 1.5);
+    final lineHeight = (style.fontSize ?? 12) * (style.height ?? 1.5);
+    return lineHeight * 2;
+  }
+
+  /// Total outer height including card padding and bottom inset.
+  @visibleForTesting
+  static double reservedOuterHeight(ThemeData theme, {required bool light}) {
+    return _outerPadding.bottom +
+        _innerPadding.vertical +
+        iconSlotHeight(light: light) +
+        _iconGap +
+        headlineSlotHeight(theme) +
+        _headlineHintsGap +
+        hintsSlotHeight(theme);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,40 +149,66 @@ class ListingsFilterSummaryStrip extends StatelessWidget {
             ),
           );
 
+    final iconSlot = iconSlotHeight(light: light);
+    final headlineSlot = headlineSlotHeight(theme);
+    final hintsSlot = hintsSlotHeight(theme);
+    final innerHeight =
+        iconSlot + _iconGap + headlineSlot + _headlineHintsGap + hintsSlot;
+
+    final hintsStyle = theme.textTheme.bodySmall?.copyWith(
+      color: scheme.onSurfaceVariant.withValues(alpha: light ? 0.5 : 0.72),
+      height: 1.5,
+      letterSpacing: 0.2,
+      fontWeight: FontWeight.w500,
+    );
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: _outerPadding,
       child: DecoratedBox(
         decoration: decoration,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(alignment: Alignment.center, child: iconWidget),
-              const SizedBox(height: 9),
-              Text(
-                headline,
-                textAlign: TextAlign.center,
-                maxLines: useDefault ? 2 : 3,
-                overflow: TextOverflow.ellipsis,
-                style: headlineStyle,
-              ),
-              if (useDefault) ...[
-                const SizedBox(height: 11),
-                Text(
-                  l10n.filtersSummaryDefaultHints,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(
-                      alpha: light ? 0.5 : 0.72,
+          padding: _innerPadding,
+          child: SizedBox(
+            height: innerHeight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: iconSlot,
+                  child: Center(child: iconWidget),
+                ),
+                const SizedBox(height: _iconGap),
+                SizedBox(
+                  height: headlineSlot,
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      headline,
+                      textAlign: TextAlign.center,
+                      maxLines: useDefault ? 2 : 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: headlineStyle,
                     ),
-                    height: 1.5,
-                    letterSpacing: 0.2,
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
+                const SizedBox(height: _headlineHintsGap),
+                SizedBox(
+                  height: hintsSlot,
+                  child: useDefault
+                      ? Align(
+                          alignment: Alignment.topCenter,
+                          child: Text(
+                            l10n.filtersSummaryDefaultHints,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: hintsStyle,
+                          ),
+                        )
+                      : null,
+                ),
               ],
-            ],
+            ),
           ),
         ),
       ),
