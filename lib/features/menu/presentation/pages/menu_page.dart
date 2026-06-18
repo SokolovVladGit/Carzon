@@ -163,6 +163,12 @@ class _MenuPageState extends State<MenuPage> {
                   _PremiumGroupedCard(
                     children: [
                       _PremiumMenuRow(
+                        rowKey: const ValueKey<String>('menu_settings_row'),
+                        icon: CarzonIcons.settings,
+                        title: l10n.menuSettings,
+                        onTap: () => context.push(AppRoutes.settings),
+                      ),
+                      _PremiumMenuRow(
                         icon: CarzonIcons.privacy,
                         title: l10n.profileLegal,
                         onTap: () => context.go(AppRoutes.legal),
@@ -363,6 +369,7 @@ class _PremiumGroupedCard extends StatelessWidget {
 
 class _PremiumMenuRow extends StatelessWidget {
   const _PremiumMenuRow({
+    this.rowKey,
     required this.icon,
     required this.title,
     required this.onTap,
@@ -370,6 +377,7 @@ class _PremiumMenuRow extends StatelessWidget {
     this.badgeCount,
   });
 
+  final Key? rowKey;
   final IconData icon;
   final String title;
   final VoidCallback onTap;
@@ -395,6 +403,7 @@ class _PremiumMenuRow extends StatelessWidget {
           Material(
             color: Colors.transparent,
             child: InkWell(
+              key: rowKey,
               onTap: onTap,
               borderRadius: BorderRadius.circular(18),
               splashFactory: InkRipple.splashFactory,

@@ -93,6 +93,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get menuAccount => 'Аккаунт';
 
   @override
+  String get menuSettings => 'Настройки';
+
+  @override
   String get listingsLoadFailed => 'Не удалось загрузить объявления.';
 
   @override
@@ -1358,6 +1361,104 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get profileSettingsSectionTitle => 'Настройки';
+
+  @override
+  String get profileOpenSettingsTitle => 'Настройки приложения';
+
+  @override
+  String get profileOpenSettingsSubtitle => 'Язык, тема, уведомления и другое';
+
+  @override
+  String get settingsTitle => 'Настройки';
+
+  @override
+  String get settingsIntro =>
+      'Управляйте аккаунтом, интерфейсом и уведомлениями в одном месте.';
+
+  @override
+  String get settingsSectionAccount => 'Аккаунт';
+
+  @override
+  String get settingsSectionPreferences => 'Предпочтения';
+
+  @override
+  String get settingsSectionNotifications => 'Уведомления';
+
+  @override
+  String get settingsSectionPrivacySafety =>
+      'Конфиденциальность и безопасность';
+
+  @override
+  String get settingsSectionSupportLegal => 'Поддержка и правовая информация';
+
+  @override
+  String get settingsAccountProfileTitle => 'Профиль аккаунта';
+
+  @override
+  String get settingsAccountProfileSubtitle =>
+      'Имя, email и публичный профиль продавца';
+
+  @override
+  String get settingsSignInForAccountSubtitle =>
+      'Войдите, чтобы управлять паролем и уведомлениями';
+
+  @override
+  String get settingsPrivacyLegalLinkTitle => 'Условия и безопасность';
+
+  @override
+  String get settingsPrivacyLegalLinkSubtitle =>
+      'Правовая информация и рекомендации по безопасным сделкам';
+
+  @override
+  String get settingsLegalLinkSubtitle =>
+      'Условия использования и политика конфиденциальности';
+
+  @override
+  String get settingsRequestDataTitle => 'Запросить мои данные';
+
+  @override
+  String get settingsRequestDataSubtitle =>
+      'Связаться с поддержкой по вопросам персональных данных';
+
+  @override
+  String get settingsDeleteAccountTitle => 'Удалить аккаунт';
+
+  @override
+  String get settingsDeleteAccountSubtitle =>
+      'Безвозвратно удалить аккаунт и связанные данные';
+
+  @override
+  String get deleteAccountTitle => 'Удаление аккаунта';
+
+  @override
+  String get deleteAccountWarningTitle => 'Это действие необратимо';
+
+  @override
+  String get deleteAccountWarningBody =>
+      'Ваш аккаунт и доступ к приложению будут удалены.\n\n• Активные объявления исчезнут с публичной витрины\n• Избранное, фильтры-оповещения, профиль продавца и настройки push будут удалены\n• Переписки и история сообщений могут быть удалены\n\nПосле подтверждения восстановить аккаунт будет невозможно.';
+
+  @override
+  String get deleteAccountConfirmationKeyword => 'УДАЛИТЬ';
+
+  @override
+  String deleteAccountConfirmationPrompt(String keyword) {
+    return 'Чтобы подтвердить, введите «$keyword»';
+  }
+
+  @override
+  String get deleteAccountSubmit => 'Удалить аккаунт навсегда';
+
+  @override
+  String get deleteAccountErrorGeneric =>
+      'Не удалось удалить аккаунт. Попробуйте снова или обратитесь в поддержку.';
+
+  @override
+  String get deleteAccountErrorNetwork =>
+      'Нет соединения. Проверьте интернет и попробуйте снова.';
+
+  @override
+  String get deleteAccountErrorSession =>
+      'Сессия истекла. Войдите снова и повторите удаление.';
 
   @override
   String get profileChangePasswordTitle => 'Изменить пароль';

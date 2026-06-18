@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/config/env.dart';
 import '../../core/l10n/app_localizations_x.dart';
 import '../../features/compare/presentation/pages/compare_page.dart';
+import '../../features/account/presentation/pages/delete_account_page.dart';
 import '../../features/auth/presentation/pages/change_password_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
@@ -23,6 +24,7 @@ import '../../features/messaging/presentation/pages/messages_inbox_page.dart';
 import '../../features/my_listings/presentation/pages/my_listings_page.dart';
 import '../../features/notifications/presentation/pages/notification_settings_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/sellers/presentation/pages/seller_profile_page.dart';
 
 class AppRoutes {
@@ -41,6 +43,8 @@ class AppRoutes {
   static const favorites = '/favorites';
   static const compare = '/compare';
   static const profile = '/profile';
+  static const settings = '/settings';
+  static const deleteAccount = '/delete-account';
   static const menu = '/menu';
   static const legal = '/legal';
   static const messages = '/messages';
@@ -180,6 +184,14 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.profile,
           builder: (_, _) => const ProfilePage(),
+        ),
+        GoRoute(
+          path: AppRoutes.settings,
+          builder: (_, _) => const SettingsPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.deleteAccount,
+          builder: (_, _) => const DeleteAccountPage(),
         ),
         GoRoute(
           path: AppRoutes.notificationSettings,

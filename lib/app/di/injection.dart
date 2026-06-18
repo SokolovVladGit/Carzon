@@ -7,6 +7,7 @@ import '../../core/l10n/app_locale_local_datasource.dart';
 import '../../core/theme/theme_mode_cubit.dart';
 import '../../core/theme/theme_mode_local_datasource.dart';
 import '../../features/auth/di/auth_injection.dart';
+import '../../features/account/di/account_injection.dart';
 import '../../features/compare/di/compare_injection.dart';
 import '../../features/create_listing/di/create_listing_injection.dart';
 import '../../features/edit_listing/di/edit_listing_injection.dart';
@@ -54,6 +55,7 @@ Future<void> configureDependencies(SupabaseService supabaseService) async {
   // Notifications before auth so `SignOut` pre-hooks can resolve push services.
   registerNotificationsFeature(sl);
   registerAuthFeature(sl);
+  registerAccountFeature(sl);
   registerListingsFeature(sl);
   registerVehicleModelDataFeature(sl);
   registerVehicleRecallDataFeature(sl);

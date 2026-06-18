@@ -12,6 +12,7 @@ import '../../bloc/listings_state.dart';
 import '../../utils/listing_formatters.dart';
 import 'listing_filter_summary_presenter.dart';
 import 'listings_filter_apply_result.dart';
+import 'listings_filter_budget_panel.dart';
 import 'listings_filter_form_seed.dart';
 import 'listings_filter_labels.dart';
 import 'listings_filter_section.dart';
@@ -885,6 +886,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
   Widget _regionSelector(AppLocalizations l10n) {
     return ListingsFilterSegmentedControl<MarketRegionFilter>(
       key: const ValueKey<String>('listings_filter_region_segmented'),
+      variant: ListingsFilterSegmentedControlVariant.region,
       value: _region,
       onChanged: (v) {
         setState(() => _region = v);
@@ -893,15 +895,40 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
       entries: [
         ListingsFilterSegmentEntry(
           value: MarketRegionFilter.transnistria,
-          label: Text(l10n.regionTransnistria),
+          label: Text(
+            l10n.regionTransnistria,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.visible,
+            softWrap: true,
+          ),
+          icon: Icons.map_outlined,
+          semanticsLabel: l10n.regionTransnistria,
         ),
         ListingsFilterSegmentEntry(
           value: MarketRegionFilter.moldova,
-          label: Text(l10n.regionMoldova),
+          label: Text(
+            l10n.regionMoldova,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.visible,
+            softWrap: true,
+          ),
+          icon: Icons.map_outlined,
+          semanticsLabel: l10n.regionMoldova,
         ),
         ListingsFilterSegmentEntry(
           value: MarketRegionFilter.both,
-          label: Text(l10n.regionBoth),
+          label: Text(
+            l10n.regionBoth,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.visible,
+            softWrap: true,
+          ),
+          icon: Icons.language_outlined,
+          isNeutralOption: true,
+          semanticsLabel: l10n.regionBoth,
         ),
       ],
     );
@@ -909,6 +936,8 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
 
   Widget _listingTypeSelector(AppLocalizations l10n) {
     return ListingsFilterSegmentedControl<ListingTypeFilter>(
+      key: const ValueKey<String>('listings_filter_type_segmented'),
+      variant: ListingsFilterSegmentedControlVariant.listingType,
       value: _type,
       onChanged: (v) {
         setState(() => _type = v);
@@ -917,15 +946,22 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
       entries: [
         ListingsFilterSegmentEntry(
           value: ListingTypeFilter.any,
-          label: Text(l10n.typeAny),
+          label: Text(l10n.typeAny, textAlign: TextAlign.center),
+          icon: Icons.apps_rounded,
+          isNeutralOption: true,
+          semanticsLabel: l10n.typeAny,
         ),
         ListingsFilterSegmentEntry(
           value: ListingTypeFilter.sale,
-          label: Text(l10n.typeSale),
+          label: Text(l10n.typeSale, textAlign: TextAlign.center),
+          icon: Icons.sell_outlined,
+          semanticsLabel: l10n.typeSale,
         ),
         ListingsFilterSegmentEntry(
           value: ListingTypeFilter.exchange,
-          label: Text(l10n.typeExchange),
+          label: Text(l10n.typeExchange, textAlign: TextAlign.center),
+          icon: Icons.swap_horiz_rounded,
+          semanticsLabel: l10n.typeExchange,
         ),
       ],
     );
@@ -1037,116 +1073,88 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: light
-                        ? scheme.outlineVariant.withValues(alpha: 0.2)
-                        : scheme.outline.withValues(alpha: 0.28),
-                  ),
-                  color: light
-                      ? Color.alphaBlend(
-                          scheme.surfaceContainerHighest.withValues(alpha: 0.2),
-                          scheme.surface,
-                        )
-                      : Color.alphaBlend(
-                          scheme.primary.withValues(alpha: 0.05),
-                          scheme.surfaceContainerLow,
+              ListingsFilterBudgetPanel(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      l10n.filterPriceBudgetHint,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant.withValues(
+                          alpha: light ? 0.52 : 0.72,
                         ),
-                  boxShadow: light
-                      ? [
-                          BoxShadow(
-                            color: scheme.shadow.withValues(alpha: 0.035),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
-                          ),
-                        ]
-                      : [
-                          BoxShadow(
-                            color: scheme.primary.withValues(alpha: 0.04),
-                            blurRadius: 14,
-                            offset: const Offset(0, 4),
-                            spreadRadius: -2,
-                          ),
-                        ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        l10n.filterPriceBudgetHint,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: light ? 0.52 : 0.72,
-                          ),
-                          height: 1.45,
+                        height: 1.45,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _filterPriceCompactField(
+                          theme: theme,
+                          scheme: scheme,
+                          controller: _minPrice,
+                          focusNode: _minPriceFocus,
+                          boundLabel: l10n.filterPriceFrom,
+                          errorText: _minPriceError,
+                          isMin: true,
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _filterPriceCompactField(
-                            theme: theme,
-                            scheme: scheme,
-                            controller: _minPrice,
-                            focusNode: _minPriceFocus,
-                            boundLabel: l10n.filterPriceFrom,
-                            errorText: _minPriceError,
-                            isMin: true,
-                          ),
-                          const SizedBox(width: 12),
-                          _filterPriceCompactField(
-                            theme: theme,
-                            scheme: scheme,
-                            controller: _maxPrice,
-                            focusNode: _maxPriceFocus,
-                            boundLabel: l10n.filterPriceTo,
-                            errorText: _maxPriceError,
-                            isMin: false,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          l10n.filterPriceCurrencyLabel,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: scheme.onSurface.withValues(alpha: 0.64),
-                            fontWeight: FontWeight.w600,
-                          ),
+                        const SizedBox(width: 12),
+                        _filterPriceCompactField(
+                          theme: theme,
+                          scheme: scheme,
+                          controller: _maxPrice,
+                          focusNode: _maxPriceFocus,
+                          boundLabel: l10n.filterPriceTo,
+                          errorText: _maxPriceError,
+                          isMin: false,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        l10n.filterPriceCurrencyLabel,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: scheme.onSurface.withValues(alpha: 0.64),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      ListingsFilterSegmentedControl<
-                        ListingPriceCurrencyFilter
-                      >(
-                        value: _priceCurrency,
-                        onChanged: (v) {
-                          setState(() => _priceCurrency = v);
-                          _notifyDraftMutated();
-                        },
-                        entries: [
-                          ListingsFilterSegmentEntry(
-                            value: ListingPriceCurrencyFilter.any,
-                            label: Text(l10n.filterPriceCurrencyAny),
-                          ),
-                          ListingsFilterSegmentEntry(
-                            value: ListingPriceCurrencyFilter.usd,
-                            label: Text(l10n.filterPriceCurrencyUsd),
-                          ),
-                          ListingsFilterSegmentEntry(
-                            value: ListingPriceCurrencyFilter.eur,
-                            label: Text(l10n.filterPriceCurrencyEur),
-                          ),
-                        ],
+                    ),
+                    const SizedBox(height: 10),
+                    ListingsFilterSegmentedControl<ListingPriceCurrencyFilter>(
+                      key: const ValueKey<String>(
+                        'listings_filter_currency_segmented',
                       ),
-                    ],
-                  ),
+                      variant: ListingsFilterSegmentedControlVariant.currency,
+                      value: _priceCurrency,
+                      onChanged: (v) {
+                        setState(() => _priceCurrency = v);
+                        _notifyDraftMutated();
+                      },
+                      entries: [
+                        ListingsFilterSegmentEntry(
+                          value: ListingPriceCurrencyFilter.any,
+                          label: Text(l10n.filterPriceCurrencyAny),
+                          isNeutralOption: true,
+                          semanticsLabel: l10n.filterPriceCurrencyAny,
+                        ),
+                        ListingsFilterSegmentEntry(
+                          value: ListingPriceCurrencyFilter.usd,
+                          label: Text(l10n.filterPriceCurrencyUsd),
+                          secondaryLabel: 'USD',
+                          semanticsLabel: 'USD',
+                        ),
+                        ListingsFilterSegmentEntry(
+                          value: ListingPriceCurrencyFilter.eur,
+                          label: Text(l10n.filterPriceCurrencyEur),
+                          secondaryLabel: 'EUR',
+                          semanticsLabel: 'EUR',
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 22),

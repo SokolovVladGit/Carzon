@@ -71,6 +71,7 @@ class CarzonIcons {
   static const IconData signIn = LucideIcons.logIn;
   static const IconData signOut = LucideIcons.logOut;
   static const IconData user = LucideIcons.user;
+  static const IconData settings = LucideIcons.settings;
   static const IconData privacy = LucideIcons.lock;
 
   /// Bell outline for informational “alert” chrome (delivery not implemented MVP).
