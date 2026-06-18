@@ -281,5 +281,24 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(cubit.state.status, AuthStatus.authenticated);
     });
+
+    test('markUnauthenticatedAfterAccountDeletion clears session without signOut', () {
+      cubit.emit(const AuthState.authenticated(user));
+      cubit.markUnauthenticatedAfterAccountDeletion();
+      expect(cubit.state.status, AuthStatus.unauthenticated);
+      expect(cubit.state.publicFeedRefreshNonce, 1);
+    });
+
+    test(
+      'markUnauthenticatedAfterAccountDeletion increments public feed refresh nonce',
+      () {
+        cubit.emit(
+          const AuthState.authenticated(user),
+        );
+        cubit.markUnauthenticatedAfterAccountDeletion();
+        cubit.markUnauthenticatedAfterAccountDeletion();
+        expect(cubit.state.publicFeedRefreshNonce, 2);
+      },
+    );
   });
 }

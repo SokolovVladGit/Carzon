@@ -655,4 +655,106 @@ class AppTheme {
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Filter exclusive-choice tiles (currency / region / listing type).
+  // Calm editorial selected state — avoids default primary-blue chip feel.
+  // ---------------------------------------------------------------------------
+
+  static Color filterChoiceUnselectedFill(ColorScheme scheme) {
+    final light = scheme.brightness == Brightness.light;
+    return light
+        ? Color.alphaBlend(
+            scheme.outlineVariant.withValues(alpha: 0.05),
+            scheme.surface,
+          )
+        : Color.alphaBlend(
+            scheme.onSurface.withValues(alpha: 0.02),
+            scheme.surfaceContainerLow,
+          );
+  }
+
+  static Color filterChoiceSelectedFill(
+    ColorScheme scheme, {
+    bool neutral = false,
+  }) {
+    final light = scheme.brightness == Brightness.light;
+    if (neutral) {
+      return light
+          ? Color.alphaBlend(
+              scheme.onSurface.withValues(alpha: 0.035),
+              scheme.surface,
+            )
+          : Color.alphaBlend(
+              scheme.onSurface.withValues(alpha: 0.05),
+              scheme.surfaceContainerLow,
+            );
+    }
+    return light
+        ? Color.alphaBlend(
+            scheme.onSurface.withValues(alpha: 0.05),
+            Color.alphaBlend(
+              scheme.surfaceContainerHighest.withValues(alpha: 0.28),
+              scheme.surface,
+            ),
+          )
+        : Color.alphaBlend(
+            scheme.onSurface.withValues(alpha: 0.07),
+            scheme.surfaceContainerHigh,
+          );
+  }
+
+  static Color filterChoiceBorder(
+    ColorScheme scheme, {
+    required bool selected,
+    bool neutral = false,
+    bool soft = false,
+  }) {
+    final light = scheme.brightness == Brightness.light;
+    if (selected) {
+      if (soft) {
+        return scheme.onSurface.withValues(
+          alpha: neutral
+              ? (light ? 0.14 : 0.18)
+              : (light ? 0.12 : 0.16),
+        );
+      }
+      return scheme.onSurface.withValues(
+        alpha: neutral
+            ? (light ? 0.20 : 0.26)
+            : (light ? 0.18 : 0.24),
+      );
+    }
+    return scheme.outlineVariant.withValues(alpha: light ? 0.20 : 0.26);
+  }
+
+  static double filterChoiceBorderWidth({
+    required bool selected,
+    bool soft = false,
+  }) {
+    // Constant width keeps selected/unselected outer size identical.
+    return 1.0;
+  }
+
+  static Color filterChoiceSelectedIndicator(
+    ColorScheme scheme, {
+    bool soft = false,
+  }) {
+    final light = scheme.brightness == Brightness.light;
+    if (soft) {
+      return scheme.onSurface.withValues(alpha: light ? 0.22 : 0.32);
+    }
+    return scheme.onSurface.withValues(alpha: light ? 0.32 : 0.44);
+  }
+
+  static List<BoxShadow>? filterChoiceSelectedShadow(ColorScheme scheme) {
+    if (scheme.brightness == Brightness.dark) return null;
+    return [
+      BoxShadow(
+        color: scheme.shadow.withValues(alpha: 0.045),
+        blurRadius: 8,
+        offset: const Offset(0, 2),
+      ),
+    ];
+  }
 }

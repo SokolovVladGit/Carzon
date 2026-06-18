@@ -34,5 +34,11 @@ void main() {
     expect(find.text(l10n.filterClear), findsOneWidget);
     expect(find.text(l10n.filterShowCars), findsOneWidget);
     expect(find.text(l10n.filtersSummaryDefaultTitle), findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey<String>('listings_filter_currency_segmented'),
+      ),
+      findsOneWidget,
+    );
   });
 }

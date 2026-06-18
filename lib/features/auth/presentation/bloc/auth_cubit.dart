@@ -61,7 +61,11 @@ class AuthCubit extends Cubit<AuthState> {
         return;
       }
       if (user == null) {
-        emit(const AuthState.unauthenticated());
+        emit(
+          AuthState.unauthenticated(
+            publicFeedRefreshNonce: state.publicFeedRefreshNonce,
+          ),
+        );
       } else {
         emit(AuthState.authenticated(user));
       }
@@ -125,8 +129,23 @@ class AuthCubit extends Cubit<AuthState> {
       (_) => emit(const AuthState.error(AuthErrorKind.signOutFailed)),
       (_) {
         _inPasswordRecovery = false;
-        emit(const AuthState.unauthenticated());
+        emit(
+          AuthState.unauthenticated(
+            publicFeedRefreshNonce: state.publicFeedRefreshNonce,
+          ),
+        );
       },
+    );
+  }
+
+  /// Syncs cubit state after [DeleteAccount] already ran push cleanup and
+  /// cleared the Supabase session. Avoids a second [SignOut] / push hook pass.
+  void markUnauthenticatedAfterAccountDeletion() {
+    _inPasswordRecovery = false;
+    emit(
+      AuthState.unauthenticated(
+        publicFeedRefreshNonce: state.publicFeedRefreshNonce + 1,
+      ),
     );
   }
 
@@ -142,7 +161,9 @@ class AuthCubit extends Cubit<AuthState> {
     final user = state.user;
     emit(
       user == null
-          ? const AuthState.unauthenticated()
+          ? AuthState.unauthenticated(
+              publicFeedRefreshNonce: state.publicFeedRefreshNonce,
+            )
           : AuthState.authenticated(user),
     );
   }

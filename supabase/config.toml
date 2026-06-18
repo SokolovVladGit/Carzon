@@ -28,3 +28,7 @@ verify_jwt = false
 # `20260707123000_schedule_process_recall_data_jobs_cron.sql` and docs/ops_recall_data_jobs.md
 [functions.process-recall-data-jobs]
 verify_jwt = false
+
+# Authenticated self-service account deletion (user JWT required).
+[functions.delete-own-account]
+verify_jwt = true

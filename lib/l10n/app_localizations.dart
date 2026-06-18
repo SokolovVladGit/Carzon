@@ -260,6 +260,12 @@ abstract class AppLocalizations {
   /// **'Аккаунт'**
   String get menuAccount;
 
+  /// No description provided for @menuSettings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки'**
+  String get menuSettings;
+
   /// No description provided for @listingsLoadFailed.
   ///
   /// In ru, this message translates to:
@@ -2537,6 +2543,174 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Настройки'**
   String get profileSettingsSectionTitle;
+
+  /// No description provided for @profileOpenSettingsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки приложения'**
+  String get profileOpenSettingsTitle;
+
+  /// No description provided for @profileOpenSettingsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Язык, тема, уведомления и другое'**
+  String get profileOpenSettingsSubtitle;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройки'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsIntro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Управляйте аккаунтом, интерфейсом и уведомлениями в одном месте.'**
+  String get settingsIntro;
+
+  /// No description provided for @settingsSectionAccount.
+  ///
+  /// In ru, this message translates to:
+  /// **'Аккаунт'**
+  String get settingsSectionAccount;
+
+  /// No description provided for @settingsSectionPreferences.
+  ///
+  /// In ru, this message translates to:
+  /// **'Предпочтения'**
+  String get settingsSectionPreferences;
+
+  /// No description provided for @settingsSectionNotifications.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления'**
+  String get settingsSectionNotifications;
+
+  /// No description provided for @settingsSectionPrivacySafety.
+  ///
+  /// In ru, this message translates to:
+  /// **'Конфиденциальность и безопасность'**
+  String get settingsSectionPrivacySafety;
+
+  /// No description provided for @settingsSectionSupportLegal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поддержка и правовая информация'**
+  String get settingsSectionSupportLegal;
+
+  /// No description provided for @settingsAccountProfileTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Профиль аккаунта'**
+  String get settingsAccountProfileTitle;
+
+  /// No description provided for @settingsAccountProfileSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Имя, email и публичный профиль продавца'**
+  String get settingsAccountProfileSubtitle;
+
+  /// No description provided for @settingsSignInForAccountSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите, чтобы управлять паролем и уведомлениями'**
+  String get settingsSignInForAccountSubtitle;
+
+  /// No description provided for @settingsPrivacyLegalLinkTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Условия и безопасность'**
+  String get settingsPrivacyLegalLinkTitle;
+
+  /// No description provided for @settingsPrivacyLegalLinkSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Правовая информация и рекомендации по безопасным сделкам'**
+  String get settingsPrivacyLegalLinkSubtitle;
+
+  /// No description provided for @settingsLegalLinkSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Условия использования и политика конфиденциальности'**
+  String get settingsLegalLinkSubtitle;
+
+  /// No description provided for @settingsRequestDataTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запросить мои данные'**
+  String get settingsRequestDataTitle;
+
+  /// No description provided for @settingsRequestDataSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Связаться с поддержкой по вопросам персональных данных'**
+  String get settingsRequestDataSubtitle;
+
+  /// No description provided for @settingsDeleteAccountTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт'**
+  String get settingsDeleteAccountTitle;
+
+  /// No description provided for @settingsDeleteAccountSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Безвозвратно удалить аккаунт и связанные данные'**
+  String get settingsDeleteAccountSubtitle;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удаление аккаунта'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountWarningTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это действие необратимо'**
+  String get deleteAccountWarningTitle;
+
+  /// No description provided for @deleteAccountWarningBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваш аккаунт и доступ к приложению будут удалены.\n\n• Активные объявления исчезнут с публичной витрины\n• Избранное, фильтры-оповещения, профиль продавца и настройки push будут удалены\n• Переписки и история сообщений могут быть удалены\n\nПосле подтверждения восстановить аккаунт будет невозможно.'**
+  String get deleteAccountWarningBody;
+
+  /// No description provided for @deleteAccountConfirmationKeyword.
+  ///
+  /// In ru, this message translates to:
+  /// **'УДАЛИТЬ'**
+  String get deleteAccountConfirmationKeyword;
+
+  /// No description provided for @deleteAccountConfirmationPrompt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чтобы подтвердить, введите «{keyword}»'**
+  String deleteAccountConfirmationPrompt(String keyword);
+
+  /// No description provided for @deleteAccountSubmit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить аккаунт навсегда'**
+  String get deleteAccountSubmit;
+
+  /// No description provided for @deleteAccountErrorGeneric.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось удалить аккаунт. Попробуйте снова или обратитесь в поддержку.'**
+  String get deleteAccountErrorGeneric;
+
+  /// No description provided for @deleteAccountErrorNetwork.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет соединения. Проверьте интернет и попробуйте снова.'**
+  String get deleteAccountErrorNetwork;
+
+  /// No description provided for @deleteAccountErrorSession.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сессия истекла. Войдите снова и повторите удаление.'**
+  String get deleteAccountErrorSession;
 
   /// No description provided for @profileChangePasswordTitle.
   ///

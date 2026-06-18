@@ -58,6 +58,10 @@ const _profileTestChangePasswordStubKey = ValueKey<String>(
   'profile_test_change_password_stub',
 );
 
+const _profileTestSettingsStubKey = ValueKey<String>(
+  'profile_test_settings_stub',
+);
+
 const _profileTestSupportThreadStubKey = ValueKey<String>(
   'profile_test_support_thread_stub',
 );
@@ -137,6 +141,13 @@ GoRouter _profileTestGoRouter({
         builder: (_, _) => const Scaffold(
           key: _profileTestNotificationSettingsStubKey,
           body: Text('profile_test_notification_settings_placeholder'),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (_, _) => const Scaffold(
+          key: _profileTestSettingsStubKey,
+          body: Text('profile_test_settings_placeholder'),
         ),
       ),
       GoRoute(
@@ -369,21 +380,26 @@ void main() {
         findsOneWidget,
       );
       expect(find.text(l10n.profileSettingsSectionTitle), findsOneWidget);
-      expect(find.text(l10n.profileLanguageTitle), findsOneWidget);
-      expect(find.text(l10n.profileNotificationsTitle), findsOneWidget);
-      expect(find.text(l10n.profileChangePasswordTitle), findsOneWidget);
-      expect(find.text(l10n.profileChangePasswordSubtitle), findsOneWidget);
-      expect(find.text(l10n.profileListingAlertsTitle), findsNothing);
-      expect(find.text(l10n.profileDarkThemeTitle), findsOneWidget);
-      expect(find.text(l10n.profileDarkThemeSubtitle), findsOneWidget);
+      expect(find.text(l10n.profileOpenSettingsTitle), findsOneWidget);
+      expect(find.text(l10n.profileOpenSettingsSubtitle), findsOneWidget);
       expect(
-        find.byKey(const ValueKey<String>('profile_dark_theme_switch')),
+        find.byKey(const ValueKey<String>('profile_open_settings_row')),
         findsOneWidget,
+      );
+      expect(find.text(l10n.profileLanguageTitle), findsNothing);
+      expect(find.text(l10n.profileNotificationsTitle), findsNothing);
+      expect(find.text(l10n.profileChangePasswordTitle), findsNothing);
+      expect(find.text(l10n.profileListingAlertsTitle), findsNothing);
+      expect(find.text(l10n.profileDarkThemeTitle), findsNothing);
+      expect(find.text(l10n.profileDarkThemeSubtitle), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('settings_dark_theme_switch')),
+        findsNothing,
       );
       expect(find.text(l10n.filterAlertProfileRowSubtitle), findsNothing);
       expect(
-        find.byKey(const ValueKey<String>('profile_change_password_row')),
-        findsOneWidget,
+        find.byKey(const ValueKey<String>('settings_change_password_row')),
+        findsNothing,
       );
       expect(
         find.byKey(const ValueKey<String>('profile_filter_alert_row')),
@@ -391,11 +407,7 @@ void main() {
       );
 
       expect(find.text(l10n.commonComingSoon), findsNothing);
-      expect(find.text(l10n.profileLanguageCurrentRussian), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('profile_future_row_language')),
-        findsOneWidget,
-      );
+      expect(find.text(l10n.contactSupport), findsNothing);
 
       expect(find.text('Saved Shop'), findsWidgets);
       expect(
@@ -430,87 +442,7 @@ void main() {
     },
   );
 
-  testWidgets(
-    'authenticated: notification settings row opens /notification-settings',
-    (tester) async {
-      const user = AuthUser(
-        id: 'u1',
-        email: 'seller@example.com',
-        fullName: 'Ana Popescu',
-      );
-      when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
-      whenListen(
-        cubit,
-        const Stream<AuthState>.empty(),
-        initialState: const AuthState.authenticated(user),
-      );
-
-      await tester.pumpWidget(
-        _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
-      );
-      await tester.pumpAndSettle();
-
-      final row = find.byKey(
-        const ValueKey<String>('profile_notification_settings_row'),
-      );
-      await tester.scrollUntilVisible(
-        row,
-        80,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(row);
-      await tester.pumpAndSettle();
-
-      expect(
-        find.byKey(_profileTestNotificationSettingsStubKey),
-        findsOneWidget,
-      );
-    },
-  );
-
-  testWidgets('authenticated: contact support row opens support thread', (
-    tester,
-  ) async {
-    const user = AuthUser(
-      id: 'u1',
-      email: 'seller@example.com',
-      fullName: 'Ana Popescu',
-    );
-    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
-    whenListen(
-      cubit,
-      const Stream<AuthState>.empty(),
-      initialState: const AuthState.authenticated(user),
-    );
-    when(() => messagingRepo.getOrCreateSupportConversation()).thenAnswer(
-      (_) async => const Success('support-conv-42'),
-    );
-
-    await tester.pumpWidget(
-      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
-    );
-    await tester.pumpAndSettle();
-
-    final row = find.byKey(
-      const ValueKey<String>('profile_contact_support_row'),
-    );
-    await tester.scrollUntilVisible(
-      row,
-      80,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(find.text(l10n.contactSupport), findsOneWidget);
-    expect(find.text(l10n.contactSupportSubtitle), findsOneWidget);
-
-    await tester.tap(row);
-    await tester.pumpAndSettle();
-
-    verify(() => messagingRepo.getOrCreateSupportConversation()).called(1);
-    expect(find.byKey(_profileTestSupportThreadStubKey), findsOneWidget);
-    expect(find.text('thread:support-conv-42'), findsOneWidget);
-  });
-
-  testWidgets('authenticated: change password row opens /change-password', (
+  testWidgets('authenticated: open settings row navigates to /settings', (
     tester,
   ) async {
     const user = AuthUser(
@@ -531,7 +463,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final row = find.byKey(
-      const ValueKey<String>('profile_change_password_row'),
+      const ValueKey<String>('profile_open_settings_row'),
     );
     await tester.scrollUntilVisible(
       row,
@@ -541,11 +473,11 @@ void main() {
     await tester.tap(row);
     await tester.pumpAndSettle();
 
-    expect(find.byKey(_profileTestChangePasswordStubKey), findsOneWidget);
+    expect(find.byKey(_profileTestSettingsStubKey), findsOneWidget);
   });
 
   testWidgets(
-    'authenticated: change password row is a single navigation target (chevron)',
+    'authenticated: open settings row is a single navigation target (chevron)',
     (tester) async {
       const user = AuthUser(
         id: 'u1',
@@ -565,7 +497,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final row = find.byKey(
-        const ValueKey<String>('profile_change_password_row'),
+        const ValueKey<String>('profile_open_settings_row'),
       );
       await tester.scrollUntilVisible(
         row,
@@ -585,54 +517,6 @@ void main() {
       );
     },
   );
-
-  testWidgets('authenticated: dark theme switch toggles on and off', (
-    tester,
-  ) async {
-    const user = AuthUser(
-      id: 'u1',
-      email: 'seller@example.com',
-      fullName: 'Ana Popescu',
-    );
-    final themeModeCubit = ThemeModeCubit(
-      localDataSource: _InMemoryThemeModeLocalDataSource(),
-    );
-    addTearDown(themeModeCubit.close);
-    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
-    whenListen(
-      cubit,
-      const Stream<AuthState>.empty(),
-      initialState: const AuthState.authenticated(user),
-    );
-
-    await tester.pumpWidget(
-      _profileTestApp(
-        cubit: cubit,
-        messagingUnread: unreadSummaryCubit,
-        themeModeCubit: themeModeCubit,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final switchFinder = find.byKey(
-      const ValueKey<String>('profile_dark_theme_switch'),
-    );
-    await tester.scrollUntilVisible(
-      switchFinder,
-      80,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(switchFinder, findsOneWidget);
-    expect(tester.widget<Switch>(switchFinder).value, isFalse);
-
-    await tester.tap(switchFinder);
-    await tester.pumpAndSettle();
-    expect(tester.widget<Switch>(switchFinder).value, isTrue);
-
-    await tester.tap(switchFinder);
-    await tester.pumpAndSettle();
-    expect(tester.widget<Switch>(switchFinder).value, isFalse);
-  });
 
   testWidgets('authenticated without full name: falls back to showing email', (
     tester,
@@ -1073,42 +957,6 @@ void main() {
       );
     },
   );
-
-  testWidgets('language row opens sheet and switches to Romanian', (
-    tester,
-  ) async {
-    final localeDataSource = _InMemoryAppLocaleLocalDataSource();
-    final appLocaleCubit = AppLocaleCubit(localDataSource: localeDataSource);
-    const user = AuthUser(id: 'u1', email: 'a@b.com');
-    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
-    whenListen(
-      cubit,
-      const Stream<AuthState>.empty(),
-      initialState: const AuthState.authenticated(user),
-    );
-
-    await tester.pumpWidget(
-      _profileTestApp(
-        cubit: cubit,
-        messagingUnread: unreadSummaryCubit,
-        appLocaleCubit: appLocaleCubit,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('profile_future_row_language')),
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('profile_future_row_language')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('profile_language_option_ro')));
-    await tester.pumpAndSettle();
-
-    expect(appLocaleCubit.state.preference, AppLocalePreference.ro);
-    expect(find.text(l10n.profileLanguageCurrentRomanian), findsOneWidget);
-    expect(find.text(l10n.commonComingSoon), findsNothing);
-  });
 
   testWidgets(
     'private header uses seller_profiles avatar ahead of AuthUser.photo',

@@ -6,12 +6,89 @@ import 'package:carzon/features/listings/presentation/widgets/filters/listings_f
 import 'package:carzon/features/listings/presentation/widgets/filters/listings_filter_form.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/listings_filter_host.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/listings_filter_summary_strip.dart';
+import 'package:carzon/features/listings/presentation/widgets/filters/listings_filter_segmented_control.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
 import '../../helpers/filter_form_brand_picker_helpers.dart';
+
+Future<void> _pumpStandaloneFilterForm(WidgetTester tester) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      locale: const Locale('ru'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: ListingsFilterForm(
+            seed: ListingsFilterFormSeed.fromListingsState(
+              const ListingsState(),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _scrollFilterControlIntoView(
+  WidgetTester tester,
+  Finder control,
+) async {
+  await tester.scrollUntilVisible(
+    control,
+    120,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.pumpAndSettle();
+}
+
+const Size _kFilterSheetViewport = Size(390, 844);
+
+Future<void> _pumpFilterHostAtViewport(
+  WidgetTester tester, {
+  Size viewport = _kFilterSheetViewport,
+}) async {
+  tester.view.physicalSize = viewport;
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
+  await tester.pumpWidget(
+    MaterialApp(
+      locale: const Locale('ru'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: ListingsFilterHost(
+        seed: ListingsFilterFormSeed.fromListingsState(const ListingsState()),
+        onDismiss: () {},
+        onApply: (_) {},
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Size _summaryStripSize(WidgetTester tester) {
+  return tester.getSize(find.byType(ListingsFilterSummaryStrip));
+}
+
+Size _filterFormSize(WidgetTester tester) {
+  return tester.getSize(find.byType(ListingsFilterForm));
+}
+
+double _filterListMaxScrollExtent(WidgetTester tester) {
+  final scrollable = find.descendant(
+    of: find.byType(ListingsFilterHost),
+    matching: find.byType(Scrollable),
+  );
+  final position =
+      tester.state<ScrollableState>(scrollable.first).position;
+  return position.maxScrollExtent;
+}
 
 void main() {
   testWidgets('ListingsFilterHost shows structured filter surface', (
@@ -94,6 +171,46 @@ void main() {
     expect(find.text(l10n.filterPriceCurrencyAny), findsOneWidget);
     expect(find.text(l10n.filterPriceCurrencyUsd), findsOneWidget);
     expect(find.text(l10n.filterPriceCurrencyEur), findsOneWidget);
+    expect(find.text('USD'), findsOneWidget);
+    expect(find.text('EUR'), findsOneWidget);
+  });
+
+  testWidgets('currency segmented control updates apply result', (tester) async {
+    final l10n = ruStrings();
+    final formKey = GlobalKey<ListingsFilterFormState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ListingsFilterForm(
+              key: formKey,
+              seed: ListingsFilterFormSeed.fromListingsState(
+                const ListingsState(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final currencyControl = find.byKey(
+      const ValueKey<String>('listings_filter_currency_segmented'),
+    );
+    await tester.scrollUntilVisible(
+      currencyControl,
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text(l10n.filterPriceCurrencyUsd));
+    await tester.pumpAndSettle();
+
+    final result = formKey.currentState!.submit();
+    expect(result, isNotNull);
+    expect(result!.priceCurrencyFilter, ListingPriceCurrencyFilter.usd);
   });
 
   testWidgets('ListingsFilterForm shows seed values when reopened', (
@@ -864,4 +981,229 @@ void main() {
       }
     },
   );
+
+  testWidgets('variant segmented controls render on compact viewport', (
+    tester,
+  ) async {
+    final l10n = ruStrings();
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: ListingsFilterHost(
+          seed: ListingsFilterFormSeed.fromListingsState(const ListingsState()),
+          onDismiss: () {},
+          onApply: (_) {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(
+        const ValueKey<String>('listings_filter_currency_segmented'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('listings_filter_region_segmented')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('listings_filter_type_segmented')),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.regionTransnistria), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('currency selector keeps stable size when selection changes', (
+    tester,
+  ) async {
+    final l10n = ruStrings();
+    await _pumpStandaloneFilterForm(tester);
+
+    final control = find.byKey(
+      const ValueKey<String>('listings_filter_currency_segmented'),
+    );
+    await _scrollFilterControlIntoView(tester, control);
+
+    final baseline = tester.getSize(control);
+    expect(baseline.height, filterChoiceVariantOuterHeight(
+      ListingsFilterSegmentedControlVariant.currency,
+    ));
+
+    for (final label in [
+      l10n.filterPriceCurrencyUsd,
+      l10n.filterPriceCurrencyEur,
+      l10n.filterPriceCurrencyAny,
+    ]) {
+      final option = find.descendant(
+        of: control,
+        matching: find.text(label),
+      );
+      await _scrollFilterControlIntoView(tester, option);
+      await tester.tap(option);
+      await tester.pumpAndSettle();
+      expect(tester.getSize(control), baseline);
+    }
+  });
+
+  testWidgets('region selector keeps stable size when selection changes', (
+    tester,
+  ) async {
+    final l10n = ruStrings();
+    await _pumpStandaloneFilterForm(tester);
+
+    final control = find.byKey(
+      const ValueKey<String>('listings_filter_region_segmented'),
+    );
+    await _scrollFilterControlIntoView(tester, control);
+
+    final baseline = tester.getSize(control);
+    expect(baseline.height, filterChoiceVariantOuterHeight(
+      ListingsFilterSegmentedControlVariant.region,
+    ));
+
+    for (final label in [
+      l10n.regionMoldova,
+      l10n.regionTransnistria,
+      l10n.regionBoth,
+    ]) {
+      final option = find.descendant(
+        of: control,
+        matching: find.text(label),
+      );
+      await _scrollFilterControlIntoView(tester, option);
+      await tester.tap(option);
+      await tester.pumpAndSettle();
+      expect(tester.getSize(control), baseline);
+    }
+  });
+
+  testWidgets('listing type selector keeps stable size when selection changes', (
+    tester,
+  ) async {
+    final l10n = ruStrings();
+    await _pumpStandaloneFilterForm(tester);
+
+    final control = find.byKey(
+      const ValueKey<String>('listings_filter_type_segmented'),
+    );
+    await _scrollFilterControlIntoView(tester, control);
+
+    final baseline = tester.getSize(control);
+    expect(baseline.height, filterChoiceVariantOuterHeight(
+      ListingsFilterSegmentedControlVariant.listingType,
+    ));
+
+    for (final label in [
+      l10n.typeSale,
+      l10n.typeExchange,
+      l10n.typeAny,
+    ]) {
+      final option = find.descendant(
+        of: control,
+        matching: find.text(label),
+      );
+      await _scrollFilterControlIntoView(tester, option);
+      await tester.tap(option);
+      await tester.pumpAndSettle();
+      expect(tester.getSize(control), baseline);
+    }
+  });
+
+  group('summary strip layout stability on first filter change', () {
+    testWidgets('summary strip height unchanged after currency first tap', (
+      tester,
+    ) async {
+      final l10n = ruStrings();
+      await _pumpFilterHostAtViewport(tester);
+
+      expect(find.text(l10n.filtersSummaryDefaultTitle), findsOneWidget);
+
+      final stripBaseline = _summaryStripSize(tester);
+      final formBaseline = _filterFormSize(tester);
+      final scrollBaseline = _filterListMaxScrollExtent(tester);
+
+      final currencyControl = find.byKey(
+        const ValueKey<String>('listings_filter_currency_segmented'),
+      );
+      await _scrollFilterControlIntoView(tester, currencyControl);
+      await tester.tap(find.text(l10n.filterPriceCurrencyUsd));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.filtersSummaryDefaultTitle), findsNothing);
+      expect(_summaryStripSize(tester), stripBaseline);
+      expect(_filterFormSize(tester), formBaseline);
+      expect(_filterListMaxScrollExtent(tester), scrollBaseline);
+    });
+
+    testWidgets('summary strip height unchanged after region first tap', (
+      tester,
+    ) async {
+      final l10n = ruStrings();
+      await _pumpFilterHostAtViewport(tester);
+
+      final stripBaseline = _summaryStripSize(tester);
+      final formBaseline = _filterFormSize(tester);
+
+      final regionControl = find.byKey(
+        const ValueKey<String>('listings_filter_region_segmented'),
+      );
+      await _scrollFilterControlIntoView(tester, regionControl);
+      await tester.tap(find.text(l10n.regionMoldova));
+      await tester.pumpAndSettle();
+
+      expect(_summaryStripSize(tester), stripBaseline);
+      expect(_filterFormSize(tester), formBaseline);
+    });
+
+    testWidgets(
+      'summary strip height unchanged after listing type first tap',
+      (tester) async {
+        final l10n = ruStrings();
+        await _pumpFilterHostAtViewport(tester);
+
+        final stripBaseline = _summaryStripSize(tester);
+        final formBaseline = _filterFormSize(tester);
+        final scrollBaseline = _filterListMaxScrollExtent(tester);
+
+        final typeControl = find.byKey(
+          const ValueKey<String>('listings_filter_type_segmented'),
+        );
+        await _scrollFilterControlIntoView(tester, typeControl);
+        await tester.tap(find.text(l10n.typeSale));
+        await tester.pumpAndSettle();
+
+        expect(_summaryStripSize(tester), stripBaseline);
+        expect(_filterFormSize(tester), formBaseline);
+        expect(_filterListMaxScrollExtent(tester), scrollBaseline);
+      },
+    );
+
+    testWidgets(
+      'reserved outer height matches measured vanilla strip on viewport',
+      (tester) async {
+        await _pumpFilterHostAtViewport(tester);
+
+        final theme = Theme.of(
+          tester.element(find.byType(ListingsFilterSummaryStrip)),
+        );
+        final measured = _summaryStripSize(tester);
+        final reserved = ListingsFilterSummaryStrip.reservedOuterHeight(
+          theme,
+          light: theme.brightness == Brightness.light,
+        );
+
+        expect(measured.height, reserved);
+      },
+    );
+  });
 }

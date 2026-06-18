@@ -136,6 +136,7 @@ void main() {
       // legal/content surfaces even when logged out.
       expect(find.text(l10n.profileMyListings), findsOneWidget);
       expect(find.text(l10n.menuAccount), findsOneWidget);
+      expect(find.text(l10n.menuSettings), findsOneWidget);
       expect(find.text(l10n.profileLegal), findsOneWidget);
     },
   );
@@ -274,6 +275,70 @@ void main() {
       expect(find.text(l10n.profileSignInRequired), findsOneWidget);
     },
   );
+
+  testWidgets('Settings row pushes /settings', (tester) async {
+    when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.unauthenticated(),
+    );
+
+    const settingsStubKey = ValueKey<String>('menu_test_settings_stub');
+
+    late final GoRouter router;
+    router = GoRouter(
+      initialLocation: AppRoutes.menu,
+      routes: [
+        GoRoute(
+          path: AppRoutes.menu,
+          builder: (_, _) => MultiBlocProvider(
+            providers: [
+              BlocProvider<AuthCubit>.value(value: cubit),
+              BlocProvider(
+                create: (_) =>
+                    SelfSellerVisualCubit(GetMySellerProfile(sellersRepo)),
+              ),
+              BlocProvider(
+                create: (_) => MessagingUnreadSummaryCubit(messagingRepo),
+              ),
+            ],
+            child: const MenuPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.settings,
+          builder: (_, _) => const Scaffold(
+            key: settingsStubKey,
+            body: Text('menu_settings_stub'),
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      BlocProvider<CompareCubit>.value(
+        value: compareCubit,
+        child: MaterialApp.router(
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey<String>('menu_settings_row')),
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.byKey(const ValueKey<String>('menu_settings_row')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(settingsStubKey), findsOneWidget);
+  });
 
   testWidgets('identity avatar prefers seller_profiles URL when present', (
     tester,
