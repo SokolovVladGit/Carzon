@@ -471,6 +471,27 @@
   "@settingsDeleteAccountTitle": {},
   "settingsDeleteAccountSubtitle": "Elimină definitiv contul și datele asociate",
   "@settingsDeleteAccountSubtitle": {},
+  "settingsSignOutSubtitle": "Deconectați-vă de pe acest dispozitiv",
+  "@settingsSignOutSubtitle": {},
+  "settingsSectionAbout": "Despre aplicație",
+  "@settingsSectionAbout": {},
+  "settingsAboutAppName": "Carzon",
+  "@settingsAboutAppName": {},
+  "settingsAboutVersion": "Versiunea {version} (build {build})",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAboutVersionLoading": "Se încarcă versiunea…",
+  "@settingsAboutVersionLoading": {},
+  "settingsAboutVersionUnavailable": "Versiune indisponibilă",
+  "@settingsAboutVersionUnavailable": {},
   "deleteAccountTitle": "Ștergere cont",
   "@deleteAccountTitle": {},
   "deleteAccountWarningTitle": "Această acțiune este ireversibilă",

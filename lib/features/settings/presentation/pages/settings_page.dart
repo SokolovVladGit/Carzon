@@ -17,6 +17,7 @@ import '../../../messaging/domain/usecases/get_or_create_support_conversation.da
 import '../../../messaging/presentation/utils/support_conversation_user_messages.dart';
 import '../../../profile/presentation/widgets/profile_grouped_card.dart';
 import '../../../profile/presentation/widgets/profile_settings_navigation_row.dart';
+import '../widgets/settings_about_section.dart';
 import '../widgets/settings_dark_theme_row.dart';
 import '../widgets/settings_language_row.dart';
 
@@ -86,7 +87,15 @@ class _SettingsPageState extends State<SettingsPage> {
             stops: const [0, 0.42, 1],
           ),
         ),
-        child: BlocBuilder<AuthCubit, AuthState>(
+        child: BlocConsumer<AuthCubit, AuthState>(
+          listenWhen: (prev, curr) => prev.status != curr.status,
+          listener: (context, auth) {
+            if (auth.status == AuthStatus.error) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.profileSignOutFailedRetry)),
+              );
+            }
+          },
           builder: (context, auth) {
             final authenticated =
                 auth.status == AuthStatus.authenticated && auth.user != null;
@@ -138,6 +147,18 @@ class _SettingsPageState extends State<SettingsPage> {
                             theme: theme,
                             scheme: scheme,
                             onTap: () => context.push(AppRoutes.changePassword),
+                          ),
+                          ProfileMutedDivider(scheme: scheme, isDark: isDark),
+                          ProfileSettingsNavigationRow(
+                            rowKey: const ValueKey<String>(
+                              'settings_sign_out_row',
+                            ),
+                            icon: CarzonIcons.signOut,
+                            title: l10n.profileSignOut,
+                            subtitle: l10n.settingsSignOutSubtitle,
+                            theme: theme,
+                            scheme: scheme,
+                            onTap: () => context.read<AuthCubit>().signOut(),
                           ),
                         ] else
                           ProfileSettingsNavigationRow(
@@ -203,26 +224,14 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  ProfileGroupedCard(
-                    title: l10n.settingsSectionPrivacySafety,
-                    childPadding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        ProfileSettingsNavigationRow(
-                          rowKey: const ValueKey<String>(
-                            'settings_privacy_legal_row',
-                          ),
-                          icon: CarzonIcons.privacy,
-                          title: l10n.settingsPrivacyLegalLinkTitle,
-                          subtitle: l10n.settingsPrivacyLegalLinkSubtitle,
-                          theme: theme,
-                          scheme: scheme,
-                          onTap: () => context.push(AppRoutes.legal),
-                        ),
-                        if (authenticated) ...[
-                          ProfileMutedDivider(scheme: scheme, isDark: isDark),
+                  if (authenticated) ...[
+                    const SizedBox(height: 16),
+                    ProfileGroupedCard(
+                      title: l10n.settingsSectionPrivacySafety,
+                      childPadding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                           ProfileSettingsNavigationRow(
                             rowKey: const ValueKey<String>(
                               'settings_request_data_row',
@@ -249,9 +258,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             onTap: () => context.push(AppRoutes.deleteAccount),
                           ),
                         ],
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 16),
                   ProfileGroupedCard(
                     title: l10n.settingsSectionSupportLegal,
@@ -287,6 +296,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  const SettingsAboutSection(),
                 ],
               ),
             );

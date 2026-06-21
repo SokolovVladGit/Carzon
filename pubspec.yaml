@@ -42,6 +42,9 @@ dependencies:
   # Local persisted listing discovery defaults
   shared_preferences: ^2.5.4
 
+  # App version/build for Settings About section
+  package_info_plus: ^8.3.0
+
   # Media (MVP: single cover image picker for create-listing)
   image_picker: ^1.1.2
   camera: ^0.11.1
