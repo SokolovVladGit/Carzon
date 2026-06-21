@@ -54,7 +54,11 @@ class ChatMessageBubble extends StatelessWidget {
               decoration: BoxDecoration(
                 color: bg,
                 borderRadius: radius,
-                border: _bubbleBorder(cs, isOutgoing: isOutgoing, isDark: isDark),
+                border: _bubbleBorder(
+                  cs,
+                  isOutgoing: isOutgoing,
+                  isDark: isDark,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: cs.shadow.withValues(alpha: shadowAlpha),

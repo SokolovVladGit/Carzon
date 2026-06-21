@@ -15,12 +15,12 @@ import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
-import 'package:carzon/features/filter_alerts/domain/repositories/filter_alerts_repository.dart';
+import 'package:carzon/features/filter_alerts/domain/entities/saved_search.dart';
+import 'package:carzon/features/filter_alerts/domain/repositories/saved_searches_repository.dart';
 import 'package:carzon/features/filter_alerts/domain/services/filter_alert_delivery_orchestrator.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/clear_filter_alert_criteria.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/get_filter_alert_settings.dart';
-import 'package:carzon/features/filter_alerts/domain/entities/filter_alert_settings.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/save_filter_alert_criteria.dart';
+import 'package:carzon/features/filter_alerts/domain/usecases/create_saved_search.dart';
+import 'package:carzon/features/filter_alerts/domain/usecases/delete_saved_search.dart';
+import 'package:carzon/features/filter_alerts/domain/usecases/list_saved_searches.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_browse_filter_alert_sheet_bell.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_browse_filter_alert_sheet_notice.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_alert_ui_constants.dart';
@@ -37,12 +37,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/browse_catalog_filter_alerts_sl.dart';
 import '../../helpers/l10n_test_helpers.dart';
 
 class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
-
-class _MockFilterAlertsRepository extends Mock
-    implements FilterAlertsRepository {}
 
 class _MockNotificationsRepository extends Mock
     implements NotificationsRepository {}
@@ -97,13 +95,7 @@ class _SheetHarnessState extends State<_SheetHarness> {
 void main() {
   setUpAll(() {
     registerFallbackValue(
-      FilterAlertSettings(
-        userId: 'u',
-        criteria: null,
-        notificationsEnabled: false,
-        createdAt: DateTime.utc(2026, 1, 2),
-        updatedAt: DateTime.utc(2026, 1, 3),
-      ),
+      testSavedSearch(criteria: const ListingDiscoveryCriteria()),
     );
     registerFallbackValue(const ListingDiscoveryCriteria());
   });
@@ -125,23 +117,15 @@ void main() {
       (
         BrowseCatalogFilterAlertsCubit,
         _MockDeliveryOrchestrator,
-        _MockFilterAlertsRepository,
+        MockSavedSearchesRepository,
       )
     >
     setupCubit() async {
-      final filterRepo = _MockFilterAlertsRepository();
+      final savedSearchesRepo = MockSavedSearchesRepository();
       final notifRepo = _MockNotificationsRepository();
       final orch = _MockDeliveryOrchestrator();
-      when(() => filterRepo.loadMine()).thenAnswer(
-        (_) async => Success(
-          FilterAlertSettings(
-            userId: 'u',
-            criteria: null,
-            notificationsEnabled: false,
-            createdAt: DateTime.utc(2026, 1, 8),
-            updatedAt: DateTime.utc(2026, 1, 9),
-          ),
-        ),
+      when(() => savedSearchesRepo.list()).thenAnswer(
+        (_) async => const Success([]),
       );
       when(() => notifRepo.getMyPreferences()).thenAnswer(
         (_) async => Success(
@@ -155,15 +139,13 @@ void main() {
           ),
         ),
       );
-      final cubit = BrowseCatalogFilterAlertsCubit(
-        getSettings: GetFilterAlertSettings(filterRepo),
-        saveCriteria: SaveFilterAlertCriteria(filterRepo),
-        clearCriteria: ClearFilterAlertCriteria(filterRepo),
-        notificationsRepository: notifRepo,
+      final cubit = buildTestBrowseCatalogFilterAlertsCubit(
+        savedSearchesRepo: savedSearchesRepo,
+        notificationsRepo: notifRepo,
         deliveryOrchestrator: orch,
       );
       await cubit.refresh();
-      return (cubit, orch, filterRepo);
+      return (cubit, orch, savedSearchesRepo);
     }
 
     Widget hostApp({
@@ -199,7 +181,7 @@ void main() {
         addTearDown(tester.view.reset);
 
         final auth = buildSignedInAuth();
-        final (alertsCubit, orch, filterRepo) = await setupCubit();
+        final (alertsCubit, orch, savedSearchesRepo) = await setupCubit();
         final formKey = GlobalKey<ListingsFilterFormState>();
 
         await tester.pumpWidget(
@@ -218,9 +200,10 @@ void main() {
 
         verifyNever(() => orch.enableDeliveries(any()));
         verifyNever(
-          () => filterRepo.saveCriteria(
-            any(),
-            notificationsEnabled: any(named: 'notificationsEnabled'),
+          () => savedSearchesRepo.create(
+            name: any(named: 'name'),
+            criteria: any(named: 'criteria'),
+            alertsEnabled: any(named: 'alertsEnabled'),
           ),
         );
 
@@ -308,30 +291,32 @@ void main() {
         addTearDown(tester.view.reset);
 
         final auth = buildSignedInAuth();
-        final (alertsCubit, orch, filterRepo) = await setupCubit();
+        final (alertsCubit, orch, savedSearchesRepo) = await setupCubit();
         // Accept any save with non-null criteria so the cubit's
         // too-broad guard never fires.
         when(
-          () => filterRepo.saveCriteria(
-            any(),
-            notificationsEnabled: any(named: 'notificationsEnabled'),
+          () => savedSearchesRepo.create(
+            name: any(named: 'name'),
+            criteria: any(named: 'criteria'),
+            alertsEnabled: any(named: 'alertsEnabled'),
           ),
-        ).thenAnswer(
-          (inv) async => Success(
-            FilterAlertSettings(
-              userId: 'u',
-              criteria:
-                  inv.positionalArguments.first as ListingDiscoveryCriteria,
-              notificationsEnabled:
-                  inv.namedArguments[#notificationsEnabled] as bool,
-              createdAt: DateTime.utc(2026, 4, 1),
-              updatedAt: DateTime.utc(2026, 4, 2),
+        ).thenAnswer((inv) async {
+          final criteria =
+              inv.namedArguments[#criteria] as ListingDiscoveryCriteria;
+          final alertsEnabled =
+              inv.namedArguments[#alertsEnabled] as bool;
+          final name = inv.namedArguments[#name] as String;
+          return Success(
+            testSavedSearch(
+              id: 'ss-bmw',
+              name: name,
+              criteria: criteria,
+              alertsEnabled: alertsEnabled,
             ),
-          ),
-        );
+          );
+        });
         when(() => orch.enableDeliveries(any())).thenAnswer(
-          (inv) async =>
-              Success(inv.positionalArguments.first as FilterAlertSettings),
+          (inv) async => Success(inv.positionalArguments.first as SavedSearch),
         );
 
         final formKey = GlobalKey<ListingsFilterFormState>();

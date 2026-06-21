@@ -53,6 +53,14 @@ void main() {
       expect(ts, isNot(contains('message_body')));
     });
 
+    test('process-message-notifications imports block gate helper', () {
+      final ts = File(
+        'supabase/functions/process-message-notifications/index.ts',
+      ).readAsStringSync();
+      expect(ts, contains('message_notification_block_gate.ts'));
+      expect(ts, contains('carzon_users_are_blocked'));
+    });
+
     test('process-filter-alert-notifications selects copy by token locale', () {
       final ts = File(
         'supabase/functions/process-filter-alert-notifications/index.ts',

@@ -4,7 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/result.dart';
+import '../../../recent_searches/domain/usecases/record_recent_search.dart';
 import '../../data/local/last_applied_listing_discovery_repository.dart';
+import '../../domain/browse_state_for_alert_criteria.dart';
 import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_discovery_criteria.dart';
 import '../../domain/listing_discovery_state_sync.dart';
@@ -17,8 +19,10 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
   ListingsBloc({
     required GetListings getListings,
     required LastAppliedListingDiscoveryRepository lastAppliedDiscovery,
+    required RecordRecentSearch recordRecentSearch,
   }) : _getListings = getListings,
        _lastAppliedDiscovery = lastAppliedDiscovery,
+       _recordRecentSearch = recordRecentSearch,
        super(const ListingsState()) {
     on<ListingsRequested>(_onRequested);
     on<ListingsRefreshed>(_onRefreshed);
@@ -34,11 +38,14 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
 
   final GetListings _getListings;
   final LastAppliedListingDiscoveryRepository _lastAppliedDiscovery;
+  final RecordRecentSearch _recordRecentSearch;
+  bool _skipNextRecentSearchRecord = false;
 
   Future<void> _onHydratedFromDiscovery(
     ListingsHydratedFromDiscovery event,
     Emitter<ListingsState> emit,
   ) async {
+    _skipNextRecentSearchRecord = true;
     final next = listingsStateFromDiscoveryCriteria(event.criteria).copyWith(
       status: ListingsStatus.loading,
       page: 0,
@@ -328,6 +335,13 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
         emit(nextState);
         final snapshot = listingDiscoveryCriteriaFromListingsState(nextState);
         unawaited(_lastAppliedDiscovery.persistIfNeeded(snapshot));
+        if (page == 0) {
+          if (_skipNextRecentSearchRecord) {
+            _skipNextRecentSearchRecord = false;
+          } else if (browseStateEligibleForFilterAlertSnapshot(nextState)) {
+            unawaited(_recordRecentSearch(snapshot));
+          }
+        }
     }
   }
 }

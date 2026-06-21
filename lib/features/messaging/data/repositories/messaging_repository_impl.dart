@@ -3,9 +3,11 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/constants/chat_attachment_limits.dart';
+import '../../domain/entities/blocked_user.dart';
 import '../../domain/entities/chat_attachment_upload.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/conversation.dart';
+import '../../domain/entities/user_report_reason.dart';
 import '../../domain/repositories/messaging_repository.dart';
 import '../datasources/chat_attachment_remote_datasource.dart';
 import '../datasources/messaging_remote_datasource.dart';
@@ -187,6 +189,69 @@ class MessagingRepositoryImpl implements MessagingRepository {
       return const FailureResult(
         UnknownFailure('Failed to load unread count.'),
       );
+    }
+  }
+
+  @override
+  Future<Result<void>> blockUser(String conversationId) async {
+    try {
+      await _remote.blockUserRpc(conversationId);
+      return const Success(null);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('blockUser unknown error', e, st);
+      return const FailureResult(UnknownFailure('Failed to block user.'));
+    }
+  }
+
+  @override
+  Future<Result<void>> reportUser({
+    required String conversationId,
+    required UserReportReason reason,
+    String? note,
+  }) async {
+    try {
+      final trimmedNote = note?.trim();
+      await _remote.reportUserRpc(
+        conversationId: conversationId,
+        reason: reason.toDbValue(),
+        note: trimmedNote == null || trimmedNote.isEmpty ? null : trimmedNote,
+      );
+      return const Success(null);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('reportUser unknown error', e, st);
+      return const FailureResult(UnknownFailure('Failed to submit report.'));
+    }
+  }
+
+  @override
+  Future<Result<List<BlockedUser>>> listBlockedUsers() async {
+    try {
+      final list = await _remote.fetchBlockedUsersRpc();
+      return Success(list);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('listBlockedUsers unknown error', e, st);
+      return const FailureResult(
+        UnknownFailure('Failed to load blocked users.'),
+      );
+    }
+  }
+
+  @override
+  Future<Result<bool>> unblockUser(String blockedUserId) async {
+    try {
+      final ok = await _remote.unblockUserRpc(blockedUserId);
+      return Success(ok);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('unblockUser unknown error', e, st);
+      return const FailureResult(UnknownFailure('Failed to unblock user.'));
     }
   }
 }

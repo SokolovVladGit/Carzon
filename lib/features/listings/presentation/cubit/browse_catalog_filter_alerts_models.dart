@@ -54,6 +54,9 @@ enum BrowseCatalogBellOutcome {
   /// Filter-alert delivery toggled **on**.
   deliveriesEnabled,
 
+  /// User already has the maximum number of saved searches (5).
+  maxSavedSearchesReached,
+
   /// No UX surface needed (silent).
   noop,
 }

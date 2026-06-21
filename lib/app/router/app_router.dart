@@ -19,10 +19,13 @@ import '../../features/listings/presentation/pages/listing_details_page.dart';
 import '../../features/listings/domain/entities/listing_discovery_criteria.dart';
 import '../../features/listings/presentation/pages/listings_page.dart';
 import '../../features/menu/presentation/pages/menu_page.dart';
+import '../../features/messaging/presentation/pages/blocked_users_page.dart';
 import '../../features/messaging/presentation/pages/conversation_thread_page.dart';
 import '../../features/messaging/presentation/pages/messages_inbox_page.dart';
 import '../../features/my_listings/presentation/pages/my_listings_page.dart';
 import '../../features/notifications/presentation/pages/notification_settings_page.dart';
+import '../../features/recent_searches/presentation/pages/recent_searches_page.dart';
+import '../../features/recently_viewed/presentation/pages/recently_viewed_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/sellers/presentation/pages/seller_profile_page.dart';
@@ -42,6 +45,8 @@ class AppRoutes {
   static const myListings = '/my-listings';
   static const favorites = '/favorites';
   static const compare = '/compare';
+  static const recentlyViewed = '/recently-viewed';
+  static const recentSearches = '/recent-searches';
   static const profile = '/profile';
   static const settings = '/settings';
   static const deleteAccount = '/delete-account';
@@ -50,6 +55,7 @@ class AppRoutes {
   static const messages = '/messages';
   static const notificationSettings = '/notification-settings';
   static const filterAlert = '/filter-alert';
+  static const blockedUsers = '/blocked-users';
   static const sellerProfile = '/sellers/:sellerId';
 
   static String listingDetailsPath(String id) => '/listings/$id';
@@ -182,6 +188,14 @@ class AppRouter {
           builder: (_, _) => const ComparePage(),
         ),
         GoRoute(
+          path: AppRoutes.recentlyViewed,
+          builder: (_, _) => const RecentlyViewedPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.recentSearches,
+          builder: (_, _) => const RecentSearchesPage(),
+        ),
+        GoRoute(
           path: AppRoutes.profile,
           builder: (_, _) => const ProfilePage(),
         ),
@@ -200,6 +214,10 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.filterAlert,
           builder: (_, _) => const FilterAlertSettingsPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.blockedUsers,
+          builder: (_, _) => const BlockedUsersPage(),
         ),
         GoRoute(path: AppRoutes.menu, builder: (_, _) => const MenuPage()),
         GoRoute(

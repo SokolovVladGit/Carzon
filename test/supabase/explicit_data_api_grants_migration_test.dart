@@ -28,6 +28,10 @@ void main() {
     'listings_after_insert_ensure_seller_profile',
     'touch_seller_profiles_updated_at',
     'touch_filter_alert_settings_updated_at',
+    'touch_saved_searches_updated_at',
+    'enforce_saved_searches_max_per_user',
+    'saved_searches_validate_name',
+    'saved_searches_validate_criteria',
     'set_listings_updated_at',
     // After INSERT on `messages`; not Flutter-called — client EXECUTE revoked in
     // 20260526120000_revoke_internal_trigger_function_execute.sql.
@@ -97,6 +101,7 @@ void main() {
     'user_conversation_state',
     'seller_profiles',
     'filter_alert_settings',
+    'saved_searches',
     'notification_preferences',
     'user_push_tokens',
     'notification_delivery_events',

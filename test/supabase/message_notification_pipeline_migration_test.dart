@@ -299,5 +299,56 @@ void main() {
       expect(ts, isNot(contains('message_body')));
       expect(ts, isNot(contains('p_body')));
     });
+
+    test('Phase B: calls carzon_users_are_blocked before FCM send', () {
+      final prefIdx = ts.indexOf('notification_preferences_off');
+      final blockIdx = ts.indexOf('"carzon_users_are_blocked"');
+      final fcmCallIdx = ts.indexOf('await sendFcmToToken');
+      expect(prefIdx, greaterThan(-1));
+      expect(blockIdx, greaterThan(prefIdx));
+      expect(fcmCallIdx, greaterThan(blockIdx));
+      expect(ts, contains('p_user_a: event.actor_user_id'));
+      expect(ts, contains('p_user_b: event.recipient_user_id'));
+    });
+
+    test(
+      'Phase B: blocked pair skips push with non-fatal messaging_blocked',
+      () {
+        expect(ts, contains('MESSAGING_BLOCKED_SKIP_REASON'));
+        expect(ts, contains('status: "skipped"'));
+        expect(ts, contains('message_notification_block_gate.ts'));
+        expect(ts, isNot(contains('blocker_user_id')));
+        expect(ts, isNot(contains('blocked_user_id')));
+      },
+    );
+
+    test('Phase B: support conversations exempt via shared block gate', () {
+      expect(ts, contains('../_shared/message_notification_block_gate.ts'));
+      expect(ts, contains('shouldApplyMessagingBlockGate'));
+      expect(ts, contains('conversation_kind'));
+    });
+
+    test('Phase B: notification preferences checked before block gate', () {
+      final prefIdx = ts.indexOf('notification_preferences_off');
+      final blockIdx = ts.indexOf('"carzon_users_are_blocked"');
+      expect(prefIdx, greaterThan(-1));
+      expect(blockIdx, greaterThan(prefIdx));
+    });
+
+    test(
+      'Phase B: missing recipient or actor skips safely before block check',
+      () {
+        final invalidIdx = ts.indexOf('invalid_recipient_or_actor');
+        final blockIdx = ts.indexOf('"carzon_users_are_blocked"');
+        expect(invalidIdx, greaterThan(-1));
+        expect(blockIdx, greaterThan(invalidIdx));
+      },
+    );
+
+    test('Phase B: does not expose VIN or official-data fields', () {
+      expect(ts.toLowerCase(), isNot(contains('vin_hash')));
+      expect(ts.toLowerCase(), isNot(contains('source_metadata')));
+      expect(ts.toLowerCase(), isNot(contains('cache_key')));
+    });
   });
 }

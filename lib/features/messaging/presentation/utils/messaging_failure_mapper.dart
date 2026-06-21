@@ -21,6 +21,9 @@ MessagingFailureKind messagingFailureKindFrom(Failure failure) {
       m.contains('message body is too long')) {
     return MessagingFailureKind.messageValidation;
   }
+  if (m.contains('messaging blocked')) {
+    return MessagingFailureKind.messagingBlocked;
+  }
   if (m.contains('jwt') || m.contains('permission')) {
     return MessagingFailureKind.serverRejected;
   }

@@ -14,8 +14,10 @@ import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/messaging/domain/repositories/messaging_repository.dart';
 import 'package:carzon/features/messaging/domain/usecases/get_or_create_support_conversation.dart';
 import 'package:carzon/features/settings/presentation/pages/settings_page.dart';
+import 'package:carzon/features/settings/presentation/widgets/settings_about_section.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -49,11 +51,19 @@ const _settingsTestSupportThreadStubKey = ValueKey<String>(
   'settings_test_support_thread_stub',
 );
 
+const _settingsTestBlockedUsersStubKey = ValueKey<String>(
+  'settings_test_blocked_users_stub',
+);
+
 const _settingsTestDeleteAccountStubKey = ValueKey<String>(
   'settings_test_delete_account_stub',
 );
 
 const _settingsTestMenuStubKey = ValueKey<String>('settings_test_menu_stub');
+
+const MethodChannel _packageInfoChannel = MethodChannel(
+  'dev.fluttercommunity.plus/package_info',
+);
 
 final class _InMemoryThemeModeLocalDataSource
     implements ThemeModeLocalDataSource {
@@ -147,6 +157,13 @@ GoRouter _settingsTestRouter({
         ),
       ),
       GoRoute(
+        path: AppRoutes.blockedUsers,
+        builder: (_, _) => const Scaffold(
+          key: _settingsTestBlockedUsersStubKey,
+          body: Text('blocked_users_stub'),
+        ),
+      ),
+      GoRoute(
         path: AppRoutes.deleteAccount,
         builder: (_, _) => const Scaffold(
           key: _settingsTestDeleteAccountStubKey,
@@ -165,9 +182,10 @@ Widget _settingsTestApp({
   required AuthCubit authCubit,
   required ThemeModeCubit themeModeCubit,
   required AppLocaleCubit appLocaleCubit,
+  Locale locale = const Locale('ru'),
 }) {
   return MaterialApp.router(
-    locale: const Locale('ru'),
+    locale: locale,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     routerConfig: _settingsTestRouter(
@@ -202,6 +220,24 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue('');
+    TestWidgetsFlutterBinding.ensureInitialized();
+    _packageInfoChannel.setMockMethodCallHandler((call) async {
+      if (call.method == 'getAll') {
+        return {
+          'appName': 'Carzon',
+          'packageName': 'com.carzon.app',
+          'version': '0.1.0',
+          'buildNumber': '1',
+          'buildSignature': '',
+          'installerStore': '',
+        };
+      }
+      return null;
+    });
+  });
+
+  tearDownAll(() {
+    _packageInfoChannel.setMockMethodCallHandler(null);
   });
 
   setUp(() {
@@ -218,6 +254,7 @@ void main() {
       const AuthState(status: AuthStatus.authenticated, user: testUser),
     );
     when(() => authCubit.stream).thenAnswer((_) => const Stream.empty());
+    when(() => authCubit.signOut()).thenAnswer((_) async {});
 
     if (sl.isRegistered<GetOrCreateSupportConversation>()) {
       sl.unregister<GetOrCreateSupportConversation>();
@@ -257,6 +294,171 @@ void main() {
     );
     expect(find.text(l10n.settingsSectionPrivacySafety), findsOneWidget);
     expect(find.text(l10n.settingsSectionSupportLegal), findsOneWidget);
+    expect(find.text(l10n.settingsSectionAbout), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('settings_account_profile_row')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  test('formatSettingsVersionLabel uses localized template', () {
+    expect(
+      formatSettingsVersionLabel(l10n, version: '0.1.0', build: '1'),
+      l10n.settingsAboutVersion('0.1.0', '1'),
+    );
+  });
+
+  testWidgets('Settings displays About version after package info loads', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _scrollToSettingsRow(
+      tester,
+      const ValueKey<String>('settings_about_version_label'),
+    );
+
+    expect(find.text(l10n.settingsAboutAppName), findsOneWidget);
+    expect(find.text(l10n.settingsAboutVersion('0.1.0', '1')), findsOneWidget);
+  });
+
+  testWidgets('Settings sign out row calls AuthCubit.signOut', (tester) async {
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _scrollToSettingsRow(
+      tester,
+      const ValueKey<String>('settings_sign_out_row'),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('settings_sign_out_row')),
+    );
+    await tester.pumpAndSettle();
+
+    verify(() => authCubit.signOut()).called(1);
+  });
+
+  testWidgets('Settings navigates to profile from account section', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('settings_account_profile_row')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_settingsTestProfileStubKey), findsOneWidget);
+  });
+
+  testWidgets('Settings shows blocked users row when authenticated', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _scrollToSettingsRow(
+      tester,
+      const ValueKey<String>('settings_blocked_users_row'),
+    );
+
+    expect(find.text(l10n.messagingSafetyBlockedUsersTitle), findsOneWidget);
+    expect(find.text(l10n.settingsBlockedUsersSubtitle), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('settings_blocked_users_row')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_settingsTestBlockedUsersStubKey), findsOneWidget);
+  });
+
+  testWidgets('Settings omits duplicate privacy legal row', (tester) async {
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('settings_privacy_legal_row')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('settings_legal_row')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Settings renders on narrow width without overflow', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.window.physicalSizeTestValue = const Size(320, 800);
+    binding.window.devicePixelRatioTestValue = 1.0;
+    addTearDown(binding.window.clearPhysicalSizeTestValue);
+    addTearDown(binding.window.clearDevicePixelRatioTestValue);
+
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SettingsPage), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Settings renders in RO locale without exceptions', (
+    tester,
+  ) async {
+    final roL10n = roStrings();
+
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+        locale: const Locale('ro'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(roL10n.settingsTitle), findsOneWidget);
+    expect(find.text(roL10n.settingsSectionAbout), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -301,7 +503,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(_settingsTestNotificationSettingsStubKey), findsOneWidget);
+    expect(
+      find.byKey(_settingsTestNotificationSettingsStubKey),
+      findsOneWidget,
+    );
   });
 
   testWidgets('Settings navigates to filter alerts when authenticated', (
@@ -320,6 +525,7 @@ void main() {
       tester,
       const ValueKey<String>('settings_filter_alerts_row'),
     );
+    expect(find.text(l10n.savedSearchesSettingsTitle), findsOneWidget);
     await tester.tap(
       find.byKey(const ValueKey<String>('settings_filter_alerts_row')),
     );
@@ -328,28 +534,9 @@ void main() {
     expect(find.byKey(_settingsTestFilterAlertStubKey), findsOneWidget);
   });
 
-  testWidgets('Settings navigates to legal from privacy section', (tester) async {
-    await tester.pumpWidget(
-      _settingsTestApp(
-        authCubit: authCubit,
-        themeModeCubit: themeModeCubit,
-        appLocaleCubit: appLocaleCubit,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await _scrollToSettingsRow(
-      tester,
-      const ValueKey<String>('settings_privacy_legal_row'),
-    );
-    await tester.tap(
-      find.byKey(const ValueKey<String>('settings_privacy_legal_row')),
-    );
-    await tester.pumpAndSettle();
-    expect(find.byKey(_settingsTestLegalStubKey), findsOneWidget);
-  });
-
-  testWidgets('Settings navigates to legal from support section', (tester) async {
+  testWidgets('Settings navigates to legal from support section', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _settingsTestApp(
         authCubit: authCubit,
@@ -388,7 +575,9 @@ void main() {
       tester,
       const ValueKey<String>('settings_support_row'),
     );
-    await tester.tap(find.byKey(const ValueKey<String>('settings_support_row')));
+    await tester.tap(
+      find.byKey(const ValueKey<String>('settings_support_row')),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byKey(_settingsTestSupportThreadStubKey), findsOneWidget);
@@ -455,9 +644,9 @@ void main() {
   testWidgets('Settings shows sign-in row when unauthenticated', (
     tester,
   ) async {
-    when(() => authCubit.state).thenReturn(
-      const AuthState(status: AuthStatus.unauthenticated),
-    );
+    when(
+      () => authCubit.state,
+    ).thenReturn(const AuthState(status: AuthStatus.unauthenticated));
 
     await tester.pumpWidget(
       _settingsTestApp(
@@ -468,7 +657,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey<String>('settings_sign_in_row')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('settings_sign_in_row')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('settings_sign_out_row')),
+      findsNothing,
+    );
+    expect(find.text(l10n.settingsSectionPrivacySafety), findsNothing);
     expect(
       find.byKey(const ValueKey<String>('settings_change_password_row')),
       findsNothing,
@@ -481,6 +678,34 @@ void main() {
       find.byKey(const ValueKey<String>('settings_delete_account_row')),
       findsNothing,
     );
+    expect(
+      find.byKey(const ValueKey<String>('settings_legal_row')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('settings_support_row')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('Settings legal row subtitle mentions safety tips', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _scrollToSettingsRow(
+      tester,
+      const ValueKey<String>('settings_legal_row'),
+    );
+    expect(find.text(l10n.settingsLegalLinkSubtitle), findsOneWidget);
+    expect(find.textContaining('безопасности'), findsOneWidget);
   });
 
   testWidgets('Settings shows delete account row when authenticated', (

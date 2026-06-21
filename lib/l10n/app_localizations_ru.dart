@@ -830,6 +830,123 @@ class AppLocalizationsRu extends AppLocalizations {
   String get messagingQuickReplyWhenCall => 'Когда удобно созвониться?';
 
   @override
+  String get messagingSafetyReportUser => 'Пожаловаться на пользователя';
+
+  @override
+  String get messagingSafetyBlockUser => 'Заблокировать пользователя';
+
+  @override
+  String get messagingSafetyBlockedLabel => 'Заблокирован';
+
+  @override
+  String get messagingSafetyBlockedUsersTitle => 'Заблокированные';
+
+  @override
+  String get messagingSafetyUnblockUser => 'Разблокировать';
+
+  @override
+  String get messagingSafetyBlockConfirmTitle => 'Заблокировать пользователя?';
+
+  @override
+  String get messagingSafetyBlockConfirmBody =>
+      'Этот пользователь не сможет писать вам и не будет получать уведомления о ваших сообщениях. Переписка останется видимой.';
+
+  @override
+  String get messagingSafetyBlockConfirmAction => 'Заблокировать';
+
+  @override
+  String get messagingSafetyBlockConfirmCancel => 'Отмена';
+
+  @override
+  String get messagingSafetyBlockSuccess => 'Пользователь заблокирован.';
+
+  @override
+  String get messagingSafetyBlockError =>
+      'Не удалось заблокировать пользователя. Попробуйте ещё раз.';
+
+  @override
+  String get messagingSafetyBlockedBannerTitle =>
+      'Вы заблокировали этого пользователя';
+
+  @override
+  String get messagingSafetyBlockedBannerBody =>
+      'Новые сообщения недоступны. Разблокировать можно в настройках.';
+
+  @override
+  String get messagingSafetySendUnavailable =>
+      'Обмен сообщениями недоступен в этой переписке.';
+
+  @override
+  String get messagingSafetyReportReasonHarassment => 'Домогательства';
+
+  @override
+  String get messagingSafetyReportReasonSpam => 'Спам';
+
+  @override
+  String get messagingSafetyReportReasonScam => 'Мошенничество';
+
+  @override
+  String get messagingSafetyReportReasonInappropriate => 'Неподходящий контент';
+
+  @override
+  String get messagingSafetyReportReasonOther => 'Другое';
+
+  @override
+  String get messagingSafetyReportNoteLabel => 'Комментарий (необязательно)';
+
+  @override
+  String get messagingSafetyReportNotePlaceholder => 'Кратко опишите проблему…';
+
+  @override
+  String get messagingSafetyReportNoteTooLong =>
+      'Комментарий слишком длинный (макс. 1000 символов).';
+
+  @override
+  String get messagingSafetyReportSubmit => 'Отправить жалобу';
+
+  @override
+  String get messagingSafetyReportSuccess => 'Жалоба отправлена. Спасибо.';
+
+  @override
+  String get messagingSafetyReportError =>
+      'Не удалось отправить жалобу. Попробуйте ещё раз.';
+
+  @override
+  String get messagingSafetyBlockedUsersEmptyTitle =>
+      'Нет заблокированных пользователей';
+
+  @override
+  String get messagingSafetyBlockedUsersEmptyBody =>
+      'Заблокированные пользователи появятся здесь.';
+
+  @override
+  String get messagingSafetyBlockedUsersLoadError =>
+      'Не удалось загрузить список. Попробуйте ещё раз.';
+
+  @override
+  String get messagingSafetyBlockedUserFallback =>
+      'Заблокированный пользователь';
+
+  @override
+  String get messagingSafetyUnblockConfirmTitle =>
+      'Разблокировать пользователя?';
+
+  @override
+  String get messagingSafetyUnblockConfirmBody =>
+      'Этот пользователь снова сможет писать вам по объявлениям.';
+
+  @override
+  String get messagingSafetyUnblockSuccess => 'Пользователь разблокирован.';
+
+  @override
+  String get messagingSafetyUnblockError =>
+      'Не удалось разблокировать пользователя. Попробуйте ещё раз.';
+
+  @override
+  String get settingsBlockedUsersSubtitle =>
+      'Управление заблокированными пользователями';
+
+  @override
   String messagingListingFallback(String shortId) {
     return 'Объявление $shortId';
   }
@@ -847,6 +964,28 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get reportListingMailFailed =>
       'Не удалось открыть почтовое приложение.';
+
+  @override
+  String get listingShareAction => 'Поделиться';
+
+  @override
+  String get listingShareIntro => 'Посмотрите объявление на Carzon:';
+
+  @override
+  String get listingShareOpenInCarzon => 'Откройте в приложении Carzon';
+
+  @override
+  String listingShareLinkLine(String url) {
+    return '$url';
+  }
+
+  @override
+  String listingShareFallbackLine(String id) {
+    return 'Объявление $id в Carzon';
+  }
+
+  @override
+  String get listingShareFailed => 'Не удалось открыть меню «Поделиться».';
 
   @override
   String get formatTypeSale => 'Продажа';
@@ -1403,15 +1542,8 @@ class AppLocalizationsRu extends AppLocalizations {
       'Войдите, чтобы управлять паролем и уведомлениями';
 
   @override
-  String get settingsPrivacyLegalLinkTitle => 'Условия и безопасность';
-
-  @override
-  String get settingsPrivacyLegalLinkSubtitle =>
-      'Правовая информация и рекомендации по безопасным сделкам';
-
-  @override
   String get settingsLegalLinkSubtitle =>
-      'Условия использования и политика конфиденциальности';
+      'Условия, политика конфиденциальности и советы по безопасности';
 
   @override
   String get settingsRequestDataTitle => 'Запросить мои данные';
@@ -1426,6 +1558,26 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get settingsDeleteAccountSubtitle =>
       'Безвозвратно удалить аккаунт и связанные данные';
+
+  @override
+  String get settingsSignOutSubtitle => 'Выйти из аккаунта на этом устройстве';
+
+  @override
+  String get settingsSectionAbout => 'О приложении';
+
+  @override
+  String get settingsAboutAppName => 'Carzon';
+
+  @override
+  String settingsAboutVersion(String version, String build) {
+    return 'Версия $version (сборка $build)';
+  }
+
+  @override
+  String get settingsAboutVersionLoading => 'Загрузка версии…';
+
+  @override
+  String get settingsAboutVersionUnavailable => 'Версия недоступна';
 
   @override
   String get deleteAccountTitle => 'Удаление аккаунта';
@@ -1772,6 +1924,88 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get filterAlertManagementClearedSnack => 'Сохранённый фильтр удалён.';
+
+  @override
+  String get savedSearchesTitle => 'Сохранённые поиски';
+
+  @override
+  String get savedSearchesSettingsTitle => 'Сохранённые поиски';
+
+  @override
+  String get savedSearchesSettingsSubtitle =>
+      'До 5 поисков с оповещениями о новых объявлениях.';
+
+  @override
+  String get savedSearchesSignInRequired =>
+      'Войдите, чтобы управлять сохранёнными поисками.';
+
+  @override
+  String get savedSearchesHeaderEyebrow => 'CARZON · ПОИСК';
+
+  @override
+  String get savedSearchesSubtitle =>
+      'Сохраняйте параметры из каталога и включайте push-оповещения для каждого поиска.';
+
+  @override
+  String get savedSearchesMaxHint => 'Можно сохранить до 5 поисков.';
+
+  @override
+  String get savedSearchesEmptyTitle => 'Сохранённых поисков пока нет';
+
+  @override
+  String get savedSearchesEmptyBody =>
+      'Задайте фильтры в каталоге и нажмите колокольчик, чтобы сохранить поиск.';
+
+  @override
+  String get savedSearchesGoToCatalog => 'Перейти в каталог';
+
+  @override
+  String get savedSearchFallbackName => 'Сохранённый поиск';
+
+  @override
+  String get savedSearchAlertsToggleTitle => 'Оповещения';
+
+  @override
+  String get savedSearchAlertsEnabledLabel => 'Push-оповещения включены';
+
+  @override
+  String get savedSearchAlertsDisabledLabel => 'Push-оповещения выключены';
+
+  @override
+  String get savedSearchDeleteAction => 'Удалить';
+
+  @override
+  String get savedSearchDeleteConfirmTitle => 'Удалить сохранённый поиск?';
+
+  @override
+  String get savedSearchDeleteConfirmBody =>
+      'Этот поиск и его оповещения будут удалены. Другие сохранённые поиски не затронуты.';
+
+  @override
+  String get savedSearchDeleteConfirmCta => 'Удалить';
+
+  @override
+  String get savedSearchRemovedSnack => 'Сохранённый поиск удалён.';
+
+  @override
+  String get savedSearchCreatedSnack => 'Поиск сохранён.';
+
+  @override
+  String get savedSearchesLoadFailed =>
+      'Не удалось загрузить сохранённые поиски.';
+
+  @override
+  String get savedSearchSaveFailed => 'Не удалось сохранить поиск.';
+
+  @override
+  String get savedSearchDeleteFailed => 'Не удалось удалить поиск.';
+
+  @override
+  String get savedSearchToggleFailed => 'Не удалось изменить оповещения.';
+
+  @override
+  String get savedSearchesMaxReachedSnack =>
+      'Можно сохранить не более 5 поисков.';
 
   @override
   String get filterAlertSummarySearchLabel => 'Поиск';
@@ -2152,6 +2386,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Carzon не является стороной соглашений между покупателем и продавцом и не отвечает за результат сделок, оформленных через платформу.';
 
   @override
+  String get legalSectionSafetyP4 =>
+      'Остерегайтесь подозрительных ссылок, сообщений и просьб об оплате вне Carzon. Не переводите предоплату под давлением и не доверяйте «гарантиям», которых нет в приложении.';
+
+  @override
+  String get legalSectionSafetyP5 =>
+      'Справочные данные в объявлениях — в том числе по VIN, модели или кампаниям отзыва — носят информационный характер и могут не отражать точное юридическое или техническое состояние конкретного автомобиля. Перед покупкой самостоятельно проверьте документы, состояние, историю и актуальные кампании безопасности.';
+
+  @override
   String get legalSectionContactUsHeading => 'Обратная связь';
 
   @override
@@ -2160,7 +2402,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get legalSectionContactUsP2 =>
-      'Вопросы по этому документу и по содержимому платформы можно задать команде Carzon через канал поддержки, указанный на странице приложения в магазине.';
+      'Вошедшие в аккаунт пользователи могут написать в поддержку через Настройки → «Связаться с поддержкой». Если у вас нет доступа к приложению, используйте канал поддержки, указанный на странице Carzon в магазине приложений.';
 
   @override
   String get sellerSectionTitle => 'Продавец';
@@ -2308,6 +2550,101 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get compareClear => 'Очистить сравнение';
+
+  @override
+  String get menuRecentlyViewed => 'Недавно просмотренные';
+
+  @override
+  String get menuRecentlyViewedSubtitle => 'Автомобили, которые вы открывали';
+
+  @override
+  String get recentlyViewedTitle => 'Недавно просмотренные';
+
+  @override
+  String get recentlyViewedEmptyTitle => 'Пока пусто';
+
+  @override
+  String get recentlyViewedEmptyBody =>
+      'Открытые объявления появятся здесь, чтобы вы могли быстро вернуться к ним.';
+
+  @override
+  String get recentlyViewedBrowseListings => 'Перейти к объявлениям';
+
+  @override
+  String get recentlyViewedClear => 'Очистить';
+
+  @override
+  String get recentlyViewedClearConfirmTitle => 'Очистить историю?';
+
+  @override
+  String get recentlyViewedClearConfirmBody =>
+      'Все недавно просмотренные объявления будут удалены с этого устройства.';
+
+  @override
+  String get recentlyViewedClearConfirmAction => 'Очистить';
+
+  @override
+  String get recentlyViewedLoadFailed =>
+      'Не удалось загрузить историю просмотров.';
+
+  @override
+  String get recentlyViewedClearFailed =>
+      'Не удалось очистить историю просмотров.';
+
+  @override
+  String get menuRecentSearches => 'Недавние поиски';
+
+  @override
+  String get menuRecentSearchesSubtitle =>
+      'Поисковые запросы и фильтры каталога';
+
+  @override
+  String get recentSearchesTitle => 'Недавние поиски';
+
+  @override
+  String get recentSearchesEmptyTitle => 'Пока пусто';
+
+  @override
+  String get recentSearchesEmptyBody =>
+      'Применённые поиски и фильтры появятся здесь, чтобы вы могли быстро вернуться к ним.';
+
+  @override
+  String get recentSearchesBrowseListings => 'Перейти к объявлениям';
+
+  @override
+  String get recentSearchesClear => 'Очистить';
+
+  @override
+  String get recentSearchesClearConfirmTitle => 'Очистить историю поисков?';
+
+  @override
+  String get recentSearchesClearConfirmBody =>
+      'Все недавние поиски будут удалены с этого устройства.';
+
+  @override
+  String get recentSearchesClearConfirmAction => 'Очистить';
+
+  @override
+  String get recentSearchesDelete => 'Удалить';
+
+  @override
+  String recentSearchesSearchOnlyLabel(String query) {
+    return 'Поиск: $query';
+  }
+
+  @override
+  String get recentSearchesFiltersOnlyLabel => 'Фильтры';
+
+  @override
+  String get recentSearchesLoadFailed =>
+      'Не удалось загрузить историю поисков.';
+
+  @override
+  String get recentSearchesClearFailed =>
+      'Не удалось очистить историю поисков.';
+
+  @override
+  String get recentSearchesRemoveFailed => 'Не удалось удалить поиск.';
 
   @override
   String get compareMaxReachedMessage =>

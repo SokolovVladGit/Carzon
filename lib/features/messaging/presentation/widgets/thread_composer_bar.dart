@@ -38,6 +38,7 @@ class ThreadComposerBar extends StatefulWidget {
     required this.conversationId,
     required this.textController,
     required this.onSendSucceeded,
+    this.composerDisabled = false,
     this.imagePicker,
     this.cameraCapture,
     this.cameraNormalizer,
@@ -46,6 +47,7 @@ class ThreadComposerBar extends StatefulWidget {
   final String conversationId;
   final TextEditingController textController;
   final VoidCallback onSendSucceeded;
+  final bool composerDisabled;
   final ThreadImagePicker? imagePicker;
   final ThreadCameraCapture? cameraCapture;
   final ThreadCameraCaptureNormalizerFn? cameraNormalizer;
@@ -93,7 +95,7 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
   bool get _hasSendableText => widget.textController.text.trim().isNotEmpty;
 
   Future<void> _showAttachmentSourceSheet() async {
-    if (_pickingAttachment) return;
+    if (_pickingAttachment || widget.composerDisabled) return;
     final source = await showThreadAttachmentSourceSheet(context);
     if (!mounted || source == null) return;
 
@@ -163,9 +165,9 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text(l10n.imagePickerLoadFailed)),
-      );
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text(l10n.imagePickerLoadFailed)));
     } finally {
       if (mounted) setState(() => _pickingAttachment = false);
     }
@@ -181,7 +183,8 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
       final captured = await capture(context);
       if (captured == null || !mounted) return;
 
-      final normalizer = widget.cameraNormalizer ?? normalizeThreadCameraCapture;
+      final normalizer =
+          widget.cameraNormalizer ?? normalizeThreadCameraCapture;
       final normalized = await normalizer(captured);
       if (!mounted) return;
       if (normalized == null) {
@@ -207,6 +210,7 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
   }
 
   void _handleSend() {
+    if (widget.composerDisabled) return;
     final cubit = context.read<ConversationThreadCubit>();
     final draft = _attachmentDraft;
     if (draft != null) {
@@ -239,8 +243,11 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
       ),
       border: Border(
         top: BorderSide(
-          color: Color.lerp(cs.outlineVariant, cs.primary, 0.16)!
-              .withValues(alpha: 0.44),
+          color: Color.lerp(
+            cs.outlineVariant,
+            cs.primary,
+            0.16,
+          )!.withValues(alpha: 0.44),
         ),
       ),
       boxShadow: [
@@ -283,11 +290,7 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
     );
   }
 
-  ButtonStyle _attachButtonStyle(
-    ColorScheme cs,
-    Color accent,
-    bool isDark,
-  ) {
+  ButtonStyle _attachButtonStyle(ColorScheme cs, Color accent, bool isDark) {
     return IconButton.styleFrom(
       minimumSize: const Size(_sideActionSize, _sideActionSize),
       maximumSize: const Size(_sideActionSize, _sideActionSize),
@@ -342,7 +345,9 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
                 height: 1,
                 indent: 14,
                 endIndent: 14,
-                color: cs.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.32),
+                color: cs.outlineVariant.withValues(
+                  alpha: isDark ? 0.28 : 0.32,
+                ),
               ),
             ],
             SafeArea(
@@ -352,9 +357,15 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    BlocBuilder<ConversationThreadCubit, ConversationThreadState>(
+                    BlocBuilder<
+                      ConversationThreadCubit,
+                      ConversationThreadState
+                    >(
                       builder: (context, state) {
-                        final attachBusy = state.sending || _pickingAttachment;
+                        final attachBusy =
+                            state.sending ||
+                            _pickingAttachment ||
+                            widget.composerDisabled;
                         return _sideActionSlot(
                           child: Tooltip(
                             message: l10n.messagingAttachImage,
@@ -373,6 +384,7 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
                     Expanded(
                       child: TextField(
                         controller: widget.textController,
+                        enabled: !widget.composerDisabled,
                         minLines: 1,
                         maxLines: 5,
                         maxLength: 4000,
@@ -398,11 +410,10 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
                               color: isDark
                                   ? cs.outlineVariant.withValues(alpha: 0.40)
                                   : Color.lerp(
-                                        cs.outlineVariant,
-                                        cs.primary,
-                                        0.12,
-                                      )!
-                                      .withValues(alpha: 0.42),
+                                      cs.outlineVariant,
+                                      cs.primary,
+                                      0.12,
+                                    )!.withValues(alpha: 0.42),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -423,13 +434,17 @@ class _ThreadComposerBarState extends State<ThreadComposerBar> {
                       ),
                     ),
                     const SizedBox(width: _sideActionGap),
-                    BlocBuilder<ConversationThreadCubit, ConversationThreadState>(
+                    BlocBuilder<
+                      ConversationThreadCubit,
+                      ConversationThreadState
+                    >(
                       builder: (context, state) {
                         final sending = state.sending;
                         final canSend =
                             (_hasSendableText || _attachmentDraft != null) &&
                             !sending &&
-                            !_pickingAttachment;
+                            !_pickingAttachment &&
+                            !widget.composerDisabled;
                         return _sideActionSlot(
                           child: Tooltip(
                             message: l10n.messagingSend,

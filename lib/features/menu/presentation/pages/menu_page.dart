@@ -147,6 +147,16 @@ class _MenuPageState extends State<MenuPage> {
                         },
                       ),
                       _PremiumMenuRow(
+                        icon: CarzonIcons.history,
+                        title: l10n.menuRecentlyViewed,
+                        onTap: () => context.go(AppRoutes.recentlyViewed),
+                      ),
+                      _PremiumMenuRow(
+                        icon: CarzonIcons.search,
+                        title: l10n.menuRecentSearches,
+                        onTap: () => context.go(AppRoutes.recentSearches),
+                      ),
+                      _PremiumMenuRow(
                         icon: CarzonIcons.chat,
                         title: l10n.messagingTitle,
                         onTap: () => context.go(AppRoutes.messages),
@@ -839,10 +849,7 @@ class _MenuBrandPill extends StatelessWidget {
       ),
       child: const Padding(
         padding: EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        child: CarzonLogo(
-          key: Key('menuCarzonLogo'),
-          height: 15,
-        ),
+        child: CarzonLogo(key: Key('menuCarzonLogo'), height: 15),
       ),
     );
   }

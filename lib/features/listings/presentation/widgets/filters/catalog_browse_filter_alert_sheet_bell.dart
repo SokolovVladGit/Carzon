@@ -13,9 +13,10 @@ import 'package:carzon/features/listings/domain/browse_state_for_alert_criteria.
 import 'package:carzon/features/listings/domain/entities/listing_discovery_criteria.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
 import 'package:carzon/features/listings/presentation/cubit/browse_catalog_filter_alerts_cubit.dart';
-import 'package:carzon/features/listings/presentation/cubit/browse_catalog_filter_alerts_models.dart';
 import 'package:carzon/features/listings/presentation/utils/listing_filter_apply_to_criteria.dart';
+import 'package:carzon/features/filter_alerts/domain/utils/saved_search_auto_name.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_alert_ui_constants.dart';
+import 'package:carzon/features/listings/presentation/cubit/browse_catalog_filter_alerts_models.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/listings_filter_form.dart';
 
 /// Inline notice surfaces the catalog filter-sheet bell can publish back
@@ -234,6 +235,7 @@ class _CatalogBrowseFilterAlertSheetBellState
         .handleCatalogFilterBell(
           draftCriteria: draft,
           authenticated: authenticated,
+          autoName: buildSavedSearchAutoName(l10n, draft),
         );
 
     if (kDebugMode) {
@@ -296,7 +298,7 @@ class _CatalogBrowseFilterAlertSheetBellState
         break;
       case BrowseCatalogBellOutcome.savedAlertClearFailed:
         messenger.showSnackBar(
-          SnackBar(content: Text(l10n.filterAlertResetFailed)),
+          SnackBar(content: Text(l10n.savedSearchDeleteFailed)),
         );
       case BrowseCatalogBellOutcome.osPermissionDenied:
         messenger.showSnackBar(
@@ -308,7 +310,11 @@ class _CatalogBrowseFilterAlertSheetBellState
         );
       case BrowseCatalogBellOutcome.criteriaSaveFailed:
         messenger.showSnackBar(
-          SnackBar(content: Text(l10n.filterAlertSaveFailed)),
+          SnackBar(content: Text(l10n.savedSearchSaveFailed)),
+        );
+      case BrowseCatalogBellOutcome.maxSavedSearchesReached:
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.savedSearchesMaxReachedSnack)),
         );
       case BrowseCatalogBellOutcome.deliveriesDisabled:
         messenger.showSnackBar(

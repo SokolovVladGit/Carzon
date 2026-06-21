@@ -4,53 +4,119 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../../listings/domain/entities/listing_discovery_criteria.dart';
 import '../../../listings/domain/listing_discovery_criteria_json.dart';
-import '../models/filter_alert_settings_model.dart';
+import '../models/saved_search_model.dart';
 
-abstract interface class FilterAlertsRemoteDataSource {
-  Future<FilterAlertSettingsModel?> fetchMine();
+abstract interface class SavedSearchesRemoteDataSource {
+  Future<List<SavedSearchModel>> listMine();
 
-  Future<FilterAlertSettingsModel> upsertCriteria(
-    ListingDiscoveryCriteria criteria, {
-    required bool notificationsEnabled,
+  Future<SavedSearchModel> create({
+    required String name,
+    required ListingDiscoveryCriteria criteria,
+    required bool alertsEnabled,
   });
 
-  Future<FilterAlertSettingsModel> upsertClearsCriteria();
+  Future<SavedSearchModel> setAlertsEnabled(String id, bool enabled);
 
-  Future<FilterAlertSettingsModel> setNotificationsEnabled(bool enabled);
+  Future<void> delete(String id);
+
+  Future<SavedSearchModel?> findByCriteria(ListingDiscoveryCriteria criteria);
 }
 
-class SupabaseFilterAlertsRemoteDataSource
-    implements FilterAlertsRemoteDataSource {
-  SupabaseFilterAlertsRemoteDataSource(this._supabase);
+class SupabaseSavedSearchesRemoteDataSource
+    implements SavedSearchesRemoteDataSource {
+  SupabaseSavedSearchesRemoteDataSource(this._supabase);
 
   final SupabaseService _supabase;
-  static const _table = 'filter_alert_settings';
 
-  static const _cols =
-      'user_id, criteria, notifications_enabled, created_at, updated_at';
+  void _requireAuth() {
+    final uid = _supabase.client.auth.currentUser?.id;
+    if (uid == null || uid.isEmpty) {
+      throw ServerException('Not authenticated');
+    }
+  }
+
+  ServerException _mapPostgrest(sb.PostgrestException e, StackTrace st) {
+    final msg = e.message;
+    if (msg.contains('max_saved_searches_reached')) {
+      return ServerException(
+        'max_saved_searches_reached',
+        cause: e,
+        stackTrace: st,
+        postgrestCode: e.code,
+      );
+    }
+    if (msg.contains('duplicate_saved_search')) {
+      return ServerException(
+        'duplicate_saved_search',
+        cause: e,
+        stackTrace: st,
+        postgrestCode: e.code,
+      );
+    }
+    if (msg.contains('not authenticated') ||
+        e.code == '28000' ||
+        msg.toLowerCase().contains('jwt')) {
+      return ServerException(
+        'Not authenticated',
+        cause: e,
+        stackTrace: st,
+        postgrestCode: e.code,
+      );
+    }
+    return ServerException(
+      'Saved search request failed',
+      cause: e,
+      stackTrace: st,
+      postgrestCode: e.code,
+      diagnosticsDetails: e.details?.toString(),
+    );
+  }
+
+  List<SavedSearchModel> _mapRows(dynamic data) {
+    if (data == null) return const [];
+    if (data is! List) {
+      throw ServerException('saved_searches list returned unexpected shape');
+    }
+    return data
+        .map(
+          (row) => SavedSearchModel.fromRpcRow(
+            Map<String, dynamic>.from(row as Map),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  SavedSearchModel _mapSingle(dynamic data) {
+    if (data == null) {
+      throw ServerException('Saved search RPC returned no row');
+    }
+    if (data is List) {
+      if (data.isEmpty) {
+        throw ServerException('Saved search RPC returned empty list');
+      }
+      return SavedSearchModel.fromRpcRow(
+        Map<String, dynamic>.from(data.first as Map),
+      );
+    }
+    if (data is Map) {
+      return SavedSearchModel.fromRpcRow(Map<String, dynamic>.from(data));
+    }
+    throw ServerException('Saved search RPC returned unexpected shape');
+  }
 
   @override
-  Future<FilterAlertSettingsModel?> fetchMine() async {
+  Future<List<SavedSearchModel>> listMine() async {
     try {
-      final uid = _supabase.client.auth.currentUser?.id;
-      if (uid == null || uid.isEmpty) {
-        throw ServerException('Not authenticated');
-      }
-      final row = await _supabase.client
-          .from(_table)
-          .select(_cols)
-          .eq('user_id', uid)
-          .maybeSingle();
-      if (row == null) return null;
-      return FilterAlertSettingsModel.fromSupabase(
-        Map<String, dynamic>.from(row),
-      );
+      _requireAuth();
+      final data = await _supabase.client.rpc('list_my_saved_searches');
+      return _mapRows(data);
     } on sb.PostgrestException catch (e, st) {
-      throw ServerException(e.message, cause: e, stackTrace: st);
+      throw _mapPostgrest(e, st);
+    } on ServerException {
+      rethrow;
     } catch (e, st) {
-      if (e is ServerException) rethrow;
       throw ServerException(
-        'Failed to load filter alert settings',
+        'Failed to load saved searches',
         cause: e,
         stackTrace: st,
       );
@@ -58,37 +124,29 @@ class SupabaseFilterAlertsRemoteDataSource
   }
 
   @override
-  Future<FilterAlertSettingsModel> upsertCriteria(
-    ListingDiscoveryCriteria criteria, {
-    required bool notificationsEnabled,
+  Future<SavedSearchModel> create({
+    required String name,
+    required ListingDiscoveryCriteria criteria,
+    required bool alertsEnabled,
   }) async {
     try {
-      final uid = _supabase.client.auth.currentUser?.id;
-      if (uid == null || uid.isEmpty) {
-        throw ServerException('Not authenticated');
-      }
-      final row = await _supabase.client
-          .from(_table)
-          .upsert({
-            'user_id': uid,
-            'criteria': listingDiscoveryCriteriaToJson(criteria),
-            'notifications_enabled': notificationsEnabled,
-          }, onConflict: 'user_id')
-          .select(_cols)
-          .maybeSingle();
-
-      if (row == null) {
-        throw ServerException('Filter alert upsert returned no row.');
-      }
-      return FilterAlertSettingsModel.fromSupabase(
-        Map<String, dynamic>.from(row),
+      _requireAuth();
+      final data = await _supabase.client.rpc(
+        'create_saved_search',
+        params: {
+          'p_name': name,
+          'p_criteria': listingDiscoveryCriteriaToJson(criteria),
+          'p_alerts_enabled': alertsEnabled,
+        },
       );
+      return _mapSingle(data);
     } on sb.PostgrestException catch (e, st) {
-      throw ServerException(e.message, cause: e, stackTrace: st);
+      throw _mapPostgrest(e, st);
+    } on ServerException {
+      rethrow;
     } catch (e, st) {
-      if (e is ServerException) rethrow;
       throw ServerException(
-        'Failed to save filter alert criteria',
+        'Failed to create saved search',
         cause: e,
         stackTrace: st,
       );
@@ -96,46 +154,21 @@ class SupabaseFilterAlertsRemoteDataSource
   }
 
   @override
-  Future<FilterAlertSettingsModel> upsertClearsCriteria() async {
+  Future<SavedSearchModel> setAlertsEnabled(String id, bool enabled) async {
     try {
-      final uid = _supabase.client.auth.currentUser?.id;
-      if (uid == null || uid.isEmpty) {
-        throw ServerException('Not authenticated');
-      }
-
-      final afterUpdate = await _supabase.client
-          .from(_table)
-          .update({'criteria': null, 'notifications_enabled': false})
-          .eq('user_id', uid)
-          .select(_cols)
-          .maybeSingle();
-
-      final Map<String, dynamic> rowFromUpdate;
-      if (afterUpdate != null) {
-        rowFromUpdate = Map<String, dynamic>.from(afterUpdate);
-      } else {
-        final inserted = await _supabase.client
-            .from(_table)
-            .upsert(<String, dynamic>{
-              'user_id': uid,
-              'criteria': null,
-              'notifications_enabled': false,
-            }, onConflict: 'user_id')
-            .select(_cols)
-            .maybeSingle();
-        if (inserted == null) {
-          throw ServerException('Filter alert clear/update returned no row.');
-        }
-        rowFromUpdate = Map<String, dynamic>.from(inserted);
-      }
-
-      return FilterAlertSettingsModel.fromSupabase(rowFromUpdate);
+      _requireAuth();
+      final data = await _supabase.client.rpc(
+        'set_saved_search_alerts_enabled',
+        params: {'p_id': id, 'p_enabled': enabled},
+      );
+      return _mapSingle(data);
     } on sb.PostgrestException catch (e, st) {
-      throw ServerException(e.message, cause: e, stackTrace: st);
+      throw _mapPostgrest(e, st);
+    } on ServerException {
+      rethrow;
     } catch (e, st) {
-      if (e is ServerException) rethrow;
       throw ServerException(
-        'Failed to clear filter alert criteria',
+        'Failed to update saved search alerts',
         cause: e,
         stackTrace: st,
       );
@@ -143,50 +176,43 @@ class SupabaseFilterAlertsRemoteDataSource
   }
 
   @override
-  Future<FilterAlertSettingsModel> setNotificationsEnabled(bool enabled) async {
+  Future<void> delete(String id) async {
     try {
-      final uid = _supabase.client.auth.currentUser?.id;
-      if (uid == null || uid.isEmpty) {
-        throw ServerException('Not authenticated');
-      }
-
-      final afterUpdate = await _supabase.client
-          .from(_table)
-          .update({'notifications_enabled': enabled})
-          .eq('user_id', uid)
-          .select(_cols)
-          .maybeSingle();
-
-      if (afterUpdate != null) {
-        return FilterAlertSettingsModel.fromSupabase(
-          Map<String, dynamic>.from(afterUpdate),
-        );
-      }
-
-      final inserted = await _supabase.client
-          .from(_table)
-          .upsert(<String, dynamic>{
-            'user_id': uid,
-            'criteria': null,
-            'notifications_enabled': enabled,
-          }, onConflict: 'user_id')
-          .select(_cols)
-          .maybeSingle();
-
-      if (inserted == null) {
-        throw ServerException(
-          'Filter alert notifications toggle returned no row.',
-        );
-      }
-      return FilterAlertSettingsModel.fromSupabase(
-        Map<String, dynamic>.from(inserted),
-      );
+      _requireAuth();
+      await _supabase.client.rpc('delete_saved_search', params: {'p_id': id});
     } on sb.PostgrestException catch (e, st) {
-      throw ServerException(e.message, cause: e, stackTrace: st);
+      throw _mapPostgrest(e, st);
+    } on ServerException {
+      rethrow;
     } catch (e, st) {
-      if (e is ServerException) rethrow;
       throw ServerException(
-        'Failed to update filter alert notifications toggle',
+        'Failed to delete saved search',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<SavedSearchModel?> findByCriteria(
+    ListingDiscoveryCriteria criteria,
+  ) async {
+    try {
+      _requireAuth();
+      final data = await _supabase.client.rpc(
+        'find_saved_search_by_criteria',
+        params: {'p_criteria': listingDiscoveryCriteriaToJson(criteria)},
+      );
+      if (data == null) return null;
+      if (data is List && data.isEmpty) return null;
+      return _mapSingle(data);
+    } on sb.PostgrestException catch (e, st) {
+      throw _mapPostgrest(e, st);
+    } on ServerException {
+      rethrow;
+    } catch (e, st) {
+      throw ServerException(
+        'Failed to find saved search',
         cause: e,
         stackTrace: st,
       );

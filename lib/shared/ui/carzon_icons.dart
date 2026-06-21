@@ -42,6 +42,8 @@ class CarzonIcons {
   static const IconData heartOutline = LucideIcons.heart;
   static const IconData heartFilled = LucideIcons.heart;
   static const IconData compare = LucideIcons.arrowLeftRight;
+  static const IconData share = LucideIcons.share;
+  static const IconData history = LucideIcons.clock;
 
   // ---- Listing details — feature strip ----
   static const IconData calendar = LucideIcons.calendar;
@@ -91,6 +93,7 @@ class CarzonIcons {
   static const IconData brokenImage = LucideIcons.imageOff;
   static const IconData delete = LucideIcons.trash2;
   static const IconData undo = LucideIcons.rotateCcw;
+  static const IconData userBlock = LucideIcons.userX;
 
   // ---- Ornamental (kept on Material) ----
   static const IconData brandCarFallback = Icons.directions_car;

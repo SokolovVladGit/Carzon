@@ -11,11 +11,7 @@ import '../utils/thread_camera_sheet_logic.dart';
 /// Fraction of viewport height used by the in-chat camera sheet.
 const double kThreadCameraSheetHeightFactor = 0.58;
 
-enum _ThreadCameraSheetError {
-  permissionDenied,
-  unavailable,
-  captureFailed,
-}
+enum _ThreadCameraSheetError { permissionDenied, unavailable, captureFailed }
 
 /// Opens a partial-height in-chat camera capture sheet.
 Future<XFile?> showThreadCameraCaptureSheet(BuildContext context) {
@@ -171,7 +167,8 @@ class _ThreadCameraCaptureSheetState extends State<ThreadCameraCaptureSheet>
       }
 
       final camera = _resolveCamera(cameras, preferred: preferred);
-      final switchingLens = preferred != null &&
+      final switchingLens =
+          preferred != null &&
           _activeCamera?.lensDirection != camera.lensDirection;
 
       _cameras = cameras;
@@ -292,7 +289,8 @@ class _ThreadCameraCaptureSheetState extends State<ThreadCameraCaptureSheet>
       _ThreadCameraSheetError.permissionDenied =>
         l10n.messagingCameraPermissionDenied,
       _ThreadCameraSheetError.unavailable => l10n.messagingCameraUnavailable,
-      _ThreadCameraSheetError.captureFailed => l10n.messagingCameraCaptureFailed,
+      _ThreadCameraSheetError.captureFailed =>
+        l10n.messagingCameraCaptureFailed,
       null => '',
     };
   }
@@ -333,7 +331,9 @@ class _ThreadCameraCaptureSheetState extends State<ThreadCameraCaptureSheet>
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: Colors.black,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: cs.shadow.withValues(alpha: 0.35),
@@ -345,9 +345,7 @@ class _ThreadCameraCaptureSheetState extends State<ThreadCameraCaptureSheet>
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Positioned.fill(
-                  child: _buildPreviewBody(l10n, theme),
-                ),
+                Positioned.fill(child: _buildPreviewBody(l10n, theme)),
                 Positioned(
                   left: 0,
                   right: 0,
@@ -379,9 +377,7 @@ class _ThreadCameraCaptureSheetState extends State<ThreadCameraCaptureSheet>
                     children: [
                       _buildCancelControl(l10n),
                       Expanded(
-                        child: Center(
-                          child: _buildShutterButton(accent, cs),
-                        ),
+                        child: Center(child: _buildShutterButton(accent, cs)),
                       ),
                       Column(
                         mainAxisSize: MainAxisSize.min,
