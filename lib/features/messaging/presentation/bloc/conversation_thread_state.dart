@@ -15,6 +15,10 @@ class ConversationThreadState extends Equatable {
     this.failureKind,
     this.lastSendFailureKind,
     this.refreshFailureKind,
+    this.peerBlockedByMe = false,
+    this.messagingUnavailable = false,
+    this.blockActionInProgress = false,
+    this.reportActionInProgress = false,
   });
 
   final ConversationThreadStatus status;
@@ -27,6 +31,17 @@ class ConversationThreadState extends Equatable {
   /// Set when [ConversationThreadCubit.refresh] fails; cleared on success refresh.
   final MessagingFailureKind? refreshFailureKind;
 
+  /// Current user blocked the listing-conversation peer (`user_blocks`).
+  final bool peerBlockedByMe;
+
+  /// Send rejected because messaging is blocked (either direction).
+  final bool messagingUnavailable;
+
+  final bool blockActionInProgress;
+  final bool reportActionInProgress;
+
+  bool get composerDisabled => peerBlockedByMe || messagingUnavailable;
+
   ConversationThreadState copyWith({
     ConversationThreadStatus? status,
     Conversation? conversation,
@@ -38,6 +53,10 @@ class ConversationThreadState extends Equatable {
     bool clearLastSendFailure = false,
     MessagingFailureKind? refreshFailureKind,
     bool clearRefreshFailure = false,
+    bool? peerBlockedByMe,
+    bool? messagingUnavailable,
+    bool? blockActionInProgress,
+    bool? reportActionInProgress,
   }) {
     return ConversationThreadState(
       status: status ?? this.status,
@@ -51,6 +70,12 @@ class ConversationThreadState extends Equatable {
       refreshFailureKind: clearRefreshFailure
           ? null
           : (refreshFailureKind ?? this.refreshFailureKind),
+      peerBlockedByMe: peerBlockedByMe ?? this.peerBlockedByMe,
+      messagingUnavailable: messagingUnavailable ?? this.messagingUnavailable,
+      blockActionInProgress:
+          blockActionInProgress ?? this.blockActionInProgress,
+      reportActionInProgress:
+          reportActionInProgress ?? this.reportActionInProgress,
     );
   }
 
@@ -63,5 +88,9 @@ class ConversationThreadState extends Equatable {
     failureKind,
     lastSendFailureKind,
     refreshFailureKind,
+    peerBlockedByMe,
+    messagingUnavailable,
+    blockActionInProgress,
+    reportActionInProgress,
   ];
 }

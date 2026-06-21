@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
+import '../models/blocked_user_model.dart';
 import '../models/chat_message_model.dart';
 import '../models/conversation_model.dart';
 
@@ -31,6 +32,18 @@ abstract interface class MessagingRemoteDataSource {
   Future<void> markConversationReadRpc(String conversationId);
 
   Future<int> fetchUnreadConversationCountRpc();
+
+  Future<void> blockUserRpc(String conversationId);
+
+  Future<void> reportUserRpc({
+    required String conversationId,
+    required String reason,
+    String? note,
+  });
+
+  Future<List<BlockedUserModel>> fetchBlockedUsersRpc();
+
+  Future<bool> unblockUserRpc(String blockedUserId);
 }
 
 class SupabaseMessagingRemoteDataSource implements MessagingRemoteDataSource {
@@ -272,6 +285,92 @@ class SupabaseMessagingRemoteDataSource implements MessagingRemoteDataSource {
         cause: e,
         stackTrace: st,
       );
+    }
+  }
+
+  @override
+  Future<void> blockUserRpc(String conversationId) async {
+    try {
+      await _supabase.client.rpc(
+        'block_user',
+        params: {'p_conversation_id': conversationId},
+      );
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is ServerException) rethrow;
+      throw ServerException('Failed to block user', cause: e, stackTrace: st);
+    }
+  }
+
+  @override
+  Future<void> reportUserRpc({
+    required String conversationId,
+    required String reason,
+    String? note,
+  }) async {
+    try {
+      final params = <String, dynamic>{
+        'p_conversation_id': conversationId,
+        'p_reason': reason,
+      };
+      if (note != null) {
+        params['p_note'] = note;
+      }
+      await _supabase.client.rpc('report_user', params: params);
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is ServerException) rethrow;
+      throw ServerException(
+        'Failed to submit report',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<List<BlockedUserModel>> fetchBlockedUsersRpc() async {
+    try {
+      final dynamic raw = await _supabase.client.rpc('list_blocked_users');
+      if (raw == null) return const [];
+      if (raw is! List<dynamic>) {
+        throw ServerException('Unexpected blocked users response');
+      }
+      return raw
+          .map<BlockedUserModel>(
+            (row) => BlockedUserModel.fromJson(
+              Map<String, dynamic>.from(row as Map),
+            ),
+          )
+          .toList(growable: false);
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is ServerException) rethrow;
+      throw ServerException(
+        'Failed to load blocked users',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<bool> unblockUserRpc(String blockedUserId) async {
+    try {
+      final dynamic raw = await _supabase.client.rpc(
+        'unblock_user',
+        params: {'p_blocked_user_id': blockedUserId},
+      );
+      if (raw is bool) return raw;
+      return false;
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is ServerException) rethrow;
+      throw ServerException('Failed to unblock user', cause: e, stackTrace: st);
     }
   }
 }

@@ -60,7 +60,8 @@ class ThreadAttachmentSourceSheet extends StatelessWidget {
             _SourceActionRow(
               icon: CarzonIcons.addPhoto,
               label: l10n.messagingAttachmentCamera,
-              onTap: () => Navigator.pop(context, ThreadAttachmentSource.camera),
+              onTap: () =>
+                  Navigator.pop(context, ThreadAttachmentSource.camera),
             ),
           ],
         ),
@@ -109,11 +110,7 @@ class _SourceActionRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
-                  _SourceIconCapsule(
-                    icon: icon,
-                    scheme: cs,
-                    isDark: isDark,
-                  ),
+                  _SourceIconCapsule(icon: icon, scheme: cs, isDark: isDark),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
@@ -121,7 +118,9 @@ class _SourceActionRow extends StatelessWidget {
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.02,
-                        color: cs.onSurface.withValues(alpha: isDark ? 0.94 : 0.9),
+                        color: cs.onSurface.withValues(
+                          alpha: isDark ? 0.94 : 0.9,
+                        ),
                       ),
                     ),
                   ),

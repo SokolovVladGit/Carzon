@@ -51,6 +51,10 @@ const _settingsTestSupportThreadStubKey = ValueKey<String>(
   'settings_test_support_thread_stub',
 );
 
+const _settingsTestBlockedUsersStubKey = ValueKey<String>(
+  'settings_test_blocked_users_stub',
+);
+
 const _settingsTestDeleteAccountStubKey = ValueKey<String>(
   'settings_test_delete_account_stub',
 );
@@ -150,6 +154,13 @@ GoRouter _settingsTestRouter({
         builder: (_, state) => Scaffold(
           key: _settingsTestSupportThreadStubKey,
           body: Text('thread:${state.pathParameters['conversationId']}'),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.blockedUsers,
+        builder: (_, _) => const Scaffold(
+          key: _settingsTestBlockedUsersStubKey,
+          body: Text('blocked_users_stub'),
         ),
       ),
       GoRoute(
@@ -361,6 +372,34 @@ void main() {
     expect(find.byKey(_settingsTestProfileStubKey), findsOneWidget);
   });
 
+  testWidgets('Settings shows blocked users row when authenticated', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _scrollToSettingsRow(
+      tester,
+      const ValueKey<String>('settings_blocked_users_row'),
+    );
+
+    expect(find.text(l10n.messagingSafetyBlockedUsersTitle), findsOneWidget);
+    expect(find.text(l10n.settingsBlockedUsersSubtitle), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('settings_blocked_users_row')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(_settingsTestBlockedUsersStubKey), findsOneWidget);
+  });
+
   testWidgets('Settings omits duplicate privacy legal row', (tester) async {
     await tester.pumpWidget(
       _settingsTestApp(
@@ -486,6 +525,7 @@ void main() {
       tester,
       const ValueKey<String>('settings_filter_alerts_row'),
     );
+    expect(find.text(l10n.savedSearchesSettingsTitle), findsOneWidget);
     await tester.tap(
       find.byKey(const ValueKey<String>('settings_filter_alerts_row')),
     );
@@ -638,6 +678,34 @@ void main() {
       find.byKey(const ValueKey<String>('settings_delete_account_row')),
       findsNothing,
     );
+    expect(
+      find.byKey(const ValueKey<String>('settings_legal_row')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('settings_support_row')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('Settings legal row subtitle mentions safety tips', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _scrollToSettingsRow(
+      tester,
+      const ValueKey<String>('settings_legal_row'),
+    );
+    expect(find.text(l10n.settingsLegalLinkSubtitle), findsOneWidget);
+    expect(find.textContaining('безопасности'), findsOneWidget);
   });
 
   testWidgets('Settings shows delete account row when authenticated', (

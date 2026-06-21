@@ -13,6 +13,8 @@ import '../domain/usecases/get_listing_by_id.dart';
 import '../domain/usecases/get_listing_images.dart';
 import '../domain/usecases/get_listing_public_contact.dart';
 import '../domain/usecases/get_listings.dart';
+import '../../recent_searches/domain/usecases/record_recent_search.dart';
+import '../../recently_viewed/domain/usecases/record_recently_viewed.dart';
 import '../domain/usecases/record_listing_view.dart';
 import '../domain/usecases/set_listing_status.dart';
 import '../presentation/bloc/listing_details_cubit.dart';
@@ -47,6 +49,7 @@ void registerListingsFeature(GetIt sl) {
     () => ListingsBloc(
       getListings: sl<GetListings>(),
       lastAppliedDiscovery: sl<LastAppliedListingDiscoveryRepository>(),
+      recordRecentSearch: sl<RecordRecentSearch>(),
     ),
   );
   sl.registerFactory<ListingDetailsCubit>(
@@ -56,6 +59,7 @@ void registerListingsFeature(GetIt sl) {
       getListingPublicContact: sl<GetListingPublicContact>(),
       getOrCreateConversation: sl<GetOrCreateConversation>(),
       recordListingView: sl<RecordListingView>(),
+      recordRecentlyViewed: sl<RecordRecentlyViewed>(),
     ),
   );
 }

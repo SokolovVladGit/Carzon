@@ -5,33 +5,24 @@ import '../../../notifications/domain/entities/notification_preferences.dart';
 import '../../../notifications/domain/repositories/notifications_repository.dart';
 import '../../../notifications/services/push_messaging_permission_status.dart';
 import '../../../notifications/services/push_notification_registration_service.dart';
-import '../entities/filter_alert_settings.dart';
-import '../usecases/set_filter_alert_notifications_enabled.dart';
+import '../entities/saved_search.dart';
+import '../usecases/set_saved_search_alerts_enabled.dart';
 
-/// Server-side delivery path for saved filter alerts (OS prompt, prefs row, FAS toggle, token).
-///
-/// Shared by account settings UI and browse catalog UX so enable/disable stay aligned.
+/// Server-side delivery path for saved-search alerts (OS prompt, prefs, per-row toggle, token).
 class FilterAlertDeliveryOrchestrator {
   FilterAlertDeliveryOrchestrator({
     required NotificationsRepository notificationsRepository,
     required PushNotificationRegistrationService pushRegistration,
-    required SetFilterAlertNotificationsEnabled setNotificationsEnabled,
+    required SetSavedSearchAlertsEnabled setAlertsEnabled,
   }) : _notificationsRepository = notificationsRepository,
        _pushRegistration = pushRegistration,
-       _setNotificationsEnabled = setNotificationsEnabled;
+       _setAlertsEnabled = setAlertsEnabled;
 
   final NotificationsRepository _notificationsRepository;
   final PushNotificationRegistrationService _pushRegistration;
-  final SetFilterAlertNotificationsEnabled _setNotificationsEnabled;
+  final SetSavedSearchAlertsEnabled _setAlertsEnabled;
 
-  Future<Result<FilterAlertSettings>> enableDeliveries(
-    FilterAlertSettings rowMustHaveCriteria,
-  ) async {
-    if (rowMustHaveCriteria.criteria == null) {
-      return const FailureResult(
-        UnknownFailure('filter_alert_delivery_no_criteria'),
-      );
-    }
+  Future<Result<SavedSearch>> enableDeliveries(SavedSearch savedSearch) async {
     if (!Env.pushNotificationsEnabled) {
       return const FailureResult(
         UnknownFailure('filter_alert_delivery_push_disabled'),
@@ -69,7 +60,7 @@ class FilterAlertDeliveryOrchestrator {
         break;
     }
 
-    final toggle = await _setNotificationsEnabled(true);
+    final toggle = await _setAlertsEnabled(savedSearch.id, true);
     switch (toggle) {
       case FailureResult(:final failure):
         return FailureResult(failure);
@@ -79,7 +70,7 @@ class FilterAlertDeliveryOrchestrator {
     }
   }
 
-  Future<Result<FilterAlertSettings>> disableDeliveriesFlagOnly() {
-    return _setNotificationsEnabled(false);
+  Future<Result<SavedSearch>> disableDeliveries(SavedSearch savedSearch) {
+    return _setAlertsEnabled(savedSearch.id, false);
   }
 }

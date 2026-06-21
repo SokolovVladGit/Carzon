@@ -25,6 +25,9 @@ class Env {
   static const String _pushNotificationsEnabled = String.fromEnvironment(
     'PUSH_NOTIFICATIONS_ENABLED',
   );
+  static const String _listingShareBaseUrl = String.fromEnvironment(
+    'CARZON_LISTING_SHARE_BASE_URL',
+  );
 
   /// Keys the app cannot run without.
   static const List<String> requiredKeys = <String>[
@@ -51,6 +54,12 @@ class Env {
     if (trimmed.isEmpty) return null;
     return trimmed;
   }
+
+  /// Optional public web base for listing share links, e.g.
+  /// `https://carzon.example`. When unset, share text omits a URL and uses
+  /// localized in-app fallback copy instead.
+  static String? get listingShareBaseUrl =>
+      _optionalNonEmpty(_listingShareBaseUrl, 'CARZON_LISTING_SHARE_BASE_URL');
 
   /// Client FCM bootstrap flag. Default **false** when unset or empty.
   static bool get pushNotificationsEnabled {

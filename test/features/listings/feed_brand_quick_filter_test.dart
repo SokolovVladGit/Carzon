@@ -334,7 +334,7 @@ void main() {
     late _MockFavoritesCubit favs;
     late _MockSellersRepository sellersRepo;
     late _MockMessagingRepository messagingRepo;
-    late MockFilterAlertsRepository browseFilterAlertsRepo;
+    late MockSavedSearchesRepository browseSavedSearchesRepo;
     late MockNotificationsRepository browseNotificationsRepo;
     late MockPushNotificationRegistrationService browsePushRegistration;
 
@@ -397,12 +397,12 @@ void main() {
       sl.registerLazySingleton<LastAppliedListingDiscoveryRepository>(
         () => const NoopLastAppliedListingDiscoveryRepository(),
       );
-      browseFilterAlertsRepo = MockFilterAlertsRepository();
+      browseSavedSearchesRepo = MockSavedSearchesRepository();
       browseNotificationsRepo = MockNotificationsRepository();
       browsePushRegistration = MockPushNotificationRegistrationService();
       primeListingBrowseFilterAlertsDeps(
         sl,
-        filterRepo: browseFilterAlertsRepo,
+        savedSearchesRepo: browseSavedSearchesRepo,
         notificationsRepo: browseNotificationsRepo,
         pushRegistration: browsePushRegistration,
       );

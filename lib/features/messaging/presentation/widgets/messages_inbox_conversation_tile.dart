@@ -52,9 +52,7 @@ class MessagesInboxConversationTile extends StatelessWidget {
       fontSize: 14.5,
     );
     final timeStyle = theme.textTheme.labelSmall?.copyWith(
-      color: unread
-          ? accent
-          : onVar.withValues(alpha: light ? 0.82 : 0.72),
+      color: unread ? accent : onVar.withValues(alpha: light ? 0.82 : 0.72),
       fontWeight: unread ? FontWeight.w700 : FontWeight.w500,
       letterSpacing: 0.02,
       height: 1.15,
@@ -63,14 +61,14 @@ class MessagesInboxConversationTile extends StatelessWidget {
 
     final rowBackground = unread
         ? (light
-            ? Color.alphaBlend(
-                cs.primary.withValues(alpha: 0.045),
-                cs.surface,
-              )
-            : Color.alphaBlend(
-                accent.withValues(alpha: 0.075),
-                cs.surfaceContainerLow,
-              ))
+              ? Color.alphaBlend(
+                  cs.primary.withValues(alpha: 0.045),
+                  cs.surface,
+                )
+              : Color.alphaBlend(
+                  accent.withValues(alpha: 0.075),
+                  cs.surfaceContainerLow,
+                ))
         : Colors.transparent;
 
     final tile = Material(
@@ -113,10 +111,7 @@ class MessagesInboxConversationTile extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        _InboxTimeLabel(
-                          timeText: timeText,
-                          style: timeStyle,
-                        ),
+                        _InboxTimeLabel(timeText: timeText, style: timeStyle),
                       ],
                     ),
                     const SizedBox(height: 4),

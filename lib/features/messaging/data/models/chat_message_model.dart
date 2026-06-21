@@ -36,9 +36,7 @@ class ChatMessageModel extends ChatMessage {
     final out = <ChatAttachment>[];
     for (final item in raw) {
       if (item is! Map) continue;
-      out.add(
-        ChatAttachmentModel.fromJson(Map<String, dynamic>.from(item)),
-      );
+      out.add(ChatAttachmentModel.fromJson(Map<String, dynamic>.from(item)));
     }
     return List<ChatAttachment>.unmodifiable(out);
   }

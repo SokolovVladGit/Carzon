@@ -1,11 +1,11 @@
 import 'package:carzon/core/utils/result.dart';
-import 'package:carzon/features/filter_alerts/domain/entities/filter_alert_settings.dart';
-import 'package:carzon/features/filter_alerts/domain/repositories/filter_alerts_repository.dart';
+import 'package:carzon/features/filter_alerts/domain/entities/saved_search.dart';
+import 'package:carzon/features/filter_alerts/domain/repositories/saved_searches_repository.dart';
 import 'package:carzon/features/filter_alerts/domain/services/filter_alert_delivery_orchestrator.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/clear_filter_alert_criteria.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/get_filter_alert_settings.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/save_filter_alert_criteria.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/set_filter_alert_notifications_enabled.dart';
+import 'package:carzon/features/filter_alerts/domain/usecases/create_saved_search.dart';
+import 'package:carzon/features/filter_alerts/domain/usecases/delete_saved_search.dart';
+import 'package:carzon/features/filter_alerts/domain/usecases/list_saved_searches.dart';
+import 'package:carzon/features/filter_alerts/domain/usecases/set_saved_search_alerts_enabled.dart';
 import 'package:carzon/features/listings/domain/entities/listing_discovery_criteria.dart';
 import 'package:carzon/features/listings/presentation/cubit/browse_catalog_filter_alerts_cubit.dart';
 import 'package:carzon/features/notifications/domain/entities/notification_preferences.dart';
@@ -16,24 +16,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockFilterAlertsRepository extends Mock
-    implements FilterAlertsRepository {}
+class MockSavedSearchesRepository extends Mock
+    implements SavedSearchesRepository {}
 
 class MockNotificationsRepository extends Mock
     implements NotificationsRepository {}
 
 class MockPushNotificationRegistrationService extends Mock
     implements PushNotificationRegistrationService {}
-
-FilterAlertSettings _emptyFilterAlertRow() {
-  return FilterAlertSettings(
-    userId: 'u-test',
-    criteria: null,
-    notificationsEnabled: false,
-    createdAt: DateTime.utc(2026, 1, 1),
-    updatedAt: DateTime.utc(2026, 1, 2),
-  );
-}
 
 NotificationPreferences _defaultPrefs() {
   return NotificationPreferences(
@@ -46,10 +36,41 @@ NotificationPreferences _defaultPrefs() {
   );
 }
 
+SavedSearch testSavedSearch({
+  String id = 'ss-1',
+  String name = 'Test search',
+  required ListingDiscoveryCriteria criteria,
+  bool alertsEnabled = false,
+}) {
+  return SavedSearch(
+    id: id,
+    name: name,
+    criteria: criteria,
+    alertsEnabled: alertsEnabled,
+    createdAt: DateTime.utc(2026, 1, 1),
+    updatedAt: DateTime.utc(2026, 1, 2),
+  );
+}
+
+/// Unit/widget-test cubit wired to mocked saved-search dependencies.
+BrowseCatalogFilterAlertsCubit buildTestBrowseCatalogFilterAlertsCubit({
+  required SavedSearchesRepository savedSearchesRepo,
+  required NotificationsRepository notificationsRepo,
+  required FilterAlertDeliveryOrchestrator deliveryOrchestrator,
+}) {
+  return BrowseCatalogFilterAlertsCubit(
+    listSavedSearches: ListSavedSearches(savedSearchesRepo),
+    createSavedSearch: CreateSavedSearch(savedSearchesRepo),
+    deleteSavedSearch: DeleteSavedSearch(savedSearchesRepo),
+    notificationsRepository: notificationsRepo,
+    deliveryOrchestrator: deliveryOrchestrator,
+  );
+}
+
 /// DI bundle for listing feed widget tests mounting [BrowseCatalogFilterAlertsCubit].
 void primeListingBrowseFilterAlertsDeps(
   GetIt sl, {
-  required MockFilterAlertsRepository filterRepo,
+  required MockSavedSearchesRepository savedSearchesRepo,
   required MockNotificationsRepository notificationsRepo,
   required MockPushNotificationRegistrationService pushRegistration,
 }) {
@@ -62,51 +83,41 @@ PUSH_NOTIFICATIONS_ENABLED=true
   );
 
   when(
-    () => filterRepo.loadMine(),
-  ).thenAnswer((_) async => Success(_emptyFilterAlertRow()));
+    () => savedSearchesRepo.list(),
+  ).thenAnswer((_) async => const Success([]));
   when(
-    () => filterRepo.saveCriteria(
-      any(),
-      notificationsEnabled: any(named: 'notificationsEnabled'),
+    () => savedSearchesRepo.create(
+      name: any(named: 'name'),
+      criteria: any(named: 'criteria'),
+      alertsEnabled: any(named: 'alertsEnabled'),
     ),
   ).thenAnswer((inv) async {
-    final criteria = inv.positionalArguments.first as ListingDiscoveryCriteria;
-    final notificationsEnabled =
-        inv.namedArguments[#notificationsEnabled] as bool;
+    final criteria = inv.namedArguments[#criteria] as ListingDiscoveryCriteria;
+    final alertsEnabled = inv.namedArguments[#alertsEnabled] as bool;
+    final name = inv.namedArguments[#name] as String;
     return Success(
-      FilterAlertSettings(
-        userId: 'u-test',
+      testSavedSearch(
         criteria: criteria,
-        notificationsEnabled: notificationsEnabled,
-        createdAt: DateTime.utc(2026, 1, 1),
-        updatedAt: DateTime.utc(2026, 1, 2),
+        name: name,
+        alertsEnabled: alertsEnabled,
       ),
     );
   });
-  when(() => filterRepo.setNotificationsEnabled(any())).thenAnswer((inv) async {
-    final enabled = inv.positionalArguments.first as bool;
-    final row = FilterAlertSettings(
-      userId: 'u-test',
-      criteria: null,
-      notificationsEnabled: enabled,
-      createdAt: DateTime.utc(2026, 1, 1),
-      updatedAt: DateTime.utc(2026, 1, 2),
-    );
-    return Success(row);
-  });
-  // Default clear behavior mirrors the production
-  // `upsertClearsCriteria` semantics: drops criteria AND flips the
-  // delivery flag off in one round-trip. Individual tests can override.
-  when(() => filterRepo.clearPersistedCriteria()).thenAnswer((_) async {
+  when(() => savedSearchesRepo.setAlertsEnabled(any(), any())).thenAnswer((
+    inv,
+  ) async {
+    final id = inv.positionalArguments.first as String;
+    final enabled = inv.positionalArguments[1] as bool;
     return Success(
-      FilterAlertSettings(
-        userId: 'u-test',
-        criteria: null,
-        notificationsEnabled: false,
-        createdAt: DateTime.utc(2026, 1, 1),
-        updatedAt: DateTime.utc(2026, 1, 2),
+      testSavedSearch(
+        id: id,
+        criteria: const ListingDiscoveryCriteria(make: 'Toyota'),
+        alertsEnabled: enabled,
       ),
     );
+  });
+  when(() => savedSearchesRepo.delete(any())).thenAnswer((_) async {
+    return const Success(null);
   });
 
   when(
@@ -138,28 +149,28 @@ PUSH_NOTIFICATIONS_ENABLED=true
     () => pushRegistration.syncTokenWithBackendIfEligible(),
   ).thenAnswer((_) async {});
 
-  sl.registerLazySingleton<FilterAlertsRepository>(() => filterRepo);
+  sl.registerLazySingleton<SavedSearchesRepository>(() => savedSearchesRepo);
   sl.registerLazySingleton<NotificationsRepository>(() => notificationsRepo);
   sl.registerLazySingleton<PushNotificationRegistrationService>(
     () => pushRegistration,
   );
-  sl.registerFactory(() => GetFilterAlertSettings(sl()));
-  sl.registerFactory(() => SaveFilterAlertCriteria(sl()));
-  sl.registerFactory(() => ClearFilterAlertCriteria(sl()));
-  sl.registerFactory(() => SetFilterAlertNotificationsEnabled(sl()));
+  sl.registerFactory(() => ListSavedSearches(sl()));
+  sl.registerFactory(() => CreateSavedSearch(sl()));
+  sl.registerFactory(() => DeleteSavedSearch(sl()));
+  sl.registerFactory(() => SetSavedSearchAlertsEnabled(sl()));
   sl.registerLazySingleton(
     () => FilterAlertDeliveryOrchestrator(
       notificationsRepository: sl(),
       pushRegistration: sl(),
-      setNotificationsEnabled: sl(),
+      setAlertsEnabled: sl(),
     ),
   );
 
   sl.registerLazySingleton<BrowseCatalogFilterAlertsCubit>(
     () => BrowseCatalogFilterAlertsCubit(
-      getSettings: sl(),
-      saveCriteria: sl(),
-      clearCriteria: sl(),
+      listSavedSearches: sl(),
+      createSavedSearch: sl(),
+      deleteSavedSearch: sl(),
       notificationsRepository: sl(),
       deliveryOrchestrator: sl(),
     ),

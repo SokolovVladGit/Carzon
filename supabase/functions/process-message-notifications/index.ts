@@ -1,5 +1,5 @@
 /**
- * Carzon — Phase 3A: process queued message notification events (FCM HTTP v1).
+ * Carzon — Phase 3A + M0.3 Phase B: process queued message notification events (FCM HTTP v1).
  *
  * Invoked only with header `x-carzon-internal-secret` matching
  * `CARZON_PROCESS_MESSAGE_NOTIFICATIONS_SECRET`.
@@ -17,6 +17,10 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { JWT } from "npm:google-auth-library@9.14.2";
+import {
+  MESSAGING_BLOCKED_SKIP_REASON,
+  shouldApplyMessagingBlockGate,
+} from "../_shared/message_notification_block_gate.ts";
 import { messageNotificationCopyForLocale } from "../_shared/push_notification_copy.ts";
 
 const MAX_SEND_ATTEMPTS = 8;
@@ -250,6 +254,50 @@ Deno.serve(async (req: Request): Promise<Response> => {
           last_error: "notification_preferences_off",
         }).eq("id", event.id);
         continue;
+      }
+
+      let conversationKind: string | null = null;
+      if (event.conversation_id) {
+        const { data: convRow, error: convErr } = await supabase
+          .from("conversations")
+          .select("conversation_kind")
+          .eq("id", event.conversation_id)
+          .maybeSingle();
+
+        if (convErr) {
+          console.error("conversations select", convErr);
+          await requeueOrFail(supabase, event, "conversation_kind_query_failed");
+          continue;
+        }
+
+        conversationKind = (convRow as { conversation_kind?: string | null } | null)
+          ?.conversation_kind ?? null;
+      }
+
+      if (shouldApplyMessagingBlockGate(conversationKind)) {
+        const { data: blocked, error: blockErr } = await supabase.rpc(
+          "carzon_users_are_blocked",
+          {
+            p_user_a: event.actor_user_id,
+            p_user_b: event.recipient_user_id,
+          },
+        );
+
+        if (blockErr) {
+          console.error("carzon_users_are_blocked", blockErr);
+          await requeueOrFail(supabase, event, "block_check_failed");
+          continue;
+        }
+
+        if (blocked === true) {
+          await supabase.from("notification_delivery_events").update({
+            status: "skipped",
+            processed_at: new Date().toISOString(),
+            locked_at: null,
+            last_error: MESSAGING_BLOCKED_SKIP_REASON,
+          }).eq("id", event.id);
+          continue;
+        }
       }
 
       const { data: tokens, error: tokErr } = await supabase

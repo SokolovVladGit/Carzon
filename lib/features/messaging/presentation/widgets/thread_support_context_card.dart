@@ -19,9 +19,7 @@ class ThreadSupportContextCard extends StatelessWidget {
         ? BoxDecoration(
             color: cs.surfaceContainerLow.withValues(alpha: 0.96),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: accent.withValues(alpha: 0.22),
-            ),
+            border: Border.all(color: accent.withValues(alpha: 0.22)),
           )
         : AppTheme.editorialDarkSectionCard(cs, borderRadius: 16)!.copyWith(
             border: Border.all(color: accent.withValues(alpha: 0.28)),

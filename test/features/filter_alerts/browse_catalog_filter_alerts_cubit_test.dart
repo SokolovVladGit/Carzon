@@ -1,11 +1,8 @@
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
-import 'package:carzon/features/filter_alerts/domain/entities/filter_alert_settings.dart';
-import 'package:carzon/features/filter_alerts/domain/repositories/filter_alerts_repository.dart';
+import 'package:carzon/features/filter_alerts/domain/entities/saved_search.dart';
+import 'package:carzon/features/filter_alerts/domain/repositories/saved_searches_repository.dart';
 import 'package:carzon/features/filter_alerts/domain/services/filter_alert_delivery_orchestrator.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/clear_filter_alert_criteria.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/get_filter_alert_settings.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/save_filter_alert_criteria.dart';
 import 'package:carzon/features/listings/domain/browse_state_for_alert_criteria.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_discovery_criteria.dart';
@@ -19,25 +16,16 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockFilterAlertsRepository extends Mock
-    implements FilterAlertsRepository {}
+import '../../helpers/browse_catalog_filter_alerts_sl.dart';
+
+class _MockSavedSearchesRepository extends Mock
+    implements SavedSearchesRepository {}
 
 class _MockNotificationsRepository extends Mock
     implements NotificationsRepository {}
 
 class _MockDeliveryOrchestrator extends Mock
     implements FilterAlertDeliveryOrchestrator {}
-
-FilterAlertSettings _row({
-  required ListingDiscoveryCriteria? criteria,
-  required bool notificationsEnabled,
-}) => FilterAlertSettings(
-  userId: 'u',
-  criteria: criteria,
-  notificationsEnabled: notificationsEnabled,
-  createdAt: DateTime.utc(2026, 2, 1),
-  updatedAt: DateTime.utc(2026, 2, 2),
-);
 
 ListingDiscoveryCriteria _discoveryCriteriaWithSortOnly(
   ListingDiscoveryCriteria base,
@@ -61,9 +49,6 @@ ListingDiscoveryCriteria _discoveryCriteriaWithSortOnly(
   sort: sort,
 );
 
-/// Replace the active dotenv snapshot so `Env.pushNotificationsEnabled`
-/// flips deterministically per test. Keep the required Supabase keys
-/// present so any incidental access does not throw `StateError`.
 void _setPushEnv({required bool enabled}) {
   dotenv.testLoad(
     fileInput:
@@ -78,15 +63,12 @@ PUSH_NOTIFICATIONS_ENABLED=${enabled ? 'true' : 'false'}
 void main() {
   setUpAll(() {
     registerFallbackValue(
-      _row(
-        criteria: const ListingDiscoveryCriteria(),
-        notificationsEnabled: false,
-      ),
+      testSavedSearch(criteria: const ListingDiscoveryCriteria()),
     );
     registerFallbackValue(const ListingDiscoveryCriteria());
   });
 
-  late _MockFilterAlertsRepository filterRepo;
+  late _MockSavedSearchesRepository savedSearchesRepo;
   late _MockNotificationsRepository notifRepo;
   late _MockDeliveryOrchestrator orchestrator;
 
@@ -100,35 +82,29 @@ void main() {
   );
 
   BrowseCatalogFilterAlertsCubit buildCubit() {
-    return BrowseCatalogFilterAlertsCubit(
-      getSettings: GetFilterAlertSettings(filterRepo),
-      saveCriteria: SaveFilterAlertCriteria(filterRepo),
-      clearCriteria: ClearFilterAlertCriteria(filterRepo),
-      notificationsRepository: notifRepo,
+    return buildTestBrowseCatalogFilterAlertsCubit(
+      savedSearchesRepo: savedSearchesRepo,
+      notificationsRepo: notifRepo,
       deliveryOrchestrator: orchestrator,
     );
   }
 
   setUp(() {
-    // Default to push-enabled so the pre-existing enable-delivery tests
-    // exercise the orchestrator path. Push-disabled tests below opt out
-    // explicitly via `_setPushEnv(enabled: false)`.
     _setPushEnv(enabled: true);
 
-    filterRepo = _MockFilterAlertsRepository();
+    savedSearchesRepo = _MockSavedSearchesRepository();
     notifRepo = _MockNotificationsRepository();
     orchestrator = _MockDeliveryOrchestrator();
 
     when(
       () => notifRepo.getMyPreferences(),
     ).thenAnswer((_) async => Success(prefsAllOn()));
+    when(
+      () => savedSearchesRepo.list(),
+    ).thenAnswer((_) async => const Success([]));
   });
 
   test('baseline browse snapshot cannot enable alert deliveries', () async {
-    final backend = _row(criteria: null, notificationsEnabled: false);
-
-    when(() => filterRepo.loadMine()).thenAnswer((_) async => Success(backend));
-
     final cubit = buildCubit();
     await cubit.refresh();
 
@@ -137,13 +113,15 @@ void main() {
         const ListingsState(),
       ),
       authenticated: true,
+      autoName: 'Baseline',
     );
 
     expect(outcome, BrowseCatalogBellOutcome.criteriaTooBroad);
     verifyNever(
-      () => filterRepo.saveCriteria(
-        any(),
-        notificationsEnabled: any(named: 'notificationsEnabled'),
+      () => savedSearchesRepo.create(
+        name: any(named: 'name'),
+        criteria: any(named: 'criteria'),
+        alertsEnabled: any(named: 'alertsEnabled'),
       ),
     );
   });
@@ -151,49 +129,41 @@ void main() {
   test(
     'enabling persists criteria with search payload then activates deliveries',
     () async {
-      var backendSnapshot = _row(criteria: null, notificationsEnabled: false);
       final bmwCrit = ListingDiscoveryCriteria(
         search: 'diesel',
         make: 'BMW',
         marketRegion: MarketRegion.transnistria,
         sort: ListingSortOption.lowestMileageFirst,
       );
-      final postSaveBackend = FilterAlertSettings(
-        userId: 'u',
+      final postSave = testSavedSearch(
+        id: 'ss-new',
+        name: 'BMW search',
         criteria: bmwCrit,
-        notificationsEnabled: false,
-        createdAt: DateTime.utc(2026, 2, 1),
-        updatedAt: DateTime.utc(2026, 2, 5),
+        alertsEnabled: false,
       );
-      final postEnableBackend = FilterAlertSettings(
-        userId: 'u',
+      final postEnable = testSavedSearch(
+        id: 'ss-new',
+        name: 'BMW search',
         criteria: bmwCrit,
-        notificationsEnabled: true,
-        createdAt: DateTime.utc(2026, 2, 1),
-        updatedAt: DateTime.utc(2026, 2, 6),
+        alertsEnabled: true,
       );
 
       when(
-        () => filterRepo.loadMine(),
-      ).thenAnswer((_) async => Success(backendSnapshot));
-
-      when(
-        () => filterRepo.saveCriteria(
-          any(),
-          notificationsEnabled: any(named: 'notificationsEnabled'),
+        () => savedSearchesRepo.create(
+          name: any(named: 'name'),
+          criteria: any(named: 'criteria'),
+          alertsEnabled: any(named: 'alertsEnabled'),
         ),
       ).thenAnswer((inv) async {
         final passed =
-            inv.positionalArguments.first as ListingDiscoveryCriteria;
+            inv.namedArguments[#criteria] as ListingDiscoveryCriteria;
         expect(passed.search, 'diesel');
         expect(passed.make, 'BMW');
-        backendSnapshot = postSaveBackend;
-        return Success(postSaveBackend);
+        return Success(postSave);
       });
 
       when(() => orchestrator.enableDeliveries(any())).thenAnswer((_) async {
-        backendSnapshot = postEnableBackend;
-        return Success(postEnableBackend);
+        return Success(postEnable);
       });
 
       final cubit = buildCubit();
@@ -202,17 +172,20 @@ void main() {
       final outcome = await cubit.handleCatalogFilterBell(
         draftCriteria: bmwCrit,
         authenticated: true,
+        autoName: 'BMW search',
       );
 
       expect(outcome, BrowseCatalogBellOutcome.deliveriesEnabled);
       verify(
-        () => filterRepo.saveCriteria(
-          any(
+        () => savedSearchesRepo.create(
+          name: 'BMW search',
+          criteria: any(
+            named: 'criteria',
             that: predicate<ListingDiscoveryCriteria>(
               (c) => c.search == 'diesel' && c.make == 'BMW',
             ),
           ),
-          notificationsEnabled: any(named: 'notificationsEnabled'),
+          alertsEnabled: false,
         ),
       ).called(1);
       verify(() => orchestrator.enableDeliveries(any())).called(1);
@@ -235,7 +208,9 @@ void main() {
         BrowseCatalogFilterAlertsState(
           phase: BrowseCatalogFilterAlertsLoadPhase.ready,
           prefs: prefsAllOn(),
-          settings: _row(criteria: toyotaCrit, notificationsEnabled: true),
+          savedSearches: [
+            testSavedSearch(criteria: toyotaCrit, alertsEnabled: true),
+          ],
         ),
       );
 
@@ -278,11 +253,51 @@ void main() {
         BrowseCatalogFilterAlertsState(
           phase: BrowseCatalogFilterAlertsLoadPhase.ready,
           prefs: prefsAllOn(),
-          settings: _row(criteria: savedToyota, notificationsEnabled: true),
+          savedSearches: [
+            testSavedSearch(criteria: savedToyota, alertsEnabled: true),
+          ],
         ),
       );
 
       expect(cubit.browseBellShowsActiveDraft(toyotaDraft), isTrue);
+    },
+  );
+
+  test(
+    'returns maxSavedSearchesReached when user already has five saved searches',
+    () async {
+      final cap = List.generate(
+        5,
+        (i) => testSavedSearch(
+          id: 'ss-$i',
+          name: 'Search $i',
+          criteria: ListingDiscoveryCriteria(make: 'Make$i'),
+        ),
+      );
+      when(
+        () => savedSearchesRepo.list(),
+      ).thenAnswer((_) async => Success(cap));
+
+      final cubit = buildCubit();
+      await cubit.refresh();
+
+      final outcome = await cubit.handleCatalogFilterBell(
+        draftCriteria: const ListingDiscoveryCriteria(
+          make: 'Volvo',
+          marketRegion: MarketRegion.transnistria,
+        ),
+        authenticated: true,
+        autoName: 'Volvo',
+      );
+
+      expect(outcome, BrowseCatalogBellOutcome.maxSavedSearchesReached);
+      verifyNever(
+        () => savedSearchesRepo.create(
+          name: any(named: 'name'),
+          criteria: any(named: 'criteria'),
+          alertsEnabled: any(named: 'alertsEnabled'),
+        ),
+      );
     },
   );
 
@@ -293,32 +308,21 @@ void main() {
       () async {
         _setPushEnv(enabled: false);
 
-        var backendSnapshot = _row(criteria: null, notificationsEnabled: false);
         final toyotaCrit = ListingDiscoveryCriteria(
           make: 'Toyota',
           marketRegion: MarketRegion.transnistria,
         );
-        final postSaveBackend = FilterAlertSettings(
-          userId: 'u',
-          criteria: toyotaCrit,
-          notificationsEnabled: false,
-          createdAt: DateTime.utc(2026, 2, 1),
-          updatedAt: DateTime.utc(2026, 2, 5),
-        );
-
         when(
-          () => filterRepo.loadMine(),
-        ).thenAnswer((_) async => Success(backendSnapshot));
-
-        when(
-          () => filterRepo.saveCriteria(
-            any(),
-            notificationsEnabled: any(named: 'notificationsEnabled'),
+          () => savedSearchesRepo.create(
+            name: any(named: 'name'),
+            criteria: any(named: 'criteria'),
+            alertsEnabled: any(named: 'alertsEnabled'),
           ),
-        ).thenAnswer((inv) async {
-          backendSnapshot = postSaveBackend;
-          return Success(postSaveBackend);
-        });
+        ).thenAnswer(
+          (_) async => Success(
+            testSavedSearch(criteria: toyotaCrit, alertsEnabled: false),
+          ),
+        );
 
         final cubit = buildCubit();
         await cubit.refresh();
@@ -326,6 +330,7 @@ void main() {
         final outcome = await cubit.handleCatalogFilterBell(
           draftCriteria: toyotaCrit,
           authenticated: true,
+          autoName: 'Toyota',
         );
 
         expect(
@@ -334,18 +339,19 @@ void main() {
         );
 
         verify(
-          () => filterRepo.saveCriteria(
-            any(
+          () => savedSearchesRepo.create(
+            name: 'Toyota',
+            criteria: any(
+              named: 'criteria',
               that: predicate<ListingDiscoveryCriteria>(
                 (c) => c.make == 'Toyota',
               ),
             ),
-            notificationsEnabled: false,
+            alertsEnabled: false,
           ),
         ).called(1);
 
         verifyNever(() => orchestrator.enableDeliveries(any()));
-        verifyNever(() => orchestrator.disableDeliveriesFlagOnly());
         verifyNever(
           () => notifRepo.updateMyPreferences(
             globalEnabled: any(named: 'globalEnabled'),
@@ -355,58 +361,59 @@ void main() {
         );
 
         expect(cubit.state.bellBusy, isFalse);
-        expect(cubit.state.deliveryFullyEnabled, isFalse);
+        expect(
+          cubit.state.deliveryFullyEnabledForCriteria(toyotaCrit),
+          isFalse,
+        );
       },
     );
 
-    test(
-      'eligible bell tap on already-saved-matching criteria now toggles OFF: '
-      'returns savedAlertCleared and never re-saves',
-      () async {
-        _setPushEnv(enabled: false);
+    test('eligible bell tap on already-saved-matching criteria toggles OFF: '
+        'returns savedAlertCleared and never re-creates', () async {
+      _setPushEnv(enabled: false);
 
-        final toyotaCrit = ListingDiscoveryCriteria(
-          make: 'Toyota',
-          marketRegion: MarketRegion.transnistria,
-        );
-        var backend = _row(criteria: toyotaCrit, notificationsEnabled: false);
-        final clearedRow = _row(criteria: null, notificationsEnabled: false);
+      final toyotaCrit = ListingDiscoveryCriteria(
+        make: 'Toyota',
+        marketRegion: MarketRegion.transnistria,
+      );
+      final saved = testSavedSearch(
+        id: 'ss-toyota',
+        criteria: toyotaCrit,
+        alertsEnabled: false,
+      );
 
-        when(
-          () => filterRepo.loadMine(),
-        ).thenAnswer((_) async => Success(backend));
-        when(() => filterRepo.clearPersistedCriteria()).thenAnswer((_) async {
-          backend = clearedRow;
-          return Success(clearedRow);
-        });
+      when(
+        () => savedSearchesRepo.list(),
+      ).thenAnswer((_) async => Success([saved]));
+      when(
+        () => savedSearchesRepo.delete('ss-toyota'),
+      ).thenAnswer((_) async => const Success(null));
 
-        final cubit = buildCubit();
-        await cubit.refresh();
+      final cubit = buildCubit();
+      await cubit.refresh();
 
-        final outcome = await cubit.handleCatalogFilterBell(
-          draftCriteria: toyotaCrit,
-          authenticated: true,
-        );
+      final outcome = await cubit.handleCatalogFilterBell(
+        draftCriteria: toyotaCrit,
+        authenticated: true,
+        autoName: 'Toyota',
+      );
 
-        expect(outcome, BrowseCatalogBellOutcome.savedAlertCleared);
-        verify(() => filterRepo.clearPersistedCriteria()).called(1);
-        verifyNever(
-          () => filterRepo.saveCriteria(
-            any(),
-            notificationsEnabled: any(named: 'notificationsEnabled'),
-          ),
-        );
-        verifyNever(() => orchestrator.enableDeliveries(any()));
-      },
-    );
+      expect(outcome, BrowseCatalogBellOutcome.savedAlertCleared);
+      verify(() => savedSearchesRepo.delete('ss-toyota')).called(1);
+      verifyNever(
+        () => savedSearchesRepo.create(
+          name: any(named: 'name'),
+          criteria: any(named: 'criteria'),
+          alertsEnabled: any(named: 'alertsEnabled'),
+        ),
+      );
+      verifyNever(() => orchestrator.enableDeliveries(any()));
+    });
 
     test('sort-only/default criteria remain ineligible (broad)', () async {
       _setPushEnv(enabled: false);
 
       final cubit = buildCubit();
-      when(() => filterRepo.loadMine()).thenAnswer(
-        (_) async => Success(_row(criteria: null, notificationsEnabled: false)),
-      );
       await cubit.refresh();
 
       final outcome = await cubit.handleCatalogFilterBell(
@@ -414,13 +421,15 @@ void main() {
           const ListingsState(sortOption: ListingSortOption.priceLowToHigh),
         ),
         authenticated: true,
+        autoName: 'Sort only',
       );
 
       expect(outcome, BrowseCatalogBellOutcome.criteriaTooBroad);
       verifyNever(
-        () => filterRepo.saveCriteria(
-          any(),
-          notificationsEnabled: any(named: 'notificationsEnabled'),
+        () => savedSearchesRepo.create(
+          name: any(named: 'name'),
+          criteria: any(named: 'criteria'),
+          alertsEnabled: any(named: 'alertsEnabled'),
         ),
       );
     });
@@ -442,7 +451,9 @@ void main() {
         BrowseCatalogFilterAlertsState(
           phase: BrowseCatalogFilterAlertsLoadPhase.ready,
           prefs: prefsAllOn(),
-          settings: _row(criteria: critToyota, notificationsEnabled: false),
+          savedSearches: [
+            testSavedSearch(criteria: critToyota, alertsEnabled: false),
+          ],
         ),
       );
 
@@ -450,7 +461,6 @@ void main() {
         cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(toyotaApplied),
         isTrue,
       );
-      // Mutually exclusive with active-delivery FAB ornament.
       expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isFalse);
     });
 
@@ -469,7 +479,9 @@ void main() {
         BrowseCatalogFilterAlertsState(
           phase: BrowseCatalogFilterAlertsLoadPhase.ready,
           prefs: prefsAllOn(),
-          settings: _row(criteria: critToyota, notificationsEnabled: true),
+          savedSearches: [
+            testSavedSearch(criteria: critToyota, alertsEnabled: true),
+          ],
         ),
       );
 
@@ -497,7 +509,9 @@ void main() {
         BrowseCatalogFilterAlertsState(
           phase: BrowseCatalogFilterAlertsLoadPhase.ready,
           prefs: prefsAllOn(),
-          settings: _row(criteria: critToyota, notificationsEnabled: false),
+          savedSearches: [
+            testSavedSearch(criteria: critToyota, alertsEnabled: false),
+          ],
         ),
       );
 
@@ -525,7 +539,9 @@ void main() {
         BrowseCatalogFilterAlertsState(
           phase: BrowseCatalogFilterAlertsLoadPhase.ready,
           prefs: prefsAllOn(),
-          settings: _row(criteria: toyotaCrit, notificationsEnabled: false),
+          savedSearches: [
+            testSavedSearch(criteria: toyotaCrit, alertsEnabled: false),
+          ],
         ),
       );
 
@@ -548,7 +564,9 @@ void main() {
         BrowseCatalogFilterAlertsState(
           phase: BrowseCatalogFilterAlertsLoadPhase.ready,
           prefs: prefsAllOn(),
-          settings: _row(criteria: toyotaCrit, notificationsEnabled: true),
+          savedSearches: [
+            testSavedSearch(criteria: toyotaCrit, alertsEnabled: true),
+          ],
         ),
       );
 
@@ -560,9 +578,9 @@ void main() {
     });
 
     test(
-      'matched draft with delivery fully off (push-disabled env): tap clears '
-      'the saved alert via clearPersistedCriteria, returns savedAlertCleared, '
-      'and both saved-off helpers return false afterwards',
+      'matched draft with delivery fully off (push-disabled env): tap deletes '
+      'the saved search, returns savedAlertCleared, and helpers return false '
+      'afterwards',
       () async {
         _setPushEnv(enabled: false);
 
@@ -570,20 +588,23 @@ void main() {
           make: 'Toyota',
           marketRegion: MarketRegion.transnistria,
         );
-        var backend = _row(criteria: toyotaCrit, notificationsEnabled: false);
-        final clearedRow = _row(criteria: null, notificationsEnabled: false);
+        final saved = testSavedSearch(
+          id: 'ss-toyota',
+          criteria: toyotaCrit,
+          alertsEnabled: false,
+        );
 
+        final searches = [saved];
         when(
-          () => filterRepo.loadMine(),
-        ).thenAnswer((_) async => Success(backend));
-        when(() => filterRepo.clearPersistedCriteria()).thenAnswer((_) async {
-          backend = clearedRow;
-          return Success(clearedRow);
+          () => savedSearchesRepo.list(),
+        ).thenAnswer((_) async => Success(List.of(searches)));
+        when(() => savedSearchesRepo.delete('ss-toyota')).thenAnswer((_) async {
+          searches.clear();
+          return const Success(null);
         });
 
         final cubit = buildCubit();
         await cubit.refresh();
-        // Sanity: saved-off helpers report the matching state before tap.
         const toyotaApplied = ListingsState(
           make: 'Toyota',
           regionFilter: MarketRegionFilter.transnistria,
@@ -600,21 +621,20 @@ void main() {
         final outcome = await cubit.handleCatalogFilterBell(
           draftCriteria: toyotaCrit,
           authenticated: true,
+          autoName: 'Toyota',
         );
 
         expect(outcome, BrowseCatalogBellOutcome.savedAlertCleared);
-        verify(() => filterRepo.clearPersistedCriteria()).called(1);
+        verify(() => savedSearchesRepo.delete('ss-toyota')).called(1);
         verifyNever(() => orchestrator.enableDeliveries(any()));
-        verifyNever(() => orchestrator.disableDeliveriesFlagOnly());
         verifyNever(
-          () => filterRepo.saveCriteria(
-            any(),
-            notificationsEnabled: any(named: 'notificationsEnabled'),
+          () => savedSearchesRepo.create(
+            name: any(named: 'name'),
+            criteria: any(named: 'criteria'),
+            alertsEnabled: any(named: 'alertsEnabled'),
           ),
         );
 
-        // After the toggle clears the row, both indicator helpers must
-        // return false so the inline banner + FAB ornament drop.
         expect(
           cubit.browseBellShowsSavedDraftWithoutDelivery(toyotaCrit),
           isFalse,
@@ -626,69 +646,78 @@ void main() {
       },
     );
 
-    test('matched draft with delivery fully on: tap clears the saved alert '
-        '(criteria + delivery flag drop in a single upsert), returns '
-        'savedAlertCleared, never calls disableDeliveriesFlagOnly', () async {
+    test(
+      'matched draft with delivery fully on: tap deletes saved search, '
+      'returns savedAlertCleared, never calls orchestrator disable',
+      () async {
+        final toyotaCrit = ListingDiscoveryCriteria(
+          make: 'Toyota',
+          marketRegion: MarketRegion.transnistria,
+        );
+        final saved = testSavedSearch(
+          id: 'ss-toyota',
+          criteria: toyotaCrit,
+          alertsEnabled: true,
+        );
+
+        final searches = [saved];
+        when(
+          () => savedSearchesRepo.list(),
+        ).thenAnswer((_) async => Success(List.of(searches)));
+        when(() => savedSearchesRepo.delete('ss-toyota')).thenAnswer((_) async {
+          searches.clear();
+          return const Success(null);
+        });
+
+        final cubit = buildCubit();
+        await cubit.refresh();
+        const toyotaApplied = ListingsState(
+          make: 'Toyota',
+          regionFilter: MarketRegionFilter.transnistria,
+        );
+        expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isTrue);
+        expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isTrue);
+
+        final outcome = await cubit.handleCatalogFilterBell(
+          draftCriteria: toyotaCrit,
+          authenticated: true,
+          autoName: 'Toyota',
+        );
+
+        expect(outcome, BrowseCatalogBellOutcome.savedAlertCleared);
+        verify(() => savedSearchesRepo.delete('ss-toyota')).called(1);
+        verifyNever(() => orchestrator.disableDeliveries(any()));
+
+        expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isFalse);
+        expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isFalse);
+        expect(
+          cubit.browseBellShowsSavedDraftWithoutDelivery(toyotaCrit),
+          isFalse,
+        );
+        expect(
+          cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(toyotaApplied),
+          isFalse,
+        );
+      },
+    );
+
+    test('delete failure returns savedAlertClearFailed and leaves saved row '
+        'in place', () async {
       final toyotaCrit = ListingDiscoveryCriteria(
         make: 'Toyota',
         marketRegion: MarketRegion.transnistria,
       );
-      var backend = _row(criteria: toyotaCrit, notificationsEnabled: true);
-      final clearedRow = _row(criteria: null, notificationsEnabled: false);
+      final saved = testSavedSearch(
+        id: 'ss-toyota',
+        criteria: toyotaCrit,
+        alertsEnabled: true,
+      );
 
       when(
-        () => filterRepo.loadMine(),
-      ).thenAnswer((_) async => Success(backend));
-      when(() => filterRepo.clearPersistedCriteria()).thenAnswer((_) async {
-        backend = clearedRow;
-        return Success(clearedRow);
-      });
-
-      final cubit = buildCubit();
-      await cubit.refresh();
-      // Sanity: active helpers fire before the toggle.
-      const toyotaApplied = ListingsState(
-        make: 'Toyota',
-        regionFilter: MarketRegionFilter.transnistria,
-      );
-      expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isTrue);
-      expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isTrue);
-
-      final outcome = await cubit.handleCatalogFilterBell(
-        draftCriteria: toyotaCrit,
-        authenticated: true,
-      );
-
-      expect(outcome, BrowseCatalogBellOutcome.savedAlertCleared);
-      verify(() => filterRepo.clearPersistedCriteria()).called(1);
-      verifyNever(() => orchestrator.disableDeliveriesFlagOnly());
-
-      // After clearing, all four indicator helpers must report false.
-      expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isFalse);
-      expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isFalse);
-      expect(
-        cubit.browseBellShowsSavedDraftWithoutDelivery(toyotaCrit),
-        isFalse,
-      );
-      expect(
-        cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(toyotaApplied),
-        isFalse,
-      );
-    });
-
-    test('clear failure returns savedAlertClearFailed and leaves saved row '
-        'in place; never falls back to disable-flag-only', () async {
-      final toyotaCrit = ListingDiscoveryCriteria(
-        make: 'Toyota',
-        marketRegion: MarketRegion.transnistria,
-      );
-      final savedRow = _row(criteria: toyotaCrit, notificationsEnabled: true);
-
+        () => savedSearchesRepo.list(),
+      ).thenAnswer((_) async => Success([saved]));
       when(
-        () => filterRepo.loadMine(),
-      ).thenAnswer((_) async => Success(savedRow));
-      when(
-        () => filterRepo.clearPersistedCriteria(),
+        () => savedSearchesRepo.delete('ss-toyota'),
       ).thenAnswer((_) async => const FailureResult(ServerFailure('boom')));
 
       final cubit = buildCubit();
@@ -697,11 +726,11 @@ void main() {
       final outcome = await cubit.handleCatalogFilterBell(
         draftCriteria: toyotaCrit,
         authenticated: true,
+        autoName: 'Toyota',
       );
 
       expect(outcome, BrowseCatalogBellOutcome.savedAlertClearFailed);
-      verify(() => filterRepo.clearPersistedCriteria()).called(1);
-      verifyNever(() => orchestrator.disableDeliveriesFlagOnly());
+      verify(() => savedSearchesRepo.delete('ss-toyota')).called(1);
       expect(cubit.state.bellBusy, isFalse);
     });
   });

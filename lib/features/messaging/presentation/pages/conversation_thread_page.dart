@@ -32,6 +32,8 @@ import '../widgets/chat_message_bubble.dart';
 import '../widgets/thread_composer_bar.dart';
 import '../widgets/thread_date_separator.dart';
 import '../widgets/thread_listing_context_card.dart';
+import '../widgets/thread_messaging_safety_ui.dart';
+import '../widgets/thread_safety_overflow_menu.dart';
 import '../widgets/thread_support_context_card.dart';
 import '../widgets/thread_quick_reply_chips.dart';
 
@@ -171,6 +173,7 @@ class _ConversationThreadPageState extends State<ConversationThreadPage> {
           create: (_) => ConversationThreadCubit(
             repository: sl<MessagingRepository>(),
             conversationId: widget.conversationId,
+            currentUserId: uid,
             onReadReceiptSynced: () async {
               await sl<MessagingUnreadSummaryCubit>().sync(
                 sl<AuthCubit>().state,
@@ -389,9 +392,9 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
 
   Future<Uint8List?> _loadAttachmentBytes(String storagePath) {
     return _attachmentByteFutures.putIfAbsent(storagePath, () {
-      return context
-          .read<ConversationThreadCubit>()
-          .downloadAttachmentBytes(storagePath);
+      return context.read<ConversationThreadCubit>().downloadAttachmentBytes(
+        storagePath,
+      );
     });
   }
 
@@ -443,6 +446,7 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
         scrolledUnderElevation: 0,
         shadowColor: Colors.transparent,
         bottom: _threadAppBarBottomEdge(cs),
+        actions: const [ThreadSafetyOverflowMenu()],
       ),
       body: Column(
         children: [
@@ -620,9 +624,10 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
                                           bytes: bytes,
                                         );
                                       },
-                                      onRetryLoad: () => _invalidateAttachmentBytes(
-                                        attachment.storagePath,
-                                      ),
+                                      onRetryLoad: () =>
+                                          _invalidateAttachmentBytes(
+                                            attachment.storagePath,
+                                          ),
                                       onLongPress: () {
                                         final caption = m.body.trim();
                                         if (caption.isEmpty) return;
@@ -678,10 +683,23 @@ class _ThreadScaffoldState extends State<_ThreadScaffold> {
               ),
             ),
           ),
-          ThreadComposerBar(
-            conversationId: widget.conversationId,
-            textController: widget.textController,
-            onSendSucceeded: () => widget.textController.clear(),
+          BlocBuilder<ConversationThreadCubit, ConversationThreadState>(
+            builder: (context, state) {
+              return ThreadBlockedBanner(
+                blockedByMe: state.peerBlockedByMe,
+                messagingUnavailable: state.messagingUnavailable,
+              );
+            },
+          ),
+          BlocBuilder<ConversationThreadCubit, ConversationThreadState>(
+            builder: (context, state) {
+              return ThreadComposerBar(
+                conversationId: widget.conversationId,
+                textController: widget.textController,
+                composerDisabled: state.composerDisabled,
+                onSendSucceeded: () => widget.textController.clear(),
+              );
+            },
           ),
         ],
       ),

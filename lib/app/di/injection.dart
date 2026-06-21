@@ -9,6 +9,8 @@ import '../../core/theme/theme_mode_local_datasource.dart';
 import '../../features/auth/di/auth_injection.dart';
 import '../../features/account/di/account_injection.dart';
 import '../../features/compare/di/compare_injection.dart';
+import '../../features/recent_searches/di/recent_searches_injection.dart';
+import '../../features/recently_viewed/di/recently_viewed_injection.dart';
 import '../../features/create_listing/di/create_listing_injection.dart';
 import '../../features/edit_listing/di/edit_listing_injection.dart';
 import '../../features/favorites/di/favorites_injection.dart';
@@ -56,6 +58,8 @@ Future<void> configureDependencies(SupabaseService supabaseService) async {
   registerNotificationsFeature(sl);
   registerAuthFeature(sl);
   registerAccountFeature(sl);
+  registerRecentlyViewedFeature(sl);
+  registerRecentSearchesFeature(sl);
   registerListingsFeature(sl);
   registerVehicleModelDataFeature(sl);
   registerVehicleRecallDataFeature(sl);

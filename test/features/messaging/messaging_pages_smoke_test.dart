@@ -70,6 +70,9 @@ void main() {
     when(
       () => messagingRepo.getUnreadConversationCount(),
     ).thenAnswer((_) async => const Success(0));
+    when(
+      () => messagingRepo.listBlockedUsers(),
+    ).thenAnswer((_) async => const Success([]));
 
     when(() => authCubit.state).thenReturn(const AuthState.authenticated(user));
     whenListen(
@@ -316,10 +319,7 @@ void main() {
 
     expect(find.text(l10n.messagingThreadEmptyBody), findsOneWidget);
     expect(find.text(l10n.messagingQuickReplyHint), findsOneWidget);
-    expect(
-      find.text(l10n.messagingQuickReplyStillAvailable),
-      findsOneWidget,
-    );
+    expect(find.text(l10n.messagingQuickReplyStillAvailable), findsOneWidget);
   });
 
   testWidgets(
@@ -340,17 +340,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        find.text(l10n.messagingSupportThreadEmptyTitle),
-        findsOneWidget,
-      );
+      expect(find.text(l10n.messagingSupportThreadEmptyTitle), findsOneWidget);
       expect(find.text(l10n.messagingSupportThreadEmptyBody), findsOneWidget);
       expect(find.text(l10n.messagingThreadEmptyBody), findsNothing);
       expect(find.text(l10n.messagingQuickReplyHint), findsNothing);
-      expect(
-        find.text(l10n.messagingQuickReplyStillAvailable),
-        findsNothing,
-      );
+      expect(find.text(l10n.messagingQuickReplyStillAvailable), findsNothing);
       expect(find.text(l10n.supportConversationTitle), findsNWidgets(2));
     },
   );
@@ -365,9 +359,7 @@ void main() {
     ).thenAnswer((_) async => const Success<List<ChatMessage>>([]));
 
     await tester.pumpWidget(
-      testedInbox(
-        const ConversationThreadPage(conversationId: 'conv-support'),
-      ),
+      testedInbox(const ConversationThreadPage(conversationId: 'conv-support')),
     );
     await tester.pumpAndSettle();
 

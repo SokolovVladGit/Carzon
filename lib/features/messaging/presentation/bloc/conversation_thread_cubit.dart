@@ -6,7 +6,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/utils/result.dart';
 import '../../domain/entities/chat_attachment_upload.dart';
 import '../../domain/entities/chat_message.dart';
+import '../../domain/entities/conversation.dart';
+import '../../domain/entities/user_report_reason.dart';
+import '../../domain/messaging_failure_kind.dart';
 import '../../domain/repositories/messaging_repository.dart';
+import '../../domain/utils/conversation_peer.dart';
 import '../utils/messaging_failure_mapper.dart';
 import 'conversation_thread_state.dart';
 
@@ -14,14 +18,17 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
   ConversationThreadCubit({
     required MessagingRepository repository,
     required String conversationId,
+    required String currentUserId,
     Future<void> Function()? onReadReceiptSynced,
   }) : _repository = repository,
        _conversationId = conversationId,
+       _currentUserId = currentUserId,
        _onReadReceiptSynced = onReadReceiptSynced,
        super(const ConversationThreadState());
 
   final MessagingRepository _repository;
   final String _conversationId;
+  final String _currentUserId;
   final Future<void> Function()? _onReadReceiptSynced;
 
   int _mainFetchDepth = 0;
@@ -92,9 +99,12 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
                   status: ConversationThreadStatus.success,
                   conversation: conv,
                   messages: value,
+                  peerBlockedByMe: state.peerBlockedByMe,
+                  messagingUnavailable: state.messagingUnavailable,
                 ),
               );
               unawaited(_touchReadReceiptSilently());
+              unawaited(_syncPeerBlockedByMe(conv));
           }
       }
     } finally {
@@ -233,11 +243,15 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
     final result = await _repository.sendMessage(_conversationId, body);
     switch (result) {
       case FailureResult(:final failure):
+        final kind = messagingFailureKindFrom(failure);
         emit(
           state.copyWith(
             sending: false,
-            lastSendFailureKind: messagingFailureKindFrom(failure),
+            lastSendFailureKind: kind,
             clearLastSendFailure: false,
+            messagingUnavailable:
+                kind == MessagingFailureKind.messagingBlocked ||
+                state.messagingUnavailable,
           ),
         );
       case Success<String>():
@@ -258,11 +272,15 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
     final result = await _repository.sendMessageWithAttachment(upload);
     switch (result) {
       case FailureResult(:final failure):
+        final kind = messagingFailureKindFrom(failure);
         emit(
           state.copyWith(
             sending: false,
-            lastSendFailureKind: messagingFailureKindFrom(failure),
+            lastSendFailureKind: kind,
             clearLastSendFailure: false,
+            messagingUnavailable:
+                kind == MessagingFailureKind.messagingBlocked ||
+                state.messagingUnavailable,
           ),
         );
       case Success<String>():
@@ -283,6 +301,63 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
         return Uint8List.fromList(value);
       case FailureResult():
         return null;
+    }
+  }
+
+  Future<bool> blockPeer() async {
+    if (state.blockActionInProgress || state.peerBlockedByMe) return false;
+    emit(state.copyWith(blockActionInProgress: true));
+    final result = await _repository.blockUser(_conversationId);
+    switch (result) {
+      case FailureResult():
+        emit(state.copyWith(blockActionInProgress: false));
+        return false;
+      case Success():
+        emit(
+          state.copyWith(
+            blockActionInProgress: false,
+            peerBlockedByMe: true,
+            messagingUnavailable: false,
+          ),
+        );
+        return true;
+    }
+  }
+
+  Future<bool> reportPeer({
+    required UserReportReason reason,
+    String? note,
+  }) async {
+    if (state.reportActionInProgress) return false;
+    emit(state.copyWith(reportActionInProgress: true));
+    final result = await _repository.reportUser(
+      conversationId: _conversationId,
+      reason: reason,
+      note: note,
+    );
+    switch (result) {
+      case FailureResult():
+        emit(state.copyWith(reportActionInProgress: false));
+        return false;
+      case Success():
+        emit(state.copyWith(reportActionInProgress: false));
+        return true;
+    }
+  }
+
+  Future<void> _syncPeerBlockedByMe(Conversation conv) async {
+    if (conv.isSupportConversation) return;
+    final peerId = conversationPeerUserId(conv, _currentUserId);
+    if (peerId == null) return;
+
+    final result = await _repository.listBlockedUsers();
+    if (isClosed) return;
+    switch (result) {
+      case FailureResult():
+        return;
+      case Success(:final value):
+        final blocked = value.any((row) => row.blockedUserId == peerId);
+        emit(state.copyWith(peerBlockedByMe: blocked));
     }
   }
 }

@@ -828,6 +828,120 @@ class AppLocalizationsRo extends AppLocalizations {
       'Când este cel mai bun moment pentru a suna?';
 
   @override
+  String get messagingSafetyReportUser => 'Raportează utilizatorul';
+
+  @override
+  String get messagingSafetyBlockUser => 'Blochează utilizatorul';
+
+  @override
+  String get messagingSafetyBlockedLabel => 'Blocat';
+
+  @override
+  String get messagingSafetyBlockedUsersTitle => 'Utilizatori blocați';
+
+  @override
+  String get messagingSafetyUnblockUser => 'Deblochează';
+
+  @override
+  String get messagingSafetyBlockConfirmTitle => 'Blocați utilizatorul?';
+
+  @override
+  String get messagingSafetyBlockConfirmBody =>
+      'Acest utilizator nu vă va putea trimite mesaje și nu va primi notificări de la dvs. Conversația va rămâne vizibilă.';
+
+  @override
+  String get messagingSafetyBlockConfirmAction => 'Blochează';
+
+  @override
+  String get messagingSafetyBlockConfirmCancel => 'Anulează';
+
+  @override
+  String get messagingSafetyBlockSuccess => 'Utilizator blocat.';
+
+  @override
+  String get messagingSafetyBlockError =>
+      'Nu s-a putut bloca utilizatorul. Încercați din nou.';
+
+  @override
+  String get messagingSafetyBlockedBannerTitle => 'Ați blocat acest utilizator';
+
+  @override
+  String get messagingSafetyBlockedBannerBody =>
+      'Mesajele noi sunt indisponibile. Deblocați din setări.';
+
+  @override
+  String get messagingSafetySendUnavailable =>
+      'Mesageria nu este disponibilă în această conversație.';
+
+  @override
+  String get messagingSafetyReportReasonHarassment => 'Hărțuire';
+
+  @override
+  String get messagingSafetyReportReasonSpam => 'Spam';
+
+  @override
+  String get messagingSafetyReportReasonScam => 'Escrocherie';
+
+  @override
+  String get messagingSafetyReportReasonInappropriate => 'Conținut nepotrivit';
+
+  @override
+  String get messagingSafetyReportReasonOther => 'Altele';
+
+  @override
+  String get messagingSafetyReportNoteLabel => 'Notă (opțional)';
+
+  @override
+  String get messagingSafetyReportNotePlaceholder =>
+      'Descrieți pe scurt problema…';
+
+  @override
+  String get messagingSafetyReportNoteTooLong =>
+      'Nota este prea lungă (max. 1000 caractere).';
+
+  @override
+  String get messagingSafetyReportSubmit => 'Trimite raportul';
+
+  @override
+  String get messagingSafetyReportSuccess => 'Raport trimis. Mulțumim.';
+
+  @override
+  String get messagingSafetyReportError =>
+      'Nu s-a putut trimite raportul. Încercați din nou.';
+
+  @override
+  String get messagingSafetyBlockedUsersEmptyTitle =>
+      'Niciun utilizator blocat';
+
+  @override
+  String get messagingSafetyBlockedUsersEmptyBody =>
+      'Utilizatorii blocați vor apărea aici.';
+
+  @override
+  String get messagingSafetyBlockedUsersLoadError =>
+      'Nu s-a putut încărca lista. Încercați din nou.';
+
+  @override
+  String get messagingSafetyBlockedUserFallback => 'Utilizator blocat';
+
+  @override
+  String get messagingSafetyUnblockConfirmTitle => 'Deblocați utilizatorul?';
+
+  @override
+  String get messagingSafetyUnblockConfirmBody =>
+      'Acest utilizator vă va putea trimite din nou mesaje despre anunțuri.';
+
+  @override
+  String get messagingSafetyUnblockSuccess => 'Utilizator deblocat.';
+
+  @override
+  String get messagingSafetyUnblockError =>
+      'Nu s-a putut debloca utilizatorul. Încercați din nou.';
+
+  @override
+  String get settingsBlockedUsersSubtitle => 'Gestionați utilizatorii blocați';
+
+  @override
   String messagingListingFallback(String shortId) {
     return 'Anunț $shortId';
   }
@@ -845,6 +959,29 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get reportListingMailFailed =>
       'Aplicația de e-mail nu a putut fi deschisă.';
+
+  @override
+  String get listingShareAction => 'Distribuie';
+
+  @override
+  String get listingShareIntro => 'Vezi anunțul pe Carzon:';
+
+  @override
+  String get listingShareOpenInCarzon => 'Deschide în aplicația Carzon';
+
+  @override
+  String listingShareLinkLine(String url) {
+    return '$url';
+  }
+
+  @override
+  String listingShareFallbackLine(String id) {
+    return 'Anunțul $id în Carzon';
+  }
+
+  @override
+  String get listingShareFailed =>
+      'Nu s-a putut deschide meniul de distribuire.';
 
   @override
   String get formatTypeSale => 'Vânzare';
@@ -1402,15 +1539,8 @@ class AppLocalizationsRo extends AppLocalizations {
       'Conectați-vă pentru a gestiona parola și notificările';
 
   @override
-  String get settingsPrivacyLegalLinkTitle => 'Termeni și siguranță';
-
-  @override
-  String get settingsPrivacyLegalLinkSubtitle =>
-      'Informații legale și recomandări pentru tranzacții sigure';
-
-  @override
   String get settingsLegalLinkSubtitle =>
-      'Termeni de utilizare și politica de confidențialitate';
+      'Termeni, politica de confidențialitate și sfaturi de siguranță';
 
   @override
   String get settingsRequestDataTitle => 'Solicită datele mele';
@@ -1795,6 +1925,87 @@ class AppLocalizationsRo extends AppLocalizations {
       'Filtrul salvat a fost șters.';
 
   @override
+  String get savedSearchesTitle => 'Căutări salvate';
+
+  @override
+  String get savedSearchesSettingsTitle => 'Căutări salvate';
+
+  @override
+  String get savedSearchesSettingsSubtitle =>
+      'Până la 5 căutări cu alerte pentru anunțuri noi.';
+
+  @override
+  String get savedSearchesSignInRequired =>
+      'Autentificați-vă pentru a gestiona căutările salvate.';
+
+  @override
+  String get savedSearchesHeaderEyebrow => 'CARZON · CĂUTARE';
+
+  @override
+  String get savedSearchesSubtitle =>
+      'Salvați filtrele din catalog și activați alerte push pentru fiecare căutare.';
+
+  @override
+  String get savedSearchesMaxHint => 'Puteți salva până la 5 căutări.';
+
+  @override
+  String get savedSearchesEmptyTitle => 'Nicio căutare salvată încă';
+
+  @override
+  String get savedSearchesEmptyBody =>
+      'Setați filtrele în catalog și apăsați clopoțelul pentru a salva căutarea.';
+
+  @override
+  String get savedSearchesGoToCatalog => 'Deschide catalogul';
+
+  @override
+  String get savedSearchFallbackName => 'Căutare salvată';
+
+  @override
+  String get savedSearchAlertsToggleTitle => 'Alerte';
+
+  @override
+  String get savedSearchAlertsEnabledLabel => 'Alerte push activate';
+
+  @override
+  String get savedSearchAlertsDisabledLabel => 'Alerte push dezactivate';
+
+  @override
+  String get savedSearchDeleteAction => 'Șterge';
+
+  @override
+  String get savedSearchDeleteConfirmTitle => 'Ștergeți căutarea salvată?';
+
+  @override
+  String get savedSearchDeleteConfirmBody =>
+      'Această căutare și alertele ei vor fi șterse. Celelalte căutări salvate rămân neschimbate.';
+
+  @override
+  String get savedSearchDeleteConfirmCta => 'Șterge';
+
+  @override
+  String get savedSearchRemovedSnack => 'Căutarea salvată a fost ștearsă.';
+
+  @override
+  String get savedSearchCreatedSnack => 'Căutare salvată.';
+
+  @override
+  String get savedSearchesLoadFailed =>
+      'Nu s-au putut încărca căutările salvate.';
+
+  @override
+  String get savedSearchSaveFailed => 'Nu s-a putut salva căutarea.';
+
+  @override
+  String get savedSearchDeleteFailed => 'Nu s-a putut șterge căutarea.';
+
+  @override
+  String get savedSearchToggleFailed => 'Nu s-au putut actualiza alertele.';
+
+  @override
+  String get savedSearchesMaxReachedSnack => 'Puteți salva cel mult 5 căutări.';
+
+  @override
   String get filterAlertSummarySearchLabel => 'Căutare';
 
   @override
@@ -2175,6 +2386,14 @@ class AppLocalizationsRo extends AppLocalizations {
       'Carzon nu este parte la acordurile dintre cumpărător și vânzător și nu este responsabil pentru rezultatul tranzacțiilor efectuate prin intermediul platformei.';
 
   @override
+  String get legalSectionSafetyP4 =>
+      'Feriți-vă de linkuri, mesaje sau cereri de plată suspecte în afara Carzon. Nu transferați avansuri sub presiune și nu vă bazați pe «garanții» care nu apar în aplicație.';
+
+  @override
+  String get legalSectionSafetyP5 =>
+      'Datele de referință din anunțuri — inclusiv VIN, model sau campanii de rechemare — sunt informative și pot să nu reflecte starea juridică sau tehnică exactă a unui vehicul anume. Înainte de cumpărare, verificați independent documentele, starea, istoricul și campaniile de siguranță în vigoare.';
+
+  @override
   String get legalSectionContactUsHeading => 'Feedback';
 
   @override
@@ -2183,7 +2402,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get legalSectionContactUsP2 =>
-      'Întrebările despre acest document și conținutul platformei pot fi direcționate către echipa Carzon prin canalul de asistență afișat pe pagina aplicației din magazin.';
+      'Utilizatorii autentificați pot contacta asistența din Setări → «Contactați asistența». Dacă nu aveți acces la aplicație, folosiți canalul de asistență de pe pagina Carzon din magazinul de aplicații.';
 
   @override
   String get sellerSectionTitle => 'Vânzător';
@@ -2332,6 +2551,101 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get compareClear => 'Comparație clară';
+
+  @override
+  String get menuRecentlyViewed => 'Vizualizate recent';
+
+  @override
+  String get menuRecentlyViewedSubtitle => 'Anunțurile pe care le-ați deschis';
+
+  @override
+  String get recentlyViewedTitle => 'Vizualizate recent';
+
+  @override
+  String get recentlyViewedEmptyTitle => 'Încă nimic aici';
+
+  @override
+  String get recentlyViewedEmptyBody =>
+      'Anunțurile deschise vor apărea aici ca să le puteți accesa rapid din nou.';
+
+  @override
+  String get recentlyViewedBrowseListings => 'Mergi la anunțuri';
+
+  @override
+  String get recentlyViewedClear => 'Șterge';
+
+  @override
+  String get recentlyViewedClearConfirmTitle => 'Ștergeți istoricul?';
+
+  @override
+  String get recentlyViewedClearConfirmBody =>
+      'Toate anunțurile vizualizate recent vor fi eliminate de pe acest dispozitiv.';
+
+  @override
+  String get recentlyViewedClearConfirmAction => 'Șterge';
+
+  @override
+  String get recentlyViewedLoadFailed =>
+      'Istoricul vizualizărilor nu a putut fi încărcat.';
+
+  @override
+  String get recentlyViewedClearFailed =>
+      'Istoricul vizualizărilor nu a putut fi șters.';
+
+  @override
+  String get menuRecentSearches => 'Căutări recente';
+
+  @override
+  String get menuRecentSearchesSubtitle => 'Interogări și filtre din catalog';
+
+  @override
+  String get recentSearchesTitle => 'Căutări recente';
+
+  @override
+  String get recentSearchesEmptyTitle => 'Încă nimic aici';
+
+  @override
+  String get recentSearchesEmptyBody =>
+      'Căutările și filtrele aplicate vor apărea aici ca să le puteți accesa rapid din nou.';
+
+  @override
+  String get recentSearchesBrowseListings => 'Mergi la anunțuri';
+
+  @override
+  String get recentSearchesClear => 'Șterge';
+
+  @override
+  String get recentSearchesClearConfirmTitle =>
+      'Ștergeți istoricul căutărilor?';
+
+  @override
+  String get recentSearchesClearConfirmBody =>
+      'Toate căutările recente vor fi eliminate de pe acest dispozitiv.';
+
+  @override
+  String get recentSearchesClearConfirmAction => 'Șterge';
+
+  @override
+  String get recentSearchesDelete => 'Eliminați';
+
+  @override
+  String recentSearchesSearchOnlyLabel(String query) {
+    return 'Căutare: $query';
+  }
+
+  @override
+  String get recentSearchesFiltersOnlyLabel => 'Filtre';
+
+  @override
+  String get recentSearchesLoadFailed =>
+      'Istoricul căutărilor nu a putut fi încărcat.';
+
+  @override
+  String get recentSearchesClearFailed =>
+      'Istoricul căutărilor nu a putut fi șters.';
+
+  @override
+  String get recentSearchesRemoveFailed => 'Căutarea nu a putut fi eliminată.';
 
   @override
   String get compareMaxReachedMessage => 'Puteți compara până la 3 mașini';

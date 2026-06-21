@@ -4,7 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/utils/result.dart';
 import '../../../messaging/domain/usecases/get_or_create_conversation.dart';
+import '../../../recently_viewed/domain/entities/recently_viewed_entry.dart';
+import '../../../recently_viewed/domain/usecases/record_recently_viewed.dart';
 import '../../domain/entities/listing_contact.dart';
+import '../../domain/entities/listing.dart';
 import '../../domain/usecases/get_listing_by_id.dart';
 import '../../domain/usecases/get_listing_images.dart';
 import '../../domain/usecases/get_listing_public_contact.dart';
@@ -20,11 +23,13 @@ class ListingDetailsCubit extends Cubit<ListingDetailsState> {
     required GetListingPublicContact getListingPublicContact,
     required GetOrCreateConversation getOrCreateConversation,
     required RecordListingView recordListingView,
+    required RecordRecentlyViewed recordRecentlyViewed,
   }) : _getListingById = getListingById,
        _getListingImages = getListingImages,
        _getListingPublicContact = getListingPublicContact,
        _getOrCreateConversation = getOrCreateConversation,
        _recordListingView = recordListingView,
+       _recordRecentlyViewed = recordRecentlyViewed,
        super(const ListingDetailsState.initial());
 
   final GetListingById _getListingById;
@@ -32,6 +37,7 @@ class ListingDetailsCubit extends Cubit<ListingDetailsState> {
   final GetListingPublicContact _getListingPublicContact;
   final GetOrCreateConversation _getOrCreateConversation;
   final RecordListingView _recordListingView;
+  final RecordRecentlyViewed _recordRecentlyViewed;
 
   Future<void> load(String id, {String? initialCoverImageUrl}) async {
     emit(const ListingDetailsState.loading());
@@ -56,6 +62,23 @@ class ListingDetailsCubit extends Cubit<ListingDetailsState> {
           ),
         );
         unawaited(_recordViewAfterSuccessfulLoad(listing.id));
+        unawaited(_recordRecentlyViewedAfterSuccessfulLoad(listing, urls));
+    }
+  }
+
+  Future<void> _recordRecentlyViewedAfterSuccessfulLoad(
+    Listing listing,
+    List<String> heroImageUrls,
+  ) async {
+    try {
+      final heroUrl = heroImageUrls.isNotEmpty ? heroImageUrls.first : null;
+      final entry = RecentlyViewedEntry.fromListing(
+        listing,
+        heroImageUrl: heroUrl,
+      );
+      await _recordRecentlyViewed(entry);
+    } catch (_) {
+      // Local history must never block or alter listing details success.
     }
   }
 

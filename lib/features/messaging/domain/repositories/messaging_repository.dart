@@ -1,7 +1,9 @@
 import '../../../../core/utils/result.dart';
+import '../entities/blocked_user.dart';
 import '../entities/chat_attachment_upload.dart';
 import '../entities/chat_message.dart';
 import '../entities/conversation.dart';
+import '../entities/user_report_reason.dart';
 
 /// Contract for buyer–seller messaging (Supabase implementation in data layer).
 abstract class MessagingRepository {
@@ -34,4 +36,20 @@ abstract class MessagingRepository {
 
   /// Distinct participant conversations having inbound unread messages since last_read.
   Future<Result<int>> getUnreadConversationCount();
+
+  /// RPC `block_user` — peer derived server-side from [conversationId].
+  Future<Result<void>> blockUser(String conversationId);
+
+  /// RPC `report_user` — reported peer derived server-side.
+  Future<Result<void>> reportUser({
+    required String conversationId,
+    required UserReportReason reason,
+    String? note,
+  });
+
+  /// RPC `list_blocked_users` — safe public display fields only.
+  Future<Result<List<BlockedUser>>> listBlockedUsers();
+
+  /// RPC `unblock_user` — scoped to auth.uid().
+  Future<Result<bool>> unblockUser(String blockedUserId);
 }
