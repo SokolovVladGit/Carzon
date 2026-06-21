@@ -83,6 +83,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
         globalEnabled: any(named: 'globalEnabled'),
         messagesEnabled: any(named: 'messagesEnabled'),
         filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+        priceDropsEnabled: any(named: 'priceDropsEnabled'),
       ),
     ).thenAnswer((inv) async {
       return Success(
@@ -91,6 +92,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
           globalEnabled: inv.namedArguments[#globalEnabled] as bool,
           messagesEnabled: inv.namedArguments[#messagesEnabled] as bool,
           filterAlertsEnabled: inv.namedArguments[#filterAlertsEnabled] as bool,
+          priceDropsEnabled: inv.namedArguments[#priceDropsEnabled] as bool,
           createdAt: DateTime.utc(2026, 1, 1),
           updatedAt: DateTime.utc(2026, 1, 2),
         ),
@@ -103,6 +105,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
           globalEnabled: false,
           messagesEnabled: true,
           filterAlertsEnabled: false,
+    priceDropsEnabled: false,
           createdAt: DateTime.utc(2026, 1, 1),
           updatedAt: DateTime.utc(2026, 1, 2),
         ),
@@ -146,6 +149,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
           globalEnabled: any(named: 'globalEnabled'),
           messagesEnabled: any(named: 'messagesEnabled'),
           filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+          priceDropsEnabled: any(named: 'priceDropsEnabled'),
         ),
       );
       verifyNever(() => savedSearchesRepo.setAlertsEnabled(any(), any()));
@@ -173,6 +177,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
           globalEnabled: true,
           messagesEnabled: true,
           filterAlertsEnabled: true,
+          priceDropsEnabled: false,
         ),
       ).called(1);
       verify(
@@ -206,6 +211,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
           globalEnabled: any(named: 'globalEnabled'),
           messagesEnabled: any(named: 'messagesEnabled'),
           filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+          priceDropsEnabled: any(named: 'priceDropsEnabled'),
         ),
       );
     },
@@ -258,6 +264,7 @@ SUPABASE_ANON_KEY=anon
           globalEnabled: any(named: 'globalEnabled'),
           messagesEnabled: any(named: 'messagesEnabled'),
           filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+          priceDropsEnabled: any(named: 'priceDropsEnabled'),
         ),
       );
     },

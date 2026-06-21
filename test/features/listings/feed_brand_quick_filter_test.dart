@@ -95,6 +95,7 @@ void main() {
         bodyType: null,
         fuelType: null,
         transmissionType: null,
+        drivetrain: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.any,
       ),
     );
@@ -156,10 +157,7 @@ void main() {
       expect(listingBrandFeedQuickFilterShouldUseMonogram('BYD'), isFalse);
       expect(listingBrandFeedQuickFilterShouldUseMonogram('Cupra'), isFalse);
       expect(listingBrandFeedQuickFilterShouldUseMonogram('Citroen'), isFalse);
-      expect(
-        isBrandIconDefaultAssetPath(getBrandIconPath('BYD')),
-        isFalse,
-      );
+      expect(isBrandIconDefaultAssetPath(getBrandIconPath('BYD')), isFalse);
     });
 
     test('cleaned packaged brands use SVG not monogram on feed', () {
@@ -222,11 +220,7 @@ void main() {
   group('feed quick-filter logo optical scale', () {
     test('balanced brands use default scale 1.0', () {
       for (final brand in ['Toyota', 'BMW', 'Volkswagen', 'Ford', 'Honda']) {
-        expect(
-          listingBrandFeedQuickFilterLogoScale(brand),
-          1.0,
-          reason: brand,
-        );
+        expect(listingBrandFeedQuickFilterLogoScale(brand), 1.0, reason: brand);
       }
     });
 
@@ -263,7 +257,8 @@ void main() {
     });
 
     test('override map keys match packaged slugs', () {
-      for (final slug in kListingBrandFeedQuickFilterLogoOpticalScaleBySlug.keys) {
+      for (final slug
+          in kListingBrandFeedQuickFilterLogoOpticalScaleBySlug.keys) {
         expect(kPackagedBrandIconSlugs, contains(slug), reason: slug);
       }
     });

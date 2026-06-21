@@ -207,10 +207,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(
-        find.byKey(const Key('listingsHeaderCarzonLogo')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const Key('listingsHeaderCarzonLogo')), findsOneWidget);
       expect(find.text('CARZON'), findsNothing);
       expect(find.text(l10n.catalogTitle), findsNothing);
       expect(find.text(l10n.catalogSubtitle), findsNothing);
@@ -345,33 +342,37 @@ void main() {
       },
     );
 
-    testWidgets('body type chips are icon-only with semantics labels; tapping SUV '
-        'dispatches ListingsBodyTypeFilterChanged(suv)', (tester) async {
-      await tester.pumpWidget(
-        _host(
-          bloc: bloc,
-          auth: auth,
-          favorites: favs,
-          sellersRepo: sellersRepo,
-          messagingRepo: messagingRepo,
-        ),
-      );
-      await tester.pump();
-      await tester.pumpAndSettle();
+    testWidgets(
+      'body type chips are icon-only with semantics labels; tapping SUV '
+      'dispatches ListingsBodyTypeFilterChanged(suv)',
+      (tester) async {
+        await tester.pumpWidget(
+          _host(
+            bloc: bloc,
+            auth: auth,
+            favorites: favs,
+            sellersRepo: sellersRepo,
+            messagingRepo: messagingRepo,
+          ),
+        );
+        await tester.pump();
+        await tester.pumpAndSettle();
 
-      expect(find.bySemanticsLabel(l10n.listingBodyTypeSuv), findsOneWidget);
-      expect(find.text(l10n.listingBodyTypeSuv), findsNothing);
-      expect(find.bySemanticsLabel(l10n.listingsBodyChipAll), findsOneWidget);
-      expect(find.text(l10n.listingsBodyChipAll), findsNothing);
+        expect(find.bySemanticsLabel(l10n.listingBodyTypeSuv), findsOneWidget);
+        expect(find.text(l10n.listingBodyTypeSuv), findsNothing);
+        expect(find.bySemanticsLabel(l10n.listingsBodyChipAll), findsOneWidget);
+        expect(find.text(l10n.listingsBodyChipAll), findsNothing);
 
-      await tester.tap(find.bySemanticsLabel(l10n.listingBodyTypeSuv));
-      await tester.pump();
+        await tester.tap(find.bySemanticsLabel(l10n.listingBodyTypeSuv));
+        await tester.pump();
 
-      verify(
-        () =>
-            bloc.add(const ListingsBodyTypeFilterChanged(ListingBodyType.suv)),
-      ).called(1);
-    });
+        verify(
+          () => bloc.add(
+            const ListingsBodyTypeFilterChanged(ListingBodyType.suv),
+          ),
+        ).called(1);
+      },
+    );
 
     testWidgets('masthead includes account avatar control key', (tester) async {
       await tester.pumpWidget(
@@ -496,6 +497,7 @@ void main() {
           globalEnabled: true,
           messagesEnabled: true,
           filterAlertsEnabled: true,
+          priceDropsEnabled: false,
           createdAt: DateTime.utc(2026, 6, 1),
           updatedAt: DateTime.utc(2026, 6, 2),
         );

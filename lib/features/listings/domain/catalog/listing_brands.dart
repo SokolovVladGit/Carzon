@@ -159,7 +159,7 @@ const Map<String, double> kListingBrandFeedQuickFilterLogoOpticalScaleBySlug = {
   'hummer': 1.32,
   'isuzu': 1.30,
   'ram': 1.30,
-  'haval': 1.30
+  'haval': 1.30,
 };
 
 /// Optical size multiplier for feed quick-filter brand SVG logos (default 1.0).

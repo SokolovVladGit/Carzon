@@ -1780,6 +1780,17 @@ class AppLocalizationsRu extends AppLocalizations {
       'Открыть оповещения по фильтру';
 
   @override
+  String get notificationSettingsPriceDropsTitle => 'Снижение цены';
+
+  @override
+  String get notificationSettingsPriceDropsSubtitle =>
+      'Push, когда цена снижается на автомобиль из избранного.';
+
+  @override
+  String get notificationSettingsPriceDropsNeedsGlobal =>
+      'Сначала включите «Push на этом устройстве».';
+
+  @override
   String get notificationSettingsDeliveryCardTitle => 'Статус доставки';
 
   @override
@@ -3427,6 +3438,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Есть объявление по вашему сохранённому фильтру. Откройте, чтобы посмотреть.';
 
   @override
+  String get notificationPriceDropTitle => 'Снижение цены';
+
+  @override
+  String get notificationPriceDropBody =>
+      'Цена на сохранённый автомобиль снизилась.';
+
+  @override
   String get notificationAndroidChannelMessagesName => 'Carzon — сообщения';
 
   @override
@@ -3440,4 +3458,12 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get notificationAndroidChannelFilterDescription =>
       'Уведомления о новых объявлениях по сохранённому фильтру';
+
+  @override
+  String get notificationAndroidChannelPriceDropName =>
+      'Carzon — снижение цены';
+
+  @override
+  String get notificationAndroidChannelPriceDropDescription =>
+      'Уведомления о снижении цены на избранные объявления';
 }

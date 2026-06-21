@@ -80,7 +80,9 @@ class ListingsPage extends StatelessWidget {
         listeners: [
           BlocListener<AuthCubit, AuthState>(
             listener: (context, auth) {
-              context.read<BrowseCatalogFilterAlertsCubit>().onAuthChanged(auth);
+              context.read<BrowseCatalogFilterAlertsCubit>().onAuthChanged(
+                auth,
+              );
             },
           ),
           BlocListener<AuthCubit, AuthState>(
@@ -316,6 +318,7 @@ class _ListingsViewState extends State<_ListingsView> {
           bodyType: result.bodyType,
           fuelType: result.fuelType,
           transmissionType: result.transmissionType,
+          drivetrain: result.drivetrain,
           priceCurrencyFilter: result.priceCurrencyFilter,
         ),
       );
@@ -551,6 +554,7 @@ class _ListingsViewState extends State<_ListingsView> {
         bodyType: s.bodyTypeFilter,
         fuelType: s.fuelTypeFilter,
         transmissionType: s.transmissionTypeFilter,
+        drivetrain: s.drivetrainFilter,
         priceCurrencyFilter: s.priceCurrencyFilter,
       ),
     );

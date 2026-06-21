@@ -124,9 +124,9 @@ void main() {
       final savedSearchesRepo = MockSavedSearchesRepository();
       final notifRepo = _MockNotificationsRepository();
       final orch = _MockDeliveryOrchestrator();
-      when(() => savedSearchesRepo.list()).thenAnswer(
-        (_) async => const Success([]),
-      );
+      when(
+        () => savedSearchesRepo.list(),
+      ).thenAnswer((_) async => const Success([]));
       when(() => notifRepo.getMyPreferences()).thenAnswer(
         (_) async => Success(
           NotificationPreferences(
@@ -134,6 +134,7 @@ void main() {
             globalEnabled: true,
             messagesEnabled: true,
             filterAlertsEnabled: true,
+            priceDropsEnabled: false,
             createdAt: DateTime.utc(2026, 4, 1),
             updatedAt: DateTime.utc(2026, 4, 2),
           ),
@@ -303,8 +304,7 @@ void main() {
         ).thenAnswer((inv) async {
           final criteria =
               inv.namedArguments[#criteria] as ListingDiscoveryCriteria;
-          final alertsEnabled =
-              inv.namedArguments[#alertsEnabled] as bool;
+          final alertsEnabled = inv.namedArguments[#alertsEnabled] as bool;
           final name = inv.namedArguments[#name] as String;
           return Success(
             testSavedSearch(

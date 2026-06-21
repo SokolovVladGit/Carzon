@@ -60,7 +60,9 @@ class BuyerVinReportLimitationSection extends StatelessWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       height: 1.4,
                       color: scheme.onSurfaceVariant.withValues(
-                        alpha: theme.brightness == Brightness.dark ? 0.88 : 0.95,
+                        alpha: theme.brightness == Brightness.dark
+                            ? 0.88
+                            : 0.95,
                       ),
                     ),
                   ),

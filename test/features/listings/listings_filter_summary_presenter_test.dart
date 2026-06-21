@@ -37,6 +37,7 @@ void main() {
         bodyType: null,
         fuelType: null,
         transmissionType: null,
+        drivetrain: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.any,
       ),
     );
@@ -66,6 +67,7 @@ void main() {
         bodyType: null,
         fuelType: null,
         transmissionType: null,
+        drivetrain: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.eur,
       ),
     );
@@ -93,11 +95,38 @@ void main() {
         bodyType: null,
         fuelType: ListingFuelType.hybrid,
         transmissionType: ListingTransmissionType.automatic,
+        drivetrain: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.any,
       ),
     );
     expect(view.useDefaultLayout, isFalse);
     expect(view.activeLine, contains(l10n.listingFuelTypeHybrid));
     expect(view.activeLine, contains(l10n.listingTransmissionAutomatic));
+  });
+
+  test('drivetrain appears in active summary', () {
+    final view = buildListingsFilterSummaryView(
+      l10n,
+      const ListingsFilterFormSeed(
+        make: null,
+        model: null,
+        minYear: null,
+        maxYear: null,
+        minPrice: null,
+        maxPrice: null,
+        maxMileage: null,
+        city: null,
+        typeFilter: ListingTypeFilter.any,
+        region: MarketRegionFilter.both,
+        sort: ListingSortOption.newestFirst,
+        bodyType: null,
+        fuelType: null,
+        transmissionType: null,
+        drivetrain: ListingDrivetrain.fourWheel,
+        priceCurrencyFilter: ListingPriceCurrencyFilter.any,
+      ),
+    );
+    expect(view.useDefaultLayout, isFalse);
+    expect(view.activeLine, contains(l10n.listingDrivetrainFourWheel));
   });
 }

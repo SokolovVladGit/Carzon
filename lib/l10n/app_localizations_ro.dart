@@ -1779,6 +1779,17 @@ class AppLocalizationsRo extends AppLocalizations {
       'Deschide alertele după filtru';
 
   @override
+  String get notificationSettingsPriceDropsTitle => 'Reducere de preț';
+
+  @override
+  String get notificationSettingsPriceDropsSubtitle =>
+      'Push când scade prețul unui anunț din favorite.';
+
+  @override
+  String get notificationSettingsPriceDropsNeedsGlobal =>
+      'Mai întâi activați „Push pe acest dispozitiv”.';
+
+  @override
   String get notificationSettingsDeliveryCardTitle => 'Starea livrării';
 
   @override
@@ -3430,6 +3441,12 @@ class AppLocalizationsRo extends AppLocalizations {
       'Există un anunț pentru filtrul salvat. Deschideți pentru a-l vedea.';
 
   @override
+  String get notificationPriceDropTitle => 'Reducere de preț';
+
+  @override
+  String get notificationPriceDropBody => 'Prețul anunțului salvat a scăzut.';
+
+  @override
   String get notificationAndroidChannelMessagesName => 'Carzon — mesaje';
 
   @override
@@ -3442,4 +3459,12 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get notificationAndroidChannelFilterDescription =>
       'Notificări despre anunțuri noi pentru filtrul salvat';
+
+  @override
+  String get notificationAndroidChannelPriceDropName =>
+      'Carzon — reducere de preț';
+
+  @override
+  String get notificationAndroidChannelPriceDropDescription =>
+      'Notificări când scade prețul anunțurilor favorite';
 }

@@ -29,9 +29,7 @@ void main() {
         ),
         vanillaAllRegions().copyWith(maxMileage: 150000),
         vanillaAllRegions().copyWith(city: '  Tiraspol  '),
-        vanillaAllRegions().copyWith(
-          regionFilter: MarketRegionFilter.moldova,
-        ),
+        vanillaAllRegions().copyWith(regionFilter: MarketRegionFilter.moldova),
         vanillaAllRegions().copyWith(
           regionFilter: MarketRegionFilter.transnistria,
         ),
@@ -40,6 +38,7 @@ void main() {
         vanillaAllRegions().copyWith(
           transmissionTypeFilter: ListingTransmissionType.automatic,
         ),
+        vanillaAllRegions().copyWith(drivetrainFilter: ListingDrivetrain.awd),
         vanillaAllRegions().copyWith(typeFilter: ListingTypeFilter.exchange),
         vanillaAllRegions().copyWith(
           sortOption: ListingSortOption.priceLowToHigh,

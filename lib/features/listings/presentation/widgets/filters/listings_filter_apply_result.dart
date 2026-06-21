@@ -23,6 +23,7 @@ class ListingsFilterApplyResult {
     required this.bodyType,
     required this.fuelType,
     required this.transmissionType,
+    required this.drivetrain,
     required this.priceCurrencyFilter,
   }) : cleared = false;
 
@@ -42,6 +43,7 @@ class ListingsFilterApplyResult {
       bodyType = null,
       fuelType = null,
       transmissionType = null,
+      drivetrain = null,
       priceCurrencyFilter = ListingPriceCurrencyFilter.any;
 
   final bool cleared;
@@ -59,5 +61,6 @@ class ListingsFilterApplyResult {
   final ListingBodyType? bodyType;
   final ListingFuelType? fuelType;
   final ListingTransmissionType? transmissionType;
+  final ListingDrivetrain? drivetrain;
   final ListingPriceCurrencyFilter priceCurrencyFilter;
 }

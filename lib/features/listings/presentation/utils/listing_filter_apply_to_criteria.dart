@@ -39,6 +39,7 @@ ListingDiscoveryCriteria listingDiscoveryCriteriaFromFilterApply(
       bodyTypeFilter: result.bodyType,
       fuelTypeFilter: result.fuelType,
       transmissionTypeFilter: result.transmissionType,
+      drivetrainFilter: result.drivetrain,
       priceCurrencyFilter: result.priceCurrencyFilter,
     ),
   );

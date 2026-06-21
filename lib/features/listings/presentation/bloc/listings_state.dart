@@ -76,6 +76,7 @@ class ListingsState extends Equatable {
     this.bodyTypeFilter,
     this.fuelTypeFilter,
     this.transmissionTypeFilter,
+    this.drivetrainFilter,
     this.sortOption = ListingSortOption.newestFirst,
     this.priceCurrencyFilter = ListingPriceCurrencyFilter.any,
     this.loadFailure,
@@ -108,6 +109,9 @@ class ListingsState extends Equatable {
   /// Transmission filter. Null means all transmission types.
   final ListingTransmissionType? transmissionTypeFilter;
 
+  /// Drivetrain filter. Null means all drivetrain types.
+  final ListingDrivetrain? drivetrainFilter;
+
   /// Optional constraint on `listings.price_currency`. [any] does not filter
   /// by currency; amount bounds still use `price_eur` only.
   final ListingPriceCurrencyFilter priceCurrencyFilter;
@@ -131,6 +135,7 @@ class ListingsState extends Equatable {
       bodyTypeFilter != null ||
       fuelTypeFilter != null ||
       transmissionTypeFilter != null ||
+      drivetrainFilter != null ||
       sortOption != ListingSortOption.newestFirst ||
       priceCurrencyFilter != ListingPriceCurrencyFilter.any;
 
@@ -160,6 +165,7 @@ class ListingsState extends Equatable {
     ListingBodyType? bodyTypeFilter,
     ListingFuelType? fuelTypeFilter,
     ListingTransmissionType? transmissionTypeFilter,
+    ListingDrivetrain? drivetrainFilter,
     ListingSortOption? sortOption,
     ListingPriceCurrencyFilter? priceCurrencyFilter,
     Failure? loadFailure,
@@ -175,6 +181,7 @@ class ListingsState extends Equatable {
     bool clearBodyType = false,
     bool clearFuelType = false,
     bool clearTransmissionType = false,
+    bool clearDrivetrain = false,
     bool clearSort = false,
     bool clearPriceCurrencyFilter = false,
     bool clearLoadFailure = false,
@@ -204,6 +211,9 @@ class ListingsState extends Equatable {
       transmissionTypeFilter: clearTransmissionType
           ? null
           : (transmissionTypeFilter ?? this.transmissionTypeFilter),
+      drivetrainFilter: clearDrivetrain
+          ? null
+          : (drivetrainFilter ?? this.drivetrainFilter),
       sortOption: clearSort
           ? ListingSortOption.newestFirst
           : (sortOption ?? this.sortOption),
@@ -234,6 +244,7 @@ class ListingsState extends Equatable {
     bodyTypeFilter,
     fuelTypeFilter,
     transmissionTypeFilter,
+    drivetrainFilter,
     priceCurrencyFilter,
     sortOption,
     loadFailure,

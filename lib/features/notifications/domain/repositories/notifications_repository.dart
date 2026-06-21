@@ -10,6 +10,7 @@ abstract interface class NotificationsRepository {
     required bool globalEnabled,
     required bool messagesEnabled,
     required bool filterAlertsEnabled,
+    required bool priceDropsEnabled,
   });
 
   /// Registers or refreshes a device token for the signed-in user (no FCM plugin yet).

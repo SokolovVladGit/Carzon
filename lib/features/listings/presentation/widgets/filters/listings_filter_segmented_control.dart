@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
 
 /// Visual role for exclusive filter choices (currency / region / listing type).
-enum ListingsFilterSegmentedControlVariant {
-  currency,
-  region,
-  listingType,
-}
+enum ListingsFilterSegmentedControlVariant { currency, region, listingType }
 
 /// One option in [ListingsFilterSegmentedControl].
 class ListingsFilterSegmentEntry<T> {
@@ -56,18 +52,16 @@ class ListingsFilterSegmentedControl<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (variant) {
-      ListingsFilterSegmentedControlVariant.currency =>
-        _CurrencyChoiceRow<T>(
-          value: value,
-          onChanged: onChanged,
-          entries: entries,
-        ),
-      ListingsFilterSegmentedControlVariant.region =>
-        _RegionChoiceGroup<T>(
-          value: value,
-          onChanged: onChanged,
-          entries: entries,
-        ),
+      ListingsFilterSegmentedControlVariant.currency => _CurrencyChoiceRow<T>(
+        value: value,
+        onChanged: onChanged,
+        entries: entries,
+      ),
+      ListingsFilterSegmentedControlVariant.region => _RegionChoiceGroup<T>(
+        value: value,
+        onChanged: onChanged,
+        entries: entries,
+      ),
       ListingsFilterSegmentedControlVariant.listingType =>
         _ListingTypeChoiceRow<T>(
           value: value,
@@ -163,9 +157,7 @@ Widget _mutedIconAnchor({
               ),
         border: Border.all(
           color: scheme.outlineVariant.withValues(
-            alpha: selected
-                ? (light ? 0.28 : 0.34)
-                : (light ? 0.18 : 0.24),
+            alpha: selected ? (light ? 0.28 : 0.34) : (light ? 0.18 : 0.24),
           ),
         ),
       ),
@@ -503,8 +495,9 @@ class _RegionTile<T> extends StatelessWidget {
                     child: Center(
                       child: DefaultTextStyle(
                         style: theme.textTheme.labelSmall!.copyWith(
-                          fontWeight:
-                              selected ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                           letterSpacing: 0.02,
                           height: 1.32,
                           fontSize: 11.5,
@@ -620,8 +613,9 @@ class _ListingTypeTile<T> extends StatelessWidget {
                     child: Center(
                       child: DefaultTextStyle(
                         style: theme.textTheme.labelMedium!.copyWith(
-                          fontWeight:
-                              selected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
                           letterSpacing: selected ? -0.02 : 0.01,
                           height: 1.2,
                           color: selected
@@ -653,6 +647,7 @@ double filterChoiceVariantOuterHeight(
   return switch (variant) {
     ListingsFilterSegmentedControlVariant.currency => _kCurrencyTileHeight,
     ListingsFilterSegmentedControlVariant.region => _kRegionTileHeight,
-    ListingsFilterSegmentedControlVariant.listingType => _kListingTypeTileHeight,
+    ListingsFilterSegmentedControlVariant.listingType =>
+      _kListingTypeTileHeight,
   };
 }

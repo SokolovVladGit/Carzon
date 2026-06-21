@@ -142,6 +142,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           globalEnabled: true,
           messagesEnabled: prefs.messagesEnabled,
           filterAlertsEnabled: prefs.filterAlertsEnabled,
+          priceDropsEnabled: prefs.priceDropsEnabled,
         );
         switch (update) {
           case FailureResult():
@@ -169,6 +170,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           globalEnabled: false,
           messagesEnabled: false,
           filterAlertsEnabled: false,
+          priceDropsEnabled: false,
         );
         switch (update) {
           case FailureResult():
@@ -241,6 +243,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           globalEnabled: true,
           messagesEnabled: true,
           filterAlertsEnabled: prefs.filterAlertsEnabled,
+          priceDropsEnabled: prefs.priceDropsEnabled,
         );
         switch (update) {
           case FailureResult():
@@ -264,6 +267,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           globalEnabled: prefs.globalEnabled,
           messagesEnabled: false,
           filterAlertsEnabled: prefs.filterAlertsEnabled,
+          priceDropsEnabled: prefs.priceDropsEnabled,
         );
         switch (update) {
           case FailureResult():
@@ -331,6 +335,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           globalEnabled: prefs.globalEnabled,
           messagesEnabled: prefs.messagesEnabled,
           filterAlertsEnabled: true,
+          priceDropsEnabled: prefs.priceDropsEnabled,
         );
         switch (update) {
           case FailureResult():
@@ -354,6 +359,99 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           globalEnabled: prefs.globalEnabled,
           messagesEnabled: prefs.messagesEnabled,
           filterAlertsEnabled: false,
+          priceDropsEnabled: prefs.priceDropsEnabled,
+        );
+        switch (update) {
+          case FailureResult():
+            emit(
+              state.copyWith(
+                busy: false,
+                notice: NotificationUserNotice.saveFailed,
+              ),
+            );
+            return;
+          case Success(:final value):
+            final p = await _pushRegistration
+                .readOsNotificationPermissionStatus();
+            emit(
+              state.copyWith(busy: false, preferences: value, osPermission: p),
+            );
+        }
+      }
+    } catch (_) {
+      emit(
+        state.copyWith(busy: false, notice: NotificationUserNotice.saveFailed),
+      );
+    }
+  }
+
+  Future<void> setPriceDropsEnabled(bool enabled) async {
+    if (state.busy) {
+      return;
+    }
+    final prefs = state.preferences;
+    if (prefs == null || state.phase != NotificationSettingsLoadPhase.ready) {
+      return;
+    }
+
+    if (!prefs.globalEnabled) {
+      return;
+    }
+
+    if (!Env.pushNotificationsEnabled) {
+      emit(
+        state.copyWith(notice: NotificationUserNotice.pushUnavailableInBuild),
+      );
+      return;
+    }
+
+    emit(state.copyWith(busy: true, notice: NotificationUserNotice.none));
+
+    try {
+      if (enabled) {
+        var perm = await _pushRegistration.readOsNotificationPermissionStatus();
+        if (!perm.allowsTokenRegistration) {
+          perm = await _pushRegistration.requestOsNotificationPermission();
+        }
+        if (!perm.allowsTokenRegistration) {
+          emit(
+            state.copyWith(
+              busy: false,
+              notice: NotificationUserNotice.osPermissionDenied,
+            ),
+          );
+          return;
+        }
+
+        final update = await _repository.updateMyPreferences(
+          globalEnabled: prefs.globalEnabled,
+          messagesEnabled: prefs.messagesEnabled,
+          filterAlertsEnabled: prefs.filterAlertsEnabled,
+          priceDropsEnabled: true,
+        );
+        switch (update) {
+          case FailureResult():
+            emit(
+              state.copyWith(
+                busy: false,
+                notice: NotificationUserNotice.saveFailed,
+              ),
+            );
+            return;
+          case Success(:final value):
+            final p = await _pushRegistration
+                .readOsNotificationPermissionStatus();
+            await _pushRegistration.syncTokenWithBackendIfEligible();
+            emit(
+              state.copyWith(busy: false, preferences: value, osPermission: p),
+            );
+        }
+      } else {
+        final update = await _repository.updateMyPreferences(
+          globalEnabled: prefs.globalEnabled,
+          messagesEnabled: prefs.messagesEnabled,
+          filterAlertsEnabled: prefs.filterAlertsEnabled,
+          priceDropsEnabled: false,
         );
         switch (update) {
           case FailureResult():

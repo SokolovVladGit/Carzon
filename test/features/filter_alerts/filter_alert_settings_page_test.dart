@@ -51,6 +51,7 @@ NotificationPreferences _defaultNotificationPreferences() {
     globalEnabled: false,
     messagesEnabled: false,
     filterAlertsEnabled: false,
+    priceDropsEnabled: false,
     createdAt: DateTime.utc(2026, 1, 1),
     updatedAt: DateTime.utc(2026, 1, 2),
   );
@@ -189,18 +190,22 @@ SUPABASE_ANON_KEY=anon
         globalEnabled: any(named: 'globalEnabled'),
         messagesEnabled: any(named: 'messagesEnabled'),
         filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+        priceDropsEnabled: any(named: 'priceDropsEnabled'),
       ),
     ).thenAnswer((invocation) async {
       final global = invocation.namedArguments[#globalEnabled] as bool;
       final messages = invocation.namedArguments[#messagesEnabled] as bool;
       final filterAlerts =
           invocation.namedArguments[#filterAlertsEnabled] as bool;
+      final priceDrops =
+          invocation.namedArguments[#priceDropsEnabled] as bool;
       return Success(
         NotificationPreferences(
           userId: 'u1',
           globalEnabled: global,
           messagesEnabled: messages,
           filterAlertsEnabled: filterAlerts,
+          priceDropsEnabled: priceDrops,
           createdAt: DateTime.utc(2026, 1, 1),
           updatedAt: DateTime.utc(2026, 1, 2),
         ),
@@ -360,6 +365,7 @@ SUPABASE_ANON_KEY=anon
         globalEnabled: any(named: 'globalEnabled'),
         messagesEnabled: any(named: 'messagesEnabled'),
         filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+        priceDropsEnabled: any(named: 'priceDropsEnabled'),
       ),
     );
   });

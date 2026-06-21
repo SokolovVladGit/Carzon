@@ -23,6 +23,7 @@ ListingsQuery _queryFromListingsState(ListingsState state) {
     bodyType: state.bodyTypeFilter,
     fuelType: state.fuelTypeFilter,
     transmissionType: state.transmissionTypeFilter,
+    drivetrain: state.drivetrainFilter,
     typeIn: state.typeFilter.asListingTypes,
     sort: state.sortOption,
     priceCurrencyFilter: state.priceCurrencyFilter,
@@ -56,6 +57,7 @@ void main() {
         expect(q.bodyType, isNull);
         expect(q.fuelType, isNull);
         expect(q.transmissionType, isNull);
+        expect(q.drivetrain, isNull);
         expect(q.typeIn, isNull);
         expect(q.sellerId, isNull);
         expect(q.page, 0);

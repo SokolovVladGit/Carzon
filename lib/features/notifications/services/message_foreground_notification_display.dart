@@ -7,4 +7,7 @@ abstract interface class MessageForegroundNotificationDisplay {
 
   /// Filter-alert foreground FCM (same privacy rules as Edge: generic copy only).
   Future<void> showFilterAlertForegroundNotification(String listingId);
+
+  /// Price-drop foreground FCM (generic copy only; no price in notification).
+  Future<void> showPriceDropForegroundNotification(String listingId);
 }

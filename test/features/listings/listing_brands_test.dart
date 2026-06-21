@@ -49,10 +49,7 @@ void main() {
     });
 
     test('catalog has no duplicate brand names', () {
-      expect(
-        kListingBrandCatalog.toSet().length,
-        kListingBrandCatalog.length,
-      );
+      expect(kListingBrandCatalog.toSet().length, kListingBrandCatalog.length);
     });
 
     test('listingBrandNormalizeForLookup folds case/spacing/hyphens', () {
@@ -183,7 +180,10 @@ void main() {
             reason: brand,
           );
         }
-        expect(listingBrandFeedQuickFilterShouldUseMonogram('Bestune'), isFalse);
+        expect(
+          listingBrandFeedQuickFilterShouldUseMonogram('Bestune'),
+          isFalse,
+        );
         expect(listingBrandFeedQuickFilterShouldUseMonogram('FAW'), isFalse);
         expect(getBrandIconPath('Bestune'), endsWith('/bestune.svg'));
         expect(getBrandIconPath('FAW'), endsWith('/faw.svg'));

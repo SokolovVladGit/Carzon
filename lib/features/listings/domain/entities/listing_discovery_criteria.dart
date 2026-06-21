@@ -28,6 +28,7 @@ class ListingDiscoveryCriteria extends Equatable {
     this.bodyType,
     this.fuelType,
     this.transmissionType,
+    this.drivetrain,
     this.typeIn,
     this.priceCurrencyFilter = ListingPriceCurrencyFilter.any,
     this.sort = ListingSortOption.newestFirst,
@@ -46,6 +47,7 @@ class ListingDiscoveryCriteria extends Equatable {
   final ListingBodyType? bodyType;
   final ListingFuelType? fuelType;
   final ListingTransmissionType? transmissionType;
+  final ListingDrivetrain? drivetrain;
   final List<ListingType>? typeIn;
 
   /// When not [ListingPriceCurrencyFilter.any], restricts rows by
@@ -74,6 +76,7 @@ class ListingDiscoveryCriteria extends Equatable {
         bodyType != null ||
         fuelType != null ||
         transmissionType != null ||
+        drivetrain != null ||
         (typeIn != null && typeIn!.isNotEmpty) ||
         sort != defaultSort ||
         priceCurrencyFilter != ListingPriceCurrencyFilter.any;
@@ -98,6 +101,7 @@ class ListingDiscoveryCriteria extends Equatable {
       bodyType: bodyType,
       fuelType: fuelType,
       transmissionType: transmissionType,
+      drivetrain: drivetrain,
       status: status,
       typeIn: typeIn,
       priceCurrency: priceCurrencyFilter.asListingCurrencyOrNull,
@@ -128,6 +132,7 @@ class ListingDiscoveryCriteria extends Equatable {
     bodyType,
     fuelType,
     transmissionType,
+    drivetrain,
     typeIn,
     priceCurrencyFilter,
     sort,

@@ -67,14 +67,8 @@ class _ActiveDiscoveryChip extends StatelessWidget {
 
     final restingBg = isDark ? scheme.surfaceContainerHigh : Colors.white;
     final fill = isDark
-        ? Color.alphaBlend(
-            scheme.primary.withValues(alpha: 0.2),
-            restingBg,
-          )
-        : Color.alphaBlend(
-            scheme.primary.withValues(alpha: 0.11),
-            restingBg,
-          );
+        ? Color.alphaBlend(scheme.primary.withValues(alpha: 0.2), restingBg)
+        : Color.alphaBlend(scheme.primary.withValues(alpha: 0.11), restingBg);
     final stroke = isDark
         ? scheme.primary.withValues(alpha: 0.38)
         : scheme.primary.withValues(alpha: 0.24);
@@ -98,7 +92,8 @@ class _ActiveDiscoveryChip extends StatelessWidget {
     );
 
     final hasLabel = data.label != null && data.label!.isNotEmpty;
-    final removeSemantics = '${l10n.listingsDiscoveryFilterRemoveTooltip}: '
+    final removeSemantics =
+        '${l10n.listingsDiscoveryFilterRemoveTooltip}: '
         '${data.flat}';
 
     return DecoratedBox(
@@ -154,9 +149,7 @@ class _ActiveDiscoveryChip extends StatelessWidget {
               color: scheme.primary.withValues(alpha: isDark ? 0.22 : 0.14),
             ),
             _ChipRemoveButton(
-              key: ValueKey<String>(
-                'discovery-chip-remove-${data.kind.name}',
-              ),
+              key: ValueKey<String>('discovery-chip-remove-${data.kind.name}'),
               onPressed: onRemove,
               semanticsLabel: removeSemantics,
               scheme: scheme,
@@ -218,11 +211,7 @@ class _ChipRemoveButton extends StatelessWidget {
                 color: wellFill,
                 border: Border.all(color: wellBorder, width: 1),
               ),
-              child: Icon(
-                CarzonIcons.close,
-                size: 12,
-                color: iconColor,
-              ),
+              child: Icon(CarzonIcons.close, size: 12, color: iconColor),
             ),
           ),
         ),

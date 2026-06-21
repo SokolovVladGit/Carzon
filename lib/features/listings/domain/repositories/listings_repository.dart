@@ -24,6 +24,7 @@ class ListingsQuery {
     this.bodyType,
     this.fuelType,
     this.transmissionType,
+    this.drivetrain,
     this.status,
     this.typeIn,
     this.sort = ListingSortOption.newestFirst,
@@ -74,6 +75,9 @@ class ListingsQuery {
 
   /// When set, restricts results to this `transmission_type`. When null, no filter.
   final ListingTransmissionType? transmissionType;
+
+  /// When set, restricts results to this `drivetrain`. When null, no filter.
+  final ListingDrivetrain? drivetrain;
 
   /// Explicit status filter for the caller. The public feed must pass
   /// [ListingStatus.active] so owners do not see their own hidden/sold/

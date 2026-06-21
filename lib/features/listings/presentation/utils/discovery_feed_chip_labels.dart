@@ -21,6 +21,7 @@ enum ListingsDiscoveryChipKind {
   bodyType,
   fuelType,
   transmissionType,
+  drivetrain,
   listingType,
   sort,
 }
@@ -79,6 +80,9 @@ ListingsState listingsStateAfterDiscoveryChipRemoved(
     ListingsDiscoveryChipKind.fuelType => state.copyWith(clearFuelType: true),
     ListingsDiscoveryChipKind.transmissionType => state.copyWith(
       clearTransmissionType: true,
+    ),
+    ListingsDiscoveryChipKind.drivetrain => state.copyWith(
+      clearDrivetrain: true,
     ),
     ListingsDiscoveryChipKind.listingType => state.copyWith(
       typeFilter: ListingTypeFilter.any,
@@ -256,6 +260,15 @@ List<ListingsDiscoveryChip> listingsDiscoveryChips(
       ),
     );
   }
+  if (s.drivetrainFilter != null) {
+    out.add(
+      ListingsDiscoveryChip(
+        kind: ListingsDiscoveryChipKind.drivetrain,
+        label: l10n.listingDrivetrain,
+        value: formatListingDrivetrain(l10n, s.drivetrainFilter!),
+      ),
+    );
+  }
   if (s.typeFilter == ListingTypeFilter.sale) {
     out.add(
       ListingsDiscoveryChip(
@@ -337,6 +350,9 @@ int listingsDiscoveryActiveFilterGroupCount(ListingsState s) {
     n++;
   }
   if (s.transmissionTypeFilter != null) {
+    n++;
+  }
+  if (s.drivetrainFilter != null) {
     n++;
   }
   if (s.typeFilter == ListingTypeFilter.sale ||

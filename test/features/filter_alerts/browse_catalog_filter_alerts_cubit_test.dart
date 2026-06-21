@@ -44,6 +44,7 @@ ListingDiscoveryCriteria _discoveryCriteriaWithSortOnly(
   bodyType: base.bodyType,
   fuelType: base.fuelType,
   transmissionType: base.transmissionType,
+  drivetrain: base.drivetrain,
   typeIn: base.typeIn,
   priceCurrencyFilter: base.priceCurrencyFilter,
   sort: sort,
@@ -77,6 +78,7 @@ void main() {
     globalEnabled: true,
     messagesEnabled: true,
     filterAlertsEnabled: true,
+    priceDropsEnabled: false,
     createdAt: DateTime.utc(2026, 1, 1),
     updatedAt: DateTime.utc(2026, 1, 2),
   );
@@ -357,6 +359,7 @@ void main() {
             globalEnabled: any(named: 'globalEnabled'),
             messagesEnabled: any(named: 'messagesEnabled'),
             filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+            priceDropsEnabled: any(named: 'priceDropsEnabled'),
           ),
         );
 

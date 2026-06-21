@@ -117,19 +117,31 @@ void main() {
       );
     });
 
-    test('allows region picker change Transnistria-only with no extra filters', () {
-      expect(
-        browseStateEligibleForFilterAlertSnapshot(
-          const ListingsState(regionFilter: MarketRegionFilter.transnistria),
-        ),
-        isTrue,
-      );
-    });
+    test(
+      'allows region picker change Transnistria-only with no extra filters',
+      () {
+        expect(
+          browseStateEligibleForFilterAlertSnapshot(
+            const ListingsState(regionFilter: MarketRegionFilter.transnistria),
+          ),
+          isTrue,
+        );
+      },
+    );
 
     test('allows fuel-only constraint with default sort option', () {
       expect(
         browseStateEligibleForFilterAlertSnapshot(
           const ListingsState(fuelTypeFilter: ListingFuelType.electric),
+        ),
+        isTrue,
+      );
+    });
+
+    test('allows drivetrain-only constraint with default sort option', () {
+      expect(
+        browseStateEligibleForFilterAlertSnapshot(
+          const ListingsState(drivetrainFilter: ListingDrivetrain.rwd),
         ),
         isTrue,
       );

@@ -95,8 +95,9 @@ void main() {
       ),
     ).thenAnswer((_) async {});
 
-    when(() => editCubit.load(any(), ownerId: any(named: 'ownerId')))
-        .thenAnswer((_) async {});
+    when(
+      () => editCubit.load(any(), ownerId: any(named: 'ownerId')),
+    ).thenAnswer((_) async {});
 
     sl.registerFactory<CreateListingCubit>(() => createCubit);
     sl.registerFactory<EditListingCubit>(() => editCubit);
@@ -205,7 +206,9 @@ void main() {
     );
     expect(find.text(ru.listingTransmissionCvt), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('edit_listing_transmission_field')));
+    await tester.tap(
+      find.byKey(const ValueKey('edit_listing_transmission_field')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text(ru.listingTransmissionRobotic).last);
     await tester.pumpAndSettle();

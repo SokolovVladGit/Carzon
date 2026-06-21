@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
 import 'package:carzon/core/widgets/app_back_button.dart';
+import 'package:carzon/core/widgets/loading_view.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
@@ -260,8 +261,9 @@ void main() {
         );
         await tester.pump();
 
-        // Existing loading UI is still rendered.
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        // Loading panel uses branded LoadingView in light theme.
+        expect(find.byType(LoadingView), findsOneWidget);
+        expect(find.byType(AppBackButton), findsOneWidget);
 
         // And critically: the cover Hero with the id-based tag is
         // already in the tree even though the cubit hasn't resolved.

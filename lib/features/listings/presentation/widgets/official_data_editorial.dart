@@ -14,9 +14,7 @@ BoxDecoration officialDataPendingCardDecoration(ThemeData theme) {
   return BoxDecoration(
     color: scheme.surfaceContainerLowest,
     borderRadius: BorderRadius.circular(16),
-    border: Border.all(
-      color: scheme.outlineVariant.withValues(alpha: 0.28),
-    ),
+    border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.28)),
   );
 }
 
@@ -40,7 +38,9 @@ class OfficialDataPendingIconAnchor extends StatelessWidget {
         ? BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppTheme.editorialAccentColor(scheme).withValues(alpha: 0.38),
+              color: AppTheme.editorialAccentColor(
+                scheme,
+              ).withValues(alpha: 0.38),
             ),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -57,9 +57,7 @@ class OfficialDataPendingIconAnchor extends StatelessWidget {
         : BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: scheme.primaryContainer.withValues(alpha: 0.42),
-            border: Border.all(
-              color: scheme.primary.withValues(alpha: 0.14),
-            ),
+            border: Border.all(color: scheme.primary.withValues(alpha: 0.14)),
           );
 
     return SizedBox(
@@ -379,7 +377,9 @@ class OfficialDataShowMoreAction extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: scheme.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.32),
+              color: scheme.outlineVariant.withValues(
+                alpha: isDark ? 0.28 : 0.32,
+              ),
             ),
             color: isDark
                 ? scheme.surfaceContainerHigh.withValues(alpha: 0.22)
@@ -395,7 +395,9 @@ class OfficialDataShowMoreAction extends StatelessWidget {
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                     letterSpacing: -0.05,
-                    color: scheme.primary.withValues(alpha: isDark ? 0.92 : 0.88),
+                    color: scheme.primary.withValues(
+                      alpha: isDark ? 0.92 : 0.88,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),

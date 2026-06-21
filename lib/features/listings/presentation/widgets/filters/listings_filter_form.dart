@@ -78,6 +78,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
   ListingBodyType? _bodyType;
   ListingFuelType? _fuelType;
   ListingTransmissionType? _transmissionType;
+  ListingDrivetrain? _drivetrain;
   late ListingPriceCurrencyFilter _priceCurrency;
 
   String? _catalogMake;
@@ -117,6 +118,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     _bodyType = w.bodyType;
     _fuelType = w.fuelType;
     _transmissionType = w.transmissionType;
+    _drivetrain = w.drivetrain;
     _priceCurrency = w.priceCurrencyFilter;
     _model.addListener(_onDraftChanged);
     _customBrand.addListener(_onDraftChanged);
@@ -201,6 +203,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     bodyType: _bodyType,
     fuelType: _fuelType,
     transmissionType: _transmissionType,
+    drivetrain: _drivetrain,
     priceCurrencyFilter: _priceCurrency,
   );
 
@@ -222,6 +225,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
       _bodyType = null;
       _fuelType = null;
       _transmissionType = null;
+      _drivetrain = null;
       _priceCurrency = ListingPriceCurrencyFilter.any;
       _minYearError = null;
       _maxYearError = null;
@@ -359,6 +363,18 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     );
     if (!mounted) return;
     setState(() => _transmissionType = picked);
+    _notifyDraftMutated();
+  }
+
+  Future<void> _openDrivetrainSheet() async {
+    final l10n = context.l10n;
+    final picked = await showListingDrivetrainPickerSheet(
+      context: context,
+      l10n: l10n,
+      selected: _drivetrain,
+    );
+    if (!mounted) return;
+    setState(() => _drivetrain = picked);
     _notifyDraftMutated();
   }
 
@@ -879,6 +895,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
       bodyType: _bodyType,
       fuelType: _fuelType,
       transmissionType: _transmissionType,
+      drivetrain: _drivetrain,
       priceCurrencyFilter: _priceCurrency,
     );
   }
@@ -1276,6 +1293,17 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                 onTap: _openTransmissionTypeSheet,
               ),
               const SizedBox(height: 16),
+              ListingsFilterVehicleSpecSelectorField(
+                fieldKey: const ValueKey<String>(
+                  'listings_filter_drivetrain_pick_trigger',
+                ),
+                label: l10n.listingDrivetrain,
+                valueText: _drivetrain == null
+                    ? l10n.listingsBodyChipAll
+                    : formatListingDrivetrain(l10n, _drivetrain!),
+                onTap: _openDrivetrainSheet,
+              ),
+              const SizedBox(height: 16),
               Text(
                 l10n.filterType,
                 style: theme.textTheme.labelLarge?.copyWith(
@@ -1292,7 +1320,9 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
           sectionIndex: '05',
           title: l10n.filterSortLabel,
           child: ListingVehicleSpecPickerRow(
-            fieldKey: const ValueKey<String>('listings_filter_sort_pick_trigger'),
+            fieldKey: const ValueKey<String>(
+              'listings_filter_sort_pick_trigger',
+            ),
             valueText: listingFilterSortOptionLabel(l10n, _sort),
             enabled: true,
             onTap: _openSortSheet,

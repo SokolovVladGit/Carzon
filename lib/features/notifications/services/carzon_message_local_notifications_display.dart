@@ -10,6 +10,8 @@ import 'filter_alert_notification_tap_payload.dart';
 import 'message_foreground_notification_display.dart';
 import 'message_notification_public_copy.dart';
 import 'message_notification_tap_payload.dart';
+import 'price_drop_notification_public_copy.dart';
+import 'price_drop_notification_tap_payload.dart';
 
 /// [MessageForegroundNotificationDisplay] backed by [flutter_local_notifications].
 ///
@@ -19,20 +21,24 @@ class CarzonMessageLocalNotificationsDisplay
   CarzonMessageLocalNotificationsDisplay({
     required void Function(String conversationId) onConversationNotificationTap,
     required void Function(String listingId) onFilterAlertNotificationTap,
+    required void Function(String listingId) onPriceDropNotificationTap,
     required AppLocalePreference Function() readLocalePreference,
     FlutterLocalNotificationsPlugin? plugin,
     AppLogger? logger,
   }) : _pluginOverride = plugin,
        _onConversationNotificationTap = onConversationNotificationTap,
        _onFilterAlertNotificationTap = onFilterAlertNotificationTap,
+       _onPriceDropNotificationTap = onPriceDropNotificationTap,
        _readLocalePreference = readLocalePreference,
        _logger = logger ?? AppLogger('CarzonLocalNotifications');
 
   static const androidChannelId = 'carzon_messages';
   static const androidFilterChannelId = 'carzon_filter_alerts';
+  static const androidPriceDropChannelId = 'carzon_price_drops';
 
   final void Function(String conversationId) _onConversationNotificationTap;
   final void Function(String listingId) _onFilterAlertNotificationTap;
+  final void Function(String listingId) _onPriceDropNotificationTap;
   final AppLocalePreference Function() _readLocalePreference;
   final FlutterLocalNotificationsPlugin? _pluginOverride;
   final AppLogger _logger;
@@ -54,6 +60,13 @@ class CarzonMessageLocalNotificationsDisplay
       final listingId = parseFilterAlertLocalNotificationPayload(payload);
       if (listingId != null) {
         _onFilterAlertNotificationTap(listingId);
+        return;
+      }
+      final priceDropListingId = parsePriceDropLocalNotificationPayload(
+        payload,
+      );
+      if (priceDropListingId != null) {
+        _onPriceDropNotificationTap(priceDropListingId);
         return;
       }
       if (!isMessageNotificationConversationId(payload)) {
@@ -117,6 +130,14 @@ class CarzonMessageLocalNotificationsDisplay
             androidFilterChannelId,
             l10n.notificationAndroidChannelFilterName,
             description: l10n.notificationAndroidChannelFilterDescription,
+            importance: Importance.high,
+          ),
+        );
+        await androidPlugin?.createNotificationChannel(
+          AndroidNotificationChannel(
+            androidPriceDropChannelId,
+            l10n.notificationAndroidChannelPriceDropName,
+            description: l10n.notificationAndroidChannelPriceDropDescription,
             importance: Importance.high,
           ),
         );
@@ -200,6 +221,41 @@ class CarzonMessageLocalNotificationsDisplay
       );
     } catch (e, st) {
       _logger.error('showFilterAlertForegroundNotification failed', e, st);
+    }
+  }
+
+  @override
+  Future<void> showPriceDropForegroundNotification(String listingId) async {
+    if (!_initialized) {
+      await initialize();
+    }
+    try {
+      final preference = _readLocalePreference();
+      final l10n = _l10nFor(preference);
+      await _plugin.show(
+        id: (listingId.hashCode ^ 0x2468ace0) & 0x7fffffff,
+        title: PriceDropNotificationPublicCopy.title(preference),
+        body: PriceDropNotificationPublicCopy.body(preference),
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            androidPriceDropChannelId,
+            l10n.notificationAndroidChannelPriceDropName,
+            channelDescription:
+                l10n.notificationAndroidChannelPriceDropDescription,
+            importance: Importance.high,
+            priority: Priority.high,
+            icon: '@mipmap/ic_launcher',
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        payload: priceDropLocalNotificationPayload(listingId),
+      );
+    } catch (e, st) {
+      _logger.error('showPriceDropForegroundNotification failed', e, st);
     }
   }
 

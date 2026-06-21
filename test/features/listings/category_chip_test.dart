@@ -189,40 +189,37 @@ void main() {
     expect(icon.color!.a, greaterThan(0.94));
   });
 
-  testWidgets('CategoryChip sedan and pickup SVGs are not horizontally mirrored', (
-    tester,
-  ) async {
-    for (final chip in [
-      (
-        id: 'sedan',
-        path: 'assets/categories/svg/sedan.svg',
-        label: 'Седан',
-      ),
-      (
-        id: 'pickup',
-        path: 'assets/categories/svg/pickup.svg',
-        label: 'Пикап',
-      ),
-    ]) {
-      await tester.pumpWidget(
-        _chipHarness(
-          child: CategoryChip(
-            chipId: chip.id,
-            label: chip.label,
-            icon: Icons.directions_car_outlined,
-            isSelected: false,
-            onTap: () {},
-            svgAssetPath: chip.path,
-          ),
+  testWidgets(
+    'CategoryChip sedan and pickup SVGs are not horizontally mirrored',
+    (tester) async {
+      for (final chip in [
+        (id: 'sedan', path: 'assets/categories/svg/sedan.svg', label: 'Седан'),
+        (
+          id: 'pickup',
+          path: 'assets/categories/svg/pickup.svg',
+          label: 'Пикап',
         ),
-      );
-      await tester.pumpAndSettle();
-      final horizontalFlips = tester
-          .widgetList<Transform>(find.byType(Transform))
-          .where(_isHorizontalFlipTransform);
-      expect(horizontalFlips, isEmpty, reason: chip.id);
-    }
-  });
+      ]) {
+        await tester.pumpWidget(
+          _chipHarness(
+            child: CategoryChip(
+              chipId: chip.id,
+              label: chip.label,
+              icon: Icons.directions_car_outlined,
+              isSelected: false,
+              onTap: () {},
+              svgAssetPath: chip.path,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final horizontalFlips = tester
+            .widgetList<Transform>(find.byType(Transform))
+            .where(_isHorizontalFlipTransform);
+        expect(horizontalFlips, isEmpty, reason: chip.id);
+      }
+    },
+  );
 
   testWidgets('CategoryChip icon-only chips hide labels but keep semantics', (
     tester,
@@ -281,69 +278,71 @@ void main() {
     }
   });
 
-  testWidgets('CategoryChip All chip uses all_bodies.svg without visible label', (
-    tester,
-  ) async {
-    const allBodiesAsset = 'assets/categories/svg/all_bodies.svg';
+  testWidgets(
+    'CategoryChip All chip uses all_bodies.svg without visible label',
+    (tester) async {
+      const allBodiesAsset = 'assets/categories/svg/all_bodies.svg';
 
-    await tester.pumpWidget(
-      _chipHarness(
-        child: CategoryChip(
-          chipId: 'all',
-          label: 'Все',
-          icon: Icons.directions_car_outlined,
-          svgAssetPath: allBodiesAsset,
-          isSelected: false,
-          onTap: () {},
+      await tester.pumpWidget(
+        _chipHarness(
+          child: CategoryChip(
+            chipId: 'all',
+            label: 'Все',
+            icon: Icons.directions_car_outlined,
+            svgAssetPath: allBodiesAsset,
+            isSelected: false,
+            onTap: () {},
+          ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Все'), findsNothing);
-    expect(find.bySemanticsLabel('Все'), findsOneWidget);
-    expect(find.byType(Icon), findsNothing);
-    final svgs = tester.widgetList<SvgPicture>(find.byType(SvgPicture));
-    expect(svgs.length, 1);
-    expect(svgs.first.width, CategoryChip.allIconSize);
-    expect(svgs.first.height, CategoryChip.allIconSize);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('Все'), findsNothing);
+      expect(find.bySemanticsLabel('Все'), findsOneWidget);
+      expect(find.byType(Icon), findsNothing);
+      final svgs = tester.widgetList<SvgPicture>(find.byType(SvgPicture));
+      expect(svgs.length, 1);
+      expect(svgs.first.width, CategoryChip.allIconSize);
+      expect(svgs.first.height, CategoryChip.allIconSize);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('CategoryChip All chip selected preserves semantics without dot', (
-    tester,
-  ) async {
-    const allBodiesAsset = 'assets/categories/svg/all_bodies.svg';
+  testWidgets(
+    'CategoryChip All chip selected preserves semantics without dot',
+    (tester) async {
+      const allBodiesAsset = 'assets/categories/svg/all_bodies.svg';
 
-    await tester.pumpWidget(
-      _chipHarness(
-        child: CategoryChip(
-          chipId: 'all',
+      await tester.pumpWidget(
+        _chipHarness(
+          child: CategoryChip(
+            chipId: 'all',
+            label: 'Все',
+            icon: Icons.directions_car_outlined,
+            svgAssetPath: allBodiesAsset,
+            isSelected: true,
+            onTap: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getSemantics(find.byType(CategoryChip)),
+        matchesSemantics(
           label: 'Все',
-          icon: Icons.directions_car_outlined,
-          svgAssetPath: allBodiesAsset,
+          isButton: true,
+          isFocusable: true,
+          hasSelectedState: true,
           isSelected: true,
-          onTap: () {},
+          hasTapAction: true,
+          hasFocusAction: true,
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(
-      tester.getSemantics(find.byType(CategoryChip)),
-      matchesSemantics(
-        label: 'Все',
-        isButton: true,
-        isFocusable: true,
-        hasSelectedState: true,
-        isSelected: true,
-        hasTapAction: true,
-        hasFocusAction: true,
-      ),
-    );
-    expect(find.byType(Icon), findsNothing);
-    expect(find.byType(SvgPicture), findsOneWidget);
-  });
+      );
+      expect(find.byType(Icon), findsNothing);
+      expect(find.byType(SvgPicture), findsOneWidget);
+    },
+  );
 
   testWidgets('CategoryChip vehicle silhouettes use width-based SVG sizing', (
     tester,
@@ -378,10 +377,7 @@ void main() {
     expect(svgs.length, 2);
     expect(svgs.first.width, CategoryChip.vehicleIconBaseWidth);
     expect(svgs.first.height, isNull);
-    expect(
-      svgs.last.width,
-      CategoryChip.vehicleIconBaseWidth * 1.04,
-    );
+    expect(svgs.last.width, CategoryChip.vehicleIconBaseWidth * 1.04);
     expect(svgs.last.height, isNull);
   });
 

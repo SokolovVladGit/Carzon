@@ -183,9 +183,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      app(
-        _listing(transmissionType: ListingTransmissionType.automatic),
-      ),
+      app(_listing(transmissionType: ListingTransmissionType.automatic)),
     );
     await tester.pumpAndSettle();
 

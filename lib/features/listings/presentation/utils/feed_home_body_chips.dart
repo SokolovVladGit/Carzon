@@ -66,12 +66,8 @@ List<FeedBodyChipDescriptor> feedHomeBodyChipDescriptors(
 ///
 /// Most silhouettes use the default icon size (1.0). Listed chip ids have
 /// narrower or lighter SVG artwork that reads smaller inside the chip.
-const Map<String, double> kListingBodyTypeQuickFilterIconOpticalScaleByChipId = {
-  'wagon': 1.04,
-  'pickup': 1.04,
-  'coupe': 1.02,
-  'minivan': 1.02,
-};
+const Map<String, double> kListingBodyTypeQuickFilterIconOpticalScaleByChipId =
+    {'wagon': 1.04, 'pickup': 1.04, 'coupe': 1.02, 'minivan': 1.02};
 
 /// Optical size multiplier for feed body-type quick-filter icons (default 1.0).
 double listingBodyTypeQuickFilterIconScale(String chipId) =>

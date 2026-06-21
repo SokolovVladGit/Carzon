@@ -367,6 +367,98 @@ PUSH_NOTIFICATIONS_ENABLED=true
       await authEmitter.close();
     });
 
+    test('valid price_drop initial opens listing when authenticated', () async {
+      dotenv.testLoad(
+        fileInput: '''
+SUPABASE_URL=https://x.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=true
+''',
+      );
+      var auth = AuthState.authenticated(user);
+      final fake = _FakeOpenEvents()
+        ..initialMessageReply = RemoteMessage(
+          data: {'type': 'price_drop', 'listing_id': filterListingId},
+        );
+      final authEmitter = StreamController<AuthState>.broadcast();
+      final navigated = <String>[];
+      final navigatedListings = <String>[];
+
+      final coordinator = MessageConversationNavigationCoordinator(
+        authStateStream: authEmitter.stream,
+        authStateSnapshot: () => auth,
+        navigateToConversation: navigated.add,
+      );
+      final listingCoordinator = FilterAlertListingNavigationCoordinator(
+        authStateStream: authEmitter.stream,
+        authStateSnapshot: () => auth,
+        navigateToListingDetail: navigatedListings.add,
+      );
+
+      final handler = MessagePushTapHandler(
+        navigationCoordinator: coordinator,
+        listingNavigationCoordinator: listingCoordinator,
+        openEvents: fake,
+        firebaseAppReady: () => true,
+      );
+
+      await handler.start();
+      expect(navigatedListings, [filterListingId]);
+      expect(navigated, isEmpty);
+
+      await handler.dispose();
+      await coordinator.dispose();
+      await listingCoordinator.dispose();
+      await fake.close();
+      await authEmitter.close();
+    });
+
+    test('malformed price_drop listing_id does not navigate', () async {
+      dotenv.testLoad(
+        fileInput: '''
+SUPABASE_URL=https://x.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=true
+''',
+      );
+      var auth = AuthState.authenticated(user);
+      final fake = _FakeOpenEvents()
+        ..initialMessageReply = RemoteMessage(
+          data: {'type': 'price_drop', 'listing_id': 'x'},
+        );
+      final authEmitter = StreamController<AuthState>.broadcast();
+      final navigated = <String>[];
+      final navigatedListings = <String>[];
+
+      final coordinator = MessageConversationNavigationCoordinator(
+        authStateStream: authEmitter.stream,
+        authStateSnapshot: () => auth,
+        navigateToConversation: navigated.add,
+      );
+      final listingCoordinator = FilterAlertListingNavigationCoordinator(
+        authStateStream: authEmitter.stream,
+        authStateSnapshot: () => auth,
+        navigateToListingDetail: navigatedListings.add,
+      );
+
+      final handler = MessagePushTapHandler(
+        navigationCoordinator: coordinator,
+        listingNavigationCoordinator: listingCoordinator,
+        openEvents: fake,
+        firebaseAppReady: () => true,
+      );
+
+      await handler.start();
+      expect(navigatedListings, isEmpty);
+      expect(navigated, isEmpty);
+
+      await handler.dispose();
+      await coordinator.dispose();
+      await listingCoordinator.dispose();
+      await fake.close();
+      await authEmitter.close();
+    });
+
     test('dedupes duplicate opened-app taps within 1s', () async {
       dotenv.testLoad(
         fileInput: '''

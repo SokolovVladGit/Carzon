@@ -34,12 +34,14 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
     required bool globalEnabled,
     required bool messagesEnabled,
     required bool filterAlertsEnabled,
+    required bool priceDropsEnabled,
   }) async {
     try {
       final v = await _remote.updateMyPreferences(
         globalEnabled: globalEnabled,
         messagesEnabled: messagesEnabled,
         filterAlertsEnabled: filterAlertsEnabled,
+        priceDropsEnabled: priceDropsEnabled,
       );
       return Success(v);
     } on ServerException catch (e) {

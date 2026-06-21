@@ -67,12 +67,14 @@ NotificationPreferences _prefs({
   bool global = false,
   bool messages = false,
   bool filterAlerts = false,
+  bool priceDrops = false,
 }) {
   return NotificationPreferences(
     userId: 'u1',
     globalEnabled: global,
     messagesEnabled: messages,
     filterAlertsEnabled: filterAlerts,
+    priceDropsEnabled: priceDrops,
     createdAt: DateTime.utc(2024, 1, 1),
     updatedAt: DateTime.utc(2024, 1, 2),
   );
@@ -90,13 +92,20 @@ void main() {
         globalEnabled: any(named: 'globalEnabled'),
         messagesEnabled: any(named: 'messagesEnabled'),
         filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+        priceDropsEnabled: any(named: 'priceDropsEnabled'),
       ),
     ).thenAnswer((inv) async {
       final global = inv.namedArguments[#globalEnabled] as bool;
       final messages = inv.namedArguments[#messagesEnabled] as bool;
       final filterAlerts = inv.namedArguments[#filterAlertsEnabled] as bool;
+      final priceDrops = inv.namedArguments[#priceDropsEnabled] as bool;
       return Success(
-        _prefs(global: global, messages: messages, filterAlerts: filterAlerts),
+        _prefs(
+          global: global,
+          messages: messages,
+          filterAlerts: filterAlerts,
+          priceDrops: priceDrops,
+        ),
       );
     });
   }
@@ -231,6 +240,7 @@ SUPABASE_ANON_KEY=anon
             globalEnabled: any(named: 'globalEnabled'),
             messagesEnabled: any(named: 'messagesEnabled'),
             filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+            priceDropsEnabled: any(named: 'priceDropsEnabled'),
           ),
         );
         expect(client.permissionRequestCalls, 0);
@@ -261,6 +271,7 @@ SUPABASE_ANON_KEY=anon
             globalEnabled: any(named: 'globalEnabled'),
             messagesEnabled: any(named: 'messagesEnabled'),
             filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+            priceDropsEnabled: any(named: 'priceDropsEnabled'),
           ),
         );
         expect(client.permissionRequestCalls, 0);
@@ -297,6 +308,7 @@ SUPABASE_ANON_KEY=anon
           globalEnabled: any(named: 'globalEnabled'),
           messagesEnabled: any(named: 'messagesEnabled'),
           filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+          priceDropsEnabled: any(named: 'priceDropsEnabled'),
         ),
       );
     },
@@ -320,6 +332,7 @@ SUPABASE_ANON_KEY=anon
           globalEnabled: true,
           messagesEnabled: true,
           filterAlertsEnabled: false,
+          priceDropsEnabled: false,
         ),
       ).called(1);
       verify(
@@ -343,6 +356,7 @@ SUPABASE_ANON_KEY=anon
         globalEnabled: any(named: 'globalEnabled'),
         messagesEnabled: any(named: 'messagesEnabled'),
         filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+        priceDropsEnabled: any(named: 'priceDropsEnabled'),
       ),
     ).thenAnswer((inv) async {
       await updateGate.future;
@@ -373,6 +387,7 @@ SUPABASE_ANON_KEY=anon
         globalEnabled: true,
         messagesEnabled: false,
         filterAlertsEnabled: false,
+        priceDropsEnabled: false,
       ),
     ).called(1);
     verify(
@@ -401,6 +416,7 @@ SUPABASE_ANON_KEY=anon
           globalEnabled: false,
           messagesEnabled: false,
           filterAlertsEnabled: false,
+          priceDropsEnabled: false,
         ),
       ).called(1);
       verify(() => repo.deactivateMyPushTokens()).called(1);
@@ -421,6 +437,7 @@ SUPABASE_ANON_KEY=anon
           globalEnabled: any(named: 'globalEnabled'),
           messagesEnabled: any(named: 'messagesEnabled'),
           filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+          priceDropsEnabled: any(named: 'priceDropsEnabled'),
         ),
       );
     },
@@ -443,6 +460,7 @@ SUPABASE_ANON_KEY=anon
           globalEnabled: true,
           messagesEnabled: true,
           filterAlertsEnabled: false,
+          priceDropsEnabled: false,
         ),
       ).called(1);
     },
@@ -462,6 +480,7 @@ SUPABASE_ANON_KEY=anon
           globalEnabled: true,
           messagesEnabled: false,
           filterAlertsEnabled: false,
+          priceDropsEnabled: false,
         ),
       ).called(1);
       verifyNever(() => repo.deactivateMyPushTokens());
@@ -486,6 +505,7 @@ SUPABASE_ANON_KEY=anon
           globalEnabled: true,
           messagesEnabled: true,
           filterAlertsEnabled: true,
+          priceDropsEnabled: false,
         ),
       ).called(1);
       verify(
@@ -514,6 +534,7 @@ SUPABASE_ANON_KEY=anon
           globalEnabled: true,
           messagesEnabled: true,
           filterAlertsEnabled: false,
+          priceDropsEnabled: false,
         ),
       ).called(1);
       verifyNever(() => repo.deactivateMyPushTokens());
@@ -534,8 +555,82 @@ SUPABASE_ANON_KEY=anon
           globalEnabled: any(named: 'globalEnabled'),
           messagesEnabled: any(named: 'messagesEnabled'),
           filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+          priceDropsEnabled: any(named: 'priceDropsEnabled'),
         ),
       );
+    },
+  );
+
+  blocTest<NotificationSettingsCubit, NotificationSettingsState>(
+    'price drops toggle no-op when global off',
+    build: buildCubit,
+    seed: () => NotificationSettingsState(
+      phase: NotificationSettingsLoadPhase.ready,
+      preferences: _prefs(global: false, priceDrops: false),
+    ),
+    act: (c) => c.setPriceDropsEnabled(true),
+    verify: (_) {
+      verifyNever(
+        () => repo.updateMyPreferences(
+          globalEnabled: any(named: 'globalEnabled'),
+          messagesEnabled: any(named: 'messagesEnabled'),
+          filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+          priceDropsEnabled: any(named: 'priceDropsEnabled'),
+        ),
+      );
+    },
+  );
+
+  blocTest<NotificationSettingsCubit, NotificationSettingsState>(
+    'price drops toggle on preserves other category flags',
+    setUp: () {
+      client.permissionStatus = PushMessagingPermissionStatus.authorized;
+    },
+    build: buildCubit,
+    seed: () => NotificationSettingsState(
+      phase: NotificationSettingsLoadPhase.ready,
+      preferences: _prefs(
+        global: true,
+        messages: true,
+        filterAlerts: true,
+        priceDrops: false,
+      ),
+    ),
+    act: (c) => c.setPriceDropsEnabled(true),
+    verify: (_) {
+      verify(
+        () => repo.updateMyPreferences(
+          globalEnabled: true,
+          messagesEnabled: true,
+          filterAlertsEnabled: true,
+          priceDropsEnabled: true,
+        ),
+      ).called(1);
+    },
+  );
+
+  blocTest<NotificationSettingsCubit, NotificationSettingsState>(
+    'price drops toggle off preserves other category flags',
+    build: buildCubit,
+    seed: () => NotificationSettingsState(
+      phase: NotificationSettingsLoadPhase.ready,
+      preferences: _prefs(
+        global: true,
+        messages: true,
+        filterAlerts: false,
+        priceDrops: true,
+      ),
+    ),
+    act: (c) => c.setPriceDropsEnabled(false),
+    verify: (_) {
+      verify(
+        () => repo.updateMyPreferences(
+          globalEnabled: true,
+          messagesEnabled: true,
+          filterAlertsEnabled: false,
+          priceDropsEnabled: false,
+        ),
+      ).called(1);
     },
   );
 
@@ -548,6 +643,7 @@ SUPABASE_ANON_KEY=anon
           globalEnabled: any(named: 'globalEnabled'),
           messagesEnabled: any(named: 'messagesEnabled'),
           filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+          priceDropsEnabled: any(named: 'priceDropsEnabled'),
         ),
       ).thenAnswer((_) async => FailureResult(const UnknownFailure('save')));
     },

@@ -12,6 +12,7 @@ abstract interface class NotificationsRemoteDataSource {
     required bool globalEnabled,
     required bool messagesEnabled,
     required bool filterAlertsEnabled,
+    required bool priceDropsEnabled,
   });
 
   Future<void> registerPushToken({
@@ -52,7 +53,8 @@ class SupabaseNotificationsRemoteDataSource
     final g = m['global_enabled'];
     final msg = m['messages_enabled'];
     final fa = m['filter_alerts_enabled'];
-    if (g is! bool || msg is! bool || fa is! bool) {
+    final pd = m['price_drops_enabled'];
+    if (g is! bool || msg is! bool || fa is! bool || pd is! bool) {
       throw ServerException('notification_preferences boolean fields invalid');
     }
     DateTime ts(dynamic v, String label) {
@@ -67,6 +69,7 @@ class SupabaseNotificationsRemoteDataSource
       globalEnabled: g,
       messagesEnabled: msg,
       filterAlertsEnabled: fa,
+      priceDropsEnabled: pd,
       createdAt: ts(m['created_at'], 'created_at'),
       updatedAt: ts(m['updated_at'], 'updated_at'),
     );
@@ -89,6 +92,7 @@ class SupabaseNotificationsRemoteDataSource
     required bool globalEnabled,
     required bool messagesEnabled,
     required bool filterAlertsEnabled,
+    required bool priceDropsEnabled,
   }) async {
     try {
       final dynamic data = await _supabase.client.rpc(
@@ -97,6 +101,7 @@ class SupabaseNotificationsRemoteDataSource
           'p_global_enabled': globalEnabled,
           'p_messages_enabled': messagesEnabled,
           'p_filter_alerts_enabled': filterAlertsEnabled,
+          'p_price_drops_enabled': priceDropsEnabled,
         },
       );
       return _parsePreferencesRow(data);

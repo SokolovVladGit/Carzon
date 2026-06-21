@@ -16,9 +16,7 @@ void main() {
         locale: const Locale('ru'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: ListingBrandPickSheet(appL10n: l10n),
-        ),
+        home: Scaffold(body: ListingBrandPickSheet(appL10n: l10n)),
       ),
     );
     await tester.pumpAndSettle();
@@ -47,9 +45,7 @@ void main() {
         locale: const Locale('ru'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: Scaffold(
-          body: ListingBrandPickSheet(appL10n: l10n),
-        ),
+        home: Scaffold(body: ListingBrandPickSheet(appL10n: l10n)),
       ),
     );
     await tester.pumpAndSettle();
