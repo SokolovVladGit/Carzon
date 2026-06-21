@@ -1427,6 +1427,26 @@ class AppLocalizationsRo extends AppLocalizations {
       'Elimină definitiv contul și datele asociate';
 
   @override
+  String get settingsSignOutSubtitle => 'Deconectați-vă de pe acest dispozitiv';
+
+  @override
+  String get settingsSectionAbout => 'Despre aplicație';
+
+  @override
+  String get settingsAboutAppName => 'Carzon';
+
+  @override
+  String settingsAboutVersion(String version, String build) {
+    return 'Versiunea $version (build $build)';
+  }
+
+  @override
+  String get settingsAboutVersionLoading => 'Se încarcă versiunea…';
+
+  @override
+  String get settingsAboutVersionUnavailable => 'Versiune indisponibilă';
+
+  @override
   String get deleteAccountTitle => 'Ștergere cont';
 
   @override

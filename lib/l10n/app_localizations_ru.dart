@@ -1428,6 +1428,26 @@ class AppLocalizationsRu extends AppLocalizations {
       'Безвозвратно удалить аккаунт и связанные данные';
 
   @override
+  String get settingsSignOutSubtitle => 'Выйти из аккаунта на этом устройстве';
+
+  @override
+  String get settingsSectionAbout => 'О приложении';
+
+  @override
+  String get settingsAboutAppName => 'Carzon';
+
+  @override
+  String settingsAboutVersion(String version, String build) {
+    return 'Версия $version (сборка $build)';
+  }
+
+  @override
+  String get settingsAboutVersionLoading => 'Загрузка версии…';
+
+  @override
+  String get settingsAboutVersionUnavailable => 'Версия недоступна';
+
+  @override
   String get deleteAccountTitle => 'Удаление аккаунта';
 
   @override

@@ -618,6 +618,27 @@
   "@settingsDeleteAccountTitle": {},
   "settingsDeleteAccountSubtitle": "Безвозвратно удалить аккаунт и связанные данные",
   "@settingsDeleteAccountSubtitle": {},
+  "settingsSignOutSubtitle": "Выйти из аккаунта на этом устройстве",
+  "@settingsSignOutSubtitle": {},
+  "settingsSectionAbout": "О приложении",
+  "@settingsSectionAbout": {},
+  "settingsAboutAppName": "Carzon",
+  "@settingsAboutAppName": {},
+  "settingsAboutVersion": "Версия {version} (сборка {build})",
+  "@settingsAboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsAboutVersionLoading": "Загрузка версии…",
+  "@settingsAboutVersionLoading": {},
+  "settingsAboutVersionUnavailable": "Версия недоступна",
+  "@settingsAboutVersionUnavailable": {},
   "deleteAccountTitle": "Удаление аккаунта",
   "@deleteAccountTitle": {},
   "deleteAccountWarningTitle": "Это действие необратимо",

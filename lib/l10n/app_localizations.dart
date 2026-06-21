@@ -2658,6 +2658,42 @@ abstract class AppLocalizations {
   /// **'Безвозвратно удалить аккаунт и связанные данные'**
   String get settingsDeleteAccountSubtitle;
 
+  /// No description provided for @settingsSignOutSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти из аккаунта на этом устройстве'**
+  String get settingsSignOutSubtitle;
+
+  /// No description provided for @settingsSectionAbout.
+  ///
+  /// In ru, this message translates to:
+  /// **'О приложении'**
+  String get settingsSectionAbout;
+
+  /// No description provided for @settingsAboutAppName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Carzon'**
+  String get settingsAboutAppName;
+
+  /// No description provided for @settingsAboutVersion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия {version} (сборка {build})'**
+  String settingsAboutVersion(String version, String build);
+
+  /// No description provided for @settingsAboutVersionLoading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Загрузка версии…'**
+  String get settingsAboutVersionLoading;
+
+  /// No description provided for @settingsAboutVersionUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия недоступна'**
+  String get settingsAboutVersionUnavailable;
+
   /// No description provided for @deleteAccountTitle.
   ///
   /// In ru, this message translates to:
