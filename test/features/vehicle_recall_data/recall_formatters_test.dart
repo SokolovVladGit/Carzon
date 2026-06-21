@@ -33,6 +33,16 @@ void main() {
     });
   });
 
+  group('formatRecallCampaignCountStat', () {
+    test('uses pluralized stat label with found suffix', () {
+      expect(
+        formatRecallCampaignCountStat(ru, 10),
+        ru.listingRecallCampaignCountStat(10),
+      );
+      expect(ru.listingRecallCampaignCountStat(10), contains('найдено'));
+    });
+  });
+
   group('formatRecallCampaignCountLabel', () {
     test('includes localized count prefix', () {
       expect(
@@ -138,25 +148,12 @@ void main() {
   });
 
   group('recallCampaignPreviewText', () {
-    test('returns truncated summary when distinct from headline', () {
-      final longSummary = 'A' * 200;
-      final preview = recallCampaignPreviewText(
-        BuyerListingRecallCampaign(
-          component: 'Airbag inflator',
-          summary: longSummary,
-        ),
-      );
-
-      expect(preview, isNotNull);
-      expect(preview!.length, lessThan(longSummary.length));
-      expect(preview.endsWith('…'), isTrue);
-    });
-
-    test('returns null when summary matches headline', () {
+    test('returns null for collapsed rows', () {
       expect(
         recallCampaignPreviewText(
-          const BuyerListingRecallCampaign(
-            summary: 'Only headline',
+          BuyerListingRecallCampaign(
+            component: 'Airbag inflator',
+            summary: 'A' * 200,
           ),
         ),
         isNull,
@@ -195,9 +192,10 @@ void main() {
   });
 
   group('recallCampaignHeadline', () {
-    test('prefers component then summary then campaign number', () {
+    test('prefers localized component then campaign number', () {
       expect(
         recallCampaignHeadline(
+          ru,
           const BuyerListingRecallCampaign(
             component: 'Airbag',
             summary: 'Summary',
@@ -208,18 +206,80 @@ void main() {
       );
       expect(
         recallCampaignHeadline(
+          ru,
+          const BuyerListingRecallCampaign(
+            component: 'SUSPENSION:FRONT',
+            summary: 'Summary',
+            campaignNumber: '20TA01',
+          ),
+        ),
+        ru.listingRecallComponentSuspensionFront,
+      );
+      expect(
+        recallCampaignHeadline(
+          ru,
           const BuyerListingRecallCampaign(
             summary: 'Summary',
             campaignNumber: '20TA01',
           ),
         ),
-        'Summary',
-      );
-      expect(
-        recallCampaignHeadline(
-          const BuyerListingRecallCampaign(campaignNumber: '20TA01'),
-        ),
         '20TA01',
+      );
+    });
+  });
+
+  group('formatRecallComponentDisplay', () {
+    test('formats unknown colon and slash separated NHTSA codes', () {
+      expect(
+        formatRecallComponentDisplay('UNKNOWN:WIDGET'),
+        'Unknown · Widget',
+      );
+    });
+  });
+
+  group('buildRecallCampaignCollapsedMetaLine', () {
+    test('joins number, report date, and manufacturer on one line', () {
+      expect(
+        buildRecallCampaignCollapsedMetaLine(
+          buildRecallCampaignCollapsedMeta(
+            const BuyerListingRecallCampaign(
+              campaignNumber: '20TA01',
+              manufacturer: 'Toyota',
+              reportReceivedDate: '2020-03-15',
+            ),
+          ),
+        ),
+        '20TA01 · 15.03.2020 · Toyota',
+      );
+    });
+  });
+
+  group('buildRecallCampaignExpandedSections', () {
+    test('includes source component in expanded sections', () {
+      final sections = buildRecallCampaignExpandedSections(
+        ru,
+        const BuyerListingRecallCampaign(
+          component: 'SUSPENSION:FRONT',
+          summary: 'Official summary text',
+        ),
+      );
+
+      expect(sections.map((s) => s.title), [
+        ru.listingRecallSummary,
+        ru.listingRecallSourceComponent,
+      ]);
+      expect(sections.last.body, 'SUSPENSION:FRONT');
+    });
+  });
+
+  group('summarizeRecallComponentCategories', () {
+    test('returns unique localized top-level categories', () {
+      expect(
+        summarizeRecallComponentCategories(ru, const [
+          BuyerListingRecallCampaign(component: 'SUSPENSION:FRONT'),
+          BuyerListingRecallCampaign(component: 'FUEL SYSTEM'),
+        ]),
+        ['Подвеска', 'Fuel System'],
       );
     });
   });

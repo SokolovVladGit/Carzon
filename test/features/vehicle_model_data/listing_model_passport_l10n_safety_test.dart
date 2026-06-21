@@ -17,6 +17,8 @@ void main() {
     'listingModelPassportSource',
     'listingModelPassportLastUpdated',
     'listingModelPassportLoading',
+    'listingModelPassportPendingTitle',
+    'listingModelPassportPendingBody',
     'listingModelPassportLimitationsTitle',
     'listingModelPassportSourceEpa',
     'listingModelPassportUnitLPer100km',

@@ -6,11 +6,13 @@ class ModelPassportMetricDisplay {
     required this.label,
     required this.value,
     this.unit,
+    this.isPrimaryHighlight = false,
   });
 
   final String label;
   final String value;
   final String? unit;
+  final bool isPrimaryHighlight;
 }
 
 double? readModelPassportDouble(dynamic raw) {
@@ -120,6 +122,70 @@ List<ModelPassportMetricDisplay> buildModelPassportMetricRows(
   }
 
   return rows;
+}
+
+/// Primary fuel-economy tiles for the premium stat grid (excludes CO₂).
+List<ModelPassportMetricDisplay> buildModelPassportPrimaryMetricTiles(
+  AppLocalizations l10n,
+  Map<String, dynamic>? summary,
+) {
+  if (summary == null || summary.isEmpty) return const [];
+
+  final rows = <ModelPassportMetricDisplay>[];
+
+  void addConsumption(
+    String label,
+    String key, {
+    bool isPrimaryHighlight = false,
+  }) {
+    final value = readModelPassportDouble(summary[key]);
+    if (value == null) return;
+    rows.add(
+      ModelPassportMetricDisplay(
+        label: label,
+        value: formatModelPassportConsumption(value),
+        unit: l10n.listingModelPassportUnitLPer100km,
+        isPrimaryHighlight: isPrimaryHighlight,
+      ),
+    );
+  }
+
+  addConsumption(
+    l10n.listingModelPassportCombinedConsumption,
+    'combined_l_per_100km',
+    isPrimaryHighlight: true,
+  );
+  addConsumption(l10n.listingModelPassportCityConsumption, 'city_l_per_100km');
+  addConsumption(
+    l10n.listingModelPassportHighwayConsumption,
+    'highway_l_per_100km',
+  );
+
+  final fuelType = readModelPassportText(summary['fuel_type']);
+  if (fuelType != null) {
+    rows.add(
+      ModelPassportMetricDisplay(
+        label: l10n.listingModelPassportFuelType,
+        value: formatModelPassportFuelTypeDisplay(l10n, fuelType),
+      ),
+    );
+  }
+
+  return rows;
+}
+
+ModelPassportMetricDisplay? buildModelPassportCo2MetricTile(
+  AppLocalizations l10n,
+  Map<String, dynamic>? summary,
+) {
+  if (summary == null || summary.isEmpty) return null;
+  final co2 = readModelPassportDouble(summary['co2_g_per_km']);
+  if (co2 == null) return null;
+  return ModelPassportMetricDisplay(
+    label: l10n.listingModelPassportCo2Emissions,
+    value: formatModelPassportCo2(co2.round()),
+    unit: l10n.listingModelPassportUnitGPerKm,
+  );
 }
 
 String _normalizeModelPassportFuelTypeKey(String raw) {

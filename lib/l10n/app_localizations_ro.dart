@@ -531,7 +531,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingDrivetrain => 'Conduce';
 
   @override
-  String get listingRegistration => 'Înregistrare';
+  String get listingRegistration => 'Locul înmatriculării auto';
 
   @override
   String get listingDescription => 'Descriere';
@@ -543,7 +543,11 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingEnginePowerHint => 'Putere in CP';
 
   @override
-  String get listingRegistrationHint => 'Unde se face inregistrarea?';
+  String get listingRegistrationHint => 'Ex.: Tiraspol, Chișinău';
+
+  @override
+  String get listingRegistrationHelper =>
+      'Conform documentelor mașinii. Nu influențează regiunea de afișare a anunțului.';
 
   @override
   String get listingEngineDisplacementLitersSuffix => 'l';
@@ -586,6 +590,27 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get listingDrivetrainFourWheel => '4x4';
+
+  @override
+  String get listingTransmission => 'Cutie de viteze';
+
+  @override
+  String get listingTransmissionManual => 'Manuală';
+
+  @override
+  String get listingTransmissionAutomatic => 'Automată';
+
+  @override
+  String get listingTransmissionCvt => 'CVT';
+
+  @override
+  String get listingTransmissionRobotic => 'Robotizată';
+
+  @override
+  String get listingTransmissionDualClutch => 'Dublu ambreiaj';
+
+  @override
+  String get listingTransmissionOther => 'Altă';
 
   @override
   String get listingDetailsDescriptionSection => 'Descriere';
@@ -875,7 +900,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get createListingSectionDealSubtitle =>
-      'Tipul ofertei și regiunea de afișare.';
+      'Tipul ofertei și regiunea unde anunțul va fi vizibil.';
 
   @override
   String get createListingSectionPrice => 'Preț și kilometraj';
@@ -1003,7 +1028,11 @@ class AppLocalizationsRo extends AppLocalizations {
   String get fieldType => 'Tip';
 
   @override
-  String get fieldRegion => 'Regiune';
+  String get fieldRegion => 'Regiune de afișare';
+
+  @override
+  String get fieldRegionHelper =>
+      'Unde va fi vizibil anunțul pentru cumpărători.';
 
   @override
   String get fieldCity => 'Oraş';
@@ -2339,7 +2368,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get listingVinReportPendingBody =>
-      'VIN adăugat de vânzător. Datele de transcriere vor apărea după procesare.';
+      'De obicei durează câteva minute. Datele vor apărea automat după verificare.';
 
   @override
   String get listingVinReportNoDataTitle => 'Datele VIN nu au fost găsite';
@@ -2712,6 +2741,14 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingModelPassportLoading => 'Se încarcă datele modelului…';
 
   @override
+  String get listingModelPassportPendingTitle =>
+      'Se încarcă datele oficiale ale modelului';
+
+  @override
+  String get listingModelPassportPendingBody =>
+      'De obicei durează până la 30 de minute după publicare. Datele vor apărea automat dacă sursa oficială găsește informații pentru acest model.';
+
+  @override
   String get listingModelPassportLimitationsTitle => 'Limitări';
 
   @override
@@ -2792,20 +2829,72 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingRecallTitle => 'Campanii de rechemare';
 
   @override
+  String get listingRecallPendingTitle => 'Verificăm campaniile de siguranță';
+
+  @override
+  String get listingRecallPendingBody =>
+      'Verificarea se face după marcă, model și an. De obicei durează până la 30 de minute după publicare.';
+
+  @override
+  String get listingRecallPendingLimitationNote =>
+      'Aceasta nu este o verificare VIN. Pentru status exact, verificați VIN-ul la dealerul oficial, producător sau NHTSA.';
+
+  @override
   String get listingRecallSourceBadge => 'NHTSA';
 
   @override
-  String get listingRecallCampaignsFound =>
-      'Campanii de rechemare găsite pentru acest model și an';
+  String get listingRecallCampaignsFound => 'Verificare după model și an';
 
   @override
   String get listingRecallCampaignCount => 'Campanii';
+
+  @override
+  String listingRecallCampaignCountStat(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count campanii găsite',
+      few: '$count campanii găsite',
+      one: '$count campanie găsită',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get listingRecallLastUpdated => 'Actualizat:';
 
   @override
   String get listingRecallComponent => 'Componentă';
+
+  @override
+  String get listingRecallSourceComponent => 'Componentă (sursă)';
+
+  @override
+  String get listingRecallComponentSuspensionFront =>
+      'Suspensie · partea frontală';
+
+  @override
+  String get listingRecallComponentSeatBeltsRear =>
+      'Centuri de siguranță · rândul din spate';
+
+  @override
+  String get listingRecallComponentEquipmentManual =>
+      'Echipament · manual/serviciu';
+
+  @override
+  String get listingRecallComponentBackOverPreventionDisplay =>
+      'Cameră/vizualizare spate · display';
+
+  @override
+  String get listingRecallComponentElectricalPropulsionBattery =>
+      'Sistem electric · baterie de tracțiune';
+
+  @override
+  String get listingRecallComponentServiceBrakesAirSupply =>
+      'Sistem de frânare · conducte';
+
+  @override
+  String get listingRecallComponentAirbagsFrontal => 'Airbag-uri · frontale';
 
   @override
   String get listingRecallCampaignNumber => 'Număr campanie';
@@ -2817,10 +2906,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingRecallSummary => 'Descriere';
 
   @override
-  String get listingRecallConsequence => 'Consecințe';
+  String get listingRecallConsequence => 'Risc';
 
   @override
-  String get listingRecallRemedy => 'Remediere';
+  String get listingRecallRemedy => 'Soluție';
 
   @override
   String get listingRecallNotes => 'Note';
@@ -2877,6 +2966,20 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get listingRecallHideDetails => 'Ascunde';
+
+  @override
+  String listingRecallShowAllCampaigns(int count) {
+    return 'Afișează toate cele $count campanii';
+  }
+
+  @override
+  String get listingRecallChipParkIt => 'Nu utilizați';
+
+  @override
+  String get listingRecallChipParkOutside => 'Nu parcați în interior';
+
+  @override
+  String get listingRecallChipOverTheAirUpdate => 'OTA';
 
   @override
   String get notificationMessageTitle => 'Mesaj nou';

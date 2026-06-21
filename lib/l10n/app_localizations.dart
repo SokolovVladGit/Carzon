@@ -1041,7 +1041,7 @@ abstract class AppLocalizations {
   /// No description provided for @listingRegistration.
   ///
   /// In ru, this message translates to:
-  /// **'Регистрация'**
+  /// **'Место регистрации авто'**
   String get listingRegistration;
 
   /// No description provided for @listingDescription.
@@ -1065,8 +1065,14 @@ abstract class AppLocalizations {
   /// No description provided for @listingRegistrationHint.
   ///
   /// In ru, this message translates to:
-  /// **'Где оформлена регистрация'**
+  /// **'Например: Тирасполь, Кишинёв'**
   String get listingRegistrationHint;
+
+  /// No description provided for @listingRegistrationHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'По документам автомобиля. Не влияет на регион показа объявления.'**
+  String get listingRegistrationHelper;
 
   /// No description provided for @listingEngineDisplacementLitersSuffix.
   ///
@@ -1151,6 +1157,48 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'4×4'**
   String get listingDrivetrainFourWheel;
+
+  /// No description provided for @listingTransmission.
+  ///
+  /// In ru, this message translates to:
+  /// **'Коробка передач'**
+  String get listingTransmission;
+
+  /// No description provided for @listingTransmissionManual.
+  ///
+  /// In ru, this message translates to:
+  /// **'Механика'**
+  String get listingTransmissionManual;
+
+  /// No description provided for @listingTransmissionAutomatic.
+  ///
+  /// In ru, this message translates to:
+  /// **'Автомат'**
+  String get listingTransmissionAutomatic;
+
+  /// No description provided for @listingTransmissionCvt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вариатор'**
+  String get listingTransmissionCvt;
+
+  /// No description provided for @listingTransmissionRobotic.
+  ///
+  /// In ru, this message translates to:
+  /// **'Робот'**
+  String get listingTransmissionRobotic;
+
+  /// No description provided for @listingTransmissionDualClutch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Робот DCT'**
+  String get listingTransmissionDualClutch;
+
+  /// No description provided for @listingTransmissionOther.
+  ///
+  /// In ru, this message translates to:
+  /// **'Другое'**
+  String get listingTransmissionOther;
 
   /// No description provided for @listingDetailsDescriptionSection.
   ///
@@ -1659,7 +1707,7 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSectionDealSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Тип сделки и регион показа.'**
+  /// **'Тип сделки и регион, где объявление будет видно.'**
   String get createListingSectionDealSubtitle;
 
   /// No description provided for @createListingSectionPrice.
@@ -1899,8 +1947,14 @@ abstract class AppLocalizations {
   /// No description provided for @fieldRegion.
   ///
   /// In ru, this message translates to:
-  /// **'Регион'**
+  /// **'Регион показа'**
   String get fieldRegion;
+
+  /// No description provided for @fieldRegionHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Где будет показываться объявление.'**
+  String get fieldRegionHelper;
 
   /// No description provided for @fieldCity.
   ///
@@ -4251,7 +4305,7 @@ abstract class AppLocalizations {
   /// No description provided for @listingVinReportPendingBody.
   ///
   /// In ru, this message translates to:
-  /// **'VIN добавлен продавцом. Данные расшифровки появятся после обработки.'**
+  /// **'Обычно это занимает несколько минут. Данные появятся автоматически после проверки.'**
   String get listingVinReportPendingBody;
 
   /// No description provided for @listingVinReportNoDataTitle.
@@ -4890,6 +4944,18 @@ abstract class AppLocalizations {
   /// **'Загрузка данных модели…'**
   String get listingModelPassportLoading;
 
+  /// No description provided for @listingModelPassportPendingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Официальные данные модели загружаются'**
+  String get listingModelPassportPendingTitle;
+
+  /// No description provided for @listingModelPassportPendingBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обычно это занимает до 30 минут после публикации. Данные появятся автоматически, если официальный источник найдёт информацию по этой модели.'**
+  String get listingModelPassportPendingBody;
+
   /// No description provided for @listingModelPassportLimitationsTitle.
   ///
   /// In ru, this message translates to:
@@ -5028,6 +5094,24 @@ abstract class AppLocalizations {
   /// **'Кампании отзыва'**
   String get listingRecallTitle;
 
+  /// No description provided for @listingRecallPendingTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверяем кампании безопасности'**
+  String get listingRecallPendingTitle;
+
+  /// No description provided for @listingRecallPendingBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверка выполняется по марке, модели и году. Обычно это занимает до 30 минут после публикации.'**
+  String get listingRecallPendingBody;
+
+  /// No description provided for @listingRecallPendingLimitationNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Это не VIN-проверка. Для точного статуса проверяйте VIN у официального дилера, производителя или NHTSA.'**
+  String get listingRecallPendingLimitationNote;
+
   /// No description provided for @listingRecallSourceBadge.
   ///
   /// In ru, this message translates to:
@@ -5037,7 +5121,7 @@ abstract class AppLocalizations {
   /// No description provided for @listingRecallCampaignsFound.
   ///
   /// In ru, this message translates to:
-  /// **'Найдены кампании отзыва для этой модели и года выпуска'**
+  /// **'Проверка по модели и году выпуска'**
   String get listingRecallCampaignsFound;
 
   /// No description provided for @listingRecallCampaignCount.
@@ -5045,6 +5129,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Кампаний'**
   String get listingRecallCampaignCount;
+
+  /// No description provided for @listingRecallCampaignCountStat.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} кампания найдена} few{{count} кампании найдено} many{{count} кампаний найдено} other{{count} кампаний найдено}}'**
+  String listingRecallCampaignCountStat(int count);
 
   /// No description provided for @listingRecallLastUpdated.
   ///
@@ -5057,6 +5147,54 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Компонент'**
   String get listingRecallComponent;
+
+  /// No description provided for @listingRecallSourceComponent.
+  ///
+  /// In ru, this message translates to:
+  /// **'Компонент (источник)'**
+  String get listingRecallSourceComponent;
+
+  /// No description provided for @listingRecallComponentSuspensionFront.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подвеска · передняя часть'**
+  String get listingRecallComponentSuspensionFront;
+
+  /// No description provided for @listingRecallComponentSeatBeltsRear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ремни безопасности · задний ряд'**
+  String get listingRecallComponentSeatBeltsRear;
+
+  /// No description provided for @listingRecallComponentEquipmentManual.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оборудование · руководство/сервис'**
+  String get listingRecallComponentEquipmentManual;
+
+  /// No description provided for @listingRecallComponentBackOverPreventionDisplay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Камера/обзор назад · дисплей'**
+  String get listingRecallComponentBackOverPreventionDisplay;
+
+  /// No description provided for @listingRecallComponentElectricalPropulsionBattery.
+  ///
+  /// In ru, this message translates to:
+  /// **'Электросистема · тяговая батарея'**
+  String get listingRecallComponentElectricalPropulsionBattery;
+
+  /// No description provided for @listingRecallComponentServiceBrakesAirSupply.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тормозная система · магистрали'**
+  String get listingRecallComponentServiceBrakesAirSupply;
+
+  /// No description provided for @listingRecallComponentAirbagsFrontal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подушки безопасности · передние'**
+  String get listingRecallComponentAirbagsFrontal;
 
   /// No description provided for @listingRecallCampaignNumber.
   ///
@@ -5079,13 +5217,13 @@ abstract class AppLocalizations {
   /// No description provided for @listingRecallConsequence.
   ///
   /// In ru, this message translates to:
-  /// **'Последствия'**
+  /// **'Риск'**
   String get listingRecallConsequence;
 
   /// No description provided for @listingRecallRemedy.
   ///
   /// In ru, this message translates to:
-  /// **'Устранение'**
+  /// **'Решение'**
   String get listingRecallRemedy;
 
   /// No description provided for @listingRecallNotes.
@@ -5183,6 +5321,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Скрыть'**
   String get listingRecallHideDetails;
+
+  /// No description provided for @listingRecallShowAllCampaigns.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показать все {count} кампаний'**
+  String listingRecallShowAllCampaigns(int count);
+
+  /// No description provided for @listingRecallChipParkIt.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не эксплуатировать'**
+  String get listingRecallChipParkIt;
+
+  /// No description provided for @listingRecallChipParkOutside.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не парковать в помещении'**
+  String get listingRecallChipParkOutside;
+
+  /// No description provided for @listingRecallChipOverTheAirUpdate.
+  ///
+  /// In ru, this message translates to:
+  /// **'OTA'**
+  String get listingRecallChipOverTheAirUpdate;
 
   /// No description provided for @notificationMessageTitle.
   ///

@@ -4,6 +4,8 @@ import '../../../../app/di/injection.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/result.dart';
+import '../../../listings/presentation/widgets/official_data_editorial.dart';
+import '../../../listings/presentation/widgets/official_data_pending_card.dart';
 import '../../domain/entities/buyer_listing_model_data_source_result.dart';
 import '../../domain/usecases/get_listing_model_data_for_buyer.dart';
 import '../utils/model_passport_formatters.dart';
@@ -65,12 +67,45 @@ class _ListingDetailsModelPassportSectionState
       );
     }
 
-    final row = selectModelPassportEpaRow(_rows)!;
     final l10n = context.l10n;
+
+    if (uiState == ModelPassportUiState.pendingOrNotReady) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 24),
+          Text(
+            l10n.listingModelPassportSectionTitle,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          OfficialDataPendingCard(
+            sectionKey: const ValueKey('listing_model_passport_pending'),
+            includeLeadingSpacing: false,
+            title: l10n.listingModelPassportPendingTitle,
+            body: l10n.listingModelPassportPendingBody,
+            sourceNote: l10n.listingModelPassportSourceEpa,
+            sourceNoteStyle: OfficialDataPendingSourceNoteStyle.sourceBadge,
+            leadingIcon: Icons.speed_rounded,
+            statusIcon: Icons.sync_rounded,
+          ),
+        ],
+      );
+    }
+
+    final row = selectModelPassportEpaRow(_rows)!;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
     final metrics = buildModelPassportMetricRows(l10n, row.normalizedSummary);
+    final primaryTiles = buildModelPassportPrimaryMetricTiles(
+      l10n,
+      row.normalizedSummary,
+    );
+    final co2Tile = buildModelPassportCo2MetricTile(l10n, row.normalizedSummary);
     if (metrics.isEmpty) {
       return const SizedBox.shrink(
         key: ValueKey('listing_model_passport_empty_metrics'),
@@ -93,12 +128,12 @@ class _ListingDetailsModelPassportSectionState
     );
 
     final cardDecoration = isDark
-        ? AppTheme.editorialDarkSectionCard(scheme, borderRadius: 14)!
+        ? AppTheme.editorialDarkSectionCard(scheme, borderRadius: 16)!
         : BoxDecoration(
-            color: scheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(14),
+            color: scheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: scheme.outlineVariant.withValues(alpha: 0.32),
+              color: scheme.outlineVariant.withValues(alpha: 0.28),
             ),
           );
 
@@ -114,7 +149,7 @@ class _ListingDetailsModelPassportSectionState
             l10n.listingModelPassportSectionTitle,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              letterSpacing: -0.1,
+              letterSpacing: -0.2,
               color: isDark
                   ? scheme.onSurface.withValues(alpha: 0.96)
                   : null,
@@ -124,37 +159,45 @@ class _ListingDetailsModelPassportSectionState
           DecoratedBox(
             decoration: cardDecoration,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ModelPassportSourceLine(
+                  OfficialDataSourceHeader(
                     theme: theme,
+                    sourceKey: const ValueKey('listing_model_passport_source_badge'),
                     sourceLabel: sourceLabel,
-                    lastUpdated: lastUpdated,
-                    lastUpdatedLabel: l10n.listingModelPassportLastUpdated,
+                    updatedDateKey: lastUpdated != null
+                        ? const ValueKey('listing_model_passport_last_updated')
+                        : null,
+                    updatedDateLabel: lastUpdated != null
+                        ? '${l10n.listingModelPassportLastUpdated} ${formatModelPassportDate(lastUpdated)}'
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   Text(
                     l10n.listingModelPassportFuelEconomyTitle,
-                    style: theme.textTheme.titleSmall?.copyWith(
+                    style: theme.textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w600,
-                      letterSpacing: -0.1,
-                      height: 1.25,
-                      color: scheme.onSurface.withValues(
-                        alpha: isDark ? 0.92 : 0.88,
+                      letterSpacing: 0.08,
+                      height: 1.2,
+                      color: scheme.onSurfaceVariant.withValues(
+                        alpha: isDark ? 0.82 : 0.78,
                       ),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ...metrics.map(
-                    (m) => _ModelPassportMetricRow(
+                  if (primaryTiles.isNotEmpty)
+                    _ModelPassportMetricTileGrid(
                       theme: theme,
-                      metric: m,
+                      tiles: primaryTiles,
                     ),
-                  ),
-                  if (limitations.isNotEmpty) ...[
+                  if (co2Tile != null) ...[
                     const SizedBox(height: 6),
+                    _ModelPassportCo2Tile(theme: theme, metric: co2Tile),
+                  ],
+                  if (limitations.isNotEmpty) ...[
+                    const SizedBox(height: 8),
                     _ModelPassportLimitationsCollapsible(
                       theme: theme,
                       title: l10n.listingModelPassportLimitationsTitle,
@@ -171,55 +214,42 @@ class _ListingDetailsModelPassportSectionState
   }
 }
 
-class _ModelPassportSourceLine extends StatelessWidget {
-  const _ModelPassportSourceLine({
+class _ModelPassportMetricTileGrid extends StatelessWidget {
+  const _ModelPassportMetricTileGrid({
     required this.theme,
-    required this.sourceLabel,
-    required this.lastUpdatedLabel,
-    this.lastUpdated,
+    required this.tiles,
   });
 
   final ThemeData theme;
-  final String sourceLabel;
-  final String lastUpdatedLabel;
-  final DateTime? lastUpdated;
+  final List<ModelPassportMetricDisplay> tiles;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 8.0;
+        final tileWidth = (constraints.maxWidth - spacing) / 2;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          key: const ValueKey('listing_model_passport_source_badge'),
-          sourceLabel,
-          style: theme.textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.1,
-            color: scheme.primary.withValues(alpha: isDark ? 0.95 : 0.92),
-          ),
-        ),
-        if (lastUpdated != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            key: const ValueKey('listing_model_passport_last_updated'),
-            '$lastUpdatedLabel ${formatModelPassportDate(lastUpdated!)}',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(
-                alpha: isDark ? 0.78 : 1,
-              ),
-            ),
-          ),
-        ],
-      ],
+        return Wrap(
+          key: const ValueKey('listing_model_passport_metric_tiles'),
+          spacing: spacing,
+          runSpacing: spacing,
+          children: tiles
+              .map(
+                (tile) => SizedBox(
+                  width: tileWidth,
+                  child: _ModelPassportStatTile(theme: theme, metric: tile),
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 }
 
-class _ModelPassportMetricRow extends StatelessWidget {
-  const _ModelPassportMetricRow({required this.theme, required this.metric});
+class _ModelPassportStatTile extends StatelessWidget {
+  const _ModelPassportStatTile({required this.theme, required this.metric});
 
   final ThemeData theme;
   final ModelPassportMetricDisplay metric;
@@ -228,38 +258,124 @@ class _ModelPassportMetricRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final isPrimary = metric.isPrimaryHighlight;
     final valueText = metric.unit == null
         ? metric.value
         : '${metric.value} ${metric.unit}';
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Text(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: isPrimary
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                        scheme.primary.withValues(alpha: 0.18),
+                        scheme.surfaceContainerHigh.withValues(alpha: 0.42),
+                      ]
+                    : [
+                        scheme.primaryContainer.withValues(alpha: 0.55),
+                        scheme.surface.withValues(alpha: 0.95),
+                      ],
+              )
+            : null,
+        color: isPrimary
+            ? null
+            : (isDark
+                  ? scheme.surfaceContainerHigh.withValues(alpha: 0.24)
+                  : scheme.surfaceContainerHighest.withValues(alpha: 0.32)),
+        boxShadow: isPrimary && !isDark
+            ? [
+                BoxShadow(
+                  color: scheme.primary.withValues(alpha: 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ]
+            : null,
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(12, isPrimary ? 11 : 9, 12, isPrimary ? 11 : 9),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
               metric.label,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                height: 1.2,
+                fontWeight: isPrimary ? FontWeight.w600 : FontWeight.w500,
                 color: scheme.onSurfaceVariant.withValues(
-                  alpha: isDark ? 0.82 : 1,
+                  alpha: isDark ? 0.84 : (isPrimary ? 0.82 : 0.86),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            flex: 4,
-            child: Text(
+            SizedBox(height: isPrimary ? 7 : 5),
+            Text(
               valueText,
-              textAlign: TextAlign.end,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: scheme.onSurface.withValues(alpha: isDark ? 0.94 : 1),
+              style: (isPrimary
+                      ? theme.textTheme.titleMedium
+                      : theme.textTheme.titleSmall)
+                  ?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.25,
+                height: 1.1,
+                color: scheme.onSurface.withValues(alpha: isDark ? 0.96 : 1),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModelPassportCo2Tile extends StatelessWidget {
+  const _ModelPassportCo2Tile({required this.theme, required this.metric});
+
+  final ThemeData theme;
+  final ModelPassportMetricDisplay metric;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final valueText = '${metric.value} ${metric.unit}';
+
+    return DecoratedBox(
+      key: const ValueKey('listing_model_passport_co2_tile'),
+      decoration: BoxDecoration(
+        color: isDark
+            ? scheme.surfaceContainerHigh.withValues(alpha: 0.2)
+            : scheme.surfaceContainerHighest.withValues(alpha: 0.24),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                metric.label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant.withValues(
+                    alpha: isDark ? 0.82 : 0.88,
+                  ),
+                ),
+              ),
+            ),
+            Text(
+              valueText,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: scheme.onSurface.withValues(alpha: isDark ? 0.92 : 0.9),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -284,13 +400,10 @@ class _ModelPassportLimitationsCollapsible extends StatelessWidget {
     return DecoratedBox(
       key: const ValueKey('listing_model_passport_limitations'),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: isDark ? 0.28 : 0.32),
-        ),
+        borderRadius: BorderRadius.circular(10),
         color: isDark
-            ? scheme.surfaceContainerHigh.withValues(alpha: 0.35)
-            : scheme.surfaceContainerHighest.withValues(alpha: 0.22),
+            ? scheme.surfaceContainerHigh.withValues(alpha: 0.18)
+            : scheme.surfaceContainerHighest.withValues(alpha: 0.14),
       ),
       child: Theme(
         data: Theme.of(context).copyWith(
@@ -305,11 +418,13 @@ class _ModelPassportLimitationsCollapsible extends StatelessWidget {
           collapsedIconColor: scheme.onSurfaceVariant,
           title: Text(
             title,
-            style: theme.textTheme.titleSmall?.copyWith(
+            style: theme.textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              letterSpacing: -0.1,
+              letterSpacing: -0.05,
               height: 1.25,
-              color: scheme.onSurface.withValues(alpha: isDark ? 0.9 : 0.88),
+              color: scheme.onSurfaceVariant.withValues(
+                alpha: isDark ? 0.88 : 0.86,
+              ),
             ),
           ),
           children: [

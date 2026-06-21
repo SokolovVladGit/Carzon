@@ -59,28 +59,36 @@ BuyerListingRecallSourceResult _fullResult() {
 void main() {
   final ru = ruStrings();
 
-  testWidgets('renders section title, source badge, and campaign cards', (
-    tester,
-  ) async {
-    await _registerUseCase(Success(_fullResult()));
-
+  Future<void> pumpRecallSection(WidgetTester tester) async {
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
+  }
+
+  testWidgets('renders section title, source badge, and campaign cards', (
+    tester,
+  ) async {
+    await _registerUseCase(Success(_fullResult()));
+    await pumpRecallSection(tester);
 
     expect(find.byKey(const ValueKey('listing_recall_section')), findsOneWidget);
+    expect(find.byKey(const ValueKey('listing_recall_summary_block')), findsOneWidget);
     expect(find.text(ru.listingRecallTitle), findsOneWidget);
     expect(find.byKey(const ValueKey('listing_recall_source_badge')), findsOneWidget);
     expect(find.text('NHTSA'), findsOneWidget);
     expect(find.text(ru.listingRecallCampaignsFound), findsOneWidget);
     expect(find.byKey(const ValueKey('listing_recall_campaign_count')), findsOneWidget);
-    expect(find.text('Airbag inflator'), findsOneWidget);
+    expect(find.text(ru.listingRecallCampaignCountStat(1)), findsOneWidget);
+    expect(find.text('Airbag inflator'), findsWidgets);
     expect(find.textContaining('20TA01'), findsOneWidget);
+    expect(find.byKey(const ValueKey('listing_recall_category_chips')), findsOneWidget);
   });
 
   testWidgets('hides while loading', (tester) async {
@@ -89,7 +97,9 @@ void main() {
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
@@ -101,13 +111,47 @@ void main() {
     expect(find.byKey(const ValueKey('listing_recall_section')), findsOneWidget);
   });
 
+  testWidgets('shows pending card for pending status without campaigns', (
+    tester,
+  ) async {
+    await _registerUseCase(
+      Success(
+        BuyerListingRecallSourceResult(
+          sourceId: 'nhtsa_recalls',
+          status: 'pending',
+          sourceLabel: 'NHTSA',
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      localizedApp(
+        home: const Scaffold(
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('listing_recall_pending')), findsOneWidget);
+    expect(find.text(ru.listingRecallTitle), findsOneWidget);
+    expect(find.text(ru.listingRecallPendingTitle), findsOneWidget);
+    expect(find.text(ru.listingRecallPendingBody), findsOneWidget);
+    expect(find.text(ru.listingRecallPendingLimitationNote), findsOneWidget);
+    expect(find.text(ru.listingRecallCampaignsFound), findsNothing);
+  });
+
   testWidgets('hides on empty success', (tester) async {
     await _registerUseCase(const Success(BuyerListingRecallSourceResult.empty));
 
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
@@ -125,7 +169,9 @@ void main() {
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
@@ -154,7 +200,9 @@ void main() {
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
@@ -171,7 +219,9 @@ void main() {
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
@@ -189,7 +239,9 @@ void main() {
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
@@ -216,7 +268,9 @@ void main() {
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
@@ -237,7 +291,9 @@ void main() {
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
@@ -247,6 +303,10 @@ void main() {
     expect(find.text(ru.listingRecallRemedy), findsNothing);
     expect(find.text(ru.listingRecallSummary), findsNothing);
     expect(
+      find.text('Inflator may rupture during deployment.'),
+      findsNothing,
+    );
+    expect(
       find.text('Injury risk during airbag deployment.'),
       findsNothing,
     );
@@ -254,36 +314,48 @@ void main() {
       find.text('Dealer will replace inflator free of charge.'),
       findsNothing,
     );
-    expect(find.text(ru.listingRecallShowDetails), findsOneWidget);
-    expect(find.text(ru.listingRecallParkIt), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('listing_recall_campaign_preview_0')),
+      findsNothing,
+    );
+    expect(find.text(ru.listingRecallChipParkIt), findsOneWidget);
+    expect(find.byKey(const ValueKey('listing_recall_campaign_toggle_0')), findsOneWidget);
   });
 
-  testWidgets('tapping show details reveals long fields', (tester) async {
+  Future<void> _expandFirstCampaign(WidgetTester tester) async {
+    await tester.tap(
+      find.byKey(const ValueKey('listing_recall_campaign_toggle_0')),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('tapping campaign tile reveals long fields', (tester) async {
     await _registerUseCase(Success(_fullResult()));
 
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text(ru.listingRecallShowDetails));
-    await tester.pumpAndSettle();
+    await _expandFirstCampaign(tester);
 
     expect(find.text(ru.listingRecallSummary), findsOneWidget);
     expect(find.text(ru.listingRecallConsequence), findsOneWidget);
     expect(find.text(ru.listingRecallRemedy), findsOneWidget);
+    expect(find.text(ru.listingRecallSourceComponent), findsOneWidget);
     expect(
       find.text('Injury risk during airbag deployment.'),
       findsOneWidget,
     );
-    expect(find.text(ru.listingRecallHideDetails), findsOneWidget);
   });
 
-  testWidgets('tapping hide details collapses long fields again', (
+  testWidgets('tapping campaign tile again collapses long fields', (
     tester,
   ) async {
     await _registerUseCase(Success(_fullResult()));
@@ -291,19 +363,18 @@ void main() {
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text(ru.listingRecallShowDetails));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(ru.listingRecallHideDetails));
-    await tester.pumpAndSettle();
+    await _expandFirstCampaign(tester);
+    await _expandFirstCampaign(tester);
 
     expect(find.text(ru.listingRecallConsequence), findsNothing);
-    expect(find.text(ru.listingRecallShowDetails), findsOneWidget);
   });
 
   testWidgets('false safety flags are omitted from collapsed cards', (
@@ -332,15 +403,143 @@ void main() {
     await tester.pumpWidget(
       localizedApp(
         home: const Scaffold(
-          body: ListingDetailsRecallSection(listingId: 'l1'),
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(ru.listingRecallParkIt), findsNothing);
-    expect(find.text(ru.listingRecallParkOutside), findsNothing);
-    expect(find.text(ru.listingRecallOverTheAirUpdate), findsNothing);
+    expect(find.text(ru.listingRecallChipParkIt), findsNothing);
+    expect(find.text(ru.listingRecallChipParkOutside), findsNothing);
+    expect(find.text(ru.listingRecallChipOverTheAirUpdate), findsNothing);
+  });
+
+  testWidgets('shows only first three campaigns until show all is tapped', (
+    tester,
+  ) async {
+    final campaigns = List.generate(
+      5,
+      (i) => BuyerListingRecallCampaign(
+        campaignNumber: 'C$i',
+        component: 'Component $i',
+        summary: 'Summary $i',
+      ),
+    );
+
+    await _registerUseCase(
+      Success(
+        BuyerListingRecallSourceResult(
+          sourceLabel: 'NHTSA',
+          campaignCount: 5,
+          limitationCodes: const ['us_market_data_only'],
+          campaigns: campaigns,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      localizedApp(
+        home: const Scaffold(
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('listing_recall_campaign_2')), findsOneWidget);
+    expect(find.byKey(const ValueKey('listing_recall_campaign_3')), findsNothing);
+    expect(find.byKey(const ValueKey('listing_recall_show_all')), findsOneWidget);
+    expect(find.text(ru.listingRecallShowAllCampaigns(5)), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('listing_recall_show_all')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('listing_recall_campaign_3')), findsOneWidget);
+    expect(find.byKey(const ValueKey('listing_recall_show_all')), findsNothing);
+  });
+
+  testWidgets('localized seat belts component title avoids raw English fallback', (
+    tester,
+  ) async {
+    await _registerUseCase(
+      Success(
+        BuyerListingRecallSourceResult(
+          sourceLabel: 'NHTSA',
+          campaignCount: 1,
+          limitationCodes: const ['us_market_data_only'],
+          campaigns: const [
+            BuyerListingRecallCampaign(
+              campaignNumber: '20TA01',
+              component: 'SEAT BELTS:REAR / OTHER:BUCKLE ASSEMBLY',
+              summary: 'Buckle may fail.',
+              manufacturer: 'Toyota',
+              reportReceivedDate: '2020-03-15',
+            ),
+          ],
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      localizedApp(
+        home: const Scaffold(
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(ru.listingRecallComponentSeatBeltsRear),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Buckle Assembly'), findsNothing);
+    expect(find.textContaining('Seat Belts · Rear'), findsNothing);
+    expect(find.text(ru.listingRecallChipParkIt), findsNothing);
+  });
+
+  testWidgets('formats uppercase component strings in campaign title', (
+    tester,
+  ) async {
+    await _registerUseCase(
+      Success(
+        BuyerListingRecallSourceResult(
+          sourceLabel: 'NHTSA',
+          campaignCount: 1,
+          limitationCodes: const ['us_market_data_only'],
+          campaigns: const [
+            BuyerListingRecallCampaign(
+              campaignNumber: '20TA01',
+              component: 'SUSPENSION:FRONT',
+              summary: 'Suspension may fail.',
+            ),
+          ],
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      localizedApp(
+        home: const Scaffold(
+          body: SingleChildScrollView(
+            child: ListingDetailsRecallSection(listingId: 'l1'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Suspension · Front'), findsNothing);
+    expect(
+      find.text(ru.listingRecallComponentSuspensionFront),
+      findsOneWidget,
+    );
   });
 }
 

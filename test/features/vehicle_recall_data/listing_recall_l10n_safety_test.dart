@@ -8,9 +8,21 @@ import '../../helpers/l10n_test_helpers.dart';
 void main() {
   const requiredKeys = [
     'listingRecallTitle',
+    'listingRecallPendingTitle',
+    'listingRecallPendingBody',
+    'listingRecallPendingLimitationNote',
     'listingRecallSourceBadge',
     'listingRecallCampaignsFound',
     'listingRecallCampaignCount',
+    'listingRecallCampaignCountStat',
+    'listingRecallSourceComponent',
+    'listingRecallComponentSuspensionFront',
+    'listingRecallComponentSeatBeltsRear',
+    'listingRecallComponentEquipmentManual',
+    'listingRecallComponentBackOverPreventionDisplay',
+    'listingRecallComponentElectricalPropulsionBattery',
+    'listingRecallComponentServiceBrakesAirSupply',
+    'listingRecallComponentAirbagsFrontal',
     'listingRecallLastUpdated',
     'listingRecallComponent',
     'listingRecallCampaignNumber',
@@ -34,6 +46,10 @@ void main() {
     'listingRecallLimitationGeneric',
     'listingRecallShowDetails',
     'listingRecallHideDetails',
+    'listingRecallShowAllCampaigns',
+    'listingRecallChipParkIt',
+    'listingRecallChipParkOutside',
+    'listingRecallChipOverTheAirUpdate',
   ];
 
   const forbiddenPhrases = [
