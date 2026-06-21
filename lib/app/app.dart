@@ -13,6 +13,8 @@ import '../l10n/app_localizations.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/auth/presentation/bloc/auth_state.dart';
 import '../features/compare/presentation/cubit/compare_cubit.dart';
+import '../features/recent_searches/presentation/cubit/recent_searches_cubit.dart';
+import '../features/recently_viewed/presentation/cubit/recently_viewed_cubit.dart';
 import '../features/compare/presentation/widgets/compare_tray_host.dart';
 import '../features/favorites/presentation/bloc/favorites_cubit.dart';
 import '../features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
@@ -79,6 +81,12 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
         BlocProvider<AuthCubit>.value(value: sl<AuthCubit>()),
         BlocProvider<FavoritesCubit>.value(value: sl<FavoritesCubit>()),
         BlocProvider<CompareCubit>.value(value: sl<CompareCubit>()),
+        BlocProvider<RecentlyViewedCubit>.value(
+          value: sl<RecentlyViewedCubit>(),
+        ),
+        BlocProvider<RecentSearchesCubit>.value(
+          value: sl<RecentSearchesCubit>(),
+        ),
         BlocProvider<SelfSellerVisualCubit>.value(
           value: sl<SelfSellerVisualCubit>(),
         ),

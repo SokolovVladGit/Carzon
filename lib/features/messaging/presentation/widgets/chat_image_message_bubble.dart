@@ -129,8 +129,8 @@ class ChatImageMessageBubble extends StatelessWidget {
                                         textAlign: TextAlign.center,
                                         style: theme.textTheme.labelMedium
                                             ?.copyWith(
-                                          color: cs.onSurfaceVariant,
-                                        ),
+                                              color: cs.onSurfaceVariant,
+                                            ),
                                       ),
                                     ],
                                   ),

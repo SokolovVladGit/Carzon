@@ -50,6 +50,9 @@ void main() {
     when(
       () => repository.markConversationRead(any()),
     ).thenAnswer((_) async => const Success(true));
+    when(
+      () => repository.listBlockedUsers(),
+    ).thenAnswer((_) async => const Success([]));
   });
 
   setUpAll(() {
@@ -76,6 +79,7 @@ void main() {
         return ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
       },
       act: (c) => c.load(),
@@ -103,6 +107,7 @@ void main() {
         return ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
       },
       act: (c) => c.load(),
@@ -127,6 +132,7 @@ void main() {
         return ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
       },
       act: (c) async {
@@ -150,6 +156,7 @@ void main() {
         return ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
       },
       act: (c) async {
@@ -176,6 +183,7 @@ void main() {
         return ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
       },
       act: (c) async {
@@ -201,6 +209,7 @@ void main() {
         return ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
       },
       act: (c) async {
@@ -230,6 +239,7 @@ void main() {
         return ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
       },
       act: (c) async {
@@ -264,6 +274,7 @@ void main() {
         return ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
       },
       act: (c) async {
@@ -294,6 +305,7 @@ void main() {
         return ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
       },
       act: (c) async {
@@ -325,6 +337,7 @@ void main() {
         return ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
       },
       act: (c) async {
@@ -353,6 +366,7 @@ void main() {
         return ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
       },
       act: (c) async {
@@ -393,6 +407,7 @@ void main() {
         final cubit = ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
         addTearDown(cubit.close);
 
@@ -441,6 +456,7 @@ void main() {
         final cubit = ConversationThreadCubit(
           repository: repository,
           conversationId: 'c1',
+          currentUserId: 'b1',
         );
         addTearDown(cubit.close);
 

@@ -37,7 +37,9 @@ class ThreadDateSeparator extends StatelessWidget {
             child: Text(
               label,
               style: theme.textTheme.labelSmall?.copyWith(
-                color: cs.onSurfaceVariant.withValues(alpha: light ? 0.88 : 0.82),
+                color: cs.onSurfaceVariant.withValues(
+                  alpha: light ? 0.88 : 0.82,
+                ),
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.25,
                 fontSize: 11.5,

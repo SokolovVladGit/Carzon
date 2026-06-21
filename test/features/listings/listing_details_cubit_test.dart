@@ -9,6 +9,8 @@ import 'package:carzon/features/listings/domain/usecases/get_listing_images.dart
 import 'package:carzon/features/listings/domain/entities/listing_view_stats.dart';
 import 'package:carzon/features/listings/domain/usecases/get_listing_public_contact.dart';
 import 'package:carzon/features/listings/domain/usecases/record_listing_view.dart';
+import 'package:carzon/features/recently_viewed/domain/entities/recently_viewed_entry.dart';
+import 'package:carzon/features/recently_viewed/domain/usecases/record_recently_viewed.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
 import 'package:carzon/features/messaging/domain/usecases/get_or_create_conversation.dart';
@@ -26,6 +28,8 @@ class _MockGetOrCreateConversation extends Mock
     implements GetOrCreateConversation {}
 
 class _MockRecordListingView extends Mock implements RecordListingView {}
+
+class _MockRecordRecentlyViewed extends Mock implements RecordRecentlyViewed {}
 
 Listing _listing({String? cover}) => Listing(
   id: 'l1',
@@ -48,8 +52,24 @@ void main() {
   late _MockGetListingPublicContact getPublicContact;
   late _MockGetOrCreateConversation getOrCreateConversation;
   late _MockRecordListingView recordListingView;
+  late _MockRecordRecentlyViewed recordRecentlyViewed;
 
-  setUpAll(() => registerFallbackValue(''));
+  setUpAll(() {
+    registerFallbackValue('');
+    registerFallbackValue(
+      RecentlyViewedEntry(
+        listingId: 'fallback',
+        viewedAt: DateTime.utc(2026, 1, 1),
+        title: 't',
+        make: 'm',
+        model: 'm',
+        year: 2020,
+        priceEur: 1,
+        city: 'c',
+        marketRegion: MarketRegion.transnistria,
+      ),
+    );
+  });
 
   setUp(() {
     getById = _MockGetListingById();
@@ -57,14 +77,17 @@ void main() {
     getPublicContact = _MockGetListingPublicContact();
     getOrCreateConversation = _MockGetOrCreateConversation();
     recordListingView = _MockRecordListingView();
+    recordRecentlyViewed = _MockRecordRecentlyViewed();
     reset(getById);
     reset(getImages);
     reset(getPublicContact);
     reset(getOrCreateConversation);
     reset(recordListingView);
+    reset(recordRecentlyViewed);
     when(() => recordListingView(any())).thenAnswer(
       (_) async => const FailureResult(UnknownFailure('skipped in test')),
     );
+    when(() => recordRecentlyViewed(any())).thenAnswer((_) async {});
   });
 
   ListingDetailsCubit buildCubit() => ListingDetailsCubit(
@@ -73,6 +96,7 @@ void main() {
     getListingPublicContact: getPublicContact,
     getOrCreateConversation: getOrCreateConversation,
     recordListingView: recordListingView,
+    recordRecentlyViewed: recordRecentlyViewed,
   );
 
   blocTest<ListingDetailsCubit, ListingDetailsState>(
@@ -198,6 +222,39 @@ void main() {
     verify: (_) {
       verifyNever(() => getImages(any()));
       verifyNever(() => getOrCreateConversation(any()));
+      verifyNever(() => recordRecentlyViewed(any()));
+    },
+  );
+
+  blocTest<ListingDetailsCubit, ListingDetailsState>(
+    'successful load records recently viewed with hero image url',
+    setUp: () {
+      final listing = _listing(cover: 'https://cdn/cover-only.jpg');
+      when(() => getById('l1')).thenAnswer((_) async => Success(listing));
+      when(() => getImages('l1')).thenAnswer(
+        (_) async => Success([
+          ListingImage(
+            id: 'i0',
+            listingId: 'l1',
+            publicUrl: 'https://cdn/a.jpg',
+            position: 0,
+            createdAt: DateTime.utc(2026, 1, 2),
+          ),
+        ]),
+      );
+    },
+    build: buildCubit,
+    act: (c) => c.load('l1'),
+    wait: const Duration(milliseconds: 20),
+    expect: () => [
+      const ListingDetailsState.loading(),
+      ListingDetailsState.success(
+        _listing(cover: 'https://cdn/cover-only.jpg'),
+        heroImageUrls: const ['https://cdn/a.jpg'],
+      ),
+    ],
+    verify: (_) {
+      verify(() => recordRecentlyViewed(any())).called(1);
     },
   );
 

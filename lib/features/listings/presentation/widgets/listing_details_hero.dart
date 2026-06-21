@@ -9,8 +9,10 @@ import '../../../../core/widgets/app_back_button.dart';
 import '../../../compare/presentation/widgets/compare_toggle_button.dart';
 import '../../../favorites/presentation/widgets/favorite_toggle_button.dart';
 import '../../domain/entities/listing.dart';
+import '../utils/listing_share_launcher.dart';
 import 'listing_cover_image.dart';
 import 'listing_details_fullscreen_gallery.dart';
+import 'listing_share_button.dart';
 
 /// Horizontal gutter for the hero top controls. Mirrors the page's
 /// below-hero content gutter so the glass tiles align to the same edge.
@@ -35,6 +37,7 @@ class ListingHeroCarousel extends StatefulWidget {
     required this.heroFlightSourceTopRadius,
     this.flySourceKey,
     this.compareFlyFallbackKey,
+    this.shareLauncher,
     required this.onPageChanged,
   });
 
@@ -44,6 +47,7 @@ class ListingHeroCarousel extends StatefulWidget {
   final double heroFlightSourceTopRadius;
   final GlobalKey? flySourceKey;
   final GlobalKey? compareFlyFallbackKey;
+  final ListingShareLauncher? shareLauncher;
   final ValueChanged<int> onPageChanged;
 
   @override
@@ -103,6 +107,7 @@ class _ListingHeroCarouselState extends State<ListingHeroCarousel> {
                 listing: widget.listing,
                 flySourceKey: widget.flySourceKey,
                 compareFlyFallbackKey: widget.compareFlyFallbackKey,
+                shareLauncher: widget.shareLauncher,
               ),
             ),
           ),
@@ -243,12 +248,14 @@ class _HeroTopControls extends StatelessWidget {
     this.listing,
     this.flySourceKey,
     this.compareFlyFallbackKey,
+    this.shareLauncher,
   });
 
   final String listingId;
   final Listing? listing;
   final GlobalKey? flySourceKey;
   final GlobalKey? compareFlyFallbackKey;
+  final ListingShareLauncher? shareLauncher;
 
   @override
   Widget build(BuildContext context) {
@@ -261,6 +268,13 @@ class _HeroTopControls extends StatelessWidget {
           ),
           const Spacer(),
           if (listing != null) ...[
+            _HeroGlassTile(
+              child: ListingShareButton(
+                listing: listing!,
+                shareLauncher: shareLauncher,
+              ),
+            ),
+            const SizedBox(width: 8),
             _HeroGlassTile(
               child: CompareToggleButton.fromListing(
                 listing!,

@@ -17,6 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/noop_last_applied_listing_discovery_repository.dart';
+import '../../helpers/noop_record_recent_search.dart';
 
 class _MockListingsRepository extends Mock implements ListingsRepository {}
 
@@ -73,6 +74,7 @@ void main() {
     build: () => ListingsBloc(
       getListings: GetListings(repo),
       lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
     ),
     act: (b) => b.add(const ListingsRequested()),
     verify: (_) {
@@ -106,6 +108,7 @@ void main() {
     build: () => ListingsBloc(
       getListings: GetListings(repo),
       lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
     ),
     act: (b) => b.add(const ListingsSearchChanged('  Audi  ')),
     verify: (_) {
@@ -128,6 +131,7 @@ void main() {
     build: () => ListingsBloc(
       getListings: GetListings(repo),
       lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
     ),
     act: (b) => b.add(
       const ListingsFiltersApplied(
@@ -174,6 +178,7 @@ void main() {
     build: () => ListingsBloc(
       getListings: GetListings(repo),
       lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
     ),
     act: (b) => b.add(
       const ListingsFiltersApplied(
@@ -214,6 +219,7 @@ void main() {
     build: () => ListingsBloc(
       getListings: GetListings(repo),
       lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
     ),
     act: (b) => b
       ..add(
@@ -256,6 +262,7 @@ void main() {
     build: () => ListingsBloc(
       getListings: GetListings(repo),
       lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
     ),
     act: (b) => b
       ..add(
@@ -298,6 +305,7 @@ void main() {
       return ListingsBloc(
         getListings: GetListings(repo),
         lastAppliedDiscovery: lastAppliedRecorder!,
+        recordRecentSearch: NoopRecordRecentSearch(),
       );
     },
     act: (b) async {
@@ -347,6 +355,7 @@ void main() {
     build: () => ListingsBloc(
       getListings: GetListings(repo),
       lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
     ),
     act: (b) => b
       ..add(const ListingsRegionFilterChanged(MarketRegionFilter.moldova))
@@ -371,6 +380,7 @@ void main() {
       return ListingsBloc(
         getListings: GetListings(repo),
         lastAppliedDiscovery: lastAppliedRecorder!,
+        recordRecentSearch: NoopRecordRecentSearch(),
       );
     },
     act: (b) async {
@@ -417,6 +427,7 @@ void main() {
       build: () => ListingsBloc(
         getListings: GetListings(repo),
         lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
       ),
       act: (b) => b.add(const ListingsRequested()),
       expect: () => [
@@ -441,6 +452,7 @@ void main() {
       build: () => ListingsBloc(
         getListings: GetListings(repo),
         lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
       ),
       act: (b) async {
         b.add(const ListingsRequested());
@@ -484,15 +496,14 @@ void main() {
       build: () => ListingsBloc(
         getListings: GetListings(repo),
         lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
       ),
       act: (b) async {
         b.add(const ListingsRequested());
         await Future<void>.delayed(Duration.zero);
         b.add(const ListingsNextPageRequested());
         await Future<void>.delayed(Duration.zero);
-        b.add(
-          const ListingsNextPageRequested(isExplicitRetry: true),
-        );
+        b.add(const ListingsNextPageRequested(isExplicitRetry: true));
       },
       expect: () => [
         const ListingsState(status: ListingsStatus.loading),
@@ -543,15 +554,14 @@ void main() {
       build: () => ListingsBloc(
         getListings: GetListings(repo),
         lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
       ),
       act: (b) async {
         b.add(const ListingsRequested());
         await Future<void>.delayed(Duration.zero);
         b.add(const ListingsNextPageRequested());
         await Future<void>.delayed(Duration.zero);
-        b.add(
-          const ListingsNextPageRequested(isExplicitRetry: true),
-        );
+        b.add(const ListingsNextPageRequested(isExplicitRetry: true));
       },
       expect: () => [
         const ListingsState(status: ListingsStatus.loading),
@@ -598,6 +608,7 @@ void main() {
       build: () => ListingsBloc(
         getListings: GetListings(repo),
         lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
       ),
       act: (b) async {
         b.add(const ListingsRequested());
@@ -648,6 +659,7 @@ void main() {
       build: () => ListingsBloc(
         getListings: GetListings(repo),
         lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
       ),
       act: (b) async {
         b.add(const ListingsRequested());
@@ -656,9 +668,7 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         b.add(const ListingsNextPageRequested());
         await Future<void>.delayed(Duration.zero);
-        b.add(
-          const ListingsNextPageRequested(isExplicitRetry: true),
-        );
+        b.add(const ListingsNextPageRequested(isExplicitRetry: true));
       },
       expect: () => [
         const ListingsState(status: ListingsStatus.loading),
@@ -712,6 +722,7 @@ void main() {
       build: () => ListingsBloc(
         getListings: GetListings(repo),
         lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
       ),
       act: (b) async {
         b.add(const ListingsRequested());
@@ -768,6 +779,7 @@ void main() {
       build: () => ListingsBloc(
         getListings: GetListings(repo),
         lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
       ),
       act: (b) async {
         b.add(const ListingsRequested());
@@ -783,68 +795,70 @@ void main() {
       },
     );
 
-  blocTest<ListingsBloc, ListingsState>(
-    'ListingsFiltersApplied maps fuel and transmission into query',
-    setUp: () {
-      when(
-        () => repo.getListings(any()),
-      ).thenAnswer((_) async => const Success([]));
-    },
-    build: () => ListingsBloc(
-      getListings: GetListings(repo),
-      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
-    ),
-    act: (b) => b.add(
-      const ListingsFiltersApplied(
-        make: null,
-        model: null,
-        minYear: null,
-        maxYear: null,
-        minPrice: null,
-        maxPrice: null,
-        maxMileage: null,
-        city: null,
-        typeFilter: ListingTypeFilter.any,
-        sort: ListingSortOption.newestFirst,
-        regionFilter: MarketRegionFilter.both,
-        bodyType: null,
-        fuelType: ListingFuelType.hybrid,
-        transmissionType: ListingTransmissionType.dualClutch,
-        priceCurrencyFilter: ListingPriceCurrencyFilter.any,
+    blocTest<ListingsBloc, ListingsState>(
+      'ListingsFiltersApplied maps fuel and transmission into query',
+      setUp: () {
+        when(
+          () => repo.getListings(any()),
+        ).thenAnswer((_) async => const Success([]));
+      },
+      build: () => ListingsBloc(
+        getListings: GetListings(repo),
+        lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
       ),
-    ),
-    verify: (_) {
-      final q =
-          verify(() => repo.getListings(captureAny())).captured.single
-              as ListingsQuery;
-      expect(q.fuelType, ListingFuelType.hybrid);
-      expect(q.transmissionType, ListingTransmissionType.dualClutch);
-    },
-  );
+      act: (b) => b.add(
+        const ListingsFiltersApplied(
+          make: null,
+          model: null,
+          minYear: null,
+          maxYear: null,
+          minPrice: null,
+          maxPrice: null,
+          maxMileage: null,
+          city: null,
+          typeFilter: ListingTypeFilter.any,
+          sort: ListingSortOption.newestFirst,
+          regionFilter: MarketRegionFilter.both,
+          bodyType: null,
+          fuelType: ListingFuelType.hybrid,
+          transmissionType: ListingTransmissionType.dualClutch,
+          priceCurrencyFilter: ListingPriceCurrencyFilter.any,
+        ),
+      ),
+      verify: (_) {
+        final q =
+            verify(() => repo.getListings(captureAny())).captured.single
+                as ListingsQuery;
+        expect(q.fuelType, ListingFuelType.hybrid);
+        expect(q.transmissionType, ListingTransmissionType.dualClutch);
+      },
+    );
 
-  blocTest<ListingsBloc, ListingsState>(
-    'ListingsFiltersCleared resets fuel and transmission filters',
-    setUp: () {
-      when(
-        () => repo.getListings(any()),
-      ).thenAnswer((_) async => const Success([]));
-    },
-    build: () => ListingsBloc(
-      getListings: GetListings(repo),
-      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
-    ),
-    seed: () => const ListingsState(
-      fuelTypeFilter: ListingFuelType.diesel,
-      transmissionTypeFilter: ListingTransmissionType.manual,
-    ),
-    act: (b) => b.add(const ListingsFiltersCleared()),
-    verify: (_) {
-      final q =
-          verify(() => repo.getListings(captureAny())).captured.single
-              as ListingsQuery;
-      expect(q.fuelType, isNull);
-      expect(q.transmissionType, isNull);
-    },
-  );
+    blocTest<ListingsBloc, ListingsState>(
+      'ListingsFiltersCleared resets fuel and transmission filters',
+      setUp: () {
+        when(
+          () => repo.getListings(any()),
+        ).thenAnswer((_) async => const Success([]));
+      },
+      build: () => ListingsBloc(
+        getListings: GetListings(repo),
+        lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
+      ),
+      seed: () => const ListingsState(
+        fuelTypeFilter: ListingFuelType.diesel,
+        transmissionTypeFilter: ListingTransmissionType.manual,
+      ),
+      act: (b) => b.add(const ListingsFiltersCleared()),
+      verify: (_) {
+        final q =
+            verify(() => repo.getListings(captureAny())).captured.single
+                as ListingsQuery;
+        expect(q.fuelType, isNull);
+        expect(q.transmissionType, isNull);
+      },
+    );
   });
 }

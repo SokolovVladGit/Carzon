@@ -8,7 +8,7 @@ import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
-import 'package:carzon/features/filter_alerts/domain/entities/filter_alert_settings.dart';
+import 'package:carzon/features/filter_alerts/domain/entities/saved_search.dart';
 import 'package:carzon/features/listings/data/local/last_applied_listing_discovery_repository.dart';
 import 'package:carzon/features/listings/domain/browse_state_for_alert_criteria.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
@@ -118,7 +118,7 @@ void main() {
   late _MockSellersRepository sellersRepo;
   late _MockMessagingRepository messagingRepo;
 
-  late MockFilterAlertsRepository browseFilterAlertsRepo;
+  late MockSavedSearchesRepository browseSavedSearchesRepo;
   late MockNotificationsRepository browseNotificationsRepo;
   late MockPushNotificationRegistrationService browsePushRegistration;
 
@@ -176,12 +176,12 @@ void main() {
       () => const NoopLastAppliedListingDiscoveryRepository(),
     );
 
-    browseFilterAlertsRepo = MockFilterAlertsRepository();
+    browseSavedSearchesRepo = MockSavedSearchesRepository();
     browseNotificationsRepo = MockNotificationsRepository();
     browsePushRegistration = MockPushNotificationRegistrationService();
     primeListingBrowseFilterAlertsDeps(
       sl,
-      filterRepo: browseFilterAlertsRepo,
+      savedSearchesRepo: browseSavedSearchesRepo,
       notificationsRepo: browseNotificationsRepo,
       pushRegistration: browsePushRegistration,
     );
@@ -500,11 +500,12 @@ void main() {
           updatedAt: DateTime.utc(2026, 6, 2),
         );
 
-    FilterAlertSettings enabledToyotaSavedRow(ListingDiscoveryCriteria crit) =>
-        FilterAlertSettings(
-          userId: 'browse-fab-test',
+    SavedSearch enabledToyotaSavedRow(ListingDiscoveryCriteria crit) =>
+        SavedSearch(
+          id: 'ss-toyota-enabled',
+          name: 'Toyota',
           criteria: crit,
-          notificationsEnabled: true,
+          alertsEnabled: true,
           createdAt: DateTime.utc(2026, 6, 4),
           updatedAt: DateTime.utc(2026, 6, 5),
         );
@@ -528,8 +529,8 @@ void main() {
           () => browseNotificationsRepo.getMyPreferences(),
         ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
         when(
-          () => browseFilterAlertsRepo.loadMine(),
-        ).thenAnswer((_) async => Success(savedRow));
+          () => browseSavedSearchesRepo.list(),
+        ).thenAnswer((_) async => Success([savedRow]));
 
         when(() => auth.state).thenReturn(
           const AuthState.authenticated(
@@ -588,8 +589,8 @@ void main() {
           () => browseNotificationsRepo.getMyPreferences(),
         ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
         when(
-          () => browseFilterAlertsRepo.loadMine(),
-        ).thenAnswer((_) async => Success(savedRow));
+          () => browseSavedSearchesRepo.list(),
+        ).thenAnswer((_) async => Success([savedRow]));
 
         when(() => auth.state).thenReturn(
           const AuthState.authenticated(
@@ -635,11 +636,12 @@ void main() {
       },
     );
 
-    FilterAlertSettings disabledToyotaSavedRow(ListingDiscoveryCriteria crit) =>
-        FilterAlertSettings(
-          userId: 'browse-fab-test',
+    SavedSearch disabledToyotaSavedRow(ListingDiscoveryCriteria crit) =>
+        SavedSearch(
+          id: 'ss-toyota-disabled',
+          name: 'Toyota',
           criteria: crit,
-          notificationsEnabled: false,
+          alertsEnabled: false,
           createdAt: DateTime.utc(2026, 6, 4),
           updatedAt: DateTime.utc(2026, 6, 5),
         );
@@ -663,8 +665,8 @@ void main() {
           () => browseNotificationsRepo.getMyPreferences(),
         ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
         when(
-          () => browseFilterAlertsRepo.loadMine(),
-        ).thenAnswer((_) async => Success(savedRow));
+          () => browseSavedSearchesRepo.list(),
+        ).thenAnswer((_) async => Success([savedRow]));
 
         when(() => auth.state).thenReturn(
           const AuthState.authenticated(
@@ -730,8 +732,8 @@ void main() {
           () => browseNotificationsRepo.getMyPreferences(),
         ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
         when(
-          () => browseFilterAlertsRepo.loadMine(),
-        ).thenAnswer((_) async => Success(savedRow));
+          () => browseSavedSearchesRepo.list(),
+        ).thenAnswer((_) async => Success([savedRow]));
 
         when(() => auth.state).thenReturn(
           const AuthState.authenticated(
@@ -795,8 +797,8 @@ void main() {
           () => browseNotificationsRepo.getMyPreferences(),
         ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
         when(
-          () => browseFilterAlertsRepo.loadMine(),
-        ).thenAnswer((_) async => Success(savedRow));
+          () => browseSavedSearchesRepo.list(),
+        ).thenAnswer((_) async => Success([savedRow]));
 
         when(() => auth.state).thenReturn(
           const AuthState.authenticated(
@@ -862,8 +864,8 @@ void main() {
           () => browseNotificationsRepo.getMyPreferences(),
         ).thenAnswer((_) async => Success(browsePrefsDeliveriesFullyOn()));
         when(
-          () => browseFilterAlertsRepo.loadMine(),
-        ).thenAnswer((_) async => Success(savedRow));
+          () => browseSavedSearchesRepo.list(),
+        ).thenAnswer((_) async => Success([savedRow]));
 
         when(() => auth.state).thenReturn(
           const AuthState.authenticated(

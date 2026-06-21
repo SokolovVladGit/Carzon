@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/noop_last_applied_listing_discovery_repository.dart';
+import '../../helpers/noop_record_recent_search.dart';
 
 class _MockListingsRepository extends Mock implements ListingsRepository {}
 
@@ -54,6 +55,7 @@ void main() {
     build: () => ListingsBloc(
       getListings: GetListings(repo),
       lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
     ),
     act: (b) => b.add(const ListingsBodyTypeFilterChanged(ListingBodyType.suv)),
     expect: () => [
@@ -88,6 +90,7 @@ void main() {
     build: () => ListingsBloc(
       getListings: GetListings(repo),
       lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
     ),
     act: (b) => b.add(const ListingsRequested()),
     verify: (_) {
@@ -112,6 +115,7 @@ void main() {
     final bloc = ListingsBloc(
       getListings: GetListings(repo),
       lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
     );
 
     bloc.add(const ListingsBodyTypeFilterChanged(ListingBodyType.suv));
@@ -151,6 +155,7 @@ void main() {
     build: () => ListingsBloc(
       getListings: GetListings(repo),
       lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
     ),
     act: (b) => b
       ..add(const ListingsBodyTypeFilterChanged(ListingBodyType.sedan))

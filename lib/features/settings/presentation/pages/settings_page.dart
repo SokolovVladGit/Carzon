@@ -214,8 +214,8 @@ class _SettingsPageState extends State<SettingsPage> {
                               'settings_filter_alerts_row',
                             ),
                             icon: CarzonIcons.filter,
-                            title: l10n.filterAlertEditorTitle,
-                            subtitle: l10n.filterAlertProfileRowSubtitle,
+                            title: l10n.savedSearchesSettingsTitle,
+                            subtitle: l10n.savedSearchesSettingsSubtitle,
                             theme: theme,
                             scheme: scheme,
                             onTap: () => context.push(AppRoutes.filterAlert),
@@ -232,6 +232,18 @@ class _SettingsPageState extends State<SettingsPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          ProfileSettingsNavigationRow(
+                            rowKey: const ValueKey<String>(
+                              'settings_blocked_users_row',
+                            ),
+                            icon: CarzonIcons.userBlock,
+                            title: l10n.messagingSafetyBlockedUsersTitle,
+                            subtitle: l10n.settingsBlockedUsersSubtitle,
+                            theme: theme,
+                            scheme: scheme,
+                            onTap: () => context.push(AppRoutes.blockedUsers),
+                          ),
+                          ProfileMutedDivider(scheme: scheme, isDark: isDark),
                           ProfileSettingsNavigationRow(
                             rowKey: const ValueKey<String>(
                               'settings_request_data_row',

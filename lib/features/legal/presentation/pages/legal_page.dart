@@ -78,6 +78,8 @@ class _LegalBody extends StatelessWidget {
             l10n.legalSectionSafetyP1,
             l10n.legalSectionSafetyP2,
             l10n.legalSectionSafetyP3,
+            l10n.legalSectionSafetyP4,
+            l10n.legalSectionSafetyP5,
           ],
         ),
         _LegalSection(

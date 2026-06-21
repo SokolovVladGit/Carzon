@@ -18,6 +18,8 @@ String messagingFailureMessage(
       MessagingFailureKind.messageValidation => l10n.messagingInvalidMessage,
       MessagingFailureKind.conversationNotFound =>
         l10n.messagingConversationNotFound,
+      MessagingFailureKind.messagingBlocked =>
+        l10n.messagingSafetySendUnavailable,
       MessagingFailureKind.serverRejected ||
       MessagingFailureKind.unknown => l10n.messagingSendFailed,
     };
@@ -29,6 +31,8 @@ String messagingFailureMessage(
     MessagingFailureKind.conversationNotFound =>
       l10n.messagingConversationNotFound,
     MessagingFailureKind.messageValidation => l10n.messagingInvalidMessage,
+    MessagingFailureKind.messagingBlocked =>
+      l10n.messagingSafetySendUnavailable,
     MessagingFailureKind.unknown => l10n.messagingServerError,
   };
 }

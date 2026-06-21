@@ -32,6 +32,7 @@ import 'package:mocktail/mocktail.dart';
 import '../../helpers/l10n_test_helpers.dart';
 import '../../helpers/browse_catalog_filter_alerts_sl.dart';
 import '../../helpers/noop_last_applied_listing_discovery_repository.dart';
+import '../../helpers/noop_record_recent_search.dart';
 
 class _MockListingsRepository extends Mock implements ListingsRepository {}
 
@@ -98,7 +99,7 @@ void main() {
   late _MockMessagingRepository messagingRepo;
   late _MockListingsRepository listingsRepo;
 
-  late MockFilterAlertsRepository browseFilterAlertsRepo;
+  late MockSavedSearchesRepository browseSavedSearchesRepo;
   late MockNotificationsRepository browseNotificationsRepo;
   late MockPushNotificationRegistrationService browsePushReg;
 
@@ -143,12 +144,12 @@ void main() {
       () => const NoopLastAppliedListingDiscoveryRepository(),
     );
 
-    browseFilterAlertsRepo = MockFilterAlertsRepository();
+    browseSavedSearchesRepo = MockSavedSearchesRepository();
     browseNotificationsRepo = MockNotificationsRepository();
     browsePushReg = MockPushNotificationRegistrationService();
     primeListingBrowseFilterAlertsDeps(
       sl,
-      filterRepo: browseFilterAlertsRepo,
+      savedSearchesRepo: browseSavedSearchesRepo,
       notificationsRepo: browseNotificationsRepo,
       pushRegistration: browsePushReg,
     );
@@ -157,6 +158,7 @@ void main() {
       () => ListingsBloc(
         getListings: GetListings(listingsRepo),
         lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
       ),
     );
   });

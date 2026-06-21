@@ -1578,6 +1578,210 @@ abstract class AppLocalizations {
   /// **'Когда удобно созвониться?'**
   String get messagingQuickReplyWhenCall;
 
+  /// No description provided for @messagingSafetyReportUser.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пожаловаться на пользователя'**
+  String get messagingSafetyReportUser;
+
+  /// No description provided for @messagingSafetyBlockUser.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заблокировать пользователя'**
+  String get messagingSafetyBlockUser;
+
+  /// No description provided for @messagingSafetyBlockedLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заблокирован'**
+  String get messagingSafetyBlockedLabel;
+
+  /// No description provided for @messagingSafetyBlockedUsersTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заблокированные'**
+  String get messagingSafetyBlockedUsersTitle;
+
+  /// No description provided for @messagingSafetyUnblockUser.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разблокировать'**
+  String get messagingSafetyUnblockUser;
+
+  /// No description provided for @messagingSafetyBlockConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заблокировать пользователя?'**
+  String get messagingSafetyBlockConfirmTitle;
+
+  /// No description provided for @messagingSafetyBlockConfirmBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Этот пользователь не сможет писать вам и не будет получать уведомления о ваших сообщениях. Переписка останется видимой.'**
+  String get messagingSafetyBlockConfirmBody;
+
+  /// No description provided for @messagingSafetyBlockConfirmAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заблокировать'**
+  String get messagingSafetyBlockConfirmAction;
+
+  /// No description provided for @messagingSafetyBlockConfirmCancel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отмена'**
+  String get messagingSafetyBlockConfirmCancel;
+
+  /// No description provided for @messagingSafetyBlockSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пользователь заблокирован.'**
+  String get messagingSafetyBlockSuccess;
+
+  /// No description provided for @messagingSafetyBlockError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось заблокировать пользователя. Попробуйте ещё раз.'**
+  String get messagingSafetyBlockError;
+
+  /// No description provided for @messagingSafetyBlockedBannerTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вы заблокировали этого пользователя'**
+  String get messagingSafetyBlockedBannerTitle;
+
+  /// No description provided for @messagingSafetyBlockedBannerBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Новые сообщения недоступны. Разблокировать можно в настройках.'**
+  String get messagingSafetyBlockedBannerBody;
+
+  /// No description provided for @messagingSafetySendUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обмен сообщениями недоступен в этой переписке.'**
+  String get messagingSafetySendUnavailable;
+
+  /// No description provided for @messagingSafetyReportReasonHarassment.
+  ///
+  /// In ru, this message translates to:
+  /// **'Домогательства'**
+  String get messagingSafetyReportReasonHarassment;
+
+  /// No description provided for @messagingSafetyReportReasonSpam.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спам'**
+  String get messagingSafetyReportReasonSpam;
+
+  /// No description provided for @messagingSafetyReportReasonScam.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мошенничество'**
+  String get messagingSafetyReportReasonScam;
+
+  /// No description provided for @messagingSafetyReportReasonInappropriate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Неподходящий контент'**
+  String get messagingSafetyReportReasonInappropriate;
+
+  /// No description provided for @messagingSafetyReportReasonOther.
+  ///
+  /// In ru, this message translates to:
+  /// **'Другое'**
+  String get messagingSafetyReportReasonOther;
+
+  /// No description provided for @messagingSafetyReportNoteLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комментарий (необязательно)'**
+  String get messagingSafetyReportNoteLabel;
+
+  /// No description provided for @messagingSafetyReportNotePlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кратко опишите проблему…'**
+  String get messagingSafetyReportNotePlaceholder;
+
+  /// No description provided for @messagingSafetyReportNoteTooLong.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комментарий слишком длинный (макс. 1000 символов).'**
+  String get messagingSafetyReportNoteTooLong;
+
+  /// No description provided for @messagingSafetyReportSubmit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить жалобу'**
+  String get messagingSafetyReportSubmit;
+
+  /// No description provided for @messagingSafetyReportSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Жалоба отправлена. Спасибо.'**
+  String get messagingSafetyReportSuccess;
+
+  /// No description provided for @messagingSafetyReportError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось отправить жалобу. Попробуйте ещё раз.'**
+  String get messagingSafetyReportError;
+
+  /// No description provided for @messagingSafetyBlockedUsersEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нет заблокированных пользователей'**
+  String get messagingSafetyBlockedUsersEmptyTitle;
+
+  /// No description provided for @messagingSafetyBlockedUsersEmptyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заблокированные пользователи появятся здесь.'**
+  String get messagingSafetyBlockedUsersEmptyBody;
+
+  /// No description provided for @messagingSafetyBlockedUsersLoadError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить список. Попробуйте ещё раз.'**
+  String get messagingSafetyBlockedUsersLoadError;
+
+  /// No description provided for @messagingSafetyBlockedUserFallback.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заблокированный пользователь'**
+  String get messagingSafetyBlockedUserFallback;
+
+  /// No description provided for @messagingSafetyUnblockConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разблокировать пользователя?'**
+  String get messagingSafetyUnblockConfirmTitle;
+
+  /// No description provided for @messagingSafetyUnblockConfirmBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Этот пользователь снова сможет писать вам по объявлениям.'**
+  String get messagingSafetyUnblockConfirmBody;
+
+  /// No description provided for @messagingSafetyUnblockSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пользователь разблокирован.'**
+  String get messagingSafetyUnblockSuccess;
+
+  /// No description provided for @messagingSafetyUnblockError.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось разблокировать пользователя. Попробуйте ещё раз.'**
+  String get messagingSafetyUnblockError;
+
+  /// No description provided for @settingsBlockedUsersSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Управление заблокированными пользователями'**
+  String get settingsBlockedUsersSubtitle;
+
   /// No description provided for @messagingListingFallback.
   ///
   /// In ru, this message translates to:
@@ -1607,6 +1811,42 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не удалось открыть почтовое приложение.'**
   String get reportListingMailFailed;
+
+  /// No description provided for @listingShareAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поделиться'**
+  String get listingShareAction;
+
+  /// No description provided for @listingShareIntro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Посмотрите объявление на Carzon:'**
+  String get listingShareIntro;
+
+  /// No description provided for @listingShareOpenInCarzon.
+  ///
+  /// In ru, this message translates to:
+  /// **'Откройте в приложении Carzon'**
+  String get listingShareOpenInCarzon;
+
+  /// No description provided for @listingShareLinkLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'{url}'**
+  String listingShareLinkLine(String url);
+
+  /// No description provided for @listingShareFallbackLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объявление {id} в Carzon'**
+  String listingShareFallbackLine(String id);
+
+  /// No description provided for @listingShareFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось открыть меню «Поделиться».'**
+  String get listingShareFailed;
 
   /// No description provided for @formatTypeSale.
   ///
@@ -2616,22 +2856,10 @@ abstract class AppLocalizations {
   /// **'Войдите, чтобы управлять паролем и уведомлениями'**
   String get settingsSignInForAccountSubtitle;
 
-  /// No description provided for @settingsPrivacyLegalLinkTitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Условия и безопасность'**
-  String get settingsPrivacyLegalLinkTitle;
-
-  /// No description provided for @settingsPrivacyLegalLinkSubtitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Правовая информация и рекомендации по безопасным сделкам'**
-  String get settingsPrivacyLegalLinkSubtitle;
-
   /// No description provided for @settingsLegalLinkSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Условия использования и политика конфиденциальности'**
+  /// **'Условия, политика конфиденциальности и советы по безопасности'**
   String get settingsLegalLinkSubtitle;
 
   /// No description provided for @settingsRequestDataTitle.
@@ -3275,6 +3503,156 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Сохранённый фильтр удалён.'**
   String get filterAlertManagementClearedSnack;
+
+  /// No description provided for @savedSearchesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранённые поиски'**
+  String get savedSearchesTitle;
+
+  /// No description provided for @savedSearchesSettingsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранённые поиски'**
+  String get savedSearchesSettingsTitle;
+
+  /// No description provided for @savedSearchesSettingsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'До 5 поисков с оповещениями о новых объявлениях.'**
+  String get savedSearchesSettingsSubtitle;
+
+  /// No description provided for @savedSearchesSignInRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите, чтобы управлять сохранёнными поисками.'**
+  String get savedSearchesSignInRequired;
+
+  /// No description provided for @savedSearchesHeaderEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'CARZON · ПОИСК'**
+  String get savedSearchesHeaderEyebrow;
+
+  /// No description provided for @savedSearchesSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохраняйте параметры из каталога и включайте push-оповещения для каждого поиска.'**
+  String get savedSearchesSubtitle;
+
+  /// No description provided for @savedSearchesMaxHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Можно сохранить до 5 поисков.'**
+  String get savedSearchesMaxHint;
+
+  /// No description provided for @savedSearchesEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранённых поисков пока нет'**
+  String get savedSearchesEmptyTitle;
+
+  /// No description provided for @savedSearchesEmptyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Задайте фильтры в каталоге и нажмите колокольчик, чтобы сохранить поиск.'**
+  String get savedSearchesEmptyBody;
+
+  /// No description provided for @savedSearchesGoToCatalog.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перейти в каталог'**
+  String get savedSearchesGoToCatalog;
+
+  /// No description provided for @savedSearchFallbackName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранённый поиск'**
+  String get savedSearchFallbackName;
+
+  /// No description provided for @savedSearchAlertsToggleTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оповещения'**
+  String get savedSearchAlertsToggleTitle;
+
+  /// No description provided for @savedSearchAlertsEnabledLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Push-оповещения включены'**
+  String get savedSearchAlertsEnabledLabel;
+
+  /// No description provided for @savedSearchAlertsDisabledLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Push-оповещения выключены'**
+  String get savedSearchAlertsDisabledLabel;
+
+  /// No description provided for @savedSearchDeleteAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить'**
+  String get savedSearchDeleteAction;
+
+  /// No description provided for @savedSearchDeleteConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить сохранённый поиск?'**
+  String get savedSearchDeleteConfirmTitle;
+
+  /// No description provided for @savedSearchDeleteConfirmBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Этот поиск и его оповещения будут удалены. Другие сохранённые поиски не затронуты.'**
+  String get savedSearchDeleteConfirmBody;
+
+  /// No description provided for @savedSearchDeleteConfirmCta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить'**
+  String get savedSearchDeleteConfirmCta;
+
+  /// No description provided for @savedSearchRemovedSnack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сохранённый поиск удалён.'**
+  String get savedSearchRemovedSnack;
+
+  /// No description provided for @savedSearchCreatedSnack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск сохранён.'**
+  String get savedSearchCreatedSnack;
+
+  /// No description provided for @savedSearchesLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить сохранённые поиски.'**
+  String get savedSearchesLoadFailed;
+
+  /// No description provided for @savedSearchSaveFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сохранить поиск.'**
+  String get savedSearchSaveFailed;
+
+  /// No description provided for @savedSearchDeleteFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось удалить поиск.'**
+  String get savedSearchDeleteFailed;
+
+  /// No description provided for @savedSearchToggleFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось изменить оповещения.'**
+  String get savedSearchToggleFailed;
+
+  /// No description provided for @savedSearchesMaxReachedSnack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Можно сохранить не более 5 поисков.'**
+  String get savedSearchesMaxReachedSnack;
 
   /// No description provided for @filterAlertSummarySearchLabel.
   ///
@@ -3948,6 +4326,18 @@ abstract class AppLocalizations {
   /// **'Carzon не является стороной соглашений между покупателем и продавцом и не отвечает за результат сделок, оформленных через платформу.'**
   String get legalSectionSafetyP3;
 
+  /// No description provided for @legalSectionSafetyP4.
+  ///
+  /// In ru, this message translates to:
+  /// **'Остерегайтесь подозрительных ссылок, сообщений и просьб об оплате вне Carzon. Не переводите предоплату под давлением и не доверяйте «гарантиям», которых нет в приложении.'**
+  String get legalSectionSafetyP4;
+
+  /// No description provided for @legalSectionSafetyP5.
+  ///
+  /// In ru, this message translates to:
+  /// **'Справочные данные в объявлениях — в том числе по VIN, модели или кампаниям отзыва — носят информационный характер и могут не отражать точное юридическое или техническое состояние конкретного автомобиля. Перед покупкой самостоятельно проверьте документы, состояние, историю и актуальные кампании безопасности.'**
+  String get legalSectionSafetyP5;
+
   /// No description provided for @legalSectionContactUsHeading.
   ///
   /// In ru, this message translates to:
@@ -3963,7 +4353,7 @@ abstract class AppLocalizations {
   /// No description provided for @legalSectionContactUsP2.
   ///
   /// In ru, this message translates to:
-  /// **'Вопросы по этому документу и по содержимому платформы можно задать команде Carzon через канал поддержки, указанный на странице приложения в магазине.'**
+  /// **'Вошедшие в аккаунт пользователи могут написать в поддержку через Настройки → «Связаться с поддержкой». Если у вас нет доступа к приложению, используйте канал поддержки, указанный на странице Carzon в магазине приложений.'**
   String get legalSectionContactUsP2;
 
   /// No description provided for @sellerSectionTitle.
@@ -4223,6 +4613,174 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Очистить сравнение'**
   String get compareClear;
+
+  /// No description provided for @menuRecentlyViewed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Недавно просмотренные'**
+  String get menuRecentlyViewed;
+
+  /// No description provided for @menuRecentlyViewedSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Автомобили, которые вы открывали'**
+  String get menuRecentlyViewedSubtitle;
+
+  /// No description provided for @recentlyViewedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Недавно просмотренные'**
+  String get recentlyViewedTitle;
+
+  /// No description provided for @recentlyViewedEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока пусто'**
+  String get recentlyViewedEmptyTitle;
+
+  /// No description provided for @recentlyViewedEmptyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открытые объявления появятся здесь, чтобы вы могли быстро вернуться к ним.'**
+  String get recentlyViewedEmptyBody;
+
+  /// No description provided for @recentlyViewedBrowseListings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перейти к объявлениям'**
+  String get recentlyViewedBrowseListings;
+
+  /// No description provided for @recentlyViewedClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить'**
+  String get recentlyViewedClear;
+
+  /// No description provided for @recentlyViewedClearConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить историю?'**
+  String get recentlyViewedClearConfirmTitle;
+
+  /// No description provided for @recentlyViewedClearConfirmBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все недавно просмотренные объявления будут удалены с этого устройства.'**
+  String get recentlyViewedClearConfirmBody;
+
+  /// No description provided for @recentlyViewedClearConfirmAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить'**
+  String get recentlyViewedClearConfirmAction;
+
+  /// No description provided for @recentlyViewedLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить историю просмотров.'**
+  String get recentlyViewedLoadFailed;
+
+  /// No description provided for @recentlyViewedClearFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось очистить историю просмотров.'**
+  String get recentlyViewedClearFailed;
+
+  /// No description provided for @menuRecentSearches.
+  ///
+  /// In ru, this message translates to:
+  /// **'Недавние поиски'**
+  String get menuRecentSearches;
+
+  /// No description provided for @menuRecentSearchesSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поисковые запросы и фильтры каталога'**
+  String get menuRecentSearchesSubtitle;
+
+  /// No description provided for @recentSearchesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Недавние поиски'**
+  String get recentSearchesTitle;
+
+  /// No description provided for @recentSearchesEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока пусто'**
+  String get recentSearchesEmptyTitle;
+
+  /// No description provided for @recentSearchesEmptyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Применённые поиски и фильтры появятся здесь, чтобы вы могли быстро вернуться к ним.'**
+  String get recentSearchesEmptyBody;
+
+  /// No description provided for @recentSearchesBrowseListings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перейти к объявлениям'**
+  String get recentSearchesBrowseListings;
+
+  /// No description provided for @recentSearchesClear.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить'**
+  String get recentSearchesClear;
+
+  /// No description provided for @recentSearchesClearConfirmTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить историю поисков?'**
+  String get recentSearchesClearConfirmTitle;
+
+  /// No description provided for @recentSearchesClearConfirmBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все недавние поиски будут удалены с этого устройства.'**
+  String get recentSearchesClearConfirmBody;
+
+  /// No description provided for @recentSearchesClearConfirmAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Очистить'**
+  String get recentSearchesClearConfirmAction;
+
+  /// No description provided for @recentSearchesDelete.
+  ///
+  /// In ru, this message translates to:
+  /// **'Удалить'**
+  String get recentSearchesDelete;
+
+  /// No description provided for @recentSearchesSearchOnlyLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск: {query}'**
+  String recentSearchesSearchOnlyLabel(String query);
+
+  /// No description provided for @recentSearchesFiltersOnlyLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фильтры'**
+  String get recentSearchesFiltersOnlyLabel;
+
+  /// No description provided for @recentSearchesLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить историю поисков.'**
+  String get recentSearchesLoadFailed;
+
+  /// No description provided for @recentSearchesClearFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось очистить историю поисков.'**
+  String get recentSearchesClearFailed;
+
+  /// No description provided for @recentSearchesRemoveFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось удалить поиск.'**
+  String get recentSearchesRemoveFailed;
 
   /// No description provided for @compareMaxReachedMessage.
   ///

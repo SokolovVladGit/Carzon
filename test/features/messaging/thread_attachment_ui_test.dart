@@ -128,6 +128,9 @@ void main() {
     when(
       () => repository.markConversationRead(any()),
     ).thenAnswer((_) async => const Success(true));
+    when(
+      () => repository.listBlockedUsers(),
+    ).thenAnswer((_) async => const Success([]));
   });
 
   setUpAll(() {
@@ -178,6 +181,7 @@ void main() {
     return ConversationThreadCubit(
       repository: repository,
       conversationId: 'c1',
+      currentUserId: 'b1',
     );
   }
 
@@ -186,10 +190,7 @@ void main() {
       conversationMessagePreviewLine('[photo]', l10n),
       l10n.messagingAttachmentPhotoPreview,
     );
-    expect(
-      conversationMessagePreviewLine('Hello', l10n),
-      'Hello',
-    );
+    expect(conversationMessagePreviewLine('Hello', l10n), 'Hello');
   });
 
   blocTest<ConversationThreadCubit, ConversationThreadState>(
@@ -207,6 +208,7 @@ void main() {
       return ConversationThreadCubit(
         repository: repository,
         conversationId: 'c1',
+        currentUserId: 'b1',
       );
     },
     act: (c) async {
@@ -259,12 +261,8 @@ void main() {
       wrapComposer(
         cubit: cubit,
         controller: controller,
-        imagePicker:
-            ({
-              required source,
-              maxWidth,
-              imageQuality,
-            }) async => XFile.fromData(
+        imagePicker: ({required source, maxWidth, imageQuality}) async =>
+            XFile.fromData(
               Uint8List.fromList(_kTinyPng),
               name: 'photo.png',
               mimeType: 'image/png',
@@ -280,15 +278,19 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(Image), findsOneWidget);
-    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-        isNotNull);
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNotNull,
+    );
 
     await tester.tap(find.text(l10n.messagingAttachmentRemove));
     await tester.pumpAndSettle();
 
     expect(find.byType(Image), findsNothing);
-    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-        isNull);
+    expect(
+      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+      isNull,
+    );
   });
 
   testWidgets('attachment send calls repository with optional caption', (
@@ -307,12 +309,8 @@ void main() {
       wrapComposer(
         cubit: cubit,
         controller: controller,
-        imagePicker:
-            ({
-              required source,
-              maxWidth,
-              imageQuality,
-            }) async => XFile.fromData(
+        imagePicker: ({required source, maxWidth, imageQuality}) async =>
+            XFile.fromData(
               Uint8List.fromList(_kTinyPng),
               name: 'photo.png',
               mimeType: 'image/png',
@@ -332,9 +330,11 @@ void main() {
     await tester.tap(find.byType(FilledButton));
     await tester.pumpAndSettle();
 
-    final captured = verify(
-      () => repository.sendMessageWithAttachment(captureAny()),
-    ).captured.single as ChatAttachmentUpload;
+    final captured =
+        verify(
+              () => repository.sendMessageWithAttachment(captureAny()),
+            ).captured.single
+            as ChatAttachmentUpload;
     expect(captured.caption, 'caption');
     expect(captured.mimeType, 'image/png');
   });
@@ -355,12 +355,8 @@ void main() {
       wrapComposer(
         cubit: cubit,
         controller: controller,
-        imagePicker:
-            ({
-              required source,
-              maxWidth,
-              imageQuality,
-            }) async => XFile.fromData(
+        imagePicker: ({required source, maxWidth, imageQuality}) async =>
+            XFile.fromData(
               Uint8List.fromList(_kTinyPng),
               name: 'photo.png',
               mimeType: 'image/png',
@@ -393,12 +389,8 @@ void main() {
       wrapComposer(
         cubit: cubit,
         controller: controller,
-        imagePicker:
-            ({
-              required source,
-              maxWidth,
-              imageQuality,
-            }) async => XFile.fromData(
+        imagePicker: ({required source, maxWidth, imageQuality}) async =>
+            XFile.fromData(
               Uint8List.fromList(_kTinyPng),
               name: 'photo.gif',
               mimeType: 'image/gif',
@@ -512,10 +504,12 @@ void main() {
     expect(caption.textAlign, TextAlign.start);
 
     final bubbleAlign = tester.widget<Align>(
-      find.descendant(
-        of: find.byType(ChatImageMessageBubble),
-        matching: find.byType(Align),
-      ).first,
+      find
+          .descendant(
+            of: find.byType(ChatImageMessageBubble),
+            matching: find.byType(Align),
+          )
+          .first,
     );
     expect(bubbleAlign.alignment, Alignment.centerRight);
   });
@@ -614,16 +608,8 @@ void main() {
       wrapComposer(
         cubit: cubit,
         controller: controller,
-        imagePicker:
-            ({
-              required source,
-              maxWidth,
-              imageQuality,
-            }) async => XFile.fromData(
-              huge,
-              name: 'big.png',
-              mimeType: 'image/png',
-            ),
+        imagePicker: ({required source, maxWidth, imageQuality}) async =>
+            XFile.fromData(huge, name: 'big.png', mimeType: 'image/png'),
       ),
     );
     await cubit.load();
@@ -681,9 +667,9 @@ void main() {
 
   testWidgets('attach button disabled while send is in flight', (tester) async {
     final gate = Completer<void>();
-    when(
-      () => repository.sendMessageWithAttachment(any()),
-    ).thenAnswer((_) async {
+    when(() => repository.sendMessageWithAttachment(any())).thenAnswer((
+      _,
+    ) async {
       await gate.future;
       return const Success<String>('m2');
     });
@@ -697,12 +683,8 @@ void main() {
       wrapComposer(
         cubit: cubit,
         controller: controller,
-        imagePicker:
-            ({
-              required source,
-              maxWidth,
-              imageQuality,
-            }) async => XFile.fromData(
+        imagePicker: ({required source, maxWidth, imageQuality}) async =>
+            XFile.fromData(
               Uint8List.fromList(_kTinyPng),
               name: 'photo.png',
               mimeType: 'image/png',
@@ -732,7 +714,9 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('gallery source uses image_picker gallery path only', (tester) async {
+  testWidgets('gallery source uses image_picker gallery path only', (
+    tester,
+  ) async {
     final cubit = readyCubit();
     addTearDown(cubit.close);
     final controller = TextEditingController();
@@ -744,20 +728,15 @@ void main() {
       wrapComposer(
         cubit: cubit,
         controller: controller,
-        imagePicker:
-            ({
-              required source,
-              maxWidth,
-              imageQuality,
-            }) async {
-              pickerCalls++;
-              pickedSource = source;
-              return XFile.fromData(
-                Uint8List.fromList(_kTinyPng),
-                name: 'photo.png',
-                mimeType: 'image/png',
-              );
-            },
+        imagePicker: ({required source, maxWidth, imageQuality}) async {
+          pickerCalls++;
+          pickedSource = source;
+          return XFile.fromData(
+            Uint8List.fromList(_kTinyPng),
+            name: 'photo.png',
+            mimeType: 'image/png',
+          );
+        },
         cameraCapture: (_) async {
           fail('camera capture should not run for gallery selection');
         },
@@ -789,15 +768,10 @@ void main() {
       wrapComposer(
         cubit: cubit,
         controller: controller,
-        imagePicker:
-            ({
-              required source,
-              maxWidth,
-              imageQuality,
-            }) async {
-              pickerCalls++;
-              return null;
-            },
+        imagePicker: ({required source, maxWidth, imageQuality}) async {
+          pickerCalls++;
+          return null;
+        },
         cameraCapture: (_) async {
           cameraCalls++;
           return XFile.fromData(
@@ -829,35 +803,36 @@ void main() {
     expect(find.byType(Image), findsOneWidget);
   });
 
-  testWidgets('cancelled camera capture leaves composer without attachment draft', (
-    tester,
-  ) async {
-    final cubit = readyCubit();
-    addTearDown(cubit.close);
-    final controller = TextEditingController();
-    addTearDown(controller.dispose);
+  testWidgets(
+    'cancelled camera capture leaves composer without attachment draft',
+    (tester) async {
+      final cubit = readyCubit();
+      addTearDown(cubit.close);
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
 
-    await tester.pumpWidget(
-      wrapComposer(
-        cubit: cubit,
-        controller: controller,
-        cameraCapture: (_) async => null,
-      ),
-    );
-    await cubit.load();
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        wrapComposer(
+          cubit: cubit,
+          controller: controller,
+          cameraCapture: (_) async => null,
+        ),
+      );
+      await cubit.load();
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip(l10n.messagingAttachImage));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.messagingAttachmentCamera));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip(l10n.messagingAttachImage));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.messagingAttachmentCamera));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(Image), findsNothing);
-    expect(
-      tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-      isNull,
-    );
-  });
+      expect(find.byType(Image), findsNothing);
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNull,
+      );
+    },
+  );
 
   testWidgets('oversize camera result shows localized oversize snackbar', (
     tester,
@@ -936,9 +911,11 @@ void main() {
     await tester.tap(find.byType(FilledButton));
     await tester.pumpAndSettle();
 
-    final captured = verify(
-      () => repository.sendMessageWithAttachment(captureAny()),
-    ).captured.single as ChatAttachmentUpload;
+    final captured =
+        verify(
+              () => repository.sendMessageWithAttachment(captureAny()),
+            ).captured.single
+            as ChatAttachmentUpload;
     expect(captured.mimeType, 'image/jpeg');
     expect(captured.filename, 'chat_camera_test.jpg');
   });

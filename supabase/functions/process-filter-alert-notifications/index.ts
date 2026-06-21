@@ -1,5 +1,5 @@
 /**
- * Carzon — Phase 4A: process queued filter alert notification events (FCM HTTP v1).
+ * Carzon — Phase 4A + P1 M1.4 Phase B: process queued filter alert events (FCM HTTP v1).
  *
  * Invoked only with header `x-carzon-internal-secret` matching
  * `CARZON_PROCESS_FILTER_ALERT_NOTIFICATIONS_SECRET`.
@@ -13,11 +13,20 @@
  *     OR FCM_SERVICE_ACCOUNT_JSON
  *
  * Claims only `filter_alert_listing_match` via `claim_filter_alert_notification_events_for_processing`.
- * Does not send listing title, price, seller contact, or other private fields.
+ * Validates recipient enabled saved searches (v2); criteria match is enforced at enqueue in SQL.
+ * Does not send listing title, price, seller contact, criteria, or other private fields.
  */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { JWT } from "npm:google-auth-library@9.14.2";
+import {
+  filterAlertNotificationDataPayload,
+  isListingEligibleForFilterAlertDelivery,
+  LISTING_INACTIVE_OR_MISSING_SKIP_REASON,
+  recipientHasEnabledSavedSearchWithCriteria,
+  SAVED_SEARCH_DISABLED_OR_MISSING_SKIP_REASON,
+  SAVED_SEARCH_VALIDATION_FAILED,
+} from "../_shared/filter_alert_saved_search_validation.ts";
 import { filterAlertNotificationCopyForLocale } from "../_shared/push_notification_copy.ts";
 
 const MAX_SEND_ATTEMPTS = 8;
@@ -155,15 +164,6 @@ function shouldDeactivateToken(errorCode?: string, errorMessage?: string): boole
   return false;
 }
 
-function dataPayload(event: DeliveryEvent): Record<string, string> {
-  const d: Record<string, string> = {
-    type: "filter_alert",
-  };
-  if (event.listing_id) d.listing_id = event.listing_id;
-  d.event_id = event.id;
-  return d;
-}
-
 Deno.serve(async (req: Request): Promise<Response> => {
   try {
     if (req.method !== "POST") {
@@ -272,22 +272,51 @@ Deno.serve(async (req: Request): Promise<Response> => {
         continue;
       }
 
-      const { data: fasRow } = await supabase
-        .from("filter_alert_settings")
-        .select("notifications_enabled, criteria")
-        .eq("user_id", event.recipient_user_id)
+      const { data: listingRow, error: listingErr } = await supabase
+        .from("listings")
+        .select("status, seller_id")
+        .eq("id", event.listing_id)
         .maybeSingle();
 
+      if (listingErr) {
+        console.error("listings select", listingErr);
+        await requeueOrFail(supabase, event, SAVED_SEARCH_VALIDATION_FAILED);
+        continue;
+      }
+
       if (
-        fasRow?.notifications_enabled !== true ||
-        fasRow.criteria === null ||
-        fasRow.criteria === undefined
+        !isListingEligibleForFilterAlertDelivery(
+          listingRow as { status: string | null; seller_id: string | null } | null,
+          event.actor_user_id,
+        )
       ) {
         await supabase.from("notification_delivery_events").update({
           status: "skipped",
           processed_at: new Date().toISOString(),
           locked_at: null,
-          last_error: "filter_alert_settings_off_or_no_criteria",
+          last_error: LISTING_INACTIVE_OR_MISSING_SKIP_REASON,
+        }).eq("id", event.id);
+        continue;
+      }
+
+      const { data: savedSearchRows, error: savedSearchErr } = await supabase
+        .from("saved_searches")
+        .select("alerts_enabled, criteria")
+        .eq("user_id", event.recipient_user_id)
+        .eq("alerts_enabled", true);
+
+      if (savedSearchErr) {
+        console.error("saved_searches select", savedSearchErr);
+        await requeueOrFail(supabase, event, SAVED_SEARCH_VALIDATION_FAILED);
+        continue;
+      }
+
+      if (!recipientHasEnabledSavedSearchWithCriteria(savedSearchRows)) {
+        await supabase.from("notification_delivery_events").update({
+          status: "skipped",
+          processed_at: new Date().toISOString(),
+          locked_at: null,
+          last_error: SAVED_SEARCH_DISABLED_OR_MISSING_SKIP_REASON,
         }).eq("id", event.id);
         continue;
       }
@@ -314,7 +343,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         continue;
       }
 
-      const stringData = dataPayload(event);
+      const stringData = filterAlertNotificationDataPayload(event);
       let anySuccess = false;
       let lastErr = "";
 

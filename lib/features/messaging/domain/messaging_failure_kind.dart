@@ -5,5 +5,6 @@ enum MessagingFailureKind {
   serverRejected,
   conversationNotFound,
   messageValidation,
+  messagingBlocked,
   unknown,
 }

@@ -12,6 +12,8 @@ import '../core/theme/theme_mode_cubit.dart';
 import '../core/utils/logger.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/compare/presentation/cubit/compare_cubit.dart';
+import '../features/recent_searches/presentation/cubit/recent_searches_cubit.dart';
+import '../features/recently_viewed/presentation/cubit/recently_viewed_cubit.dart';
 import '../features/favorites/presentation/bloc/favorites_cubit.dart';
 import '../features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import '../features/notifications/services/push_notification_registration_service.dart';
@@ -102,6 +104,8 @@ Future<void> bootstrap() async {
       await sl<FavoritesCubit>().syncWithAuth(auth.state.user);
 
       await sl<CompareCubit>().loadFromStorage();
+      await sl<RecentlyViewedCubit>().loadFromStorage();
+      await sl<RecentSearchesCubit>().loadFromStorage();
 
       await sl<SelfSellerVisualCubit>().prime(auth.state);
       await sl<MessagingUnreadSummaryCubit>().sync(auth.state);

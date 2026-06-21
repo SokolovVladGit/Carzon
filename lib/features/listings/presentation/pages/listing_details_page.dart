@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../bloc/listing_details_cubit.dart';
 import '../bloc/listing_details_state.dart';
 import '../utils/listing_details_uri_launcher.dart';
+import '../utils/listing_share_launcher.dart';
 import '../widgets/listing_details_contact_bar.dart';
 import '../widgets/listing_details_content_panel.dart';
 import '../widgets/listing_details_hero.dart';
@@ -24,6 +25,7 @@ class ListingDetailsPage extends StatelessWidget {
     required this.id,
     this.reportEmail,
     this.uriLauncher,
+    this.shareLauncher,
     this.initialCoverImageUrl,
     this.coverHeroFlightTopRadius,
   });
@@ -37,6 +39,9 @@ class ListingDetailsPage extends StatelessWidget {
 
   /// Test seam for the "Report listing" mailto launcher.
   final ListingDetailsUriLauncher? uriLauncher;
+
+  /// Test seam for the hero "Share listing" action.
+  final ListingShareLauncher? shareLauncher;
 
   /// through `GoRouter` `extra` so the Hero flight matches the tapped
   /// card while [ListingDetailsCubit] has not emitted resolved gallery
@@ -57,6 +62,7 @@ class ListingDetailsPage extends StatelessWidget {
         id: id,
         reportEmail: reportEmail,
         uriLauncher: uriLauncher,
+        shareLauncher: shareLauncher,
         initialCoverImageUrl: initialCoverImageUrl,
         heroFlightSourceTopRadius: coverHeroFlightTopRadius ?? 20,
       ),
@@ -69,6 +75,7 @@ class _ListingDetailsView extends StatefulWidget {
     required this.id,
     required this.reportEmail,
     required this.uriLauncher,
+    required this.shareLauncher,
     required this.initialCoverImageUrl,
     required this.heroFlightSourceTopRadius,
   });
@@ -76,6 +83,7 @@ class _ListingDetailsView extends StatefulWidget {
   final String id;
   final String? reportEmail;
   final ListingDetailsUriLauncher? uriLauncher;
+  final ListingShareLauncher? shareLauncher;
   final String? initialCoverImageUrl;
   final double heroFlightSourceTopRadius;
 
@@ -176,6 +184,7 @@ class _ListingDetailsViewState extends State<_ListingDetailsView> {
                                 widget.heroFlightSourceTopRadius,
                             flySourceKey: _compareFlySourceKey,
                             compareFlyFallbackKey: _compareToggleFlyKey,
+                            shareLauncher: widget.shareLauncher,
                             onPageChanged: (i) =>
                                 setState(() => _carouselPageIndex = i),
                           ),

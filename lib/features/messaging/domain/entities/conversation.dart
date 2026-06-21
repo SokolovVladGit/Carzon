@@ -55,9 +55,11 @@ class Conversation extends Equatable {
   /// (see `list_inbox_conversations`; single-conversation loads omit this).
   final bool hasUnread;
 
-  bool get isSupportConversation => conversationKind == ConversationKind.support;
+  bool get isSupportConversation =>
+      conversationKind == ConversationKind.support;
 
-  bool get isListingConversation => conversationKind == ConversationKind.listing;
+  bool get isListingConversation =>
+      conversationKind == ConversationKind.listing;
 
   @override
   List<Object?> get props => [
