@@ -50,6 +50,7 @@ class FilterAlertDeliveryOrchestrator {
       globalEnabled: true,
       messagesEnabled: prefs.messagesEnabled,
       filterAlertsEnabled: true,
+      priceDropsEnabled: prefs.priceDropsEnabled,
     );
     switch (prefUp) {
       case FailureResult():

@@ -3258,6 +3258,24 @@ abstract class AppLocalizations {
   /// **'Открыть оповещения по фильтру'**
   String get notificationSettingsFilterAlertsOpenCta;
 
+  /// No description provided for @notificationSettingsPriceDropsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Снижение цены'**
+  String get notificationSettingsPriceDropsTitle;
+
+  /// No description provided for @notificationSettingsPriceDropsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Push, когда цена снижается на автомобиль из избранного.'**
+  String get notificationSettingsPriceDropsSubtitle;
+
+  /// No description provided for @notificationSettingsPriceDropsNeedsGlobal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала включите «Push на этом устройстве».'**
+  String get notificationSettingsPriceDropsNeedsGlobal;
+
   /// No description provided for @notificationSettingsDeliveryCardTitle.
   ///
   /// In ru, this message translates to:
@@ -6138,6 +6156,18 @@ abstract class AppLocalizations {
   /// **'Есть объявление по вашему сохранённому фильтру. Откройте, чтобы посмотреть.'**
   String get notificationFilterAlertBody;
 
+  /// No description provided for @notificationPriceDropTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Снижение цены'**
+  String get notificationPriceDropTitle;
+
+  /// No description provided for @notificationPriceDropBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена на сохранённый автомобиль снизилась.'**
+  String get notificationPriceDropBody;
+
   /// No description provided for @notificationAndroidChannelMessagesName.
   ///
   /// In ru, this message translates to:
@@ -6161,6 +6191,18 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Уведомления о новых объявлениях по сохранённому фильтру'**
   String get notificationAndroidChannelFilterDescription;
+
+  /// No description provided for @notificationAndroidChannelPriceDropName.
+  ///
+  /// In ru, this message translates to:
+  /// **'Carzon — снижение цены'**
+  String get notificationAndroidChannelPriceDropName;
+
+  /// No description provided for @notificationAndroidChannelPriceDropDescription.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уведомления о снижении цены на избранные объявления'**
+  String get notificationAndroidChannelPriceDropDescription;
 }
 
 class _AppLocalizationsDelegate

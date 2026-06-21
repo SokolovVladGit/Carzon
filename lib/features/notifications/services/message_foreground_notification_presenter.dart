@@ -10,6 +10,7 @@ import 'filter_alert_notification_tap_payload.dart';
 import 'message_conversation_navigation_coordinator.dart';
 import 'message_foreground_notification_display.dart';
 import 'message_notification_tap_payload.dart';
+import 'price_drop_notification_tap_payload.dart';
 
 /// Subscribes to foreground FCM data messages and shows a local notification.
 class MessageForegroundNotificationPresenter {
@@ -92,6 +93,15 @@ class MessageForegroundNotificationPresenter {
       if (filterPayload != null) {
         await _display.showFilterAlertForegroundNotification(
           filterPayload.listingId,
+        );
+        return;
+      }
+      final priceDropPayload = parsePriceDropNotificationTapPayload(
+        message.data,
+      );
+      if (priceDropPayload != null) {
+        await _display.showPriceDropForegroundNotification(
+          priceDropPayload.listingId,
         );
         return;
       }

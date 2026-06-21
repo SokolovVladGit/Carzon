@@ -154,11 +154,8 @@ class _BrandTile extends StatelessWidget {
         width: _allBrandsIconSize,
         height: _allBrandsIconSize,
         fit: BoxFit.contain,
-        errorBuilder: (context, error, _) => Icon(
-          Icons.apps_rounded,
-          size: _logoSize,
-          color: scheme.primary,
-        ),
+        errorBuilder: (context, error, _) =>
+            Icon(Icons.apps_rounded, size: _logoSize, color: scheme.primary),
       );
     } else if (assetPath != null) {
       glyph = BrandLogoGlyph(

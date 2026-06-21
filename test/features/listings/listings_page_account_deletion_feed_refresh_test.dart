@@ -60,9 +60,7 @@ Widget _host({
       BlocProvider(
         create: (_) => SelfSellerVisualCubit(GetMySellerProfile(sellersRepo)),
       ),
-      BlocProvider(
-        create: (_) => MessagingUnreadSummaryCubit(messagingRepo),
-      ),
+      BlocProvider(create: (_) => MessagingUnreadSummaryCubit(messagingRepo)),
     ],
     child: MaterialApp.router(
       locale: const Locale('ru'),
@@ -70,9 +68,7 @@ Widget _host({
       supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: GoRouter(
         initialLocation: '/',
-        routes: [
-          GoRoute(path: '/', builder: (_, _) => const ListingsPage()),
-        ],
+        routes: [GoRoute(path: '/', builder: (_, _) => const ListingsPage())],
       ),
     ),
   );
@@ -131,9 +127,9 @@ void main() {
       initialState: const FavoritesState(),
     );
 
-    when(() => authCubit.state).thenReturn(
-      const AuthState.authenticated(_testUser),
-    );
+    when(
+      () => authCubit.state,
+    ).thenReturn(const AuthState.authenticated(_testUser));
 
     sl.registerLazySingleton<LastAppliedListingDiscoveryRepository>(
       () => const NoopLastAppliedListingDiscoveryRepository(),
@@ -156,41 +152,38 @@ void main() {
     await sl.reset();
   });
 
-  testWidgets(
-    'account deletion signal dispatches an extra listings reload',
-    (tester) async {
-      whenListen(
-        authCubit,
-        Stream.fromIterable([
-          const AuthState.unauthenticated(publicFeedRefreshNonce: 1),
-        ]),
-        initialState: const AuthState.authenticated(_testUser),
-      );
+  testWidgets('account deletion signal dispatches an extra listings reload', (
+    tester,
+  ) async {
+    whenListen(
+      authCubit,
+      Stream.fromIterable([
+        const AuthState.unauthenticated(publicFeedRefreshNonce: 1),
+      ]),
+      initialState: const AuthState.authenticated(_testUser),
+    );
 
-      await tester.pumpWidget(
-        _host(
-          listingsBloc: listingsBloc,
-          authCubit: authCubit,
-          favoritesCubit: favoritesCubit,
-          sellersRepo: sellersRepo,
-          messagingRepo: messagingRepo,
-        ),
-      );
-      await tester.pump();
-      await tester.pump();
+    await tester.pumpWidget(
+      _host(
+        listingsBloc: listingsBloc,
+        authCubit: authCubit,
+        favoritesCubit: favoritesCubit,
+        sellersRepo: sellersRepo,
+        messagingRepo: messagingRepo,
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
 
-      verify(() => listingsBloc.add(const ListingsRequested())).called(2);
-    },
-  );
+    verify(() => listingsBloc.add(const ListingsRequested())).called(2);
+  });
 
   testWidgets(
     'sign-out without account deletion only seeds the initial feed load',
     (tester) async {
       whenListen(
         authCubit,
-        Stream.fromIterable([
-          const AuthState.unauthenticated(),
-        ]),
+        Stream.fromIterable([const AuthState.unauthenticated()]),
         initialState: const AuthState.authenticated(_testUser),
       );
 

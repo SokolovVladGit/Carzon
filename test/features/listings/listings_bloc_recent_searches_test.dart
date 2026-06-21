@@ -126,6 +126,7 @@ void main() {
         bodyType: null,
         fuelType: null,
         transmissionType: null,
+        drivetrain: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.any,
       ),
     ),

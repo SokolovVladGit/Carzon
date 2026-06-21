@@ -24,6 +24,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../helpers/carzon_app_widget_test_stubs.dart';
+
 class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
 class _MockFavoritesCubit extends MockCubit<FavoritesState>
@@ -122,6 +124,7 @@ void main() {
     sl.registerSingleton<MessagingUnreadSummaryCubit>(
       messagingUnreadSummaryCubit,
     );
+    registerCarzonAppLocalHistoryCubitStubs(sl);
     sl.registerLazySingleton<ThemeModeLocalDataSource>(
       () => _InMemoryThemeModeLocalDataSource(),
     );

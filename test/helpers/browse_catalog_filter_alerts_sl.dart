@@ -31,6 +31,7 @@ NotificationPreferences _defaultPrefs() {
     globalEnabled: false,
     messagesEnabled: true,
     filterAlertsEnabled: false,
+    priceDropsEnabled: false,
     createdAt: DateTime.utc(2026, 1, 1),
     updatedAt: DateTime.utc(2026, 1, 2),
   );
@@ -128,6 +129,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
       globalEnabled: any(named: 'globalEnabled'),
       messagesEnabled: any(named: 'messagesEnabled'),
       filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+      priceDropsEnabled: any(named: 'priceDropsEnabled'),
     ),
   ).thenAnswer((inv) async {
     return Success(
@@ -136,6 +138,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
         globalEnabled: inv.namedArguments[#globalEnabled] as bool,
         messagesEnabled: inv.namedArguments[#messagesEnabled] as bool,
         filterAlertsEnabled: inv.namedArguments[#filterAlertsEnabled] as bool,
+    priceDropsEnabled: false,
         createdAt: DateTime.utc(2026, 1, 1),
         updatedAt: DateTime.utc(2026, 1, 2),
       ),

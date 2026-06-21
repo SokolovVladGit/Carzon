@@ -119,6 +119,7 @@ NotificationPreferences _prefsAllOn() => NotificationPreferences(
   globalEnabled: true,
   messagesEnabled: true,
   filterAlertsEnabled: true,
+  priceDropsEnabled: false,
   createdAt: DateTime.utc(2026, 5, 1),
   updatedAt: DateTime.utc(2026, 5, 2),
 );
@@ -281,6 +282,7 @@ void main() {
           globalEnabled: any(named: 'globalEnabled'),
           messagesEnabled: any(named: 'messagesEnabled'),
           filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+          priceDropsEnabled: any(named: 'priceDropsEnabled'),
         ),
       );
 

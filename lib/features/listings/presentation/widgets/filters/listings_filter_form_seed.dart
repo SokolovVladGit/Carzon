@@ -24,6 +24,7 @@ class ListingsFilterFormSeed {
     required this.bodyType,
     required this.fuelType,
     required this.transmissionType,
+    required this.drivetrain,
     required this.priceCurrencyFilter,
   });
 
@@ -43,6 +44,7 @@ class ListingsFilterFormSeed {
       bodyType: state.bodyTypeFilter,
       fuelType: state.fuelTypeFilter,
       transmissionType: state.transmissionTypeFilter,
+      drivetrain: state.drivetrainFilter,
       priceCurrencyFilter: state.priceCurrencyFilter,
     );
   }
@@ -61,5 +63,6 @@ class ListingsFilterFormSeed {
   final ListingBodyType? bodyType;
   final ListingFuelType? fuelType;
   final ListingTransmissionType? transmissionType;
+  final ListingDrivetrain? drivetrain;
   final ListingPriceCurrencyFilter priceCurrencyFilter;
 }

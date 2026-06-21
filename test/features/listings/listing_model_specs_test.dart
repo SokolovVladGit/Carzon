@@ -117,25 +117,28 @@ void main() {
       }
     });
 
-    test('toJson echoes transmission_type as dual_clutch for dualClutch enum', () {
-      final m = ListingModel(
-        id: 'a',
-        title: 't',
-        make: 'm',
-        model: 'x',
-        year: 2019,
-        priceEur: 1,
-        mileageKm: 1,
-        type: ListingType.sale,
-        city: 'c',
-        marketRegion: MarketRegion.moldova,
-        transmissionType: ListingTransmissionType.dualClutch,
-        createdAt: DateTime.utc(2026),
-        contactPhone: '+123',
-      );
+    test(
+      'toJson echoes transmission_type as dual_clutch for dualClutch enum',
+      () {
+        final m = ListingModel(
+          id: 'a',
+          title: 't',
+          make: 'm',
+          model: 'x',
+          year: 2019,
+          priceEur: 1,
+          mileageKm: 1,
+          type: ListingType.sale,
+          city: 'c',
+          marketRegion: MarketRegion.moldova,
+          transmissionType: ListingTransmissionType.dualClutch,
+          createdAt: DateTime.utc(2026),
+          contactPhone: '+123',
+        );
 
-      final out = m.toJson();
-      expect(out['transmission_type'], 'dual_clutch');
-    });
+        final out = m.toJson();
+        expect(out['transmission_type'], 'dual_clutch');
+      },
+    );
   });
 }

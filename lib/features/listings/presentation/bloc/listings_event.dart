@@ -85,6 +85,7 @@ class ListingsFiltersApplied extends ListingsEvent {
     required this.bodyType,
     required this.fuelType,
     required this.transmissionType,
+    required this.drivetrain,
     required this.priceCurrencyFilter,
   });
 
@@ -102,6 +103,7 @@ class ListingsFiltersApplied extends ListingsEvent {
   final ListingBodyType? bodyType;
   final ListingFuelType? fuelType;
   final ListingTransmissionType? transmissionType;
+  final ListingDrivetrain? drivetrain;
   final ListingPriceCurrencyFilter priceCurrencyFilter;
 
   @override
@@ -120,6 +122,7 @@ class ListingsFiltersApplied extends ListingsEvent {
     bodyType,
     fuelType,
     transmissionType,
+    drivetrain,
     priceCurrencyFilter,
   ];
 }

@@ -149,6 +149,7 @@ void main() {
         bodyType: null,
         fuelType: null,
         transmissionType: null,
+        drivetrain: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.any,
       ),
     ),
@@ -196,6 +197,7 @@ void main() {
         bodyType: null,
         fuelType: null,
         transmissionType: null,
+        drivetrain: null,
         priceCurrencyFilter: ListingPriceCurrencyFilter.usd,
       ),
     ),
@@ -238,6 +240,7 @@ void main() {
           bodyType: null,
           fuelType: null,
           transmissionType: null,
+          drivetrain: null,
           priceCurrencyFilter: ListingPriceCurrencyFilter.eur,
         ),
       )
@@ -281,6 +284,7 @@ void main() {
           bodyType: null,
           fuelType: null,
           transmissionType: null,
+          drivetrain: null,
           priceCurrencyFilter: ListingPriceCurrencyFilter.any,
         ),
       )
@@ -325,6 +329,7 @@ void main() {
           bodyType: null,
           fuelType: null,
           transmissionType: null,
+          drivetrain: null,
           priceCurrencyFilter: ListingPriceCurrencyFilter.any,
         ),
       );
@@ -823,6 +828,7 @@ void main() {
           bodyType: null,
           fuelType: ListingFuelType.hybrid,
           transmissionType: ListingTransmissionType.dualClutch,
+          drivetrain: null,
           priceCurrencyFilter: ListingPriceCurrencyFilter.any,
         ),
       ),
@@ -832,6 +838,46 @@ void main() {
                 as ListingsQuery;
         expect(q.fuelType, ListingFuelType.hybrid);
         expect(q.transmissionType, ListingTransmissionType.dualClutch);
+      },
+    );
+
+    blocTest<ListingsBloc, ListingsState>(
+      'ListingsFiltersApplied maps drivetrain into query',
+      setUp: () {
+        when(
+          () => repo.getListings(any()),
+        ).thenAnswer((_) async => const Success([]));
+      },
+      build: () => ListingsBloc(
+        getListings: GetListings(repo),
+        lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+        recordRecentSearch: NoopRecordRecentSearch(),
+      ),
+      act: (b) => b.add(
+        const ListingsFiltersApplied(
+          make: null,
+          model: null,
+          minYear: null,
+          maxYear: null,
+          minPrice: null,
+          maxPrice: null,
+          maxMileage: null,
+          city: null,
+          typeFilter: ListingTypeFilter.any,
+          sort: ListingSortOption.newestFirst,
+          regionFilter: MarketRegionFilter.both,
+          bodyType: null,
+          fuelType: null,
+          transmissionType: null,
+          drivetrain: ListingDrivetrain.fourWheel,
+          priceCurrencyFilter: ListingPriceCurrencyFilter.any,
+        ),
+      ),
+      verify: (_) {
+        final q =
+            verify(() => repo.getListings(captureAny())).captured.single
+                as ListingsQuery;
+        expect(q.drivetrain, ListingDrivetrain.fourWheel);
       },
     );
 
@@ -850,6 +896,7 @@ void main() {
       seed: () => const ListingsState(
         fuelTypeFilter: ListingFuelType.diesel,
         transmissionTypeFilter: ListingTransmissionType.manual,
+        drivetrainFilter: ListingDrivetrain.fwd,
       ),
       act: (b) => b.add(const ListingsFiltersCleared()),
       verify: (_) {
@@ -858,6 +905,7 @@ void main() {
                 as ListingsQuery;
         expect(q.fuelType, isNull);
         expect(q.transmissionType, isNull);
+        expect(q.drivetrain, isNull);
       },
     );
   });

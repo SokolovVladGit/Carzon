@@ -14,10 +14,8 @@ Future<ListingSortOption?> showListingsFilterSortPickSheet({
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (sheetCtx) => ListingsFilterSortPickSheet(
-      appL10n: l10n,
-      selected: selected,
-    ),
+    builder: (sheetCtx) =>
+        ListingsFilterSortPickSheet(appL10n: l10n, selected: selected),
   );
 }
 
@@ -39,12 +37,7 @@ class ListingsFilterSortPickSheet extends StatelessWidget {
     final br = theme.brightness;
 
     final items = ListingSortOption.values
-        .map(
-          (e) => (
-            value: e,
-            label: listingFilterSortOptionLabel(appL10n, e),
-          ),
-        )
+        .map((e) => (value: e, label: listingFilterSortOptionLabel(appL10n, e)))
         .toList(growable: false);
 
     return SafeArea(

@@ -65,7 +65,29 @@ expected AS (
             ('20260627120000', 'vin_phase2j_buyer_report_rpc',            'VIN'),
             ('20260628120000', 'vin_phase2k_public_nhtsa_basic_decode',   'VIN'),
             ('20260629120000', 'vin_report_v2b_nhtsa_expanded_summary',   'VIN'),
-            ('20260630120000', 'public_contact_projection_hardening',     'contact hardening')
+            ('20260630120000', 'public_contact_projection_hardening',     'contact hardening'),
+            ('20260701120000', 'listing_view_counting',                   'listings'),
+            ('20260702120000', 'support_conversations',                   'messaging'),
+            ('20260703120000', 'chat_attachments_foundation',             'messaging'),
+            ('20260704120000', 'chat_attachments_size_hardening',           'messaging'),
+            ('20260705120000', 'listing_discovery_search_title_make_model','listings'),
+            ('20260706120000', 'vehicle_model_data_foundation',             'official data'),
+            ('20260706123000', 'schedule_process_model_data_jobs_cron',     'official data'),
+            ('20260706130000', 'model_data_buyer_rpc_volatile',             'official data'),
+            ('20260706133000', 'model_data_buyer_rpc_safe_summary',         'official data'),
+            ('20260707120000', 'vehicle_recall_data_foundation',            'official data'),
+            ('20260707123000', 'schedule_process_recall_data_jobs_cron',    'official data'),
+            ('20260708120000', 'vin_create_rpc_explicit_enqueue',           'VIN'),
+            ('20260709120000', 'buyer_official_data_pending_signals',       'official data'),
+            ('20260710120000', 'model_fetch_vin_identity_hints',            'official data'),
+            ('20260711120000', 'listing_transmission_type',                 'listings'),
+            ('20260712120000', 'discovery_fuel_transmission_filter_alert',  'filter alerts'),
+            ('20260713120000', 'delete_own_account',                        'account privacy'),
+            ('20260713130000', 'delete_own_account_storage_delete_bypass',  'account privacy'),
+            ('20260714120000', 'messaging_user_blocks_and_reports',         'messaging'),
+            ('20260801120000', 'saved_searches_table_and_backfill',         'filter alerts'),
+            ('20260802120000', 'price_drop_favorite_notifications',         'notifications'),
+            ('20260803120000', 'discovery_drivetrain_filter_alert',         'filter alerts')
            ) AS t(version, migration_name, category)
 ),
 hosted AS (
@@ -120,7 +142,7 @@ info_rows AS (
            'parity_check_scope'::text AS migration_name,
            'meta'::text AS category,
            'INFO'::text AS status,
-           'Read-only parity check for 45 repo migrations under supabase/migrations/. '
+           'Read-only parity check for 67 repo migrations under supabase/migrations/. '
            || 'Compares hosted supabase_migrations.schema_migrations by version only. '
            || 'Staging preferred; safe on a single production project (SELECT only).'::text
            AS details,

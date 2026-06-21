@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
+import 'package:carzon/features/notifications/services/price_drop_notification_public_copy.dart';
 import 'package:carzon/features/notifications/services/filter_alert_listing_navigation_coordinator.dart';
 import 'package:carzon/features/notifications/services/filter_alert_notification_public_copy.dart';
 import 'package:carzon/features/notifications/services/message_conversation_navigation_coordinator.dart';
@@ -37,6 +38,13 @@ class _RecordingDisplay implements MessageForegroundNotificationDisplay {
     shownListingIds.add(listingId);
     titles.add(FilterAlertNotificationPublicCopy.title(AppLocalePreference.ru));
     bodies.add(FilterAlertNotificationPublicCopy.body(AppLocalePreference.ru));
+  }
+
+  @override
+  Future<void> showPriceDropForegroundNotification(String listingId) async {
+    shownListingIds.add(listingId);
+    titles.add(PriceDropNotificationPublicCopy.title(AppLocalePreference.ru));
+    bodies.add(PriceDropNotificationPublicCopy.body(AppLocalePreference.ru));
   }
 }
 
@@ -323,6 +331,116 @@ PUSH_NOTIFICATIONS_ENABLED=true
       await authEmitter.close();
     },
   );
+
+  test('valid foreground price_drop shows generic Russian copy only', () async {
+    dotenv.testLoad(
+      fileInput: '''
+SUPABASE_URL=https://x.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=true
+''',
+    );
+    var auth = AuthState.authenticated(user);
+    final authEmitter = StreamController<AuthState>.broadcast();
+    final display = _RecordingDisplay();
+
+    final coordinator = MessageConversationNavigationCoordinator(
+      authStateStream: authEmitter.stream,
+      authStateSnapshot: () => auth,
+      navigateToConversation: (_) {},
+    );
+    final listingCoordinator = FilterAlertListingNavigationCoordinator(
+      authStateStream: authEmitter.stream,
+      authStateSnapshot: () => auth,
+      navigateToListingDetail: (_) {},
+    );
+
+    final opened = StreamController<RemoteMessage>.broadcast();
+    final presenter = MessageForegroundNotificationPresenter(
+      navigationCoordinator: coordinator,
+      listingNavigationCoordinator: listingCoordinator,
+      display: display,
+      foregroundMessageStream: opened.stream,
+      firebaseAppReady: () => true,
+    );
+
+    await presenter.start();
+    opened.add(
+      RemoteMessage(
+        data: {
+          'type': 'price_drop',
+          'listing_id': listingOkId,
+          'old_price_eur': '100000',
+          'new_price_eur': '90000',
+          'title': 'Secret title',
+        },
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+
+    expect(display.shownListingIds, [listingOkId]);
+    expect(display.shownConversationIds, isEmpty);
+    expect(display.titles, [
+      PriceDropNotificationPublicCopy.title(AppLocalePreference.ru),
+    ]);
+    expect(display.bodies, [
+      PriceDropNotificationPublicCopy.body(AppLocalePreference.ru),
+    ]);
+    expect(display.bodies.join(), isNot(contains('90000')));
+    expect(display.bodies.join(), isNot(contains('Secret')));
+
+    await presenter.dispose();
+    await coordinator.dispose();
+    await listingCoordinator.dispose();
+    await opened.close();
+    await authEmitter.close();
+  });
+
+  test('malformed price_drop listing_id ignored', () async {
+    dotenv.testLoad(
+      fileInput: '''
+SUPABASE_URL=https://x.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=true
+''',
+    );
+    var auth = AuthState.authenticated(user);
+    final authEmitter = StreamController<AuthState>.broadcast();
+    final display = _RecordingDisplay();
+
+    final coordinator = MessageConversationNavigationCoordinator(
+      authStateStream: authEmitter.stream,
+      authStateSnapshot: () => auth,
+      navigateToConversation: (_) {},
+    );
+    final listingCoordinator = FilterAlertListingNavigationCoordinator(
+      authStateStream: authEmitter.stream,
+      authStateSnapshot: () => auth,
+      navigateToListingDetail: (_) {},
+    );
+
+    final opened = StreamController<RemoteMessage>.broadcast();
+    final presenter = MessageForegroundNotificationPresenter(
+      navigationCoordinator: coordinator,
+      listingNavigationCoordinator: listingCoordinator,
+      display: display,
+      foregroundMessageStream: opened.stream,
+      firebaseAppReady: () => true,
+    );
+
+    await presenter.start();
+    opened.add(
+      RemoteMessage(data: {'type': 'price_drop', 'listing_id': 'bad'}),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(display.shownListingIds, isEmpty);
+
+    await presenter.dispose();
+    await coordinator.dispose();
+    await listingCoordinator.dispose();
+    await opened.close();
+    await authEmitter.close();
+  });
 
   test('malformed filter_alert listing_id ignored', () async {
     dotenv.testLoad(

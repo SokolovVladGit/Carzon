@@ -74,9 +74,7 @@ class CategoryChip extends StatelessWidget {
   static bool isAllBodyChip({
     required String chipId,
     required String? svgAssetPath,
-  }) =>
-      chipId == 'all' &&
-      (svgAssetPath?.endsWith('all_bodies.svg') ?? false);
+  }) => chipId == 'all' && (svgAssetPath?.endsWith('all_bodies.svg') ?? false);
 
   @visibleForTesting
   static double get allIconSize => _allBodiesIconSize;

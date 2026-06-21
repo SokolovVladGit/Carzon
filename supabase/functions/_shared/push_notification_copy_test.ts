@@ -5,6 +5,7 @@ import {
   filterAlertNotificationCopyForLocale,
   messageNotificationCopyForLocale,
   normalizePushLocale,
+  priceDropNotificationCopyForLocale,
 } from "./push_notification_copy.ts";
 
 Deno.test("normalizePushLocale supports ro and ru prefixes", () => {
@@ -55,5 +56,24 @@ Deno.test("filter alert copy by locale", () => {
   assertEquals(
     filterAlertNotificationCopyForLocale("xx").body,
     "Есть объявление по вашему сохранённому фильтру. Откройте, чтобы посмотреть.",
+  );
+});
+
+Deno.test("price drop copy by locale", () => {
+  assertEquals(
+    priceDropNotificationCopyForLocale("ru").title,
+    "Снижение цены",
+  );
+  assertEquals(
+    priceDropNotificationCopyForLocale("ru").body,
+    "Цена на сохранённый автомобиль снизилась.",
+  );
+  assertEquals(
+    priceDropNotificationCopyForLocale("ro").title,
+    "Reducere de preț",
+  );
+  assertEquals(
+    priceDropNotificationCopyForLocale("ro").body,
+    "Prețul anunțului salvat a scăzut.",
   );
 });

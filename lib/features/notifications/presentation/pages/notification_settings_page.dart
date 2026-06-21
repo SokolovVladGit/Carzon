@@ -200,6 +200,13 @@ class _NotificationSettingsContent extends StatelessWidget {
             filterAlertsEnabled: prefs.filterAlertsEnabled,
           ),
           const SizedBox(height: 12),
+          _PriceDropsNotificationsCard(
+            pushOn: pushOn,
+            busy: state.busy,
+            globalOn: globalOn,
+            priceDropsEnabled: prefs.priceDropsEnabled,
+          ),
+          const SizedBox(height: 12),
           NotificationSettingsSectionCard(
             key: const ValueKey<String>('notification_settings_delivery_card'),
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -566,6 +573,41 @@ class _FilterAlertsNotificationsCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PriceDropsNotificationsCard extends StatelessWidget {
+  const _PriceDropsNotificationsCard({
+    required this.pushOn,
+    required this.busy,
+    required this.globalOn,
+    required this.priceDropsEnabled,
+  });
+
+  final bool pushOn;
+  final bool busy;
+  final bool globalOn;
+  final bool priceDropsEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return NotificationSettingsSectionCard(
+      key: const ValueKey<String>('notification_settings_price_drops_card'),
+      child: _NotificationSwitchRow(
+        icon: Icons.trending_down_rounded,
+        title: l10n.notificationSettingsPriceDropsTitle,
+        subtitle: globalOn
+            ? l10n.notificationSettingsPriceDropsSubtitle
+            : l10n.notificationSettingsPriceDropsNeedsGlobal,
+        value: priceDropsEnabled && globalOn,
+        onChanged: busy || !pushOn || !globalOn
+            ? null
+            : (v) => context
+                  .read<NotificationSettingsCubit>()
+                  .setPriceDropsEnabled(v),
       ),
     );
   }

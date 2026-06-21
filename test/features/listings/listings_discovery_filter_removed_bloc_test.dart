@@ -287,4 +287,35 @@ void main() {
       expect(q.transmissionType, isNull);
     },
   );
+
+  blocTest<ListingsBloc, ListingsState>(
+    'ListingsDiscoveryFilterRemoved drivetrain clears drivetrain only',
+    setUp: () {
+      when(
+        () => repo.getListings(any()),
+      ).thenAnswer((_) async => const Success([]));
+    },
+    build: () => ListingsBloc(
+      getListings: GetListings(repo),
+      lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
+      recordRecentSearch: NoopRecordRecentSearch(),
+    ),
+    seed: () => const ListingsState(
+      status: ListingsStatus.success,
+      drivetrainFilter: ListingDrivetrain.awd,
+      fuelTypeFilter: ListingFuelType.hybrid,
+    ),
+    act: (b) => b.add(
+      const ListingsDiscoveryFilterRemoved(
+        ListingsDiscoveryChipKind.drivetrain,
+      ),
+    ),
+    verify: (_) {
+      final q =
+          verify(() => repo.getListings(captureAny())).captured.single
+              as ListingsQuery;
+      expect(q.drivetrain, isNull);
+      expect(q.fuelType, ListingFuelType.hybrid);
+    },
+  );
 }

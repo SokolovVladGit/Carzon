@@ -53,7 +53,10 @@ void main() {
 
     test('Daihatsu resolves to packaged SVG slug', () {
       expect(getBrandIconPath('Daihatsu'), endsWith('/daihatsu.svg'));
-      expect(isBrandIconDefaultAssetPath(getBrandIconPath('Daihatsu')), isFalse);
+      expect(
+        isBrandIconDefaultAssetPath(getBrandIconPath('Daihatsu')),
+        isFalse,
+      );
     });
 
     test('newly activated vector brands resolve to packaged SVG slugs', () {

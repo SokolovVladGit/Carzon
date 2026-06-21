@@ -359,7 +359,9 @@ class _BuyerVinReportStateBody extends StatelessWidget {
 }
 
 /// Standard buyer limitation bullets — always the same concise set in the report.
-const List<String> kBuyerVinReportStandardLimitationCodes = ['basic_decode_only'];
+const List<String> kBuyerVinReportStandardLimitationCodes = [
+  'basic_decode_only',
+];
 
 /// Premium spec-sheet sections below the hero (NHTSA groups, limitations, footer).
 class _BuyerVinReportSpecSheetBody extends StatelessWidget {
@@ -444,4 +446,3 @@ class _NhtsaSpecSheetSection extends StatelessWidget {
     );
   }
 }
-

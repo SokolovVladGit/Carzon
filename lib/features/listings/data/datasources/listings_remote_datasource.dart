@@ -137,6 +137,12 @@ view_count
           listingTransmissionTypeToDbValue(query.transmissionType!),
         );
       }
+      if (query.drivetrain != null) {
+        filterQuery = filterQuery.eq(
+          'drivetrain',
+          listingDrivetrainToDbValue(query.drivetrain!),
+        );
+      }
       // Explicit status filter: callers (e.g. the public feed) must pass
       // `active` so owners do not see their own non-active listings mixed in
       // via the owner-read RLS policy. Left null by My Listings.

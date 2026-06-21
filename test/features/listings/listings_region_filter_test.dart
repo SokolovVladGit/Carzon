@@ -35,6 +35,7 @@ ListingsQuery _queryFromState(ListingsState state) {
     bodyType: state.bodyTypeFilter,
     fuelType: state.fuelTypeFilter,
     transmissionType: state.transmissionTypeFilter,
+    drivetrain: state.drivetrainFilter,
     typeIn: state.typeFilter.asListingTypes,
     sort: state.sortOption,
     priceCurrencyFilter: state.priceCurrencyFilter,

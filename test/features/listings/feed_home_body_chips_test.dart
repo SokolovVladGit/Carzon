@@ -40,7 +40,8 @@ void main() {
         'pickup',
         'coupe',
       };
-      for (final chipId in kListingBodyTypeQuickFilterIconOpticalScaleByChipId.keys) {
+      for (final chipId
+          in kListingBodyTypeQuickFilterIconOpticalScaleByChipId.keys) {
         expect(feedChipIds, contains(chipId), reason: chipId);
       }
     });

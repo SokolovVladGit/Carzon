@@ -23,6 +23,7 @@ void main() {
       bodyType: ListingBodyType.suv,
       fuelType: ListingFuelType.hybrid,
       transmissionType: ListingTransmissionType.automatic,
+      drivetrain: ListingDrivetrain.rwd,
       priceCurrencyFilter: ListingPriceCurrencyFilter.usd,
     );
     final c = listingDiscoveryCriteriaFromFilterApply(
@@ -36,6 +37,7 @@ void main() {
     expect(c.bodyType, ListingBodyType.suv);
     expect(c.fuelType, ListingFuelType.hybrid);
     expect(c.transmissionType, ListingTransmissionType.automatic);
+    expect(c.drivetrain, ListingDrivetrain.rwd);
     expect(c.maxPrice, 20000);
     expect(c.priceCurrencyFilter, ListingPriceCurrencyFilter.usd);
   });

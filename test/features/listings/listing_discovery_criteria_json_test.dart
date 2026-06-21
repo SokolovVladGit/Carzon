@@ -117,6 +117,34 @@ void main() {
       expect(encoded['transmissionType'], 'dual_clutch');
     });
 
+    test('drivetrain round-trip with four_wheel wire', () {
+      assertRoundTrip(
+        const ListingDiscoveryCriteria(drivetrain: ListingDrivetrain.fourWheel),
+      );
+      final encoded = listingDiscoveryCriteriaToJson(
+        const ListingDiscoveryCriteria(drivetrain: ListingDrivetrain.fourWheel),
+      );
+      expect(encoded['drivetrain'], 'four_wheel');
+      final decoded = listingDiscoveryCriteriaFromJson(encoded);
+      expect(decoded!.drivetrain, ListingDrivetrain.fourWheel);
+    });
+
+    test('old JSON without drivetrain key decodes with null drivetrain', () {
+      final decoded = listingDiscoveryCriteriaFromJson(<String, dynamic>{
+        ListingDiscoveryCriteriaJsonSchema.schemaVersionKey: 1,
+        'make': 'Toyota',
+      });
+      expect(decoded!.drivetrain, isNull);
+    });
+
+    test('unknown drivetrain wire becomes null (safe)', () {
+      final decoded = listingDiscoveryCriteriaFromJson(<String, dynamic>{
+        ListingDiscoveryCriteriaJsonSchema.schemaVersionKey: 1,
+        'drivetrain': 'hover',
+      });
+      expect(decoded!.drivetrain, isNull);
+    });
+
     test('old JSON without fuel/transmission keys decodes with nulls', () {
       final decoded = listingDiscoveryCriteriaFromJson(<String, dynamic>{
         ListingDiscoveryCriteriaJsonSchema.schemaVersionKey: 1,

@@ -13,4 +13,7 @@ class NoopMessageForegroundNotificationDisplay
 
   @override
   Future<void> showFilterAlertForegroundNotification(String _) async {}
+
+  @override
+  Future<void> showPriceDropForegroundNotification(String _) async {}
 }

@@ -446,13 +446,185 @@ check_rows AS (
            END,
            'Profile/menu unread badge'
 
+    UNION ALL
+
+    SELECT 48, 'messaging', 'column_conversations_conversation_kind',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM col_exists c
+                     WHERE c.table_name = 'conversations'
+                       AND c.column_name = 'conversation_kind'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Support vs listing threads (settings support chat)'
+
+    UNION ALL
+
+    SELECT 49, 'messaging', 'rpc_get_or_create_support_conversation',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'get_or_create_support_conversation'
+                ) THEN 'STOP'
+             WHEN COALESCE(
+                    (SELECT ok FROM fn_auth_exec f
+                      WHERE f.proname = 'get_or_create_support_conversation'),
+                    false
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Settings → Contact support thread'
+
+    UNION ALL
+
+    SELECT 491, 'messaging', 'table_message_attachments',
+           CASE WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'message_attachments')
+                THEN 'PASS' ELSE 'STOP' END,
+           'Chat attachment metadata (RPC-only writes)'
+
+    UNION ALL
+
+    SELECT 492, 'messaging', 'rpc_send_message_with_attachment',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'send_message_with_attachment'
+                ) THEN 'STOP'
+             WHEN COALESCE(
+                    (SELECT ok FROM fn_auth_exec f
+                      WHERE f.proname = 'send_message_with_attachment'),
+                    false
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Send chat message with attachment metadata'
+
+    UNION ALL
+
+    SELECT 493, 'messaging', 'storage_bucket_chat_attachments',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM storage.buckets b
+                     WHERE b.id = 'chat-attachments'
+                ) THEN 'PASS'
+             ELSE 'WARN'
+           END,
+           'Private chat-attachments bucket (WARN if migrations not fully applied)'
+
+    UNION ALL
+
+    SELECT 494, 'messaging', 'table_user_blocks',
+           CASE WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'user_blocks')
+                THEN 'PASS' ELSE 'STOP' END,
+           'User block safety (RPC-only mutations)'
+
+    UNION ALL
+
+    SELECT 495, 'messaging', 'table_user_reports',
+           CASE WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'user_reports')
+                THEN 'PASS' ELSE 'STOP' END,
+           'User report safety (insert via report_user RPC only)'
+
+    UNION ALL
+
+    SELECT 496, 'messaging', 'rpc_block_user',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'block_user')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'block_user'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Thread safety overflow → block peer'
+
+    UNION ALL
+
+    SELECT 497, 'messaging', 'rpc_unblock_user',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'unblock_user')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'unblock_user'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Blocked users list → unblock'
+
+    UNION ALL
+
+    SELECT 498, 'messaging', 'rpc_list_blocked_users',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'list_blocked_users')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'list_blocked_users'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Settings → blocked users screen'
+
+    UNION ALL
+
+    SELECT 499, 'messaging', 'rpc_report_user',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'report_user')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'report_user'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Thread safety overflow → report peer'
+
+    UNION ALL
+
+    SELECT 4991, 'messaging', 'fn_carzon_users_are_blocked',
+           CASE
+             WHEN EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'carzon_users_are_blocked')
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Internal block gate helper (send/enqueue paths depend on it)'
+
+    UNION ALL
+
+    SELECT 4992, 'messaging', 'fn_carzon_messaging_peer_from_conversation',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'carzon_messaging_peer_from_conversation'
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Internal peer resolver for block/report RPCs'
+
+    UNION ALL
+
+    SELECT 4993, 'messaging', 'fn_enqueue_message_notification_event',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'enqueue_message_notification_event'
+                ) THEN 'PASS'
+             ELSE 'WARN'
+           END,
+           'Message push enqueue trigger function (must include block gate after M0.3 migration)'
+
+    -- account privacy ---------------------------------------------------------
+    UNION ALL
+
+    SELECT 4995, 'account privacy', 'rpc_delete_own_account',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'delete_own_account')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'delete_own_account'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Settings → delete account (Edge Function also calls this RPC)'
+
     -- filter alerts -----------------------------------------------------------
     UNION ALL
 
     SELECT 50, 'filter alerts', 'table_filter_alert_settings',
            CASE WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'filter_alert_settings')
-                THEN 'PASS' ELSE 'STOP' END,
-           'Direct PostgREST CRUD from FilterAlertsRemoteDataSource'
+                THEN 'PASS' ELSE 'WARN' END,
+           'Legacy v1 table retained for backfill only — active UX uses saved_searches'
 
     UNION ALL
 
@@ -465,8 +637,137 @@ check_rows AS (
                            'user_id', 'criteria', 'notifications_enabled',
                            'created_at', 'updated_at'
                        )
-                ) = 5 THEN 'PASS' ELSE 'STOP' END,
-           'Client select/upsert columns'
+                ) = 5 THEN 'PASS' ELSE 'WARN' END,
+           'Legacy filter_alert_settings columns (backfill source for saved_searches v2)'
+
+    UNION ALL
+
+    SELECT 511, 'filter alerts', 'table_saved_searches',
+           CASE WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'saved_searches')
+                THEN 'PASS' ELSE 'STOP' END,
+           'P1 M1.4 active saved-search model (up to 5 per user)'
+
+    UNION ALL
+
+    SELECT 512, 'filter alerts', 'saved_searches_core_columns',
+           CASE WHEN (
+                    SELECT COUNT(*)
+                      FROM col_exists c
+                     WHERE c.table_name = 'saved_searches'
+                       AND c.column_name IN (
+                           'id', 'user_id', 'name', 'criteria', 'alerts_enabled',
+                           'created_at', 'updated_at', 'last_notified_at'
+                       )
+                ) = 8 THEN 'PASS' ELSE 'STOP' END,
+           'saved_searches columns for SavedSearchesCubit / FilterAlertsRemoteDataSource'
+
+    UNION ALL
+
+    SELECT 513, 'filter alerts', 'meta_saved_searches_v2_active_model', 'INFO',
+           'Active client UX: saved_searches RPCs (list/create/update/delete/set alerts). '
+           || 'filter_alert_settings is legacy/backfill-only after 20260801120000.'
+
+    UNION ALL
+
+    SELECT 514, 'filter alerts', 'rpc_list_my_saved_searches',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'list_my_saved_searches')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'list_my_saved_searches'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Load saved searches manager screen'
+
+    UNION ALL
+
+    SELECT 515, 'filter alerts', 'rpc_create_saved_search',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'create_saved_search')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'create_saved_search'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Catalog bell → save current discovery criteria'
+
+    UNION ALL
+
+    SELECT 516, 'filter alerts', 'rpc_update_saved_search',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'update_saved_search')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'update_saved_search'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Edit saved search name/criteria/alerts'
+
+    UNION ALL
+
+    SELECT 517, 'filter alerts', 'rpc_delete_saved_search',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'delete_saved_search')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'delete_saved_search'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Remove saved search row'
+
+    UNION ALL
+
+    SELECT 518, 'filter alerts', 'rpc_set_saved_search_alerts_enabled',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'set_saved_search_alerts_enabled'
+                ) THEN 'STOP'
+             WHEN COALESCE(
+                    (SELECT ok FROM fn_auth_exec f
+                      WHERE f.proname = 'set_saved_search_alerts_enabled'),
+                    false
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Toggle push alerts per saved search'
+
+    UNION ALL
+
+    SELECT 519, 'filter alerts', 'rpc_find_saved_search_by_criteria',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'find_saved_search_by_criteria'
+                ) THEN 'STOP'
+             WHEN COALESCE(
+                      (SELECT ok FROM fn_auth_exec f
+                        WHERE f.proname = 'find_saved_search_by_criteria'),
+                      false
+                  ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Catalog bell duplicate detection by criteria JSON'
+
+    UNION ALL
+
+    SELECT 520, 'filter alerts', 'fn_listing_matches_saved_discovery_criteria_drivetrain',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'listing_matches_saved_discovery_criteria'
+                ) THEN 'STOP'
+             WHEN EXISTS (
+                    SELECT 1
+                      FROM pg_proc p
+                      JOIN pg_namespace n ON n.oid = p.pronamespace
+                     WHERE n.nspname = 'public'
+                       AND p.proname = 'listing_matches_saved_discovery_criteria'
+                       AND pg_get_functiondef(p.oid) ILIKE '%drivetrain%'
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Saved-search/filter-alert matcher supports optional drivetrain criteria key'
 
     UNION ALL
 
@@ -476,9 +777,9 @@ check_rows AS (
                     SELECT 1 FROM fn_exists f
                      WHERE f.proname = 'claim_filter_alert_notification_events_for_processing'
                 ) THEN 'PASS'
-             ELSE 'WARN'
+             ELSE 'STOP'
            END,
-           'Background worker RPC (live filter push only; app settings work without it)'
+           'Background worker RPC (filter-alert Edge worker; saved_searches enqueue path)'
 
     UNION ALL
 
@@ -560,8 +861,159 @@ check_rows AS (
 
     SELECT 66, 'notifications', 'table_notification_delivery_events',
            CASE WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'notification_delivery_events')
-                THEN 'PASS' ELSE 'WARN' END,
-           'Message/filter push queue — WARN if absent (in-app chat still works)'
+                THEN 'PASS' ELSE 'STOP' END,
+           'Message/filter/price-drop push queue — required for live notification delivery'
+
+    UNION ALL
+
+    SELECT 681, 'notifications', 'column_notification_preferences_price_drops_enabled',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM col_exists c
+                     WHERE c.table_name = 'notification_preferences'
+                       AND c.column_name = 'price_drops_enabled'
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Opt-in price drop alerts toggle (default false after 20260802120000)'
+
+    UNION ALL
+
+    SELECT 682, 'notifications', 'event_type_price_drop_favorite',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1
+                      FROM pg_constraint c
+                      JOIN pg_class t ON t.oid = c.conrelid
+                      JOIN pg_namespace n ON n.oid = t.relnamespace
+                     WHERE n.nspname = 'public'
+                       AND t.relname = 'notification_delivery_events'
+                       AND c.conname = 'notification_delivery_events_event_type_chk'
+                       AND pg_get_constraintdef(c.oid) ILIKE '%price_drop_favorite%'
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Queue event_type allows price_drop_favorite'
+
+    UNION ALL
+
+    SELECT 683, 'notifications', 'index_notification_delivery_events_price_drop_dedup',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM pg_indexes i
+                     WHERE i.schemaname = 'public'
+                       AND i.indexname = 'notification_delivery_events_price_drop_dedup_idx'
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Dedup one event per recipient + listing + new price transition'
+
+    UNION ALL
+
+    SELECT 684, 'notifications', 'fn_enqueue_price_drop_favorite_notification_events',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'enqueue_price_drop_favorite_notification_events'
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Enqueue on listing price decrease (update_listing_details_v2 path)'
+
+    UNION ALL
+
+    SELECT 685, 'notifications', 'rpc_claim_price_drop_notification_events_for_processing',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'claim_price_drop_notification_events_for_processing'
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Background worker RPC (price-drop Edge worker; service_role only)'
+
+    UNION ALL
+
+    SELECT 686, 'notifications', 'fn_carzon_invoke_process_price_drop_notifications_worker',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'carzon_invoke_process_price_drop_notifications_worker'
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'pg_cron/pg_net invoke helper for process-price-drop-notifications'
+
+    UNION ALL
+
+    SELECT 687, 'notifications', 'cron_price_drop_notifications',
+           CASE
+             WHEN (SELECT cron_job_regclass FROM helpers) IS NULL THEN 'WARN'
+             WHEN EXISTS (
+                    SELECT 1 FROM cron.job j
+                     WHERE j.jobname = 'carzon_process_price_drop_notifications_1m'
+                       AND j.schedule = '* * * * *'
+                ) THEN 'PASS'
+             WHEN EXISTS (
+                    SELECT 1 FROM cron.job j
+                     WHERE j.jobname = 'carzon_process_price_drop_notifications_1m'
+                ) THEN 'WARN'
+             ELSE 'WARN'
+           END,
+           'pg_cron job for price-drop Edge worker (optional unless live push)'
+
+    UNION ALL
+
+    SELECT 688, 'notifications', 'grants_enqueue_price_drop_not_client',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'enqueue_price_drop_favorite_notification_events'
+                ) THEN 'WARN'
+             WHEN EXISTS (
+                    SELECT 1
+                      FROM pg_proc p
+                      JOIN pg_namespace n ON n.oid = p.pronamespace
+                     WHERE n.nspname = 'public'
+                       AND p.proname = 'enqueue_price_drop_favorite_notification_events'
+                       AND (
+                           has_function_privilege('authenticated', p.oid, 'EXECUTE')
+                           OR has_function_privilege('anon', p.oid, 'EXECUTE')
+                       )
+                ) THEN 'STOP'
+             ELSE 'PASS'
+           END,
+           'enqueue_price_drop_favorite_notification_events must not be client EXECUTE'
+
+    UNION ALL
+
+    SELECT 689, 'notifications', 'grants_claim_price_drop_not_client',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'claim_price_drop_notification_events_for_processing'
+                ) THEN 'WARN'
+             WHEN EXISTS (
+                    SELECT 1
+                      FROM pg_proc p
+                      JOIN pg_namespace n ON n.oid = p.pronamespace
+                     WHERE n.nspname = 'public'
+                       AND p.proname = 'claim_price_drop_notification_events_for_processing'
+                       AND (
+                           has_function_privilege('authenticated', p.oid, 'EXECUTE')
+                           OR has_function_privilege('anon', p.oid, 'EXECUTE')
+                       )
+                ) THEN 'STOP'
+             ELSE 'PASS'
+           END,
+           'claim_price_drop_notification_events_for_processing must not be client EXECUTE'
+
+    UNION ALL
+
+    SELECT 690, 'notifications', 'edge_process_price_drop_notifications_contract', 'INFO',
+           'Edge Function process-price-drop-notifications must be deployed ACTIVE with '
+           || 'verify_jwt=false (see supabase/config.toml). Not introspectable from Postgres; '
+           || 'verify via Dashboard or curl smoke after Vault secrets are set.'
 
     UNION ALL
 
@@ -614,8 +1066,8 @@ check_rows AS (
 
     SELECT 73, 'VIN', 'table_vin_processing_jobs',
            CASE WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'vin_processing_jobs')
-                THEN 'PASS' ELSE 'WARN' END,
-           'Decode queue — WARN if absent (VIN entry still possible; decode may not run)'
+                THEN 'PASS' ELSE 'STOP' END,
+           'VIN decode queue — create/edit explicit enqueue depends on worker drain'
 
     UNION ALL
 
@@ -695,18 +1147,48 @@ check_rows AS (
            CASE WHEN EXISTS (
                     SELECT 1 FROM col_exists c
                      WHERE c.table_name = 'listings' AND c.column_name = 'view_count'
-                ) THEN 'PASS' ELSE 'WARN' END,
+                ) THEN 'PASS' ELSE 'STOP' END,
            'Public listing details metadata reads listings.view_count'
+
+    UNION ALL
+
+    SELECT 801, 'listings', 'column_listings_transmission_type',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM col_exists c
+                     WHERE c.table_name = 'listings'
+                       AND c.column_name = 'transmission_type'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Discovery filter + listing details transmission field'
+
+    UNION ALL
+
+    SELECT 802, 'listings', 'column_listings_drivetrain',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM col_exists c
+                     WHERE c.table_name = 'listings'
+                       AND c.column_name = 'drivetrain'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Discovery filter + listing details drivetrain field'
+
+    UNION ALL
+
+    SELECT 803, 'listings', 'index_listings_feed_active_region_drivetrain_created',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM pg_indexes i
+                     WHERE i.schemaname = 'public'
+                       AND i.indexname = 'listings_feed_active_region_drivetrain_created_idx'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Partial index for active feed drivetrain filter (20260803120000)'
 
     UNION ALL
 
     SELECT 81, 'listings', 'rpc_record_listing_view',
            CASE
              WHEN NOT EXISTS (SELECT 1 FROM rpc_record_listing_view)
-             THEN 'WARN'
+             THEN 'STOP'
              WHEN NOT has_function_privilege('anon', (SELECT oid FROM rpc_record_listing_view), 'EXECUTE')
                   OR NOT has_function_privilege('authenticated', (SELECT oid FROM rpc_record_listing_view), 'EXECUTE')
-             THEN 'WARN'
+             THEN 'STOP'
              ELSE 'PASS'
            END,
            'Listing details view recording RPC EXECUTE for anon + authenticated'
@@ -716,7 +1198,7 @@ check_rows AS (
     SELECT 84, 'listings', 'rpc_record_listing_view_signature',
            CASE
              WHEN NOT EXISTS (SELECT 1 FROM rpc_record_listing_view)
-             THEN 'WARN'
+             THEN 'STOP'
              WHEN (SELECT arg_types FROM rpc_record_listing_view) IS DISTINCT FROM 'uuid, text'
              THEN 'WARN'
              ELSE 'PASS'
@@ -730,7 +1212,7 @@ check_rows AS (
     SELECT 85, 'listings', 'rpc_record_listing_view_return_columns',
            CASE
              WHEN NOT EXISTS (SELECT 1 FROM rpc_record_listing_view)
-             THEN 'WARN'
+             THEN 'STOP'
              WHEN lower(coalesce((SELECT result_type FROM rpc_record_listing_view), '')) NOT LIKE '%total_views%integer%'
                   OR lower(coalesce((SELECT result_type FROM rpc_record_listing_view), '')) NOT LIKE '%today_views%integer%'
              THEN 'WARN'
@@ -754,6 +1236,147 @@ check_rows AS (
                 THEN 'PASS' ELSE 'WARN' END,
            'Per-viewer per-day dedupe store (hashed viewer identity)'
 
+    -- official data (model passport + recall) ---------------------------------
+    UNION ALL
+
+    SELECT 94, 'official data', 'table_vehicle_model_fetch_jobs',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_model_fetch_jobs'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Model Passport background fetch queue'
+
+    UNION ALL
+
+    SELECT 941, 'official data', 'column_vehicle_model_fetch_jobs_listing_id',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM col_exists c
+                     WHERE c.table_name = 'vehicle_model_fetch_jobs'
+                       AND c.column_name = 'listing_id'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Optional listing_id on jobs (VIN decode hints for EPA candidates)'
+
+    UNION ALL
+
+    SELECT 942, 'official data', 'table_vehicle_model_source_cache',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_model_source_cache'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Sanitized Model Passport cache rows'
+
+    UNION ALL
+
+    SELECT 943, 'official data', 'table_vehicle_recall_fetch_jobs',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_recall_fetch_jobs'
+                ) THEN 'PASS' ELSE 'WARN' END,
+           'Recall campaign fetch queue (WARN if recall section hidden only)'
+
+    UNION ALL
+
+    SELECT 944, 'official data', 'table_vehicle_recall_source_cache',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_recall_source_cache'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Model/year recall campaign cache (not VIN-level status)'
+
+    UNION ALL
+
+    SELECT 945, 'official data', 'rpc_get_listing_model_data_for_buyer',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'get_listing_model_data_for_buyer'
+                ) THEN 'STOP'
+             WHEN COALESCE(
+                    (SELECT ok FROM fn_anon_exec f
+                      WHERE f.proname = 'get_listing_model_data_for_buyer'),
+                    false
+                )
+                  AND COALESCE(
+                    (SELECT ok FROM fn_auth_exec f
+                      WHERE f.proname = 'get_listing_model_data_for_buyer'),
+                    false
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Buyer Model Passport section on listing details'
+
+    UNION ALL
+
+    SELECT 946, 'official data', 'rpc_get_listing_recalls_for_buyer',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'get_listing_recalls_for_buyer'
+                ) THEN 'STOP'
+             WHEN COALESCE(
+                    (SELECT ok FROM fn_anon_exec f
+                      WHERE f.proname = 'get_listing_recalls_for_buyer'),
+                    false
+                )
+                  AND COALESCE(
+                    (SELECT ok FROM fn_auth_exec f
+                      WHERE f.proname = 'get_listing_recalls_for_buyer'),
+                    false
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Buyer recall campaigns section (model/year only; not exact-vehicle status)'
+
+    UNION ALL
+
+    SELECT 947, 'official data', 'fn_get_listing_vin_model_fetch_hints',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'get_listing_vin_model_fetch_hints'
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Worker-only VIN hints RPC (service_role; must exist after model_fetch migration)'
+
+    UNION ALL
+
+    SELECT 948, 'VIN', 'fn_carzon_enqueue_vin_decode_from_identity',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'carzon_enqueue_vin_decode_from_identity'
+                ) THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Explicit VIN decode enqueue helper (create_listing_v2 / update_listing_details_v2)'
+
+    UNION ALL
+
+    SELECT 949, 'official data', 'cron_model_data_jobs',
+           CASE
+             WHEN (SELECT cron_job_regclass FROM helpers) IS NULL THEN 'WARN'
+             WHEN EXISTS (
+                    SELECT 1 FROM cron.job j
+                     WHERE j.jobname = 'carzon_process_model_data_jobs_30m'
+                ) THEN 'PASS'
+             ELSE 'WARN'
+           END,
+           'pg_cron Model Passport worker (optional unless live official data)'
+
+    UNION ALL
+
+    SELECT 9491, 'official data', 'cron_recall_data_jobs',
+           CASE
+             WHEN (SELECT cron_job_regclass FROM helpers) IS NULL THEN 'WARN'
+             WHEN EXISTS (
+                    SELECT 1 FROM cron.job j
+                     WHERE j.jobname = 'carzon_process_recall_data_jobs_30m'
+                ) THEN 'PASS'
+             ELSE 'WARN'
+           END,
+           'pg_cron recall worker (optional unless live recall data)'
+
     -- grants / security reference ---------------------------------------------
     UNION ALL
 
@@ -775,12 +1398,39 @@ check_rows AS (
              WHEN has_table_privilege('authenticated', 'public.filter_alert_settings', 'SELECT')
                   AND has_table_privilege('authenticated', 'public.filter_alert_settings', 'INSERT')
                   AND has_table_privilege('authenticated', 'public.filter_alert_settings', 'UPDATE')
-             THEN 'PASS'
+             THEN 'WARN'
              WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'filter_alert_settings')
              THEN 'WARN'
+             ELSE 'WARN'
+           END,
+           'Legacy filter_alert_settings direct DML — active UX uses saved_searches RPCs after v2'
+
+    UNION ALL
+
+    SELECT 911, 'grants', 'authenticated_saved_searches_select',
+           CASE
+             WHEN has_table_privilege('authenticated', 'public.saved_searches', 'SELECT')
+             THEN 'PASS'
+             WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'saved_searches')
+             THEN 'STOP'
              ELSE 'STOP'
            END,
-           'Direct table grants from explicit_data_api_grants / filter_alert_settings migration'
+           'saved_searches SELECT for authenticated (writes via RPC only)'
+
+    UNION ALL
+
+    SELECT 912, 'grants', 'authenticated_saved_searches_rpc_exec',
+           CASE
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'list_my_saved_searches'), false)
+                  AND COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'create_saved_search'), false)
+                  AND COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'update_saved_search'), false)
+                  AND COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'delete_saved_search'), false)
+                  AND COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'set_saved_search_alerts_enabled'), false)
+                  AND COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'find_saved_search_by_criteria'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'EXECUTE on saved_searches v2 client RPCs for authenticated'
 
     UNION ALL
 
@@ -824,7 +1474,7 @@ SELECT cr.area,
                  WHEN (SELECT stop_count FROM blocking) > 0
                  THEN (SELECT stop_count FROM blocking)::text
                       || ' app-critical STOP check(s). Hosted runtime contract incomplete — '
-                      || 'plan targeted apply for missing groups; do NOT bulk-apply 33 migrations blindly.'
+                      || 'plan targeted apply for missing migration groups; do NOT bulk-apply all migrations blindly.'
                  WHEN (SELECT warn_count FROM blocking) > 0
                  THEN 'No STOP; '
                       || (SELECT warn_count FROM blocking)::text

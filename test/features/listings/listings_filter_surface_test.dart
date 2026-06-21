@@ -85,8 +85,7 @@ double _filterListMaxScrollExtent(WidgetTester tester) {
     of: find.byType(ListingsFilterHost),
     matching: find.byType(Scrollable),
   );
-  final position =
-      tester.state<ScrollableState>(scrollable.first).position;
+  final position = tester.state<ScrollableState>(scrollable.first).position;
   return position.maxScrollExtent;
 }
 
@@ -175,7 +174,9 @@ void main() {
     expect(find.text('EUR'), findsOneWidget);
   });
 
-  testWidgets('currency segmented control updates apply result', (tester) async {
+  testWidgets('currency segmented control updates apply result', (
+    tester,
+  ) async {
     final l10n = ruStrings();
     final formKey = GlobalKey<ListingsFilterFormState>();
     await tester.pumpWidget(
@@ -232,6 +233,7 @@ void main() {
       bodyType: null,
       fuelType: null,
       transmissionType: null,
+      drivetrain: null,
       priceCurrencyFilter: ListingPriceCurrencyFilter.any,
     );
 
@@ -724,6 +726,7 @@ void main() {
     expect(find.byType(DropdownButton<ListingBodyType?>), findsNothing);
     expect(find.byType(DropdownButton<ListingFuelType?>), findsNothing);
     expect(find.byType(DropdownButton<ListingTransmissionType?>), findsNothing);
+    expect(find.byType(DropdownButton<ListingDrivetrain?>), findsNothing);
     expect(find.byType(DropdownButton<ListingSortOption>), findsNothing);
 
     final bodyTrigger = find.byKey(
@@ -735,6 +738,11 @@ void main() {
     final transmissionTrigger = find.byKey(
       const ValueKey<String>('listings_filter_transmission_type_pick_trigger'),
     );
+    final drivetrainTrigger = find.byKey(
+      const ValueKey<String>('listings_filter_drivetrain_pick_trigger'),
+    );
+
+    expect(drivetrainTrigger, findsOneWidget);
 
     expect(
       find.descendant(
@@ -790,6 +798,24 @@ void main() {
       find.descendant(
         of: transmissionTrigger,
         matching: find.text(l10n.listingTransmissionManual),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.scrollUntilVisible(
+      drivetrainTrigger,
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(drivetrainTrigger);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.listingDrivetrainAwd).last);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: drivetrainTrigger,
+        matching: find.text(l10n.listingDrivetrainAwd),
       ),
       findsOneWidget,
     );
@@ -962,10 +988,7 @@ void main() {
           l10n.regionBoth,
         ]) {
           expect(
-            find.descendant(
-              of: regionControl,
-              matching: find.text(label),
-            ),
+            find.descendant(of: regionControl, matching: find.text(label)),
             findsOneWidget,
           );
         }
@@ -1006,9 +1029,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.byKey(
-        const ValueKey<String>('listings_filter_currency_segmented'),
-      ),
+      find.byKey(const ValueKey<String>('listings_filter_currency_segmented')),
       findsOneWidget,
     );
     expect(
@@ -1035,19 +1056,19 @@ void main() {
     await _scrollFilterControlIntoView(tester, control);
 
     final baseline = tester.getSize(control);
-    expect(baseline.height, filterChoiceVariantOuterHeight(
-      ListingsFilterSegmentedControlVariant.currency,
-    ));
+    expect(
+      baseline.height,
+      filterChoiceVariantOuterHeight(
+        ListingsFilterSegmentedControlVariant.currency,
+      ),
+    );
 
     for (final label in [
       l10n.filterPriceCurrencyUsd,
       l10n.filterPriceCurrencyEur,
       l10n.filterPriceCurrencyAny,
     ]) {
-      final option = find.descendant(
-        of: control,
-        matching: find.text(label),
-      );
+      final option = find.descendant(of: control, matching: find.text(label));
       await _scrollFilterControlIntoView(tester, option);
       await tester.tap(option);
       await tester.pumpAndSettle();
@@ -1067,19 +1088,19 @@ void main() {
     await _scrollFilterControlIntoView(tester, control);
 
     final baseline = tester.getSize(control);
-    expect(baseline.height, filterChoiceVariantOuterHeight(
-      ListingsFilterSegmentedControlVariant.region,
-    ));
+    expect(
+      baseline.height,
+      filterChoiceVariantOuterHeight(
+        ListingsFilterSegmentedControlVariant.region,
+      ),
+    );
 
     for (final label in [
       l10n.regionMoldova,
       l10n.regionTransnistria,
       l10n.regionBoth,
     ]) {
-      final option = find.descendant(
-        of: control,
-        matching: find.text(label),
-      );
+      final option = find.descendant(of: control, matching: find.text(label));
       await _scrollFilterControlIntoView(tester, option);
       await tester.tap(option);
       await tester.pumpAndSettle();
@@ -1087,37 +1108,34 @@ void main() {
     }
   });
 
-  testWidgets('listing type selector keeps stable size when selection changes', (
-    tester,
-  ) async {
-    final l10n = ruStrings();
-    await _pumpStandaloneFilterForm(tester);
+  testWidgets(
+    'listing type selector keeps stable size when selection changes',
+    (tester) async {
+      final l10n = ruStrings();
+      await _pumpStandaloneFilterForm(tester);
 
-    final control = find.byKey(
-      const ValueKey<String>('listings_filter_type_segmented'),
-    );
-    await _scrollFilterControlIntoView(tester, control);
-
-    final baseline = tester.getSize(control);
-    expect(baseline.height, filterChoiceVariantOuterHeight(
-      ListingsFilterSegmentedControlVariant.listingType,
-    ));
-
-    for (final label in [
-      l10n.typeSale,
-      l10n.typeExchange,
-      l10n.typeAny,
-    ]) {
-      final option = find.descendant(
-        of: control,
-        matching: find.text(label),
+      final control = find.byKey(
+        const ValueKey<String>('listings_filter_type_segmented'),
       );
-      await _scrollFilterControlIntoView(tester, option);
-      await tester.tap(option);
-      await tester.pumpAndSettle();
-      expect(tester.getSize(control), baseline);
-    }
-  });
+      await _scrollFilterControlIntoView(tester, control);
+
+      final baseline = tester.getSize(control);
+      expect(
+        baseline.height,
+        filterChoiceVariantOuterHeight(
+          ListingsFilterSegmentedControlVariant.listingType,
+        ),
+      );
+
+      for (final label in [l10n.typeSale, l10n.typeExchange, l10n.typeAny]) {
+        final option = find.descendant(of: control, matching: find.text(label));
+        await _scrollFilterControlIntoView(tester, option);
+        await tester.tap(option);
+        await tester.pumpAndSettle();
+        expect(tester.getSize(control), baseline);
+      }
+    },
+  );
 
   group('summary strip layout stability on first filter change', () {
     testWidgets('summary strip height unchanged after currency first tap', (
@@ -1165,28 +1183,27 @@ void main() {
       expect(_filterFormSize(tester), formBaseline);
     });
 
-    testWidgets(
-      'summary strip height unchanged after listing type first tap',
-      (tester) async {
-        final l10n = ruStrings();
-        await _pumpFilterHostAtViewport(tester);
+    testWidgets('summary strip height unchanged after listing type first tap', (
+      tester,
+    ) async {
+      final l10n = ruStrings();
+      await _pumpFilterHostAtViewport(tester);
 
-        final stripBaseline = _summaryStripSize(tester);
-        final formBaseline = _filterFormSize(tester);
-        final scrollBaseline = _filterListMaxScrollExtent(tester);
+      final stripBaseline = _summaryStripSize(tester);
+      final formBaseline = _filterFormSize(tester);
+      final scrollBaseline = _filterListMaxScrollExtent(tester);
 
-        final typeControl = find.byKey(
-          const ValueKey<String>('listings_filter_type_segmented'),
-        );
-        await _scrollFilterControlIntoView(tester, typeControl);
-        await tester.tap(find.text(l10n.typeSale));
-        await tester.pumpAndSettle();
+      final typeControl = find.byKey(
+        const ValueKey<String>('listings_filter_type_segmented'),
+      );
+      await _scrollFilterControlIntoView(tester, typeControl);
+      await tester.tap(find.text(l10n.typeSale));
+      await tester.pumpAndSettle();
 
-        expect(_summaryStripSize(tester), stripBaseline);
-        expect(_filterFormSize(tester), formBaseline);
-        expect(_filterListMaxScrollExtent(tester), scrollBaseline);
-      },
-    );
+      expect(_summaryStripSize(tester), stripBaseline);
+      expect(_filterFormSize(tester), formBaseline);
+      expect(_filterListMaxScrollExtent(tester), scrollBaseline);
+    });
 
     testWidgets(
       'reserved outer height matches measured vanilla strip on viewport',

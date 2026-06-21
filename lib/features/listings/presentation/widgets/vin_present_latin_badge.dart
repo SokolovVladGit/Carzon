@@ -45,12 +45,10 @@ class VinNeutralLatinBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final scale = heroSize ? VinLatinMarkScale.report : VinLatinMarkScale.detail;
-    return _VinNeutralLatinMark(
-      scheme: scheme,
-      isDark: isDark,
-      scale: scale,
-    );
+    final scale = heroSize
+        ? VinLatinMarkScale.report
+        : VinLatinMarkScale.detail;
+    return _VinNeutralLatinMark(scheme: scheme, isDark: isDark, scale: scale);
   }
 }
 
@@ -146,11 +144,12 @@ class _VinLatinMarkMetrics {
     inLetterSpacing: -0.32,
   );
 
-  static _VinLatinMarkMetrics forScale(VinLatinMarkScale scale) => switch (scale) {
-    VinLatinMarkScale.card => card,
-    VinLatinMarkScale.detail => detail,
-    VinLatinMarkScale.report => report,
-  };
+  static _VinLatinMarkMetrics forScale(VinLatinMarkScale scale) =>
+      switch (scale) {
+        VinLatinMarkScale.card => card,
+        VinLatinMarkScale.detail => detail,
+        VinLatinMarkScale.report => report,
+      };
 }
 
 class _VinPresentLatinMark extends StatelessWidget {

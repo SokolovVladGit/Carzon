@@ -34,6 +34,17 @@ const FILTER_ALERT_COPY: Record<PushNotificationLocale, PushNotificationCopy> = 
   },
 };
 
+const PRICE_DROP_COPY: Record<PushNotificationLocale, PushNotificationCopy> = {
+  ru: {
+    title: "Снижение цены",
+    body: "Цена на сохранённый автомобиль снизилась.",
+  },
+  ro: {
+    title: "Reducere de preț",
+    body: "Prețul anunțului salvat a scăzut.",
+  },
+};
+
 /** Normalizes stored push token locale; unknown/null → Russian. */
 export function normalizePushLocale(
   raw: string | null | undefined,
@@ -58,4 +69,10 @@ export function filterAlertNotificationCopyForLocale(
   rawLocale: string | null | undefined,
 ): PushNotificationCopy {
   return FILTER_ALERT_COPY[normalizePushLocale(rawLocale)];
+}
+
+export function priceDropNotificationCopyForLocale(
+  rawLocale: string | null | undefined,
+): PushNotificationCopy {
+  return PRICE_DROP_COPY[normalizePushLocale(rawLocale)];
 }

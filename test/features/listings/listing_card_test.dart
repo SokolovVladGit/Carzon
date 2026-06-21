@@ -216,37 +216,34 @@ void main() {
       },
     );
 
-    testWidgets(
-      'featured variant renders a 4:3 cover, keeps the region badge, '
-      'and still drops the exchange/type badge',
-      (tester) async {
-        await pumpLocalizedWidget(
-          tester,
-          Scaffold(
-            body: SingleChildScrollView(
-              child: ListingCard(
-                listing: _seed(type: ListingType.exchange),
-                variant: ListingCardVariant.featured,
-              ),
+    testWidgets('featured variant renders a 4:3 cover, keeps the region badge, '
+        'and still drops the exchange/type badge', (tester) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: SingleChildScrollView(
+            child: ListingCard(
+              listing: _seed(type: ListingType.exchange),
+              variant: ListingCardVariant.featured,
             ),
           ),
-        );
+        ),
+      );
 
-        expect(coverAspectRatio(tester), closeTo(4 / 3, 1e-9));
-        expect(find.text(l10n.regionTransnistria), findsOneWidget);
-        expect(find.text(l10n.formatTypeExchange), findsNothing);
-        // Price, title and meta (mileage + city) still render — the
-        // hierarchy is stronger, not poorer.
-        expect(find.text('€8 900'), findsOneWidget);
-        expect(find.text('Volkswagen Golf'), findsOneWidget);
-        expect(
-          find.text('120 000 ${l10n.commonKilometersShort}'),
-          findsOneWidget,
-        );
-        expect(find.text('2016'), findsOneWidget);
-        expect(find.text('Tiraspol'), findsOneWidget);
-      },
-    );
+      expect(coverAspectRatio(tester), closeTo(4 / 3, 1e-9));
+      expect(find.text(l10n.regionTransnistria), findsOneWidget);
+      expect(find.text(l10n.formatTypeExchange), findsNothing);
+      // Price, title and meta (mileage + city) still render — the
+      // hierarchy is stronger, not poorer.
+      expect(find.text('€8 900'), findsOneWidget);
+      expect(find.text('Volkswagen Golf'), findsOneWidget);
+      expect(
+        find.text('120 000 ${l10n.commonKilometersShort}'),
+        findsOneWidget,
+      );
+      expect(find.text('2016'), findsOneWidget);
+      expect(find.text('Tiraspol'), findsOneWidget);
+    });
 
     testWidgets(
       'featured variant with VIN shows market region badge and VIN stamp',
@@ -266,7 +263,10 @@ void main() {
         );
 
         expect(find.text(l10n.regionTransnistria), findsOneWidget);
-        expect(find.byKey(const ValueKey('vin_present_latin_badge')), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('vin_present_latin_badge')),
+          findsOneWidget,
+        );
 
         final vinRect = tester.getRect(
           find.byKey(const ValueKey('vin_present_latin_badge')),
@@ -294,7 +294,10 @@ void main() {
         ),
       );
 
-      expect(find.byKey(const ValueKey('vin_present_latin_badge')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('vin_present_latin_badge')),
+        findsNothing,
+      );
     });
 
     testWidgets('shows card-stamp VIN badge when vinStatus is formatValid', (
@@ -313,9 +316,15 @@ void main() {
         ),
       );
 
-      expect(find.byKey(const ValueKey('vin_present_latin_badge')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('vin_present_latin_badge')),
+        findsOneWidget,
+      );
       expect(find.byType(VinPresentLatinBadge), findsOneWidget);
-      expect(find.byKey(const ValueKey('vin_present_latin_badge_v')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('vin_present_latin_badge_v')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('VIN stamp anchors top-right above trailing actions', (
@@ -413,7 +422,10 @@ void main() {
       );
 
       expect(find.text('2016'), findsOneWidget);
-      expect(find.text('120 000 ${l10n.commonKilometersShort}'), findsOneWidget);
+      expect(
+        find.text('120 000 ${l10n.commonKilometersShort}'),
+        findsOneWidget,
+      );
       expect(find.textContaining('Bender'), findsOneWidget);
     });
 

@@ -10,6 +10,7 @@ import 'filter_alert_notification_tap_payload.dart';
 import 'firebase_messaging_open_events.dart';
 import 'message_conversation_navigation_coordinator.dart';
 import 'message_notification_tap_payload.dart';
+import 'price_drop_notification_tap_payload.dart';
 
 /// Listens for push notification opens and routes by `type` in FCM data.
 class MessagePushTapHandler {
@@ -102,6 +103,15 @@ class MessagePushTapHandler {
       if (filterPayload != null) {
         _listingNavigationCoordinator.requestOpenListing(
           filterPayload.listingId,
+        );
+        return;
+      }
+      final priceDropPayload = parsePriceDropNotificationTapPayload(
+        message.data,
+      );
+      if (priceDropPayload != null) {
+        _listingNavigationCoordinator.requestOpenListing(
+          priceDropPayload.listingId,
         );
         return;
       }

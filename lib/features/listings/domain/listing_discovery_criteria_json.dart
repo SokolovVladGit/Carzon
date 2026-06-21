@@ -145,6 +145,15 @@ String? listingTransmissionTypeToWire(ListingTransmissionType? t) {
   return listingTransmissionTypeToDbValue(t);
 }
 
+String? listingDrivetrainToWire(ListingDrivetrain? d) {
+  if (d == null) return null;
+  return listingDrivetrainToDbValue(d);
+}
+
+ListingDrivetrain? listingDrivetrainFromWire(String? raw) {
+  return listingDrivetrainFromDb(raw);
+}
+
 ListingType? listingTypeFromWire(String? raw) {
   switch (raw?.trim().toLowerCase()) {
     case 'sale':
@@ -191,6 +200,9 @@ Map<String, dynamic> listingDiscoveryCriteriaToJson(
     'transmissionType': c.transmissionType == null
         ? null
         : listingTransmissionTypeToWire(c.transmissionType!),
+    'drivetrain': c.drivetrain == null
+        ? null
+        : listingDrivetrainToWire(c.drivetrain!),
     'typeIn': typeStrings.isEmpty ? <String>[] : typeStrings,
     'priceCurrencyFilter': listingPriceCurrencyFilterToWire(
       c.priceCurrencyFilter,
@@ -248,6 +260,7 @@ ListingDiscoveryCriteria? listingDiscoveryCriteriaFromJson(dynamic raw) {
     transmissionType: listingTransmissionTypeFromWire(
       map['transmissionType']?.toString(),
     ),
+    drivetrain: listingDrivetrainFromWire(map['drivetrain']?.toString()),
     typeIn: typeInDecoded,
     priceCurrencyFilter: listingPriceCurrencyFilterFromWire(
       map['priceCurrencyFilter']?.toString(),

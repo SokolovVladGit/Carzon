@@ -209,10 +209,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('recent_search_delete_0')));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text(l10n.recentSearchesSearchOnlyLabel('beta')),
-      findsNothing,
-    );
+    expect(find.text(l10n.recentSearchesSearchOnlyLabel('beta')), findsNothing);
     expect(
       find.text(l10n.recentSearchesSearchOnlyLabel('alpha')),
       findsOneWidget,

@@ -7,6 +7,7 @@ class NotificationPreferences extends Equatable {
     required this.globalEnabled,
     required this.messagesEnabled,
     required this.filterAlertsEnabled,
+    required this.priceDropsEnabled,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -15,6 +16,7 @@ class NotificationPreferences extends Equatable {
   final bool globalEnabled;
   final bool messagesEnabled;
   final bool filterAlertsEnabled;
+  final bool priceDropsEnabled;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -24,6 +26,7 @@ class NotificationPreferences extends Equatable {
     globalEnabled,
     messagesEnabled,
     filterAlertsEnabled,
+    priceDropsEnabled,
     createdAt,
     updatedAt,
   ];

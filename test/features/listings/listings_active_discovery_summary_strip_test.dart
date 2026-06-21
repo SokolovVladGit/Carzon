@@ -28,7 +28,9 @@ void main() {
     );
   }
 
-  testWidgets('active chips render a close affordance per chip', (tester) async {
+  testWidgets('active chips render a close affordance per chip', (
+    tester,
+  ) async {
     final l10n = ruStrings();
     const state = ListingsState(
       search: 'Audi',
@@ -65,7 +67,9 @@ void main() {
       find.byWidgetPredicate(
         (w) =>
             w.key is ValueKey<String> &&
-            (w.key! as ValueKey<String>).value.startsWith('discovery-chip-remove-'),
+            (w.key! as ValueKey<String>).value.startsWith(
+              'discovery-chip-remove-',
+            ),
       ),
       findsNWidgets(listingsDiscoveryChips(state, l10n).length),
     );
@@ -78,10 +82,7 @@ void main() {
     const state = ListingsState(search: 'Audi', make: 'Skoda');
 
     await tester.pumpWidget(
-      wrap(
-        state: state,
-        onFilterRemoved: (kind) => removed = kind,
-      ),
+      wrap(state: state, onFilterRemoved: (kind) => removed = kind),
     );
     await tester.pumpAndSettle();
 
@@ -100,10 +101,7 @@ void main() {
     const state = ListingsState(make: 'Skoda', minPrice: 1000, maxPrice: 2000);
 
     await tester.pumpWidget(
-      wrap(
-        state: state,
-        onFilterRemoved: (kind) => removed = kind,
-      ),
+      wrap(state: state, onFilterRemoved: (kind) => removed = kind),
     );
     await tester.pumpAndSettle();
 
@@ -119,17 +117,10 @@ void main() {
     tester,
   ) async {
     ListingsDiscoveryChipKind? removed;
-    const state = ListingsState(
-      make: 'Skoda',
-      minYear: 2022,
-      maxYear: 2025,
-    );
+    const state = ListingsState(make: 'Skoda', minYear: 2022, maxYear: 2025);
 
     await tester.pumpWidget(
-      wrap(
-        state: state,
-        onFilterRemoved: (kind) => removed = kind,
-      ),
+      wrap(state: state, onFilterRemoved: (kind) => removed = kind),
     );
     await tester.pumpAndSettle();
 
@@ -155,10 +146,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      wrap(
-        state: state,
-        onFilterRemoved: (kind) => removed = kind,
-      ),
+      wrap(state: state, onFilterRemoved: (kind) => removed = kind),
     );
     await tester.pumpAndSettle();
 
@@ -183,7 +171,9 @@ void main() {
     );
   });
 
-  testWidgets('close semantics uses remove-filter tooltip copy', (tester) async {
+  testWidgets('close semantics uses remove-filter tooltip copy', (
+    tester,
+  ) async {
     final l10n = ruStrings();
     const state = ListingsState(make: 'Skoda');
 
@@ -205,11 +195,7 @@ void main() {
     const state = ListingsState(make: 'Skoda');
 
     await tester.pumpWidget(
-      wrap(
-        state: state,
-        onFilterRemoved: (_) {},
-        theme: ThemeData.dark(),
-      ),
+      wrap(state: state, onFilterRemoved: (_) {}, theme: ThemeData.dark()),
     );
     await tester.pumpAndSettle();
 

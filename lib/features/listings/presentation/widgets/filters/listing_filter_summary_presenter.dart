@@ -56,6 +56,7 @@ bool isListingsFilterDraftVanilla(ListingsFilterFormSeed draft) {
       draft.bodyType == null &&
       draft.fuelType == null &&
       draft.transmissionType == null &&
+      draft.drivetrain == null &&
       draft.priceCurrencyFilter == ListingPriceCurrencyFilter.any &&
       draft.sort == ListingSortOption.newestFirst;
 }
@@ -161,6 +162,10 @@ ListingsFilterSummaryView buildListingsFilterSummaryView(
 
   if (draft.transmissionType != null) {
     parts.add(formatListingTransmissionType(l10n, draft.transmissionType!));
+  }
+
+  if (draft.drivetrain != null) {
+    parts.add(formatListingDrivetrain(l10n, draft.drivetrain!));
   }
 
   switch (draft.typeFilter) {

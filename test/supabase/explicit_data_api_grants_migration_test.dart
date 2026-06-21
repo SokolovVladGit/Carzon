@@ -51,6 +51,10 @@ void main() {
     'carzon_invoke_process_message_notifications_worker',
     // Phase 4A: pg_cron-only worker; REVOKE from anon/authenticated in 20260601 migration.
     'carzon_invoke_process_filter_alert_notifications_worker',
+    // P2 V1 price drop favorites (enqueue on listing edit + Edge claim + pg_cron worker only).
+    'enqueue_price_drop_favorite_notification_events',
+    'claim_price_drop_notification_events_for_processing',
+    'carzon_invoke_process_price_drop_notifications_worker',
     // VIN Phase 2C scheduler: pg_cron-only worker; REVOKE from anon/authenticated.
     'carzon_invoke_process_vin_decode_jobs_worker',
     // Phase 1 VIN: SECURITY DEFINER listing RPCs only; revoked from clients in migration.
@@ -69,6 +73,38 @@ void main() {
     // Phase 2C VIN provider plumbing (service_role / Edge only).
     'get_vin_for_decode_job',
     'requeue_vin_decode_job_for_listing',
+    // Chat attachments: BEFORE INSERT trigger on message_attachments only.
+    'validate_message_attachment_conversation',
+    // Model Passport SQL helpers (SECURITY DEFINER; revoked from client roles).
+    'carzon_model_data_fold_whitespace',
+    'carzon_model_data_normalize_make_key',
+    'carzon_model_data_normalize_model_key',
+    'carzon_model_data_apply_make_alias_key',
+    'carzon_model_data_canonical_make_label',
+    'carzon_model_data_resolve_identity',
+    'carzon_model_data_default_limitation_codes',
+    'carzon_model_data_build_cache_key',
+    // Model Passport worker RPCs (service_role / Edge only).
+    'enqueue_vehicle_model_fetch_if_needed',
+    'claim_vehicle_model_fetch_jobs_for_processing',
+    'complete_vehicle_model_fetch_job_success',
+    'complete_vehicle_model_fetch_job_failure',
+    'get_listing_vin_model_fetch_hints',
+    // Model Passport pg_cron worker; REVOKE from anon/authenticated.
+    'carzon_invoke_process_model_data_jobs_worker',
+    // Recall SQL helpers + worker RPCs (service_role / Edge only).
+    'carzon_recall_data_build_cache_key',
+    'carzon_recall_data_resolve_identity',
+    'carzon_recall_data_default_limitation_codes',
+    'enqueue_vehicle_recall_fetch_if_needed',
+    'claim_vehicle_recall_fetch_jobs_for_processing',
+    'complete_vehicle_recall_fetch_job_success',
+    'complete_vehicle_recall_fetch_job_failure',
+    'carzon_invoke_process_recall_data_jobs_worker',
+    // M0.3 messaging block/report helpers (trigger/RPC-internal only).
+    'carzon_is_support_user_id',
+    'carzon_users_are_blocked',
+    'carzon_messaging_peer_from_conversation',
   };
 
   /// Internal `public` tables with RLS that must **not** receive `GRANT` to
@@ -87,6 +123,14 @@ void main() {
     // Listing view analytics (RPC-only writes; hashed dedupe store).
     'listing_view_daily',
     'listing_view_dedupe',
+    // Model Passport worker cache/queue (service_role / Edge only).
+    'vehicle_model_source_cache',
+    'vehicle_model_fetch_jobs',
+    // Recall worker cache/queue (service_role / Edge only).
+    'vehicle_recall_source_cache',
+    'vehicle_recall_fetch_jobs',
+    // M0.3 reports: RPC-only writes; no client table access.
+    'user_reports',
   };
 
   /// `public` tables created by this repo: must match migrations exactly.
@@ -113,6 +157,13 @@ void main() {
     'listing_vin_source_results',
     'listing_view_daily',
     'listing_view_dedupe',
+    'message_attachments',
+    'vehicle_model_source_cache',
+    'vehicle_model_fetch_jobs',
+    'vehicle_recall_source_cache',
+    'vehicle_recall_fetch_jobs',
+    'user_blocks',
+    'user_reports',
   };
 
   setUpAll(() {

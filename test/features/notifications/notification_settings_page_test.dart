@@ -65,12 +65,14 @@ NotificationPreferences _prefs({
   bool global = false,
   bool messages = false,
   bool filterAlerts = false,
+  bool priceDrops = false,
 }) {
   return NotificationPreferences(
     userId: 'u1',
     globalEnabled: global,
     messagesEnabled: messages,
     filterAlertsEnabled: filterAlerts,
+    priceDropsEnabled: priceDrops,
     createdAt: DateTime.utc(2024, 1, 1),
     updatedAt: DateTime.utc(2024, 1, 2),
   );
@@ -98,9 +100,8 @@ void main() {
         ),
         GoRoute(
           path: AppRoutes.filterAlert,
-          builder: (context, state) => const Scaffold(
-            body: Text('filter_alert_stub'),
-          ),
+          builder: (context, state) =>
+              const Scaffold(body: Text('filter_alert_stub')),
         ),
         GoRoute(
           path: AppRoutes.profile,
@@ -159,14 +160,15 @@ void main() {
 
     registerFallbackValue(PushTokenPlatform.android);
 
-    when(() => repo.getMyPreferences()).thenAnswer(
-      (_) async => Success(_prefs(global: true, messages: true)),
-    );
+    when(
+      () => repo.getMyPreferences(),
+    ).thenAnswer((_) async => Success(_prefs(global: true, messages: true)));
     when(
       () => repo.updateMyPreferences(
         globalEnabled: any(named: 'globalEnabled'),
         messagesEnabled: any(named: 'messagesEnabled'),
         filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+        priceDropsEnabled: any(named: 'priceDropsEnabled'),
       ),
     ).thenAnswer((inv) async {
       return Success(
@@ -174,6 +176,7 @@ void main() {
           global: inv.namedArguments[#globalEnabled] as bool,
           messages: inv.namedArguments[#messagesEnabled] as bool,
           filterAlerts: inv.namedArguments[#filterAlertsEnabled] as bool,
+          priceDrops: inv.namedArguments[#priceDropsEnabled] as bool,
         ),
       );
     });
@@ -229,6 +232,12 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.byKey(
+        const ValueKey<String>('notification_settings_price_drops_card'),
+      ),
+      findsOneWidget,
+    );
+    expect(
       find.byKey(const ValueKey<String>('notification_settings_delivery_card')),
       findsOneWidget,
     );
@@ -239,6 +248,7 @@ void main() {
       find.text(l10n.notificationSettingsFilterAlertsTitle),
       findsOneWidget,
     );
+    expect(find.text(l10n.notificationSettingsPriceDropsTitle), findsOneWidget);
     expect(
       find.text(l10n.notificationSettingsDeliveryDisclaimer),
       findsOneWidget,
@@ -260,6 +270,39 @@ void main() {
       find.byKey(const ValueKey<String>('notification_settings_delivery_card')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('price drops toggle calls repository when enabled', (
+    tester,
+  ) async {
+    await pumpUntilContent(tester);
+
+    if (!Env.pushNotificationsEnabled) {
+      return;
+    }
+
+    final priceDropSwitch = find.descendant(
+      of: find.byKey(
+        const ValueKey<String>('notification_settings_price_drops_card'),
+      ),
+      matching: find.byType(Switch),
+    );
+    expect(priceDropSwitch, findsOneWidget);
+
+    await tester.ensureVisible(priceDropSwitch);
+    await tester.pumpAndSettle();
+
+    await tester.tap(priceDropSwitch);
+    await tester.pumpAndSettle();
+
+    verify(
+      () => repo.updateMyPreferences(
+        globalEnabled: true,
+        messagesEnabled: true,
+        filterAlertsEnabled: false,
+        priceDropsEnabled: true,
+      ),
+    ).called(1);
   });
 
   testWidgets('filter alert CTA is present', (tester) async {

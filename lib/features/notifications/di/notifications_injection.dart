@@ -90,6 +90,11 @@ void registerNotificationsFeature(GetIt sl) {
                 listingId,
               );
             },
+            onPriceDropNotificationTap: (listingId) {
+              sl<FilterAlertListingNavigationCoordinator>().requestOpenListing(
+                listingId,
+              );
+            },
             readLocalePreference: () => sl<AppLocaleCubit>().state.preference,
           )
         : const NoopMessageForegroundNotificationDisplay(),

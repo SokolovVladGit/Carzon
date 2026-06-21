@@ -24,6 +24,7 @@ ListingsState listingsStateFromDiscoveryCriteria(ListingDiscoveryCriteria c) {
     bodyTypeFilter: c.bodyType,
     fuelTypeFilter: c.fuelType,
     transmissionTypeFilter: c.transmissionType,
+    drivetrainFilter: c.drivetrain,
     sortOption: c.sort,
     priceCurrencyFilter: c.priceCurrencyFilter,
   );
@@ -46,6 +47,7 @@ ListingDiscoveryCriteria listingDiscoveryCriteriaFromListingsState(
     bodyType: s.bodyTypeFilter,
     fuelType: s.fuelTypeFilter,
     transmissionType: s.transmissionTypeFilter,
+    drivetrain: s.drivetrainFilter,
     typeIn: s.typeFilter.asListingTypes,
     sort: s.sortOption,
     priceCurrencyFilter: s.priceCurrencyFilter,

@@ -633,57 +633,57 @@ class _InfoPanel extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                      Text(
-                                        priceLabel,
-                                        style: priceStyle,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                    Text(
+                                      priceLabel,
+                                      style: priceStyle,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      titleLabel,
+                                      style: titleStyle,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    DefaultTextStyle.merge(
+                                      style: metaStyle ?? const TextStyle(),
+                                      child: Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              mileageLabel,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          _MetaSeparator(
+                                            color: scheme.onSurfaceVariant,
+                                          ),
+                                          Text(yearLabel),
+                                          _MetaSeparator(
+                                            color: scheme.onSurfaceVariant,
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              city,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                    ),
+                                    if (badges.isNotEmpty) ...[
                                       const SizedBox(height: 6),
-                                      Text(
-                                        titleLabel,
-                                        style: titleStyle,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 4,
+                                        crossAxisAlignment:
+                                            WrapCrossAlignment.center,
+                                        children: badges,
                                       ),
-                                      const SizedBox(height: 4),
-                                      DefaultTextStyle.merge(
-                                        style: metaStyle ?? const TextStyle(),
-                                        child: Row(
-                                          children: [
-                                            Flexible(
-                                              child: Text(
-                                                mileageLabel,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            _MetaSeparator(
-                                              color: scheme.onSurfaceVariant,
-                                            ),
-                                            Text(yearLabel),
-                                            _MetaSeparator(
-                                              color: scheme.onSurfaceVariant,
-                                            ),
-                                            Flexible(
-                                              child: Text(
-                                                city,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (badges.isNotEmpty) ...[
-                                        const SizedBox(height: 6),
-                                        Wrap(
-                                          spacing: 6,
-                                          runSpacing: 4,
-                                          crossAxisAlignment:
-                                              WrapCrossAlignment.center,
-                                          children: badges,
-                                        ),
-                                      ],
                                     ],
+                                  ],
                                 ),
                               ),
                             ],
@@ -692,10 +692,7 @@ class _InfoPanel extends StatelessWidget {
                       ),
                       if (trailing != null) ...[
                         const SizedBox(width: 8),
-                        _PanelActionSlot(
-                          wide: trailingWide,
-                          child: trailing!,
-                        ),
+                        _PanelActionSlot(wide: trailingWide, child: trailing!),
                       ],
                     ],
                   ),

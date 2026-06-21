@@ -66,6 +66,9 @@ void main() {
     when(
       () => messagingRepo.getUnreadConversationCount(),
     ).thenAnswer((_) async => const Success(0));
+    when(
+      () => messagingRepo.listBlockedUsers(),
+    ).thenAnswer((_) async => const Success([]));
     when(() => authCubit.state).thenReturn(const AuthState.authenticated(user));
     whenListen(
       authCubit,

@@ -393,16 +393,19 @@ class _HeroCompareResultLine extends StatelessWidget {
             text,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: (isMatch
-                    ? theme.textTheme.bodySmall
-                    : theme.textTheme.bodyMedium)
-                ?.copyWith(
-              height: 1.35,
-              fontWeight: FontWeight.w600,
-              color: isMatch
-                  ? accent.withValues(alpha: isDark ? 0.92 : 0.88)
-                  : scheme.onSurface.withValues(alpha: isDark ? 0.9 : 0.86),
-            ),
+            style:
+                (isMatch
+                        ? theme.textTheme.bodySmall
+                        : theme.textTheme.bodyMedium)
+                    ?.copyWith(
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
+                      color: isMatch
+                          ? accent.withValues(alpha: isDark ? 0.92 : 0.88)
+                          : scheme.onSurface.withValues(
+                              alpha: isDark ? 0.9 : 0.86,
+                            ),
+                    ),
           ),
         ),
       ],
@@ -438,7 +441,9 @@ class BuyerVinReportFooterStrip extends StatelessWidget {
 
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final muted = scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.58 : 0.62);
+    final muted = scheme.onSurfaceVariant.withValues(
+      alpha: isDark ? 0.58 : 0.62,
+    );
     final noteStyle = theme.textTheme.labelSmall?.copyWith(
       height: 1.35,
       fontWeight: FontWeight.w400,
@@ -454,7 +459,9 @@ class BuyerVinReportFooterStrip extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 1,
-            color: scheme.outlineVariant.withValues(alpha: isDark ? 0.14 : 0.18),
+            color: scheme.outlineVariant.withValues(
+              alpha: isDark ? 0.14 : 0.18,
+            ),
           ),
           const SizedBox(height: 8),
           if (sourceLine != null) Text(sourceLine!, style: noteStyle),
