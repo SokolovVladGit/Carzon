@@ -46,6 +46,7 @@ void main() {
 
     test('calls worker claim/complete RPCs', () {
       expect(indexTs, contains('claim_vehicle_model_fetch_jobs_for_processing'));
+      expect(indexTs, contains('get_listing_vin_model_fetch_hints'));
       expect(indexTs, contains('complete_vehicle_model_fetch_job_success'));
       expect(indexTs, contains('complete_vehicle_model_fetch_job_failure'));
     });

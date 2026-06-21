@@ -33,6 +33,7 @@ type ClaimedJobRow = {
   lookup_model: string;
   lookup_year: number;
   attempts: number;
+  listing_id: string | null;
 };
 
 function jsonResponse(status: number, body: Record<string, unknown>): Response {
@@ -109,6 +110,21 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     for (const job of claimed) {
       try {
+        let vinHints = null;
+        if (job.listing_id) {
+          const { data: hintsRaw, error: hintsError } = await supabase.rpc(
+            "get_listing_vin_model_fetch_hints",
+            { p_listing_id: job.listing_id },
+          );
+          if (hintsError) {
+            console.error(
+              `process-model-data-jobs: vin_hints_failed job_id=${job.job_id}`,
+            );
+          } else if (hintsRaw != null && typeof hintsRaw === "object") {
+            vinHints = hintsRaw as Record<string, unknown>;
+          }
+        }
+
         const result = await provider.fetch({
           lookupMake: job.lookup_make,
           lookupModel: job.lookup_model,
@@ -116,6 +132,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
           sourceId: job.source_id,
           jobId: job.job_id,
           cacheKey: job.cache_key,
+          listingId: job.listing_id,
+          vinHints,
         });
 
         if (!result.ok) {

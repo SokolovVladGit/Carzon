@@ -8,6 +8,13 @@ import type {
   ModelDataProviderResult,
 } from "./types.ts";
 import {
+  buildEpaMenuMatchContext,
+  buildEpaModelMenuCandidates,
+  buildEpaProviderModelQueryMetadata,
+  type EpaMenuMatchContext,
+  type EpaModelMenuCandidate,
+} from "./epa_model_candidates.ts";
+import {
   aggregateEpaVehicleDetails,
   buildEpaMenuOptionsUrl,
   buildEpaNoDataResult,
@@ -51,6 +58,14 @@ async function defaultHttpGet(
   }
 }
 
+type MenuLookupResult =
+  | {
+    ok: true;
+    optionIds: string[];
+    menuContext: EpaMenuMatchContext;
+  }
+  | { ok: false; result: ModelDataProviderFailure };
+
 export class EpaFuelEconomyProvider implements ModelDataProvider {
   readonly id = "epa_fueleconomy";
 
@@ -68,78 +83,141 @@ export class EpaFuelEconomyProvider implements ModelDataProvider {
       };
     }
 
-    const menuUrl = buildEpaMenuOptionsUrl(
-      input.lookupYear,
-      input.lookupMake,
-      input.lookupModel,
-    );
+    const menuLookup = await this.resolveMenuOptions(input);
+    if (!menuLookup.ok) return menuLookup.result;
 
-    let menuResponse: { ok: boolean; status: number; body: string };
-    try {
-      menuResponse = await this.http.getText(menuUrl, EPA_TIMEOUT_MS);
-    } catch {
-      return {
-        ok: false,
-        error: {
-          code: "epa_menu_timeout",
-          safeMessage: "epa_menu_timeout",
-          retryable: true,
-        },
-      };
-    }
+    const { optionIds, menuContext } = menuLookup;
 
-    if (menuResponse.status === 429 || menuResponse.status >= 500) {
-      return {
-        ok: false,
-        error: {
-          code: "epa_menu_http_error",
-          safeMessage: "epa_menu_http_error",
-          retryable: true,
-        },
-      };
-    }
-
-    if (!menuResponse.ok) {
-      return {
-        ok: false,
-        error: {
-          code: "epa_menu_http_error",
-          safeMessage: "epa_menu_http_error",
-          retryable: false,
-        },
-      };
-    }
-
-    const optionIds = parseMenuOptionVehicleIds(menuResponse.body);
     if (optionIds.length === 0) {
-      const noData = buildEpaNoDataResult("no_match");
-      return {
-        ok: true,
-        status: noData.status,
-        confidence: noData.confidence,
-        normalizedSummary: noData.normalizedSummary,
-        limitationCodes: noData.limitationCodes,
-        matchQuality: noData.matchQuality,
-        sourceLabel: EPA_SOURCE_LABEL,
-        providerVersion: EPA_PROVIDER_VERSION,
-        sourceMetadata: {
-          providerId: this.id,
-          providerVersion: EPA_PROVIDER_VERSION,
-          optionCount: 0,
-        },
-      };
+      return this.buildNoDataResult(menuContext);
     }
+
+    const baseMetadata = buildEpaProviderModelQueryMetadata(menuContext, {
+      providerId: this.id,
+      providerVersion: EPA_PROVIDER_VERSION,
+      optionCount: optionIds.length,
+    });
 
     if (optionIds.length === 1) {
-      return await this.fetchSingleOption(input, optionIds[0]!);
+      return await this.fetchSingleOption(input, optionIds[0]!, baseMetadata);
     }
 
-    return await this.fetchMultipleOptions(input, optionIds);
+    return await this.fetchMultipleOptions(input, optionIds, baseMetadata);
+  }
+
+  private async resolveMenuOptions(
+    input: ModelDataFetchInput,
+  ): Promise<MenuLookupResult> {
+    const candidates = buildEpaModelMenuCandidates({
+      sellerMake: input.lookupMake,
+      sellerModel: input.lookupModel,
+      sellerYear: input.lookupYear,
+      vinHints: input.vinHints ?? null,
+    });
+    const attemptedProviderModels: string[] = [];
+
+    for (const candidate of candidates) {
+      attemptedProviderModels.push(candidate.model);
+      const menuUrl = buildEpaMenuOptionsUrl(
+        candidate.year,
+        candidate.make,
+        candidate.model,
+      );
+
+      let menuResponse: { ok: boolean; status: number; body: string };
+      try {
+        menuResponse = await this.http.getText(menuUrl, EPA_TIMEOUT_MS);
+      } catch {
+        return {
+          ok: false,
+          result: {
+            ok: false,
+            error: {
+              code: "epa_menu_timeout",
+              safeMessage: "epa_menu_timeout",
+              retryable: true,
+            },
+          },
+        };
+      }
+
+      if (menuResponse.status === 429 || menuResponse.status >= 500) {
+        return {
+          ok: false,
+          result: {
+            ok: false,
+            error: {
+              code: "epa_menu_http_error",
+              safeMessage: "epa_menu_http_error",
+              retryable: true,
+            },
+          },
+        };
+      }
+
+      if (!menuResponse.ok) {
+        continue;
+      }
+
+      const optionIds = parseMenuOptionVehicleIds(menuResponse.body);
+      if (optionIds.length === 0) {
+        continue;
+      }
+
+      return {
+        ok: true,
+        optionIds,
+        menuContext: buildEpaMenuMatchContext(
+          candidates,
+          candidate,
+          attemptedProviderModels,
+        ),
+      };
+    }
+
+    const fallbackCandidate: EpaModelMenuCandidate = candidates[0] ?? {
+      make: input.lookupMake.trim(),
+      model: input.lookupModel.trim(),
+      year: input.lookupYear,
+      source: "seller_identity",
+    };
+
+    return {
+      ok: true,
+      optionIds: [],
+      menuContext: buildEpaMenuMatchContext(
+        candidates,
+        fallbackCandidate,
+        attemptedProviderModels,
+      ),
+    };
+  }
+
+  private buildNoDataResult(
+    menuContext: EpaMenuMatchContext,
+  ): ModelDataProviderResult {
+    const noData = buildEpaNoDataResult("no_match");
+    return {
+      ok: true,
+      status: noData.status,
+      confidence: noData.confidence,
+      normalizedSummary: noData.normalizedSummary,
+      limitationCodes: noData.limitationCodes,
+      matchQuality: noData.matchQuality,
+      sourceLabel: EPA_SOURCE_LABEL,
+      providerVersion: EPA_PROVIDER_VERSION,
+      sourceMetadata: buildEpaProviderModelQueryMetadata(menuContext, {
+        providerId: this.id,
+        providerVersion: EPA_PROVIDER_VERSION,
+        optionCount: 0,
+      }),
+    };
   }
 
   private async fetchSingleOption(
     input: ModelDataFetchInput,
     vehicleId: string,
+    baseMetadata: Record<string, unknown>,
   ): Promise<ModelDataProviderResult> {
     const detailResult = await this.fetchVehicleDetailXml(vehicleId);
     if (!detailResult.ok) return detailResult.result;
@@ -164,8 +242,7 @@ export class EpaFuelEconomyProvider implements ModelDataProvider {
         sourceLabel: EPA_SOURCE_LABEL,
         providerVersion: EPA_PROVIDER_VERSION,
         sourceMetadata: {
-          providerId: this.id,
-          providerVersion: EPA_PROVIDER_VERSION,
+          ...baseMetadata,
           optionVehicleIds: [vehicleId],
         },
       };
@@ -183,8 +260,7 @@ export class EpaFuelEconomyProvider implements ModelDataProvider {
       sourceLabel: EPA_SOURCE_LABEL,
       providerVersion: EPA_PROVIDER_VERSION,
       sourceMetadata: {
-        providerId: this.id,
-        providerVersion: EPA_PROVIDER_VERSION,
+        ...baseMetadata,
         optionVehicleIds: [vehicleId],
       },
     };
@@ -193,6 +269,7 @@ export class EpaFuelEconomyProvider implements ModelDataProvider {
   private async fetchMultipleOptions(
     input: ModelDataFetchInput,
     optionIds: string[],
+    baseMetadata: Record<string, unknown>,
   ): Promise<ModelDataProviderResult> {
     const selected = optionIds.slice(0, MAX_MULTI_OPTIONS);
     const parsedDetails = [];
@@ -232,10 +309,8 @@ export class EpaFuelEconomyProvider implements ModelDataProvider {
         sourceLabel: EPA_SOURCE_LABEL,
         providerVersion: EPA_PROVIDER_VERSION,
         sourceMetadata: {
-          providerId: this.id,
-          providerVersion: EPA_PROVIDER_VERSION,
+          ...baseMetadata,
           optionVehicleIds: selected,
-          optionCount: optionIds.length,
           aggregatedFrom: parsedDetails.length,
           strategy: "average_numeric_fields",
         },
@@ -255,10 +330,8 @@ export class EpaFuelEconomyProvider implements ModelDataProvider {
       sourceLabel: EPA_SOURCE_LABEL,
       providerVersion: EPA_PROVIDER_VERSION,
       sourceMetadata: {
-        providerId: this.id,
-        providerVersion: EPA_PROVIDER_VERSION,
+        ...baseMetadata,
         optionVehicleIds: selected,
-        optionCount: optionIds.length,
         aggregatedFrom: parsedDetails.length,
         strategy: "average_numeric_fields",
       },
