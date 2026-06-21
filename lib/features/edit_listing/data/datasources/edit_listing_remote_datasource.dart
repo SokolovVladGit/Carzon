@@ -209,6 +209,9 @@ class SupabaseEditListingRemoteDataSource
       ..['p_drivetrain'] = input.drivetrain == null
           ? null
           : listingDrivetrainToDbValue(input.drivetrain!)
+      ..['p_transmission_type'] = input.transmissionType == null
+          ? null
+          : listingTransmissionTypeToDbValue(input.transmissionType!)
       ..['p_registration'] = _nullableTrimListingField(input.registration)
       ..['p_description'] = _nullableTrimListingField(input.description);
     if (input.submitVinParameterToRpc) {

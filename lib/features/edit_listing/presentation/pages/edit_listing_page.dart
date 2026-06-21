@@ -282,6 +282,7 @@ class _EditListingFormState extends State<_EditListingForm> {
   ListingBodyType? _bodyType;
   ListingFuelType? _fuelType;
   ListingDrivetrain? _drivetrain;
+  ListingTransmissionType? _transmissionType;
   late final TextEditingController _engineDisplacement;
   late final TextEditingController _enginePower;
   late final TextEditingController _registration;
@@ -327,6 +328,7 @@ class _EditListingFormState extends State<_EditListingForm> {
     _bodyType = l.bodyType;
     _fuelType = l.fuelType;
     _drivetrain = l.drivetrain;
+    _transmissionType = l.transmissionType;
     _engineDisplacement = TextEditingController(
       text: l.engineDisplacementLiters == null
           ? ''
@@ -569,6 +571,7 @@ class _EditListingFormState extends State<_EditListingForm> {
       engineDisplacementLiters: _engineDisplacementFromField(),
       enginePowerHp: _enginePowerFromField(),
       drivetrain: _drivetrain,
+      transmissionType: _transmissionType,
       registration: _registration.text.trim().isEmpty
           ? null
           : _registration.text.trim(),
@@ -892,6 +895,8 @@ class _EditListingFormState extends State<_EditListingForm> {
                         alpha: .22,
                       ),
                       labelText: l10n.fieldRegion,
+                      helperText: l10n.fieldRegionHelper,
+                      helperMaxLines: 2,
                     ),
                     items: [
                       DropdownMenuItem(
@@ -1063,6 +1068,37 @@ class _EditListingFormState extends State<_EditListingForm> {
                         : (v) => setState(() => _drivetrain = v),
                   ),
                   const SizedBox(height: 14),
+                  DropdownButtonFormField<ListingTransmissionType?>(
+                    key: const ValueKey('edit_listing_transmission_field'),
+                    initialValue: _transmissionType,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.listingTransmission,
+                    ),
+                    items: [
+                      DropdownMenuItem<ListingTransmissionType?>(
+                        value: null,
+                        child: Text(l10n.listingBodyTypeNotSpecified),
+                      ),
+                      ...ListingTransmissionType.values.map(
+                        (e) => DropdownMenuItem<ListingTransmissionType?>(
+                          value: e,
+                          child: Text(formatListingTransmissionType(l10n, e)),
+                        ),
+                      ),
+                    ],
+                    onChanged: submitting
+                        ? null
+                        : (v) => setState(() => _transmissionType = v),
+                  ),
+                  const SizedBox(height: 14),
                   TextFormField(
                     controller: _registration,
                     decoration: InputDecoration(
@@ -1075,6 +1111,8 @@ class _EditListingFormState extends State<_EditListingForm> {
                       ),
                       labelText: l10n.listingRegistration,
                       hintText: l10n.listingRegistrationHint,
+                      helperText: l10n.listingRegistrationHelper,
+                      helperMaxLines: 3,
                     ),
                     maxLength: kListingRegistrationMaxLength,
                     buildCounter:

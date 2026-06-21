@@ -163,6 +163,11 @@ class _DetailsList extends StatelessWidget {
           l10n.listingDrivetrain,
           formatListingDrivetrain(l10n, listing.drivetrain!),
         ),
+      if (listing.transmissionType != null)
+        _DetailsRowData(
+          l10n.compareRowTransmission,
+          formatListingTransmissionType(l10n, listing.transmissionType!),
+        ),
       if (listing.registration != null &&
           listing.registration!.trim().isNotEmpty)
         _DetailsRowData(l10n.listingRegistration, listing.registration!.trim()),
