@@ -140,23 +140,27 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get catalogBrowseFilterBellEnabledSnack =>
-      'Оповещения по этому фильтру включены.';
+      'Оповещения включены для этого фильтра.';
 
   @override
   String get catalogBrowseFilterBellDisabledSnack =>
-      'Оповещения по фильтру выключены.';
+      'Оповещения выключены для этого фильтра.';
+
+  @override
+  String get catalogBrowseFilterBellSavedEnableGlobalCategorySnack =>
+      'Поиск сохранён. Чтобы получать push, включите оповещения о сохранённых поисках в настройках.';
 
   @override
   String get catalogBrowseFilterBellSavedDeliveryUnavailableTooltip =>
-      'Оповещение сохранено. Нажмите, чтобы удалить.';
+      'Поиск сохранён. Оповещения для этого фильтра пока не доставляются.';
 
   @override
   String get catalogBrowseFilterBellInactiveTooltip =>
-      'Включить оповещения по этому фильтру.';
+      'Включить оповещения для этого фильтра.';
 
   @override
   String get catalogBrowseFilterBellActiveTooltip =>
-      'Оповещения включены. Нажмите, чтобы выключить.';
+      'Оповещения для этого фильтра включены. Нажмите, чтобы выключить.';
 
   @override
   String get listingsEmptyTitle => 'Объявления не найдены';
@@ -1705,7 +1709,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Включите «Push на этом устройстве», чтобы настроить типы уведомлений ниже.';
 
   @override
-  String get notificationSettingsStatusCardTitle => 'Разрешение устройства';
+  String get notificationSettingsStatusCardTitle => 'Уведомления на устройстве';
 
   @override
   String get notificationSettingsOsPillAllowed => 'Разрешены';
@@ -1720,7 +1724,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get notificationSettingsOsPillNotDetermined => 'Не запрошены';
 
   @override
-  String get notificationSettingsOsPillUnavailable => 'Недоступны';
+  String get notificationSettingsOsPillUnavailable => 'Недоступно';
 
   @override
   String get notificationSettingsOsDescriptionAuthorized =>
@@ -1740,7 +1744,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationSettingsOsDescriptionUnavailable =>
-      'В этой сборке push недоступен, поэтому статус разрешения устройства не применяется.';
+      'В этой сборке системные уведомления недоступны.';
 
   @override
   String get notificationSettingsGlobalTitle => 'Push на этом устройстве';
@@ -1754,18 +1758,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationSettingsMessagesSubtitle =>
-      'Push о новых сообщениях в чатах по объявлениям.';
+      'О новых сообщениях в чатах.';
 
   @override
   String get notificationSettingsMessagesNeedsGlobal =>
       'Сначала включите «Push на этом устройстве».';
 
   @override
-  String get notificationSettingsFilterAlertsTitle => 'Оповещения по фильтру';
+  String get notificationSettingsFilterAlertsTitle => 'Сохранённые поиски';
 
   @override
   String get notificationSettingsFilterAlertsSubtitle =>
-      'Push при новых объявлениях, подходящих под сохранённый фильтр.';
+      'Push, когда появляются новые объявления по вашим сохранённым поискам.';
 
   @override
   String get notificationSettingsFilterAlertsNeedsGlobal =>
@@ -1773,18 +1777,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notificationSettingsFilterAlertsSavedFilterNote =>
-      'Нужен сохранённый фильтр и включённые оповещения на экране управления фильтром.';
+      'Нужен сохранённый поиск и включённые оповещения на экране управления фильтром.';
 
   @override
   String get notificationSettingsFilterAlertsOpenCta =>
-      'Открыть оповещения по фильтру';
+      'Управлять сохранёнными поисками';
 
   @override
   String get notificationSettingsPriceDropsTitle => 'Снижение цены';
 
   @override
   String get notificationSettingsPriceDropsSubtitle =>
-      'Push, когда цена снижается на автомобиль из избранного.';
+      'Когда цена снижается на автомобиль из избранного.';
+
+  @override
+  String get notificationSettingsComingSoonBadge => 'Скоро';
 
   @override
   String get notificationSettingsPriceDropsNeedsGlobal =>
@@ -1878,7 +1885,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get filterAlertNotificationsPushDisabled =>
-      'В этой сборке push недоступен (PUSH_NOTIFICATIONS_ENABLED).';
+      'В этой сборке системные уведомления недоступны.';
 
   @override
   String get filterAlertManagementHeaderEyebrow => 'CARZON · ОПОВЕЩЕНИЯ';
@@ -1937,86 +1944,109 @@ class AppLocalizationsRu extends AppLocalizations {
   String get filterAlertManagementClearedSnack => 'Сохранённый фильтр удалён.';
 
   @override
-  String get savedSearchesTitle => 'Сохранённые поиски';
+  String get savedSearchesTitle => 'Оповещения по фильтрам';
 
   @override
-  String get savedSearchesSettingsTitle => 'Сохранённые поиски';
+  String get savedSearchesSettingsTitle => 'Оповещения по фильтрам';
 
   @override
   String get savedSearchesSettingsSubtitle =>
-      'До 5 поисков с оповещениями о новых объявлениях.';
+      'Сохранённые фильтры и оповещения о новых объявлениях.';
 
   @override
   String get savedSearchesSignInRequired =>
-      'Войдите, чтобы управлять сохранёнными поисками.';
+      'Войдите, чтобы управлять оповещениями по фильтрам.';
 
   @override
   String get savedSearchesHeaderEyebrow => 'CARZON · ПОИСК';
 
   @override
   String get savedSearchesSubtitle =>
-      'Сохраняйте параметры из каталога и включайте push-оповещения для каждого поиска.';
+      'Сохраняйте важные параметры поиска и получайте новые объявления по ним.';
 
   @override
-  String get savedSearchesMaxHint => 'Можно сохранить до 5 поисков.';
+  String get savedSearchesMaxHint => 'До 5 активных фильтров.';
 
   @override
-  String get savedSearchesEmptyTitle => 'Сохранённых поисков пока нет';
+  String get savedSearchesHowToAddTitle => 'Как добавить фильтр';
+
+  @override
+  String get savedSearchesHowToAddBody =>
+      'Настройте параметры в каталоге и нажмите колокольчик. Фильтр появится здесь, а оповещения можно будет включить или выключить отдельно.';
+
+  @override
+  String get savedSearchesMaxReachedHint =>
+      'Можно сохранить до 5 фильтров. Удалите один из существующих, чтобы добавить новый.';
+
+  @override
+  String get savedSearchesEmptyTitle => 'Нет оповещений';
 
   @override
   String get savedSearchesEmptyBody =>
-      'Задайте фильтры в каталоге и нажмите колокольчик, чтобы сохранить поиск.';
+      'Настройте фильтр в каталоге и нажмите колокольчик, чтобы добавить его сюда.';
 
   @override
-  String get savedSearchesGoToCatalog => 'Перейти в каталог';
+  String get savedSearchesGoToCatalog => 'Открыть каталог';
 
   @override
-  String get savedSearchFallbackName => 'Сохранённый поиск';
+  String get savedSearchFallbackName => 'Фильтр поиска';
 
   @override
-  String get savedSearchAlertsToggleTitle => 'Оповещения';
+  String get savedSearchDisplayTitleFallback => 'Фильтр поиска';
 
   @override
-  String get savedSearchAlertsEnabledLabel => 'Push-оповещения включены';
+  String get savedSearchCardCaption => 'Фильтр поиска';
 
   @override
-  String get savedSearchAlertsDisabledLabel => 'Push-оповещения выключены';
+  String get savedSearchAlertsToggleTitle => 'Получать оповещения';
+
+  @override
+  String get savedSearchAlertsToggleSubtitle =>
+      'Push при новых объявлениях по этому фильтру.';
+
+  @override
+  String get savedSearchAlertsEnabledLabel =>
+      'Вы получите push, когда появятся новые объявления.';
+
+  @override
+  String get savedSearchAlertsDisabledLabel =>
+      'Оповещения по этому фильтру выключены.';
 
   @override
   String get savedSearchDeleteAction => 'Удалить';
 
   @override
-  String get savedSearchDeleteConfirmTitle => 'Удалить сохранённый поиск?';
+  String get savedSearchDeleteConfirmTitle => 'Удалить этот фильтр?';
 
   @override
   String get savedSearchDeleteConfirmBody =>
-      'Этот поиск и его оповещения будут удалены. Другие сохранённые поиски не затронуты.';
+      'Параметры фильтра и оповещения по нему будут удалены.';
 
   @override
   String get savedSearchDeleteConfirmCta => 'Удалить';
 
   @override
-  String get savedSearchRemovedSnack => 'Сохранённый поиск удалён.';
+  String get savedSearchRemovedSnack => 'Фильтр удалён.';
 
   @override
-  String get savedSearchCreatedSnack => 'Поиск сохранён.';
+  String get savedSearchCreatedSnack => 'Фильтр сохранён.';
 
   @override
   String get savedSearchesLoadFailed =>
-      'Не удалось загрузить сохранённые поиски.';
+      'Не удалось загрузить оповещения по фильтрам.';
 
   @override
-  String get savedSearchSaveFailed => 'Не удалось сохранить поиск.';
+  String get savedSearchSaveFailed => 'Не удалось сохранить фильтр.';
 
   @override
-  String get savedSearchDeleteFailed => 'Не удалось удалить поиск.';
+  String get savedSearchDeleteFailed => 'Не удалось удалить фильтр.';
 
   @override
   String get savedSearchToggleFailed => 'Не удалось изменить оповещения.';
 
   @override
   String get savedSearchesMaxReachedSnack =>
-      'Можно сохранить не более 5 поисков.';
+      'Можно сохранить до 5 фильтров. Удалите один из существующих, чтобы добавить новый.';
 
   @override
   String get filterAlertSummarySearchLabel => 'Поиск';
@@ -2307,6 +2337,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get legalTitle => 'Условия и конфиденциальность';
 
   @override
+  String get legalDisclaimerLabel => 'Справочная информация';
+
+  @override
   String get legalDisclaimer =>
       'Это ознакомительная версия условий и уведомления о конфиденциальности. Документ описывает, как сейчас работает Carzon, и не заменяет юридически выверенные условия. Пользуйтесь им как информационным материалом на ранней стадии продукта.';
 
@@ -2344,8 +2377,14 @@ class AppLocalizationsRu extends AppLocalizations {
       'Пока ваше объявление активно, указанные для него контакты могут быть видны любым пользователям Carzon, в том числе без входа в аккаунт.';
 
   @override
-  String get legalSectionContactP2 =>
-      'Это может быть номер телефона, ник в Telegram (если указан) и отметка о том, что по номеру доступен WhatsApp.';
+  String get legalSectionContactB1 => 'номер телефона';
+
+  @override
+  String get legalSectionContactB2 => 'ник в Telegram (если указан)';
+
+  @override
+  String get legalSectionContactB3 =>
+      'отметка о том, что по номеру доступен WhatsApp';
 
   @override
   String get legalSectionContactP3 =>
@@ -3466,4 +3505,88 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get notificationAndroidChannelPriceDropDescription =>
       'Уведомления о снижении цены на избранные объявления';
+
+  @override
+  String get fuelPricesTitle => 'Цены на топливо';
+
+  @override
+  String get fuelPricesMenuSubtitle =>
+      'Актуальные ориентиры по топливу в Молдове и ПМР';
+
+  @override
+  String get fuelPricesTerritoryMoldova => 'Молдова';
+
+  @override
+  String get fuelPricesTerritoryPmr => 'Приднестровье';
+
+  @override
+  String get fuelPricesDisclaimerTitle => 'Справочно';
+
+  @override
+  String get fuelPricesDisclaimer =>
+      'Цены носят справочный характер. Перед заправкой уточните актуальную цену на АЗС.';
+
+  @override
+  String get fuelPricesMoldovaScopeNote =>
+      'Официальный максимальный уровень цен ANRE по Молдове.';
+
+  @override
+  String get fuelPricesPmrScopeNote =>
+      'Ориентир по ценам сети Sheriff в Приднестровье.';
+
+  @override
+  String fuelPricesSourceLabel(String source) {
+    return 'Источник: $source';
+  }
+
+  @override
+  String fuelPricesEffectiveDate(String date) {
+    return 'Действует с $date';
+  }
+
+  @override
+  String fuelPricesLastFetched(String date) {
+    return 'Обновлено $date';
+  }
+
+  @override
+  String get fuelPricesStaleNotice =>
+      'Данные могут быть устаревшими. Проверьте цену на АЗС.';
+
+  @override
+  String get fuelPricesLoadFailed => 'Не удалось загрузить цены на топливо';
+
+  @override
+  String get fuelPricesEmpty => 'Цены временно недоступны';
+
+  @override
+  String get fuelPricesTerritoryUnavailable =>
+      'Цены для этого региона временно недоступны. Попробуйте позже или выберите другой регион.';
+
+  @override
+  String get fuelPricesUnitMdlPerLiter => 'MDL/L';
+
+  @override
+  String get fuelPricesUnitPmrRubPerLiter => 'PMR RUB/L';
+
+  @override
+  String get fuelPricesFuelGasoline95 => 'Бензин 95';
+
+  @override
+  String get fuelPricesFuelDiesel => 'Дизель';
+
+  @override
+  String get fuelPricesFuelAi98 => 'АИ-98';
+
+  @override
+  String get fuelPricesFuelAi95Premium => 'АИ-95 Premium';
+
+  @override
+  String get fuelPricesFuelAi95 => 'АИ-95';
+
+  @override
+  String get fuelPricesFuelDieselEuro => 'Дизель Euro';
+
+  @override
+  String get fuelPricesFuelDieselRegular => 'Дизель';
 }

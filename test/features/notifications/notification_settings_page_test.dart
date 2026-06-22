@@ -99,20 +99,11 @@ void main() {
           ),
         ),
         GoRoute(
-          path: AppRoutes.filterAlert,
-          builder: (context, state) =>
-              const Scaffold(body: Text('filter_alert_stub')),
-        ),
-        GoRoute(
           path: AppRoutes.profile,
           builder: (context, state) => const Scaffold(body: SizedBox.shrink()),
         ),
         GoRoute(
           path: AppRoutes.signIn,
-          builder: (context, state) => const Scaffold(body: SizedBox.shrink()),
-        ),
-        GoRoute(
-          path: AppRoutes.listings,
           builder: (context, state) => const Scaffold(body: SizedBox.shrink()),
         ),
       ],
@@ -132,12 +123,12 @@ void main() {
     await tester.pumpWidget(buildApp(theme: theme));
     await tester.pump();
 
-    final masterKey = find.byKey(
-      const ValueKey<String>('notification_settings_master_card'),
+    final messagesKey = find.byKey(
+      const ValueKey<String>('notification_settings_messages_card'),
     );
     final deadline = DateTime.now().add(const Duration(seconds: 3));
     while (DateTime.now().isBefore(deadline)) {
-      if (masterKey.evaluate().isNotEmpty) {
+      if (messagesKey.evaluate().isNotEmpty) {
         await tester.pump();
         return;
       }
@@ -210,25 +201,11 @@ void main() {
     await settingsCubit.close();
   });
 
-  testWidgets('renders section cards and delivery note after load', (
-    tester,
-  ) async {
+  testWidgets('renders only message and price-drop cards', (tester) async {
     await pumpUntilContent(tester);
 
     expect(
-      find.byKey(const ValueKey<String>('notification_settings_status_card')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey<String>('notification_settings_master_card')),
-      findsOneWidget,
-    );
-    expect(
       find.byKey(const ValueKey<String>('notification_settings_messages_card')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const ValueKey<String>('notification_settings_filter_card')),
       findsOneWidget,
     );
     expect(
@@ -238,23 +215,27 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.byKey(const ValueKey<String>('notification_settings_status_card')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('notification_settings_master_card')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('notification_settings_filter_card')),
+      findsNothing,
+    );
+    expect(
       find.byKey(const ValueKey<String>('notification_settings_delivery_card')),
-      findsOneWidget,
+      findsNothing,
     );
-
-    expect(find.text(l10n.notificationSettingsGlobalTitle), findsOneWidget);
-    expect(find.text(l10n.notificationSettingsMessagesTitle), findsOneWidget);
-    expect(
-      find.text(l10n.notificationSettingsFilterAlertsTitle),
-      findsOneWidget,
-    );
-    expect(find.text(l10n.notificationSettingsPriceDropsTitle), findsOneWidget);
-    expect(
-      find.text(l10n.notificationSettingsDeliveryDisclaimer),
-      findsOneWidget,
-    );
-    expect(find.textContaining('полностью'), findsNothing);
+    expect(find.text(l10n.notificationSettingsPageIntro), findsNothing);
+    expect(find.text(l10n.notificationSettingsFilterAlertsTitle), findsNothing);
+    expect(find.text(l10n.notificationSettingsComingSoonBadge), findsNothing);
     expect(find.textContaining('PUSH_NOTIFICATIONS'), findsNothing);
+    expect(find.text(l10n.notificationSettingsMessagesSubtitle), findsOneWidget);
+    expect(find.text(l10n.notificationSettingsPriceDropsSubtitle), findsOneWidget);
   });
 
   testWidgets('load does not request OS permission', (tester) async {
@@ -263,11 +244,17 @@ void main() {
     expect(pushClient.permissionRequestCalls, 0);
   });
 
-  testWidgets('dark theme renders section cards', (tester) async {
+  testWidgets('dark theme renders both cards', (tester) async {
     await pumpUntilContent(tester, theme: ThemeData.dark(useMaterial3: true));
 
     expect(
-      find.byKey(const ValueKey<String>('notification_settings_delivery_card')),
+      find.byKey(const ValueKey<String>('notification_settings_messages_card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey<String>('notification_settings_price_drops_card'),
+      ),
       findsOneWidget,
     );
   });
@@ -305,20 +292,7 @@ void main() {
     ).called(1);
   });
 
-  testWidgets('filter alert CTA is present', (tester) async {
-    await pumpUntilContent(tester);
-
-    expect(
-      find.byKey(const ValueKey<String>('notification_settings_filter_cta')),
-      findsOneWidget,
-    );
-    expect(
-      find.text(l10n.notificationSettingsFilterAlertsOpenCta),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('push-disabled build shows friendly unavailable copy', (
+  testWidgets('push-disabled build disables toggles without technical copy', (
     tester,
   ) async {
     await pumpUntilContent(tester);
@@ -327,20 +301,34 @@ void main() {
       return;
     }
 
-    expect(
-      find.text(l10n.notificationSettingsPushBuildDisabledBanner),
-      findsWidgets,
-    );
     expect(find.textContaining('PUSH_NOTIFICATIONS'), findsNothing);
+    expect(find.text(l10n.notificationSettingsPushBuildDisabledBanner), findsNothing);
 
-    final masterSwitch = tester.widget<Switch>(
+    final messagesSwitch = tester.widget<Switch>(
       find.descendant(
         of: find.byKey(
-          const ValueKey<String>('notification_settings_master_card'),
+          const ValueKey<String>('notification_settings_messages_card'),
         ),
         matching: find.byType(Switch),
       ),
     );
-    expect(masterSwitch.onChanged, isNull);
+    expect(messagesSwitch.onChanged, isNull);
+  });
+
+  testWidgets('renders on narrow width without overflow', (tester) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.window.physicalSizeTestValue = const Size(320, 800);
+    binding.window.devicePixelRatioTestValue = 1.0;
+    addTearDown(binding.window.clearPhysicalSizeTestValue);
+    addTearDown(binding.window.clearDevicePixelRatioTestValue);
+
+    await pumpUntilContent(tester);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('notification_settings_messages_card')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 }

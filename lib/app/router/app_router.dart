@@ -14,6 +14,7 @@ import '../../features/create_listing/presentation/pages/create_listing_page.dar
 import '../../features/edit_listing/presentation/pages/edit_listing_page.dart';
 import '../../features/favorites/presentation/pages/favorites_page.dart';
 import '../../features/filter_alerts/presentation/pages/filter_alert_settings_page.dart';
+import '../../features/fuel_prices/presentation/pages/fuel_prices_page.dart';
 import '../../features/legal/presentation/pages/legal_page.dart';
 import '../../features/listings/presentation/pages/listing_details_page.dart';
 import '../../features/listings/domain/entities/listing_discovery_criteria.dart';
@@ -52,6 +53,7 @@ class AppRoutes {
   static const deleteAccount = '/delete-account';
   static const menu = '/menu';
   static const legal = '/legal';
+  static const fuelPrices = '/fuel-prices';
   static const messages = '/messages';
   static const notificationSettings = '/notification-settings';
   static const filterAlert = '/filter-alert';
@@ -231,6 +233,10 @@ class AppRouter {
           ),
         ),
         GoRoute(path: AppRoutes.legal, builder: (_, _) => const LegalPage()),
+        GoRoute(
+          path: AppRoutes.fuelPrices,
+          builder: (_, _) => const FuelPricesPage(),
+        ),
       ],
       errorBuilder: (context, state) => Scaffold(
         body: Center(

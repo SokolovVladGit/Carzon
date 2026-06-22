@@ -37,6 +37,10 @@ const _settingsTestNotificationSettingsStubKey = ValueKey<String>(
   'settings_test_notification_settings_stub',
 );
 
+const _settingsTestFuelPricesStubKey = ValueKey<String>(
+  'settings_test_fuel_prices_stub',
+);
+
 const _settingsTestLegalStubKey = ValueKey<String>('settings_test_legal_stub');
 
 const _settingsTestFilterAlertStubKey = ValueKey<String>(
@@ -133,6 +137,13 @@ GoRouter _settingsTestRouter({
         builder: (_, _) => const Scaffold(
           key: _settingsTestFilterAlertStubKey,
           body: Text('filter_alert_stub'),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.fuelPrices,
+        builder: (_, _) => const Scaffold(
+          key: _settingsTestFuelPricesStubKey,
+          body: Text('fuel_prices_stub'),
         ),
       ),
       GoRoute(
@@ -285,7 +296,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.settingsTitle), findsOneWidget);
-    expect(find.text(l10n.settingsIntro), findsOneWidget);
+    expect(find.text(l10n.settingsIntro), findsNothing);
     expect(find.text(l10n.settingsSectionAccount), findsOneWidget);
     expect(find.text(l10n.settingsSectionPreferences), findsOneWidget);
     expect(
@@ -532,6 +543,29 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(_settingsTestFilterAlertStubKey), findsOneWidget);
+  });
+
+  testWidgets('Settings navigates to fuel prices from support section', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _scrollToSettingsRow(
+      tester,
+      const ValueKey<String>('settings_fuel_prices_row'),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('settings_fuel_prices_row')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(_settingsTestFuelPricesStubKey), findsOneWidget);
   });
 
   testWidgets('Settings navigates to legal from support section', (

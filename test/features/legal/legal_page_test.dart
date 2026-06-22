@@ -1,4 +1,5 @@
 import 'package:carzon/features/legal/presentation/pages/legal_page.dart';
+import 'package:carzon/features/legal/presentation/utils/legal_sections_builder.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,12 +9,20 @@ import '../../helpers/l10n_test_helpers.dart';
 void main() {
   final l10n = ruStrings();
 
-  Widget wrap({Locale locale = const Locale('ru')}) => MaterialApp(
-    locale: locale,
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    home: const LegalPage(),
-  );
+  Widget wrap({
+    Locale locale = const Locale('ru'),
+    ThemeMode themeMode = ThemeMode.light,
+  }) {
+    return MaterialApp(
+      locale: locale,
+      themeMode: themeMode,
+      theme: ThemeData(useMaterial3: true),
+      darkTheme: ThemeData(useMaterial3: true, brightness: Brightness.dark),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: const LegalPage(),
+    );
+  }
 
   Future<void> scrollToText(WidgetTester tester, String text) async {
     final listFinder = find.byType(Scrollable);
@@ -28,27 +37,34 @@ void main() {
     expect(find.widgetWithText(AppBar, l10n.legalTitle), findsOneWidget);
   });
 
+  testWidgets('LegalPage renders disclaimer callout with label', (tester) async {
+    await tester.pumpWidget(wrap());
+
+    expect(
+      find.byKey(const ValueKey<String>('legal_disclaimer_callout')),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.legalDisclaimerLabel), findsOneWidget);
+    expect(find.text(l10n.legalDisclaimer), findsOneWidget);
+  });
+
   testWidgets('LegalPage renders the required section headings', (
     tester,
   ) async {
     await tester.pumpWidget(wrap());
 
-    // Each heading is rendered as a distinct Text widget inside the
-    // scrollable body. Because the body is a lazy ListView, headings
-    // below the initial viewport are not built until scrolled to, so
-    // we drive a scroll-until-visible for each required heading.
-    for (final heading in [
-      l10n.legalSectionAboutHeading,
-      l10n.legalSectionListingsHeading,
-      l10n.legalSectionContactHeading,
-      l10n.legalSectionPhotosHeading,
-      l10n.legalSectionAccountHeading,
-      l10n.legalSectionFavoritesHeading,
-      l10n.legalSectionSafetyHeading,
-      l10n.legalSectionContactUsHeading,
-    ]) {
+    for (final heading in buildLegalSections(l10n).map((s) => s.heading)) {
       await scrollToText(tester, heading);
     }
+  });
+
+  testWidgets('LegalPage renders contact bullets', (tester) async {
+    await tester.pumpWidget(wrap());
+
+    await scrollToText(tester, l10n.legalSectionContactHeading);
+    expect(find.text(l10n.legalSectionContactB1), findsOneWidget);
+    expect(find.text(l10n.legalSectionContactB2), findsOneWidget);
+    expect(find.text(l10n.legalSectionContactB3), findsOneWidget);
   });
 
   testWidgets('LegalPage body is scrollable', (tester) async {
@@ -94,6 +110,32 @@ void main() {
     final ro = lookupAppLocalizations(const Locale('ro'));
     expect(find.widgetWithText(AppBar, ro.legalTitle), findsOneWidget);
     await scrollToText(tester, ro.legalSectionSafetyP4);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('LegalPage renders in dark theme without exceptions', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap(themeMode: ThemeMode.dark));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LegalPage), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('LegalPage renders on narrow width without overflow', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.window.physicalSizeTestValue = const Size(320, 800);
+    binding.window.devicePixelRatioTestValue = 1.0;
+    addTearDown(binding.window.clearPhysicalSizeTestValue);
+    addTearDown(binding.window.clearDevicePixelRatioTestValue);
+
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LegalPage), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

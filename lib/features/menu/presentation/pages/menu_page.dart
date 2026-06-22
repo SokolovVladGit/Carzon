@@ -179,6 +179,12 @@ class _MenuPageState extends State<MenuPage> {
                         onTap: () => context.push(AppRoutes.settings),
                       ),
                       _PremiumMenuRow(
+                        rowKey: const ValueKey<String>('menu_fuel_prices_row'),
+                        icon: CarzonIcons.fuel,
+                        title: l10n.fuelPricesTitle,
+                        onTap: () => context.push(AppRoutes.fuelPrices),
+                      ),
+                      _PremiumMenuRow(
                         icon: CarzonIcons.privacy,
                         title: l10n.profileLegal,
                         onTap: () => context.go(AppRoutes.legal),

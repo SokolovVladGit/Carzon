@@ -27,32 +27,26 @@ enum BrowseCatalogBellOutcome {
   /// bell state instead of treating the action as a hard failure.
   criteriaSavedDeliveryUnavailable,
 
-  /// The catalog bell was tapped while the current draft already
-  /// matched the saved alert criteria, so the bell acted as a toggle
-  /// and cleared the saved alert (criteria + `notifications_enabled`
-  /// flip to null/false in one server upsert). Use this when callers
-  /// want to differentiate a tap-to-remove success from a save success.
+  /// Filter-alert delivery toggled **off** for the matched saved search.
+  deliveriesDisabled,
+
+  /// Filter-alert delivery toggled **on** for the current filter criteria.
+  deliveriesEnabled,
+
+  /// @deprecated Use [deliveriesDisabled]. Kept for test migration only.
   savedAlertCleared,
 
-  /// Clearing the saved alert via the catalog bell failed (RPC/network
-  /// error). Distinct from [prefsOrRowFailed] so the UI can surface a
-  /// clear-specific message in a future iteration.
+  /// @deprecated Use [prefsOrRowFailed]. Kept for test migration only.
   savedAlertClearFailed,
 
   /// User denied OS notification permission during enable flow.
   osPermissionDenied,
 
-  /// Updating notification_preferences or filter-alert row failed unexpectedly.
+  /// Updating notification_preferences or a saved-search row failed unexpectedly.
   prefsOrRowFailed,
 
-  /// Saving filter-alert criteria failed.
+  /// Saving saved-search criteria failed.
   criteriaSaveFailed,
-
-  /// Filter-alert delivery toggled **off**.
-  deliveriesDisabled,
-
-  /// Filter-alert delivery toggled **on**.
-  deliveriesEnabled,
 
   /// User already has the maximum number of saved searches (5).
   maxSavedSearchesReached,

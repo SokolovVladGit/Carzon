@@ -8,7 +8,6 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../filter_alerts/domain/entities/saved_search.dart';
 import '../../../filter_alerts/domain/services/filter_alert_delivery_orchestrator.dart';
 import '../../../filter_alerts/domain/usecases/create_saved_search.dart';
-import '../../../filter_alerts/domain/usecases/delete_saved_search.dart';
 import '../../../filter_alerts/domain/usecases/list_saved_searches.dart';
 import '../../../filter_alerts/domain/utils/saved_search_match.dart';
 import '../../../notifications/domain/entities/notification_preferences.dart';
@@ -85,19 +84,16 @@ class BrowseCatalogFilterAlertsCubit
   BrowseCatalogFilterAlertsCubit({
     required ListSavedSearches listSavedSearches,
     required CreateSavedSearch createSavedSearch,
-    required DeleteSavedSearch deleteSavedSearch,
     required NotificationsRepository notificationsRepository,
     required FilterAlertDeliveryOrchestrator deliveryOrchestrator,
   }) : _listSavedSearches = listSavedSearches,
        _createSavedSearch = createSavedSearch,
-       _deleteSavedSearch = deleteSavedSearch,
        _notificationsRepository = notificationsRepository,
        _deliveryOrchestrator = deliveryOrchestrator,
        super(const BrowseCatalogFilterAlertsState());
 
   final ListSavedSearches _listSavedSearches;
   final CreateSavedSearch _createSavedSearch;
-  final DeleteSavedSearch _deleteSavedSearch;
   final NotificationsRepository _notificationsRepository;
   final FilterAlertDeliveryOrchestrator _deliveryOrchestrator;
 
@@ -198,26 +194,47 @@ class BrowseCatalogFilterAlertsCubit
 
     emit(state.copyWith(bellBusy: true));
     try {
-      if (matched != null) {
-        final deleteResult = await _deleteSavedSearch(matched.id);
-        switch (deleteResult) {
+      if (deliveryOn && matched != null) {
+        final disableResult = await _deliveryOrchestrator.disableDeliveries(
+          matched,
+        );
+        switch (disableResult) {
           case FailureResult():
             emit(state.copyWith(bellBusy: false));
             await refresh();
-            if (kDebugMode) {
-              debugPrint(
-                '[catalogBell] outcome=savedAlertClearFailed '
-                'deliveryWasOn=$deliveryOn',
-              );
-            }
-            return BrowseCatalogBellOutcome.savedAlertClearFailed;
+            return BrowseCatalogBellOutcome.prefsOrRowFailed;
           case Success():
             emit(state.copyWith(bellBusy: false));
             await refresh();
             if (kDebugMode) {
-              debugPrint('[catalogBell] outcome=savedAlertCleared');
+              debugPrint('[catalogBell] outcome=deliveriesDisabled');
             }
-            return BrowseCatalogBellOutcome.savedAlertCleared;
+            return BrowseCatalogBellOutcome.deliveriesDisabled;
+        }
+      }
+
+      if (matched != null) {
+        if (!Env.pushNotificationsEnabled) {
+          emit(state.copyWith(bellBusy: false));
+          return BrowseCatalogBellOutcome.criteriaSavedDeliveryUnavailable;
+        }
+
+        switch (await _deliveryOrchestrator.enableDeliveries(matched)) {
+          case FailureResult(:final failure):
+            emit(state.copyWith(bellBusy: false));
+            await refresh();
+            if (failure.message == 'filter_alert_delivery_prefs_save_failed' ||
+                failure.message == 'filter_alert_delivery_prefs_load_failed') {
+              return BrowseCatalogBellOutcome.prefsOrRowFailed;
+            }
+            return _browseOutcomeFromEnableFailure(failure.message);
+          case Success(:final value):
+            final updated = state.savedSearches
+                .map((s) => s.id == value.id ? value : s)
+                .toList(growable: false);
+            emit(state.copyWith(bellBusy: false, savedSearches: updated));
+            await refresh();
+            return BrowseCatalogBellOutcome.deliveriesEnabled;
         }
       }
 

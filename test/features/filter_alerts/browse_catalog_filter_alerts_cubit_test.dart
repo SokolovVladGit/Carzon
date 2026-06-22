@@ -371,8 +371,8 @@ void main() {
       },
     );
 
-    test('eligible bell tap on already-saved-matching criteria toggles OFF: '
-        'returns savedAlertCleared and never re-creates', () async {
+    test('matched saved search in push-disabled build returns delivery unavailable',
+        () async {
       _setPushEnv(enabled: false);
 
       final toyotaCrit = ListingDiscoveryCriteria(
@@ -388,9 +388,6 @@ void main() {
       when(
         () => savedSearchesRepo.list(),
       ).thenAnswer((_) async => Success([saved]));
-      when(
-        () => savedSearchesRepo.delete('ss-toyota'),
-      ).thenAnswer((_) async => const Success(null));
 
       final cubit = buildCubit();
       await cubit.refresh();
@@ -401,8 +398,8 @@ void main() {
         autoName: 'Toyota',
       );
 
-      expect(outcome, BrowseCatalogBellOutcome.savedAlertCleared);
-      verify(() => savedSearchesRepo.delete('ss-toyota')).called(1);
+      expect(outcome, BrowseCatalogBellOutcome.criteriaSavedDeliveryUnavailable);
+      verifyNever(() => savedSearchesRepo.delete(any()));
       verifyNever(
         () => savedSearchesRepo.create(
           name: any(named: 'name'),
@@ -581,9 +578,8 @@ void main() {
     });
 
     test(
-      'matched draft with delivery fully off (push-disabled env): tap deletes '
-      'the saved search, returns savedAlertCleared, and helpers return false '
-      'afterwards',
+      'matched draft with delivery fully off (push-disabled env): tap keeps '
+      'saved search and returns delivery unavailable',
       () async {
         _setPushEnv(enabled: false);
 
@@ -597,14 +593,9 @@ void main() {
           alertsEnabled: false,
         );
 
-        final searches = [saved];
         when(
           () => savedSearchesRepo.list(),
-        ).thenAnswer((_) async => Success(List.of(searches)));
-        when(() => savedSearchesRepo.delete('ss-toyota')).thenAnswer((_) async {
-          searches.clear();
-          return const Success(null);
-        });
+        ).thenAnswer((_) async => Success([saved]));
 
         final cubit = buildCubit();
         await cubit.refresh();
@@ -627,8 +618,11 @@ void main() {
           autoName: 'Toyota',
         );
 
-        expect(outcome, BrowseCatalogBellOutcome.savedAlertCleared);
-        verify(() => savedSearchesRepo.delete('ss-toyota')).called(1);
+        expect(
+          outcome,
+          BrowseCatalogBellOutcome.criteriaSavedDeliveryUnavailable,
+        );
+        verifyNever(() => savedSearchesRepo.delete(any()));
         verifyNever(() => orchestrator.enableDeliveries(any()));
         verifyNever(
           () => savedSearchesRepo.create(
@@ -640,18 +634,18 @@ void main() {
 
         expect(
           cubit.browseBellShowsSavedDraftWithoutDelivery(toyotaCrit),
-          isFalse,
+          isTrue,
         );
         expect(
           cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(toyotaApplied),
-          isFalse,
+          isTrue,
         );
       },
     );
 
     test(
-      'matched draft with delivery fully on: tap deletes saved search, '
-      'returns savedAlertCleared, never calls orchestrator disable',
+      'matched draft with delivery fully on: tap disables row alerts via '
+      'orchestrator and returns deliveriesDisabled',
       () async {
         final toyotaCrit = ListingDiscoveryCriteria(
           make: 'Toyota',
@@ -662,14 +656,19 @@ void main() {
           criteria: toyotaCrit,
           alertsEnabled: true,
         );
+        final disabled = testSavedSearch(
+          id: 'ss-toyota',
+          criteria: toyotaCrit,
+          alertsEnabled: false,
+        );
 
         final searches = [saved];
         when(
           () => savedSearchesRepo.list(),
         ).thenAnswer((_) async => Success(List.of(searches)));
-        when(() => savedSearchesRepo.delete('ss-toyota')).thenAnswer((_) async {
-          searches.clear();
-          return const Success(null);
+        when(() => orchestrator.disableDeliveries(saved)).thenAnswer((_) async {
+          searches[0] = disabled;
+          return Success(disabled);
         });
 
         final cubit = buildCubit();
@@ -687,25 +686,25 @@ void main() {
           autoName: 'Toyota',
         );
 
-        expect(outcome, BrowseCatalogBellOutcome.savedAlertCleared);
-        verify(() => savedSearchesRepo.delete('ss-toyota')).called(1);
-        verifyNever(() => orchestrator.disableDeliveries(any()));
+        expect(outcome, BrowseCatalogBellOutcome.deliveriesDisabled);
+        verify(() => orchestrator.disableDeliveries(saved)).called(1);
+        verifyNever(() => savedSearchesRepo.delete(any()));
 
         expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isFalse);
         expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isFalse);
         expect(
           cubit.browseBellShowsSavedDraftWithoutDelivery(toyotaCrit),
-          isFalse,
+          isTrue,
         );
         expect(
           cubit.catalogBellSavedWithoutDeliveryVisibleForApplied(toyotaApplied),
-          isFalse,
+          isTrue,
         );
       },
     );
 
-    test('delete failure returns savedAlertClearFailed and leaves saved row '
-        'in place', () async {
+    test('disable failure returns prefsOrRowFailed and leaves saved row in place',
+        () async {
       final toyotaCrit = ListingDiscoveryCriteria(
         make: 'Toyota',
         marketRegion: MarketRegion.transnistria,
@@ -719,9 +718,9 @@ void main() {
       when(
         () => savedSearchesRepo.list(),
       ).thenAnswer((_) async => Success([saved]));
-      when(
-        () => savedSearchesRepo.delete('ss-toyota'),
-      ).thenAnswer((_) async => const FailureResult(ServerFailure('boom')));
+      when(() => orchestrator.disableDeliveries(saved)).thenAnswer(
+        (_) async => const FailureResult(ServerFailure('boom')),
+      );
 
       final cubit = buildCubit();
       await cubit.refresh();
@@ -732,8 +731,8 @@ void main() {
         autoName: 'Toyota',
       );
 
-      expect(outcome, BrowseCatalogBellOutcome.savedAlertClearFailed);
-      verify(() => savedSearchesRepo.delete('ss-toyota')).called(1);
+      expect(outcome, BrowseCatalogBellOutcome.prefsOrRowFailed);
+      verify(() => orchestrator.disableDeliveries(saved)).called(1);
       expect(cubit.state.bellBusy, isFalse);
     });
   });

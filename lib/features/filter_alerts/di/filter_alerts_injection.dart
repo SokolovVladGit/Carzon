@@ -45,7 +45,6 @@ void registerFilterAlertsFeature(GetIt sl) {
     () => BrowseCatalogFilterAlertsCubit(
       listSavedSearches: sl<ListSavedSearches>(),
       createSavedSearch: sl<CreateSavedSearch>(),
-      deleteSavedSearch: sl<DeleteSavedSearch>(),
       notificationsRepository: sl<NotificationsRepository>(),
       deliveryOrchestrator: sl<FilterAlertDeliveryOrchestrator>(),
     ),
