@@ -1,13 +1,16 @@
 # Carzon Release Hardening Inventory
 
-## Current release hardening status (hosted Carzon — closed 2026-06)
+## Current release hardening status (hosted Carzon — closed 2026-06-22)
+
+> **Stale baseline note:** References to **45/45** migrations elsewhere in this repo describe the **June 2026 contact-hardening closure** only. **Authoritative hosted count (2026-06-22):** **68** migrations recorded (`schema_migrations`), including Fuel Prices v1. Repo has **70** files under `supabase/migrations/`.
 
 | Area | Status | Evidence |
 |------|--------|----------|
 | **Seller contact exposure hardening** | **Closed** | Migration `20260630120000` applied; `check_contact_hardening.sql` → `overall_sql_metadata_result` PASS; simulator smoke PASS |
-| **Hosted migration parity** | **Closed** | `check_hosted_migration_parity.sql` → 45/45 repo migrations recorded (`hosted_migration_parity_result` PASS) |
+| **Hosted migration parity** | **Closed** | **68** hosted migrations through Fuel Prices v1; parity helper inventories **70** repo files — re-run `check_hosted_migration_parity.sql` after future applies |
 | **Hosted runtime contracts** | **Closed** | `check_hosted_runtime_contracts.sql` → `overall_runtime_contract_result` PASS (no STOP/WARN) |
 | **Metadata reconciliation** | **Closed** | Resolved prior parity STOP (33 missing metadata rows) after runtime PASS — metadata inserts only, no migration re-apply |
+| **Fuel Prices v1 (hosted backend)** | **Closed** | Three migrations applied; Edge **`process-fuel-price-jobs`** ACTIVE **v3**; cron **`carzon_process_fuel_price_jobs_6h`**; Vault synced; **`get_fuel_prices_for_app()`** fresh — **`docs/ops_fuel_price_jobs.md`** |
 | **Pagination failure UX** | **Implemented / tested** | `ListingsStatus.paginationFailure` + retry footer; not a release priority unless QA finds regression |
 
 **Optional / not independently confirmed:** anon-only PostgREST contact curls (Phase 3 minimal) — extra API-layer proof; SQL metadata + app smoke are complete.
@@ -263,9 +266,11 @@ Migration file:
 - Verification runbook: `docs/supabase_contact_hardening_verification.md`
 - Post-apply closure: `docs/supabase_contact_hardening_post_apply_checklist.md`
 
-### Hosted migration parity — **closed on hosted**
+### Hosted migration parity — **closed on hosted (superseded count 2026-06-22)**
 
-**Resolved (2026-06):** `check_hosted_migration_parity.sql` → **45/45** repo migrations recorded. Prior STOP (33 missing metadata rows) was metadata drift; runtime contracts PASS; reconciliation completed without re-applying migration SQL.
+**Resolved (2026-06):** parity **45/45 PASS** at June 2026 contact-hardening baseline. Prior STOP (33 missing metadata rows) was metadata drift; runtime contracts PASS; reconciliation completed without re-applying migration SQL.
+
+**Current (2026-06-22):** **68** hosted migrations through Fuel Prices v1 — see status table at top of this doc and **`docs/ops_fuel_price_jobs.md`**. Re-run parity helper after future applies.
 
 Authoritative pre-release helpers (re-run after any hosted change):
 
@@ -283,7 +288,7 @@ Verification workflow (for **future** hosted changes):
 
 - [x] SQL Editor: **`check_contact_hardening.sql`** → `overall_sql_metadata_result` PASS
 - [x] Migration `20260630120000` applied on hosted; simulator smoke PASS
-- [x] Hosted migration parity 45/45; runtime contracts PASS
+- [x] Hosted migration parity closed at June 2026 baseline (**45/45** then; **68** hosted as of 2026-06-22); runtime contracts PASS
 - [ ] **Optional:** anon-only PostgREST curls — `docs/supabase_contact_hardening_post_apply_checklist.md` § Minimal anon-only Phase 3 (independent API proof; not required if SQL + smoke accepted)
 
 ### Remaining manual QA before release
@@ -321,7 +326,7 @@ flutter test test/supabase/
 **Closed (2026-06 — do not re-open without new hosted evidence):**
 
 - ~~Contact hardening unapplied~~ → applied; SQL metadata PASS; simulator smoke PASS
-- ~~Hosted migration parity unknown~~ → 45/45 PASS; metadata reconciliation complete
+- ~~Hosted migration parity unknown~~ → closed (**45/45** at 2026-06 baseline; **68** hosted through Fuel Prices v1, 2026-06-22)
 - ~~Runtime backend contract gaps~~ → runtime helper PASS
 
 **Still open before public release:**

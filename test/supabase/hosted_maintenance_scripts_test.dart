@@ -120,6 +120,17 @@ void main() {
       },
     );
 
+    test('includes Fuel Prices v1 migrations', () {
+      const fuelPrices = [
+        '20260822120000',
+        '20260822123000',
+        '20260822130000',
+      ];
+      for (final version in fuelPrices) {
+        expect(expectedVersions, contains(version));
+      }
+    });
+
     test('reports orphan hosted migrations (hosted_only_migrations row)', () {
       expect(paritySql, contains('orphan_hosted'));
       expect(paritySql, contains('hosted_only_migrations'));

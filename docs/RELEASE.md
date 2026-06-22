@@ -153,19 +153,23 @@ Local **last-applied listing filters** persist on-device (`ListingDiscoveryCrite
 
 **June 2026 migrations (repo — full inventory through contact hardening)**
 
-Later migrations add **filter-alert notification queue/cron**, **VIN decode/report phases** (`20260616120000` … `20260629120000`), and **public contact projection hardening** (`20260630120000`). **Hosted Carzon (2026-06):** all **45** repo versions recorded; runtime contracts PASS; contact hardening closed.
+Later migrations add **filter-alert notification queue/cron**, **VIN decode/report phases** (`20260616120000` … `20260629120000`), and **public contact projection hardening** (`20260630120000`). **Hosted Carzon (2026-06):** contact hardening closed; parity **45/45 at that baseline** (metadata reconciliation).
+
+**Post–June 2026 + Fuel Prices (repo — hosted applied 2026-06-22):** additional migrations through **`20260822130000_fix_fuel_price_job_reenqueue.sql`**. **Hosted migration count: 68** (was **65** before Fuel Prices v1). **No pending hosted SQL or Edge deploy for Fuel Prices.** Runbook: **`docs/ops_fuel_price_jobs.md`**.
+
+> **Stale doc warning:** Any checklist still citing **45/45** migrations describes the June 2026 contact-hardening snapshot only — not current hosted state.
 
 **Authoritative pre-release verification** (re-run after any hosted SQL change):
 
 | Helper | Purpose |
 |--------|---------|
-| `supabase/maintenance/check_hosted_migration_parity.sql` | 45/45 `schema_migrations` metadata |
+| `supabase/maintenance/check_hosted_migration_parity.sql` | Repo vs `schema_migrations` metadata (update helper when adding migrations) |
 | `supabase/maintenance/check_hosted_runtime_contracts.sql` | App-critical tables/RPCs exist |
 | `supabase/maintenance/check_contact_hardening.sql` | Contact column grants + RPC metadata |
 
-Runbooks: `docs/hosted_migration_parity_verification.md`, `docs/hosted_migration_metadata_reconciliation.md` (if parity STOP + runtime PASS).
+Runbooks: `docs/hosted_migration_parity_verification.md`, `docs/hosted_migration_metadata_reconciliation.md` (if parity STOP + runtime PASS), **`docs/ops_fuel_price_jobs.md`** (Fuel Prices worker).
 
-**Full repo migration range:** `20260423120000_create_listings.sql` … `20260630120000_public_contact_projection_hardening.sql` (45 files under `supabase/migrations/`).
+**Full repo migration range:** `20260423120000_create_listings.sql` … `20260822130000_fix_fuel_price_job_reenqueue.sql` (**70** files under `supabase/migrations/`; **68** recorded on hosted as of 2026-06-22).
 
 **Important**
 

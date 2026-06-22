@@ -2,7 +2,9 @@
 
 ## Completed reconciliation — **hosted Carzon (2026-06)**
 
-**Resolved:** Parity was STOP (33 missing `schema_migrations` rows) while runtime contracts were PASS. Owner approved metadata INSERTs only (no migration SQL re-apply). Final parity: **45/45 PASS**.
+**Resolved:** Parity was STOP (33 missing `schema_migrations` rows) while runtime contracts were PASS. Owner approved metadata INSERTs only (no migration SQL re-apply). Final parity: **45/45 PASS** at June 2026 baseline.
+
+> **Historical doc:** **45/45** counts here are accurate for the 2026-06 reconciliation event only. **Current hosted count (2026-06-22):** **68** migrations — see **`docs/hosted_migration_parity_verification.md`**.
 
 This runbook remains for **future** drift if parity STOP recurs with runtime PASS.
 

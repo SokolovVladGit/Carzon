@@ -1,12 +1,14 @@
 # Hosted migration parity verification
 
-## Hosted status — **closed (2026-06)**
+## Hosted status — **closed (2026-06-22)**
 
 **Confirmed on hosted Carzon:**
 
-- `check_hosted_migration_parity.sql` → **45/45** repo migrations recorded (`hosted_migration_parity_result` PASS)
-- `check_hosted_runtime_contracts.sql` → PASS (no STOP/WARN)
-- Prior parity STOP (33 missing metadata rows) resolved via **metadata reconciliation** — not migration re-apply
+- **68** migrations recorded in `supabase_migrations.schema_migrations` (was **65** before Fuel Prices v1; **45/45** in older docs is a **stale June 2026 baseline**)
+- Fuel Prices trilogy applied hosted: `20260822120000_fuel_prices_foundation`, `20260822123000_schedule_process_fuel_price_jobs_cron`, `20260822130000_fix_fuel_price_job_reenqueue`
+- **`process-fuel-price-jobs`** Edge Function deployed **ACTIVE v3**; cron **`carzon_process_fuel_price_jobs_6h`** active; Vault secrets synced — see **`docs/ops_fuel_price_jobs.md`**
+- `check_hosted_runtime_contracts.sql` → PASS (no STOP/WARN) at last full audit; re-run after hosted changes
+- Prior parity STOP (33 missing metadata rows, 2026-06) resolved via **metadata reconciliation** — not migration re-apply
 
 Re-run helpers before future releases or after any hosted SQL change.
 
@@ -52,7 +54,7 @@ This check is **read-only** and does **not** apply migrations.
 
 ### `hosted_migration_parity_result` = **PASS**
 
-All **45** repo migrations (as of this doc) are recorded in hosted `schema_migrations` by **version**.
+All **70** repo migrations in the parity helper inventory are recorded in hosted `schema_migrations` by **version**. **As of 2026-06-22:** hosted Carzon has **68** migrations recorded (includes Fuel Prices v1). A PASS requires full inventory match — update `check_hosted_migration_parity.sql` when adding new migration files.
 
 **Next steps (do not skip):**
 
@@ -116,6 +118,7 @@ After manual SQL Editor apply, always insert the matching metadata row (see cont
 - **Runtime contract triage:** `supabase/maintenance/check_hosted_runtime_contracts.sql` (run after parity STOP).
 - Contact hardening verification: `docs/supabase_contact_hardening_verification.md`
 - Contact hardening SQL helper: `supabase/maintenance/check_contact_hardening.sql`
+- Fuel Prices worker: `docs/ops_fuel_price_jobs.md`
 - Release inventory: `docs/release_hardening_inventory.md`
 
 ## Inventory source
