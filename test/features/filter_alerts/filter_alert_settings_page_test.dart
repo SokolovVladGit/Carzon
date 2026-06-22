@@ -256,6 +256,12 @@ SUPABASE_ANON_KEY=anon
     );
     expect(find.text(l10n.savedSearchesEmptyTitle), findsOneWidget);
     expect(find.text(l10n.savedSearchesEmptyBody), findsOneWidget);
+    expect(find.text(l10n.savedSearchesHowToAddTitle), findsOneWidget);
+    expect(find.text(l10n.savedSearchesHowToAddBody), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('saved_searches_how_to_add_callout')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey<String>('saved_searches_go_to_catalog')),
       findsOneWidget,
@@ -299,21 +305,28 @@ SUPABASE_ANON_KEY=anon
     await tester.pumpAndSettle();
 
     expect(find.text('BMW 320'), findsOneWidget);
-    expect(find.text('BMW'), findsOneWidget);
-    expect(find.text('320'), findsOneWidget);
-    expect(find.text('2018–2024'), findsOneWidget);
-    expect(find.text('Тирасполь'), findsOneWidget);
-    expect(find.text(l10n.regionTransnistria), findsOneWidget);
-    expect(find.text(l10n.listingBodyTypeSedan), findsOneWidget);
-    expect(find.text(l10n.filterMake), findsOneWidget);
+    expect(find.text(l10n.savedSearchCardCaption), findsOneWidget);
+    expect(find.text(l10n.savedSearchesHowToAddTitle), findsOneWidget);
+    expect(find.text(l10n.savedSearchesHowToAddBody), findsOneWidget);
+    expect(find.textContaining('${l10n.filterMake} ·'), findsOneWidget);
+    expect(find.textContaining('${l10n.filterModel} ·'), findsOneWidget);
+    expect(find.textContaining('2018–2024'), findsOneWidget);
+    expect(find.textContaining('Тирасполь'), findsOneWidget);
+    expect(find.textContaining(l10n.regionTransnistria), findsOneWidget);
+    expect(find.textContaining(l10n.listingBodyTypeSedan), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('filter_alert_management_summary_chips')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey<String>('saved_search_delete_ss-bmw')),
       findsOneWidget,
     );
     expect(find.text(l10n.savedSearchAlertsToggleTitle), findsOneWidget);
+    expect(find.text(l10n.savedSearchAlertsToggleSubtitle), findsOneWidget);
   });
 
-  testWidgets('push disabled: toggle is inactive and shows localized notice', (
+  testWidgets('push disabled: toggle is inactive without technical card copy', (
     tester,
   ) async {
     const user = AuthUser(id: 'u1', email: 'a@b.com');
@@ -348,16 +361,15 @@ SUPABASE_ANON_KEY=anon
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.savedSearchAlertsToggleTitle), findsOneWidget);
+    expect(find.text(l10n.savedSearchAlertsToggleSubtitle), findsOneWidget);
     expect(
       find.text(l10n.filterAlertNotificationsPushDisabled),
-      findsOneWidget,
+      findsNothing,
     );
-    final tileFinder = find.ancestor(
-      of: find.text(l10n.savedSearchAlertsToggleTitle),
-      matching: find.byType(SwitchListTile),
-    );
+    expect(find.text(l10n.savedSearchAlertsToggleSubtitle), findsOneWidget);
+    final tileFinder = find.byType(Switch);
     expect(tileFinder, findsOneWidget);
-    expect(tester.widget<SwitchListTile>(tileFinder).onChanged, isNull);
+    expect(tester.widget<Switch>(tileFinder).onChanged, isNull);
     verifyNever(() => pushRegistration.requestOsNotificationPermission());
     verifyNever(() => pushRegistration.syncTokenWithBackendIfEligible());
     verifyNever(
@@ -469,10 +481,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
     await tester.pumpWidget(_wrappedPage(auth, recorder: routeRecorder));
     await tester.pumpAndSettle();
 
-    final switchTile = find.ancestor(
-      of: find.text(ruStrings().savedSearchAlertsToggleTitle),
-      matching: find.byType(SwitchListTile),
-    );
+    final switchTile = find.byType(Switch);
     await tester.tap(switchTile);
     await tester.pumpAndSettle();
 

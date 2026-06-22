@@ -210,14 +210,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
       return;
     }
 
-    if (!prefs.globalEnabled) {
-      return;
-    }
-
     if (!Env.pushNotificationsEnabled) {
-      emit(
-        state.copyWith(notice: NotificationUserNotice.pushUnavailableInBuild),
-      );
       return;
     }
 
@@ -394,14 +387,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
       return;
     }
 
-    if (!prefs.globalEnabled) {
-      return;
-    }
-
     if (!Env.pushNotificationsEnabled) {
-      emit(
-        state.copyWith(notice: NotificationUserNotice.pushUnavailableInBuild),
-      );
       return;
     }
 
@@ -424,7 +410,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
         }
 
         final update = await _repository.updateMyPreferences(
-          globalEnabled: prefs.globalEnabled,
+          globalEnabled: true,
           messagesEnabled: prefs.messagesEnabled,
           filterAlertsEnabled: prefs.filterAlertsEnabled,
           priceDropsEnabled: true,

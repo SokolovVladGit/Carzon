@@ -406,34 +406,16 @@ void main() {
       reason: 'No technical banner copy after first tap.',
     );
 
-    // Second tap on the SAME draft must clear the saved alert via
-    // the new toggle path. Bell falls back to the inactive glyph
-    // and no SnackBar bleeds anywhere.
+    // Second tap on the SAME draft keeps the saved search in push-disabled
+    // builds and does not delete it.
     await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));
     await tester.pumpAndSettle();
 
-    verify(() => savedSearchesRepo.delete('ss-1')).called(1);
+    verifyNever(() => savedSearchesRepo.delete(any()));
     expect(
       find.byKey(CatalogFilterAlertAccent.sheetBellSavedNoDeliveryIconKey),
-      findsNothing,
+      findsOneWidget,
     );
-    // Inactive tooltip + the inactive glyph come back.
-    final inactiveTooltip = tester
-        .widget<IconButton>(
-          find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey),
-        )
-        .tooltip;
-    expect(inactiveTooltip, l10n.catalogBrowseFilterBellInactiveTooltip);
-    final iconsAfter = tester
-        .widgetList<Icon>(
-          find.descendant(
-            of: find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey),
-            matching: find.byType(Icon),
-          ),
-        )
-        .toList();
-    expect(iconsAfter.any((i) => i.icon == Icons.notifications_none), isTrue);
-    // No bleed: clear path emits no root SnackBar.
     expect(find.byType(SnackBar), findsNothing);
   });
 
@@ -695,15 +677,14 @@ void main() {
         findsOneWidget,
       );
 
-      // Tapping the bell on a matching draft must clear via the toggle
-      // path — the user can disable the saved alert directly from the
-      // sheet without leaving for /filter-alert.
+      // Tapping the bell on a matching draft keeps the saved search in
+      // push-disabled builds (delivery remains unavailable).
       await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));
       await tester.pumpAndSettle();
-      verify(() => savedSearchesRepo.delete('ss-1')).called(1);
+      verifyNever(() => savedSearchesRepo.delete(any()));
       expect(
         find.byKey(CatalogFilterAlertAccent.sheetBellSavedNoDeliveryIconKey),
-        findsNothing,
+        findsOneWidget,
       );
     },
   );

@@ -104,20 +104,10 @@ class _SettingsPageState extends State<SettingsPage> {
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-              padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + bottomInset),
+              padding: EdgeInsets.fromLTRB(16, 4, 16, 28 + bottomInset),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    l10n.settingsIntro,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(
-                        alpha: isDark ? 0.78 : 0.82,
-                      ),
-                      height: 1.42,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
                   ProfileGroupedCard(
                     title: l10n.settingsSectionAccount,
                     childPadding: const EdgeInsets.symmetric(vertical: 6),
@@ -175,7 +165,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   ProfileGroupedCard(
                     title: l10n.settingsSectionPreferences,
                     childPadding: const EdgeInsets.symmetric(vertical: 6),
@@ -188,7 +178,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   ProfileGroupedCard(
                     title: l10n.settingsSectionNotifications,
                     childPadding: const EdgeInsets.symmetric(vertical: 6),
@@ -225,7 +215,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   if (authenticated) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                     ProfileGroupedCard(
                       title: l10n.settingsSectionPrivacySafety,
                       childPadding: const EdgeInsets.symmetric(vertical: 6),
@@ -273,7 +263,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   ProfileGroupedCard(
                     title: l10n.settingsSectionSupportLegal,
                     childPadding: const EdgeInsets.symmetric(vertical: 6),
@@ -297,6 +287,18 @@ class _SettingsPageState extends State<SettingsPage> {
                         if (authenticated)
                           ProfileMutedDivider(scheme: scheme, isDark: isDark),
                         ProfileSettingsNavigationRow(
+                          rowKey: const ValueKey<String>(
+                            'settings_fuel_prices_row',
+                          ),
+                          icon: CarzonIcons.fuel,
+                          title: l10n.fuelPricesTitle,
+                          subtitle: l10n.fuelPricesMenuSubtitle,
+                          theme: theme,
+                          scheme: scheme,
+                          onTap: () => context.push(AppRoutes.fuelPrices),
+                        ),
+                        ProfileMutedDivider(scheme: scheme, isDark: isDark),
+                        ProfileSettingsNavigationRow(
                           rowKey: const ValueKey<String>('settings_legal_row'),
                           icon: CarzonIcons.privacy,
                           title: l10n.profileLegal,
@@ -308,7 +310,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   const SettingsAboutSection(),
                 ],
               ),

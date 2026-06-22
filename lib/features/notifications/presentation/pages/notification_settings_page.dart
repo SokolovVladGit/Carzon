@@ -16,7 +16,6 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
-import '../../services/push_messaging_permission_status.dart';
 import '../cubit/notification_settings_cubit.dart';
 import '../widgets/notification_settings_section_card.dart';
 
@@ -75,13 +74,13 @@ class _NotificationSettingsChrome extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: _notificationPageBackground(context),
       appBar: AppBar(
         leading: const AppBackButton(fallback: AppRoutes.profile),
         title: Text(l10n.notificationSettingsTitle),
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: scheme.surface,
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         foregroundColor: scheme.onSurface,
         systemOverlayStyle: isDark
@@ -90,20 +89,12 @@ class _NotificationSettingsChrome extends StatelessWidget {
       ),
       body: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: isDark
-              ? LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: AppTheme.editorialDarkFilterCanvasGradient(scheme),
-                  stops: const [0, 0.4, 1],
-                )
-              : null,
-          color: isDark
-              ? null
-              : Color.alphaBlend(
-                  scheme.primary.withValues(alpha: 0.02),
-                  scheme.surface,
-                ),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: _notificationCanvasGradient(context),
+            stops: const [0, 0.42, 1],
+          ),
         ),
         child: body,
       ),
@@ -154,330 +145,27 @@ class _NotificationSettingsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final pushOn = Env.pushNotificationsEnabled;
     final prefs = state.preferences!;
-    final globalOn = prefs.globalEnabled;
-    final masterEnabled = pushOn && globalOn;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+      padding: EdgeInsets.fromLTRB(16, 4, 16, 28 + bottomInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            l10n.notificationSettingsPageIntro,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _DevicePermissionCard(
-            pushOn: pushOn,
-            osPermission: state.osPermission,
-          ),
-          const SizedBox(height: 12),
-          _MasterPushCard(
-            pushOn: pushOn,
-            busy: state.busy,
-            globalEnabled: globalOn,
-          ),
-          const SizedBox(height: 12),
           _MessagesNotificationsCard(
             pushOn: pushOn,
             busy: state.busy,
-            globalOn: globalOn,
             messagesEnabled: prefs.messagesEnabled,
           ),
-          const SizedBox(height: 12),
-          _FilterAlertsNotificationsCard(
-            pushOn: pushOn,
-            busy: state.busy,
-            globalOn: globalOn,
-            filterAlertsEnabled: prefs.filterAlertsEnabled,
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           _PriceDropsNotificationsCard(
             pushOn: pushOn,
             busy: state.busy,
-            globalOn: globalOn,
             priceDropsEnabled: prefs.priceDropsEnabled,
           ),
-          const SizedBox(height: 12),
-          NotificationSettingsSectionCard(
-            key: const ValueKey<String>('notification_settings_delivery_card'),
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: 22,
-                  color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.notificationSettingsDeliveryCardTitle,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          height: 1.25,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        l10n.notificationSettingsDeliveryDisclaimer,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (!pushOn) ...[
-            const SizedBox(height: 12),
-            Text(
-              l10n.notificationSettingsPushBuildDisabledHint,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-                height: 1.32,
-              ),
-            ),
-          ] else if (!masterEnabled) ...[
-            const SizedBox(height: 12),
-            Text(
-              l10n.notificationSettingsMasterOffHint,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
-                height: 1.32,
-              ),
-            ),
-          ],
         ],
-      ),
-    );
-  }
-}
-
-class _DevicePermissionCard extends StatelessWidget {
-  const _DevicePermissionCard({
-    required this.pushOn,
-    required this.osPermission,
-  });
-
-  final bool pushOn;
-  final PushMessagingPermissionStatus? osPermission;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final visuals = _permissionVisuals(
-      l10n,
-      scheme: scheme,
-      pushOn: pushOn,
-      status: osPermission,
-    );
-
-    return NotificationSettingsSectionCard(
-      key: const ValueKey<String>('notification_settings_status_card'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.smartphone_outlined,
-                size: 22,
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  l10n.notificationSettingsStatusCardTitle,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    height: 1.25,
-                  ),
-                ),
-              ),
-              _StatusPill(label: visuals.pillLabel, colors: visuals.pillColors),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            visuals.description,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-              height: 1.35,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PermissionVisuals {
-  const _PermissionVisuals({
-    required this.pillLabel,
-    required this.pillColors,
-    required this.description,
-  });
-
-  final String pillLabel;
-  final _StatusPillColors pillColors;
-  final String description;
-}
-
-class _StatusPillColors {
-  const _StatusPillColors({
-    required this.background,
-    required this.foreground,
-    required this.border,
-  });
-
-  final Color background;
-  final Color foreground;
-  final Color border;
-}
-
-_PermissionVisuals _permissionVisuals(
-  AppLocalizations l10n, {
-  required ColorScheme scheme,
-  required bool pushOn,
-  required PushMessagingPermissionStatus? status,
-}) {
-  final accent = AppTheme.editorialAccentColor(scheme);
-
-  if (!pushOn) {
-    return _PermissionVisuals(
-      pillLabel: l10n.notificationSettingsOsPillUnavailable,
-      pillColors: _StatusPillColors(
-        background: scheme.surfaceContainerHighest,
-        foreground: scheme.onSurfaceVariant,
-        border: scheme.outlineVariant.withValues(alpha: 0.45),
-      ),
-      description: l10n.notificationSettingsOsDescriptionUnavailable,
-    );
-  }
-
-  return switch (status) {
-    PushMessagingPermissionStatus.authorized => _PermissionVisuals(
-      pillLabel: l10n.notificationSettingsOsPillAllowed,
-      pillColors: _StatusPillColors(
-        background: Color.alphaBlend(
-          const Color(0xFF2E7D32).withValues(alpha: 0.14),
-          scheme.surfaceContainerHigh,
-        ),
-        foreground: scheme.onSurface.withValues(alpha: 0.92),
-        border: const Color(0xFF2E7D32).withValues(alpha: 0.35),
-      ),
-      description: l10n.notificationSettingsOsDescriptionAuthorized,
-    ),
-    PushMessagingPermissionStatus.provisional => _PermissionVisuals(
-      pillLabel: l10n.notificationSettingsOsPillProvisional,
-      pillColors: _StatusPillColors(
-        background: Color.alphaBlend(
-          accent.withValues(alpha: 0.14),
-          scheme.surfaceContainerHigh,
-        ),
-        foreground: accent,
-        border: accent.withValues(alpha: 0.40),
-      ),
-      description: l10n.notificationSettingsOsDescriptionProvisional,
-    ),
-    PushMessagingPermissionStatus.denied => _PermissionVisuals(
-      pillLabel: l10n.notificationSettingsOsPillDenied,
-      pillColors: _StatusPillColors(
-        background: Color.alphaBlend(
-          scheme.error.withValues(alpha: 0.12),
-          scheme.surfaceContainerHigh,
-        ),
-        foreground: scheme.error,
-        border: scheme.error.withValues(alpha: 0.35),
-      ),
-      description: l10n.notificationSettingsOsDescriptionDenied,
-    ),
-    PushMessagingPermissionStatus.notDetermined || null => _PermissionVisuals(
-      pillLabel: l10n.notificationSettingsOsPillNotDetermined,
-      pillColors: _StatusPillColors(
-        background: scheme.surfaceContainerHighest,
-        foreground: scheme.onSurfaceVariant,
-        border: scheme.outlineVariant.withValues(alpha: 0.40),
-      ),
-      description: l10n.notificationSettingsOsDescriptionNotDetermined,
-    ),
-  };
-}
-
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label, required this.colors});
-
-  final String label;
-  final _StatusPillColors colors;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: colors.foreground,
-            letterSpacing: 0.1,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MasterPushCard extends StatelessWidget {
-  const _MasterPushCard({
-    required this.pushOn,
-    required this.busy,
-    required this.globalEnabled,
-  });
-
-  final bool pushOn;
-  final bool busy;
-  final bool globalEnabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return NotificationSettingsSectionCard(
-      key: const ValueKey<String>('notification_settings_master_card'),
-      child: _NotificationSwitchRow(
-        icon: CarzonIcons.notificationsOutline,
-        title: l10n.notificationSettingsGlobalTitle,
-        subtitle: pushOn
-            ? l10n.notificationSettingsGlobalSubtitle
-            : l10n.notificationSettingsPushBuildDisabledBanner,
-        value: globalEnabled,
-        onChanged: busy || !pushOn
-            ? null
-            : (v) =>
-                  context.read<NotificationSettingsCubit>().setGlobalEnabled(v),
       ),
     );
   }
@@ -487,13 +175,11 @@ class _MessagesNotificationsCard extends StatelessWidget {
   const _MessagesNotificationsCard({
     required this.pushOn,
     required this.busy,
-    required this.globalOn,
     required this.messagesEnabled,
   });
 
   final bool pushOn;
   final bool busy;
-  final bool globalOn;
   final bool messagesEnabled;
 
   @override
@@ -504,11 +190,9 @@ class _MessagesNotificationsCard extends StatelessWidget {
       child: _NotificationSwitchRow(
         icon: CarzonIcons.chat,
         title: l10n.notificationSettingsMessagesTitle,
-        subtitle: globalOn
-            ? l10n.notificationSettingsMessagesSubtitle
-            : l10n.notificationSettingsMessagesNeedsGlobal,
-        value: messagesEnabled && globalOn,
-        onChanged: busy || !pushOn || !globalOn
+        subtitle: l10n.notificationSettingsMessagesSubtitle,
+        value: messagesEnabled,
+        onChanged: busy || !pushOn
             ? null
             : (v) => context
                   .read<NotificationSettingsCubit>()
@@ -518,77 +202,15 @@ class _MessagesNotificationsCard extends StatelessWidget {
   }
 }
 
-class _FilterAlertsNotificationsCard extends StatelessWidget {
-  const _FilterAlertsNotificationsCard({
-    required this.pushOn,
-    required this.busy,
-    required this.globalOn,
-    required this.filterAlertsEnabled,
-  });
-
-  final bool pushOn;
-  final bool busy;
-  final bool globalOn;
-  final bool filterAlertsEnabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    return NotificationSettingsSectionCard(
-      key: const ValueKey<String>('notification_settings_filter_card'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _NotificationSwitchRow(
-            icon: CarzonIcons.filter,
-            title: l10n.notificationSettingsFilterAlertsTitle,
-            subtitle: globalOn
-                ? l10n.notificationSettingsFilterAlertsSubtitle
-                : l10n.notificationSettingsFilterAlertsNeedsGlobal,
-            value: filterAlertsEnabled && globalOn,
-            onChanged: busy || !pushOn || !globalOn
-                ? null
-                : (v) => context
-                      .read<NotificationSettingsCubit>()
-                      .setFilterAlertsEnabled(v),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            l10n.notificationSettingsFilterAlertsSavedFilterNote,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.9),
-              height: 1.32,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              key: const ValueKey<String>('notification_settings_filter_cta'),
-              onPressed: () => context.push(AppRoutes.filterAlert),
-              child: Text(l10n.notificationSettingsFilterAlertsOpenCta),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _PriceDropsNotificationsCard extends StatelessWidget {
   const _PriceDropsNotificationsCard({
     required this.pushOn,
     required this.busy,
-    required this.globalOn,
     required this.priceDropsEnabled,
   });
 
   final bool pushOn;
   final bool busy;
-  final bool globalOn;
   final bool priceDropsEnabled;
 
   @override
@@ -599,11 +221,9 @@ class _PriceDropsNotificationsCard extends StatelessWidget {
       child: _NotificationSwitchRow(
         icon: Icons.trending_down_rounded,
         title: l10n.notificationSettingsPriceDropsTitle,
-        subtitle: globalOn
-            ? l10n.notificationSettingsPriceDropsSubtitle
-            : l10n.notificationSettingsPriceDropsNeedsGlobal,
-        value: priceDropsEnabled && globalOn,
-        onChanged: busy || !pushOn || !globalOn
+        subtitle: l10n.notificationSettingsPriceDropsSubtitle,
+        value: priceDropsEnabled,
+        onChanged: busy || !pushOn
             ? null
             : (v) => context
                   .read<NotificationSettingsCubit>()
@@ -682,8 +302,47 @@ String? _noticeMessage(AppLocalizations l10n, NotificationUserNotice notice) {
       l10n.notificationSettingsOsPermissionDenied,
     NotificationUserNotice.loadFailed => l10n.notificationSettingsLoadFailed,
     NotificationUserNotice.saveFailed => l10n.notificationSettingsSaveFailed,
-    NotificationUserNotice.pushUnavailableInBuild =>
-      l10n.notificationSettingsPushUnavailableInBuild,
+    NotificationUserNotice.pushUnavailableInBuild ||
     NotificationUserNotice.none => null,
   };
+}
+
+Color _notificationPageBackground(BuildContext context) {
+  final scheme = Theme.of(context).colorScheme;
+  final isDark = scheme.brightness == Brightness.dark;
+  if (isDark) {
+    return Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.050),
+      scheme.surface,
+    );
+  }
+  return Color.alphaBlend(
+    scheme.primary.withValues(alpha: 0.018),
+    scheme.surface,
+  );
+}
+
+List<Color> _notificationCanvasGradient(BuildContext context) {
+  final scheme = Theme.of(context).colorScheme;
+  final isDark = scheme.brightness == Brightness.dark;
+  if (isDark) {
+    return AppTheme.editorialDarkFilterCanvasGradient(scheme);
+  }
+
+  final top = Color.alphaBlend(
+    scheme.surfaceTint.withValues(alpha: 0.008),
+    scheme.surface,
+  );
+  final mid = Color.alphaBlend(
+    scheme.primary.withValues(alpha: 0.032),
+    scheme.surfaceContainerLowest,
+  );
+  final bottom = Color.alphaBlend(
+    scheme.onSurface.withValues(alpha: 0.024),
+    Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.070),
+      scheme.surfaceContainerLow,
+    ),
+  );
+  return [top, mid, bottom];
 }

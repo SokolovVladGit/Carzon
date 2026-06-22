@@ -248,6 +248,31 @@ SUPABASE_ANON_KEY=anon
     );
 
     blocTest<NotificationSettingsCubit, NotificationSettingsState>(
+      'messages enabled does not call repository when push disabled',
+      build: () => NotificationSettingsCubit(
+        notificationsRepository: repo,
+        pushRegistration: regNoPush,
+      ),
+      seed: () => NotificationSettingsState(
+        phase: NotificationSettingsLoadPhase.ready,
+        preferences: _prefs(global: false, messages: false),
+      ),
+      act: (c) => c.setMessagesEnabled(true),
+      expect: () => <NotificationSettingsState>[],
+      verify: (_) {
+        verifyNever(
+          () => repo.updateMyPreferences(
+            globalEnabled: any(named: 'globalEnabled'),
+            messagesEnabled: any(named: 'messagesEnabled'),
+            filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+            priceDropsEnabled: any(named: 'priceDropsEnabled'),
+          ),
+        );
+        expect(client.permissionRequestCalls, 0);
+      },
+    );
+
+    blocTest<NotificationSettingsCubit, NotificationSettingsState>(
       'filter alerts enabled does not call repository when push disabled',
       build: () => NotificationSettingsCubit(
         notificationsRepository: repo,
@@ -424,7 +449,10 @@ SUPABASE_ANON_KEY=anon
   );
 
   blocTest<NotificationSettingsCubit, NotificationSettingsState>(
-    'message toggle no-op when global off',
+    'message toggle on auto-enables global when global off',
+    setUp: () {
+      client.permissionStatus = PushMessagingPermissionStatus.authorized;
+    },
     build: buildCubit,
     seed: () => NotificationSettingsState(
       phase: NotificationSettingsLoadPhase.ready,
@@ -432,14 +460,14 @@ SUPABASE_ANON_KEY=anon
     ),
     act: (c) => c.setMessagesEnabled(true),
     verify: (_) {
-      verifyNever(
+      verify(
         () => repo.updateMyPreferences(
-          globalEnabled: any(named: 'globalEnabled'),
-          messagesEnabled: any(named: 'messagesEnabled'),
-          filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
-          priceDropsEnabled: any(named: 'priceDropsEnabled'),
+          globalEnabled: true,
+          messagesEnabled: true,
+          filterAlertsEnabled: false,
+          priceDropsEnabled: false,
         ),
-      );
+      ).called(1);
     },
   );
 
@@ -562,7 +590,10 @@ SUPABASE_ANON_KEY=anon
   );
 
   blocTest<NotificationSettingsCubit, NotificationSettingsState>(
-    'price drops toggle no-op when global off',
+    'price drops toggle on auto-enables global when global off',
+    setUp: () {
+      client.permissionStatus = PushMessagingPermissionStatus.authorized;
+    },
     build: buildCubit,
     seed: () => NotificationSettingsState(
       phase: NotificationSettingsLoadPhase.ready,
@@ -570,14 +601,14 @@ SUPABASE_ANON_KEY=anon
     ),
     act: (c) => c.setPriceDropsEnabled(true),
     verify: (_) {
-      verifyNever(
+      verify(
         () => repo.updateMyPreferences(
-          globalEnabled: any(named: 'globalEnabled'),
-          messagesEnabled: any(named: 'messagesEnabled'),
-          filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
-          priceDropsEnabled: any(named: 'priceDropsEnabled'),
+          globalEnabled: true,
+          messagesEnabled: false,
+          filterAlertsEnabled: false,
+          priceDropsEnabled: true,
         ),
-      );
+      ).called(1);
     },
   );
 

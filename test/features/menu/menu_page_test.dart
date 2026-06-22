@@ -340,6 +340,72 @@ void main() {
     expect(find.byKey(settingsStubKey), findsOneWidget);
   });
 
+  testWidgets('Fuel prices row pushes /fuel-prices', (tester) async {
+    when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.unauthenticated(),
+    );
+
+    const fuelPricesStubKey = ValueKey<String>('menu_test_fuel_prices_stub');
+
+    late final GoRouter router;
+    router = GoRouter(
+      initialLocation: AppRoutes.menu,
+      routes: [
+        GoRoute(
+          path: AppRoutes.menu,
+          builder: (_, _) => MultiBlocProvider(
+            providers: [
+              BlocProvider<AuthCubit>.value(value: cubit),
+              BlocProvider(
+                create: (_) =>
+                    SelfSellerVisualCubit(GetMySellerProfile(sellersRepo)),
+              ),
+              BlocProvider(
+                create: (_) => MessagingUnreadSummaryCubit(messagingRepo),
+              ),
+            ],
+            child: const MenuPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.fuelPrices,
+          builder: (_, _) => const Scaffold(
+            key: fuelPricesStubKey,
+            body: Text('menu_fuel_prices_stub'),
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      BlocProvider<CompareCubit>.value(
+        value: compareCubit,
+        child: MaterialApp.router(
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey<String>('menu_fuel_prices_row')),
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('menu_fuel_prices_row')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(fuelPricesStubKey), findsOneWidget);
+  });
+
   testWidgets('identity avatar prefers seller_profiles URL when present', (
     tester,
   ) async {

@@ -2,6 +2,8 @@
 
 ## Hosted status — **closed (2026-06)**
 
+> **Migration count note:** **68** hosted migrations as of 2026-06-22 (Fuel Prices v1). **45/45** below is the June 2026 baseline only.
+
 **Confirmed on hosted Carzon:**
 
 - Migration `20260630120000_public_contact_projection_hardening.sql` applied

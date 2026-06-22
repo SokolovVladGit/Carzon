@@ -139,15 +139,19 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get catalogBrowseFilterBellEnabledSnack =>
-      'Alertele pentru acest filtru sunt activate.';
+      'Alertele sunt activate pentru acest filtru.';
 
   @override
   String get catalogBrowseFilterBellDisabledSnack =>
-      'Alertele de filtrare sunt dezactivate.';
+      'Alertele sunt dezactivate pentru acest filtru.';
+
+  @override
+  String get catalogBrowseFilterBellSavedEnableGlobalCategorySnack =>
+      'Căutarea a fost salvată. Pentru push, activați alertele pentru căutările salvate în setări.';
 
   @override
   String get catalogBrowseFilterBellSavedDeliveryUnavailableTooltip =>
-      'Alerta a fost salvată. Faceți clic pentru a șterge.';
+      'Căutarea a fost salvată. Alertele pentru acest filtru nu sunt livrate încă.';
 
   @override
   String get catalogBrowseFilterBellInactiveTooltip =>
@@ -155,7 +159,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get catalogBrowseFilterBellActiveTooltip =>
-      'Alertele sunt activate. Faceți clic pentru a dezactiva.';
+      'Alertele pentru acest filtru sunt activate. Atingeți pentru a dezactiva.';
 
   @override
   String get listingsEmptyTitle => 'Nu s-au găsit reclame';
@@ -1703,8 +1707,7 @@ class AppLocalizationsRo extends AppLocalizations {
       'Activați „Push pe acest dispozitiv” pentru a configura tipurile de notificări de mai jos.';
 
   @override
-  String get notificationSettingsStatusCardTitle =>
-      'Permisiunea dispozitivului';
+  String get notificationSettingsStatusCardTitle => 'Notificări pe dispozitiv';
 
   @override
   String get notificationSettingsOsPillAllowed => 'Permise';
@@ -1719,7 +1722,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get notificationSettingsOsPillNotDetermined => 'Nesolicitate';
 
   @override
-  String get notificationSettingsOsPillUnavailable => 'Indisponibile';
+  String get notificationSettingsOsPillUnavailable => 'Indisponibil';
 
   @override
   String get notificationSettingsOsDescriptionAuthorized =>
@@ -1739,7 +1742,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get notificationSettingsOsDescriptionUnavailable =>
-      'În această versiune push nu este disponibil; statusul permisiunii nu se aplică.';
+      'În această versiune notificările de sistem nu sunt disponibile.';
 
   @override
   String get notificationSettingsGlobalTitle => 'Push pe acest dispozitiv';
@@ -1753,18 +1756,18 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get notificationSettingsMessagesSubtitle =>
-      'Push pentru mesaje noi în chat-urile anunțurilor.';
+      'Despre mesaje noi în chat.';
 
   @override
   String get notificationSettingsMessagesNeedsGlobal =>
       'Mai întâi activați „Push pe acest dispozitiv”.';
 
   @override
-  String get notificationSettingsFilterAlertsTitle => 'Alerte după filtru';
+  String get notificationSettingsFilterAlertsTitle => 'Căutări salvate';
 
   @override
   String get notificationSettingsFilterAlertsSubtitle =>
-      'Push când apar anunțuri noi care se potrivesc filtrului salvat.';
+      'Push când apar anunțuri noi care se potrivesc căutărilor salvate.';
 
   @override
   String get notificationSettingsFilterAlertsNeedsGlobal =>
@@ -1776,14 +1779,17 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get notificationSettingsFilterAlertsOpenCta =>
-      'Deschide alertele după filtru';
+      'Gestionați căutările salvate';
 
   @override
   String get notificationSettingsPriceDropsTitle => 'Reducere de preț';
 
   @override
   String get notificationSettingsPriceDropsSubtitle =>
-      'Push când scade prețul unui anunț din favorite.';
+      'Când scade prețul unui anunț din favorite.';
+
+  @override
+  String get notificationSettingsComingSoonBadge => 'În curând';
 
   @override
   String get notificationSettingsPriceDropsNeedsGlobal =>
@@ -1876,7 +1882,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get filterAlertNotificationsPushDisabled =>
-      'Push nu este disponibil în această versiune (PUSH_NOTIFICATIONS_ENABLED).';
+      'În această versiune notificările de sistem nu sunt disponibile.';
 
   @override
   String get filterAlertManagementHeaderEyebrow => 'CARZON · ALERTE';
@@ -1936,85 +1942,109 @@ class AppLocalizationsRo extends AppLocalizations {
       'Filtrul salvat a fost șters.';
 
   @override
-  String get savedSearchesTitle => 'Căutări salvate';
+  String get savedSearchesTitle => 'Alerte după filtre';
 
   @override
-  String get savedSearchesSettingsTitle => 'Căutări salvate';
+  String get savedSearchesSettingsTitle => 'Alerte după filtre';
 
   @override
   String get savedSearchesSettingsSubtitle =>
-      'Până la 5 căutări cu alerte pentru anunțuri noi.';
+      'Filtre salvate și alerte pentru anunțuri noi.';
 
   @override
   String get savedSearchesSignInRequired =>
-      'Autentificați-vă pentru a gestiona căutările salvate.';
+      'Autentificați-vă pentru a gestiona alertele după filtre.';
 
   @override
   String get savedSearchesHeaderEyebrow => 'CARZON · CĂUTARE';
 
   @override
   String get savedSearchesSubtitle =>
-      'Salvați filtrele din catalog și activați alerte push pentru fiecare căutare.';
+      'Salvați parametrii importanți de căutare și primiți anunțuri noi pentru ei.';
 
   @override
-  String get savedSearchesMaxHint => 'Puteți salva până la 5 căutări.';
+  String get savedSearchesMaxHint => 'Până la 5 filtre active.';
 
   @override
-  String get savedSearchesEmptyTitle => 'Nicio căutare salvată încă';
+  String get savedSearchesHowToAddTitle => 'Cum adăugați un filtru';
+
+  @override
+  String get savedSearchesHowToAddBody =>
+      'Configurați parametrii în catalog și apăsați clopoțelul. Filtrul va apărea aici, iar alertele le puteți activa sau dezactiva separat.';
+
+  @override
+  String get savedSearchesMaxReachedHint =>
+      'Puteți salva până la 5 filtre. Ștergeți unul existent pentru a adăuga altul.';
+
+  @override
+  String get savedSearchesEmptyTitle => 'Nicio alertă';
 
   @override
   String get savedSearchesEmptyBody =>
-      'Setați filtrele în catalog și apăsați clopoțelul pentru a salva căutarea.';
+      'Configurați filtrul în catalog și apăsați clopoțelul pentru a-l adăuga aici.';
 
   @override
   String get savedSearchesGoToCatalog => 'Deschide catalogul';
 
   @override
-  String get savedSearchFallbackName => 'Căutare salvată';
+  String get savedSearchFallbackName => 'Filtru de căutare';
 
   @override
-  String get savedSearchAlertsToggleTitle => 'Alerte';
+  String get savedSearchDisplayTitleFallback => 'Filtru de căutare';
 
   @override
-  String get savedSearchAlertsEnabledLabel => 'Alerte push activate';
+  String get savedSearchCardCaption => 'Filtru de căutare';
 
   @override
-  String get savedSearchAlertsDisabledLabel => 'Alerte push dezactivate';
+  String get savedSearchAlertsToggleTitle => 'Primi alerte';
+
+  @override
+  String get savedSearchAlertsToggleSubtitle =>
+      'Push când apar anunțuri noi pentru acest filtru.';
+
+  @override
+  String get savedSearchAlertsEnabledLabel =>
+      'Veți primi push când apar anunțuri noi.';
+
+  @override
+  String get savedSearchAlertsDisabledLabel =>
+      'Alertele pentru acest filtru sunt dezactivate.';
 
   @override
   String get savedSearchDeleteAction => 'Șterge';
 
   @override
-  String get savedSearchDeleteConfirmTitle => 'Ștergeți căutarea salvată?';
+  String get savedSearchDeleteConfirmTitle => 'Ștergeți acest filtru?';
 
   @override
   String get savedSearchDeleteConfirmBody =>
-      'Această căutare și alertele ei vor fi șterse. Celelalte căutări salvate rămân neschimbate.';
+      'Parametrii filtrului și alertele pentru el vor fi șterse.';
 
   @override
   String get savedSearchDeleteConfirmCta => 'Șterge';
 
   @override
-  String get savedSearchRemovedSnack => 'Căutarea salvată a fost ștearsă.';
+  String get savedSearchRemovedSnack => 'Filtrul a fost șters.';
 
   @override
-  String get savedSearchCreatedSnack => 'Căutare salvată.';
+  String get savedSearchCreatedSnack => 'Filtrul a fost salvat.';
 
   @override
   String get savedSearchesLoadFailed =>
-      'Nu s-au putut încărca căutările salvate.';
+      'Nu s-au putut încărca alertele după filtre.';
 
   @override
-  String get savedSearchSaveFailed => 'Nu s-a putut salva căutarea.';
+  String get savedSearchSaveFailed => 'Nu s-a putut salva filtrul.';
 
   @override
-  String get savedSearchDeleteFailed => 'Nu s-a putut șterge căutarea.';
+  String get savedSearchDeleteFailed => 'Nu s-a putut șterge filtrul.';
 
   @override
   String get savedSearchToggleFailed => 'Nu s-au putut actualiza alertele.';
 
   @override
-  String get savedSearchesMaxReachedSnack => 'Puteți salva cel mult 5 căutări.';
+  String get savedSearchesMaxReachedSnack =>
+      'Puteți salva până la 5 filtre. Ștergeți unul existent pentru a adăuga altul.';
 
   @override
   String get filterAlertSummarySearchLabel => 'Căutare';
@@ -2307,6 +2337,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get legalTitle => 'Termeni și confidențialitate';
 
   @override
+  String get legalDisclaimerLabel => 'Informații orientative';
+
+  @override
   String get legalDisclaimer =>
       'Aceasta este o previzualizare a termenilor și a notificării de confidențialitate. Documentul descrie modul în care Carzon operează în prezent și nu înlocuiește condițiile verificate legal. Utilizați-l ca material informativ într-un stadiu incipient al produsului.';
 
@@ -2345,8 +2378,14 @@ class AppLocalizationsRo extends AppLocalizations {
       'În timp ce anunțul dvs. este activ, persoanele de contact specificate pentru acesta pot fi vizibile pentru orice utilizator Carzon, inclusiv pentru cei care nu se conectează la contul dvs.';
 
   @override
-  String get legalSectionContactP2 =>
-      'Acesta poate fi un număr de telefon, porecla Telegram (dacă este specificat) și o notă că WhatsApp este disponibil după număr.';
+  String get legalSectionContactB1 => 'un număr de telefon';
+
+  @override
+  String get legalSectionContactB2 => 'porecla Telegram (dacă este specificat)';
+
+  @override
+  String get legalSectionContactB3 =>
+      'o notă că WhatsApp este disponibil după număr';
 
   @override
   String get legalSectionContactP3 =>
@@ -3467,4 +3506,89 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get notificationAndroidChannelPriceDropDescription =>
       'Notificări când scade prețul anunțurilor favorite';
+
+  @override
+  String get fuelPricesTitle => 'Prețuri la combustibil';
+
+  @override
+  String get fuelPricesMenuSubtitle =>
+      'Referințe actuale pentru combustibil în Moldova și Transnistria';
+
+  @override
+  String get fuelPricesTerritoryMoldova => 'Moldova';
+
+  @override
+  String get fuelPricesTerritoryPmr => 'Transnistria';
+
+  @override
+  String get fuelPricesDisclaimerTitle => 'Informativ';
+
+  @override
+  String get fuelPricesDisclaimer =>
+      'Prețurile sunt informative. Verificați prețul final la stație înainte de alimentare.';
+
+  @override
+  String get fuelPricesMoldovaScopeNote =>
+      'Nivelul maxim oficial al prețurilor ANRE pentru Moldova.';
+
+  @override
+  String get fuelPricesPmrScopeNote =>
+      'Referință pentru prețurile rețelei Sheriff din Transnistria.';
+
+  @override
+  String fuelPricesSourceLabel(String source) {
+    return 'Sursă: $source';
+  }
+
+  @override
+  String fuelPricesEffectiveDate(String date) {
+    return 'Valabil de la $date';
+  }
+
+  @override
+  String fuelPricesLastFetched(String date) {
+    return 'Actualizat $date';
+  }
+
+  @override
+  String get fuelPricesStaleNotice =>
+      'Datele pot fi depășite. Verificați prețul la stație.';
+
+  @override
+  String get fuelPricesLoadFailed =>
+      'Nu s-au putut încărca prețurile la combustibil';
+
+  @override
+  String get fuelPricesEmpty => 'Prețurile sunt temporar indisponibile';
+
+  @override
+  String get fuelPricesTerritoryUnavailable =>
+      'Prețurile pentru această regiune sunt temporar indisponibile. Încercați mai târziu sau alegeți altă regiune.';
+
+  @override
+  String get fuelPricesUnitMdlPerLiter => 'MDL/L';
+
+  @override
+  String get fuelPricesUnitPmrRubPerLiter => 'PMR RUB/L';
+
+  @override
+  String get fuelPricesFuelGasoline95 => 'Benzină 95';
+
+  @override
+  String get fuelPricesFuelDiesel => 'Motorină';
+
+  @override
+  String get fuelPricesFuelAi98 => 'AI-98';
+
+  @override
+  String get fuelPricesFuelAi95Premium => 'AI-95 Premium';
+
+  @override
+  String get fuelPricesFuelAi95 => 'AI-95';
+
+  @override
+  String get fuelPricesFuelDieselEuro => 'Motorină Euro';
+
+  @override
+  String get fuelPricesFuelDieselRegular => 'Motorină';
 }

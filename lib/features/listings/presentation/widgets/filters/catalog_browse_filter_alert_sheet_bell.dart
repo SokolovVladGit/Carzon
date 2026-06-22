@@ -290,23 +290,18 @@ class _CatalogBrowseFilterAlertSheetBellState
         // and is exactly the regression Phase-4 follow-up addresses.
         break;
       case BrowseCatalogBellOutcome.savedAlertCleared:
-        // Tap-to-remove success: state already updates (inline banner
-        // disappears, bell returns to inactive, FAB ornament drops on
-        // refresh). No root snackbar — a "Filter cleared" toast would
-        // bleed onto the listings page through the root messenger and
-        // contradict the silent toggle UX we want here.
-        break;
-      case BrowseCatalogBellOutcome.savedAlertClearFailed:
+      case BrowseCatalogBellOutcome.deliveriesDisabled:
         messenger.showSnackBar(
-          SnackBar(content: Text(l10n.savedSearchDeleteFailed)),
+          SnackBar(content: Text(l10n.catalogBrowseFilterBellDisabledSnack)),
+        );
+      case BrowseCatalogBellOutcome.savedAlertClearFailed:
+      case BrowseCatalogBellOutcome.prefsOrRowFailed:
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.notificationSettingsSaveFailed)),
         );
       case BrowseCatalogBellOutcome.osPermissionDenied:
         messenger.showSnackBar(
           SnackBar(content: Text(l10n.notificationSettingsOsPermissionDenied)),
-        );
-      case BrowseCatalogBellOutcome.prefsOrRowFailed:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.notificationSettingsSaveFailed)),
         );
       case BrowseCatalogBellOutcome.criteriaSaveFailed:
         messenger.showSnackBar(
@@ -315,10 +310,6 @@ class _CatalogBrowseFilterAlertSheetBellState
       case BrowseCatalogBellOutcome.maxSavedSearchesReached:
         messenger.showSnackBar(
           SnackBar(content: Text(l10n.savedSearchesMaxReachedSnack)),
-        );
-      case BrowseCatalogBellOutcome.deliveriesDisabled:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.catalogBrowseFilterBellDisabledSnack)),
         );
       case BrowseCatalogBellOutcome.deliveriesEnabled:
         messenger.showSnackBar(

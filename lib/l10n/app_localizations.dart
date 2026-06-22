@@ -347,31 +347,37 @@ abstract class AppLocalizations {
   /// No description provided for @catalogBrowseFilterBellEnabledSnack.
   ///
   /// In ru, this message translates to:
-  /// **'Оповещения по этому фильтру включены.'**
+  /// **'Оповещения включены для этого фильтра.'**
   String get catalogBrowseFilterBellEnabledSnack;
 
   /// No description provided for @catalogBrowseFilterBellDisabledSnack.
   ///
   /// In ru, this message translates to:
-  /// **'Оповещения по фильтру выключены.'**
+  /// **'Оповещения выключены для этого фильтра.'**
   String get catalogBrowseFilterBellDisabledSnack;
 
-  /// Tooltip + a11y label for the in-sheet bell when the current draft matches a saved alert row but delivery is not fully enabled. Concise, product-friendly copy that hints at tap-to-remove (toggle-off) semantics. Replaces the previous technical 'push disabled in this build' inline banner — the bell colour + tooltip are now the only saved/off surface.
+  /// No description provided for @catalogBrowseFilterBellSavedEnableGlobalCategorySnack.
   ///
   /// In ru, this message translates to:
-  /// **'Оповещение сохранено. Нажмите, чтобы удалить.'**
+  /// **'Поиск сохранён. Чтобы получать push, включите оповещения о сохранённых поисках в настройках.'**
+  String get catalogBrowseFilterBellSavedEnableGlobalCategorySnack;
+
+  /// Tooltip when saved search exists but delivery gate is incomplete (global category off, row alerts off, or push unavailable).
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск сохранён. Оповещения для этого фильтра пока не доставляются.'**
   String get catalogBrowseFilterBellSavedDeliveryUnavailableTooltip;
 
-  /// Tooltip + a11y label for the in-sheet bell when no saved alert matches the current draft. Tap creates/saves the alert (and, where push is enabled, attempts to enable delivery).
+  /// Tooltip when no saved search matches the current filter draft.
   ///
   /// In ru, this message translates to:
-  /// **'Включить оповещения по этому фильтру.'**
+  /// **'Включить оповещения для этого фильтра.'**
   String get catalogBrowseFilterBellInactiveTooltip;
 
-  /// Tooltip + a11y label for the in-sheet bell when delivery is fully enabled for the matching saved alert. Tap clears the saved alert (which also disables delivery on the row).
+  /// Tooltip when delivery is fully enabled for the matching saved search.
   ///
   /// In ru, this message translates to:
-  /// **'Оповещения включены. Нажмите, чтобы выключить.'**
+  /// **'Оповещения для этого фильтра включены. Нажмите, чтобы выключить.'**
   String get catalogBrowseFilterBellActiveTooltip;
 
   /// No description provided for @listingsEmptyTitle.
@@ -3078,7 +3084,7 @@ abstract class AppLocalizations {
   /// **'Уведомления'**
   String get notificationSettingsTitle;
 
-  /// No description provided for @notificationSettingsPageIntro.
+  /// Legacy intro copy; no longer shown in release UI.
   ///
   /// In ru, this message translates to:
   /// **'Настройте push на этом устройстве: сообщения в чатах и оповещения по сохранённому фильтру.'**
@@ -3135,7 +3141,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationSettingsStatusCardTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Разрешение устройства'**
+  /// **'Уведомления на устройстве'**
   String get notificationSettingsStatusCardTitle;
 
   /// No description provided for @notificationSettingsOsPillAllowed.
@@ -3165,7 +3171,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationSettingsOsPillUnavailable.
   ///
   /// In ru, this message translates to:
-  /// **'Недоступны'**
+  /// **'Недоступно'**
   String get notificationSettingsOsPillUnavailable;
 
   /// No description provided for @notificationSettingsOsDescriptionAuthorized.
@@ -3195,7 +3201,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationSettingsOsDescriptionUnavailable.
   ///
   /// In ru, this message translates to:
-  /// **'В этой сборке push недоступен, поэтому статус разрешения устройства не применяется.'**
+  /// **'В этой сборке системные уведомления недоступны.'**
   String get notificationSettingsOsDescriptionUnavailable;
 
   /// No description provided for @notificationSettingsGlobalTitle.
@@ -3219,7 +3225,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationSettingsMessagesSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Push о новых сообщениях в чатах по объявлениям.'**
+  /// **'О новых сообщениях в чатах.'**
   String get notificationSettingsMessagesSubtitle;
 
   /// No description provided for @notificationSettingsMessagesNeedsGlobal.
@@ -3231,13 +3237,13 @@ abstract class AppLocalizations {
   /// No description provided for @notificationSettingsFilterAlertsTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Оповещения по фильтру'**
+  /// **'Сохранённые поиски'**
   String get notificationSettingsFilterAlertsTitle;
 
   /// No description provided for @notificationSettingsFilterAlertsSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Push при новых объявлениях, подходящих под сохранённый фильтр.'**
+  /// **'Push, когда появляются новые объявления по вашим сохранённым поискам.'**
   String get notificationSettingsFilterAlertsSubtitle;
 
   /// No description provided for @notificationSettingsFilterAlertsNeedsGlobal.
@@ -3246,16 +3252,16 @@ abstract class AppLocalizations {
   /// **'Сначала включите «Push на этом устройстве».'**
   String get notificationSettingsFilterAlertsNeedsGlobal;
 
-  /// No description provided for @notificationSettingsFilterAlertsSavedFilterNote.
+  /// Legacy note; no longer shown in release UI.
   ///
   /// In ru, this message translates to:
-  /// **'Нужен сохранённый фильтр и включённые оповещения на экране управления фильтром.'**
+  /// **'Нужен сохранённый поиск и включённые оповещения на экране управления фильтром.'**
   String get notificationSettingsFilterAlertsSavedFilterNote;
 
   /// No description provided for @notificationSettingsFilterAlertsOpenCta.
   ///
   /// In ru, this message translates to:
-  /// **'Открыть оповещения по фильтру'**
+  /// **'Управлять сохранёнными поисками'**
   String get notificationSettingsFilterAlertsOpenCta;
 
   /// No description provided for @notificationSettingsPriceDropsTitle.
@@ -3267,8 +3273,14 @@ abstract class AppLocalizations {
   /// No description provided for @notificationSettingsPriceDropsSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Push, когда цена снижается на автомобиль из избранного.'**
+  /// **'Когда цена снижается на автомобиль из избранного.'**
   String get notificationSettingsPriceDropsSubtitle;
+
+  /// No description provided for @notificationSettingsComingSoonBadge.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скоро'**
+  String get notificationSettingsComingSoonBadge;
 
   /// No description provided for @notificationSettingsPriceDropsNeedsGlobal.
   ///
@@ -3423,7 +3435,7 @@ abstract class AppLocalizations {
   /// No description provided for @filterAlertNotificationsPushDisabled.
   ///
   /// In ru, this message translates to:
-  /// **'В этой сборке push недоступен (PUSH_NOTIFICATIONS_ENABLED).'**
+  /// **'В этой сборке системные уведомления недоступны.'**
   String get filterAlertNotificationsPushDisabled;
 
   /// No description provided for @filterAlertManagementHeaderEyebrow.
@@ -3525,25 +3537,25 @@ abstract class AppLocalizations {
   /// No description provided for @savedSearchesTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Сохранённые поиски'**
+  /// **'Оповещения по фильтрам'**
   String get savedSearchesTitle;
 
   /// No description provided for @savedSearchesSettingsTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Сохранённые поиски'**
+  /// **'Оповещения по фильтрам'**
   String get savedSearchesSettingsTitle;
 
   /// No description provided for @savedSearchesSettingsSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'До 5 поисков с оповещениями о новых объявлениях.'**
+  /// **'Сохранённые фильтры и оповещения о новых объявлениях.'**
   String get savedSearchesSettingsSubtitle;
 
   /// No description provided for @savedSearchesSignInRequired.
   ///
   /// In ru, this message translates to:
-  /// **'Войдите, чтобы управлять сохранёнными поисками.'**
+  /// **'Войдите, чтобы управлять оповещениями по фильтрам.'**
   String get savedSearchesSignInRequired;
 
   /// No description provided for @savedSearchesHeaderEyebrow.
@@ -3555,55 +3567,91 @@ abstract class AppLocalizations {
   /// No description provided for @savedSearchesSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Сохраняйте параметры из каталога и включайте push-оповещения для каждого поиска.'**
+  /// **'Сохраняйте важные параметры поиска и получайте новые объявления по ним.'**
   String get savedSearchesSubtitle;
 
   /// No description provided for @savedSearchesMaxHint.
   ///
   /// In ru, this message translates to:
-  /// **'Можно сохранить до 5 поисков.'**
+  /// **'До 5 активных фильтров.'**
   String get savedSearchesMaxHint;
+
+  /// No description provided for @savedSearchesHowToAddTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как добавить фильтр'**
+  String get savedSearchesHowToAddTitle;
+
+  /// No description provided for @savedSearchesHowToAddBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Настройте параметры в каталоге и нажмите колокольчик. Фильтр появится здесь, а оповещения можно будет включить или выключить отдельно.'**
+  String get savedSearchesHowToAddBody;
+
+  /// No description provided for @savedSearchesMaxReachedHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Можно сохранить до 5 фильтров. Удалите один из существующих, чтобы добавить новый.'**
+  String get savedSearchesMaxReachedHint;
 
   /// No description provided for @savedSearchesEmptyTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Сохранённых поисков пока нет'**
+  /// **'Нет оповещений'**
   String get savedSearchesEmptyTitle;
 
   /// No description provided for @savedSearchesEmptyBody.
   ///
   /// In ru, this message translates to:
-  /// **'Задайте фильтры в каталоге и нажмите колокольчик, чтобы сохранить поиск.'**
+  /// **'Настройте фильтр в каталоге и нажмите колокольчик, чтобы добавить его сюда.'**
   String get savedSearchesEmptyBody;
 
   /// No description provided for @savedSearchesGoToCatalog.
   ///
   /// In ru, this message translates to:
-  /// **'Перейти в каталог'**
+  /// **'Открыть каталог'**
   String get savedSearchesGoToCatalog;
 
   /// No description provided for @savedSearchFallbackName.
   ///
   /// In ru, this message translates to:
-  /// **'Сохранённый поиск'**
+  /// **'Фильтр поиска'**
   String get savedSearchFallbackName;
+
+  /// No description provided for @savedSearchDisplayTitleFallback.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фильтр поиска'**
+  String get savedSearchDisplayTitleFallback;
+
+  /// No description provided for @savedSearchCardCaption.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фильтр поиска'**
+  String get savedSearchCardCaption;
 
   /// No description provided for @savedSearchAlertsToggleTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Оповещения'**
+  /// **'Получать оповещения'**
   String get savedSearchAlertsToggleTitle;
+
+  /// No description provided for @savedSearchAlertsToggleSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Push при новых объявлениях по этому фильтру.'**
+  String get savedSearchAlertsToggleSubtitle;
 
   /// No description provided for @savedSearchAlertsEnabledLabel.
   ///
   /// In ru, this message translates to:
-  /// **'Push-оповещения включены'**
+  /// **'Вы получите push, когда появятся новые объявления.'**
   String get savedSearchAlertsEnabledLabel;
 
   /// No description provided for @savedSearchAlertsDisabledLabel.
   ///
   /// In ru, this message translates to:
-  /// **'Push-оповещения выключены'**
+  /// **'Оповещения по этому фильтру выключены.'**
   String get savedSearchAlertsDisabledLabel;
 
   /// No description provided for @savedSearchDeleteAction.
@@ -3615,13 +3663,13 @@ abstract class AppLocalizations {
   /// No description provided for @savedSearchDeleteConfirmTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Удалить сохранённый поиск?'**
+  /// **'Удалить этот фильтр?'**
   String get savedSearchDeleteConfirmTitle;
 
   /// No description provided for @savedSearchDeleteConfirmBody.
   ///
   /// In ru, this message translates to:
-  /// **'Этот поиск и его оповещения будут удалены. Другие сохранённые поиски не затронуты.'**
+  /// **'Параметры фильтра и оповещения по нему будут удалены.'**
   String get savedSearchDeleteConfirmBody;
 
   /// No description provided for @savedSearchDeleteConfirmCta.
@@ -3633,31 +3681,31 @@ abstract class AppLocalizations {
   /// No description provided for @savedSearchRemovedSnack.
   ///
   /// In ru, this message translates to:
-  /// **'Сохранённый поиск удалён.'**
+  /// **'Фильтр удалён.'**
   String get savedSearchRemovedSnack;
 
   /// No description provided for @savedSearchCreatedSnack.
   ///
   /// In ru, this message translates to:
-  /// **'Поиск сохранён.'**
+  /// **'Фильтр сохранён.'**
   String get savedSearchCreatedSnack;
 
   /// No description provided for @savedSearchesLoadFailed.
   ///
   /// In ru, this message translates to:
-  /// **'Не удалось загрузить сохранённые поиски.'**
+  /// **'Не удалось загрузить оповещения по фильтрам.'**
   String get savedSearchesLoadFailed;
 
   /// No description provided for @savedSearchSaveFailed.
   ///
   /// In ru, this message translates to:
-  /// **'Не удалось сохранить поиск.'**
+  /// **'Не удалось сохранить фильтр.'**
   String get savedSearchSaveFailed;
 
   /// No description provided for @savedSearchDeleteFailed.
   ///
   /// In ru, this message translates to:
-  /// **'Не удалось удалить поиск.'**
+  /// **'Не удалось удалить фильтр.'**
   String get savedSearchDeleteFailed;
 
   /// No description provided for @savedSearchToggleFailed.
@@ -3669,7 +3717,7 @@ abstract class AppLocalizations {
   /// No description provided for @savedSearchesMaxReachedSnack.
   ///
   /// In ru, this message translates to:
-  /// **'Можно сохранить не более 5 поисков.'**
+  /// **'Можно сохранить до 5 фильтров. Удалите один из существующих, чтобы добавить новый.'**
   String get savedSearchesMaxReachedSnack;
 
   /// No description provided for @filterAlertSummarySearchLabel.
@@ -4200,6 +4248,12 @@ abstract class AppLocalizations {
   /// **'Условия и конфиденциальность'**
   String get legalTitle;
 
+  /// No description provided for @legalDisclaimerLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Справочная информация'**
+  String get legalDisclaimerLabel;
+
   /// No description provided for @legalDisclaimer.
   ///
   /// In ru, this message translates to:
@@ -4260,11 +4314,23 @@ abstract class AppLocalizations {
   /// **'Пока ваше объявление активно, указанные для него контакты могут быть видны любым пользователям Carzon, в том числе без входа в аккаунт.'**
   String get legalSectionContactP1;
 
-  /// No description provided for @legalSectionContactP2.
+  /// No description provided for @legalSectionContactB1.
   ///
   /// In ru, this message translates to:
-  /// **'Это может быть номер телефона, ник в Telegram (если указан) и отметка о том, что по номеру доступен WhatsApp.'**
-  String get legalSectionContactP2;
+  /// **'номер телефона'**
+  String get legalSectionContactB1;
+
+  /// No description provided for @legalSectionContactB2.
+  ///
+  /// In ru, this message translates to:
+  /// **'ник в Telegram (если указан)'**
+  String get legalSectionContactB2;
+
+  /// No description provided for @legalSectionContactB3.
+  ///
+  /// In ru, this message translates to:
+  /// **'отметка о том, что по номеру доступен WhatsApp'**
+  String get legalSectionContactB3;
 
   /// No description provided for @legalSectionContactP3.
   ///
@@ -6203,6 +6269,150 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Уведомления о снижении цены на избранные объявления'**
   String get notificationAndroidChannelPriceDropDescription;
+
+  /// No description provided for @fuelPricesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цены на топливо'**
+  String get fuelPricesTitle;
+
+  /// No description provided for @fuelPricesMenuSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Актуальные ориентиры по топливу в Молдове и ПМР'**
+  String get fuelPricesMenuSubtitle;
+
+  /// No description provided for @fuelPricesTerritoryMoldova.
+  ///
+  /// In ru, this message translates to:
+  /// **'Молдова'**
+  String get fuelPricesTerritoryMoldova;
+
+  /// No description provided for @fuelPricesTerritoryPmr.
+  ///
+  /// In ru, this message translates to:
+  /// **'Приднестровье'**
+  String get fuelPricesTerritoryPmr;
+
+  /// No description provided for @fuelPricesDisclaimerTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Справочно'**
+  String get fuelPricesDisclaimerTitle;
+
+  /// No description provided for @fuelPricesDisclaimer.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цены носят справочный характер. Перед заправкой уточните актуальную цену на АЗС.'**
+  String get fuelPricesDisclaimer;
+
+  /// No description provided for @fuelPricesMoldovaScopeNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Официальный максимальный уровень цен ANRE по Молдове.'**
+  String get fuelPricesMoldovaScopeNote;
+
+  /// No description provided for @fuelPricesPmrScopeNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ориентир по ценам сети Sheriff в Приднестровье.'**
+  String get fuelPricesPmrScopeNote;
+
+  /// No description provided for @fuelPricesSourceLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник: {source}'**
+  String fuelPricesSourceLabel(String source);
+
+  /// No description provided for @fuelPricesEffectiveDate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Действует с {date}'**
+  String fuelPricesEffectiveDate(String date);
+
+  /// No description provided for @fuelPricesLastFetched.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обновлено {date}'**
+  String fuelPricesLastFetched(String date);
+
+  /// No description provided for @fuelPricesStaleNotice.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные могут быть устаревшими. Проверьте цену на АЗС.'**
+  String get fuelPricesStaleNotice;
+
+  /// No description provided for @fuelPricesLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить цены на топливо'**
+  String get fuelPricesLoadFailed;
+
+  /// No description provided for @fuelPricesEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цены временно недоступны'**
+  String get fuelPricesEmpty;
+
+  /// No description provided for @fuelPricesTerritoryUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цены для этого региона временно недоступны. Попробуйте позже или выберите другой регион.'**
+  String get fuelPricesTerritoryUnavailable;
+
+  /// No description provided for @fuelPricesUnitMdlPerLiter.
+  ///
+  /// In ru, this message translates to:
+  /// **'MDL/L'**
+  String get fuelPricesUnitMdlPerLiter;
+
+  /// No description provided for @fuelPricesUnitPmrRubPerLiter.
+  ///
+  /// In ru, this message translates to:
+  /// **'PMR RUB/L'**
+  String get fuelPricesUnitPmrRubPerLiter;
+
+  /// No description provided for @fuelPricesFuelGasoline95.
+  ///
+  /// In ru, this message translates to:
+  /// **'Бензин 95'**
+  String get fuelPricesFuelGasoline95;
+
+  /// No description provided for @fuelPricesFuelDiesel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дизель'**
+  String get fuelPricesFuelDiesel;
+
+  /// No description provided for @fuelPricesFuelAi98.
+  ///
+  /// In ru, this message translates to:
+  /// **'АИ-98'**
+  String get fuelPricesFuelAi98;
+
+  /// No description provided for @fuelPricesFuelAi95Premium.
+  ///
+  /// In ru, this message translates to:
+  /// **'АИ-95 Premium'**
+  String get fuelPricesFuelAi95Premium;
+
+  /// No description provided for @fuelPricesFuelAi95.
+  ///
+  /// In ru, this message translates to:
+  /// **'АИ-95'**
+  String get fuelPricesFuelAi95;
+
+  /// No description provided for @fuelPricesFuelDieselEuro.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дизель Euro'**
+  String get fuelPricesFuelDieselEuro;
+
+  /// No description provided for @fuelPricesFuelDieselRegular.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дизель'**
+  String get fuelPricesFuelDieselRegular;
 }
 
 class _AppLocalizationsDelegate

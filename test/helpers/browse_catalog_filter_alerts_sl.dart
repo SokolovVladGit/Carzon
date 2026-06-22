@@ -62,7 +62,6 @@ BrowseCatalogFilterAlertsCubit buildTestBrowseCatalogFilterAlertsCubit({
   return BrowseCatalogFilterAlertsCubit(
     listSavedSearches: ListSavedSearches(savedSearchesRepo),
     createSavedSearch: CreateSavedSearch(savedSearchesRepo),
-    deleteSavedSearch: DeleteSavedSearch(savedSearchesRepo),
     notificationsRepository: notificationsRepo,
     deliveryOrchestrator: deliveryOrchestrator,
   );
@@ -173,7 +172,6 @@ PUSH_NOTIFICATIONS_ENABLED=true
     () => BrowseCatalogFilterAlertsCubit(
       listSavedSearches: sl(),
       createSavedSearch: sl(),
-      deleteSavedSearch: sl(),
       notificationsRepository: sl(),
       deliveryOrchestrator: sl(),
     ),

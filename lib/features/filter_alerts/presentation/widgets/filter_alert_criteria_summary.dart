@@ -1,22 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../../listings/domain/entities/listing_discovery_criteria.dart';
 import '../../../listings/presentation/utils/listing_formatters.dart';
 
-/// Read-only summary of a saved filter-alert criteria row.
-///
-/// Renders one label/value row per active dimension. Empty / default
-/// dimensions are skipped so the "no constraints" baseline collapses
-/// to nothing (the parent page renders an empty state in that case).
+/// Read-only compact criteria chips for a saved filter-alert row.
 ///
 /// Sort is intentionally **not** rendered: filter-alert SQL matching does
-/// not read [ListingDiscoveryCriteria.sort], so showing it would imply a
-/// constraint that the server never applies.
+/// not read [ListingDiscoveryCriteria.sort].
 class FilterAlertCriteriaSummary extends StatelessWidget {
   const FilterAlertCriteriaSummary({super.key, required this.criteria});
 
@@ -26,37 +20,21 @@ class FilterAlertCriteriaSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final rows = _buildRows(l10n);
 
     if (rows.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    final scheme = theme.colorScheme;
-    return Container(
-      key: const ValueKey<String>('filter_alert_management_summary_card'),
-      decoration: AppTheme.filterAlertManagementSurface(
-        scheme,
-        borderRadius: 14,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.filterAlertManagementCriteriaSectionTitle,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
-            ),
-          ),
-          const SizedBox(height: 10),
-          for (final row in rows) ...[
-            _SummaryRow(label: row.$1, value: row.$2),
-            if (row != rows.last) const SizedBox(height: 6),
-          ],
-        ],
-      ),
+    return Wrap(
+      key: const ValueKey<String>('filter_alert_management_summary_chips'),
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final row in rows)
+          _CriteriaChip(label: row.$1, value: row.$2, scheme: scheme),
+      ],
     );
   }
 
@@ -225,38 +203,38 @@ class FilterAlertCriteriaSummary extends StatelessWidget {
   }
 }
 
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
+class _CriteriaChip extends StatelessWidget {
+  const _CriteriaChip({
+    required this.label,
+    required this.value,
+    required this.scheme,
+  });
 
   final String label;
   final String value;
+  final ColorScheme scheme;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 116,
-          child: Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.85),
-            ),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(
+          alpha: theme.brightness == Brightness.light ? 0.45 : 0.28,
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.38),
         ),
-      ],
+      ),
+      child: Text(
+        '$label · $value',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: scheme.onSurface.withValues(alpha: 0.88),
+          height: 1.25,
+        ),
+      ),
     );
   }
 }
