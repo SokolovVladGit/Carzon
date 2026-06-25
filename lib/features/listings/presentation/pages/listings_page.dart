@@ -74,7 +74,7 @@ class ListingsPage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => sl<ListingsBloc>()),
-        BlocProvider(create: (_) => sl<BrowseCatalogFilterAlertsCubit>()),
+        BlocProvider.value(value: sl<BrowseCatalogFilterAlertsCubit>()),
       ],
       child: MultiBlocListener(
         listeners: [
@@ -780,12 +780,6 @@ class _FeedHeaderLayer extends StatelessWidget {
                             listingsDiscoveryActiveFilterGroupCount(state) > 0;
                         final bellBadge = alertsCubit
                             .catalogBellBadgeVisibleForApplied(state);
-                        final savedNoDeliveryBadge =
-                            !bellBadge &&
-                            alertsCubit
-                                .catalogBellSavedWithoutDeliveryVisibleForApplied(
-                                  state,
-                                );
                         return ListingsSearchFilterBar(
                           searchCtrl: searchCtrl,
                           onOpenFilters: onOpenFilters,
@@ -800,7 +794,6 @@ class _FeedHeaderLayer extends StatelessWidget {
                           },
                           active: active,
                           bellBadge: bellBadge,
-                          savedNoDeliveryBadge: savedNoDeliveryBadge,
                         );
                       },
                     );

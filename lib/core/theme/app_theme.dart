@@ -266,6 +266,90 @@ class AppTheme {
     )!.withValues(alpha: 0.96);
   }
 
+  /// Body-type vehicle silhouette tint for discovery feed chips (dark-aware).
+  ///
+  /// Dark mode follows the same state mapping as [discoveryClearChipIconColor]:
+  /// neutral inactive icons, accent/blue only when selected.
+  static Color discoveryBodyTypeIconColor(
+    ColorScheme scheme, {
+    required bool selected,
+  }) {
+    if (scheme.brightness == Brightness.light) {
+      return categoryIconColor(scheme, selected: selected);
+    }
+    return discoveryClearChipIconColor(scheme, selected: selected);
+  }
+
+  /// Discovery feed reset/clear chip (All brands / All body types).
+  static bool isDiscoveryClearChipId(String chipId) => chipId == 'all';
+
+  static Color discoveryClearChipFill(
+    ColorScheme scheme, {
+    required bool selected,
+  }) {
+    if (scheme.brightness == Brightness.light) {
+      return selected ? selectedChipFill(scheme) : unselectedChipFill(scheme);
+    }
+    if (selected) return selectedChipFill(scheme);
+    return Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.11),
+      scheme.surfaceContainerHigh,
+    );
+  }
+
+  /// Discovery feed inactive brand chip fill (dark only; brand row override).
+  ///
+  /// Editorial blue-graphite between flat [unselectedChipFill] and
+  /// [selectedChipFill]. Quieter than [discoveryClearChipFill] so reset/all
+  /// and selected states stay distinct.
+  static Color discoveryBrandChipInactiveFill(ColorScheme scheme) {
+    if (scheme.brightness == Brightness.light) {
+      return unselectedChipFill(scheme);
+    }
+    return Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.10),
+      scheme.surfaceContainerHigh,
+    );
+  }
+
+  /// Soft inactive brand chip outline (dark only).
+  static Color discoveryBrandChipInactiveBorder(ColorScheme scheme) {
+    if (scheme.brightness == Brightness.light) {
+      return scheme.outlineVariant.withValues(alpha: 0.42);
+    }
+    return Color.lerp(scheme.primary, scheme.outline, 0.62)!
+        .withValues(alpha: 0.22);
+  }
+
+  static Color discoveryClearChipBorder(
+    ColorScheme scheme, {
+    required bool selected,
+  }) {
+    if (scheme.brightness == Brightness.light) {
+      return selected
+          ? scheme.primary.withValues(alpha: 0.34)
+          : scheme.outline.withValues(alpha: 0.18);
+    }
+    if (selected) return scheme.primary.withValues(alpha: 0.52);
+    return Color.lerp(scheme.primary, scheme.outline, 0.48)!
+        .withValues(alpha: 0.44);
+  }
+
+  static Color discoveryClearChipIconColor(
+    ColorScheme scheme, {
+    required bool selected,
+  }) {
+    if (scheme.brightness == Brightness.light) {
+      return categoryIconColor(scheme, selected: selected);
+    }
+    if (selected) {
+      return Color.lerp(scheme.primary, scheme.onSurface, 0.22)!
+          .withValues(alpha: 0.98);
+    }
+    return Color.lerp(scheme.onSurfaceVariant, scheme.onSurface, 0.68)!
+        .withValues(alpha: 0.94);
+  }
+
   /// Muted silver tint for monochrome brand SVGs in dark mode.
   static Color brandLogoGlyphColor(ColorScheme scheme) {
     if (scheme.brightness == Brightness.light) {
@@ -276,6 +360,18 @@ class AppTheme {
       scheme.onSurface,
       0.62,
     )!.withValues(alpha: 0.98);
+  }
+
+  /// Restrained silver for simple discovery feed emblem tints (dark only).
+  static Color discoveryFeedBrandLogoColor(ColorScheme scheme) {
+    if (scheme.brightness == Brightness.light) {
+      return brandLogoGlyphColor(scheme);
+    }
+    return Color.lerp(
+      scheme.onSurfaceVariant,
+      scheme.onSurface,
+      0.72,
+    )!.withValues(alpha: 0.90);
   }
 
   /// Chip border (dark-aware).
@@ -305,6 +401,29 @@ class AppTheme {
     );
   }
 
+  /// Warm porcelain backplate for dark/complex discovery feed logos (dark only).
+  static BoxDecoration discoveryFeedBrandLogoBackplateDecoration(
+    ColorScheme scheme,
+  ) {
+    const porcelainCenter = Color(0xFFF5F3EF);
+    const porcelainEdge = Color(0xFFE8EAED);
+    return BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: RadialGradient(
+        colors: [
+          porcelainCenter.withValues(alpha: 0.94),
+          porcelainEdge.withValues(alpha: 0.86),
+        ],
+        stops: const [0.58, 1.0],
+      ),
+      border: Border.all(
+        color: Color.lerp(scheme.outline, const Color(0xFFD8D4CE), 0.45)!
+            .withValues(alpha: 0.16),
+        width: 0.5,
+      ),
+    );
+  }
+
   /// Restrained blue-steel accent for editorial compose surfaces (dark).
   static Color editorialAccentColor(ColorScheme scheme) {
     if (scheme.brightness == Brightness.light) {
@@ -315,6 +434,57 @@ class AppTheme {
       scheme.onSurface,
       0.12,
     )!.withValues(alpha: 0.78);
+  }
+
+  /// Soft vertical wash for compact editorial utility modules.
+  static LinearGradient editorialModuleAtmosphereWash(ColorScheme scheme) {
+    final isDark = scheme.brightness == Brightness.dark;
+    if (isDark) {
+      return LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color.alphaBlend(
+            scheme.primary.withValues(alpha: 0.065),
+            scheme.surfaceContainerHigh,
+          ),
+          Color.alphaBlend(
+            scheme.primary.withValues(alpha: 0.022),
+            scheme.surfaceContainerLow,
+          ),
+          scheme.surfaceContainerLow,
+        ],
+        stops: const [0, 0.44, 1],
+      );
+    }
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Color.alphaBlend(scheme.primary.withValues(alpha: 0.042), scheme.surface),
+        Color.alphaBlend(
+          scheme.primary.withValues(alpha: 0.014),
+          scheme.surfaceContainerLowest,
+        ),
+        scheme.surface,
+      ],
+      stops: const [0, 0.48, 1],
+    );
+  }
+
+  /// Faint radial highlight for the header area of editorial utility modules.
+  static RadialGradient editorialModuleAtmosphereHighlight(ColorScheme scheme) {
+    final isDark = scheme.brightness == Brightness.dark;
+    return RadialGradient(
+      center: const Alignment(0, -0.9),
+      radius: 1.08,
+      colors: [
+        scheme.primary.withValues(alpha: isDark ? 0.07 : 0.055),
+        scheme.primary.withValues(alpha: isDark ? 0.018 : 0.012),
+        Colors.transparent,
+      ],
+      stops: const [0, 0.42, 1],
+    );
   }
 
   /// Create/edit listing hero card in dark mode. Null in light (callers keep light UI).

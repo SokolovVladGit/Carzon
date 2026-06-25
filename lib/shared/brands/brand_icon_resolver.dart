@@ -8,6 +8,8 @@
 /// fallback asset `assets/brands/svg/default.svg`.
 library;
 
+import 'package:meta/meta.dart';
+
 const String _assetDir = 'assets/brands/svg';
 const String _defaultSlug = 'default';
 
@@ -508,6 +510,10 @@ String getBrandIconPath(String? make) {
 
 String _pathFor(String slug) => '$_assetDir/$slug.svg';
 
+/// Packaged brand SVG path for [slug].
+@visibleForTesting
+String packagedBrandIconAssetPath(String slug) => _pathFor(slug);
+
 /// Suffix of the neutral fallback asset returned for unknown makes.
 const String brandIconDefaultAssetSuffix = '/default.svg';
 
@@ -524,7 +530,7 @@ String? brandIconSlugFromAssetPath(String assetPath) {
 
 /// Black/gray single-fill SVG marks that need a light tint on dark surfaces.
 ///
-/// Multi-color / gradient marks (BMW, Mercedes, Ferrari, …) are excluded so
+/// Multi-color / gradient marks (BMW, Mercedes, Volvo, Ferrari, …) are excluded so
 /// brand identity stays intact.
 const Set<String> _monochromeBrandSlugs = {
   'honda',
@@ -540,7 +546,24 @@ const Set<String> _monochromeBrandSlugs = {
   'rolls-royce',
   'suzuki',
   'toyota',
-  'volvo',
+};
+
+/// Simple emblem silhouettes safe for moderate metallic tint on discovery feed.
+///
+/// Wordmarks, ovals with script, multilayer marks (Ford, Nissan, Volvo, …) are
+/// excluded so [ColorFilter.srcIn] does not flatten internal detail.
+const Set<String> _discoveryFeedSimpleTintSlugs = {
+  'honda',
+  'infiniti',
+  'jaguar',
+  'jeep',
+  'kia',
+  'lexus',
+  'mazda',
+  'mitsubishi',
+  'renault',
+  'suzuki',
+  'toyota',
 };
 
 /// True when [assetPath] is a known monochrome brand SVG (not [default.svg]).
@@ -548,6 +571,44 @@ bool isBrandIconMonochromeAssetPath(String assetPath) {
   if (isBrandIconDefaultAssetPath(assetPath)) return false;
   final slug = brandIconSlugFromAssetPath(assetPath);
   return slug != null && _monochromeBrandSlugs.contains(slug);
+}
+
+/// True when a discovery feed chip may use moderate metallic [ColorFilter.srcIn].
+bool isBrandIconDiscoveryFeedSimpleTintAssetPath(String assetPath) {
+  if (isBrandIconDefaultAssetPath(assetPath)) return false;
+  final slug = brandIconSlugFromAssetPath(assetPath);
+  return slug != null && _discoveryFeedSimpleTintSlugs.contains(slug);
+}
+
+/// True when a discovery feed chip should use a porcelain backplate (native SVG).
+///
+/// Default-on for dark feed chips except [isBrandIconDiscoveryFeedSimpleTintAssetPath]
+/// marks, which stay flat with a restrained metallic tint.
+bool isBrandIconDiscoveryFeedLightBackplateAssetPath(String assetPath) {
+  if (isBrandIconDefaultAssetPath(assetPath)) return false;
+  return !isBrandIconDiscoveryFeedSimpleTintAssetPath(assetPath);
+}
+
+/// Default inner glyph size inside the porcelain backplate (fraction of outer slot).
+const double kBrandIconDiscoveryFeedBackplateInnerFractionDefault = 0.78;
+
+/// Per-slug inner fraction overrides for porcelain backplate marks (dark feed only).
+///
+/// Boosts marks whose internal detail reads too small at chip/card sizes without
+/// changing outer slot or plate diameter.
+const Map<String, double> kBrandIconDiscoveryFeedBackplateInnerFractionBySlug = {
+  'volvo': 0.90,
+};
+
+/// Inner glyph fraction for a porcelain backplate mark at [assetPath].
+double brandIconDiscoveryFeedBackplateInnerFraction(String assetPath) {
+  if (isBrandIconDefaultAssetPath(assetPath)) {
+    return kBrandIconDiscoveryFeedBackplateInnerFractionDefault;
+  }
+  final slug = brandIconSlugFromAssetPath(assetPath);
+  if (slug == null) return kBrandIconDiscoveryFeedBackplateInnerFractionDefault;
+  return kBrandIconDiscoveryFeedBackplateInnerFractionBySlug[slug] ??
+      kBrandIconDiscoveryFeedBackplateInnerFractionDefault;
 }
 
 /// Normalizes a free-text brand name for alias lookup.

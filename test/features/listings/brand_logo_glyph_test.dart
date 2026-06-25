@@ -12,7 +12,7 @@ void main() {
     test('every packaged slug has a matching SVG file on disk', () {
       for (final slug in kPackagedBrandIconSlugs) {
         expect(
-          File('assets/brands/svg/$slug.svg').existsSync(),
+          File(packagedBrandIconAssetPath(slug)).existsSync(),
           isTrue,
           reason: slug,
         );
@@ -43,6 +43,14 @@ void main() {
   group('getBrandIconPath', () {
     test('packaged slug resolves to brand SVG', () {
       expect(getBrandIconPath('Toyota'), endsWith('/toyota.svg'));
+    });
+
+    test('Volvo resolves to canonical packaged SVG', () {
+      expect(getBrandIconPath('Volvo'), endsWith('/volvo.svg'));
+      expect(
+        isBrandIconDefaultAssetPath(getBrandIconPath('Volvo')),
+        isFalse,
+      );
     });
 
     test('newly packaged aliases resolve to brand SVG', () {
@@ -137,6 +145,136 @@ void main() {
 
     test('BMW is not monochrome', () {
       expect(isBrandIconMonochromeAssetPath(getBrandIconPath('BMW')), isFalse);
+    });
+
+    test('complex feed marks are not listing-card monochrome tint targets', () {
+      for (final make in ['Nissan', 'Chevrolet', 'Cupra', 'Ford']) {
+        expect(
+          isBrandIconMonochromeAssetPath(getBrandIconPath(make)),
+          isFalse,
+          reason: make,
+        );
+      }
+    });
+
+    test('multicolor feed brands keep native rendering path', () {
+      for (final make in [
+        'BMW',
+        'Mercedes-Benz',
+        'Audi',
+        'Volkswagen',
+        'Skoda',
+        'Porsche',
+        'Volvo',
+      ]) {
+        expect(
+          isBrandIconMonochromeAssetPath(getBrandIconPath(make)),
+          isFalse,
+          reason: make,
+        );
+      }
+    });
+  });
+
+  group('isBrandIconDiscoveryFeedSimpleTintAssetPath', () {
+    test('simple emblems may use feed metallic tint', () {
+      for (final make in ['Toyota', 'Honda', 'Mazda']) {
+        expect(
+          isBrandIconDiscoveryFeedSimpleTintAssetPath(getBrandIconPath(make)),
+          isTrue,
+          reason: make,
+        );
+      }
+    });
+
+    test('wordmark and complex marks stay native on feed', () {
+      for (final make in [
+        'Nissan',
+        'Ford',
+        'Chevrolet',
+        'Volkswagen',
+        'BMW',
+        'Mercedes-Benz',
+        'Audi',
+        'Skoda',
+        'Volvo',
+      ]) {
+        expect(
+          isBrandIconDiscoveryFeedSimpleTintAssetPath(getBrandIconPath(make)),
+          isFalse,
+          reason: make,
+        );
+      }
+    });
+  });
+
+  group('isBrandIconDiscoveryFeedLightBackplateAssetPath', () {
+    test('simple emblem marks skip porcelain backplate on feed', () {
+      for (final make in [
+        'Toyota',
+        'Honda',
+        'Mazda',
+      ]) {
+        expect(
+          isBrandIconDiscoveryFeedLightBackplateAssetPath(
+            getBrandIconPath(make),
+          ),
+          isFalse,
+          reason: make,
+        );
+      }
+    });
+
+    test('complex and multicolor marks use porcelain backplate on feed', () {
+      for (final make in [
+        'Volvo',
+        'BMW',
+        'Mercedes-Benz',
+        'Audi',
+        'Skoda',
+        'Porsche',
+        'Tesla',
+        'Nissan',
+        'Ford',
+        'Chevrolet',
+        'Volkswagen',
+        'Opel',
+        'Fiat',
+      ]) {
+        expect(
+          isBrandIconDiscoveryFeedLightBackplateAssetPath(
+            getBrandIconPath(make),
+          ),
+          isTrue,
+          reason: make,
+        );
+      }
+    });
+  });
+
+  group('brandIconDiscoveryFeedBackplateInnerFraction', () {
+    test('Volvo uses boosted inner fraction on porcelain backplate', () {
+      expect(
+        brandIconDiscoveryFeedBackplateInnerFraction(getBrandIconPath('Volvo')),
+        0.90,
+      );
+    });
+
+    test('balanced brands keep default inner fraction', () {
+      for (final make in ['Audi', 'BMW', 'Toyota', 'Ford', 'Fiat']) {
+        expect(
+          brandIconDiscoveryFeedBackplateInnerFraction(getBrandIconPath(make)),
+          kBrandIconDiscoveryFeedBackplateInnerFractionDefault,
+          reason: make,
+        );
+      }
+    });
+
+    test('override map keys match packaged slugs', () {
+      for (final slug
+          in kBrandIconDiscoveryFeedBackplateInnerFractionBySlug.keys) {
+        expect(kPackagedBrandIconSlugs, contains(slug));
+      }
     });
   });
 
@@ -266,6 +404,483 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+    });
+
+    testWidgets('dark mode keeps Nissan native without flattening tint', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: BrandLogoGlyph(
+                assetPath: getBrandIconPath('Nissan'),
+                size: 32,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+      final svg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+      expect(svg.colorFilter, isNull);
+    });
+
+    testWidgets('discovery feed tints simple Toyota emblem moderately', (
+      tester,
+    ) async {
+      final scheme = AppTheme.dark().colorScheme;
+      final feedTint = AppTheme.discoveryFeedBrandLogoColor(scheme);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: BrandLogoGlyph(
+                assetPath: getBrandIconPath('Toyota'),
+                size: 34,
+                discoveryFeedPresentation: true,
+                darkTintColorOverride: feedTint,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsNothing);
+      final svg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+      expect(
+        svg.colorFilter,
+        ColorFilter.mode(feedTint, BlendMode.srcIn),
+      );
+      expect(feedTint.a, closeTo(0.90, 0.01));
+    });
+
+    testWidgets('discovery feed keeps Ford native with porcelain backplate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: BrandLogoGlyph(
+                assetPath: getBrandIconPath('Ford'),
+                size: 34,
+                discoveryFeedPresentation: true,
+                darkTintColorOverride: AppTheme.discoveryFeedBrandLogoColor(
+                  AppTheme.dark().colorScheme,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+      final svg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+      expect(svg.colorFilter, isNull);
+    });
+
+    testWidgets('discovery feed keeps Nissan native with porcelain backplate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: BrandLogoGlyph(
+                assetPath: getBrandIconPath('Nissan'),
+                size: 34,
+                discoveryFeedPresentation: true,
+                darkTintColorOverride: AppTheme.discoveryFeedBrandLogoColor(
+                  AppTheme.dark().colorScheme,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+      final svg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+      expect(svg.colorFilter, isNull);
+    });
+
+    testWidgets('discovery feed keeps Chevrolet native with porcelain backplate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: BrandLogoGlyph(
+                assetPath: getBrandIconPath('Chevrolet'),
+                size: 34,
+                discoveryFeedPresentation: true,
+                darkTintColorOverride: AppTheme.discoveryFeedBrandLogoColor(
+                  AppTheme.dark().colorScheme,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+    });
+
+    testWidgets('discovery feed keeps Opel native with porcelain backplate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: BrandLogoGlyph(
+                assetPath: getBrandIconPath('Opel'),
+                size: 34,
+                discoveryFeedPresentation: true,
+                darkTintColorOverride: AppTheme.discoveryFeedBrandLogoColor(
+                  AppTheme.dark().colorScheme,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+      final svg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+      expect(svg.colorFilter, isNull);
+    });
+
+    testWidgets('discovery feed keeps BMW native with porcelain backplate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: BrandLogoGlyph(
+                assetPath: getBrandIconPath('BMW'),
+                size: 34,
+                discoveryFeedPresentation: true,
+                darkTintColorOverride: AppTheme.discoveryFeedBrandLogoColor(
+                  AppTheme.dark().colorScheme,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      final svg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+      expect(svg.colorFilter, isNull);
+    });
+
+    testWidgets('discovery feed keeps Skoda native with porcelain backplate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: BrandLogoGlyph(
+                assetPath: getBrandIconPath('Skoda'),
+                size: 34,
+                discoveryFeedPresentation: true,
+                darkTintColorOverride: AppTheme.discoveryFeedBrandLogoColor(
+                  AppTheme.dark().colorScheme,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+    });
+
+    testWidgets(
+      'discovery feed keeps Mercedes-Benz native with porcelain backplate',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: Scaffold(
+              body: Center(
+                child: BrandLogoGlyph(
+                  assetPath: getBrandIconPath('Mercedes-Benz'),
+                  size: 34,
+                  discoveryFeedPresentation: true,
+                  darkTintColorOverride: AppTheme.discoveryFeedBrandLogoColor(
+                    AppTheme.dark().colorScheme,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+        expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+      },
+    );
+
+    testWidgets('discovery feed keeps Audi native with porcelain backplate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: BrandLogoGlyph(
+                assetPath: getBrandIconPath('Audi'),
+                size: 34,
+                discoveryFeedPresentation: true,
+                darkTintColorOverride: AppTheme.discoveryFeedBrandLogoColor(
+                  AppTheme.dark().colorScheme,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+    });
+
+    testWidgets('discovery feed keeps Volvo native with porcelain backplate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: BrandLogoGlyph(
+                assetPath: getBrandIconPath('Volvo'),
+                size: 34,
+                discoveryFeedPresentation: true,
+                darkTintColorOverride: AppTheme.discoveryFeedBrandLogoColor(
+                  AppTheme.dark().colorScheme,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+      final svg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+      expect(svg.colorFilter, isNull);
+    });
+
+    testWidgets('Volvo readableOnDark keeps native badge without tint', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: BrandLogoGlyph.readableOnDark(
+                  context: context,
+                  assetPath: getBrandIconPath('Volvo'),
+                  size: 32,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+    });
+
+    testWidgets('Volvo readableOnDark uses boosted inner glyph on backplate', (
+      tester,
+    ) async {
+      const outerSize = 32.0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: BrandLogoGlyph.readableOnDark(
+                  context: context,
+                  assetPath: getBrandIconPath('Volvo'),
+                  size: outerSize,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final volvoSvg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+      expect(
+        volvoSvg.width,
+        outerSize *
+            brandIconDiscoveryFeedBackplateInnerFraction(
+              getBrandIconPath('Volvo'),
+            ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: BrandLogoGlyph.readableOnDark(
+                  context: context,
+                  assetPath: getBrandIconPath('BMW'),
+                  size: outerSize,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final bmwSvg = tester.widget<SvgPicture>(find.byType(SvgPicture));
+      expect(
+        bmwSvg.width,
+        outerSize *
+            brandIconDiscoveryFeedBackplateInnerFraction(
+              getBrandIconPath('BMW'),
+            ),
+      );
+      expect(volvoSvg.width, greaterThan(bmwSvg.width!));
+    });
+
+    test('Volvo is not classified for simple feed tint', () {
+      expect(
+        isBrandIconDiscoveryFeedSimpleTintAssetPath(getBrandIconPath('Volvo')),
+        isFalse,
+      );
+      expect(
+        isBrandIconMonochromeAssetPath(getBrandIconPath('Volvo')),
+        isFalse,
+      );
+      expect(getBrandIconPath('Toyota'), endsWith('/toyota.svg'));
+      expect(
+        isBrandIconDiscoveryFeedSimpleTintAssetPath(getBrandIconPath('Toyota')),
+        isTrue,
+      );
+    });
+
+    testWidgets('discovery feed keeps Fiat native with porcelain backplate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: Center(
+              child: BrandLogoGlyph(
+                assetPath: getBrandIconPath('Fiat'),
+                size: 34,
+                discoveryFeedPresentation: true,
+                darkTintColorOverride: AppTheme.discoveryFeedBrandLogoColor(
+                  AppTheme.dark().colorScheme,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+    });
+
+    testWidgets('readableOnDark uses porcelain backplate for Audi', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: BrandLogoGlyph.readableOnDark(
+                  context: context,
+                  assetPath: getBrandIconPath('Audi'),
+                  size: 32,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+    });
+
+    testWidgets('readableOnDark light mode stays flat without plate', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: BrandLogoGlyph.readableOnDark(
+                  context: context,
+                  assetPath: getBrandIconPath('Audi'),
+                  size: 32,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsNothing);
+      expect(find.byKey(brandLogoDarkWellKey), findsNothing);
     });
   });
 }

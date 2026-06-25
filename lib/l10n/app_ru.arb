@@ -85,20 +85,26 @@
       "Поиск сохранён. Чтобы получать push, включите оповещения о сохранённых поисках в настройках.",
   "@catalogBrowseFilterBellSavedEnableGlobalCategorySnack": {},
 
+  "catalogBrowseFilterBellSavedSearchTooltip":
+      "Фильтр сохранён. Нажмите, чтобы удалить. Оповещения включаются на странице сохранённых фильтров.",
+  "@catalogBrowseFilterBellSavedSearchTooltip": {
+    "description": "Tooltip when saved search exists but notification delivery is not fully enabled."
+  },
+
   "catalogBrowseFilterBellSavedDeliveryUnavailableTooltip":
-      "Поиск сохранён. Оповещения для этого фильтра пока не доставляются.",
+      "Фильтр сохранён. Нажмите, чтобы удалить. Оповещения включаются на странице сохранённых фильтров.",
   "@catalogBrowseFilterBellSavedDeliveryUnavailableTooltip": {
-    "description": "Tooltip when saved search exists but delivery gate is incomplete (global category off, row alerts off, or push unavailable)."
+    "description": "Deprecated alias kept for migration; prefer catalogBrowseFilterBellSavedSearchTooltip."
   },
 
   "catalogBrowseFilterBellInactiveTooltip":
-      "Включить оповещения для этого фильтра.",
+      "Сохранить фильтр поиска.",
   "@catalogBrowseFilterBellInactiveTooltip": {
     "description": "Tooltip when no saved search matches the current filter draft."
   },
 
   "catalogBrowseFilterBellActiveTooltip":
-      "Оповещения для этого фильтра включены. Нажмите, чтобы выключить.",
+      "Оповещения включены для этого фильтра. Нажмите, чтобы удалить сохранённый фильтр.",
   "@catalogBrowseFilterBellActiveTooltip": {
     "description": "Tooltip when delivery is fully enabled for the matching saved search."
   },
@@ -914,6 +920,8 @@
   "@savedSearchAlertsToggleTitle": {},
   "savedSearchAlertsToggleSubtitle": "Push при новых объявлениях по этому фильтру.",
   "@savedSearchAlertsToggleSubtitle": {},
+  "savedSearchAlertsPushUnavailableHint": "Оповещения пока недоступны. Вы сможете включить их позже.",
+  "@savedSearchAlertsPushUnavailableHint": {},
   "savedSearchAlertsEnabledLabel": "Вы получите push, когда появятся новые объявления.",
   "@savedSearchAlertsEnabledLabel": {},
   "savedSearchAlertsDisabledLabel": "Оповещения по этому фильтру выключены.",
@@ -1780,15 +1788,19 @@
 
   "fuelPricesTitle": "Цены на топливо",
   "@fuelPricesTitle": {},
-  "fuelPricesMenuSubtitle": "Актуальные ориентиры по топливу в Молдове и ПМР",
+  "fuelPricesMenuSubtitle": "Справочные цены для Молдовы и Приднестровья.",
   "@fuelPricesMenuSubtitle": {},
+  "fuelPricesIntroEyebrow": "Топливный ориентир",
+  "@fuelPricesIntroEyebrow": {},
+  "fuelPricesIntroLine": "Справочные цены для Молдовы и Приднестровья.",
+  "@fuelPricesIntroLine": {},
   "fuelPricesTerritoryMoldova": "Молдова",
   "@fuelPricesTerritoryMoldova": {},
   "fuelPricesTerritoryPmr": "Приднестровье",
   "@fuelPricesTerritoryPmr": {},
-  "fuelPricesDisclaimerTitle": "Справочно",
+  "fuelPricesDisclaimerTitle": "Перед заправкой",
   "@fuelPricesDisclaimerTitle": {},
-  "fuelPricesDisclaimer": "Цены носят справочный характер. Перед заправкой уточните актуальную цену на АЗС.",
+  "fuelPricesDisclaimer": "Цены носят справочный характер. Актуальную цену уточняйте на АЗС.",
   "@fuelPricesDisclaimer": {},
   "fuelPricesMoldovaScopeNote": "Официальный максимальный уровень цен ANRE по Молдове.",
   "@fuelPricesMoldovaScopeNote": {},

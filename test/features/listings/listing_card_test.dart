@@ -126,7 +126,7 @@ void main() {
       },
     );
 
-    testWidgets('dark mode shows brand logo contrast well for dark SVG marks', (
+    testWidgets('dark mode tints simple Toyota emblem on listing card', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -144,8 +144,30 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(brandLogoDarkWellKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkWellKey), findsNothing);
       expect(find.byKey(brandLogoDarkTintKey), findsOneWidget);
+    });
+
+    testWidgets('dark mode shows porcelain backplate for Audi on listing card', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ListingCard(listing: _seed(make: 'Audi')),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
     });
 
     testWidgets('forwards onTap when the card is tapped', (tester) async {

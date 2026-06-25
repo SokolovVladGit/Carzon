@@ -151,16 +151,20 @@ class AppLocalizationsRu extends AppLocalizations {
       'Поиск сохранён. Чтобы получать push, включите оповещения о сохранённых поисках в настройках.';
 
   @override
+  String get catalogBrowseFilterBellSavedSearchTooltip =>
+      'Фильтр сохранён. Нажмите, чтобы удалить. Оповещения включаются на странице сохранённых фильтров.';
+
+  @override
   String get catalogBrowseFilterBellSavedDeliveryUnavailableTooltip =>
-      'Поиск сохранён. Оповещения для этого фильтра пока не доставляются.';
+      'Фильтр сохранён. Нажмите, чтобы удалить. Оповещения включаются на странице сохранённых фильтров.';
 
   @override
   String get catalogBrowseFilterBellInactiveTooltip =>
-      'Включить оповещения для этого фильтра.';
+      'Сохранить фильтр поиска.';
 
   @override
   String get catalogBrowseFilterBellActiveTooltip =>
-      'Оповещения для этого фильтра включены. Нажмите, чтобы выключить.';
+      'Оповещения включены для этого фильтра. Нажмите, чтобы удалить сохранённый фильтр.';
 
   @override
   String get listingsEmptyTitle => 'Объявления не найдены';
@@ -2005,6 +2009,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Push при новых объявлениях по этому фильтру.';
 
   @override
+  String get savedSearchAlertsPushUnavailableHint =>
+      'Оповещения пока недоступны. Вы сможете включить их позже.';
+
+  @override
   String get savedSearchAlertsEnabledLabel =>
       'Вы получите push, когда появятся новые объявления.';
 
@@ -3511,7 +3519,14 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get fuelPricesMenuSubtitle =>
-      'Актуальные ориентиры по топливу в Молдове и ПМР';
+      'Справочные цены для Молдовы и Приднестровья.';
+
+  @override
+  String get fuelPricesIntroEyebrow => 'Топливный ориентир';
+
+  @override
+  String get fuelPricesIntroLine =>
+      'Справочные цены для Молдовы и Приднестровья.';
 
   @override
   String get fuelPricesTerritoryMoldova => 'Молдова';
@@ -3520,11 +3535,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get fuelPricesTerritoryPmr => 'Приднестровье';
 
   @override
-  String get fuelPricesDisclaimerTitle => 'Справочно';
+  String get fuelPricesDisclaimerTitle => 'Перед заправкой';
 
   @override
   String get fuelPricesDisclaimer =>
-      'Цены носят справочный характер. Перед заправкой уточните актуальную цену на АЗС.';
+      'Цены носят справочный характер. Актуальную цену уточняйте на АЗС.';
 
   @override
   String get fuelPricesMoldovaScopeNote =>

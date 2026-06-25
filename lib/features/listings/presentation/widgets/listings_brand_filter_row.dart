@@ -122,27 +122,47 @@ class _BrandTile extends StatelessWidget {
         ? l10n.brandFilterBrandSemantics(semanticsLabel!)
         : l10n.brandFilterAllSemantics;
 
-    final bg = selected
+    final isClearChip = allBrandsAssetPath != null;
+
+    final bg = isClearChip
+        ? AppTheme.discoveryClearChipFill(scheme, selected: selected)
+        : selected
         ? (isDark
               ? AppTheme.selectedChipFill(scheme)
               : Color.alphaBlend(
                   scheme.primary.withValues(alpha: 0.11),
                   Colors.white,
                 ))
-        : (isDark ? AppTheme.unselectedChipFill(scheme) : Colors.white);
-    final borderColor = selected
+        : (isDark
+              ? AppTheme.discoveryBrandChipInactiveFill(scheme)
+              : Colors.white);
+
+    final borderColor = isClearChip
+        ? AppTheme.discoveryClearChipBorder(scheme, selected: selected)
+        : selected
         ? (isDark
               ? scheme.primary.withValues(alpha: 0.55)
               : scheme.primary.withValues(alpha: 0.38))
         : (isDark
-              ? scheme.outline.withValues(alpha: 0.28)
+              ? AppTheme.discoveryBrandChipInactiveBorder(scheme)
               : scheme.outlineVariant.withValues(alpha: 0.42));
+
     final borderWidth = selected ? 2.0 : 1.0;
+
+    final clearIconColor = AppTheme.discoveryClearChipIconColor(
+      scheme,
+      selected: selected,
+    );
+
     final shadow = BoxShadow(
-      color: selected
+      color: isClearChip && isDark && !selected
+          ? scheme.primary.withValues(alpha: 0.10)
+          : selected
           ? scheme.primary.withValues(alpha: isDark ? 0.18 : 0.12)
+          : isDark && !isClearChip
+          ? scheme.primary.withValues(alpha: 0.08)
           : scheme.shadow.withValues(alpha: isDark ? 0.16 : 0.025),
-      blurRadius: selected ? 12 : 6,
+      blurRadius: selected ? 12 : (isDark ? 8 : 6),
       spreadRadius: selected ? 0.5 : 0,
       offset: Offset(0, selected ? 3 : 2),
     );
@@ -154,11 +174,16 @@ class _BrandTile extends StatelessWidget {
         width: _allBrandsIconSize,
         height: _allBrandsIconSize,
         fit: BoxFit.contain,
-        errorBuilder: (context, error, _) =>
-            Icon(Icons.apps_rounded, size: _logoSize, color: scheme.primary),
+        colorFilter: ColorFilter.mode(clearIconColor, BlendMode.srcIn),
+        errorBuilder: (context, error, _) => Icon(
+          Icons.grid_view_rounded,
+          size: _logoSize,
+          color: clearIconColor,
+        ),
       );
     } else if (assetPath != null) {
-      glyph = BrandLogoGlyph(
+      glyph = BrandLogoGlyph.readableOnDark(
+        context: context,
         assetPath: assetPath!,
         size: _logoSize * logoOpticalScale,
       );
@@ -191,6 +216,9 @@ class _BrandTile extends StatelessWidget {
             ),
             child: InkWell(
               onTap: onTap,
+              borderRadius: BorderRadius.circular(_radius),
+              splashColor: scheme.onSurface.withValues(alpha: 0.048),
+              highlightColor: scheme.onSurface.withValues(alpha: 0.026),
               child: SizedBox(
                 width: _size,
                 height: _size,

@@ -41,7 +41,7 @@ void registerFilterAlertsFeature(GetIt sl) {
       deliveryOrchestrator: sl<FilterAlertDeliveryOrchestrator>(),
     ),
   );
-  sl.registerFactory(
+  sl.registerLazySingleton(
     () => BrowseCatalogFilterAlertsCubit(
       listSavedSearches: sl<ListSavedSearches>(),
       createSavedSearch: sl<CreateSavedSearch>(),

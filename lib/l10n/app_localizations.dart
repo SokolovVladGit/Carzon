@@ -362,22 +362,28 @@ abstract class AppLocalizations {
   /// **'Поиск сохранён. Чтобы получать push, включите оповещения о сохранённых поисках в настройках.'**
   String get catalogBrowseFilterBellSavedEnableGlobalCategorySnack;
 
-  /// Tooltip when saved search exists but delivery gate is incomplete (global category off, row alerts off, or push unavailable).
+  /// Tooltip when saved search exists but notification delivery is not fully enabled.
   ///
   /// In ru, this message translates to:
-  /// **'Поиск сохранён. Оповещения для этого фильтра пока не доставляются.'**
+  /// **'Фильтр сохранён. Нажмите, чтобы удалить. Оповещения включаются на странице сохранённых фильтров.'**
+  String get catalogBrowseFilterBellSavedSearchTooltip;
+
+  /// Deprecated alias kept for migration; prefer catalogBrowseFilterBellSavedSearchTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фильтр сохранён. Нажмите, чтобы удалить. Оповещения включаются на странице сохранённых фильтров.'**
   String get catalogBrowseFilterBellSavedDeliveryUnavailableTooltip;
 
   /// Tooltip when no saved search matches the current filter draft.
   ///
   /// In ru, this message translates to:
-  /// **'Включить оповещения для этого фильтра.'**
+  /// **'Сохранить фильтр поиска.'**
   String get catalogBrowseFilterBellInactiveTooltip;
 
   /// Tooltip when delivery is fully enabled for the matching saved search.
   ///
   /// In ru, this message translates to:
-  /// **'Оповещения для этого фильтра включены. Нажмите, чтобы выключить.'**
+  /// **'Оповещения включены для этого фильтра. Нажмите, чтобы удалить сохранённый фильтр.'**
   String get catalogBrowseFilterBellActiveTooltip;
 
   /// No description provided for @listingsEmptyTitle.
@@ -3642,6 +3648,12 @@ abstract class AppLocalizations {
   /// **'Push при новых объявлениях по этому фильтру.'**
   String get savedSearchAlertsToggleSubtitle;
 
+  /// No description provided for @savedSearchAlertsPushUnavailableHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оповещения пока недоступны. Вы сможете включить их позже.'**
+  String get savedSearchAlertsPushUnavailableHint;
+
   /// No description provided for @savedSearchAlertsEnabledLabel.
   ///
   /// In ru, this message translates to:
@@ -6279,8 +6291,20 @@ abstract class AppLocalizations {
   /// No description provided for @fuelPricesMenuSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Актуальные ориентиры по топливу в Молдове и ПМР'**
+  /// **'Справочные цены для Молдовы и Приднестровья.'**
   String get fuelPricesMenuSubtitle;
+
+  /// No description provided for @fuelPricesIntroEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Топливный ориентир'**
+  String get fuelPricesIntroEyebrow;
+
+  /// No description provided for @fuelPricesIntroLine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Справочные цены для Молдовы и Приднестровья.'**
+  String get fuelPricesIntroLine;
 
   /// No description provided for @fuelPricesTerritoryMoldova.
   ///
@@ -6297,13 +6321,13 @@ abstract class AppLocalizations {
   /// No description provided for @fuelPricesDisclaimerTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Справочно'**
+  /// **'Перед заправкой'**
   String get fuelPricesDisclaimerTitle;
 
   /// No description provided for @fuelPricesDisclaimer.
   ///
   /// In ru, this message translates to:
-  /// **'Цены носят справочный характер. Перед заправкой уточните актуальную цену на АЗС.'**
+  /// **'Цены носят справочный характер. Актуальную цену уточняйте на АЗС.'**
   String get fuelPricesDisclaimer;
 
   /// No description provided for @fuelPricesMoldovaScopeNote.

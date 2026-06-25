@@ -713,7 +713,7 @@ class _InfoPanel extends StatelessWidget {
 }
 
 /// Brand logo in the info panel. Light mode: flat mark on the glass panel.
-/// Dark mode: [BrandLogoGlyph] adds a soft well so black SVGs stay visible.
+/// Dark mode: porcelain backplate / emblem tint (same as brand filter row).
 class _BrandIconTile extends StatelessWidget {
   const _BrandIconTile({required this.assetPath});
 
@@ -723,7 +723,11 @@ class _BrandIconTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BrandLogoGlyph(assetPath: assetPath, size: _size);
+    return BrandLogoGlyph.readableOnDark(
+      context: context,
+      assetPath: assetPath,
+      size: _size,
+    );
   }
 }
 

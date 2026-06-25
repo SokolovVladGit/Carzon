@@ -102,6 +102,59 @@ void main() {
       expect(AppTheme.editorialAccentColor(dark).a, greaterThan(0.7));
     });
 
+    test('discovery body-type icon tint is state-driven in dark', () {
+      final scheme = AppTheme.dark().colorScheme;
+      final inactive = AppTheme.discoveryBodyTypeIconColor(
+        scheme,
+        selected: false,
+      );
+      final selected = AppTheme.discoveryBodyTypeIconColor(
+        scheme,
+        selected: true,
+      );
+      final clearInactive = AppTheme.discoveryClearChipIconColor(
+        scheme,
+        selected: false,
+      );
+      final clearSelected = AppTheme.discoveryClearChipIconColor(
+        scheme,
+        selected: true,
+      );
+
+      expect(inactive, equals(clearInactive));
+      expect(selected, equals(clearSelected));
+      expect(inactive.a, greaterThan(0.84));
+      expect(selected.a, greaterThan(0.94));
+      expect(selected.b, greaterThan(inactive.b));
+      expect(
+        inactive,
+        isNot(AppTheme.editorialAccentColor(scheme)),
+      );
+    });
+
+    test('discovery feed porcelain backplate uses warm radial fill', () {
+      final decoration = AppTheme.discoveryFeedBrandLogoBackplateDecoration(
+        AppTheme.dark().colorScheme,
+      );
+      expect(decoration.shape, BoxShape.circle);
+      expect(decoration.gradient, isNotNull);
+    });
+
+    test('discovery feed brand logo color is restrained silver in dark', () {
+      final scheme = AppTheme.dark().colorScheme;
+      final card = AppTheme.brandLogoGlyphColor(scheme);
+      final feed = AppTheme.discoveryFeedBrandLogoColor(scheme);
+      final priorBrightFeed = Color.lerp(
+        const Color(0xFFEDF1F5),
+        scheme.onSurface,
+        0.94,
+      )!;
+
+      expect(feed.a, closeTo(0.90, 0.01));
+      expect(feed.computeLuminance(), greaterThan(card.computeLuminance()));
+      expect(feed.computeLuminance(), lessThan(priorBrightFeed.computeLuminance()));
+    });
+
     test('brandLogoGlyphColor and categoryIconColor are readable in dark', () {
       final scheme = AppTheme.dark().colorScheme;
       final logo = AppTheme.brandLogoGlyphColor(scheme);
@@ -123,6 +176,67 @@ void main() {
       expect(
         AppTheme.selectedChipFill(scheme),
         isNot(equals(AppTheme.unselectedChipFill(scheme))),
+      );
+    });
+
+    test('discovery clear chip icon is neutral in light mode', () {
+      final scheme = AppTheme.light().colorScheme;
+      final inactive = AppTheme.discoveryClearChipIconColor(
+        scheme,
+        selected: false,
+      );
+      final selected = AppTheme.discoveryClearChipIconColor(
+        scheme,
+        selected: true,
+      );
+
+      expect(inactive, AppTheme.categoryIconColor(scheme, selected: false));
+      expect(selected, AppTheme.categoryIconColor(scheme, selected: true));
+      expect(selected, isNot(scheme.primary.withValues(alpha: 0.86)));
+    });
+
+    test('discovery clear chip icon stays editorial in dark mode', () {
+      final scheme = AppTheme.dark().colorScheme;
+      final inactive = AppTheme.discoveryClearChipIconColor(
+        scheme,
+        selected: false,
+      );
+      final selected = AppTheme.discoveryClearChipIconColor(
+        scheme,
+        selected: true,
+      );
+
+      expect(
+        inactive,
+        isNot(AppTheme.categoryIconColor(scheme, selected: false)),
+      );
+      expect(selected.b, greaterThan(inactive.b));
+    });
+
+    test('discovery brand chip inactive fill is editorial blue-graphite', () {
+      final scheme = AppTheme.dark().colorScheme;
+      final inactive = AppTheme.discoveryBrandChipInactiveFill(scheme);
+      final flat = AppTheme.unselectedChipFill(scheme);
+      final clear = AppTheme.discoveryClearChipFill(scheme, selected: false);
+      final selected = AppTheme.selectedChipFill(scheme);
+
+      expect(inactive, isNot(equals(flat)));
+      expect(inactive, isNot(equals(selected)));
+      expect(
+        inactive.computeLuminance(),
+        greaterThan(flat.computeLuminance()),
+      );
+      expect(
+        selected.computeLuminance(),
+        greaterThan(inactive.computeLuminance()),
+      );
+      expect(
+        clear.computeLuminance(),
+        greaterThan(inactive.computeLuminance()),
+      );
+      expect(
+        AppTheme.discoveryBrandChipInactiveFill(AppTheme.light().colorScheme),
+        AppTheme.unselectedChipFill(AppTheme.light().colorScheme),
       );
     });
 

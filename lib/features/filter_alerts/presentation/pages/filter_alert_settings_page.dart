@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,6 +19,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../listings/presentation/cubit/browse_catalog_filter_alerts_cubit.dart';
 import '../../domain/entities/saved_search.dart';
 import '../cubit/saved_searches_cubit.dart';
 import '../utils/saved_search_display_title.dart';
@@ -34,6 +37,12 @@ String? _savedSearchesNoticeMessage(
       l10n.notificationSettingsSaveFailed,
     SavedSearchesUserNotice.none => null,
   };
+}
+
+void _refreshCatalogSavedSearchStateIfRegistered() {
+  if (sl.isRegistered<BrowseCatalogFilterAlertsCubit>()) {
+    unawaited(sl<BrowseCatalogFilterAlertsCubit>().refresh());
+  }
 }
 
 /// Filter alerts manager (`/filter-alert`).
@@ -54,9 +63,16 @@ class FilterAlertSettingsPage extends StatelessWidget {
             ),
           );
         }
-        return BlocProvider(
-          create: (_) => sl<SavedSearchesCubit>()..refresh(),
-          child: const _SavedSearchesBody(),
+        return PopScope(
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) {
+              _refreshCatalogSavedSearchStateIfRegistered();
+            }
+          },
+          child: BlocProvider(
+            create: (_) => sl<SavedSearchesCubit>()..refresh(),
+            child: const _SavedSearchesBody(),
+          ),
         );
       },
     );
@@ -386,6 +402,7 @@ class _SavedSearchTile extends StatelessWidget {
     if (!context.mounted) return;
     switch (result) {
       case Success():
+        _refreshCatalogSavedSearchStateIfRegistered();
         messenger.showSnackBar(
           SnackBar(content: Text(l10n.savedSearchRemovedSnack)),
         );
@@ -516,6 +533,7 @@ class _SavedSearchTile extends StatelessWidget {
                           if (!context.mounted) return;
                           switch (result) {
                             case Success():
+                              _refreshCatalogSavedSearchStateIfRegistered();
                               break;
                             case FailureResult():
                               messenger.showSnackBar(
@@ -528,6 +546,16 @@ class _SavedSearchTile extends StatelessWidget {
                 ),
             ],
           ),
+          if (!pushOn) ...[
+            const SizedBox(height: 10),
+            Text(
+              l10n.savedSearchAlertsPushUnavailableHint,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                height: 1.32,
+              ),
+            ),
+          ],
         ],
       ),
     );

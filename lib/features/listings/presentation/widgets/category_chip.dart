@@ -123,13 +123,26 @@ class CategoryChip extends StatelessWidget {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final Color bg = isSelected
+    final isAllChip = chipId == 'all';
+    final isClearChip = isAllChip;
+    final iconScale = listingBodyTypeQuickFilterIconScale(chipId);
+    final vehicleRenderWidth = _vehicleIconWidth * iconScale;
+
+    final Color bg = isClearChip
+        ? AppTheme.discoveryClearChipFill(scheme, selected: isSelected)
+        : isSelected
         ? AppTheme.selectedChipFill(scheme)
         : AppTheme.unselectedChipFill(scheme);
 
-    final Color fg = AppTheme.categoryIconColor(scheme, selected: isSelected);
+    final Color fg = isClearChip
+        ? AppTheme.discoveryClearChipIconColor(scheme, selected: isSelected)
+        : isDark
+        ? AppTheme.discoveryBodyTypeIconColor(scheme, selected: isSelected)
+        : AppTheme.categoryIconColor(scheme, selected: isSelected);
 
-    final Color borderColor = isSelected
+    final Color borderColor = isClearChip
+        ? AppTheme.discoveryClearChipBorder(scheme, selected: isSelected)
+        : isSelected
         ? (isDark
               ? scheme.primary.withValues(alpha: 0.48)
               : scheme.primary.withValues(alpha: 0.34))
@@ -139,12 +152,16 @@ class CategoryChip extends StatelessWidget {
     final radius = BorderRadius.circular(_cornerRadius);
 
     final List<BoxShadow> elevationShadow = isDark
-        ? const []
+        ? (isClearChip && !isSelected
+              ? [
+                  BoxShadow(
+                    color: scheme.primary.withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : const [])
         : _lightElevation(scheme);
-
-    final isAllChip = chipId == 'all';
-    final iconScale = listingBodyTypeQuickFilterIconScale(chipId);
-    final vehicleRenderWidth = _vehicleIconWidth * iconScale;
 
     final chipGlyph = _chipGlyph(
       assetPath: svgAssetPath,
@@ -227,6 +244,7 @@ Widget _chipGlyph({
         width: allBodiesIconSize,
         height: allBodiesIconSize,
         fit: BoxFit.contain,
+        colorFilter: ColorFilter.mode(fg, BlendMode.srcIn),
         errorBuilder: (context, error, _) =>
             Icon(fallbackIcon, color: fg, size: fallbackIconSize),
       );

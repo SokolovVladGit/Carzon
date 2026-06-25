@@ -115,33 +115,18 @@ class _CatalogBrowseFilterAlertSheetBellState
 
         final cubit = context.read<BrowseCatalogFilterAlertsCubit>();
         final bool deliveryOn = cubit.browseBellShowsActiveDraft(draftCrit);
-        final bool savedNoDelivery =
-            !deliveryOn &&
-            cubit.browseBellShowsSavedDraftWithoutDelivery(draftCrit);
 
         final l10n = widget.sheetContext.l10n;
         late final IconData bellIcon;
         late final Color fg;
-        late final double iconSize;
         late final String tooltip;
         if (deliveryOn) {
           bellIcon = Icons.notifications_active;
           fg = CatalogFilterAlertAccent.amber;
-          iconSize = 22;
           tooltip = l10n.catalogBrowseFilterBellActiveTooltip;
-        } else if (savedNoDelivery) {
-          // Saved-but-delivery-off reads "saved" without faking active
-          // delivery: a filled bell (vs the outlined inactive glyph) at
-          // a slightly larger size, in muted amber. Still visibly weaker
-          // than the strong amber active state above.
-          bellIcon = Icons.notifications;
-          fg = CatalogFilterAlertAccent.savedNoDelivery(scheme);
-          iconSize = 24;
-          tooltip = l10n.catalogBrowseFilterBellSavedDeliveryUnavailableTooltip;
         } else {
           bellIcon = Icons.notifications_none;
           fg = CatalogFilterAlertAccent.inactiveStroke(scheme);
-          iconSize = 22;
           tooltip = l10n.catalogBrowseFilterBellInactiveTooltip;
         }
 
@@ -157,10 +142,7 @@ class _CatalogBrowseFilterAlertSheetBellState
                 : () => unawaited(_onBellTapped(context)),
             icon: Icon(
               bellIcon,
-              key: savedNoDelivery
-                  ? CatalogFilterAlertAccent.sheetBellSavedNoDeliveryIconKey
-                  : null,
-              size: iconSize,
+              size: 22,
               color: fg,
               semanticLabel: tooltip,
             ),
@@ -276,25 +258,19 @@ class _CatalogBrowseFilterAlertSheetBellState
           CatalogBellInlineNotice.criteriaTooBroad,
         );
       case BrowseCatalogBellOutcome.pushBuildDisabled:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.filterAlertNotificationsPushDisabled)),
-        );
       case BrowseCatalogBellOutcome.criteriaSavedDeliveryUnavailable:
-        // Intentionally no root snackbar. The sheet renders an inline
-        // status banner (driven by `browseBellShowsSavedDraftWithoutDelivery`)
-        // plus the dedicated saved-no-delivery bell glyph, and the main
-        // catalog FAB switches to its saved-no-delivery ornament when
-        // the user applies the matching draft. Surfacing a snackbar here
-        // would bleed onto the catalog page after "Show cars" dismisses
-        // the modal (the bottom sheet's ScaffoldMessenger is the root one)
-        // and is exactly the regression Phase-4 follow-up addresses.
-        break;
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.savedSearchAlertsPushUnavailableHint)),
+        );
       case BrowseCatalogBellOutcome.savedAlertCleared:
       case BrowseCatalogBellOutcome.deliveriesDisabled:
         messenger.showSnackBar(
           SnackBar(content: Text(l10n.catalogBrowseFilterBellDisabledSnack)),
         );
+      case BrowseCatalogBellOutcome.savedSearchRemoved:
+        break;
       case BrowseCatalogBellOutcome.savedAlertClearFailed:
+      case BrowseCatalogBellOutcome.savedSearchDeleteFailed:
       case BrowseCatalogBellOutcome.prefsOrRowFailed:
         messenger.showSnackBar(
           SnackBar(content: Text(l10n.notificationSettingsSaveFailed)),
@@ -315,6 +291,8 @@ class _CatalogBrowseFilterAlertSheetBellState
         messenger.showSnackBar(
           SnackBar(content: Text(l10n.catalogBrowseFilterBellEnabledSnack)),
         );
+      case BrowseCatalogBellOutcome.savedSearchCreated:
+        break;
       case BrowseCatalogBellOutcome.noop:
         break;
     }
