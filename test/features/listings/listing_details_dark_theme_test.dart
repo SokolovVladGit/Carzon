@@ -16,6 +16,7 @@ import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
 import 'package:carzon/features/listings/presentation/pages/listing_details_page.dart';
 import 'package:carzon/features/listings/presentation/widgets/listing_details_fullscreen_gallery.dart';
+import 'package:carzon/shared/brands/brand_logo_glyph.dart';
 import 'package:carzon/features/sellers/domain/entities/seller_public_profile.dart';
 import 'package:carzon/features/sellers/domain/entities/seller_type.dart';
 import 'package:carzon/features/sellers/domain/usecases/get_seller_public_profile.dart';
@@ -181,6 +182,15 @@ void main() {
     expect(find.text(ru.chatLabel), findsOneWidget);
     expect(find.text(ru.listingDetailsSpecs), findsOneWidget);
     expect(find.byType(AppBackButton), findsOneWidget);
+  });
+
+  testWidgets('dark mode shows porcelain backplate for Audi brand mark', (
+    tester,
+  ) async {
+    await pumpDetails(tester, ListingDetailsState.success(listing()));
+
+    expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+    expect(find.byKey(brandLogoDarkTintKey), findsNothing);
   });
 
   testWidgets('seller trust section renders in dark theme', (tester) async {

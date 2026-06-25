@@ -367,6 +367,12 @@ SUPABASE_ANON_KEY=anon
       findsNothing,
     );
     expect(find.text(l10n.savedSearchAlertsToggleSubtitle), findsOneWidget);
+    expect(find.text(l10n.savedSearchAlertsPushUnavailableHint), findsOneWidget);
+    expect(
+      l10n.savedSearchAlertsPushUnavailableHint,
+      'Оповещения пока недоступны. Вы сможете включить их позже.',
+    );
+    expect(l10n.savedSearchAlertsPushUnavailableHint.toLowerCase(), isNot(contains('сборк')));
     final tileFinder = find.byType(Switch);
     expect(tileFinder, findsOneWidget);
     expect(tester.widget<Switch>(tileFinder).onChanged, isNull);
@@ -482,6 +488,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
     await tester.pumpAndSettle();
 
     final switchTile = find.byType(Switch);
+    expect(tester.widget<Switch>(switchTile).onChanged, isNotNull);
     await tester.tap(switchTile);
     await tester.pumpAndSettle();
 

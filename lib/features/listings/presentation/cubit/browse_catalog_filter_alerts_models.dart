@@ -9,34 +9,23 @@ enum BrowseCatalogBellOutcome {
   /// Baseline feed / sort-only / otherwise too broad for alert subscription.
   criteriaTooBroad,
 
-  /// PUSH_NOTIFICATIONS_ENABLED is false **and** the caller explicitly
-  /// requested delivery to be enabled. Reserved for surfaces that try to
-  /// flip delivery on (`/filter-alert`'s explicit toggle, future debug
-  /// tools). The catalog bell never returns this — it uses
-  /// [criteriaSavedDeliveryUnavailable] instead, since tapping the bell
-  /// in a push-disabled build still successfully persists criteria.
+  /// PUSH_NOTIFICATIONS_ENABLED is false when the catalog bell or Saved
+  /// Searches page tries to enable delivery.
   pushBuildDisabled,
 
-  /// Eligible criteria were saved, but delivery cannot be enabled
-  /// because `PUSH_NOTIFICATIONS_ENABLED` is false in this build.
-  ///
-  /// Criteria persistence and `notification_preferences` semantics are
-  /// independent of push availability: the row remains with
-  /// `notifications_enabled = false`. The catalog UI surfaces a
-  /// success-shaped snackbar and shows a "saved, delivery pending"
-  /// bell state instead of treating the action as a hard failure.
+  /// @deprecated Catalog bell no longer toggles delivery. Kept for migration.
   criteriaSavedDeliveryUnavailable,
 
-  /// Filter-alert delivery toggled **off** for the matched saved search.
+  /// @deprecated Catalog bell no longer toggles delivery. Kept for migration.
   deliveriesDisabled,
 
-  /// Filter-alert delivery toggled **on** for the current filter criteria.
+  /// @deprecated Catalog bell no longer toggles delivery. Kept for migration.
   deliveriesEnabled,
 
-  /// @deprecated Use [deliveriesDisabled]. Kept for test migration only.
+  /// @deprecated Use [savedSearchRemoved]. Kept for test migration only.
   savedAlertCleared,
 
-  /// @deprecated Use [prefsOrRowFailed]. Kept for test migration only.
+  /// @deprecated Use [savedSearchDeleteFailed]. Kept for test migration only.
   savedAlertClearFailed,
 
   /// User denied OS notification permission during enable flow.
@@ -47,6 +36,15 @@ enum BrowseCatalogBellOutcome {
 
   /// Saving saved-search criteria failed.
   criteriaSaveFailed,
+
+  /// Deleting a matched saved search from the catalog bell failed.
+  savedSearchDeleteFailed,
+
+  /// Matched saved search was removed via the catalog bell.
+  savedSearchRemoved,
+
+  /// New saved search persisted with `alerts_enabled=false`.
+  savedSearchCreated,
 
   /// User already has the maximum number of saved searches (5).
   maxSavedSearchesReached,

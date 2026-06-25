@@ -649,8 +649,8 @@ void main() {
         );
 
     testWidgets(
-      'shows distinct saved-no-delivery ornament when saved Toyota row matches '
-      'applied Toyota feed but notifications_enabled is false (push-disabled)',
+      'does not show active notification ornament when saved Toyota row matches '
+      'applied Toyota feed but alerts_enabled is false',
       (tester) async {
         const toyotaApplied = ListingsState(
           status: ListingsStatus.success,
@@ -701,14 +701,6 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Saved-but-delivery-off ornament is present, fully-active
-        // ornament is absent — the two states are mutually exclusive.
-        expect(
-          find.byKey(
-            CatalogFilterAlertAccent.discoveryFilterFABSavedNoDeliveryBellKey,
-          ),
-          findsOneWidget,
-        );
         expect(
           find.byKey(CatalogFilterAlertAccent.discoveryFilterFABAlertBellKey),
           findsNothing,
@@ -717,7 +709,7 @@ void main() {
     );
 
     testWidgets(
-      'fully-active ornament wins over saved-no-delivery when deliveryFullyEnabled',
+      'shows active notification ornament only when delivery fully enabled',
       (tester) async {
         const toyotaApplied = ListingsState(
           status: ListingsStatus.success,
@@ -772,17 +764,11 @@ void main() {
           find.byKey(CatalogFilterAlertAccent.discoveryFilterFABAlertBellKey),
           findsOneWidget,
         );
-        expect(
-          find.byKey(
-            CatalogFilterAlertAccent.discoveryFilterFABSavedNoDeliveryBellKey,
-          ),
-          findsNothing,
-        );
       },
     );
 
     testWidgets(
-      'saved-no-delivery ornament absent when applied feed differs from saved row',
+      'active notification ornament absent when applied feed differs from saved row',
       (tester) async {
         const toyotaCritFeed = ListingsState(
           status: ListingsStatus.success,
@@ -840,9 +826,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.byKey(
-            CatalogFilterAlertAccent.discoveryFilterFABSavedNoDeliveryBellKey,
-          ),
+          find.byKey(CatalogFilterAlertAccent.discoveryFilterFABAlertBellKey),
           findsNothing,
         );
       },

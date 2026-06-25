@@ -38,6 +38,7 @@ class BrowseCatalogFilterAlertsState extends Equatable {
   }
 
   bool deliveryFullyEnabledForCriteria(ListingDiscoveryCriteria criteria) {
+    if (!Env.pushNotificationsEnabled) return false;
     final match = matchedSavedSearch(criteria);
     final p = prefs;
     if (match == null || !match.alertsEnabled) return false;
@@ -153,30 +154,13 @@ class BrowseCatalogFilterAlertsCubit
     return state.deliveryFullyEnabledForCriteria(merged);
   }
 
-  bool catalogBellSavedWithoutDeliveryVisibleForApplied(ListingsState applied) {
-    if (state.phase != BrowseCatalogFilterAlertsLoadPhase.ready) return false;
-    final merged = listingDiscoveryCriteriaFromBrowseStateForAlert(applied);
-    final match = state.matchedSavedSearch(merged);
-    if (match == null) return false;
-    if (state.deliveryFullyEnabledForCriteria(merged)) return false;
-    return true;
-  }
-
   bool browseBellShowsActiveDraft(ListingDiscoveryCriteria draft) {
     if (state.phase != BrowseCatalogFilterAlertsLoadPhase.ready) return false;
     return state.deliveryFullyEnabledForCriteria(draft);
   }
 
-  bool browseBellShowsSavedDraftWithoutDelivery(
-    ListingDiscoveryCriteria draft,
-  ) {
-    if (state.phase != BrowseCatalogFilterAlertsLoadPhase.ready) return false;
-    final match = state.matchedSavedSearch(draft);
-    if (match == null) return false;
-    if (state.deliveryFullyEnabledForCriteria(draft)) return false;
-    return true;
-  }
-
+  /// Catalog bell enables/disables filter-alert delivery for matching criteria.
+  /// Saved-search deletion is managed on the Saved Searches page only.
   Future<BrowseCatalogBellOutcome> handleCatalogFilterBell({
     required ListingDiscoveryCriteria draftCriteria,
     required bool authenticated,

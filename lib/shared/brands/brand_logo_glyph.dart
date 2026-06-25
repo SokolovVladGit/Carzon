@@ -4,8 +4,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/theme/app_theme.dart';
 import 'brand_icon_resolver.dart';
 
-/// Test hook: dark-mode logo well wrapper on listing/feed brand glyphs.
+/// Test hook: listing-card dark logo well wrapper.
 const Key brandLogoDarkWellKey = Key('brand_logo_dark_well');
+
+/// Test hook: discovery feed porcelain backplate for dark/complex logos.
+const Key brandLogoFeedLightBackplateKey = Key('brand_logo_feed_light_backplate');
 
 /// Test hook: dark-mode monochrome SVG tint applied.
 const Key brandLogoDarkTintKey = Key('brand_logo_dark_tint');
@@ -13,9 +16,9 @@ const Key brandLogoDarkTintKey = Key('brand_logo_dark_tint');
 /// Renders a resolved brand SVG (or unknown-car fallback) with readable
 /// contrast on dark surfaces.
 ///
-/// Light mode keeps flat, untinted SVGs. Dark mode uses a soft well plus a
-/// warm silver [ColorFilter] for known monochrome marks (Toyota, Honda, …).
-/// Multi-color SVGs (BMW, Ferrari, …) keep native colors.
+/// Light mode keeps flat, untinted SVGs. Listing cards use a soft well plus a
+/// warm silver [ColorFilter] for known monochrome marks. Discovery feed chips
+/// tint simple emblems or place all other natives on a porcelain backplate.
 class BrandLogoGlyph extends StatelessWidget {
   const BrandLogoGlyph({
     super.key,
@@ -24,6 +27,8 @@ class BrandLogoGlyph extends StatelessWidget {
     this.innerSizeFraction = 0.76,
     this.darkWell = true,
     this.tintMonochromeInDarkMode,
+    this.darkTintColorOverride,
+    this.discoveryFeedPresentation = false,
   });
 
   final String assetPath;
@@ -32,11 +37,40 @@ class BrandLogoGlyph extends StatelessWidget {
   /// Logo size inside the dark well, relative to [size].
   final double innerSizeFraction;
 
-  /// When false, never draws the dark well (e.g. previews on light tiles).
+  /// When false, never draws the listing-card dark well.
   final bool darkWell;
 
   /// Dark-mode SVG tint override. `null` → tint only [isBrandIconMonochromeAssetPath].
   final bool? tintMonochromeInDarkMode;
+
+  /// When set, replaces [AppTheme.brandLogoGlyphColor] for dark-mode SVG tinting.
+  final Color? darkTintColorOverride;
+
+  /// Discovery feed chip presentation (simple tint / porcelain backplate / bare native).
+  final bool discoveryFeedPresentation;
+
+  /// Shared readable plate for listing surfaces and brand filter chips.
+  ///
+  /// Dark mode: simple emblems get a restrained tint; complex marks (Audi, BMW,
+  /// etc.) sit on the warm porcelain circular backplate. Light mode: flat native SVG.
+  factory BrandLogoGlyph.readableOnDark({
+    required BuildContext context,
+    required String assetPath,
+    required double size,
+    double innerSizeFraction = 0.76,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    return BrandLogoGlyph(
+      assetPath: assetPath,
+      size: size,
+      innerSizeFraction: innerSizeFraction,
+      discoveryFeedPresentation: isDark,
+      darkTintColorOverride: isDark
+          ? AppTheme.discoveryFeedBrandLogoColor(scheme)
+          : null,
+    );
+  }
 
   static const Color _fallbackSilver = Color(0xFF9E9E9E);
 
@@ -44,7 +78,35 @@ class BrandLogoGlyph extends StatelessWidget {
     if (!isDark || isUnknown || tintMonochromeInDarkMode == false) {
       return false;
     }
+    if (discoveryFeedPresentation) {
+      return isBrandIconDiscoveryFeedSimpleTintAssetPath(assetPath);
+    }
     return isBrandIconMonochromeAssetPath(assetPath);
+  }
+
+  bool _useListingWell({
+    required bool isDark,
+    required bool isUnknown,
+    required bool applyTint,
+  }) {
+    return isDark && darkWell && !isUnknown && !discoveryFeedPresentation;
+  }
+
+  bool _useFeedLightBackplate({
+    required bool isDark,
+    required bool isUnknown,
+    required bool applyTint,
+  }) {
+    return discoveryFeedPresentation &&
+        isDark &&
+        !isUnknown &&
+        !applyTint &&
+        isBrandIconDiscoveryFeedLightBackplateAssetPath(assetPath);
+  }
+
+  Color? _darkTintColor(ColorScheme scheme, {required bool applyTint}) {
+    if (!applyTint) return null;
+    return darkTintColorOverride ?? AppTheme.brandLogoGlyphColor(scheme);
   }
 
   @override
@@ -52,18 +114,33 @@ class BrandLogoGlyph extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final isDark = scheme.brightness == Brightness.dark;
     final isUnknown = isBrandIconDefaultAssetPath(assetPath);
-    final useWell = isDark && darkWell && !isUnknown;
     final applyTint = _shouldTintInDark(isDark: isDark, isUnknown: isUnknown);
+    final useListingWell = _useListingWell(
+      isDark: isDark,
+      isUnknown: isUnknown,
+      applyTint: applyTint,
+    );
+    final useFeedLightBackplate = _useFeedLightBackplate(
+      isDark: isDark,
+      isUnknown: isUnknown,
+      applyTint: applyTint,
+    );
+    final useWell = useListingWell || useFeedLightBackplate;
 
-    final glyphSize = useWell ? size * innerSizeFraction : size;
-    final tintColor = applyTint ? AppTheme.brandLogoGlyphColor(scheme) : null;
+    final glyphSize = useWell
+        ? size *
+              (useFeedLightBackplate
+                  ? brandIconDiscoveryFeedBackplateInnerFraction(assetPath)
+                  : innerSizeFraction)
+        : size;
+    final tintColor = _darkTintColor(scheme, applyTint: applyTint);
 
     final Widget glyph = isUnknown
         ? Icon(
             Icons.directions_car,
             size: glyphSize,
             color: isDark
-                ? AppTheme.brandLogoGlyphColor(scheme)
+                ? (darkTintColorOverride ?? AppTheme.brandLogoGlyphColor(scheme))
                 : _fallbackSilver,
           )
         : _brandSvg(
@@ -84,8 +161,12 @@ class BrandLogoGlyph extends StatelessWidget {
       width: size,
       height: size,
       child: DecoratedBox(
-        key: brandLogoDarkWellKey,
-        decoration: AppTheme.brandLogoWellDecoration(scheme),
+        key: useFeedLightBackplate
+            ? brandLogoFeedLightBackplateKey
+            : brandLogoDarkWellKey,
+        decoration: useFeedLightBackplate
+            ? AppTheme.discoveryFeedBrandLogoBackplateDecoration(scheme)
+            : AppTheme.brandLogoWellDecoration(scheme),
         child: Center(child: glyph),
       ),
     );

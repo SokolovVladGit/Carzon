@@ -538,7 +538,11 @@ class _BrandMark extends StatelessWidget {
       );
     }
 
-    return BrandLogoGlyph(assetPath: assetPath, size: _iconSize);
+    return BrandLogoGlyph.readableOnDark(
+      context: context,
+      assetPath: assetPath,
+      size: _iconSize,
+    );
   }
 
   static String _firstLetter(String make) {

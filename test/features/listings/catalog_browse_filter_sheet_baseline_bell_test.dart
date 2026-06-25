@@ -113,17 +113,10 @@ void main() {
       return auth;
     }
 
-    Future<
-      (
-        BrowseCatalogFilterAlertsCubit,
-        _MockDeliveryOrchestrator,
-        MockSavedSearchesRepository,
-      )
-    >
+    Future<(BrowseCatalogFilterAlertsCubit, MockSavedSearchesRepository)>
     setupCubit() async {
       final savedSearchesRepo = MockSavedSearchesRepository();
       final notifRepo = _MockNotificationsRepository();
-      final orch = _MockDeliveryOrchestrator();
       when(
         () => savedSearchesRepo.list(),
       ).thenAnswer((_) async => const Success([]));
@@ -140,13 +133,27 @@ void main() {
           ),
         ),
       );
+      final orch = _MockDeliveryOrchestrator();
+      when(() => orch.enableDeliveries(any())).thenAnswer((inv) async {
+        final row = inv.positionalArguments.first as SavedSearch;
+        return Success(
+          SavedSearch(
+            id: row.id,
+            name: row.name,
+            criteria: row.criteria,
+            alertsEnabled: true,
+            createdAt: row.createdAt,
+            updatedAt: row.updatedAt,
+          ),
+        );
+      });
       final cubit = buildTestBrowseCatalogFilterAlertsCubit(
         savedSearchesRepo: savedSearchesRepo,
         notificationsRepo: notifRepo,
         deliveryOrchestrator: orch,
       );
       await cubit.refresh();
-      return (cubit, orch, savedSearchesRepo);
+      return (cubit, savedSearchesRepo);
     }
 
     Widget hostApp({
@@ -182,7 +189,7 @@ void main() {
         addTearDown(tester.view.reset);
 
         final auth = buildSignedInAuth();
-        final (alertsCubit, orch, savedSearchesRepo) = await setupCubit();
+        final (alertsCubit, savedSearchesRepo) = await setupCubit();
         final formKey = GlobalKey<ListingsFilterFormState>();
 
         await tester.pumpWidget(
@@ -199,7 +206,6 @@ void main() {
         await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));
         await tester.pumpAndSettle();
 
-        verifyNever(() => orch.enableDeliveries(any()));
         verifyNever(
           () => savedSearchesRepo.create(
             name: any(named: 'name'),
@@ -245,7 +251,7 @@ void main() {
       addTearDown(tester.view.reset);
 
       final auth = buildSignedInAuth();
-      final (alertsCubit, _, _) = await setupCubit();
+      final (alertsCubit, _) = await setupCubit();
       final formKey = GlobalKey<ListingsFilterFormState>();
 
       await tester.pumpWidget(
@@ -292,7 +298,7 @@ void main() {
         addTearDown(tester.view.reset);
 
         final auth = buildSignedInAuth();
-        final (alertsCubit, orch, savedSearchesRepo) = await setupCubit();
+        final (alertsCubit, savedSearchesRepo) = await setupCubit();
         // Accept any save with non-null criteria so the cubit's
         // too-broad guard never fires.
         when(
@@ -315,9 +321,6 @@ void main() {
             ),
           );
         });
-        when(() => orch.enableDeliveries(any())).thenAnswer(
-          (inv) async => Success(inv.positionalArguments.first as SavedSearch),
-        );
 
         final formKey = GlobalKey<ListingsFilterFormState>();
         await tester.pumpWidget(

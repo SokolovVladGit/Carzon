@@ -150,16 +150,20 @@ class AppLocalizationsRo extends AppLocalizations {
       'Căutarea a fost salvată. Pentru push, activați alertele pentru căutările salvate în setări.';
 
   @override
+  String get catalogBrowseFilterBellSavedSearchTooltip =>
+      'Căutarea a fost salvată. Atingeți pentru a șterge. Alertele se activează pe pagina filtrelor salvate.';
+
+  @override
   String get catalogBrowseFilterBellSavedDeliveryUnavailableTooltip =>
-      'Căutarea a fost salvată. Alertele pentru acest filtru nu sunt livrate încă.';
+      'Căutarea a fost salvată. Atingeți pentru a șterge. Alertele se activează pe pagina filtrelor salvate.';
 
   @override
   String get catalogBrowseFilterBellInactiveTooltip =>
-      'Activați alertele pentru acest filtru.';
+      'Salvați acest filtru de căutare.';
 
   @override
   String get catalogBrowseFilterBellActiveTooltip =>
-      'Alertele pentru acest filtru sunt activate. Atingeți pentru a dezactiva.';
+      'Alertele sunt activate pentru acest filtru. Atingeți pentru a șterge filtrul salvat.';
 
   @override
   String get listingsEmptyTitle => 'Nu s-au găsit reclame';
@@ -2003,6 +2007,10 @@ class AppLocalizationsRo extends AppLocalizations {
       'Push când apar anunțuri noi pentru acest filtru.';
 
   @override
+  String get savedSearchAlertsPushUnavailableHint =>
+      'Alertele nu sunt disponibile momentan. Veți putea să le activați mai târziu.';
+
+  @override
   String get savedSearchAlertsEnabledLabel =>
       'Veți primi push când apar anunțuri noi.';
 
@@ -3512,7 +3520,14 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get fuelPricesMenuSubtitle =>
-      'Referințe actuale pentru combustibil în Moldova și Transnistria';
+      'Prețuri orientative pentru Moldova și Transnistria.';
+
+  @override
+  String get fuelPricesIntroEyebrow => 'Reper combustibil';
+
+  @override
+  String get fuelPricesIntroLine =>
+      'Prețuri orientative pentru Moldova și Transnistria.';
 
   @override
   String get fuelPricesTerritoryMoldova => 'Moldova';
@@ -3521,11 +3536,11 @@ class AppLocalizationsRo extends AppLocalizations {
   String get fuelPricesTerritoryPmr => 'Transnistria';
 
   @override
-  String get fuelPricesDisclaimerTitle => 'Informativ';
+  String get fuelPricesDisclaimerTitle => 'Înainte de alimentare';
 
   @override
   String get fuelPricesDisclaimer =>
-      'Prețurile sunt informative. Verificați prețul final la stație înainte de alimentare.';
+      'Prețurile au caracter informativ. Verificați prețul actual la stație.';
 
   @override
   String get fuelPricesMoldovaScopeNote =>

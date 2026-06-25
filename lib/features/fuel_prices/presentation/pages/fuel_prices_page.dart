@@ -11,10 +11,9 @@ import '../../../../core/widgets/empty_state_view.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../cubit/fuel_prices_cubit.dart';
-import '../widgets/fuel_prices_board.dart';
+import '../widgets/fuel_prices_board_module.dart';
 import '../widgets/fuel_prices_disclaimer_callout.dart';
-import '../widgets/fuel_prices_metadata_footer.dart';
-import '../widgets/fuel_prices_territory_control.dart';
+import '../widgets/fuel_prices_intro_header.dart';
 
 /// Utility screen for Moldova and PMR fuel price reference boards.
 class FuelPricesPage extends StatelessWidget {
@@ -97,37 +96,48 @@ class FuelPricesBody extends StatelessWidget {
 
   final FuelPricesState state;
 
+  static const double _horizontalPadding = 20;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final snapshot = state.selectedSnapshot;
+    final boardAvailable = snapshot != null && snapshot.isAvailable;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(16, 4, 16, 28 + bottomInset),
+      padding: EdgeInsets.fromLTRB(
+        _horizontalPadding,
+        2,
+        _horizontalPadding,
+        28 + bottomInset,
+      ),
       children: [
-        const FuelPricesDisclaimerCallout(),
-        const SizedBox(height: 20),
-        FuelPricesTerritoryControl(
+        const FuelPricesIntroHeader(),
+        const SizedBox(height: 18),
+        FuelPricesBoardModule(
           selected: state.selectedTerritory,
-          onChanged: context.read<FuelPricesCubit>().selectTerritory,
+          onTerritoryChanged: context.read<FuelPricesCubit>().selectTerritory,
+          snapshot: snapshot,
         ),
-        const SizedBox(height: 20),
-        if (snapshot == null || !snapshot.isAvailable)
-          EmptyStateView(
-            icon: Icons.local_gas_station_outlined,
-            title: l10n.fuelPricesEmpty,
-            body: l10n.fuelPricesTerritoryUnavailable,
-            expand: false,
-            primaryAction: EmptyStateAction(
-              label: l10n.commonRetry,
-              onPressed: () => context.read<FuelPricesCubit>().load(),
+        if (!boardAvailable) ...[
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: EmptyStateView(
+              icon: Icons.local_gas_station_outlined,
+              title: l10n.fuelPricesEmpty,
+              body: l10n.fuelPricesTerritoryUnavailable,
+              expand: false,
+              primaryAction: EmptyStateAction(
+                label: l10n.commonRetry,
+                onPressed: () => context.read<FuelPricesCubit>().load(),
+              ),
             ),
-          )
-        else ...[
-          FuelPricesBoard(snapshot: snapshot),
-          const SizedBox(height: 16),
-          FuelPricesMetadataFooter(snapshot: snapshot),
+          ),
+        ] else ...[
+          const SizedBox(height: 24),
+          const FuelPricesDisclaimerCallout(),
         ],
       ],
     );

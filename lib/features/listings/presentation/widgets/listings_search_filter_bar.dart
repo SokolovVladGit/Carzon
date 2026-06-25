@@ -18,7 +18,6 @@ class ListingsSearchFilterBar extends StatelessWidget {
     required this.onClearSearch,
     required this.active,
     required this.bellBadge,
-    required this.savedNoDeliveryBadge,
   });
 
   final TextEditingController searchCtrl;
@@ -27,7 +26,6 @@ class ListingsSearchFilterBar extends StatelessWidget {
   final VoidCallback onClearSearch;
   final bool active;
   final bool bellBadge;
-  final bool savedNoDeliveryBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -66,9 +64,6 @@ class ListingsSearchFilterBar extends StatelessWidget {
     final semanticsLabel = bellBadge
         ? '${l10n.listingsFiltersTooltip}. '
               '${l10n.catalogBrowseFilterBellFilterChipSemantics}'
-        : savedNoDeliveryBadge
-        ? '${l10n.listingsFiltersTooltip}. '
-              '${l10n.catalogBrowseFilterBellSavedDeliveryUnavailableTooltip}'
         : l10n.listingsFiltersTooltip;
 
     return SizedBox(
@@ -190,26 +185,6 @@ class ListingsSearchFilterBar extends StatelessWidget {
                               outline: badgeOutline,
                               icon: Icons.notifications,
                               iconColor: scheme.onPrimary,
-                              iconSize: 9,
-                            ),
-                          )
-                        else if (savedNoDeliveryBadge)
-                          Positioned(
-                            bottom: 4,
-                            right: 4,
-                            child: _FilterFabCornerBadge(
-                              ornamentKey: CatalogFilterAlertAccent
-                                  .discoveryFilterFABSavedNoDeliveryBellKey,
-                              background: Color.alphaBlend(
-                                CatalogFilterAlertAccent.amber.withValues(
-                                  alpha: 0.22,
-                                ),
-                                restingBg,
-                              ),
-                              outline: CatalogFilterAlertAccent.amber
-                                  .withValues(alpha: 0.55),
-                              icon: Icons.notifications,
-                              iconColor: CatalogFilterAlertAccent.amber,
                               iconSize: 9,
                             ),
                           ),
