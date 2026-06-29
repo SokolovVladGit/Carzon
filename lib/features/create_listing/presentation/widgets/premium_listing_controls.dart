@@ -236,9 +236,7 @@ class PremiumPublishActionButton extends StatelessWidget {
             baseFill,
           )
         : baseFill;
-    final onFill = br == Brightness.light
-        ? cs.surface
-        : cs.surface.withValues(alpha: 0.97);
+    final onFill = light ? cs.surface : cs.onPrimary;
 
     return SizedBox(
       width: double.infinity,

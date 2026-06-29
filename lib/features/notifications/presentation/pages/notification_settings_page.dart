@@ -159,12 +159,8 @@ class _NotificationSettingsContent extends StatelessWidget {
             busy: state.busy,
             messagesEnabled: prefs.messagesEnabled,
           ),
-          const SizedBox(height: 20),
-          _PriceDropsNotificationsCard(
-            pushOn: pushOn,
-            busy: state.busy,
-            priceDropsEnabled: prefs.priceDropsEnabled,
-          ),
+          const SizedBox(height: 14),
+          const _SavedSearchAlertsNote(),
         ],
       ),
     );
@@ -202,32 +198,26 @@ class _MessagesNotificationsCard extends StatelessWidget {
   }
 }
 
-class _PriceDropsNotificationsCard extends StatelessWidget {
-  const _PriceDropsNotificationsCard({
-    required this.pushOn,
-    required this.busy,
-    required this.priceDropsEnabled,
-  });
-
-  final bool pushOn;
-  final bool busy;
-  final bool priceDropsEnabled;
+class _SavedSearchAlertsNote extends StatelessWidget {
+  const _SavedSearchAlertsNote();
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return NotificationSettingsSectionCard(
-      key: const ValueKey<String>('notification_settings_price_drops_card'),
-      child: _NotificationSwitchRow(
-        icon: Icons.trending_down_rounded,
-        title: l10n.notificationSettingsPriceDropsTitle,
-        subtitle: l10n.notificationSettingsPriceDropsSubtitle,
-        value: priceDropsEnabled,
-        onChanged: busy || !pushOn
-            ? null
-            : (v) => context
-                  .read<NotificationSettingsCubit>()
-                  .setPriceDropsEnabled(v),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Text(
+        l10n.notificationSettingsSavedSearchAlertsNote,
+        key: const ValueKey<String>(
+          'notification_settings_saved_search_alerts_note',
+        ),
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: scheme.onSurfaceVariant.withValues(alpha: 0.82),
+          height: 1.38,
+        ),
       ),
     );
   }

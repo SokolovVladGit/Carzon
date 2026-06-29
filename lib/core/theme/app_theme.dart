@@ -33,7 +33,8 @@ class AppTheme {
   static const Color darkOutlineVariant = Color(0xFF2E3640);
   static const Color darkPrimary = Color(0xFF4DA3E8);
   static const Color darkPrimaryContainer = Color(0xFF1E3A4A);
-  static const Color darkOnPrimary = Color(0xFF0B1116);
+  /// Near-white foreground on primary blue surfaces in dark mode.
+  static const Color darkOnPrimary = darkOnSurface;
 
   static ThemeData light() {
     final scheme = ColorScheme.fromSeed(
@@ -175,6 +176,8 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size(0, 44),
+          foregroundColor: scheme.onPrimary,
+          disabledForegroundColor: scheme.onSurface.withValues(alpha: 0.38),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),

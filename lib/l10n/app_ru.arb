@@ -788,6 +788,8 @@
   "notificationSettingsMessagesTitle": "Сообщения",
   "notificationSettingsMessagesSubtitle": "О новых сообщениях в чатах.",
   "notificationSettingsMessagesNeedsGlobal": "Сначала включите «Push на этом устройстве».",
+  "notificationSettingsSavedSearchAlertsNote": "Оповещения по сохранённым поискам настраиваются отдельно — на странице сохранённых поисков.",
+  "@notificationSettingsSavedSearchAlertsNote": {},
   "notificationSettingsFilterAlertsTitle": "Сохранённые поиски",
   "@notificationSettingsFilterAlertsTitle": {},
   "notificationSettingsFilterAlertsSubtitle": "Push, когда появляются новые объявления по вашим сохранённым поискам.",
