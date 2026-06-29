@@ -3240,6 +3240,12 @@ abstract class AppLocalizations {
   /// **'Сначала включите «Push на этом устройстве».'**
   String get notificationSettingsMessagesNeedsGlobal;
 
+  /// No description provided for @notificationSettingsSavedSearchAlertsNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оповещения по сохранённым поискам настраиваются отдельно — на странице сохранённых поисков.'**
+  String get notificationSettingsSavedSearchAlertsNote;
+
   /// No description provided for @notificationSettingsFilterAlertsTitle.
   ///
   /// In ru, this message translates to:

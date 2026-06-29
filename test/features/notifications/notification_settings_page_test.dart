@@ -201,7 +201,7 @@ void main() {
     await settingsCubit.close();
   });
 
-  testWidgets('renders only message and price-drop cards', (tester) async {
+  testWidgets('renders only the messages notification card', (tester) async {
     await pumpUntilContent(tester);
 
     expect(
@@ -212,7 +212,7 @@ void main() {
       find.byKey(
         const ValueKey<String>('notification_settings_price_drops_card'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.byKey(const ValueKey<String>('notification_settings_status_card')),
@@ -233,9 +233,14 @@ void main() {
     expect(find.text(l10n.notificationSettingsPageIntro), findsNothing);
     expect(find.text(l10n.notificationSettingsFilterAlertsTitle), findsNothing);
     expect(find.text(l10n.notificationSettingsComingSoonBadge), findsNothing);
+    expect(find.text(l10n.notificationSettingsPriceDropsTitle), findsNothing);
+    expect(find.text(l10n.notificationSettingsPriceDropsSubtitle), findsNothing);
     expect(find.textContaining('PUSH_NOTIFICATIONS'), findsNothing);
     expect(find.text(l10n.notificationSettingsMessagesSubtitle), findsOneWidget);
-    expect(find.text(l10n.notificationSettingsPriceDropsSubtitle), findsOneWidget);
+    expect(
+      find.text(l10n.notificationSettingsSavedSearchAlertsNote),
+      findsOneWidget,
+    );
   });
 
   testWidgets('load does not request OS permission', (tester) async {
@@ -244,7 +249,7 @@ void main() {
     expect(pushClient.permissionRequestCalls, 0);
   });
 
-  testWidgets('dark theme renders both cards', (tester) async {
+  testWidgets('dark theme renders messages card only', (tester) async {
     await pumpUntilContent(tester, theme: ThemeData.dark(useMaterial3: true));
 
     expect(
@@ -255,41 +260,8 @@ void main() {
       find.byKey(
         const ValueKey<String>('notification_settings_price_drops_card'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
-  });
-
-  testWidgets('price drops toggle calls repository when enabled', (
-    tester,
-  ) async {
-    await pumpUntilContent(tester);
-
-    if (!Env.pushNotificationsEnabled) {
-      return;
-    }
-
-    final priceDropSwitch = find.descendant(
-      of: find.byKey(
-        const ValueKey<String>('notification_settings_price_drops_card'),
-      ),
-      matching: find.byType(Switch),
-    );
-    expect(priceDropSwitch, findsOneWidget);
-
-    await tester.ensureVisible(priceDropSwitch);
-    await tester.pumpAndSettle();
-
-    await tester.tap(priceDropSwitch);
-    await tester.pumpAndSettle();
-
-    verify(
-      () => repo.updateMyPreferences(
-        globalEnabled: true,
-        messagesEnabled: true,
-        filterAlertsEnabled: false,
-        priceDropsEnabled: true,
-      ),
-    ).called(1);
   });
 
   testWidgets('push-disabled build disables toggles without technical copy', (

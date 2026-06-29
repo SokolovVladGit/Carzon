@@ -1769,6 +1769,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Сначала включите «Push на этом устройстве».';
 
   @override
+  String get notificationSettingsSavedSearchAlertsNote =>
+      'Оповещения по сохранённым поискам настраиваются отдельно — на странице сохранённых поисков.';
+
+  @override
   String get notificationSettingsFilterAlertsTitle => 'Сохранённые поиски';
 
   @override

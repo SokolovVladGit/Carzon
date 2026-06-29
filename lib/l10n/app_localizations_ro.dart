@@ -24,7 +24,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get commonDelete => 'Şterge';
 
   @override
-  String get commonSignIn => 'Log in';
+  String get commonSignIn => 'Conectare';
 
   @override
   String get commonSignOut => 'Deconectați-vă';
@@ -53,7 +53,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingsTooltipMyListings => 'Reclamele mele';
 
   @override
-  String get listingsTooltipFavorites => 'Favorite';
+  String get listingsTooltipFavorites => 'Preferate';
 
   @override
   String get listingsTooltipProfile => 'Profil';
@@ -71,7 +71,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get navListings => 'Căutare';
 
   @override
-  String get navFavorites => 'Favorite';
+  String get navFavorites => 'Preferate';
 
   @override
   String get navSell => 'Trimiteți';
@@ -1413,7 +1413,7 @@ class AppLocalizationsRo extends AppLocalizations {
       'Anunțul nu a putut fi șters. Încearcă din nou.';
 
   @override
-  String get favoritesTitle => 'Favorite';
+  String get favoritesTitle => 'Preferate';
 
   @override
   String get favoritesSignInRequired =>
@@ -1466,7 +1466,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get profileMyListings => 'Reclamele mele';
 
   @override
-  String get profileFavorites => 'Favorite';
+  String get profileFavorites => 'Preferate';
 
   @override
   String get profileCreateListing => 'Postați un anunț';
@@ -1765,6 +1765,10 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get notificationSettingsMessagesNeedsGlobal =>
       'Mai întâi activați „Push pe acest dispozitiv”.';
+
+  @override
+  String get notificationSettingsSavedSearchAlertsNote =>
+      'Alertele pentru căutările salvate se gestionează separat, pe pagina căutărilor salvate.';
 
   @override
   String get notificationSettingsFilterAlertsTitle => 'Căutări salvate';
@@ -2138,7 +2142,7 @@ class AppLocalizationsRo extends AppLocalizations {
       'Conectați-vă pentru a gestiona anunțurile și mesajele';
 
   @override
-  String get signInSubmit => 'Log in';
+  String get signInSubmit => 'Conectare';
 
   @override
   String get signInError => 'Eroare de conectare';
@@ -2201,7 +2205,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get signUpError => 'Eroare de înregistrare';
 
   @override
-  String get signUpHaveAccount => 'Aveți deja un cont? Log in';
+  String get signUpHaveAccount => 'Aveți deja un cont? Conectați-vă';
 
   @override
   String get signUpConfirmEmail =>

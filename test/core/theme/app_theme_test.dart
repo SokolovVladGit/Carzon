@@ -37,6 +37,13 @@ void main() {
       expect(scheme.onSurface, AppTheme.darkOnSurface);
       expect(scheme.onSurfaceVariant, AppTheme.darkOnSurfaceVariant);
       expect(scheme.primary, AppTheme.darkPrimary);
+      expect(scheme.onPrimary, AppTheme.darkOnPrimary);
+      expect(scheme.onPrimary, AppTheme.darkOnSurface);
+      expect(scheme.onPrimary.computeLuminance(), greaterThan(0.7));
+      expect(
+        scheme.onPrimary.computeLuminance(),
+        greaterThan(scheme.primary.computeLuminance()),
+      );
       expect(scheme.surfaceContainerLow, AppTheme.darkSurfaceContainer);
       expect(scheme.surfaceContainerHigh, AppTheme.darkSurfaceContainerHigh);
     });
