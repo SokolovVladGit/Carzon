@@ -356,13 +356,9 @@ class _ListingsViewState extends State<_ListingsView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    // Pass 1.7 flattens the feed background: pure white in light
-    // mode (the brief's "clean editorial canvas"), theme surface in
-    // dark. The old `_HomeBackdrop` gradient was removed because it
-    // pulled a primary tint over the top of the screen that made
-    // controls feel washed and "generic Flutter".
-    final feedBackground = isDark ? scheme.surface : Colors.white;
+    // Warm editorial canvas in light mode (`scheme.surface`), theme surface in
+    // dark. Avoids the colder pure-white feed that read as generic Material.
+    final feedBackground = scheme.surface;
     return TopLevelScaffold(
       destination: TopLevelDestination.listings,
       backgroundColor: feedBackground,
@@ -751,11 +747,9 @@ class _FeedHeaderLayer extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    // Light mode: the layer is pure white on a pure-white page —
-    // the only thing separating the two is the soft bottom shadow.
-    // Dark mode: a one-step-lifted surface so the shadow has
-    // something to read against.
-    final layerColor = isDark ? scheme.surfaceContainerLow : Colors.white;
+    // Light mode: one-step-lifted header strip on the warm canvas.
+    // Dark mode: a one-step-lifted surface so the shadow has something to read against.
+    final layerColor = isDark ? scheme.surfaceContainerLow : scheme.surfaceContainerLowest;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: layerColor,

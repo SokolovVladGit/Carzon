@@ -73,12 +73,13 @@ void main() {
       expect(AppTheme.editorialDarkFilterCanvasGradient(dark), hasLength(3));
     });
 
-    test('filter alert management surface is editorial in dark only', () {
+    test('filter alert management surface is editorial in light and dark', () {
       final light = AppTheme.light().colorScheme;
       final dark = AppTheme.dark().colorScheme;
       final lightDeco = AppTheme.filterAlertManagementSurface(light);
       final darkDeco = AppTheme.filterAlertManagementSurface(dark);
-      expect(lightDeco.color, isNotNull);
+      expect(lightDeco.gradient, isNotNull);
+      expect(lightDeco.border, isNotNull);
       expect(darkDeco.gradient, isNotNull);
     });
 
@@ -269,6 +270,85 @@ void main() {
       expect(input.fillColor, AppTheme.darkSurfaceContainer);
     });
 
+    group('light surface hierarchy', () {
+      test('light containers form a subtle warm stepped hierarchy', () {
+        final scheme = AppTheme.light().colorScheme;
+
+        expect(scheme.surface, const Color(0xFFFFFCF7));
+        expect(scheme.surfaceContainerLowest, AppTheme.lightSurfaceContainerLowest);
+        expect(scheme.surfaceContainerLow, AppTheme.lightSurfaceContainerLow);
+        expect(scheme.surfaceContainer, AppTheme.lightSurfaceContainer);
+        expect(scheme.surfaceContainerHigh, AppTheme.lightSurfaceContainerHigh);
+        expect(
+          scheme.surfaceContainerHighest,
+          AppTheme.lightSurfaceContainerHighest,
+        );
+
+        expect(
+          scheme.surfaceContainerLowest.computeLuminance(),
+          greaterThan(scheme.surface.computeLuminance()),
+        );
+        expect(
+          scheme.surfaceContainerLow.computeLuminance(),
+          lessThan(scheme.surfaceContainerLowest.computeLuminance()),
+        );
+        expect(
+          scheme.surfaceContainerHighest.computeLuminance(),
+          lessThan(scheme.surfaceContainerHigh.computeLuminance()),
+        );
+      });
+
+      test('light card theme has subtle border and transparent tint', () {
+        final theme = AppTheme.light();
+        final shape = theme.cardTheme.shape! as RoundedRectangleBorder;
+
+        expect(theme.cardTheme.elevation, 0);
+        expect(theme.cardTheme.surfaceTintColor, Colors.transparent);
+        expect(shape.side.color.a, closeTo(0.24, 0.15));
+        expect(shape.borderRadius, BorderRadius.circular(12));
+      });
+
+      test('light editorial section card is not flat fill-only', () {
+        final scheme = AppTheme.light().colorScheme;
+        final deco = AppTheme.editorialSectionCard(scheme, borderRadius: 16);
+
+        expect(deco.border, isNotNull);
+        expect(deco.gradient, isNotNull);
+        expect(deco.boxShadow, isNotEmpty);
+        expect(deco.color, isNull);
+      });
+
+      test('filterAlertManagementSurface matches editorial section card', () {
+        final scheme = AppTheme.light().colorScheme;
+        final management = AppTheme.filterAlertManagementSurface(scheme);
+        final section = AppTheme.editorialSectionCard(scheme, borderRadius: 16);
+
+        expect(management.border, section.border);
+        expect(management.gradient, section.gradient);
+      });
+
+      test('dark editorial section card is preserved', () {
+        final scheme = AppTheme.dark().colorScheme;
+        final deco = AppTheme.editorialSectionCard(scheme, borderRadius: 16);
+        final darkOnly = AppTheme.editorialDarkSectionCard(scheme, borderRadius: 16);
+
+        expect(deco.gradient, darkOnly?.gradient);
+        expect(deco.border, darkOnly?.border);
+      });
+
+      test('showroom canvas helpers are defined for light and dark', () {
+        final light = AppTheme.light().colorScheme;
+        final dark = AppTheme.dark().colorScheme;
+
+        expect(AppTheme.showroomPageCanvasGradient(light), hasLength(3));
+        expect(AppTheme.showroomPageCanvasGradient(dark), hasLength(3));
+        expect(
+          AppTheme.showroomPageBackground(light),
+          isNot(equals(AppTheme.showroomPageBackground(dark))),
+        );
+      });
+    });
+
     group('snackBarTheme', () {
       test('light uses premium surface instead of inverse black bar', () {
         final theme = AppTheme.light();
@@ -418,4 +498,3 @@ class _SnackBarHarness extends StatelessWidget {
     );
   }
 }
-

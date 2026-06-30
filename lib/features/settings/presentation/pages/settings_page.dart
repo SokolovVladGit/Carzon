@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../shared/ui/carzon_icons.dart';
@@ -65,7 +66,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      backgroundColor: _settingsPageBackground(context),
+      backgroundColor: AppTheme.showroomPageBackground(scheme),
       appBar: AppBar(
         leading: const AppBackButton(fallback: AppRoutes.menu),
         title: Text(l10n.settingsTitle),
@@ -83,7 +84,7 @@ class _SettingsPageState extends State<SettingsPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: _settingsCanvasGradient(context),
+            colors: AppTheme.showroomPageCanvasGradient(scheme),
             stops: const [0, 0.42, 1],
           ),
         ),
@@ -320,59 +321,4 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
-}
-
-Color _settingsPageBackground(BuildContext context) {
-  final scheme = Theme.of(context).colorScheme;
-  final isDark = scheme.brightness == Brightness.dark;
-  if (isDark) {
-    return Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.050),
-      scheme.surface,
-    );
-  }
-  return Color.alphaBlend(
-    scheme.primary.withValues(alpha: 0.018),
-    scheme.surface,
-  );
-}
-
-List<Color> _settingsCanvasGradient(BuildContext context) {
-  final scheme = Theme.of(context).colorScheme;
-  final isDark = scheme.brightness == Brightness.dark;
-  if (isDark) {
-    final top = Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.075),
-      scheme.surfaceContainerLow,
-    );
-    final mid = Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.030),
-      scheme.surface,
-    );
-    final bottom = Color.alphaBlend(
-      scheme.onSurface.withValues(alpha: 0.026),
-      Color.alphaBlend(
-        scheme.primary.withValues(alpha: 0.080),
-        scheme.surfaceContainerLow,
-      ),
-    );
-    return [top, mid, bottom];
-  }
-
-  final top = Color.alphaBlend(
-    scheme.surfaceTint.withValues(alpha: 0.008),
-    scheme.surface,
-  );
-  final mid = Color.alphaBlend(
-    scheme.primary.withValues(alpha: 0.032),
-    scheme.surfaceContainerLowest,
-  );
-  final bottom = Color.alphaBlend(
-    scheme.onSurface.withValues(alpha: 0.024),
-    Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.070),
-      scheme.surfaceContainerLow,
-    ),
-  );
-  return [top, mid, bottom];
 }

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../../shared/ui/carzon_icons.dart';
@@ -70,7 +71,7 @@ class _MenuPageState extends State<MenuPage> {
 
     return TopLevelScaffold(
       destination: TopLevelDestination.menu,
-      backgroundColor: _menuPageBackground(context),
+      backgroundColor: AppTheme.showroomPageBackground(scheme),
       appBar: AppBar(
         title: Text(
           l10n.menuTitle,
@@ -228,12 +229,13 @@ class _MenuShowroomBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: _menuPageGradient(context),
+          colors: AppTheme.showroomPageCanvasGradient(scheme),
           stops: const [0, 0.42, 1],
         ),
       ),
@@ -242,75 +244,6 @@ class _MenuShowroomBackground extends StatelessWidget {
   }
 }
 
-Color _menuPageBackground(BuildContext context) {
-  final scheme = Theme.of(context).colorScheme;
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  if (isDark) {
-    return Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.050),
-      scheme.surface,
-    );
-  }
-  return Color.alphaBlend(
-    scheme.primary.withValues(alpha: 0.018),
-    scheme.surface,
-  );
-}
-
-List<Color> _menuPageGradient(BuildContext context) {
-  final scheme = Theme.of(context).colorScheme;
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  if (isDark) {
-    final top = Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.075),
-      scheme.surfaceContainerLow,
-    );
-    final mid = Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.035),
-      scheme.surface,
-    );
-    final bottom = Color.alphaBlend(
-      scheme.onSurface.withValues(alpha: 0.026),
-      Color.alphaBlend(
-        scheme.primary.withValues(alpha: 0.080),
-        scheme.surfaceContainerLow,
-      ),
-    );
-    return [top, mid, bottom];
-  }
-
-  final top = Color.alphaBlend(
-    scheme.surfaceTint.withValues(alpha: 0.008),
-    scheme.surface,
-  );
-  final mid = Color.alphaBlend(
-    scheme.primary.withValues(alpha: 0.032),
-    scheme.surfaceContainerLowest,
-  );
-  final bottom = Color.alphaBlend(
-    scheme.onSurface.withValues(alpha: 0.024),
-    Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.070),
-      scheme.surfaceContainerLow,
-    ),
-  );
-  return [top, mid, bottom];
-}
-
-Color _softMenuSurface(ColorScheme scheme, {required bool isDark}) {
-  if (isDark) {
-    return Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.070),
-      scheme.surfaceContainerLow,
-    );
-  }
-  return Color.alphaBlend(
-    scheme.primary.withValues(alpha: 0.026),
-    scheme.surfaceContainerLowest,
-  );
-}
-
-/// Rounded group surface wrapping premium menu rows.
 class _PremiumGroupedCard extends StatelessWidget {
   const _PremiumGroupedCard({required this.children});
 
@@ -319,53 +252,16 @@ class _PremiumGroupedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    final shadow = isDark
-        ? [
-            BoxShadow(
-              color: scheme.shadow.withValues(alpha: 0.18),
-              blurRadius: 26,
-              offset: const Offset(0, 11),
-            ),
-          ]
-        : [
-            BoxShadow(
-              color: scheme.shadow.withValues(alpha: 0.056),
-              blurRadius: 26,
-              offset: const Offset(0, 10),
-            ),
-            BoxShadow(
-              color: scheme.primary.withValues(alpha: 0.026),
-              blurRadius: 20,
-              offset: const Offset(0, 5),
-            ),
-          ];
-
-    final Color cardFill = _softMenuSurface(scheme, isDark: isDark);
+    final shadow = AppTheme.softCardShadow(scheme);
     final radius = BorderRadius.circular(26);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color.alphaBlend(
-                scheme.onSurface.withValues(alpha: isDark ? 0.025 : 0.010),
-                cardFill,
-              ),
-              cardFill,
-            ],
-          ),
+          gradient: AppTheme.softCardGroupedGradient(scheme),
           borderRadius: radius,
-          border: Border.all(
-            color: isDark
-                ? scheme.outline.withValues(alpha: 0.28)
-                : scheme.outlineVariant.withValues(alpha: 0.42),
-          ),
+          border: Border.all(color: AppTheme.softCardBorderColor(scheme)),
           boxShadow: shadow,
         ),
         child: ClipRRect(
@@ -779,11 +675,11 @@ class _MenuIdentityCard extends StatelessWidget {
                 colors: [
                   Color.alphaBlend(
                     scheme.primary.withValues(alpha: isDark ? 0.120 : 0.060),
-                    _softMenuSurface(scheme, isDark: isDark),
+                    AppTheme.softCardSurface(scheme),
                   ),
                   Color.alphaBlend(
                     scheme.onSurface.withValues(alpha: isDark ? 0.045 : 0.014),
-                    _softMenuSurface(scheme, isDark: isDark),
+                    AppTheme.softCardSurface(scheme),
                   ),
                 ],
               ),
@@ -944,11 +840,11 @@ class _MenuFooterAuthAction extends StatelessWidget {
     final Color bg = accent
         ? Color.alphaBlend(
             scheme.primary.withValues(alpha: isDark ? 0.17 : 0.105),
-            _softMenuSurface(scheme, isDark: isDark),
+            AppTheme.softCardSurface(scheme),
           )
         : Color.alphaBlend(
             scheme.onSurface.withValues(alpha: isDark ? 0.035 : 0.012),
-            _softMenuSurface(scheme, isDark: isDark),
+            AppTheme.softCardSurface(scheme),
           );
 
     final Color border = accent
