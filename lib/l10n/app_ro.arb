@@ -43,8 +43,10 @@
   "catalogBrowseFilterBellTooBroad": "Rafinați filtrul (căutare, marcă, parametri sau regiune), apoi salvați alerta - catalogul de bază fără condiții este prea larg.",
   "catalogBrowseFilterAlertTooBroadInlineTitle": "Rafinați filtrul pentru a salva alerta.",
   "catalogBrowseFilterAlertTooBroadInlineBody": "Catalogul de bază fără condiții este prea larg.",
-  "catalogBrowseFilterBellEnabledSnack": "Alertele sunt activate pentru acest filtru.",
-  "catalogBrowseFilterBellDisabledSnack": "Alertele sunt dezactivate pentru acest filtru.",
+  "catalogBrowseFilterBellEnabledSnack": "Gata — urmărim mașinile după acest filtru.",
+  "catalogBrowseFilterBellDisabledSnack": "Alertele pentru acest filtru sunt dezactivate.",
+  "catalogBrowseFilterBellSaveFailedSnack":
+      "Nu s-a putut salva alerta. Verificați conexiunea și încercați din nou.",
   "catalogBrowseFilterBellSavedEnableGlobalCategorySnack": "Căutarea a fost salvată. Pentru push, activați alertele pentru căutările salvate în setări.",
   "catalogBrowseFilterBellSavedSearchTooltip": "Căutarea a fost salvată. Atingeți pentru a șterge. Alertele se activează pe pagina filtrelor salvate.",
   "catalogBrowseFilterBellSavedDeliveryUnavailableTooltip": "Căutarea a fost salvată. Atingeți pentru a șterge. Alertele se activează pe pagina filtrelor salvate.",
@@ -696,6 +698,7 @@
   "savedSearchDeleteFailed": "Nu s-a putut șterge filtrul.",
   "savedSearchToggleFailed": "Nu s-au putut actualiza alertele.",
   "savedSearchesMaxReachedSnack": "Puteți salva până la 5 filtre. Ștergeți unul existent pentru a adăuga altul.",
+  "savedSearchesMaxReachedOpenAction": "La filtrele salvate",
   "filterAlertSummarySearchLabel": "Căutare",
   "filterAlertSummaryMileageLabel": "Kilometraj",
   "profilePublicSellerNameTitle": "Numele public al vânzătorului",
@@ -1149,6 +1152,7 @@
   "@catalogBrowseFilterAlertTooBroadInlineBody": {},
   "@catalogBrowseFilterBellEnabledSnack": {},
   "@catalogBrowseFilterBellDisabledSnack": {},
+  "@catalogBrowseFilterBellSaveFailedSnack": {},
   "@catalogBrowseFilterBellSavedDeliveryUnavailableTooltip": {
     "description": "Tooltip + a11y label for the in-sheet bell when the current draft matches a saved alert row but delivery is not fully enabled. Concise, product-friendly copy that hints at tap-to-remove (toggle-off) semantics. Replaces the previous technical 'push disabled in this build' inline banner — the bell colour + tooltip are now the only saved/off surface."
   },
@@ -1327,6 +1331,7 @@
   "@savedSearchDeleteFailed": {},
   "@savedSearchToggleFailed": {},
   "@savedSearchesMaxReachedSnack": {},
+  "@savedSearchesMaxReachedOpenAction": {},
   "@filterAlertSummarySearchLabel": {},
   "@filterAlertSummaryMileageLabel": {},
   "@profilePublicSellerNameTitle": {},

@@ -22,6 +22,7 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import '../cubit/browse_catalog_filter_alerts_cubit.dart';
 import '../widgets/filters/catalog_browse_filter_alert_sheet_bell.dart';
 import '../widgets/filters/catalog_browse_filter_alert_sheet_notice.dart';
+import '../widgets/filters/catalog_filter_sheet_feedback.dart';
 import '../../../messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import '../../../sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import '../widgets/category_chip.dart';
@@ -229,10 +230,30 @@ class _ListingsViewState extends State<_ListingsView> {
         // on the listings page after the user closes the sheet, which
         // was the root-snackbar bleed bug we're fixing here.
         CatalogBellInlineNotice? inlineNotice;
+        CatalogFilterSheetFeedback? sheetFeedback;
         return BlocProvider<BrowseCatalogFilterAlertsCubit>.value(
           value: browseAlerts,
           child: StatefulBuilder(
             builder: (sheetContext, setSheetState) {
+              void clearSheetNotices() {
+                setSheetState(() {
+                  inlineNotice = null;
+                  sheetFeedback = null;
+                });
+              }
+
+              Future<void> applyAndClose(ListingsFilterApplyResult r) async {
+                if (sheetFeedback?.kind ==
+                    CatalogFilterSheetFeedbackKind.success) {
+                  await Future<void>.delayed(
+                    const Duration(milliseconds: 750),
+                  );
+                }
+                if (sheetContext.mounted) {
+                  Navigator.of(sheetContext).pop(r);
+                }
+              }
+
               return SizedBox(
                 height: h,
                 child: Builder(
@@ -251,12 +272,7 @@ class _ListingsViewState extends State<_ListingsView> {
                     // user toggled the bell. Apply remains visually stable.
                     return ListingsFilterHost(
                       filterFormExternalKey: _catalogFilterSheetFormKey,
-                      onBrowseDraftMutated: () => setSheetState(() {
-                        // Any draft edit clears the "refine filter"
-                        // notice — the user has acknowledged it and
-                        // is iterating on the draft.
-                        inlineNotice = null;
-                      }),
+                      onBrowseDraftMutated: clearSheetNotices,
                       browseHeaderTrailing: CatalogBrowseFilterAlertSheetBell(
                         sheetFormKey: _catalogFilterSheetFormKey,
                         sheetContext: sheetContext,
@@ -268,11 +284,22 @@ class _ListingsViewState extends State<_ListingsView> {
                         appliedState: current,
                         onInlineNoticeRequested: (notice) =>
                             setSheetState(() => inlineNotice = notice),
+                        onSheetFeedbackRequested: (feedback) => setSheetState(
+                          () => sheetFeedback = feedback,
+                        ),
                       ),
                       browseHeaderNotice: inlineNotice == null
                           ? null
                           : CatalogBrowseFilterAlertSheetNotice(
                               notice: inlineNotice!,
+                            ),
+                      browseSheetFeedbackOverlay: sheetFeedback == null
+                          ? null
+                          : CatalogFilterSheetFeedbackOverlay(
+                              feedback: sheetFeedback!,
+                              onDismissed: () => setSheetState(
+                                () => sheetFeedback = null,
+                              ),
                             ),
                       // Bell visual + tooltip are the only saved-state
                       // surface in the catalog filter sheet now: a tech
@@ -282,11 +309,11 @@ class _ListingsViewState extends State<_ListingsView> {
                       // build-flag copy.
                       seed: ListingsFilterFormSeed.fromListingsState(current),
                       onDismiss: () => Navigator.of(sheetContext).pop(),
-                      onApply: (r) => Navigator.of(sheetContext).pop(r),
+                      onApply: (r) => unawaited(applyAndClose(r)),
                       onBrowseFeedReset: () {
                         _searchCtrl.clear();
                         bloc.add(const ListingsFiltersCleared());
-                        setSheetState(() => inlineNotice = null);
+                        clearSheetNotices();
                       },
                     );
                   },

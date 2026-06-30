@@ -20,6 +20,11 @@ abstract final class CatalogFilterAlertAccent {
     'catalog_browse_filter_alert_sheet_too_broad_notice',
   );
 
+  /// Test hook for sheet-local floating feedback (bell success/error/info).
+  static const Key sheetFeedbackToastKey = ValueKey<Object>(
+    'catalog_browse_filter_alert_sheet_feedback_toast',
+  );
+
   /// Outlined inactive bell stroke (readable on bright sheets).
   static Color inactiveStroke(ColorScheme scheme) =>
       scheme.onSurface.withValues(alpha: 0.45);

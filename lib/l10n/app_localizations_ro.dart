@@ -139,11 +139,15 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get catalogBrowseFilterBellEnabledSnack =>
-      'Alertele sunt activate pentru acest filtru.';
+      'Gata — urmărim mașinile după acest filtru.';
 
   @override
   String get catalogBrowseFilterBellDisabledSnack =>
-      'Alertele sunt dezactivate pentru acest filtru.';
+      'Alertele pentru acest filtru sunt dezactivate.';
+
+  @override
+  String get catalogBrowseFilterBellSaveFailedSnack =>
+      'Nu s-a putut salva alerta. Verificați conexiunea și încercați din nou.';
 
   @override
   String get catalogBrowseFilterBellSavedEnableGlobalCategorySnack =>
@@ -2057,6 +2061,9 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get savedSearchesMaxReachedSnack =>
       'Puteți salva până la 5 filtre. Ștergeți unul existent pentru a adăuga altul.';
+
+  @override
+  String get savedSearchesMaxReachedOpenAction => 'La filtrele salvate';
 
   @override
   String get filterAlertSummarySearchLabel => 'Căutare';

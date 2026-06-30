@@ -14,6 +14,7 @@ import 'package:carzon/features/listings/domain/entities/listing_discovery_crite
 import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
 import 'package:carzon/features/listings/presentation/cubit/browse_catalog_filter_alerts_cubit.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_browse_filter_alert_sheet_bell.dart';
+import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_sheet_feedback.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/listings_filter_form.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/listings_filter_host.dart';
 import 'package:carzon/features/notifications/domain/entities/notification_preferences.dart';
@@ -125,6 +126,53 @@ Icon _sheetBellIcon(WidgetTester tester) {
   ).first;
 }
 
+class _PushDisabledSheetHarness extends StatefulWidget {
+  const _PushDisabledSheetHarness({
+    required this.formKey,
+    required this.seedState,
+    required this.onApply,
+  });
+
+  final GlobalKey<ListingsFilterFormState> formKey;
+  final ListingsState seedState;
+  final ValueChanged<dynamic> onApply;
+
+  @override
+  State<_PushDisabledSheetHarness> createState() =>
+      _PushDisabledSheetHarnessState();
+}
+
+class _PushDisabledSheetHarnessState extends State<_PushDisabledSheetHarness> {
+  CatalogFilterSheetFeedback? _sheetFeedback;
+
+  @override
+  Widget build(BuildContext context) {
+    return Builder(
+      builder: (context) => ListingsFilterHost(
+        filterFormExternalKey: widget.formKey,
+        seed: ListingsFilterFormSeed.fromListingsState(widget.seedState),
+        onDismiss: () {},
+        onApply: widget.onApply,
+        onBrowseDraftMutated: () => setState(() => _sheetFeedback = null),
+        browseHeaderTrailing: CatalogBrowseFilterAlertSheetBell(
+          sheetFormKey: widget.formKey,
+          sheetContext: context,
+          searchSnippet: () => '',
+          appliedState: widget.seedState,
+          onSheetFeedbackRequested: (feedback) =>
+              setState(() => _sheetFeedback = feedback),
+        ),
+        browseSheetFeedbackOverlay: _sheetFeedback == null
+            ? null
+            : CatalogFilterSheetFeedbackOverlay(
+                feedback: _sheetFeedback!,
+                onDismissed: () => setState(() => _sheetFeedback = null),
+              ),
+      ),
+    );
+  }
+}
+
 void main() {
   setUpAll(() {
     registerFallbackValue(
@@ -150,21 +198,10 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         home: Scaffold(
-          body: Builder(
-            builder: (context) {
-              return ListingsFilterHost(
-                filterFormExternalKey: formKey,
-                seed: ListingsFilterFormSeed.fromListingsState(seedState),
-                onDismiss: () {},
-                onApply: onApply,
-                browseHeaderTrailing: CatalogBrowseFilterAlertSheetBell(
-                  sheetFormKey: formKey,
-                  sheetContext: context,
-                  searchSnippet: () => '',
-                  appliedState: seedState,
-                ),
-              );
-            },
+          body: _PushDisabledSheetHarness(
+            formKey: formKey,
+            seedState: seedState,
+            onApply: onApply,
           ),
         ),
       ),

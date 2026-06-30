@@ -140,11 +140,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get catalogBrowseFilterBellEnabledSnack =>
-      'Оповещения включены для этого фильтра.';
+      'Готово — будем следить за авто по этому фильтру.';
 
   @override
   String get catalogBrowseFilterBellDisabledSnack =>
-      'Оповещения выключены для этого фильтра.';
+      'Оповещения для этого фильтра выключены.';
+
+  @override
+  String get catalogBrowseFilterBellSaveFailedSnack =>
+      'Не удалось сохранить оповещение. Проверьте подключение и попробуйте ещё раз.';
 
   @override
   String get catalogBrowseFilterBellSavedEnableGlobalCategorySnack =>
@@ -2059,6 +2063,9 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get savedSearchesMaxReachedSnack =>
       'Можно сохранить до 5 фильтров. Удалите один из существующих, чтобы добавить новый.';
+
+  @override
+  String get savedSearchesMaxReachedOpenAction => 'К сохранённым фильтрам';
 
   @override
   String get filterAlertSummarySearchLabel => 'Поиск';
