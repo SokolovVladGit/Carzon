@@ -88,7 +88,7 @@ void main() {
 
   final t0 = DateTime.utc(2026, 5, 2, 10);
 
-  const _kTinyPng = <int>[
+  const kTinyPng = <int>[
     0x89,
     0x50,
     0x4E,
@@ -677,7 +677,7 @@ void main() {
     );
     when(
       () => messagingRepo.downloadChatAttachmentBytes(any()),
-    ).thenAnswer((_) async => Success(_kTinyPng));
+    ).thenAnswer((_) async => Success(kTinyPng));
 
     await tester.pumpWidget(
       testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),

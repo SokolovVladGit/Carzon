@@ -347,14 +347,20 @@ abstract class AppLocalizations {
   /// No description provided for @catalogBrowseFilterBellEnabledSnack.
   ///
   /// In ru, this message translates to:
-  /// **'Оповещения включены для этого фильтра.'**
+  /// **'Готово — будем следить за авто по этому фильтру.'**
   String get catalogBrowseFilterBellEnabledSnack;
 
   /// No description provided for @catalogBrowseFilterBellDisabledSnack.
   ///
   /// In ru, this message translates to:
-  /// **'Оповещения выключены для этого фильтра.'**
+  /// **'Оповещения для этого фильтра выключены.'**
   String get catalogBrowseFilterBellDisabledSnack;
+
+  /// No description provided for @catalogBrowseFilterBellSaveFailedSnack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сохранить оповещение. Проверьте подключение и попробуйте ещё раз.'**
+  String get catalogBrowseFilterBellSaveFailedSnack;
 
   /// No description provided for @catalogBrowseFilterBellSavedEnableGlobalCategorySnack.
   ///
@@ -3737,6 +3743,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Можно сохранить до 5 фильтров. Удалите один из существующих, чтобы добавить новый.'**
   String get savedSearchesMaxReachedSnack;
+
+  /// No description provided for @savedSearchesMaxReachedOpenAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'К сохранённым фильтрам'**
+  String get savedSearchesMaxReachedOpenAction;
 
   /// No description provided for @filterAlertSummarySearchLabel.
   ///

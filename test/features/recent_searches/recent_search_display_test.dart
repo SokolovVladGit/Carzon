@@ -2,7 +2,6 @@ import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_discovery_criteria.dart';
 import 'package:carzon/features/listings/domain/entities/listing_sort_option.dart';
 import 'package:carzon/features/recent_searches/presentation/utils/recent_search_display.dart';
-import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/l10n_test_helpers.dart';

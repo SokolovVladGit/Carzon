@@ -73,12 +73,13 @@ void main() {
       expect(AppTheme.editorialDarkFilterCanvasGradient(dark), hasLength(3));
     });
 
-    test('filter alert management surface is editorial in dark only', () {
+    test('filter alert management surface is editorial in light and dark', () {
       final light = AppTheme.light().colorScheme;
       final dark = AppTheme.dark().colorScheme;
       final lightDeco = AppTheme.filterAlertManagementSurface(light);
       final darkDeco = AppTheme.filterAlertManagementSurface(dark);
-      expect(lightDeco.color, isNotNull);
+      expect(lightDeco.gradient, isNotNull);
+      expect(lightDeco.border, isNotNull);
       expect(darkDeco.gradient, isNotNull);
     });
 
@@ -268,5 +269,232 @@ void main() {
       expect(input.labelStyle?.color?.a, greaterThan(0.85));
       expect(input.fillColor, AppTheme.darkSurfaceContainer);
     });
+
+    group('light surface hierarchy', () {
+      test('light containers form a subtle warm stepped hierarchy', () {
+        final scheme = AppTheme.light().colorScheme;
+
+        expect(scheme.surface, const Color(0xFFFFFCF7));
+        expect(scheme.surfaceContainerLowest, AppTheme.lightSurfaceContainerLowest);
+        expect(scheme.surfaceContainerLow, AppTheme.lightSurfaceContainerLow);
+        expect(scheme.surfaceContainer, AppTheme.lightSurfaceContainer);
+        expect(scheme.surfaceContainerHigh, AppTheme.lightSurfaceContainerHigh);
+        expect(
+          scheme.surfaceContainerHighest,
+          AppTheme.lightSurfaceContainerHighest,
+        );
+
+        expect(
+          scheme.surfaceContainerLowest.computeLuminance(),
+          greaterThan(scheme.surface.computeLuminance()),
+        );
+        expect(
+          scheme.surfaceContainerLow.computeLuminance(),
+          lessThan(scheme.surfaceContainerLowest.computeLuminance()),
+        );
+        expect(
+          scheme.surfaceContainerHighest.computeLuminance(),
+          lessThan(scheme.surfaceContainerHigh.computeLuminance()),
+        );
+      });
+
+      test('light card theme has subtle border and transparent tint', () {
+        final theme = AppTheme.light();
+        final shape = theme.cardTheme.shape! as RoundedRectangleBorder;
+
+        expect(theme.cardTheme.elevation, 0);
+        expect(theme.cardTheme.surfaceTintColor, Colors.transparent);
+        expect(shape.side.color.a, closeTo(0.24, 0.15));
+        expect(shape.borderRadius, BorderRadius.circular(12));
+      });
+
+      test('light editorial section card is not flat fill-only', () {
+        final scheme = AppTheme.light().colorScheme;
+        final deco = AppTheme.editorialSectionCard(scheme, borderRadius: 16);
+
+        expect(deco.border, isNotNull);
+        expect(deco.gradient, isNotNull);
+        expect(deco.boxShadow, isNotEmpty);
+        expect(deco.color, isNull);
+      });
+
+      test('filterAlertManagementSurface matches editorial section card', () {
+        final scheme = AppTheme.light().colorScheme;
+        final management = AppTheme.filterAlertManagementSurface(scheme);
+        final section = AppTheme.editorialSectionCard(scheme, borderRadius: 16);
+
+        expect(management.border, section.border);
+        expect(management.gradient, section.gradient);
+      });
+
+      test('dark editorial section card is preserved', () {
+        final scheme = AppTheme.dark().colorScheme;
+        final deco = AppTheme.editorialSectionCard(scheme, borderRadius: 16);
+        final darkOnly = AppTheme.editorialDarkSectionCard(scheme, borderRadius: 16);
+
+        expect(deco.gradient, darkOnly?.gradient);
+        expect(deco.border, darkOnly?.border);
+      });
+
+      test('showroom canvas helpers are defined for light and dark', () {
+        final light = AppTheme.light().colorScheme;
+        final dark = AppTheme.dark().colorScheme;
+
+        expect(AppTheme.showroomPageCanvasGradient(light), hasLength(3));
+        expect(AppTheme.showroomPageCanvasGradient(dark), hasLength(3));
+        expect(
+          AppTheme.showroomPageBackground(light),
+          isNot(equals(AppTheme.showroomPageBackground(dark))),
+        );
+      });
+    });
+
+    group('snackBarTheme', () {
+      test('light uses premium surface instead of inverse black bar', () {
+        final theme = AppTheme.light();
+        final scheme = theme.colorScheme;
+        final snack = theme.snackBarTheme;
+
+        expect(snack.behavior, SnackBarBehavior.floating);
+        expect(snack.backgroundColor, isNot(equals(scheme.inverseSurface)));
+        expect(snack.backgroundColor, equals(Colors.white));
+        expect(snack.contentTextStyle?.color, isNot(equals(scheme.onInverseSurface)));
+        expect(
+          snack.contentTextStyle?.color,
+          equals(scheme.onSurface.withValues(alpha: 0.92)),
+        );
+        expect(snack.actionTextColor, scheme.primary);
+
+        final shape = snack.shape! as RoundedRectangleBorder;
+        expect(shape.borderRadius, BorderRadius.circular(18));
+        expect(shape.side.color.a, closeTo(scheme.outlineVariant.a * 0.22, 0.05));
+        expect(snack.insetPadding, const EdgeInsets.symmetric(horizontal: 16, vertical: 16));
+      });
+
+      test('dark uses graphite surface with readable text and action color', () {
+        final theme = AppTheme.dark();
+        final scheme = theme.colorScheme;
+        final snack = theme.snackBarTheme;
+
+        expect(snack.backgroundColor, scheme.surfaceContainerHigh);
+        expect(snack.backgroundColor, isNot(equals(scheme.inverseSurface)));
+        expect(
+          snack.contentTextStyle?.color,
+          equals(scheme.onSurface.withValues(alpha: 0.94)),
+        );
+        expect(snack.actionTextColor, scheme.primary);
+        expect(snack.elevation, 6);
+
+        final shape = snack.shape! as RoundedRectangleBorder;
+        expect(shape.borderRadius, BorderRadius.circular(18));
+        expect(shape.side.color.a, closeTo(scheme.outlineVariant.a * 0.35, 0.05));
+      });
+
+      testWidgets('light renders plain snackbar with rounded premium surface', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light(),
+            home: _SnackBarHarness(showAction: false),
+          ),
+        );
+
+        await tester.tap(find.byKey(const ValueKey<String>('show_snack')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+        expect(snackBar.backgroundColor, isNull);
+        expect(snackBar.behavior, isNull);
+
+        final themeSnack = AppTheme.light().snackBarTheme;
+        expect(themeSnack.behavior, SnackBarBehavior.floating);
+        expect(themeSnack.backgroundColor, Colors.white);
+        final shape = themeSnack.shape! as RoundedRectangleBorder;
+        expect(shape.borderRadius, BorderRadius.circular(18));
+      });
+
+      testWidgets('dark snackbar with action has readable action at 320px width', (
+        tester,
+      ) async {
+        tester.view.physicalSize = const Size(320, 640);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: _SnackBarHarness(showAction: true),
+          ),
+        );
+
+        await tester.tap(find.byKey(const ValueKey<String>('show_snack')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(find.text('Action'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('light snackbar with action does not overflow at 320px width', (
+        tester,
+      ) async {
+        tester.view.physicalSize = const Size(320, 640);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light(),
+            home: _SnackBarHarness(showAction: true),
+          ),
+        );
+
+        await tester.tap(find.byKey(const ValueKey<String>('show_snack')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    });
   });
+}
+
+class _SnackBarHarness extends StatelessWidget {
+  const _SnackBarHarness({required this.showAction});
+
+  final bool showAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: TextButton(
+          key: const ValueKey<String>('show_snack'),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Feedback message'),
+                action: showAction
+                    ? SnackBarAction(
+                        label: 'Action',
+                        onPressed: () {},
+                      )
+                    : null,
+              ),
+            );
+          },
+          child: const Text('Show'),
+        ),
+      ),
+    );
+  }
 }

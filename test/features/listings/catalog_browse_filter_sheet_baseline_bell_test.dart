@@ -16,13 +16,10 @@ import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/filter_alerts/domain/entities/saved_search.dart';
-import 'package:carzon/features/filter_alerts/domain/repositories/saved_searches_repository.dart';
 import 'package:carzon/features/filter_alerts/domain/services/filter_alert_delivery_orchestrator.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/create_saved_search.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/delete_saved_search.dart';
-import 'package:carzon/features/filter_alerts/domain/usecases/list_saved_searches.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_browse_filter_alert_sheet_bell.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_browse_filter_alert_sheet_notice.dart';
+import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_sheet_feedback.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_alert_ui_constants.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/listings_filter_form.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/listings_filter_host.dart';
@@ -34,6 +31,7 @@ import 'package:carzon/l10n/app_localizations.dart';
 import 'package:carzon/features/notifications/domain/entities/notification_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -65,6 +63,7 @@ class _SheetHarness extends StatefulWidget {
 
 class _SheetHarnessState extends State<_SheetHarness> {
   CatalogBellInlineNotice? _inlineNotice;
+  CatalogFilterSheetFeedback? _sheetFeedback;
 
   @override
   Widget build(BuildContext context) {
@@ -74,8 +73,14 @@ class _SheetHarnessState extends State<_SheetHarness> {
         seed: ListingsFilterFormSeed.fromListingsState(widget.seedState),
         onDismiss: () {},
         onApply: (_) {},
-        onBrowseDraftMutated: () => setState(() => _inlineNotice = null),
-        onBrowseFeedReset: () => setState(() => _inlineNotice = null),
+        onBrowseDraftMutated: () => setState(() {
+          _inlineNotice = null;
+          _sheetFeedback = null;
+        }),
+        onBrowseFeedReset: () => setState(() {
+          _inlineNotice = null;
+          _sheetFeedback = null;
+        }),
         browseHeaderTrailing: CatalogBrowseFilterAlertSheetBell(
           sheetFormKey: widget.formKey,
           sheetContext: context,
@@ -83,10 +88,18 @@ class _SheetHarnessState extends State<_SheetHarness> {
           appliedState: widget.seedState,
           onInlineNoticeRequested: (notice) =>
               setState(() => _inlineNotice = notice),
+          onSheetFeedbackRequested: (feedback) =>
+              setState(() => _sheetFeedback = feedback),
         ),
         browseHeaderNotice: _inlineNotice == null
             ? null
             : CatalogBrowseFilterAlertSheetNotice(notice: _inlineNotice!),
+        browseSheetFeedbackOverlay: _sheetFeedback == null
+            ? null
+            : CatalogFilterSheetFeedbackOverlay(
+                feedback: _sheetFeedback!,
+                onDismissed: () => setState(() => _sheetFeedback = null),
+              ),
       ),
     );
   }
@@ -115,6 +128,13 @@ void main() {
 
     Future<(BrowseCatalogFilterAlertsCubit, MockSavedSearchesRepository)>
     setupCubit() async {
+      dotenv.testLoad(
+        fileInput: '''
+SUPABASE_URL=https://example.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=true
+''',
+      );
       final savedSearchesRepo = MockSavedSearchesRepository();
       final notifRepo = _MockNotificationsRepository();
       when(
@@ -345,6 +365,64 @@ void main() {
         expect(
           find.text(ruStrings().catalogBrowseFilterAlertTooBroadInlineTitle),
           findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'bell enable on a non-broad draft surfaces sheet-local success '
+      'feedback and never a root SnackBar',
+      (tester) async {
+        tester.view.physicalSize = const Size(420, 1400);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+
+        final auth = buildSignedInAuth();
+        final (alertsCubit, savedSearchesRepo) = await setupCubit();
+        when(
+          () => savedSearchesRepo.create(
+            name: any(named: 'name'),
+            criteria: any(named: 'criteria'),
+            alertsEnabled: any(named: 'alertsEnabled'),
+          ),
+        ).thenAnswer((inv) async {
+          final criteria =
+              inv.namedArguments[#criteria] as ListingDiscoveryCriteria;
+          final alertsEnabled = inv.namedArguments[#alertsEnabled] as bool;
+          final name = inv.namedArguments[#name] as String;
+          return Success(
+            testSavedSearch(
+              id: 'ss-bmw',
+              name: name,
+              criteria: criteria,
+              alertsEnabled: alertsEnabled,
+            ),
+          );
+        });
+
+        final formKey = GlobalKey<ListingsFilterFormState>();
+        await tester.pumpWidget(
+          hostApp(
+            auth: auth,
+            alertsCubit: alertsCubit,
+            formKey: formKey,
+            seedState: const ListingsState(make: 'BMW'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));
+        await tester.pumpAndSettle();
+
+        final ru = ruStrings();
+        expect(find.byType(SnackBar), findsNothing);
+        expect(
+          find.byKey(CatalogFilterAlertAccent.sheetFeedbackToastKey),
+          findsOneWidget,
+        );
+        expect(
+          find.text(ru.catalogBrowseFilterBellEnabledSnack),
+          findsOneWidget,
         );
       },
     );

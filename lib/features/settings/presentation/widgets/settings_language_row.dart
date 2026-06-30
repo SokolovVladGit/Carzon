@@ -11,7 +11,6 @@ import '../../../../core/l10n/app_locale_preference.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../../notifications/services/push_notification_registration_service.dart';
-import '../../../profile/presentation/widgets/profile_settings_navigation_row.dart';
 
 /// App language picker row (RU / RO) for [SettingsPage].
 class SettingsLanguageRow extends StatelessWidget {

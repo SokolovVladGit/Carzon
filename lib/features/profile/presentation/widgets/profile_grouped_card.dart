@@ -1,40 +1,12 @@
 import 'package:flutter/material.dart';
 
-Color profileSoftSurface(ColorScheme scheme, {required bool isDark}) {
-  if (isDark) {
-    return Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.070),
-      scheme.surfaceContainerLow,
-    );
-  }
-  return Color.alphaBlend(
-    scheme.primary.withValues(alpha: 0.026),
-    scheme.surfaceContainerLowest,
-  );
-}
+import '../../../../core/theme/app_theme.dart';
 
-List<BoxShadow> profileCardShadow(ColorScheme scheme, {required bool isDark}) {
-  return isDark
-      ? [
-          BoxShadow(
-            color: scheme.shadow.withValues(alpha: 0.18),
-            blurRadius: 26,
-            offset: const Offset(0, 11),
-          ),
-        ]
-      : [
-          BoxShadow(
-            color: scheme.shadow.withValues(alpha: 0.056),
-            blurRadius: 26,
-            offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: scheme.primary.withValues(alpha: 0.026),
-            blurRadius: 20,
-            offset: const Offset(0, 5),
-          ),
-        ];
-}
+Color profileSoftSurface(ColorScheme scheme, {required bool isDark}) =>
+    AppTheme.softCardSurface(scheme);
+
+List<BoxShadow> profileCardShadow(ColorScheme scheme, {required bool isDark}) =>
+    AppTheme.softCardShadow(scheme);
 
 class ProfileGroupedCard extends StatelessWidget {
   const ProfileGroupedCard({
@@ -56,8 +28,7 @@ class ProfileGroupedCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final cardFill = profileSoftSurface(scheme, isDark: isDark);
-    final shadow = profileCardShadow(scheme, isDark: isDark);
+    final shadow = AppTheme.softCardShadow(scheme);
     final radius = BorderRadius.circular(26);
 
     final innerPad =
@@ -72,31 +43,12 @@ class ProfileGroupedCard extends StatelessWidget {
         color: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: radius,
-          side: BorderSide(
-            color: isDark
-                ? scheme.outline.withValues(alpha: 0.28)
-                : scheme.outlineVariant.withValues(alpha: 0.42),
-          ),
+          side: BorderSide(color: AppTheme.softCardBorderColor(scheme)),
         ),
         clipBehavior: Clip.antiAlias,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color.alphaBlend(
-                  scheme.onSurface.withValues(alpha: isDark ? 0.028 : 0.012),
-                  cardFill,
-                ),
-                cardFill,
-                Color.alphaBlend(
-                  scheme.primary.withValues(alpha: isDark ? 0.035 : 0.018),
-                  cardFill,
-                ),
-              ],
-              stops: const [0, 0.55, 1],
-            ),
+            gradient: AppTheme.softCardGroupedGradient(scheme),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

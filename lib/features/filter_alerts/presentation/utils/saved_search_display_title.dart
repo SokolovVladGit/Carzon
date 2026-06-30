@@ -2,6 +2,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../listings/domain/entities/listing_discovery_criteria.dart';
 import '../../../listings/domain/listing_discovery_state_sync.dart';
 import '../../../listings/presentation/utils/discovery_feed_chip_labels.dart';
+import '../../../listings/presentation/utils/listing_details_header_titles.dart';
 
 /// Builds a user-facing card title from [criteria], independent of the
 /// persisted [SavedSearch.name] (which may be generic or stale).
@@ -13,7 +14,7 @@ String buildSavedSearchDisplayTitle(
   final model = criteria.model?.trim();
 
   if (make != null && make.isNotEmpty && model != null && model.isNotEmpty) {
-    return '$make $model';
+    return listingDetailsVehicleIdentityLine(make, model);
   }
 
   final state = listingsStateFromDiscoveryCriteria(criteria);

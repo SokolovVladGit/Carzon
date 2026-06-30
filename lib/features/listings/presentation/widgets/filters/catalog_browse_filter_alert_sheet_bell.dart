@@ -17,6 +17,7 @@ import 'package:carzon/features/listings/presentation/utils/listing_filter_apply
 import 'package:carzon/features/filter_alerts/domain/utils/saved_search_auto_name.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_alert_ui_constants.dart';
 import 'package:carzon/features/listings/presentation/cubit/browse_catalog_filter_alerts_models.dart';
+import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_sheet_feedback.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/listings_filter_form.dart';
 
 /// Inline notice surfaces the catalog filter-sheet bell can publish back
@@ -52,6 +53,7 @@ class CatalogBrowseFilterAlertSheetBell extends StatefulWidget {
     required this.searchSnippet,
     required this.appliedState,
     this.onInlineNoticeRequested,
+    this.onSheetFeedbackRequested,
   });
 
   static const bellKey = Key('catalog_browse_filter_alert_sheet_bell');
@@ -78,6 +80,10 @@ class CatalogBrowseFilterAlertSheetBell extends StatefulWidget {
   /// outcome, so stale notices never linger.
   final ValueChanged<CatalogBellInlineNotice?>? onInlineNoticeRequested;
 
+  /// Sheet-local floating feedback for bell success/error/info outcomes.
+  /// Replaces root snackbars so feedback is visible while the modal is open.
+  final ValueChanged<CatalogFilterSheetFeedback?>? onSheetFeedbackRequested;
+
   @override
   State<CatalogBrowseFilterAlertSheetBell> createState() =>
       _CatalogBrowseFilterAlertSheetBellState();
@@ -99,6 +105,10 @@ class _CatalogBrowseFilterAlertSheetBellState
       if (!mounted) return;
       setState(() {});
     });
+  }
+
+  void _publishFeedback(CatalogFilterSheetFeedback? feedback) {
+    widget.onSheetFeedbackRequested?.call(feedback);
   }
 
   @override
@@ -196,8 +206,11 @@ class _CatalogBrowseFilterAlertSheetBellState
 
     final apply = formState.peekValidatedApplyOutcome();
     if (apply == null) {
-      ScaffoldMessenger.maybeOf(modalContext)?.showSnackBar(
-        SnackBar(content: Text(l10n.filterAlertApplyBlockedValidation)),
+      _publishFeedback(
+        CatalogFilterSheetFeedback(
+          message: l10n.filterAlertApplyBlockedValidation,
+          kind: CatalogFilterSheetFeedbackKind.error,
+        ),
       );
       return;
     }
@@ -208,9 +221,6 @@ class _CatalogBrowseFilterAlertSheetBellState
       apply,
       preservedSearch: preservedSearch,
     );
-
-    final messenger = ScaffoldMessenger.maybeOf(modalContext);
-    if (messenger == null) return;
 
     final outcome = await modalContext
         .read<BrowseCatalogFilterAlertsCubit>()
@@ -227,6 +237,10 @@ class _CatalogBrowseFilterAlertSheetBellState
       );
     }
 
+    if (!mounted) return;
+    final sheetContext = widget.sheetContext;
+    if (!sheetContext.mounted) return;
+
     // Default: clear any stale inline notice on the sheet so that
     // success or non-blocking outcomes never leave a "refine filter"
     // pill stuck on top of a freshly-saved alert. The `criteriaTooBroad`
@@ -235,18 +249,28 @@ class _CatalogBrowseFilterAlertSheetBellState
 
     switch (outcome) {
       case BrowseCatalogBellOutcome.signedOut:
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(l10n.filterAlertSignInRequired),
-            action: SnackBarAction(
-              label: l10n.commonSignIn,
-              onPressed: () => modalContext.go(AppRoutes.signIn),
-            ),
+        final router = GoRouter.maybeOf(sheetContext);
+        _publishFeedback(
+          CatalogFilterSheetFeedback(
+            message: l10n.filterAlertSignInRequired,
+            kind: CatalogFilterSheetFeedbackKind.info,
+            actionLabel: router == null ? null : l10n.commonSignIn,
+            onAction: router == null
+                ? null
+                : () {
+                    if (sheetContext.mounted) {
+                      Navigator.of(sheetContext).pop();
+                    }
+                    router.go(AppRoutes.signIn);
+                  },
           ),
         );
       case BrowseCatalogBellOutcome.filterSheetValidationFailed:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.filterAlertApplyBlockedValidation)),
+        _publishFeedback(
+          CatalogFilterSheetFeedback(
+            message: l10n.filterAlertApplyBlockedValidation,
+            kind: CatalogFilterSheetFeedbackKind.error,
+          ),
         );
       case BrowseCatalogBellOutcome.criteriaTooBroad:
         // Sheet-local inline notice instead of a root snackbar. The
@@ -257,44 +281,77 @@ class _CatalogBrowseFilterAlertSheetBellState
         widget.onInlineNoticeRequested?.call(
           CatalogBellInlineNotice.criteriaTooBroad,
         );
+        _publishFeedback(null);
       case BrowseCatalogBellOutcome.pushBuildDisabled:
       case BrowseCatalogBellOutcome.criteriaSavedDeliveryUnavailable:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.savedSearchAlertsPushUnavailableHint)),
+        _publishFeedback(
+          CatalogFilterSheetFeedback(
+            message: l10n.savedSearchAlertsPushUnavailableHint,
+            kind: CatalogFilterSheetFeedbackKind.info,
+          ),
         );
       case BrowseCatalogBellOutcome.savedAlertCleared:
       case BrowseCatalogBellOutcome.deliveriesDisabled:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.catalogBrowseFilterBellDisabledSnack)),
+        _publishFeedback(
+          CatalogFilterSheetFeedback(
+            message: l10n.catalogBrowseFilterBellDisabledSnack,
+            kind: CatalogFilterSheetFeedbackKind.info,
+          ),
         );
       case BrowseCatalogBellOutcome.savedSearchRemoved:
-        break;
+        _publishFeedback(null);
       case BrowseCatalogBellOutcome.savedAlertClearFailed:
       case BrowseCatalogBellOutcome.savedSearchDeleteFailed:
       case BrowseCatalogBellOutcome.prefsOrRowFailed:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.notificationSettingsSaveFailed)),
+        _publishFeedback(
+          CatalogFilterSheetFeedback(
+            message: l10n.catalogBrowseFilterBellSaveFailedSnack,
+            kind: CatalogFilterSheetFeedbackKind.error,
+          ),
         );
       case BrowseCatalogBellOutcome.osPermissionDenied:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.notificationSettingsOsPermissionDenied)),
+        _publishFeedback(
+          CatalogFilterSheetFeedback(
+            message: l10n.notificationSettingsOsPermissionDenied,
+            kind: CatalogFilterSheetFeedbackKind.error,
+          ),
         );
       case BrowseCatalogBellOutcome.criteriaSaveFailed:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.savedSearchSaveFailed)),
+        _publishFeedback(
+          CatalogFilterSheetFeedback(
+            message: l10n.catalogBrowseFilterBellSaveFailedSnack,
+            kind: CatalogFilterSheetFeedbackKind.error,
+          ),
         );
       case BrowseCatalogBellOutcome.maxSavedSearchesReached:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.savedSearchesMaxReachedSnack)),
+        final router = GoRouter.maybeOf(sheetContext);
+        _publishFeedback(
+          CatalogFilterSheetFeedback(
+            message: l10n.savedSearchesMaxReachedSnack,
+            kind: CatalogFilterSheetFeedbackKind.error,
+            actionLabel:
+                router == null ? null : l10n.savedSearchesMaxReachedOpenAction,
+            onAction: router == null
+                ? null
+                : () {
+                    if (sheetContext.mounted) {
+                      Navigator.of(sheetContext).pop();
+                    }
+                    router.push(AppRoutes.filterAlert);
+                  },
+          ),
         );
       case BrowseCatalogBellOutcome.deliveriesEnabled:
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n.catalogBrowseFilterBellEnabledSnack)),
+        _publishFeedback(
+          CatalogFilterSheetFeedback(
+            message: l10n.catalogBrowseFilterBellEnabledSnack,
+            kind: CatalogFilterSheetFeedbackKind.success,
+          ),
         );
       case BrowseCatalogBellOutcome.savedSearchCreated:
-        break;
+        _publishFeedback(null);
       case BrowseCatalogBellOutcome.noop:
-        break;
+        _publishFeedback(null);
     }
   }
 }

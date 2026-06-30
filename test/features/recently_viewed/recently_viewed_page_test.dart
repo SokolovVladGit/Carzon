@@ -1,18 +1,15 @@
-import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/router/app_router.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:carzon/features/recently_viewed/domain/entities/recently_viewed_entry.dart';
 import 'package:carzon/features/recently_viewed/domain/repositories/recently_viewed_repository.dart';
 import 'package:carzon/features/recently_viewed/presentation/cubit/recently_viewed_cubit.dart';
-import 'package:carzon/features/recently_viewed/presentation/cubit/recently_viewed_state.dart';
 import 'package:carzon/features/recently_viewed/presentation/pages/recently_viewed_page.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
 

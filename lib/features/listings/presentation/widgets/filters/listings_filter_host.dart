@@ -39,6 +39,7 @@ class ListingsFilterHost extends StatefulWidget {
     this.filterFormExternalKey,
     this.browseHeaderTrailing,
     this.browseHeaderNotice,
+    this.browseSheetFeedbackOverlay,
     this.onBrowseDraftMutated,
     this.applyEnabled = true,
   });
@@ -59,6 +60,9 @@ class ListingsFilterHost extends StatefulWidget {
   /// too-broad draft) without leaking onto the catalog page through
   /// the root [ScaffoldMessenger].
   final Widget? browseHeaderNotice;
+
+  /// Browse mode: floating feedback toast positioned above the sticky footer.
+  final Widget? browseSheetFeedbackOverlay;
 
   /// Browse mode: notified when discovery draft fields update.
   final VoidCallback? onBrowseDraftMutated;
@@ -186,80 +190,84 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
         : AppTheme.editorialDarkFilterCanvasGradient(scheme);
 
     return SizedBox.expand(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: canvasColors,
-            stops: const [0, 0.42, 1],
-          ),
-        ),
-        child: Material(
-          type: MaterialType.transparency,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(16, headerTop, 16, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: canvasColors,
+                stops: const [0, 0.42, 1],
+              ),
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(16, headerTop, 16, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        SizedBox(
-                          width: _headerTrailWidth,
-                          child: Align(
-                            alignment: Alignment.topLeft,
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Tooltip(
-                                message: l10n.filtersDismissTooltip,
-                                child: Material(
-                                  color: light
-                                      ? Color.alphaBlend(
-                                          scheme.surfaceContainerHigh
-                                              .withValues(alpha: 0.5),
-                                          scheme.surface.withValues(
-                                            alpha: 0.12,
-                                          ),
-                                        )
-                                      : Color.alphaBlend(
-                                          scheme.primary.withValues(
-                                            alpha: 0.08,
-                                          ),
-                                          scheme.surfaceContainerHigh,
-                                        ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                    side: BorderSide(
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: _headerTrailWidth,
+                              child: Align(
+                                alignment: Alignment.topLeft,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Tooltip(
+                                    message: l10n.filtersDismissTooltip,
+                                    child: Material(
                                       color: light
-                                          ? scheme.outlineVariant.withValues(
-                                              alpha: 0.24,
+                                          ? Color.alphaBlend(
+                                              scheme.surfaceContainerHigh
+                                                  .withValues(alpha: 0.5),
+                                              scheme.surface.withValues(
+                                                alpha: 0.12,
+                                              ),
                                             )
-                                          : scheme.outline.withValues(
-                                              alpha: 0.32,
+                                          : Color.alphaBlend(
+                                              scheme.primary.withValues(
+                                                alpha: 0.08,
+                                              ),
+                                              scheme.surfaceContainerHigh,
                                             ),
-                                    ),
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: InkWell(
-                                    onTap: widget.onDismiss,
-                                    customBorder: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(
-                                        Radius.circular(14),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        side: BorderSide(
+                                          color: light
+                                              ? scheme.outlineVariant
+                                                    .withValues(alpha: 0.24)
+                                              : scheme.outline.withValues(
+                                                  alpha: 0.32,
+                                                ),
+                                        ),
                                       ),
-                                    ),
-                                    child: SizedBox(
-                                      width: 40,
-                                      height: 40,
-                                      child: Center(
-                                        child: Icon(
-                                          Icons.arrow_back_ios_new_rounded,
-                                          size: 18,
-                                          color: scheme.onSurface.withValues(
-                                            alpha: 0.8,
+                                      clipBehavior: Clip.antiAlias,
+                                      child: InkWell(
+                                        onTap: widget.onDismiss,
+                                        customBorder:
+                                            const RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.all(
+                                                Radius.circular(14),
+                                              ),
+                                            ),
+                                        child: SizedBox(
+                                          width: 40,
+                                          height: 40,
+                                          child: Center(
+                                            child: Icon(
+                                              Icons.arrow_back_ios_new_rounded,
+                                              size: 18,
+                                              color: scheme.onSurface
+                                                  .withValues(alpha: 0.8),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -268,252 +276,266 @@ class _ListingsFilterHostState extends State<ListingsFilterHost> {
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                headerEyebrow,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style:
-                                    theme.textTheme.labelSmall?.copyWith(
-                                      letterSpacing: 2.4,
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.2,
-                                      color: light
-                                          ? scheme.onSurface.withValues(
-                                              alpha: 0.42,
-                                            )
-                                          : AppTheme.editorialAccentColor(
-                                              scheme,
-                                            ).withValues(alpha: 0.72),
-                                    ) ??
-                                    theme.textTheme.bodySmall?.copyWith(
-                                      letterSpacing: 2.0,
-                                      fontWeight: FontWeight.w600,
-                                      color: light
-                                          ? scheme.onSurface.withValues(
-                                              alpha: 0.42,
-                                            )
-                                          : AppTheme.editorialAccentColor(
-                                              scheme,
-                                            ).withValues(alpha: 0.72),
-                                    ),
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    headerEyebrow,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        theme.textTheme.labelSmall?.copyWith(
+                                          letterSpacing: 2.4,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.2,
+                                          color: light
+                                              ? scheme.onSurface.withValues(
+                                                  alpha: 0.42,
+                                                )
+                                              : AppTheme.editorialAccentColor(
+                                                  scheme,
+                                                ).withValues(alpha: 0.72),
+                                        ) ??
+                                        theme.textTheme.bodySmall?.copyWith(
+                                          letterSpacing: 2.0,
+                                          fontWeight: FontWeight.w600,
+                                          color: light
+                                              ? scheme.onSurface.withValues(
+                                                  alpha: 0.42,
+                                                )
+                                              : AppTheme.editorialAccentColor(
+                                                  scheme,
+                                                ).withValues(alpha: 0.72),
+                                        ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    headerTitle,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        theme.textTheme.titleLarge?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: -0.2,
+                                          height: 1.15,
+                                          color: scheme.onSurface.withValues(
+                                            alpha: 0.96,
+                                          ),
+                                        ) ??
+                                        theme.textTheme.headlineSmall?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: -0.15,
+                                          height: 1.15,
+                                        ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                headerTitle,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style:
-                                    theme.textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: -0.2,
-                                      height: 1.15,
-                                      color: scheme.onSurface.withValues(
-                                        alpha: 0.96,
-                                      ),
-                                    ) ??
-                                    theme.textTheme.headlineSmall?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: -0.15,
-                                      height: 1.15,
-                                    ),
+                            ),
+                            SizedBox(
+                              width: _headerTrailWidth,
+                              child: Align(
+                                alignment: Alignment.topRight,
+                                child:
+                                    (!isAlert &&
+                                        widget.browseHeaderTrailing != null)
+                                    ? Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: widget.browseHeaderTrailing!,
+                                      )
+                                    : const SizedBox.shrink(),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        SizedBox(
-                          width: _headerTrailWidth,
-                          child: Align(
-                            alignment: Alignment.topRight,
-                            child:
-                                (!isAlert &&
-                                    widget.browseHeaderTrailing != null)
-                                ? Padding(
-                                    padding: const EdgeInsets.only(top: 2),
-                                    child: widget.browseHeaderTrailing!,
-                                  )
-                                : const SizedBox.shrink(),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
-                        headerSubtitle,
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant.withValues(
-                            alpha: light ? 0.5 : 0.74,
-                          ),
-                          height: 1.45,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: light
-                            ? scheme.outlineVariant.withValues(alpha: 0.2)
-                            : Color.alphaBlend(
-                                AppTheme.editorialAccentColor(
-                                  scheme,
-                                ).withValues(alpha: 0.16),
-                                scheme.outline.withValues(alpha: 0.24),
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            headerSubtitle,
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: scheme.onSurfaceVariant.withValues(
+                                alpha: light ? 0.5 : 0.74,
                               ),
-                      ),
-                    ),
-                    if (!isAlert && widget.browseHeaderNotice != null) ...[
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: widget.browseHeaderNotice!,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: EdgeInsets.fromLTRB(
-                    22,
-                    isAlert ? 20 : 8,
-                    22,
-                    listScrollBottomPad,
-                  ),
-                  children: [
-                    ListingsFilterForm(
-                      key: _formKeyEffective,
-                      seed: widget.seed,
-                      showDraftSummaryStrip: !isAlert,
-                      onDraftMutated: !isAlert ? _onBrowseDraftTouched : null,
-                    ),
-                  ],
-                ),
-              ),
-              DecoratedBox(
-                decoration:
-                    AppTheme.editorialDarkFilterFooter(scheme) ??
-                    BoxDecoration(
-                      color: Color.alphaBlend(
-                        scheme.surfaceContainerHighest.withValues(alpha: 0.28),
-                        scheme.surface,
-                      ),
-                      border: Border(
-                        top: BorderSide(
-                          color: scheme.outlineVariant.withValues(alpha: 0.22),
+                              height: 1.45,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
                         ),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: scheme.shadow.withValues(alpha: 0.07),
-                          blurRadius: 28,
-                          offset: const Offset(0, -12),
-                        ),
-                      ],
-                    ),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(22, 20, 22, footerBottomPad),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _onResetTap,
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            foregroundColor: scheme.onSurface.withValues(
-                              alpha: 0.82,
-                            ),
-                            side: BorderSide(
-                              color: light
-                                  ? scheme.outlineVariant.withValues(
-                                      alpha: 0.45,
-                                    )
-                                  : scheme.outline.withValues(alpha: 0.38),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            backgroundColor: light
-                                ? Color.alphaBlend(
-                                    scheme.surface.withValues(alpha: 0.72),
-                                    scheme.surfaceContainerHighest.withValues(
-                                      alpha: 0.08,
-                                    ),
-                                  )
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Divider(
+                            height: 1,
+                            thickness: 1,
+                            color: light
+                                ? scheme.outlineVariant.withValues(alpha: 0.2)
                                 : Color.alphaBlend(
-                                    scheme.primary.withValues(alpha: 0.06),
-                                    scheme.surfaceContainerHigh,
+                                    AppTheme.editorialAccentColor(
+                                      scheme,
+                                    ).withValues(alpha: 0.16),
+                                    scheme.outline.withValues(alpha: 0.24),
                                   ),
                           ),
-                          child: Text(
-                            l10n.filterClear,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        flex: 2,
-                        child: FilledButton(
-                          onPressed: widget.applyEnabled ? _onApplyTap : null,
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            elevation: light ? 0 : 1,
-                            shadowColor: scheme.primary.withValues(
-                              alpha: light ? 0.28 : 0.18,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            backgroundColor: light
-                                ? null
-                                : Color.lerp(
-                                    scheme.primary,
-                                    scheme.primaryContainer,
-                                    0.15,
-                                  ),
+                        if (!isAlert && widget.browseHeaderNotice != null) ...[
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: widget.browseHeaderNotice!,
                           ),
-                          child: Text(
-                            applyLabel,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.15,
-                              color: scheme.onPrimary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                        ],
+                      ],
+                    ),
                   ),
-                ),
+                  Expanded(
+                    child: ListView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: EdgeInsets.fromLTRB(
+                        22,
+                        isAlert ? 20 : 8,
+                        22,
+                        listScrollBottomPad,
+                      ),
+                      children: [
+                        ListingsFilterForm(
+                          key: _formKeyEffective,
+                          seed: widget.seed,
+                          showDraftSummaryStrip: !isAlert,
+                          onDraftMutated: !isAlert ? _onBrowseDraftTouched : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                  DecoratedBox(
+                    decoration:
+                        AppTheme.editorialDarkFilterFooter(scheme) ??
+                        BoxDecoration(
+                          color: Color.alphaBlend(
+                            scheme.surfaceContainerHighest.withValues(
+                              alpha: 0.28,
+                            ),
+                            scheme.surface,
+                          ),
+                          border: Border(
+                            top: BorderSide(
+                              color: scheme.outlineVariant.withValues(
+                                alpha: 0.22,
+                              ),
+                            ),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: scheme.shadow.withValues(alpha: 0.07),
+                              blurRadius: 28,
+                              offset: const Offset(0, -12),
+                            ),
+                          ],
+                        ),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(22, 20, 22, footerBottomPad),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: _onResetTap,
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 18,
+                                ),
+                                foregroundColor: scheme.onSurface.withValues(
+                                  alpha: 0.82,
+                                ),
+                                side: BorderSide(
+                                  color: light
+                                      ? scheme.outlineVariant.withValues(
+                                          alpha: 0.45,
+                                        )
+                                      : scheme.outline.withValues(alpha: 0.38),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                backgroundColor: light
+                                    ? Color.alphaBlend(
+                                        scheme.surface.withValues(alpha: 0.72),
+                                        scheme.surfaceContainerHighest
+                                            .withValues(alpha: 0.08),
+                                      )
+                                    : Color.alphaBlend(
+                                        scheme.primary.withValues(alpha: 0.06),
+                                        scheme.surfaceContainerHigh,
+                                      ),
+                              ),
+                              child: Text(
+                                l10n.filterClear,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            flex: 2,
+                            child: FilledButton(
+                              onPressed: widget.applyEnabled ? _onApplyTap : null,
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 18,
+                                ),
+                                elevation: light ? 0 : 1,
+                                shadowColor: scheme.primary.withValues(
+                                  alpha: light ? 0.28 : 0.18,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                backgroundColor: light
+                                    ? null
+                                    : Color.lerp(
+                                        scheme.primary,
+                                        scheme.primaryContainer,
+                                        0.15,
+                                      ),
+                              ),
+                              child: Text(
+                                applyLabel,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.15,
+                                  color: scheme.onPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          if (!isAlert && widget.browseSheetFeedbackOverlay != null)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: footerBottomPad + footerChromeHeight - 8,
+              child: widget.browseSheetFeedbackOverlay!,
+            ),
+        ],
       ),
     );
   }

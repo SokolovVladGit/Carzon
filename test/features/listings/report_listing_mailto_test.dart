@@ -119,6 +119,22 @@ void main() {
       expect(body, contains(l10n.reportBodyPrompt));
     });
 
+    test('make/model/year line dedupes repeated leading make in model', () {
+      final uri = buildReportListingMailto(
+        l10n: l10n,
+        listing: _listing(
+          make: 'Toyota',
+          model: 'Toyota RAV4 Hybrid',
+          year: 2018,
+        ),
+        recipientEmail: 'reports@carzon.example',
+      );
+
+      final body = uri.queryParameters['body']!;
+      expect(body, contains('Toyota RAV4 Hybrid 2018'));
+      expect(body, isNot(contains('Toyota Toyota RAV4 Hybrid')));
+    });
+
     test(
       'does NOT include seller private data (sellerId, phone, telegram)',
       () {

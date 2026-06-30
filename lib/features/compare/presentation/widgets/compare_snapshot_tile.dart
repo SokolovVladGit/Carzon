@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../listings/presentation/utils/listing_details_header_titles.dart';
 import '../../../listings/presentation/widgets/listing_cover_image.dart';
 import '../../domain/entities/compare_listing_snapshot.dart';
 
@@ -88,7 +89,7 @@ class CompareSnapshotTile extends StatelessWidget {
     final make = snapshot.make?.trim();
     final model = snapshot.model?.trim();
     if (make != null && make.isNotEmpty && model != null && model.isNotEmpty) {
-      return '$make $model';
+      return listingDetailsVehicleIdentityLine(make, model);
     }
     if (make != null && make.isNotEmpty) return make;
     if (model != null && model.isNotEmpty) return model;

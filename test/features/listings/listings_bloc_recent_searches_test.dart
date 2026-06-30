@@ -63,7 +63,7 @@ void main() {
     );
   });
 
-  ListingsBloc _buildBloc() => ListingsBloc(
+  ListingsBloc buildBloc() => ListingsBloc(
     getListings: GetListings(repo),
     lastAppliedDiscovery: const NoopLastAppliedListingDiscoveryRepository(),
     recordRecentSearch: recorder,
@@ -76,7 +76,7 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => Success([_listing('1')]));
     },
-    build: _buildBloc,
+    build: buildBloc,
     act: (b) => b.add(const ListingsSearchChanged('bmw')),
     verify: (_) {
       expect(recorder.callCount, 1);
@@ -91,7 +91,7 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => const Success([]));
     },
-    build: _buildBloc,
+    build: buildBloc,
     act: (b) => b.add(const ListingsRequested()),
     verify: (_) {
       expect(recorder.callCount, 0);
@@ -105,7 +105,7 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => const Success([]));
     },
-    build: _buildBloc,
+    build: buildBloc,
     seed: () => const ListingsState(
       status: ListingsStatus.success,
       sortOption: ListingSortOption.newestFirst,
@@ -142,7 +142,7 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => const FailureResult(ServerFailure('x')));
     },
-    build: _buildBloc,
+    build: buildBloc,
     act: (b) => b.add(const ListingsSearchChanged('audi')),
     verify: (_) {
       expect(recorder.callCount, 0);
@@ -152,9 +152,7 @@ void main() {
   blocTest<ListingsBloc, ListingsState>(
     'does not record pagination loads',
     setUp: () {
-      var call = 0;
       when(() => repo.getListings(any())).thenAnswer((invocation) async {
-        call++;
         final q = invocation.positionalArguments.first as ListingsQuery;
         if (q.page == 0) {
           return Success(List.generate(20, (i) => _listing('p0-$i')));
@@ -162,7 +160,7 @@ void main() {
         return Success([_listing('p1-0')]);
       });
     },
-    build: _buildBloc,
+    build: buildBloc,
     act: (b) async {
       b.add(const ListingsSearchChanged('vw'));
       await Future<void>.delayed(Duration.zero);
@@ -181,7 +179,7 @@ void main() {
         () => repo.getListings(any()),
       ).thenAnswer((_) async => Success([_listing('1')]));
     },
-    build: _buildBloc,
+    build: buildBloc,
     act: (b) => b.add(
       ListingsHydratedFromDiscovery(
         const ListingDiscoveryCriteria(search: 'saved'),

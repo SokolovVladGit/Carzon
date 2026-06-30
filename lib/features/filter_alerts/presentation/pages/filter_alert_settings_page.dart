@@ -91,7 +91,7 @@ class _FilterAlertsChrome extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: _pageBackground(context),
+      backgroundColor: AppTheme.showroomPageBackground(scheme),
       appBar: AppBar(
         leading: const AppBackButton(fallback: AppRoutes.profile),
         title: Text(l10n.savedSearchesTitle),
@@ -109,7 +109,9 @@ class _FilterAlertsChrome extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: _canvasGradient(context),
+            colors: isDark
+                ? AppTheme.editorialDarkFilterCanvasGradient(scheme)
+                : AppTheme.showroomPageCanvasGradient(scheme),
             stops: const [0, 0.42, 1],
           ),
         ),
@@ -560,44 +562,4 @@ class _SavedSearchTile extends StatelessWidget {
       ),
     );
   }
-}
-
-Color _pageBackground(BuildContext context) {
-  final scheme = Theme.of(context).colorScheme;
-  final isDark = scheme.brightness == Brightness.dark;
-  if (isDark) {
-    return Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.050),
-      scheme.surface,
-    );
-  }
-  return Color.alphaBlend(
-    scheme.primary.withValues(alpha: 0.018),
-    scheme.surface,
-  );
-}
-
-List<Color> _canvasGradient(BuildContext context) {
-  final scheme = Theme.of(context).colorScheme;
-  final isDark = scheme.brightness == Brightness.dark;
-  if (isDark) {
-    return AppTheme.editorialDarkFilterCanvasGradient(scheme);
-  }
-
-  final top = Color.alphaBlend(
-    scheme.surfaceTint.withValues(alpha: 0.008),
-    scheme.surface,
-  );
-  final mid = Color.alphaBlend(
-    scheme.primary.withValues(alpha: 0.032),
-    scheme.surfaceContainerLowest,
-  );
-  final bottom = Color.alphaBlend(
-    scheme.onSurface.withValues(alpha: 0.024),
-    Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.070),
-      scheme.surfaceContainerLow,
-    ),
-  );
-  return [top, mid, bottom];
 }

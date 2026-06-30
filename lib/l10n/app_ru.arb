@@ -75,11 +75,15 @@
       "Базовый каталог без условий слишком широкий.",
   "@catalogBrowseFilterAlertTooBroadInlineBody": {},
 
-  "catalogBrowseFilterBellEnabledSnack": "Оповещения включены для этого фильтра.",
+  "catalogBrowseFilterBellEnabledSnack": "Готово — будем следить за авто по этому фильтру.",
   "@catalogBrowseFilterBellEnabledSnack": {},
 
-  "catalogBrowseFilterBellDisabledSnack": "Оповещения выключены для этого фильтра.",
+  "catalogBrowseFilterBellDisabledSnack": "Оповещения для этого фильтра выключены.",
   "@catalogBrowseFilterBellDisabledSnack": {},
+
+  "catalogBrowseFilterBellSaveFailedSnack":
+      "Не удалось сохранить оповещение. Проверьте подключение и попробуйте ещё раз.",
+  "@catalogBrowseFilterBellSaveFailedSnack": {},
 
   "catalogBrowseFilterBellSavedEnableGlobalCategorySnack":
       "Поиск сохранён. Чтобы получать push, включите оповещения о сохранённых поисках в настройках.",
@@ -950,6 +954,8 @@
   "@savedSearchToggleFailed": {},
   "savedSearchesMaxReachedSnack": "Можно сохранить до 5 фильтров. Удалите один из существующих, чтобы добавить новый.",
   "@savedSearchesMaxReachedSnack": {},
+  "savedSearchesMaxReachedOpenAction": "К сохранённым фильтрам",
+  "@savedSearchesMaxReachedOpenAction": {},
   "filterAlertSummarySearchLabel": "Поиск",
   "@filterAlertSummarySearchLabel": {},
   "filterAlertSummaryMileageLabel": "Пробег",

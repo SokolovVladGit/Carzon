@@ -29,6 +29,19 @@ void main() {
     );
   });
 
+  test('make and model dedupe repeated leading make in model criteria', () {
+    expect(
+      buildSavedSearchDisplayTitle(
+        l10n,
+        const ListingDiscoveryCriteria(
+          make: 'Toyota',
+          model: 'Toyota RAV4 Hybrid',
+        ),
+      ),
+      'Toyota RAV4 Hybrid',
+    );
+  });
+
   test('make with budget uses middot separator', () {
     final title = buildSavedSearchDisplayTitle(
       l10n,

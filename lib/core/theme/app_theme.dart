@@ -22,6 +22,13 @@ class AppTheme {
   /// Warm milk-white used as the light-theme base.
   static const Color _lightSurface = Color(0xFFFFFCF7);
 
+  /// Subtle warm surface steps for light mode (cards above canvas).
+  static const Color lightSurfaceContainerLowest = Color(0xFFFFFEFE);
+  static const Color lightSurfaceContainerLow = Color(0xFFF8F5F0);
+  static const Color lightSurfaceContainer = Color(0xFFF2EEE8);
+  static const Color lightSurfaceContainerHigh = Color(0xFFEBE7E0);
+  static const Color lightSurfaceContainerHighest = Color(0xFFE4E0D8);
+
   /// Premium dark graphite baseline (not pure black).
   static const Color darkSurface = Color(0xFF121417);
   static const Color darkSurfaceContainer = Color(0xFF1A1D21);
@@ -40,7 +47,14 @@ class AppTheme {
     final scheme = ColorScheme.fromSeed(
       seedColor: _seed,
       brightness: Brightness.light,
-    ).copyWith(surface: _lightSurface);
+    ).copyWith(
+      surface: _lightSurface,
+      surfaceContainerLowest: lightSurfaceContainerLowest,
+      surfaceContainerLow: lightSurfaceContainerLow,
+      surfaceContainer: lightSurfaceContainer,
+      surfaceContainerHigh: lightSurfaceContainerHigh,
+      surfaceContainerHighest: lightSurfaceContainerHighest,
+    );
     return _base(scheme);
   }
 
@@ -136,6 +150,17 @@ class AppTheme {
         ? scheme.outline
         : scheme.outline.withValues(alpha: 0.55);
 
+    final isDark = scheme.brightness == Brightness.dark;
+    final snackBarSurface = isDark
+        ? scheme.surfaceContainerHigh
+        : Colors.white;
+    final snackBarBorderColor = scheme.outlineVariant.withValues(
+      alpha: isDark ? 0.35 : 0.22,
+    );
+    final snackBarContentColor = scheme.onSurface.withValues(
+      alpha: isDark ? 0.94 : 0.92,
+    );
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
@@ -198,8 +223,15 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         color: scheme.surfaceContainerLow,
-        surfaceTintColor: scheme.surfaceTint,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: isDark
+              ? BorderSide.none
+              : BorderSide(
+                  color: scheme.outlineVariant.withValues(alpha: 0.24),
+                ),
+        ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: scheme.primary,
@@ -212,10 +244,196 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: scheme.inverseSurface,
-        contentTextStyle: TextStyle(color: scheme.onInverseSurface),
+        backgroundColor: snackBarSurface,
+        elevation: isDark ? 6 : 4,
+        contentTextStyle: baseText.bodyMedium?.copyWith(
+          color: snackBarContentColor,
+          height: 1.35,
+        ),
+        actionTextColor: scheme.primary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: snackBarBorderColor),
+        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       listTileTheme: ListTileThemeData(iconColor: scheme.onSurfaceVariant),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Hub pages, grouped cards, and editorial section surfaces.
+  // ---------------------------------------------------------------------------
+
+  /// Scaffold background for menu/settings-style hub pages.
+  static Color showroomPageBackground(ColorScheme scheme) {
+    if (scheme.brightness == Brightness.dark) {
+      return Color.alphaBlend(
+        scheme.primary.withValues(alpha: 0.050),
+        scheme.surface,
+      );
+    }
+    return Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.018),
+      scheme.surface,
+    );
+  }
+
+  /// Vertical canvas wash behind hub-style scroll bodies (menu, settings).
+  static List<Color> showroomPageCanvasGradient(ColorScheme scheme) {
+    if (scheme.brightness == Brightness.dark) {
+      final top = Color.alphaBlend(
+        scheme.primary.withValues(alpha: 0.075),
+        scheme.surfaceContainerLow,
+      );
+      final mid = Color.alphaBlend(
+        scheme.primary.withValues(alpha: 0.035),
+        scheme.surface,
+      );
+      final bottom = Color.alphaBlend(
+        scheme.onSurface.withValues(alpha: 0.026),
+        Color.alphaBlend(
+          scheme.primary.withValues(alpha: 0.080),
+          scheme.surfaceContainerLow,
+        ),
+      );
+      return [top, mid, bottom];
+    }
+
+    final top = Color.alphaBlend(
+      scheme.surfaceTint.withValues(alpha: 0.008),
+      scheme.surface,
+    );
+    final mid = Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.032),
+      scheme.surfaceContainerLowest,
+    );
+    final bottom = Color.alphaBlend(
+      scheme.onSurface.withValues(alpha: 0.024),
+      Color.alphaBlend(
+        scheme.primary.withValues(alpha: 0.070),
+        scheme.surfaceContainerLow,
+      ),
+    );
+    return [top, mid, bottom];
+  }
+
+  /// Soft grouped-card fill (menu rows, profile/settings sections).
+  static Color softCardSurface(ColorScheme scheme) {
+    if (scheme.brightness == Brightness.dark) {
+      return Color.alphaBlend(
+        scheme.primary.withValues(alpha: 0.070),
+        scheme.surfaceContainerLow,
+      );
+    }
+    return Color.alphaBlend(
+      scheme.primary.withValues(alpha: 0.026),
+      scheme.surfaceContainerLowest,
+    );
+  }
+
+  /// Border for soft editorial grouped cards.
+  static Color softCardBorderColor(ColorScheme scheme) {
+    if (scheme.brightness == Brightness.dark) {
+      return scheme.outline.withValues(alpha: 0.28);
+    }
+    return scheme.outlineVariant.withValues(alpha: 0.42);
+  }
+
+  /// Whisper shadow stack for grouped hub cards.
+  static List<BoxShadow> softCardShadow(ColorScheme scheme) {
+    if (scheme.brightness == Brightness.dark) {
+      return [
+        BoxShadow(
+          color: scheme.shadow.withValues(alpha: 0.18),
+          blurRadius: 26,
+          offset: const Offset(0, 11),
+        ),
+      ];
+    }
+    return [
+      BoxShadow(
+        color: scheme.shadow.withValues(alpha: 0.056),
+        blurRadius: 26,
+        offset: const Offset(0, 10),
+      ),
+      BoxShadow(
+        color: scheme.primary.withValues(alpha: 0.026),
+        blurRadius: 20,
+        offset: const Offset(0, 5),
+      ),
+    ];
+  }
+
+  /// Diagonal wash for grouped hub cards (profile, menu sections).
+  static LinearGradient softCardGroupedGradient(ColorScheme scheme) {
+    final isDark = scheme.brightness == Brightness.dark;
+    final cardFill = softCardSurface(scheme);
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color.alphaBlend(
+          scheme.onSurface.withValues(alpha: isDark ? 0.028 : 0.012),
+          cardFill,
+        ),
+        cardFill,
+        Color.alphaBlend(
+          scheme.primary.withValues(alpha: isDark ? 0.035 : 0.018),
+          cardFill,
+        ),
+      ],
+      stops: const [0, 0.55, 1],
+    );
+  }
+
+  /// Editorial section/management card — brightness-aware.
+  ///
+  /// Dark mode delegates to [editorialDarkSectionCard]. Light mode uses a
+  /// calm lifted surface with subtle border and whisper shadow.
+  static BoxDecoration editorialSectionCard(
+    ColorScheme scheme, {
+    required double borderRadius,
+  }) {
+    final dark = editorialDarkSectionCard(scheme, borderRadius: borderRadius);
+    if (dark != null) return dark;
+
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(borderRadius),
+      border: Border.all(color: softCardBorderColor(scheme)),
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color.alphaBlend(
+            scheme.primary.withValues(alpha: 0.038),
+            scheme.surfaceContainerLowest,
+          ),
+          Color.alphaBlend(
+            scheme.onSurface.withValues(alpha: 0.006),
+            scheme.surfaceContainerLowest,
+          ),
+          Color.alphaBlend(
+            scheme.primary.withValues(alpha: 0.014),
+            scheme.surfaceContainerLow,
+          ),
+        ],
+        stops: const [0, 0.38, 1],
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: scheme.shadow.withValues(alpha: 0.042),
+          blurRadius: 22,
+          offset: const Offset(0, 8),
+          spreadRadius: -4,
+        ),
+        BoxShadow(
+          color: scheme.primary.withValues(alpha: 0.018),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+          spreadRadius: -6,
+        ),
+      ],
     );
   }
 
@@ -698,18 +916,12 @@ class AppTheme {
   static List<Color> editorialDarkCompareCanvasGradient(ColorScheme scheme) =>
       editorialDarkFilterCanvasGradient(scheme);
 
-  /// Filter-alert management cards (dark editorial, light flat surface).
+  /// Filter-alert / notification management cards.
   static BoxDecoration filterAlertManagementSurface(
     ColorScheme scheme, {
     double borderRadius = 16,
   }) {
-    final dark = editorialDarkSectionCard(scheme, borderRadius: borderRadius);
-    if (dark != null) return dark;
-    return BoxDecoration(
-      color: scheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(borderRadius),
-      border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
-    );
+    return editorialSectionCard(scheme, borderRadius: borderRadius);
   }
 
   /// Lifted vehicle column on the compare screen (dark). Null in light.

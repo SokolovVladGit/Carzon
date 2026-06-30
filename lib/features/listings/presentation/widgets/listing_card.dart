@@ -9,6 +9,7 @@ import '../../../../shared/brands/brand_icon_resolver.dart';
 import '../../../../shared/brands/brand_logo_glyph.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/entities/listing.dart';
+import '../utils/listing_details_header_titles.dart';
 import '../utils/listing_formatters.dart';
 import 'listing_cover_image.dart';
 import 'vin_present_latin_badge.dart';
@@ -197,7 +198,10 @@ class _ListingCardState extends State<ListingCard> {
               // Child 1: info panel that overlaps the image's bottom.
               _InfoPanel(
                 priceLabel: formatListingPriceFromListing(listing),
-                titleLabel: '${listing.make} ${listing.model}',
+                titleLabel: listingDetailsVehicleIdentityLine(
+                  listing.make,
+                  listing.model,
+                ),
                 brandIconAsset: getBrandIconPath(listing.make),
                 mileageLabel: formatKm(l10n, listing.mileageKm),
                 yearLabel: listing.year.toString(),

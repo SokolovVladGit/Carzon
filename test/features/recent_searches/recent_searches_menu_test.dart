@@ -7,8 +7,6 @@ import 'package:carzon/features/compare/domain/repositories/compare_repository.d
 import 'package:carzon/features/compare/presentation/cubit/compare_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
-import 'package:carzon/features/listings/domain/entities/listing_discovery_criteria.dart';
-import 'package:carzon/features/listings/presentation/pages/listings_page.dart';
 import 'package:carzon/features/menu/presentation/pages/menu_page.dart';
 import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_state.dart';

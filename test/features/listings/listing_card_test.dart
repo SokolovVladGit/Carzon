@@ -45,12 +45,13 @@ Listing _seed({
   MarketRegion region = MarketRegion.transnistria,
   String make = 'Volkswagen',
   String model = 'Golf',
+  String title = 'VW Golf',
   String city = 'Tiraspol',
   ListingVinStatus vinStatus = ListingVinStatus.notProvided,
 }) {
   return Listing(
     id: 'l1',
-    title: 'VW Golf',
+    title: title,
     make: make,
     model: model,
     year: 2016,
@@ -94,6 +95,29 @@ void main() {
       // region for a plain sale listing.
       expect(find.text(l10n.formatTypeSale), findsNothing);
     });
+
+    testWidgets(
+      'dedupes make repeated in model field on card title',
+      (tester) async {
+        await pumpLocalizedWidget(
+          tester,
+          Scaffold(
+            body: SingleChildScrollView(
+              child: ListingCard(
+                listing: _seed(
+                  make: 'Toyota',
+                  model: 'Toyota RAV4 Hybrid',
+                  title: 'Toyota RAV4 Hybrid',
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Toyota RAV4 Hybrid'), findsOneWidget);
+        expect(find.text('Toyota Toyota RAV4 Hybrid'), findsNothing);
+      },
+    );
 
     testWidgets(
       'shows the exchange type badge when listing is ListingType.exchange',

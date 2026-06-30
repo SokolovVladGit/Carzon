@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../listings/presentation/utils/listing_details_header_titles.dart';
 import '../../../listings/presentation/widgets/listing_cover_image.dart';
 import '../../domain/entities/compare_resolved_slot.dart';
 import '../utils/compare_spec_formatters.dart';
@@ -317,7 +318,7 @@ class CompareVehicleColumnHeader extends StatelessWidget {
     final make = (listMake ?? snapMake)?.trim();
     final model = (listModel ?? snapModel)?.trim();
     if (make != null && make.isNotEmpty && model != null && model.isNotEmpty) {
-      return '$make $model';
+      return listingDetailsVehicleIdentityLine(make, model);
     }
     if (make != null && make.isNotEmpty) return make;
     if (model != null && model.isNotEmpty) return model;
