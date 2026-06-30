@@ -126,9 +126,9 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
 
     try {
       if (enabled) {
-        final requested = await _pushRegistration
-            .requestOsNotificationPermission();
-        if (!requested.allowsTokenRegistration) {
+        final perm = await _pushRegistration
+            .resolvePermissionForPreferenceEnable();
+        if (perm.blocksPreferenceEnable) {
           emit(
             state.copyWith(
               busy: false,
@@ -218,11 +218,9 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
 
     try {
       if (enabled) {
-        var perm = await _pushRegistration.readOsNotificationPermissionStatus();
-        if (!perm.allowsTokenRegistration) {
-          perm = await _pushRegistration.requestOsNotificationPermission();
-        }
-        if (!perm.allowsTokenRegistration) {
+        final perm = await _pushRegistration
+            .resolvePermissionForPreferenceEnable();
+        if (perm.blocksPreferenceEnable) {
           emit(
             state.copyWith(
               busy: false,
@@ -310,11 +308,9 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
 
     try {
       if (enabled) {
-        var perm = await _pushRegistration.readOsNotificationPermissionStatus();
-        if (!perm.allowsTokenRegistration) {
-          perm = await _pushRegistration.requestOsNotificationPermission();
-        }
-        if (!perm.allowsTokenRegistration) {
+        final perm = await _pushRegistration
+            .resolvePermissionForPreferenceEnable();
+        if (perm.blocksPreferenceEnable) {
           emit(
             state.copyWith(
               busy: false,
@@ -395,11 +391,9 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
 
     try {
       if (enabled) {
-        var perm = await _pushRegistration.readOsNotificationPermissionStatus();
-        if (!perm.allowsTokenRegistration) {
-          perm = await _pushRegistration.requestOsNotificationPermission();
-        }
-        if (!perm.allowsTokenRegistration) {
+        final perm = await _pushRegistration
+            .resolvePermissionForPreferenceEnable();
+        if (perm.blocksPreferenceEnable) {
           emit(
             state.copyWith(
               busy: false,

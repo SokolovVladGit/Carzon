@@ -52,7 +52,7 @@ See also: `lib/core/config/env.dart` (`Env.requiredKeys`). Optional push flag: `
 2. Create a **Firebase** project; enable **Cloud Messaging**; add apps for Android / iOS.
 3. **Android:** download **`google-services.json`** into **`android/app/`** (do not commit placeholders). The Gradle plugin **`com.google.gms.google-services`** is applied **only** when this file **exists**, so builds without Firebase still succeed.
 4. **iOS:** add **`GoogleService-Info.plist`** via Xcode ; enable **Push Notifications** capability and APNs (development/prod) per Apple + Firebase docs — not verified by CI.
-5. Set **`PUSH_NOTIFICATIONS_ENABLED=true`** in `.env.client` and pass **`--dart-define-from-file=.env.client`** for dev builds that should register tokens (requires Firebase plist/json).
+5. Set **`PUSH_NOTIFICATIONS_ENABLED=true`** in `.env.client` and pass **`--dart-define-from-file=.env.client`** for dev builds that should register tokens (requires Firebase plist/json). See **[`mobile_push_setup.md`](mobile_push_setup.md)** for platform checklist.
 
 **Manual SQL reminder:** Token RPCs require **`authenticated`** — confirm `register_push_token` / `deactivate_my_push_tokens` exist on the target project (§5).
 

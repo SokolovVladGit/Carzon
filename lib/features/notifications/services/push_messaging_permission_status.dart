@@ -12,4 +12,8 @@ extension PushMessagingPermissionStatusX on PushMessagingPermissionStatus {
   bool get allowsTokenRegistration =>
       this == PushMessagingPermissionStatus.authorized ||
       this == PushMessagingPermissionStatus.provisional;
+
+  /// Whether enabling notification preferences must be blocked (explicit OS denial).
+  bool get blocksPreferenceEnable =>
+      this == PushMessagingPermissionStatus.denied;
 }

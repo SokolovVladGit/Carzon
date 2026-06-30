@@ -17,6 +17,7 @@ import 'package:carzon/features/notifications/services/push_messaging_permission
 import 'package:carzon/features/notifications/services/push_notification_registration_service.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -138,6 +139,13 @@ void main() {
   }
 
   setUp(() {
+    dotenv.testLoad(
+      fileInput: '''
+SUPABASE_URL=https://example.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=true
+''',
+    );
     authCubit = _MockAuthCubit();
     repo = _MockNotificationsRepository();
     pushClient = _FakePushMessagingClient();
@@ -201,7 +209,9 @@ void main() {
     await settingsCubit.close();
   });
 
-  testWidgets('renders only the messages notification card', (tester) async {
+  testWidgets('renders messages and price-drop notification cards', (
+    tester,
+  ) async {
     await pumpUntilContent(tester);
 
     expect(
@@ -212,7 +222,7 @@ void main() {
       find.byKey(
         const ValueKey<String>('notification_settings_price_drops_card'),
       ),
-      findsNothing,
+      findsOneWidget,
     );
     expect(
       find.byKey(const ValueKey<String>('notification_settings_status_card')),
@@ -233,8 +243,11 @@ void main() {
     expect(find.text(l10n.notificationSettingsPageIntro), findsNothing);
     expect(find.text(l10n.notificationSettingsFilterAlertsTitle), findsNothing);
     expect(find.text(l10n.notificationSettingsComingSoonBadge), findsNothing);
-    expect(find.text(l10n.notificationSettingsPriceDropsTitle), findsNothing);
-    expect(find.text(l10n.notificationSettingsPriceDropsSubtitle), findsNothing);
+    expect(find.text(l10n.notificationSettingsPriceDropsTitle), findsOneWidget);
+    expect(
+      find.text(l10n.notificationSettingsPriceDropsSubtitle),
+      findsOneWidget,
+    );
     expect(find.textContaining('PUSH_NOTIFICATIONS'), findsNothing);
     expect(find.text(l10n.notificationSettingsMessagesSubtitle), findsOneWidget);
     expect(
@@ -249,7 +262,9 @@ void main() {
     expect(pushClient.permissionRequestCalls, 0);
   });
 
-  testWidgets('dark theme renders messages card only', (tester) async {
+  testWidgets('dark theme renders messages and price-drop cards', (
+    tester,
+  ) async {
     await pumpUntilContent(tester, theme: ThemeData.dark(useMaterial3: true));
 
     expect(
@@ -260,18 +275,78 @@ void main() {
       find.byKey(
         const ValueKey<String>('notification_settings_price_drops_card'),
       ),
-      findsNothing,
+      findsOneWidget,
     );
+  });
+
+  testWidgets('toggling price-drop switch calls setPriceDropsEnabled', (
+    tester,
+  ) async {
+    when(
+      () => repo.getMyPreferences(),
+    ).thenAnswer((_) async => Success(_prefs(global: true, priceDrops: false)));
+
+    await pumpUntilContent(tester);
+
+    final priceDropSwitch = find.descendant(
+      of: find.byKey(
+        const ValueKey<String>('notification_settings_price_drops_card'),
+      ),
+      matching: find.byType(Switch),
+    );
+    expect(priceDropSwitch, findsOneWidget);
+
+    await tester.tap(priceDropSwitch);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    verify(
+      () => repo.updateMyPreferences(
+        globalEnabled: true,
+        messagesEnabled: false,
+        filterAlertsEnabled: false,
+        priceDropsEnabled: true,
+      ),
+    ).called(1);
+  });
+
+  testWidgets('push enabled build keeps message and price-drop toggles active', (
+    tester,
+  ) async {
+    await pumpUntilContent(tester);
+
+    final messagesSwitch = tester.widget<Switch>(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey<String>('notification_settings_messages_card'),
+        ),
+        matching: find.byType(Switch),
+      ),
+    );
+    expect(messagesSwitch.onChanged, isNotNull);
+
+    final priceDropsSwitch = tester.widget<Switch>(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey<String>('notification_settings_price_drops_card'),
+        ),
+        matching: find.byType(Switch),
+      ),
+    );
+    expect(priceDropsSwitch.onChanged, isNotNull);
   });
 
   testWidgets('push-disabled build disables toggles without technical copy', (
     tester,
   ) async {
-    await pumpUntilContent(tester);
+    dotenv.testLoad(
+      fileInput: '''
+SUPABASE_URL=https://example.supabase.co
+SUPABASE_ANON_KEY=anon
+''',
+    );
 
-    if (Env.pushNotificationsEnabled) {
-      return;
-    }
+    await pumpUntilContent(tester);
 
     expect(find.textContaining('PUSH_NOTIFICATIONS'), findsNothing);
     expect(find.text(l10n.notificationSettingsPushBuildDisabledBanner), findsNothing);
@@ -285,6 +360,16 @@ void main() {
       ),
     );
     expect(messagesSwitch.onChanged, isNull);
+
+    final priceDropsSwitch = tester.widget<Switch>(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey<String>('notification_settings_price_drops_card'),
+        ),
+        matching: find.byType(Switch),
+      ),
+    );
+    expect(priceDropsSwitch.onChanged, isNull);
   });
 
   testWidgets('renders on narrow width without overflow', (tester) async {
@@ -299,6 +384,12 @@ void main() {
 
     expect(
       find.byKey(const ValueKey<String>('notification_settings_messages_card')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey<String>('notification_settings_price_drops_card'),
+      ),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);

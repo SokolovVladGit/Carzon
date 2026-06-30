@@ -8,7 +8,8 @@ contact data, tokens, JWTs, or private message text in screenshots or reports.
 
 ## Setup
 
-- Build with push enabled for the target environment.
+- Build with push enabled for the target environment (`PUSH_NOTIFICATIONS_ENABLED=true`;
+  see [`mobile_push_setup.md`](mobile_push_setup.md)).
 - Confirm Firebase config is present for the platform under test.
 - Use one signed-in test account with:
   - at least one listing detail notification payload available for testing,

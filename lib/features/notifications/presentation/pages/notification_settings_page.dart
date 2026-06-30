@@ -160,6 +160,12 @@ class _NotificationSettingsContent extends StatelessWidget {
             messagesEnabled: prefs.messagesEnabled,
           ),
           const SizedBox(height: 14),
+          _PriceDropsNotificationsCard(
+            pushOn: pushOn,
+            busy: state.busy,
+            priceDropsEnabled: prefs.priceDropsEnabled,
+          ),
+          const SizedBox(height: 14),
           const _SavedSearchAlertsNote(),
         ],
       ),
@@ -193,6 +199,37 @@ class _MessagesNotificationsCard extends StatelessWidget {
             : (v) => context
                   .read<NotificationSettingsCubit>()
                   .setMessagesEnabled(v),
+      ),
+    );
+  }
+}
+
+class _PriceDropsNotificationsCard extends StatelessWidget {
+  const _PriceDropsNotificationsCard({
+    required this.pushOn,
+    required this.busy,
+    required this.priceDropsEnabled,
+  });
+
+  final bool pushOn;
+  final bool busy;
+  final bool priceDropsEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return NotificationSettingsSectionCard(
+      key: const ValueKey<String>('notification_settings_price_drops_card'),
+      child: _NotificationSwitchRow(
+        icon: CarzonIcons.heartOutline,
+        title: l10n.notificationSettingsPriceDropsTitle,
+        subtitle: l10n.notificationSettingsPriceDropsSubtitle,
+        value: priceDropsEnabled,
+        onChanged: busy || !pushOn
+            ? null
+            : (v) => context
+                  .read<NotificationSettingsCubit>()
+                  .setPriceDropsEnabled(v),
       ),
     );
   }

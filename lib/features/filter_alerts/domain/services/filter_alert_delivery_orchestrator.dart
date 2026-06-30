@@ -28,8 +28,8 @@ class FilterAlertDeliveryOrchestrator {
         UnknownFailure('filter_alert_delivery_push_disabled'),
       );
     }
-    final requested = await _pushRegistration.requestOsNotificationPermission();
-    if (!requested.allowsTokenRegistration) {
+    final perm = await _pushRegistration.resolvePermissionForPreferenceEnable();
+    if (perm.blocksPreferenceEnable) {
       return const FailureResult(
         UnknownFailure('filter_alert_delivery_permission_denied'),
       );

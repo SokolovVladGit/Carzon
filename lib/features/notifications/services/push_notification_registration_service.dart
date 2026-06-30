@@ -100,6 +100,27 @@ class PushNotificationRegistrationService {
     }
   }
 
+  /// Best-effort OS permission before saving notification preferences.
+  ///
+  /// Only [PushMessagingPermissionStatus.denied] should block preference
+  /// persistence; simulator / missing FCM token must not block saving prefs.
+  Future<PushMessagingPermissionStatus>
+  resolvePermissionForPreferenceEnable() async {
+    try {
+      if (!Env.pushNotificationsEnabled) {
+        return PushMessagingPermissionStatus.notDetermined;
+      }
+      var perm = await readOsNotificationPermissionStatus();
+      if (perm.allowsTokenRegistration || perm.blocksPreferenceEnable) {
+        return perm;
+      }
+      return requestOsNotificationPermission();
+    } catch (e, st) {
+      _logger.error('resolvePermissionForPreferenceEnable failed', e, st);
+      return PushMessagingPermissionStatus.notDetermined;
+    }
+  }
+
   /// Explicit OS permission request (user-driven flows only).
   Future<PushMessagingPermissionStatus>
   requestOsNotificationPermission() async {
