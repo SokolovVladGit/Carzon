@@ -22,6 +22,66 @@ Listing _listing({
 );
 
 void main() {
+  group('listingDetailsVehicleIdentityLine', () {
+    test('strips repeated leading make token from model', () {
+      expect(
+        listingDetailsVehicleIdentityLine('Toyota', 'Toyota RAV4 Hybrid'),
+        'Toyota RAV4 Hybrid',
+      );
+    });
+
+    test('joins make and model when model does not repeat make', () {
+      expect(
+        listingDetailsVehicleIdentityLine('Toyota', 'RAV4 Hybrid'),
+        'Toyota RAV4 Hybrid',
+      );
+    });
+
+    test('strips case-insensitive leading make token', () {
+      expect(
+        listingDetailsVehicleIdentityLine('BMW', 'BMW M340i'),
+        'BMW M340i',
+      );
+      expect(
+        listingDetailsVehicleIdentityLine('MINI', 'Mini Cooper'),
+        'MINI Cooper',
+      );
+    });
+
+    test('does not strip hyphen-glued longer make in model', () {
+      expect(
+        listingDetailsVehicleIdentityLine('Mercedes-Benz', 'C-Class'),
+        'Mercedes-Benz C-Class',
+      );
+      expect(
+        listingDetailsVehicleIdentityLine('Mercedes', 'Mercedes-Benz C-Class'),
+        'Mercedes Mercedes-Benz C-Class',
+      );
+    });
+
+    test('does not strip when make is glued to model without space', () {
+      expect(
+        listingDetailsVehicleIdentityLine('BMW', 'BMWX5'),
+        'BMW BMWX5',
+      );
+    });
+
+    test('collapses whitespace and handles empty sides', () {
+      expect(
+        listingDetailsVehicleIdentityLine('  Toyota  ', '  RAV4   Hybrid  '),
+        'Toyota RAV4 Hybrid',
+      );
+      expect(listingDetailsVehicleIdentityLine('', 'RAV4'), 'RAV4');
+      expect(listingDetailsVehicleIdentityLine('Toyota', ''), 'Toyota');
+      expect(listingDetailsVehicleIdentityLine('', ''), '');
+    });
+
+    test('returns make only when model equals make', () {
+      expect(listingDetailsVehicleIdentityLine('Toyota', 'Toyota'), 'Toyota');
+      expect(listingDetailsVehicleIdentityLine('Toyota', 'toyota'), 'Toyota');
+    });
+  });
+
   group('listingDetailsDisplayPrimaryTitle', () {
     test('drops trailing comma + listing year when title is identity-only', () {
       expect(
@@ -223,6 +283,32 @@ void main() {
       );
       expect(d.primaryLine, 'В идеальном состоянии, 2023');
       expect(d.tagline, 'Mercedes-Benz AMG C-Class Coupe · 2023');
+    });
+
+    test('tagline dedupes make repeated in model field', () {
+      final d = ListingDetailsHeaderDisplay.fromListing(
+        _listing(
+          title: 'Low mileage hybrid',
+          make: 'Toyota',
+          model: 'Toyota RAV4 Hybrid',
+          year: 2018,
+        ),
+      );
+      expect(d.primaryLine, 'Low mileage hybrid');
+      expect(d.tagline, 'Toyota RAV4 Hybrid · 2018');
+    });
+
+    test('empty title uses deduped vehicle line as primary', () {
+      final d = ListingDetailsHeaderDisplay.fromListing(
+        _listing(
+          title: '',
+          make: 'Toyota',
+          model: 'Toyota RAV4 Hybrid',
+          year: 2018,
+        ),
+      );
+      expect(d.primaryLine, 'Toyota RAV4 Hybrid');
+      expect(d.tagline, isNull);
     });
   });
 

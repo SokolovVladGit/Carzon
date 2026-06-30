@@ -1,5 +1,6 @@
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/listing.dart';
+import 'listing_details_header_titles.dart';
 
 /// Builds the `mailto:` URI used by the in-app "Report listing" action
 /// on `ListingDetailsPage`.
@@ -58,7 +59,8 @@ Uri buildReportListingMailto({
     ..writeln('${l10n.reportBodyFieldListingId}: ${listing.id}')
     ..writeln(
       '${l10n.reportBodyFieldMmy}: '
-      '${listing.make} ${listing.model} ${listing.year}',
+      '${listingDetailsVehicleIdentityLine(listing.make, listing.model)} '
+      '${listing.year}',
     )
     ..writeln('${l10n.reportBodyFieldCity}: ${listing.city}')
     ..writeln('${l10n.reportBodyFieldRegion}: $regionLabel')

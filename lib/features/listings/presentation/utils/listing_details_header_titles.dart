@@ -14,18 +14,50 @@ String normalizeListingHeaderForComparison(String raw) {
   return s.trim();
 }
 
-/// Stable make + model headline as used before the subtitle rule.
-String listingDetailsVehicleIdentityLine(String makeRaw, String modelRaw) {
-  String squeezeSpaces(String v) => v.replaceAll(RegExp(r'\s+'), ' ').trim();
-  final make = makeRaw.trim();
-  final model = modelRaw.trim();
-  if (make.isEmpty && model.isEmpty) return '';
-  if (make.isEmpty) return squeezeSpaces(model);
-  if (model.isEmpty) return squeezeSpaces(make);
-  return squeezeSpaces('$make $model');
+String _squeezeSpaces(String v) => v.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+/// True when [char] ends a leading make token in model display dedupe (space only).
+///
+/// Hyphens are not boundaries so `Mercedes` does not strip `Mercedes-Benz`.
+bool _isMakeModelDisplayTokenBoundary(String char) =>
+    RegExp(r'\s').hasMatch(char);
+
+/// When [model] repeats [make] as a whole leading token, returns the remainder
+/// of [model] after that prefix (original casing). Null when no safe strip.
+String? _modelRemainderAfterLeadingMakeToken(String make, String model) {
+  if (make.isEmpty || model.isEmpty) return null;
+
+  final makeLower = make.toLowerCase();
+  if (!model.toLowerCase().startsWith(makeLower)) return null;
+
+  final boundaryIndex = make.length;
+  if (boundaryIndex >= model.length) return '';
+
+  if (!_isMakeModelDisplayTokenBoundary(model[boundaryIndex])) return null;
+
+  return model.substring(boundaryIndex).trimLeft();
 }
 
-String _squeezeTitle(String raw) => raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+/// Display-only make + model headline for cards, taglines, and structured copy.
+///
+/// Never mutates stored listing fields. Strips a repeated leading make token in
+/// [modelRaw] when it matches [makeRaw] as a whole word (case-insensitive).
+String listingDetailsVehicleIdentityLine(String makeRaw, String modelRaw) {
+  final make = _squeezeSpaces(makeRaw);
+  final model = _squeezeSpaces(modelRaw);
+  if (make.isEmpty && model.isEmpty) return '';
+  if (make.isEmpty) return model;
+  if (model.isEmpty) return make;
+
+  final remainder = _modelRemainderAfterLeadingMakeToken(make, model);
+  if (remainder != null) {
+    if (remainder.isEmpty) return make;
+    return _squeezeSpaces('$make $remainder');
+  }
+  return _squeezeSpaces('$make $model');
+}
+
+String _squeezeTitle(String raw) => _squeezeSpaces(raw);
 
 /// True when `c` separates the listing year digits from preceding text (comma,
 /// dot, middot, spaces, slashes, hyphen-style dashes), not alphanumeric glue.
