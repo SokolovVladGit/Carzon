@@ -1,7 +1,6 @@
 import 'package:carzon/app/router/app_router.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_discovery_criteria.dart';
-import 'package:carzon/features/listings/presentation/pages/listings_page.dart';
 import 'package:carzon/features/recent_searches/domain/entities/recent_search_entry.dart';
 import 'package:carzon/features/recent_searches/domain/repositories/recent_searches_repository.dart';
 import 'package:carzon/features/recent_searches/presentation/cubit/recent_searches_cubit.dart';

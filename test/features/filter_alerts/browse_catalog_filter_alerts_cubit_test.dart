@@ -1,6 +1,5 @@
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
-import 'package:carzon/features/filter_alerts/domain/entities/saved_search.dart';
 import 'package:carzon/features/filter_alerts/domain/repositories/saved_searches_repository.dart';
 import 'package:carzon/features/filter_alerts/domain/services/filter_alert_delivery_orchestrator.dart';
 import 'package:carzon/features/listings/domain/browse_state_for_alert_criteria.dart';

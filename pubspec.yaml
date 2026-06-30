@@ -20,6 +20,7 @@ dependencies:
   # State management
   flutter_bloc: ^9.1.1
   equatable: ^2.0.7
+  meta: ^1.16.0
 
   # Dependency injection
   get_it: ^8.0.3

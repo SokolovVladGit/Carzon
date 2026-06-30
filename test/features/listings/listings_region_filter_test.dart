@@ -1,10 +1,8 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/constants/app_constants.dart';
 import 'package:carzon/core/utils/result.dart';
-import 'package:carzon/features/listings/data/local/last_applied_listing_discovery_repository.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_discovery_criteria.dart';
-import 'package:carzon/features/listings/domain/entities/listing_sort_option.dart';
 import 'package:carzon/features/listings/domain/repositories/listings_repository.dart';
 import 'package:carzon/features/listings/domain/usecases/get_listings.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_bloc.dart';

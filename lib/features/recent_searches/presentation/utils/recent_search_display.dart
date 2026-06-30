@@ -28,7 +28,7 @@ RecentSearchDisplay buildRecentSearchDisplay(
       .toList(growable: false);
 
   final title = hasSearch
-      ? l10n.recentSearchesSearchOnlyLabel(search!)
+      ? l10n.recentSearchesSearchOnlyLabel(search)
       : l10n.recentSearchesFiltersOnlyLabel;
 
   final subtitle = subtitleParts.isEmpty ? null : subtitleParts.join(' · ');

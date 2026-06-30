@@ -1,6 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/router/app_router.dart';
-import 'package:carzon/core/config/env.dart';
 import 'package:carzon/core/l10n/app_locale_preference.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';

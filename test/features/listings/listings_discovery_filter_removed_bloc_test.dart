@@ -2,7 +2,6 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/listings/domain/entities/buyer_listing_vin_report_source_result.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
-import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:carzon/features/listings/domain/repositories/listings_repository.dart';
 import 'package:carzon/features/listings/domain/usecases/get_listings.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_bloc.dart';
@@ -212,7 +211,7 @@ void main() {
         make: null,
         page: 0,
         hasReachedEnd: false,
-        items: const [],
+        items: [],
       ),
       ListingsState(
         status: ListingsStatus.success,

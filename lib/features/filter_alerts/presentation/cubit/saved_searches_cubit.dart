@@ -7,7 +7,6 @@ import '../../domain/entities/saved_search.dart';
 import '../../domain/services/filter_alert_delivery_orchestrator.dart';
 import '../../domain/usecases/delete_saved_search.dart';
 import '../../domain/usecases/list_saved_searches.dart';
-import '../../domain/usecases/set_saved_search_alerts_enabled.dart';
 
 enum SavedSearchesLoadStatus { initial, loading, loaded, failure }
 

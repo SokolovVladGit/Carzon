@@ -322,7 +322,7 @@ void main() {
     expect(find.byKey(const ValueKey('listing_recall_campaign_toggle_0')), findsOneWidget);
   });
 
-  Future<void> _expandFirstCampaign(WidgetTester tester) async {
+  Future<void> expandFirstCampaign(WidgetTester tester) async {
     await tester.tap(
       find.byKey(const ValueKey('listing_recall_campaign_toggle_0')),
     );
@@ -343,7 +343,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await _expandFirstCampaign(tester);
+    await expandFirstCampaign(tester);
 
     expect(find.text(ru.listingRecallSummary), findsOneWidget);
     expect(find.text(ru.listingRecallConsequence), findsOneWidget);
@@ -371,8 +371,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await _expandFirstCampaign(tester);
-    await _expandFirstCampaign(tester);
+    await expandFirstCampaign(tester);
+    await expandFirstCampaign(tester);
 
     expect(find.text(ru.listingRecallConsequence), findsNothing);
   });
