@@ -268,5 +268,154 @@ void main() {
       expect(input.labelStyle?.color?.a, greaterThan(0.85));
       expect(input.fillColor, AppTheme.darkSurfaceContainer);
     });
+
+    group('snackBarTheme', () {
+      test('light uses premium surface instead of inverse black bar', () {
+        final theme = AppTheme.light();
+        final scheme = theme.colorScheme;
+        final snack = theme.snackBarTheme;
+
+        expect(snack.behavior, SnackBarBehavior.floating);
+        expect(snack.backgroundColor, isNot(equals(scheme.inverseSurface)));
+        expect(snack.backgroundColor, equals(Colors.white));
+        expect(snack.contentTextStyle?.color, isNot(equals(scheme.onInverseSurface)));
+        expect(
+          snack.contentTextStyle?.color,
+          equals(scheme.onSurface.withValues(alpha: 0.92)),
+        );
+        expect(snack.actionTextColor, scheme.primary);
+
+        final shape = snack.shape! as RoundedRectangleBorder;
+        expect(shape.borderRadius, BorderRadius.circular(18));
+        expect(shape.side.color.a, closeTo(scheme.outlineVariant.a * 0.22, 0.05));
+        expect(snack.insetPadding, const EdgeInsets.symmetric(horizontal: 16, vertical: 16));
+      });
+
+      test('dark uses graphite surface with readable text and action color', () {
+        final theme = AppTheme.dark();
+        final scheme = theme.colorScheme;
+        final snack = theme.snackBarTheme;
+
+        expect(snack.backgroundColor, scheme.surfaceContainerHigh);
+        expect(snack.backgroundColor, isNot(equals(scheme.inverseSurface)));
+        expect(
+          snack.contentTextStyle?.color,
+          equals(scheme.onSurface.withValues(alpha: 0.94)),
+        );
+        expect(snack.actionTextColor, scheme.primary);
+        expect(snack.elevation, 6);
+
+        final shape = snack.shape! as RoundedRectangleBorder;
+        expect(shape.borderRadius, BorderRadius.circular(18));
+        expect(shape.side.color.a, closeTo(scheme.outlineVariant.a * 0.35, 0.05));
+      });
+
+      testWidgets('light renders plain snackbar with rounded premium surface', (
+        tester,
+      ) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light(),
+            home: _SnackBarHarness(showAction: false),
+          ),
+        );
+
+        await tester.tap(find.byKey(const ValueKey<String>('show_snack')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(tester.takeException(), isNull);
+
+        final snackBar = tester.widget<SnackBar>(find.byType(SnackBar));
+        expect(snackBar.backgroundColor, isNull);
+        expect(snackBar.behavior, isNull);
+
+        final themeSnack = AppTheme.light().snackBarTheme;
+        expect(themeSnack.behavior, SnackBarBehavior.floating);
+        expect(themeSnack.backgroundColor, Colors.white);
+        final shape = themeSnack.shape! as RoundedRectangleBorder;
+        expect(shape.borderRadius, BorderRadius.circular(18));
+      });
+
+      testWidgets('dark snackbar with action has readable action at 320px width', (
+        tester,
+      ) async {
+        tester.view.physicalSize = const Size(320, 640);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            home: _SnackBarHarness(showAction: true),
+          ),
+        );
+
+        await tester.tap(find.byKey(const ValueKey<String>('show_snack')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(find.text('Action'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('light snackbar with action does not overflow at 320px width', (
+        tester,
+      ) async {
+        tester.view.physicalSize = const Size(320, 640);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light(),
+            home: _SnackBarHarness(showAction: true),
+          ),
+        );
+
+        await tester.tap(find.byKey(const ValueKey<String>('show_snack')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.byType(SnackBar), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    });
   });
 }
+
+class _SnackBarHarness extends StatelessWidget {
+  const _SnackBarHarness({required this.showAction});
+
+  final bool showAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: TextButton(
+          key: const ValueKey<String>('show_snack'),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Feedback message'),
+                action: showAction
+                    ? SnackBarAction(
+                        label: 'Action',
+                        onPressed: () {},
+                      )
+                    : null,
+              ),
+            );
+          },
+          child: const Text('Show'),
+        ),
+      ),
+    );
+  }
+}
+

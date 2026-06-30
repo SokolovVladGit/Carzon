@@ -136,6 +136,17 @@ class AppTheme {
         ? scheme.outline
         : scheme.outline.withValues(alpha: 0.55);
 
+    final isDark = scheme.brightness == Brightness.dark;
+    final snackBarSurface = isDark
+        ? scheme.surfaceContainerHigh
+        : Colors.white;
+    final snackBarBorderColor = scheme.outlineVariant.withValues(
+      alpha: isDark ? 0.35 : 0.22,
+    );
+    final snackBarContentColor = scheme.onSurface.withValues(
+      alpha: isDark ? 0.94 : 0.92,
+    );
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
@@ -212,8 +223,18 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: scheme.inverseSurface,
-        contentTextStyle: TextStyle(color: scheme.onInverseSurface),
+        backgroundColor: snackBarSurface,
+        elevation: isDark ? 6 : 4,
+        contentTextStyle: baseText.bodyMedium?.copyWith(
+          color: snackBarContentColor,
+          height: 1.35,
+        ),
+        actionTextColor: scheme.primary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: snackBarBorderColor),
+        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       listTileTheme: ListTileThemeData(iconColor: scheme.onSurfaceVariant),
     );
