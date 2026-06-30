@@ -21,6 +21,8 @@ class _FakePushMessagingClient implements PushMessagingClient {
   bool initResult = true;
   PushMessagingPermissionStatus permissionStatus =
       PushMessagingPermissionStatus.authorized;
+  PushMessagingPermissionStatus permissionAfterRequest =
+      PushMessagingPermissionStatus.authorized;
   String? token = 'fake-token';
   final StreamController<String> _refresh = StreamController.broadcast();
 
@@ -38,7 +40,7 @@ class _FakePushMessagingClient implements PushMessagingClient {
   @override
   Future<PushMessagingPermissionStatus> requestPermission() async {
     permissionRequestCalls++;
-    permissionStatus = PushMessagingPermissionStatus.authorized;
+    permissionStatus = permissionAfterRequest;
     return permissionStatus;
   }
 
@@ -362,6 +364,27 @@ PUSH_NOTIFICATIONS_ENABLED=false
       ),
     ).called(1);
   });
+
+  test(
+    'resolvePermissionForPreferenceEnable returns denied without prompting',
+    () async {
+      client.permissionStatus = PushMessagingPermissionStatus.denied;
+      final status = await sut.resolvePermissionForPreferenceEnable();
+      expect(status, PushMessagingPermissionStatus.denied);
+      expect(client.permissionRequestCalls, 0);
+    },
+  );
+
+  test(
+    'resolvePermissionForPreferenceEnable prompts when notDetermined then returns status',
+    () async {
+      client.permissionStatus = PushMessagingPermissionStatus.notDetermined;
+      client.permissionAfterRequest = PushMessagingPermissionStatus.notDetermined;
+      final status = await sut.resolvePermissionForPreferenceEnable();
+      expect(status, PushMessagingPermissionStatus.notDetermined);
+      expect(client.permissionRequestCalls, 1);
+    },
+  );
 
   test('beforeSignOut calls deactivateMyPushTokens when signed in', () async {
     await sut.beforeSignOut();

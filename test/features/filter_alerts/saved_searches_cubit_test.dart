@@ -112,6 +112,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
       ),
     );
     when(
+      () => pushReg.resolvePermissionForPreferenceEnable(),
+    ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
+    when(
       () => pushReg.requestOsNotificationPermission(),
     ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
     when(
@@ -134,7 +137,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
         () => savedSearchesRepo.list(),
       ).thenAnswer((_) async => Success([_audiRow()]));
       when(
-        () => pushReg.requestOsNotificationPermission(),
+        () => pushReg.resolvePermissionForPreferenceEnable(),
       ).thenAnswer((_) async => PushMessagingPermissionStatus.denied);
     },
     build: buildCubit,
@@ -153,6 +156,40 @@ PUSH_NOTIFICATIONS_ENABLED=true
         ),
       );
       verifyNever(() => savedSearchesRepo.setAlertsEnabled(any(), any()));
+    },
+  );
+
+  blocTest<SavedSearchesCubit, SavedSearchesState>(
+    'enable when permission stays notDetermined still saves prefs and row flag',
+    setUp: () {
+      when(
+        () => savedSearchesRepo.list(),
+      ).thenAnswer((_) async => Success([_audiRow()]));
+      when(
+        () => pushReg.resolvePermissionForPreferenceEnable(),
+      ).thenAnswer((_) async => PushMessagingPermissionStatus.notDetermined);
+      when(
+        () => savedSearchesRepo.setAlertsEnabled('ss-audi', true),
+      ).thenAnswer((_) async => Success(_audiRow(alertsEnabled: true)));
+    },
+    build: buildCubit,
+    act: (c) async {
+      await c.refresh();
+      await c.setAlertsEnabled('ss-audi', true);
+    },
+    verify: (_) {
+      verify(
+        () => notifRepo.updateMyPreferences(
+          globalEnabled: true,
+          messagesEnabled: true,
+          filterAlertsEnabled: true,
+          priceDropsEnabled: false,
+        ),
+      ).called(1);
+      verify(
+        () => savedSearchesRepo.setAlertsEnabled('ss-audi', true),
+      ).called(1);
+      verify(() => pushReg.syncTokenWithBackendIfEligible()).called(1);
     },
   );
 

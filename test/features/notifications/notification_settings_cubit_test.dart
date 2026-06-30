@@ -449,6 +449,63 @@ SUPABASE_ANON_KEY=anon
   );
 
   blocTest<NotificationSettingsCubit, NotificationSettingsState>(
+    'messages enabled saves prefs when permission stays notDetermined',
+    setUp: () {
+      client.permissionStatus = PushMessagingPermissionStatus.notDetermined;
+      client.permissionAfterRequest = PushMessagingPermissionStatus.notDetermined;
+    },
+    build: buildCubit,
+    seed: () => NotificationSettingsState(
+      phase: NotificationSettingsLoadPhase.ready,
+      preferences: _prefs(global: false, messages: false),
+    ),
+    act: (c) => c.setMessagesEnabled(true),
+    verify: (_) {
+      verify(
+        () => repo.updateMyPreferences(
+          globalEnabled: true,
+          messagesEnabled: true,
+          filterAlertsEnabled: false,
+          priceDropsEnabled: false,
+        ),
+      ).called(1);
+      verifyNever(
+        () => repo.registerPushToken(
+          token: any(named: 'token'),
+          platform: any(named: 'platform'),
+          appVersion: any(named: 'appVersion'),
+          deviceId: any(named: 'deviceId'),
+          locale: any(named: 'locale'),
+        ),
+      );
+    },
+  );
+
+  blocTest<NotificationSettingsCubit, NotificationSettingsState>(
+    'price drops enabled saves prefs when permission stays notDetermined',
+    setUp: () {
+      client.permissionStatus = PushMessagingPermissionStatus.notDetermined;
+      client.permissionAfterRequest = PushMessagingPermissionStatus.notDetermined;
+    },
+    build: buildCubit,
+    seed: () => NotificationSettingsState(
+      phase: NotificationSettingsLoadPhase.ready,
+      preferences: _prefs(global: false, priceDrops: false),
+    ),
+    act: (c) => c.setPriceDropsEnabled(true),
+    verify: (_) {
+      verify(
+        () => repo.updateMyPreferences(
+          globalEnabled: true,
+          messagesEnabled: false,
+          filterAlertsEnabled: false,
+          priceDropsEnabled: true,
+        ),
+      ).called(1);
+    },
+  );
+
+  blocTest<NotificationSettingsCubit, NotificationSettingsState>(
     'message toggle on auto-enables global when global off',
     setUp: () {
       client.permissionStatus = PushMessagingPermissionStatus.authorized;

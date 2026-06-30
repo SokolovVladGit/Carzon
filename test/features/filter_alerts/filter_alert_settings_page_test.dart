@@ -212,6 +212,9 @@ SUPABASE_ANON_KEY=anon
       );
     });
     when(
+      () => pushRegistration.resolvePermissionForPreferenceEnable(),
+    ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
+    when(
       () => pushRegistration.requestOsNotificationPermission(),
     ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
     when(
