@@ -28,27 +28,48 @@ class FavoritesCubit extends Cubit<FavoritesState> {
   final RemoveFavorite _removeFavorite;
 
   String? _currentUserId;
+  bool _hasSynchronizedAuth = false;
+  int _sessionGeneration = 0;
+  int _loadGeneration = 0;
   int _errorSeq = 0;
 
   /// Called by the app root on every auth state change.
   /// - Signed in: load this user's favorite ids.
   /// - Signed out: clear local state.
   Future<void> syncWithAuth(AuthUser? user) async {
-    if (user == null) {
-      _currentUserId = null;
-      emit(const FavoritesState(status: FavoritesStatus.ready));
+    if (isClosed) return;
+    final userId = user?.id;
+    final firstSynchronization = !_hasSynchronizedAuth;
+    final userChanged = !firstSynchronization && userId != _currentUserId;
+    final sessionChanged = firstSynchronization || userChanged;
+    if (sessionChanged) {
+      _hasSynchronizedAuth = true;
+      _currentUserId = userId;
+      _sessionGeneration += 1;
+      _loadGeneration += 1;
+      if (isClosed) return;
+      if (userId == null || userChanged) {
+        emit(const FavoritesState(status: FavoritesStatus.ready));
+      }
+    }
+
+    if (userId == null) {
       return;
     }
-    if (user.id == _currentUserId && state.status == FavoritesStatus.ready) {
+    if (!sessionChanged && state.status == FavoritesStatus.ready) {
       return;
     }
-    _currentUserId = user.id;
     await _loadIds();
   }
 
   Future<void> _loadIds() async {
+    final userId = _currentUserId;
+    if (userId == null) return;
+    final sessionGeneration = _sessionGeneration;
+    final loadGeneration = ++_loadGeneration;
     emit(state.copyWith(status: FavoritesStatus.loading));
     final result = await _getFavoriteIds();
+    if (!_isCurrentLoad(userId, sessionGeneration, loadGeneration)) return;
     result.fold(
       (_) => emit(
         state.copyWith(
@@ -67,9 +88,14 @@ class FavoritesCubit extends Cubit<FavoritesState> {
   }
 
   Future<void> loadListings() async {
-    if (_currentUserId == null) return;
+    if (isClosed) return;
+    final userId = _currentUserId;
+    if (userId == null) return;
+    final sessionGeneration = _sessionGeneration;
+    final loadGeneration = ++_loadGeneration;
     emit(state.copyWith(status: FavoritesStatus.loading));
     final result = await _getFavoriteListings();
+    if (!_isCurrentLoad(userId, sessionGeneration, loadGeneration)) return;
     result.fold(
       (_) => emit(
         state.copyWith(
@@ -96,8 +122,11 @@ class FavoritesCubit extends Cubit<FavoritesState> {
   /// backend error; the widget is responsible for surfacing it (e.g.
   /// snackbar) and mapping the kind to a localized message.
   Future<void> toggle(String listingId) async {
-    if (_currentUserId == null) return;
+    if (isClosed) return;
+    final userId = _currentUserId;
+    if (userId == null) return;
     if (state.isPending(listingId)) return;
+    final sessionGeneration = _sessionGeneration;
 
     final wasFavorite = state.isFavorite(listingId);
     emit(state.copyWith(pending: {...state.pending, listingId}));
@@ -106,6 +135,7 @@ class FavoritesCubit extends Cubit<FavoritesState> {
         ? await _removeFavorite(listingId)
         : await _addFavorite(listingId);
 
+    if (!_isCurrentSession(userId, sessionGeneration)) return;
     final newPending = {...state.pending}..remove(listingId);
 
     result.fold(
@@ -143,5 +173,20 @@ class FavoritesCubit extends Cubit<FavoritesState> {
   FavoritesErrorEvent _nextError(FavoritesFailureKind kind) {
     _errorSeq += 1;
     return FavoritesErrorEvent(id: _errorSeq, kind: kind);
+  }
+
+  bool _isCurrentSession(String userId, int sessionGeneration) {
+    return !isClosed &&
+        _currentUserId == userId &&
+        _sessionGeneration == sessionGeneration;
+  }
+
+  bool _isCurrentLoad(
+    String userId,
+    int sessionGeneration,
+    int loadGeneration,
+  ) {
+    return _isCurrentSession(userId, sessionGeneration) &&
+        _loadGeneration == loadGeneration;
   }
 }

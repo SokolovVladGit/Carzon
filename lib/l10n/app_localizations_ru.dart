@@ -1049,14 +1049,21 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get createListingSectionVehicleSubtitle =>
-      'Город, марка, модель, год и характеристики.';
+      'Марка, модель, год и характеристики.';
 
   @override
-  String get createListingSectionDeal => 'Сделка и рынок';
+  String get createListingSectionDeal => 'Тип объявления';
 
   @override
   String get createListingSectionDealSubtitle =>
-      'Тип сделки и регион, где объявление будет видно.';
+      'Выберите продажу, обмен или оба варианта.';
+
+  @override
+  String get createListingSectionLocation => 'Местоположение';
+
+  @override
+  String get createListingSectionLocationSubtitle =>
+      'Регион и город, где находится автомобиль.';
 
   @override
   String get createListingSectionPrice => 'Цена и пробег';
@@ -1177,6 +1184,23 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createListingSearchBrandsHint => 'Поиск марки';
 
   @override
+  String get brandPickNotFoundTitle => 'Марка не найдена';
+
+  @override
+  String get brandPickEnterManually => 'Ввести вручную';
+
+  @override
+  String brandPickUseMake(String make) {
+    return 'Использовать «$make»';
+  }
+
+  @override
+  String get brandPickManualHint => 'Не нашли марку?';
+
+  @override
+  String get createListingCustomBrandInvalid => 'Укажите название марки';
+
+  @override
   String get fieldMileageKm => 'Пробег (км)';
 
   @override
@@ -1190,6 +1214,28 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get fieldCity => 'Город';
+
+  @override
+  String get listingCitySelectPlaceholder => 'Выберите город';
+
+  @override
+  String get listingCityPickerTitle => 'Выберите город';
+
+  @override
+  String get listingCitySearchHint => 'Поиск города';
+
+  @override
+  String get listingCityNoResults => 'Город не найден';
+
+  @override
+  String get listingCityOtherLocality => 'Другой населённый пункт';
+
+  @override
+  String get listingCityManualHelper =>
+      'Не нашли нужный город? Укажите его вручную.';
+
+  @override
+  String get listingCityManualFieldLabel => 'Населённый пункт';
 
   @override
   String get fieldPhone => 'Номер телефона';

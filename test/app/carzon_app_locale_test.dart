@@ -15,6 +15,7 @@ import 'package:carzon/features/compare/presentation/widgets/compare_fly_to_tray
 import 'package:carzon/features/compare/presentation/widgets/compare_tray_feedback_controller.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_cubit.dart';
 import 'package:carzon/features/favorites/presentation/bloc/favorites_state.dart';
+import 'package:carzon/features/listings/presentation/cubit/browse_catalog_filter_alerts_cubit.dart';
 import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_state.dart';
 import 'package:carzon/features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
@@ -40,6 +41,10 @@ class _MockSelfSellerVisualCubit extends MockCubit<SelfSellerVisualState>
 class _MockMessagingUnreadSummaryCubit
     extends MockCubit<MessagingUnreadSummaryState>
     implements MessagingUnreadSummaryCubit {}
+
+class _MockBrowseCatalogFilterAlertsCubit
+    extends MockCubit<BrowseCatalogFilterAlertsState>
+    implements BrowseCatalogFilterAlertsCubit {}
 
 final class _InMemoryThemeModeLocalDataSource
     implements ThemeModeLocalDataSource {
@@ -72,7 +77,12 @@ void main() {
   late _MockCompareCubit compareCubit;
   late _MockSelfSellerVisualCubit selfSellerVisualCubit;
   late _MockMessagingUnreadSummaryCubit messagingUnreadSummaryCubit;
+  late _MockBrowseCatalogFilterAlertsCubit browseFilterAlertsCubit;
   late _InMemoryAppLocaleLocalDataSource localeDataSource;
+
+  setUpAll(() {
+    registerFallbackValue(const AuthState.unauthenticated());
+  });
 
   setUp(() async {
     authCubit = _MockAuthCubit();
@@ -80,6 +90,7 @@ void main() {
     compareCubit = _MockCompareCubit();
     selfSellerVisualCubit = _MockSelfSellerVisualCubit();
     messagingUnreadSummaryCubit = _MockMessagingUnreadSummaryCubit();
+    browseFilterAlertsCubit = _MockBrowseCatalogFilterAlertsCubit();
     localeDataSource = _InMemoryAppLocaleLocalDataSource(
       AppLocalePreference.ru,
     );
@@ -110,6 +121,9 @@ void main() {
         phase: MessagingUnreadSummaryPhase.initial,
       ),
     );
+    when(
+      () => browseFilterAlertsCubit.onAuthChanged(any<AuthState>()),
+    ).thenAnswer((_) async {});
 
     sl.registerSingleton<AuthCubit>(authCubit);
     sl.registerSingleton<FavoritesCubit>(favoritesCubit);
@@ -123,6 +137,9 @@ void main() {
     sl.registerSingleton<SelfSellerVisualCubit>(selfSellerVisualCubit);
     sl.registerSingleton<MessagingUnreadSummaryCubit>(
       messagingUnreadSummaryCubit,
+    );
+    sl.registerSingleton<BrowseCatalogFilterAlertsCubit>(
+      browseFilterAlertsCubit,
     );
     registerCarzonAppLocalHistoryCubitStubs(sl);
     sl.registerLazySingleton<ThemeModeLocalDataSource>(

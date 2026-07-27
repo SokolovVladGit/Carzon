@@ -15,6 +15,7 @@ import 'package:carzon/features/edit_listing/presentation/widgets/edit_listing_g
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:carzon/features/listings/domain/entities/listing_image.dart';
+import 'package:carzon/features/listings/presentation/widgets/listing_city_pick_sheet.dart';
 import 'package:carzon/features/listings/presentation/widgets/public_contact_notice.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +33,8 @@ class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
 Listing _listing({
   String? coverUrl,
+  String city = 'Chișinău',
+  MarketRegion marketRegion = MarketRegion.moldova,
   ListingVinStatus vinStatus = ListingVinStatus.notProvided,
 }) => Listing(
   id: 'l1',
@@ -43,8 +46,8 @@ Listing _listing({
   priceCurrency: ListingCurrency.usd,
   mileageKm: 120000,
   type: ListingType.sale,
-  city: 'Chișinău',
-  marketRegion: MarketRegion.moldova,
+  city: city,
+  marketRegion: marketRegion,
   createdAt: DateTime.utc(2026, 4, 1),
   status: ListingStatus.active,
   sellerId: 's1',
@@ -201,6 +204,160 @@ void main() {
       find.byKey(const ValueKey('edit_listing_save_button')),
       findsOneWidget,
     );
+
+    final vehicle = find.byKey(const ValueKey('edit_listing_vehicle_section'));
+    final location = find.byKey(
+      const ValueKey('edit_listing_location_section'),
+    );
+    final price = find.byKey(const ValueKey('edit_listing_price_section'));
+    final region = find.byKey(const ValueKey('edit_listing_region_selector'));
+    final city = find.byKey(const ValueKey('edit_listing_city_field'));
+
+    expect(vehicle, findsOneWidget);
+    expect(location, findsOneWidget);
+    expect(price, findsOneWidget);
+    expect(region, findsOneWidget);
+    expect(city, findsOneWidget);
+    expect(find.text(ru.createListingSectionLocation), findsOneWidget);
+    expect(find.descendant(of: vehicle, matching: region), findsNothing);
+    expect(find.descendant(of: vehicle, matching: city), findsNothing);
+    expect(find.descendant(of: location, matching: region), findsOneWidget);
+    expect(find.descendant(of: location, matching: city), findsOneWidget);
+    expect(
+      tester.getTopLeft(vehicle).dy,
+      lessThan(tester.getTopLeft(location).dy),
+    );
+    expect(
+      tester.getTopLeft(location).dy,
+      lessThan(tester.getTopLeft(price).dy),
+    );
+    expect(tester.getTopLeft(region).dy, lessThan(tester.getTopLeft(city).dy));
+
+    final regionField = tester.widget<DropdownButtonFormField<MarketRegion>>(
+      region,
+    );
+    final cityField = tester.widget<ListingCitySelectorField>(city);
+    expect(regionField.initialValue, MarketRegion.moldova);
+    expect(cityField.canonicalCity, 'Chișinău');
+    expect(cityField.manualMode, isFalse);
+  });
+
+  testWidgets('historical alias hydrates to its canonical known city', (
+    tester,
+  ) async {
+    final listing = _listing(city: '  Chisinau  ');
+    stub(
+      EditListingState.ready(
+        listing,
+        listingGalleryImages: const [],
+        galleryLoadSucceeded: true,
+        initialGallerySlots: <EditListingGallerySlot>[],
+      ),
+    );
+
+    await tester.pumpWidget(app());
+    await tester.pump();
+
+    final cityField = tester.widget<ListingCitySelectorField>(
+      find.byKey(const ValueKey('edit_listing_city_field')),
+    );
+    expect(cityField.canonicalCity, 'Chișinău');
+    expect(cityField.manualMode, isFalse);
+    expect(
+      find.byKey(const ValueKey('edit_listing_manual_city_field')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('unknown historical city hydrates in manual mode unchanged', (
+    tester,
+  ) async {
+    const historicalCity = '  Criuleni village  ';
+    final listing = _listing(city: historicalCity);
+    stub(
+      EditListingState.ready(
+        listing,
+        listingGalleryImages: const [],
+        galleryLoadSucceeded: true,
+        initialGallerySlots: <EditListingGallerySlot>[],
+      ),
+    );
+
+    await tester.pumpWidget(app());
+    await tester.pump();
+
+    final cityField = tester.widget<ListingCitySelectorField>(
+      find.byKey(const ValueKey('edit_listing_city_field')),
+    );
+    expect(cityField.canonicalCity, isNull);
+    expect(cityField.manualMode, isTrue);
+    final manualField = tester.widget<TextFormField>(
+      find.byKey(const ValueKey('edit_listing_manual_city_field')),
+    );
+    expect(manualField.controller?.text, historicalCity);
+  });
+
+  testWidgets('changing region clears hydrated city and manual state', (
+    tester,
+  ) async {
+    final listing = _listing(city: 'Criuleni village');
+    stub(
+      EditListingState.ready(
+        listing,
+        listingGalleryImages: const [],
+        galleryLoadSucceeded: true,
+        initialGallerySlots: <EditListingGallerySlot>[],
+      ),
+    );
+
+    await tester.pumpWidget(app());
+    await tester.pump();
+
+    final region = find.byKey(const ValueKey('edit_listing_region_selector'));
+    await tester.ensureVisible(region);
+    await tester.tap(region);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(ru.regionTransnistria).last);
+    await tester.pumpAndSettle();
+
+    final cityField = tester.widget<ListingCitySelectorField>(
+      find.byKey(const ValueKey('edit_listing_city_field')),
+    );
+    expect(cityField.canonicalCity, isNull);
+    expect(cityField.manualMode, isFalse);
+    expect(
+      find.byKey(const ValueKey('edit_listing_manual_city_field')),
+      findsNothing,
+    );
+    expect(find.text(ru.listingCitySelectPlaceholder), findsOneWidget);
+  });
+
+  testWidgets('cancelling city picker preserves hydrated selection', (
+    tester,
+  ) async {
+    final listing = _listing();
+    stub(
+      EditListingState.ready(
+        listing,
+        listingGalleryImages: const [],
+        galleryLoadSucceeded: true,
+        initialGallerySlots: <EditListingGallerySlot>[],
+      ),
+    );
+
+    await tester.pumpWidget(app());
+    await tester.pump();
+
+    final city = find.byKey(const ValueKey('edit_listing_city_field'));
+    await tester.ensureVisible(city);
+    await tester.tap(city);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip(ru.commonCancel));
+    await tester.pumpAndSettle();
+
+    final cityField = tester.widget<ListingCitySelectorField>(city);
+    expect(cityField.canonicalCity, 'Chișinău');
+    expect(cityField.manualMode, isFalse);
   });
 
   testWidgets(
@@ -410,12 +567,55 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('edit_listing_save_button')));
     await tester.pump();
 
-    verify(
+    final saved =
+        verify(
+              () => cubit.save(
+                input: captureAny(named: 'input'),
+                galleryDraft: any(named: 'galleryDraft'),
+              ),
+            ).captured.single
+            as EditListingInput;
+    expect(saved.city, 'Chișinău');
+    expect(saved.marketRegion, MarketRegion.moldova);
+  });
+
+  testWidgets('manual historical city submits trimmed custom value', (
+    tester,
+  ) async {
+    final listing = _listing(city: '  Criuleni village  ');
+    stub(
+      EditListingState.ready(
+        listing,
+        listingGalleryImages: const [],
+        galleryLoadSucceeded: true,
+        initialGallerySlots: <EditListingGallerySlot>[],
+      ),
+    );
+    when(
       () => cubit.save(
         input: any(named: 'input'),
         galleryDraft: any(named: 'galleryDraft'),
       ),
-    ).called(1);
+    ).thenAnswer((_) async {});
+
+    await tester.pumpWidget(app());
+    await tester.pump();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('edit_listing_save_button')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('edit_listing_save_button')));
+    await tester.pump();
+
+    final saved =
+        verify(
+              () => cubit.save(
+                input: captureAny(named: 'input'),
+                galleryDraft: any(named: 'galleryDraft'),
+              ),
+            ).captured.single
+            as EditListingInput;
+    expect(saved.city, 'Criuleni village');
   });
 
   testWidgets('failed gallery load shows read-only hint string', (

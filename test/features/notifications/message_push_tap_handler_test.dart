@@ -12,24 +12,85 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _FakeOpenEvents implements FirebaseMessagingOpenEvents {
-  _FakeOpenEvents();
+  _FakeOpenEvents() {
+    openedApp = StreamController<RemoteMessage>.broadcast(
+      onListen: () => openedAppListenerCount++,
+      onCancel: () => openedAppCancellationCount++,
+    );
+  }
 
   RemoteMessage? initialMessageReply;
+  Future<RemoteMessage?> Function()? getInitialMessageOverride;
+  bool throwOnOpenedAppAccess = false;
   int getInitialMessageCalls = 0;
-  final StreamController<RemoteMessage> openedApp =
-      StreamController<RemoteMessage>.broadcast();
+  int openedAppListenerCount = 0;
+  int openedAppCancellationCount = 0;
+  late final StreamController<RemoteMessage> openedApp;
 
   @override
   Future<RemoteMessage?> getInitialMessage() async {
     getInitialMessageCalls++;
+    final override = getInitialMessageOverride;
+    if (override != null) {
+      return override();
+    }
     return initialMessageReply;
   }
 
   @override
-  Stream<RemoteMessage> get onMessageOpenedApp => openedApp.stream;
+  Stream<RemoteMessage> get onMessageOpenedApp {
+    if (throwOnOpenedAppAccess) {
+      throwOnOpenedAppAccess = false;
+      throw StateError('temporary opened-app listener failure');
+    }
+    return openedApp.stream;
+  }
 
   Future<void> close() async {
     await openedApp.close();
+  }
+}
+
+final class _TapRetryHarness {
+  _TapRetryHarness({
+    required this.openEvents,
+    required bool Function() firebaseAppReady,
+  }) {
+    conversationCoordinator = MessageConversationNavigationCoordinator(
+      authStateStream: authStates.stream,
+      authStateSnapshot: () => auth,
+      navigateToConversation: navigatedConversations.add,
+    );
+    listingCoordinator = FilterAlertListingNavigationCoordinator(
+      authStateStream: authStates.stream,
+      authStateSnapshot: () => auth,
+      navigateToListingDetail: navigatedListings.add,
+    );
+    handler = MessagePushTapHandler(
+      navigationCoordinator: conversationCoordinator,
+      listingNavigationCoordinator: listingCoordinator,
+      openEvents: openEvents,
+      firebaseAppReady: firebaseAppReady,
+    );
+  }
+
+  final _FakeOpenEvents openEvents;
+  final auth = const AuthState.authenticated(
+    AuthUser(id: 'retry-user', email: 'retry@example.com'),
+  );
+  final authStates = StreamController<AuthState>.broadcast();
+  final navigatedConversations = <String>[];
+  final navigatedListings = <String>[];
+  late final MessageConversationNavigationCoordinator conversationCoordinator;
+  late final FilterAlertListingNavigationCoordinator listingCoordinator;
+  late final MessagePushTapHandler handler;
+
+  Future<void> dispose() async {
+    await handler.dispose();
+    await conversationCoordinator.dispose();
+    await listingCoordinator.dispose();
+    await openEvents.close();
+    await authStates.close();
   }
 }
 
@@ -504,6 +565,186 @@ PUSH_NOTIFICATIONS_ENABLED=true
       await listingCoordinator.dispose();
       await fake.close();
       await authEmitter.close();
+    });
+
+    group('retryable startup', () {
+      setUp(() {
+        dotenv.testLoad(
+          fileInput: '''
+SUPABASE_URL=https://x.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=true
+''',
+        );
+      });
+
+      test(
+        'Firebase unavailable remains idle and later handles initial message',
+        () async {
+          var firebaseReady = false;
+          final fake = _FakeOpenEvents()
+            ..initialMessageReply = RemoteMessage(
+              data: {'type': 'message', 'conversation_id': okId},
+            );
+          final harness = _TapRetryHarness(
+            openEvents: fake,
+            firebaseAppReady: () => firebaseReady,
+          );
+
+          await harness.handler.start();
+          expect(harness.handler.isStarted, isFalse);
+          expect(fake.getInitialMessageCalls, 0);
+          expect(fake.openedAppListenerCount, 0);
+
+          firebaseReady = true;
+          await harness.handler.start();
+          expect(harness.handler.isStarted, isTrue);
+          expect(fake.getInitialMessageCalls, 1);
+          expect(fake.openedAppListenerCount, 1);
+          expect(harness.navigatedConversations, [okId]);
+
+          await harness.dispose();
+        },
+      );
+
+      test(
+        'listener setup failure remains retryable without initial replay',
+        () async {
+          final fake = _FakeOpenEvents()
+            ..initialMessageReply = RemoteMessage(
+              data: {'type': 'message', 'conversation_id': okId},
+            )
+            ..throwOnOpenedAppAccess = true;
+          final harness = _TapRetryHarness(
+            openEvents: fake,
+            firebaseAppReady: () => true,
+          );
+
+          await harness.handler.start();
+          expect(harness.handler.isStarted, isFalse);
+          expect(fake.getInitialMessageCalls, 1);
+          expect(harness.navigatedConversations, [okId]);
+          expect(fake.openedAppListenerCount, 0);
+
+          await harness.handler.start();
+          expect(harness.handler.isStarted, isTrue);
+          expect(fake.getInitialMessageCalls, 1);
+          expect(harness.navigatedConversations, [okId]);
+          expect(fake.openedAppListenerCount, 1);
+
+          await harness.dispose();
+        },
+      );
+
+      test(
+        'concurrent starts share initial lookup and listener setup',
+        () async {
+          final initialGate = Completer<RemoteMessage?>();
+          final fake = _FakeOpenEvents()
+            ..getInitialMessageOverride = () => initialGate.future;
+          final harness = _TapRetryHarness(
+            openEvents: fake,
+            firebaseAppReady: () => true,
+          );
+
+          final first = harness.handler.start();
+          final second = harness.handler.start();
+          expect(fake.getInitialMessageCalls, 1);
+          expect(fake.openedAppListenerCount, 0);
+
+          initialGate.complete();
+          await Future.wait([first, second]);
+          expect(harness.handler.isStarted, isTrue);
+          expect(fake.getInitialMessageCalls, 1);
+          expect(fake.openedAppListenerCount, 1);
+
+          await harness.dispose();
+        },
+      );
+
+      test('initial-message lookup failure retries and routes once', () async {
+        var lookupAttempts = 0;
+        final fake = _FakeOpenEvents()
+          ..getInitialMessageOverride = () async {
+            lookupAttempts++;
+            if (lookupAttempts == 1) {
+              throw StateError('temporary initial-message failure');
+            }
+            return RemoteMessage(
+              data: {'type': 'message', 'conversation_id': okId},
+            );
+          };
+        final harness = _TapRetryHarness(
+          openEvents: fake,
+          firebaseAppReady: () => true,
+        );
+
+        await harness.handler.start();
+        expect(harness.handler.isStarted, isFalse);
+        expect(fake.openedAppListenerCount, 0);
+        expect(harness.navigatedConversations, isEmpty);
+
+        await harness.handler.start();
+        expect(harness.handler.isStarted, isTrue);
+        expect(fake.getInitialMessageCalls, 2);
+        expect(fake.openedAppListenerCount, 1);
+        expect(harness.navigatedConversations, [okId]);
+
+        await harness.dispose();
+      });
+
+      test(
+        'repeated start does not replay initial or duplicate opened listener',
+        () async {
+          const openedId = 'cccccccc-cccc-4ccc-a789-cccccccccccc';
+          final fake = _FakeOpenEvents()
+            ..initialMessageReply = RemoteMessage(
+              data: {'type': 'message', 'conversation_id': okId},
+            );
+          final harness = _TapRetryHarness(
+            openEvents: fake,
+            firebaseAppReady: () => true,
+          );
+
+          await harness.handler.start();
+          await harness.handler.start();
+          fake.openedApp.add(
+            RemoteMessage(
+              data: {'type': 'message', 'conversation_id': openedId},
+            ),
+          );
+          await Future<void>.delayed(Duration.zero);
+
+          expect(fake.getInitialMessageCalls, 1);
+          expect(fake.openedAppListenerCount, 1);
+          expect(harness.navigatedConversations, [okId, openedId]);
+
+          await harness.dispose();
+          expect(fake.openedAppCancellationCount, 1);
+        },
+      );
+
+      test(
+        'malformed initial payload is ignored without breaking startup',
+        () async {
+          final fake = _FakeOpenEvents()
+            ..initialMessageReply = RemoteMessage(
+              data: {'type': 'message', 'conversation_id': 'malformed'},
+            );
+          final harness = _TapRetryHarness(
+            openEvents: fake,
+            firebaseAppReady: () => true,
+          );
+
+          await harness.handler.start();
+          expect(harness.handler.isStarted, isTrue);
+          expect(harness.navigatedConversations, isEmpty);
+          expect(harness.navigatedListings, isEmpty);
+          expect(fake.openedAppListenerCount, 1);
+
+          await harness.dispose();
+        },
+      );
     });
   });
 }

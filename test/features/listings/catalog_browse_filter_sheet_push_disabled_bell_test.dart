@@ -243,7 +243,11 @@ void main() {
         notifRepo: notifRepo,
         orch: orch,
       );
-      await alertsCubit.refresh();
+      await alertsCubit.onAuthChanged(
+        const AuthState.authenticated(
+          AuthUser(id: 'u', email: 'u@example.com'),
+        ),
+      );
 
       final formKey = GlobalKey<ListingsFilterFormState>();
       await tester.pumpWidget(
@@ -305,7 +309,11 @@ void main() {
         notifRepo: notifRepo,
         orch: orch,
       );
-      await alertsCubit.refresh();
+      await alertsCubit.onAuthChanged(
+        const AuthState.authenticated(
+          AuthUser(id: 'u', email: 'u@example.com'),
+        ),
+      );
 
       final formKey = GlobalKey<ListingsFilterFormState>();
       await tester.pumpWidget(
@@ -362,7 +370,11 @@ void main() {
         notifRepo: notifRepo,
         orch: orch,
       );
-      await alertsCubit.refresh();
+      await alertsCubit.onAuthChanged(
+        const AuthState.authenticated(
+          AuthUser(id: 'u', email: 'u@example.com'),
+        ),
+      );
 
       const appliedState = ListingsState(
         make: 'BMW',

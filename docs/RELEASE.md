@@ -155,9 +155,18 @@ Local **last-applied listing filters** persist on-device (`ListingDiscoveryCrite
 
 Later migrations add **filter-alert notification queue/cron**, **VIN decode/report phases** (`20260616120000` … `20260629120000`), and **public contact projection hardening** (`20260630120000`). **Hosted Carzon (2026-06):** contact hardening closed; parity **45/45 at that baseline** (metadata reconciliation).
 
-**Post–June 2026 + Fuel Prices (repo — hosted applied 2026-06-22):** additional migrations through **`20260822130000_fix_fuel_price_job_reenqueue.sql`**. **Hosted migration count: 68** (was **65** before Fuel Prices v1). **No pending hosted SQL or Edge deploy for Fuel Prices.** Runbook: **`docs/ops_fuel_price_jobs.md`**.
+**Current hosted chain (verified 27 July 2026):** all **71/71** local
+migrations are applied through
+**`20260823120000_retain_pseudonymized_moderation_reports.sql`**. Hosted
+moderation-retention verification passed: all four report foreign keys use
+`ON DELETE SET NULL`, original-evidence snapshot columns and the immutability
+trigger exist, and the affected functions have the expected security/search
+path configuration. **No additional SQL remains pending from the current local
+migration chain.** Fuel Prices operations remain documented in
+**`docs/ops_fuel_price_jobs.md`**.
 
-> **Stale doc warning:** Any checklist still citing **45/45** migrations describes the June 2026 contact-hardening snapshot only — not current hosted state.
+> **Stale doc warning:** Counts of **45/45**, **65**, or **68** describe
+> historical hosted baselines, not the current 71/71 state.
 
 **Authoritative pre-release verification** (re-run after any hosted SQL change):
 
@@ -169,7 +178,10 @@ Later migrations add **filter-alert notification queue/cron**, **VIN decode/repo
 
 Runbooks: `docs/hosted_migration_parity_verification.md`, `docs/hosted_migration_metadata_reconciliation.md` (if parity STOP + runtime PASS), **`docs/ops_fuel_price_jobs.md`** (Fuel Prices worker).
 
-**Full repo migration range:** `20260423120000_create_listings.sql` … `20260822130000_fix_fuel_price_job_reenqueue.sql` (**70** files under `supabase/migrations/`; **68** recorded on hosted as of 2026-06-22).
+**Full repo migration range:** `20260423120000_create_listings.sql` …
+`20260823120000_retain_pseudonymized_moderation_reports.sql` (**71** files
+under `supabase/migrations/`; **71/71** applied on hosted as verified
+27 July 2026).
 
 **Important**
 

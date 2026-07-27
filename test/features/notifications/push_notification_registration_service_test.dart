@@ -24,6 +24,8 @@ class _FakePushMessagingClient implements PushMessagingClient {
   PushMessagingPermissionStatus permissionAfterRequest =
       PushMessagingPermissionStatus.authorized;
   String? token = 'fake-token';
+  Future<String?>? pendingToken;
+  Completer<void>? tokenReadStarted;
   final StreamController<String> _refresh = StreamController.broadcast();
 
   @override
@@ -45,7 +47,12 @@ class _FakePushMessagingClient implements PushMessagingClient {
   }
 
   @override
-  Future<String?> getFcmToken() async => token;
+  Future<String?> getFcmToken() async {
+    tokenReadStarted?.complete();
+    final pending = pendingToken;
+    if (pending != null) return pending;
+    return token;
+  }
 
   @override
   Stream<String> watchTokenRefresh() => _refresh.stream;
@@ -246,6 +253,35 @@ PUSH_NOTIFICATIONS_ENABLED=false
           locale: 'ru',
         ),
       ).called(1);
+    },
+  );
+
+  test(
+    'guard stops registration when session changes during token read',
+    () async {
+      final tokenRead = Completer<String?>();
+      final tokenStarted = Completer<void>();
+      client.pendingToken = tokenRead.future;
+      client.tokenReadStarted = tokenStarted;
+      var sessionCurrent = true;
+
+      final sync = sut.syncTokenWithBackendIfEligible(
+        isSessionCurrent: () => sessionCurrent,
+      );
+      await tokenStarted.future;
+      sessionCurrent = false;
+      tokenRead.complete('user-a-token');
+      await sync;
+
+      verifyNever(
+        () => repo.registerPushToken(
+          token: any(named: 'token'),
+          platform: any(named: 'platform'),
+          appVersion: any(named: 'appVersion'),
+          deviceId: any(named: 'deviceId'),
+          locale: any(named: 'locale'),
+        ),
+      );
     },
   );
 

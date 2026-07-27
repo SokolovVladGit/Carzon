@@ -111,6 +111,12 @@ void main() {
       testSavedSearch(criteria: const ListingDiscoveryCriteria()),
     );
     registerFallbackValue(const ListingDiscoveryCriteria());
+    registerFallbackValue(
+      FilterAlertDeliverySessionGuard(
+        expectedUserId: 'fallback',
+        isSessionCurrent: () => true,
+      ),
+    );
   });
 
   group('catalog filter sheet bell — criteria too broad inline notice', () {
@@ -154,7 +160,12 @@ PUSH_NOTIFICATIONS_ENABLED=true
         ),
       );
       final orch = _MockDeliveryOrchestrator();
-      when(() => orch.enableDeliveries(any())).thenAnswer((inv) async {
+      when(
+        () => orch.enableDeliveries(
+          any(),
+          sessionGuard: any(named: 'sessionGuard'),
+        ),
+      ).thenAnswer((inv) async {
         final row = inv.positionalArguments.first as SavedSearch;
         return Success(
           SavedSearch(
@@ -172,7 +183,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
         notificationsRepo: notifRepo,
         deliveryOrchestrator: orch,
       );
-      await cubit.refresh();
+      await cubit.onAuthChanged(
+        const AuthState.authenticated(AuthUser(id: 'id', email: 'e@m.com')),
+      );
       return (cubit, savedSearchesRepo);
     }
 

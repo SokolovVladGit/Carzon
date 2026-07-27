@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.carzon</string>
+	<string>com.carzon.app</string>
 	<key>PROJECT_ID</key>
 	<string>carzon-b8583</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:68189143516:ios:2a7f7aecb59b1185af4f19</string>
+	<string>1:68189143516:ios:37d01d3d84833fdcaf4f19</string>
 </dict>
 </plist>

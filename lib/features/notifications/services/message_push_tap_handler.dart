@@ -12,6 +12,8 @@ import 'message_conversation_navigation_coordinator.dart';
 import 'message_notification_tap_payload.dart';
 import 'price_drop_notification_tap_payload.dart';
 
+enum _PushTapHandlerStartupState { idle, starting, started }
+
 /// Listens for push notification opens and routes by `type` in FCM data.
 class MessagePushTapHandler {
   MessagePushTapHandler({
@@ -34,25 +36,43 @@ class MessagePushTapHandler {
   final AppLogger _logger;
 
   StreamSubscription<RemoteMessage>? _openedAppSub;
-  bool _started = false;
+  _PushTapHandlerStartupState _startupState = _PushTapHandlerStartupState.idle;
+  Future<void>? _startInFlight;
   bool _initialMessageHandled = false;
+
+  bool get isStarted => _startupState == _PushTapHandlerStartupState.started;
 
   /// Idempotent. Safe to call from the first frame after [MaterialApp.router]
   /// is mounted.
   Future<void> start() async {
-    if (!Env.pushNotificationsEnabled || _started) {
+    if (!Env.pushNotificationsEnabled || isStarted) {
       return;
     }
-    if (!_firebaseAppReady()) {
-      _logger.warn(
-        'Skipping message push tap handler: Firebase default app not available',
-      );
-      return;
+    final inFlight = _startInFlight;
+    if (inFlight != null) {
+      return inFlight;
     }
-
-    _started = true;
-
+    final attempt = _start();
+    _startInFlight = attempt;
     try {
+      await attempt;
+    } finally {
+      if (identical(_startInFlight, attempt)) {
+        _startInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _start() async {
+    _startupState = _PushTapHandlerStartupState.starting;
+    try {
+      if (!_firebaseAppReady()) {
+        _logger.warn(
+          'Skipping message push tap handler: Firebase default app not available',
+        );
+        _startupState = _PushTapHandlerStartupState.idle;
+        return;
+      }
       _navigationCoordinator.ensureStarted();
       _listingNavigationCoordinator.ensureStarted();
 
@@ -64,7 +84,11 @@ class MessagePushTapHandler {
           _logger.error('onMessageOpenedApp stream error', e, st);
         },
       );
+      _startupState = _PushTapHandlerStartupState.started;
     } catch (e, st) {
+      await _openedAppSub?.cancel();
+      _openedAppSub = null;
+      _startupState = _PushTapHandlerStartupState.idle;
       _logger.error('MessagePushTapHandler.start failed', e, st);
     }
   }
@@ -81,8 +105,8 @@ class MessagePushTapHandler {
       }
       await _handleRemoteMessage(message);
     } catch (e, st) {
-      _initialMessageHandled = true;
       _logger.error('getInitialMessage failed', e, st);
+      rethrow;
     }
   }
 
@@ -121,9 +145,14 @@ class MessagePushTapHandler {
   }
 
   Future<void> dispose() async {
-    await _openedAppSub?.cancel();
+    final inFlight = _startInFlight;
+    if (inFlight != null) {
+      await inFlight;
+    }
+    final subscription = _openedAppSub;
     _openedAppSub = null;
-    _started = false;
+    await subscription?.cancel();
+    _startupState = _PushTapHandlerStartupState.idle;
     _initialMessageHandled = false;
   }
 }

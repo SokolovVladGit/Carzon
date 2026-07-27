@@ -1,10 +1,16 @@
 # Hosted migration parity verification
 
-## Hosted status — **closed (2026-06-22)**
+## Hosted status — **closed (27 July 2026)**
 
 **Confirmed on hosted Carzon:**
 
-- **68** migrations recorded in `supabase_migrations.schema_migrations` (was **65** before Fuel Prices v1; **45/45** in older docs is a **stale June 2026 baseline**)
+- **71/71** local migrations applied and recorded through
+  `20260823120000_retain_pseudonymized_moderation_reports.sql`
+- Moderation-report retention verified: all four `public.user_reports` foreign
+  keys use `ON DELETE SET NULL`; original-evidence snapshot columns and
+  `protect_user_report_original_evidence_before_update` exist; affected
+  functions have the expected security/search path configuration
+- No additional SQL is pending from the current local migration chain
 - Fuel Prices trilogy applied hosted: `20260822120000_fuel_prices_foundation`, `20260822123000_schedule_process_fuel_price_jobs_cron`, `20260822130000_fix_fuel_price_job_reenqueue`
 - **`process-fuel-price-jobs`** Edge Function deployed **ACTIVE v3**; cron **`carzon_process_fuel_price_jobs_6h`** active; Vault secrets synced — see **`docs/ops_fuel_price_jobs.md`**
 - `check_hosted_runtime_contracts.sql` → PASS (no STOP/WARN) at last full audit; re-run after hosted changes
@@ -54,7 +60,12 @@ This check is **read-only** and does **not** apply migrations.
 
 ### `hosted_migration_parity_result` = **PASS**
 
-All **70** repo migrations in the parity helper inventory are recorded in hosted `schema_migrations` by **version**. **As of 2026-06-22:** hosted Carzon has **68** migrations recorded (includes Fuel Prices v1). A PASS requires full inventory match — update `check_hosted_migration_parity.sql` when adding new migration files.
+All **71** repo migrations in the parity helper inventory are recorded in
+hosted `schema_migrations` by **version**. As verified **27 July 2026**, the
+latest applied migration is
+`20260823120000_retain_pseudonymized_moderation_reports.sql`. A PASS requires
+full inventory match — update `check_hosted_migration_parity.sql` when adding
+new migration files.
 
 **Next steps (do not skip):**
 

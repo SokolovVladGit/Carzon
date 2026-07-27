@@ -101,10 +101,18 @@ void main() {
     'complete_vehicle_recall_fetch_job_success',
     'complete_vehicle_recall_fetch_job_failure',
     'carzon_invoke_process_recall_data_jobs_worker',
+    // Fuel Prices v1: internal SQL helpers + pg_cron worker (not Flutter `.rpc()`).
+    // Public buyer path is `get_fuel_prices_for_app()` only.
+    'carzon_fuel_price_territory_for_cache_key',
+    'carzon_fuel_price_source_for_cache_key',
+    'carzon_fuel_price_default_limitation_codes',
+    'carzon_invoke_process_fuel_price_jobs_worker',
     // M0.3 messaging block/report helpers (trigger/RPC-internal only).
     'carzon_is_support_user_id',
     'carzon_users_are_blocked',
     'carzon_messaging_peer_from_conversation',
+    // Retained moderation evidence guard: table trigger only, never app-called.
+    'protect_user_report_original_evidence',
   };
 
   /// Internal `public` tables with RLS that must **not** receive `GRANT` to
@@ -129,6 +137,9 @@ void main() {
     // Recall worker cache/queue (service_role / Edge only).
     'vehicle_recall_source_cache',
     'vehicle_recall_fetch_jobs',
+    // Fuel Prices worker cache/queue (service_role / Edge only).
+    'fuel_price_source_cache',
+    'fuel_price_fetch_jobs',
     // M0.3 reports: RPC-only writes; no client table access.
     'user_reports',
   };
@@ -162,6 +173,8 @@ void main() {
     'vehicle_model_fetch_jobs',
     'vehicle_recall_source_cache',
     'vehicle_recall_fetch_jobs',
+    'fuel_price_source_cache',
+    'fuel_price_fetch_jobs',
     'user_blocks',
     'user_reports',
   };

@@ -432,6 +432,46 @@ void main() {
     expect(received?.make, 'Mercedes-Benz');
   });
 
+  testWidgets('apply passes manual custom make from picker empty search', (
+    tester,
+  ) async {
+    final l10n = ruStrings();
+    ListingsFilterApplyResult? received;
+    const customMake = 'Zaporozhets';
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: ListingsFilterHost(
+          seed: ListingsFilterFormSeed.fromListingsState(const ListingsState()),
+          onDismiss: () {},
+          onApply: (r) => received = r,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final trigger = find.byKey(
+      const ValueKey<String>('listings_filter_make_pick_trigger'),
+    );
+    await tester.scrollUntilVisible(
+      trigger,
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(trigger);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, customMake);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.brandPickUseMake(customMake)));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text(l10n.filterShowCars));
+    await tester.pumpAndSettle();
+    expect(received?.make, customMake);
+  });
+
   testWidgets('apply passes newly added Chinese catalog make', (tester) async {
     final l10n = ruStrings();
     ListingsFilterApplyResult? received;

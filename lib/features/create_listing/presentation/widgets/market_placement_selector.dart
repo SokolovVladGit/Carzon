@@ -34,22 +34,28 @@ class MarketPlacementSelector extends StatelessWidget {
               SizedBox(
                 width: half,
                 child: ComposeChoiceCard(
+                  key: const ValueKey('market_region_transnistria'),
                   label: l10n.regionTransnistria,
                   selected: value == MarketRegion.transnistria,
                   enabled: !disabled,
                   onTap: () => onChanged(MarketRegion.transnistria),
                   theme: theme,
+                  stableSelectionIndicator: true,
+                  singleLineScaleDown: true,
                 ),
               ),
               SizedBox(width: gap),
               SizedBox(
                 width: half,
                 child: ComposeChoiceCard(
+                  key: const ValueKey('market_region_moldova'),
                   label: l10n.regionMoldova,
                   selected: value == MarketRegion.moldova,
                   enabled: !disabled,
                   onTap: () => onChanged(MarketRegion.moldova),
                   theme: theme,
+                  stableSelectionIndicator: true,
+                  singleLineScaleDown: true,
                 ),
               ),
             ],

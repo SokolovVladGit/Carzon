@@ -59,12 +59,15 @@ class PushNotificationRegistrationService {
 
   /// Syncs the device token with Supabase when config, auth, permission,
   /// and token availability allow (no permission prompt).
-  Future<void> syncTokenWithBackendIfEligible() async {
+  Future<void> syncTokenWithBackendIfEligible({
+    bool Function()? isSessionCurrent,
+  }) async {
+    if (!_isCurrent(isSessionCurrent)) return;
     final inFlight = _syncInFlight;
     if (inFlight != null) {
       return inFlight;
     }
-    final sync = _syncTokenWithBackendIfEligible();
+    final sync = _syncTokenWithBackendIfEligible(isSessionCurrent);
     _syncInFlight = sync;
     try {
       await sync;
@@ -75,7 +78,9 @@ class PushNotificationRegistrationService {
     }
   }
 
-  Future<void> _syncTokenWithBackendIfEligible() async {
+  Future<void> _syncTokenWithBackendIfEligible(
+    bool Function()? isSessionCurrent,
+  ) async {
     try {
       if (!Env.pushNotificationsEnabled) {
         return;
@@ -83,17 +88,21 @@ class PushNotificationRegistrationService {
       if (!await _ensureFirebaseReady()) {
         return;
       }
+      if (!_isCurrent(isSessionCurrent)) return;
       if (!_authGate.hasAuthenticatedUser) {
         return;
       }
       final status = await _messagingClient.getPermissionStatus();
+      if (!_isCurrent(isSessionCurrent)) return;
       if (!status.allowsTokenRegistration) {
         return;
       }
       final token = await _messagingClient.getFcmToken();
+      if (!_isCurrent(isSessionCurrent)) return;
       if (token == null || token.trim().isEmpty) {
         return;
       }
+      if (!_isCurrent(isSessionCurrent)) return;
       await _registerWithRepository(token.trim());
     } catch (e, st) {
       _logger.error('syncTokenWithBackendIfEligible failed', e, st);
@@ -266,6 +275,10 @@ class PushNotificationRegistrationService {
       AppLocalePreference.ro => 'ro',
       AppLocalePreference.ru => 'ru',
     };
+  }
+
+  bool _isCurrent(bool Function()? isSessionCurrent) {
+    return isSessionCurrent?.call() ?? true;
   }
 
   Future<void> _registerWithRepository(String token) async {

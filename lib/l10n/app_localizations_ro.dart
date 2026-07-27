@@ -1045,14 +1045,21 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get createListingSectionVehicleSubtitle =>
-      'Oraș, marcă, model, an și specificații.';
+      'Marcă, model, an și specificații.';
 
   @override
-  String get createListingSectionDeal => 'Comerț și piață';
+  String get createListingSectionDeal => 'Tipul anunțului';
 
   @override
   String get createListingSectionDealSubtitle =>
-      'Tipul ofertei și regiunea unde anunțul va fi vizibil.';
+      'Alegeți vânzare, schimb sau ambele opțiuni.';
+
+  @override
+  String get createListingSectionLocation => 'Locație';
+
+  @override
+  String get createListingSectionLocationSubtitle =>
+      'Regiunea și orașul în care se află automobilul.';
 
   @override
   String get createListingSectionPrice => 'Preț și kilometraj';
@@ -1174,6 +1181,23 @@ class AppLocalizationsRo extends AppLocalizations {
   String get createListingSearchBrandsHint => 'Căutare de mărci';
 
   @override
+  String get brandPickNotFoundTitle => 'Marca nu a fost găsită';
+
+  @override
+  String get brandPickEnterManually => 'Introduceți manual';
+
+  @override
+  String brandPickUseMake(String make) {
+    return 'Folosiți «$make»';
+  }
+
+  @override
+  String get brandPickManualHint => 'Nu ați găsit marca?';
+
+  @override
+  String get createListingCustomBrandInvalid => 'Specificați numele mărcii';
+
+  @override
   String get fieldMileageKm => 'Kilometraj (km)';
 
   @override
@@ -1188,6 +1212,28 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get fieldCity => 'Oraş';
+
+  @override
+  String get listingCitySelectPlaceholder => 'Selectați orașul';
+
+  @override
+  String get listingCityPickerTitle => 'Selectați orașul';
+
+  @override
+  String get listingCitySearchHint => 'Căutați orașul';
+
+  @override
+  String get listingCityNoResults => 'Orașul nu a fost găsit';
+
+  @override
+  String get listingCityOtherLocality => 'Altă localitate';
+
+  @override
+  String get listingCityManualHelper =>
+      'Nu ați găsit localitatea? Introduceți-o manual.';
+
+  @override
+  String get listingCityManualFieldLabel => 'Localitate';
 
   @override
   String get fieldPhone => 'Număr de telefon';

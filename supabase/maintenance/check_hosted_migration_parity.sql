@@ -90,7 +90,8 @@ expected AS (
             ('20260803120000', 'discovery_drivetrain_filter_alert',         'filter alerts'),
             ('20260822120000', 'fuel_prices_foundation',                    'fuel prices'),
             ('20260822123000', 'schedule_process_fuel_price_jobs_cron',     'fuel prices'),
-            ('20260822130000', 'fix_fuel_price_job_reenqueue',              'fuel prices')
+            ('20260822130000', 'fix_fuel_price_job_reenqueue',              'fuel prices'),
+            ('20260823120000', 'retain_pseudonymized_moderation_reports',    'moderation')
            ) AS t(version, migration_name, category)
 ),
 hosted AS (
@@ -145,7 +146,7 @@ info_rows AS (
            'parity_check_scope'::text AS migration_name,
            'meta'::text AS category,
            'INFO'::text AS status,
-           'Read-only parity check for 70 repo migrations under supabase/migrations/. '
+           'Read-only parity check for 71 repo migrations under supabase/migrations/. '
            || 'Compares hosted supabase_migrations.schema_migrations by version only. '
            || 'Staging preferred; safe on a single production project (SELECT only).'::text
            AS details,

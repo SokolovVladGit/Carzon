@@ -1959,20 +1959,32 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSectionVehicleSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Город, марка, модель, год и характеристики.'**
+  /// **'Марка, модель, год и характеристики.'**
   String get createListingSectionVehicleSubtitle;
 
   /// No description provided for @createListingSectionDeal.
   ///
   /// In ru, this message translates to:
-  /// **'Сделка и рынок'**
+  /// **'Тип объявления'**
   String get createListingSectionDeal;
 
   /// No description provided for @createListingSectionDealSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Тип сделки и регион, где объявление будет видно.'**
+  /// **'Выберите продажу, обмен или оба варианта.'**
   String get createListingSectionDealSubtitle;
+
+  /// No description provided for @createListingSectionLocation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Местоположение'**
+  String get createListingSectionLocation;
+
+  /// No description provided for @createListingSectionLocationSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регион и город, где находится автомобиль.'**
+  String get createListingSectionLocationSubtitle;
 
   /// No description provided for @createListingSectionPrice.
   ///
@@ -2196,6 +2208,36 @@ abstract class AppLocalizations {
   /// **'Поиск марки'**
   String get createListingSearchBrandsHint;
 
+  /// No description provided for @brandPickNotFoundTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Марка не найдена'**
+  String get brandPickNotFoundTitle;
+
+  /// No description provided for @brandPickEnterManually.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ввести вручную'**
+  String get brandPickEnterManually;
+
+  /// No description provided for @brandPickUseMake.
+  ///
+  /// In ru, this message translates to:
+  /// **'Использовать «{make}»'**
+  String brandPickUseMake(String make);
+
+  /// No description provided for @brandPickManualHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не нашли марку?'**
+  String get brandPickManualHint;
+
+  /// No description provided for @createListingCustomBrandInvalid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите название марки'**
+  String get createListingCustomBrandInvalid;
+
   /// No description provided for @fieldMileageKm.
   ///
   /// In ru, this message translates to:
@@ -2225,6 +2267,48 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Город'**
   String get fieldCity;
+
+  /// No description provided for @listingCitySelectPlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите город'**
+  String get listingCitySelectPlaceholder;
+
+  /// No description provided for @listingCityPickerTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите город'**
+  String get listingCityPickerTitle;
+
+  /// No description provided for @listingCitySearchHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск города'**
+  String get listingCitySearchHint;
+
+  /// No description provided for @listingCityNoResults.
+  ///
+  /// In ru, this message translates to:
+  /// **'Город не найден'**
+  String get listingCityNoResults;
+
+  /// No description provided for @listingCityOtherLocality.
+  ///
+  /// In ru, this message translates to:
+  /// **'Другой населённый пункт'**
+  String get listingCityOtherLocality;
+
+  /// No description provided for @listingCityManualHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не нашли нужный город? Укажите его вручную.'**
+  String get listingCityManualHelper;
+
+  /// No description provided for @listingCityManualFieldLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Населённый пункт'**
+  String get listingCityManualFieldLabel;
 
   /// No description provided for @fieldPhone.
   ///

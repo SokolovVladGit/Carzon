@@ -10,7 +10,10 @@ import 'package:carzon/features/create_listing/domain/entities/new_listing_input
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_cubit.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_state.dart';
 import 'package:carzon/features/create_listing/presentation/pages/create_listing_page.dart';
+import 'package:carzon/features/create_listing/presentation/widgets/market_placement_selector.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_media_section.dart';
+import 'package:carzon/features/listings/domain/catalog/listing_brands.dart';
+import 'package:carzon/features/listings/presentation/widgets/listing_brand_pick_sheet.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/widgets/public_contact_notice.dart';
 import 'package:carzon/l10n/app_localizations.dart';
@@ -177,6 +180,95 @@ void main() {
     await tester.pump();
   }
 
+  Future<void> openCityPicker(WidgetTester tester) async {
+    tester.testTextInput.hide();
+    await tester.pumpAndSettle();
+    final city = find.byKey(const ValueKey('create_listing_city_field'));
+    await tester.ensureVisible(city);
+    await tester.pumpAndSettle();
+    await tester.tap(city);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> chooseRegion(WidgetTester tester, String regionLabel) async {
+    tester.testTextInput.hide();
+    await tester.pumpAndSettle();
+    final region = find.byKey(const ValueKey('create_listing_region_selector'));
+    await tester.ensureVisible(region);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(of: region, matching: find.text(regionLabel)),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> fillRequiredFieldsExceptCity(WidgetTester tester) async {
+    final brand = find.byKey(const ValueKey('create_listing_brand_field'));
+    await tester.scrollUntilVisible(
+      brand,
+      160,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(brand);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'Toyota');
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ListTile, 'Toyota'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, l10n.fieldModel),
+      'Corolla',
+    );
+    final year = find.byKey(const ValueKey('create_listing_year_field'));
+    await tester.ensureVisible(year);
+    await tester.tap(year);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.commonDone));
+    await tester.pumpAndSettle();
+
+    final price = find.widgetWithText(
+      TextFormField,
+      l10n.createListingPriceAmount,
+    );
+    await tester.scrollUntilVisible(
+      price,
+      160,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.enterText(price, '9000');
+    await tester.enterText(
+      find.widgetWithText(TextFormField, l10n.fieldMileageKm),
+      '100000',
+    );
+
+    final phone = find.widgetWithText(TextFormField, l10n.fieldPhone);
+    await tester.scrollUntilVisible(
+      phone,
+      160,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.enterText(phone, '+37369000001');
+  }
+
+  Future<NewListingInput> submitAndCapture(WidgetTester tester) async {
+    tester.testTextInput.hide();
+    await tester.pumpAndSettle();
+    final publish = find.text(l10n.publishListing).last;
+    await tester.ensureVisible(publish);
+    await tester.pumpAndSettle();
+    await tester.tap(publish);
+    await tester.pump();
+    return verify(
+          () => createCubit.submit(
+            listingInput: captureAny(named: 'listingInput'),
+            orderedPhotos: any(named: 'orderedPhotos'),
+          ),
+        ).captured.single
+        as NewListingInput;
+  }
+
   testWidgets(
     'Phase 3A form shell: media, currency, brand, year, publish, disclosure',
     (tester) async {
@@ -220,6 +312,172 @@ void main() {
       await tester.pumpAndSettle();
     },
   );
+
+  testWidgets('location is a dedicated fifth section between type and price', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+
+    const sectionKeys = [
+      'create_listing_photos_section',
+      'create_listing_vehicle_section',
+      'create_listing_description_section',
+      'create_listing_type_section',
+      'create_listing_location_section',
+      'create_listing_price_section',
+      'create_listing_publish_section',
+    ];
+    final sections = [for (final key in sectionKeys) find.byKey(ValueKey(key))];
+
+    for (final section in sections) {
+      expect(section, findsOneWidget);
+    }
+    for (var i = 1; i < sections.length; i++) {
+      expect(
+        tester.getTopLeft(sections[i - 1]).dy,
+        lessThan(tester.getTopLeft(sections[i]).dy),
+      );
+    }
+
+    final vehicle = sections[1];
+    final type = sections[3];
+    final location = sections[4];
+    final price = sections[5];
+    final publish = sections[6];
+    final city = find.byKey(const ValueKey('create_listing_city_field'));
+    final region = find.byKey(const ValueKey('create_listing_region_selector'));
+
+    expect(find.text(l10n.createListingSectionLocation), findsOneWidget);
+    expect(city, findsOneWidget);
+    expect(region, findsOneWidget);
+    expect(find.byType(MarketPlacementSelector), findsOneWidget);
+    expect(find.descendant(of: vehicle, matching: city), findsNothing);
+    expect(find.descendant(of: type, matching: region), findsNothing);
+    expect(find.descendant(of: location, matching: region), findsOneWidget);
+    expect(find.descendant(of: location, matching: city), findsOneWidget);
+    expect(tester.getTopLeft(region).dy, lessThan(tester.getTopLeft(city).dy));
+    expect(
+      find.descendant(of: location, matching: find.text('05')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: price, matching: find.text('06')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: publish, matching: find.text('07')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('city picker follows region and region change clears selection', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+
+    await openCityPicker(tester);
+    expect(find.text('Тирасполь'), findsOneWidget);
+    expect(find.text('Chișinău'), findsNothing);
+    await tester.tap(find.text('Тирасполь'));
+    await tester.pumpAndSettle();
+    expect(find.text('Тирасполь'), findsOneWidget);
+
+    await chooseRegion(tester, l10n.regionMoldova);
+    expect(find.text(l10n.listingCitySelectPlaceholder), findsOneWidget);
+    await openCityPicker(tester);
+    expect(find.text('Chișinău'), findsOneWidget);
+    expect(find.text('Тирасполь'), findsNothing);
+  });
+
+  testWidgets('manual city mode is revealed and cleared by region change', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+
+    await openCityPicker(tester);
+    await tester.tap(find.byKey(const ValueKey('listing_city_manual_option')));
+    await tester.pumpAndSettle();
+    final manual = find.byKey(
+      const ValueKey('create_listing_manual_city_field'),
+    );
+    expect(manual, findsOneWidget);
+    await tester.enterText(manual, 'Valea Mare');
+
+    await chooseRegion(tester, l10n.regionMoldova);
+    expect(manual, findsNothing);
+    expect(find.text('Valea Mare'), findsNothing);
+    expect(find.text(l10n.listingCitySelectPlaceholder), findsOneWidget);
+  });
+
+  testWidgets('blank city shows one logical city error and skips submit', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+
+    final publish = find.text(l10n.publishListing).last;
+    await tester.ensureVisible(publish);
+    await tester.tap(publish);
+    await tester.pumpAndSettle();
+
+    final city = find.byKey(const ValueKey('create_listing_city_field'));
+    expect(
+      find.descendant(of: city, matching: find.text(l10n.validationRequired)),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_manual_city_field')),
+      findsNothing,
+    );
+    verifyNever(
+      () => createCubit.submit(
+        listingInput: any(named: 'listingInput'),
+        orderedPhotos: any(named: 'orderedPhotos'),
+      ),
+    );
+  });
+
+  testWidgets('manual custom city is trimmed on create submission', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await fillRequiredFieldsExceptCity(tester);
+    await openCityPicker(tester);
+    await tester.tap(find.byKey(const ValueKey('listing_city_manual_option')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('create_listing_manual_city_field')),
+      '  Valea Mare  ',
+    );
+
+    final submitted = await submitAndCapture(tester);
+    expect(submitted.city, 'Valea Mare');
+    expect(submitted.marketRegion, MarketRegion.transnistria);
+  });
+
+  testWidgets('manual alias is canonicalized on create submission', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await fillRequiredFieldsExceptCity(tester);
+    await chooseRegion(tester, l10n.regionMoldova);
+    await openCityPicker(tester);
+    await tester.tap(find.byKey(const ValueKey('listing_city_manual_option')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('create_listing_manual_city_field')),
+      '  Chisinau  ',
+    );
+
+    final submitted = await submitAndCapture(tester);
+    expect(submitted.city, 'Chișinău');
+    expect(submitted.marketRegion, MarketRegion.moldova);
+  });
 
   testWidgets(
     'empty photo hero: no layout overflow on narrow phone + bumped text scale',
@@ -359,4 +617,72 @@ void main() {
       expect(find.byType(Image), findsWidgets);
     },
   );
+
+  testWidgets(
+    'Other with empty custom make shows validation and skips submit',
+    (tester) async {
+      await tester.pumpWidget(wrap());
+      await tester.pumpAndSettle();
+
+      final brandField = find.byKey(
+        const ValueKey('create_listing_brand_field'),
+      );
+      await tester.scrollUntilVisible(
+        brandField,
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(brandField);
+      await tester.pumpAndSettle();
+
+      final otherLabel = localizedListingBrandCatalogLabel(
+        l10n,
+        kListingBrandCatalogOther,
+      );
+      await tester.enterText(
+        find.byType(TextField).last,
+        otherLabel.substring(0, 2),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(otherLabel));
+      await tester.pumpAndSettle();
+
+      final publishButton = find.text(l10n.publishListing).last;
+      await tester.ensureVisible(publishButton);
+      await tester.pumpAndSettle();
+      await tester.tap(publishButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.validationRequired), findsWidgets);
+      verifyNever(
+        () => createCubit.submit(
+          listingInput: any(named: 'listingInput'),
+          orderedPhotos: any(named: 'orderedPhotos'),
+        ),
+      );
+    },
+  );
+
+  testWidgets('manual brand pick prefills custom make display', (tester) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+
+    const customMake = 'Zaporozhets';
+    final brandField = find.byKey(const ValueKey('create_listing_brand_field'));
+    await tester.scrollUntilVisible(
+      brandField,
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(brandField);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, customMake);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.brandPickUseMake(customMake)));
+    await tester.pumpAndSettle();
+
+    expect(find.text(customMake), findsWidgets);
+  });
 }

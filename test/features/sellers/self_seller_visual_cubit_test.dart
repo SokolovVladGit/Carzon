@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
@@ -117,4 +119,81 @@ void main() {
           .having((s) => s.loadFailed, 'loadFailed', isTrue),
     ],
   );
+
+  test('A completion cannot repopulate visuals after sign-out', () async {
+    final pending = Completer<Result<MySellerProfileModel>>();
+    when(
+      () => repository.getMySellerProfile(),
+    ).thenAnswer((_) => pending.future);
+    final cubit = SelfSellerVisualCubit(GetMySellerProfile(repository));
+
+    final loadA = cubit.prime(authenticated);
+    await cubit.prime(const AuthState.unauthenticated());
+    pending.complete(Success(_row(displayName: 'User A')));
+    await loadA;
+
+    expect(cubit.state, const SelfSellerVisualState());
+    await cubit.close();
+  });
+
+  test('A completion cannot overwrite B visuals', () async {
+    final pendingA = Completer<Result<MySellerProfileModel>>();
+    final pendingB = Completer<Result<MySellerProfileModel>>();
+    var call = 0;
+    when(
+      () => repository.getMySellerProfile(),
+    ).thenAnswer((_) => call++ == 0 ? pendingA.future : pendingB.future);
+    final cubit = SelfSellerVisualCubit(GetMySellerProfile(repository));
+
+    final loadA = cubit.prime(authenticated);
+    final loadB = cubit.prime(
+      const AuthState.authenticated(
+        AuthUser(id: 'u2', email: 'u2@example.com'),
+      ),
+    );
+    pendingB.complete(Success(_row(displayName: 'User B')));
+    await loadB;
+    pendingA.complete(Success(_row(displayName: 'User A')));
+    await loadA;
+
+    expect(cubit.state.sellerDisplayName, 'User B');
+    await cubit.close();
+  });
+
+  test('newer same-user prime remains authoritative', () async {
+    final older = Completer<Result<MySellerProfileModel>>();
+    final newer = Completer<Result<MySellerProfileModel>>();
+    var call = 0;
+    when(
+      () => repository.getMySellerProfile(),
+    ).thenAnswer((_) => call++ == 0 ? older.future : newer.future);
+    final cubit = SelfSellerVisualCubit(GetMySellerProfile(repository));
+
+    final olderLoad = cubit.prime(authenticated);
+    final newerLoad = cubit.prime(authenticated);
+    newer.complete(Success(_row(displayName: 'Newer')));
+    await newerLoad;
+    older.complete(Success(_row(displayName: 'Older')));
+    await olderLoad;
+
+    expect(cubit.state.sellerDisplayName, 'Newer');
+    await cubit.close();
+  });
+
+  test('stale failure cannot mark the new session failed', () async {
+    final pendingA = Completer<Result<MySellerProfileModel>>();
+    when(
+      () => repository.getMySellerProfile(),
+    ).thenAnswer((_) => pendingA.future);
+    final cubit = SelfSellerVisualCubit(GetMySellerProfile(repository));
+
+    final loadA = cubit.prime(authenticated);
+    await cubit.prime(const AuthState.unauthenticated());
+    pendingA.complete(const FailureResult(NetworkFailure('offline')));
+    await loadA;
+
+    expect(cubit.state.loadFailed, isFalse);
+    expect(cubit.state.loading, isFalse);
+    await cubit.close();
+  });
 }

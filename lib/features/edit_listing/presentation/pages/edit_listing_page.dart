@@ -21,6 +21,7 @@ import '../../../create_listing/domain/constants/listing_gallery_limits.dart';
 import '../../../create_listing/domain/entities/cover_image_upload.dart';
 import '../../../create_listing/presentation/widgets/create_listing_compose_layout.dart';
 import '../../../listings/domain/catalog/listing_brands.dart';
+import '../../../listings/domain/catalog/listing_city_catalog.dart';
 import '../../../listings/domain/constants/listing_text_limits.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
@@ -31,6 +32,7 @@ import '../../../listings/domain/validation/listing_vin.dart';
 import '../../../listings/presentation/utils/contact_format.dart';
 import '../../../listings/presentation/utils/listing_formatters.dart';
 import '../../../listings/presentation/widgets/listing_brand_pick_sheet.dart';
+import '../../../listings/presentation/widgets/listing_city_pick_sheet.dart';
 import '../../../listings/presentation/widgets/listing_year_pick_sheet.dart';
 import '../../../listings/presentation/widgets/public_contact_notice.dart';
 import '../../domain/entities/edit_listing_input.dart';
@@ -274,11 +276,15 @@ class _EditListingFormState extends State<_EditListingForm> {
   late final TextEditingController _price;
   late final TextEditingController _mileage;
   late final TextEditingController _city;
+  final GlobalKey<FormFieldState<String>> _citySelectorKey =
+      GlobalKey<FormFieldState<String>>();
   late final TextEditingController _phone;
   late final TextEditingController _telegram;
 
   late ListingType _type;
   late MarketRegion _marketRegion;
+  String? _selectedCanonicalCity;
+  late bool _manualCity;
   ListingBodyType? _bodyType;
   ListingFuelType? _fuelType;
   ListingDrivetrain? _drivetrain;
@@ -325,6 +331,14 @@ class _EditListingFormState extends State<_EditListingForm> {
     _telegram = TextEditingController(text: l.telegramUsername ?? '');
     _type = l.type;
     _marketRegion = l.marketRegion;
+    final resolvedCity = resolveListingCity(_marketRegion, l.city);
+    if (resolvedCity != null) {
+      _selectedCanonicalCity = resolvedCity.canonicalValue;
+      _manualCity = false;
+      _city.text = resolvedCity.canonicalValue;
+    } else {
+      _manualCity = l.city.trim().isNotEmpty;
+    }
     _bodyType = l.bodyType;
     _fuelType = l.fuelType;
     _drivetrain = l.drivetrain;
@@ -386,14 +400,65 @@ class _EditListingFormState extends State<_EditListingForm> {
     super.dispose();
   }
 
-  String _effectiveMakeForSubmit() {
-    final brandKey = _selectedBrandCatalogValue;
-    if (brandKey == null) return '';
-    if (brandKey == _kListingBrandCatalogOther) {
-      final trimmed = _customBrand.text.trim();
-      return trimmed.isNotEmpty ? trimmed : _kListingBrandCatalogOther;
+  String _effectiveMakeForSubmit() => effectiveListingMakeForSubmit(
+    catalogKey: _selectedBrandCatalogValue,
+    customMakeText: _customBrand.text,
+  );
+
+  void _applyBrandPick(String picked) {
+    final applied = applyListingBrandPick(picked);
+    _selectedBrandCatalogValue = applied.catalogKey;
+    if (applied.catalogKey == _kListingBrandCatalogOther) {
+      _customBrand.text = applied.customMakeText;
+    } else {
+      _customBrand.clear();
     }
-    return brandKey;
+  }
+
+  String _effectiveCityForSubmit() {
+    final trimmed = _city.text.trim();
+    if (!_manualCity) return _selectedCanonicalCity ?? trimmed;
+    return resolveListingCity(_marketRegion, trimmed)?.canonicalValue ??
+        trimmed;
+  }
+
+  void _resetCityValidation() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _citySelectorKey.currentState?.reset();
+    });
+  }
+
+  void _onRegionChanged(MarketRegion region) {
+    if (region == _marketRegion) return;
+    setState(() {
+      _marketRegion = region;
+      _selectedCanonicalCity = null;
+      _manualCity = false;
+      _city.clear();
+    });
+    _resetCityValidation();
+  }
+
+  Future<void> _openCitySheet() async {
+    final result = await showListingCityPickSheet(
+      context: context,
+      l10n: context.l10n,
+      region: _marketRegion,
+      selectedCanonicalCity: _selectedCanonicalCity,
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      if (result.manual) {
+        _selectedCanonicalCity = null;
+        _manualCity = true;
+        _city.clear();
+      } else {
+        _selectedCanonicalCity = result.canonicalValue;
+        _manualCity = false;
+        _city.text = result.canonicalValue!;
+      }
+    });
+    _resetCityValidation();
   }
 
   Future<void> _openBrandSheet() async {
@@ -405,16 +470,12 @@ class _EditListingFormState extends State<_EditListingForm> {
 
     if (!mounted || picked == null) return;
 
-    setState(() {
-      _selectedBrandCatalogValue = picked;
-      if (picked != _kListingBrandCatalogOther) {
-        _customBrand.clear();
-      }
-    });
+    setState(() => _applyBrandPick(picked));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _brandFieldKey.currentState?.didChange(_selectedBrandCatalogValue);
       _brandFieldKey.currentState?.validate();
+      _formKey.currentState?.validate();
     });
   }
 
@@ -564,7 +625,7 @@ class _EditListingFormState extends State<_EditListingForm> {
       priceEur: num.parse(_price.text.trim()),
       mileageKm: int.parse(_mileage.text.trim()),
       type: _type,
-      city: _city.text.trim(),
+      city: _effectiveCityForSubmit(),
       marketRegion: _marketRegion,
       bodyType: _bodyType,
       fuelType: _fuelType,
@@ -603,9 +664,14 @@ class _EditListingFormState extends State<_EditListingForm> {
     );
   }
 
-  Widget _elevatedSheet(BuildContext context, {required Widget child}) {
+  Widget _elevatedSheet(
+    BuildContext context, {
+    Key? key,
+    required Widget child,
+  }) {
     final theme = Theme.of(context);
     return Card(
+      key: key,
       elevation: 0,
       clipBehavior: Clip.antiAlias,
       color: theme.colorScheme.surfaceContainerLowest,
@@ -628,9 +694,11 @@ class _EditListingFormState extends State<_EditListingForm> {
     final theme = Theme.of(context);
     final submitting = widget.submitting;
 
-    final brandDisplay = _selectedBrandCatalogValue == null
-        ? l10n.createListingChooseBrand
-        : localizedListingBrandCatalogLabel(l10n, _selectedBrandCatalogValue!);
+    final brandDisplay = listingBrandFieldDisplay(
+      l10n: l10n,
+      catalogKey: _selectedBrandCatalogValue,
+      customMakeText: _customBrand.text,
+    );
 
     final bottomInset = math.max(
       MediaQuery.paddingOf(context).bottom,
@@ -695,27 +763,10 @@ class _EditListingFormState extends State<_EditListingForm> {
             const SizedBox(height: 14),
             _elevatedSheet(
               context,
+              key: const ValueKey('edit_listing_vehicle_section'),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _mutedSectionLabel(context, l10n.fieldCity),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _city,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      filled: true,
-                      fillColor: theme.colorScheme.surface.withValues(
-                        alpha: .22,
-                      ),
-                    ),
-                    textInputAction: TextInputAction.next,
-                    validator: (v) => _required(l10n, v),
-                    enabled: !submitting,
-                  ),
-                  const SizedBox(height: 18),
                   FormField<String?>(
                     key: _brandFieldKey,
                     initialValue: _selectedBrandCatalogValue,
@@ -778,6 +829,12 @@ class _EditListingFormState extends State<_EditListingForm> {
                       ),
                       textInputAction: TextInputAction.next,
                       enabled: !submitting,
+                      onChanged: (_) => setState(() {}),
+                      validator: (v) => validateListingCustomMakeField(
+                        l10n,
+                        catalogKey: _selectedBrandCatalogValue,
+                        customMakeText: v ?? '',
+                      ),
                     ),
                   ],
                   const SizedBox(height: 18),
@@ -882,39 +939,6 @@ class _EditListingFormState extends State<_EditListingForm> {
                     onChanged: submitting
                         ? null
                         : (v) => setState(() => _type = v ?? ListingType.sale),
-                  ),
-                  const SizedBox(height: 18),
-                  DropdownButtonFormField<MarketRegion>(
-                    initialValue: _marketRegion,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      filled: true,
-                      fillColor: theme.colorScheme.surface.withValues(
-                        alpha: .22,
-                      ),
-                      labelText: l10n.fieldRegion,
-                      helperText: l10n.fieldRegionHelper,
-                      helperMaxLines: 2,
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: MarketRegion.transnistria,
-                        child: Text(l10n.regionTransnistria),
-                      ),
-                      DropdownMenuItem(
-                        value: MarketRegion.moldova,
-                        child: Text(l10n.regionMoldova),
-                      ),
-                    ],
-                    onChanged: submitting
-                        ? null
-                        : (v) => setState(
-                            () =>
-                                _marketRegion = v ?? MarketRegion.transnistria,
-                          ),
-                    validator: (v) => v == null ? l10n.regionRequired : null,
                   ),
                   const SizedBox(height: 18),
                   CreateListingFieldLabel(l10n.listingBodyTypeSectionTitle),
@@ -1168,6 +1192,96 @@ class _EditListingFormState extends State<_EditListingForm> {
             const SizedBox(height: 14),
             _elevatedSheet(
               context,
+              key: const ValueKey('edit_listing_location_section'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _mutedSectionLabel(
+                    context,
+                    l10n.createListingSectionLocation,
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<MarketRegion>(
+                    key: const ValueKey('edit_listing_region_selector'),
+                    initialValue: _marketRegion,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.fieldRegion,
+                      helperText: l10n.fieldRegionHelper,
+                      helperMaxLines: 2,
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: MarketRegion.transnistria,
+                        child: Text(l10n.regionTransnistria),
+                      ),
+                      DropdownMenuItem(
+                        value: MarketRegion.moldova,
+                        child: Text(l10n.regionMoldova),
+                      ),
+                    ],
+                    onChanged: submitting
+                        ? null
+                        : (v) =>
+                              _onRegionChanged(v ?? MarketRegion.transnistria),
+                    validator: (v) => v == null ? l10n.regionRequired : null,
+                  ),
+                  const SizedBox(height: 18),
+                  ListingCitySelectorField(
+                    key: const ValueKey('edit_listing_city_field'),
+                    formFieldKey: _citySelectorKey,
+                    l10n: l10n,
+                    enabled: !submitting,
+                    manualMode: _manualCity,
+                    canonicalCity: _selectedCanonicalCity,
+                    onTap: _openCitySheet,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.fieldCity,
+                    ),
+                  ),
+                  if (_manualCity) ...[
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      key: const ValueKey('edit_listing_manual_city_field'),
+                      controller: _city,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface.withValues(
+                          alpha: .22,
+                        ),
+                        labelText: l10n.listingCityManualFieldLabel,
+                        helperText: l10n.listingCityManualHelper,
+                        helperMaxLines: 3,
+                      ),
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.words,
+                      validator: (v) => _required(l10n, v),
+                      enabled: !submitting,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _elevatedSheet(
+              context,
+              key: const ValueKey('edit_listing_price_section'),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

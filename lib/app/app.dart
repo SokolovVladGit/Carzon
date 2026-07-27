@@ -17,6 +17,7 @@ import '../features/recent_searches/presentation/cubit/recent_searches_cubit.dar
 import '../features/recently_viewed/presentation/cubit/recently_viewed_cubit.dart';
 import '../features/compare/presentation/widgets/compare_tray_host.dart';
 import '../features/favorites/presentation/bloc/favorites_cubit.dart';
+import '../features/listings/presentation/cubit/browse_catalog_filter_alerts_cubit.dart';
 import '../features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import '../features/notifications/services/message_foreground_notification_presenter.dart';
 import '../features/notifications/services/message_push_tap_handler.dart';
@@ -33,14 +34,16 @@ class CarzonApp extends StatefulWidget {
 }
 
 class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
+  Future<void>? _pushListenersStartInFlight;
+  Future<void>? _pushResumeRecoveryInFlight;
+
   @override
   void initState() {
     super.initState();
     if (Env.pushNotificationsEnabled) {
       WidgetsBinding.instance.addObserver(this);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        unawaited(sl<MessagePushTapHandler>().start());
-        unawaited(sl<MessageForegroundNotificationPresenter>().start());
+        unawaited(_ensurePushListenersStarted());
       });
     }
   }
@@ -61,13 +64,81 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
     if (!Env.pushNotificationsEnabled) {
       return;
     }
+    unawaited(_recoverPushAfterResume());
+  }
+
+  Future<void> _recoverPushAfterResume() async {
+    final inFlight = _pushResumeRecoveryInFlight;
+    if (inFlight != null) {
+      return inFlight;
+    }
+    final recovery = _runPushResumeRecovery();
+    _pushResumeRecoveryInFlight = recovery;
+    try {
+      await recovery;
+    } finally {
+      if (identical(_pushResumeRecoveryInFlight, recovery)) {
+        _pushResumeRecoveryInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _runPushResumeRecovery() async {
     // Retry FCM token sync when the app returns to foreground: on iOS the
     // APNs token may not have existed at cold-start bootstrap, so startup
     // sync no-ops; this path is cheap (returns early if still not eligible).
-    unawaited(
-      sl<PushNotificationRegistrationService>()
-          .syncTokenWithBackendIfEligible(),
-    );
+    try {
+      await sl<PushNotificationRegistrationService>()
+          .syncTokenWithBackendIfEligible();
+    } catch (_) {
+      // Registration logs its own nonfatal failures. Listener recovery must
+      // still proceed independently.
+    }
+    await _ensurePushListenersStarted();
+  }
+
+  Future<void> _ensurePushListenersStarted() async {
+    final inFlight = _pushListenersStartInFlight;
+    if (inFlight != null) {
+      return inFlight;
+    }
+    final start = _startMissingPushListeners();
+    _pushListenersStartInFlight = start;
+    try {
+      await start;
+    } finally {
+      if (identical(_pushListenersStartInFlight, start)) {
+        _pushListenersStartInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _startMissingPushListeners() async {
+    final tapHandler = sl<MessagePushTapHandler>();
+    final foregroundPresenter = sl<MessageForegroundNotificationPresenter>();
+    await Future.wait([
+      if (!tapHandler.isStarted) _startPushTapHandler(tapHandler),
+      if (!foregroundPresenter.isStarted)
+        _startForegroundPresenter(foregroundPresenter),
+    ]);
+  }
+
+  Future<void> _startPushTapHandler(MessagePushTapHandler handler) async {
+    try {
+      await handler.start();
+    } catch (_) {
+      // Individual services log nonfatal startup failures and remain retryable.
+    }
+  }
+
+  Future<void> _startForegroundPresenter(
+    MessageForegroundNotificationPresenter presenter,
+  ) async {
+    try {
+      await presenter.start();
+    } catch (_) {
+      // Individual services log nonfatal startup failures and remain retryable.
+    }
   }
 
   @override
@@ -99,9 +170,22 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
       child: MultiBlocListener(
         listeners: [
           BlocListener<AuthCubit, AuthState>(
-            listenWhen: (prev, curr) => prev.user?.id != curr.user?.id,
+            listenWhen: (prev, curr) =>
+                prev.user?.id != curr.user?.id || prev.status != curr.status,
             listener: (context, state) {
-              context.read<FavoritesCubit>().syncWithAuth(state.user);
+              final activeUser = state.status == AuthStatus.authenticated
+                  ? state.user
+                  : null;
+              unawaited(
+                context.read<FavoritesCubit>().syncWithAuth(activeUser),
+              );
+              unawaited(context.read<SelfSellerVisualCubit>().prime(state));
+              unawaited(
+                context.read<MessagingUnreadSummaryCubit>().sync(state),
+              );
+              unawaited(
+                sl<BrowseCatalogFilterAlertsCubit>().onAuthChanged(state),
+              );
             },
           ),
           BlocListener<AuthCubit, AuthState>(
@@ -111,16 +195,6 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
               unawaited(
                 sl<PushNotificationRegistrationService>()
                     .syncTokenWithBackendIfEligible(),
-              );
-            },
-          ),
-          BlocListener<AuthCubit, AuthState>(
-            listenWhen: (prev, curr) =>
-                prev.user?.id != curr.user?.id || prev.status != curr.status,
-            listener: (context, state) {
-              unawaited(context.read<SelfSellerVisualCubit>().prime(state));
-              unawaited(
-                context.read<MessagingUnreadSummaryCubit>().sync(state),
               );
             },
           ),
