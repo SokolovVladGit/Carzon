@@ -12,6 +12,8 @@ import 'message_foreground_notification_display.dart';
 import 'message_notification_tap_payload.dart';
 import 'price_drop_notification_tap_payload.dart';
 
+enum _ForegroundPresenterStartupState { idle, starting, started }
+
 /// Subscribes to foreground FCM data messages and shows a local notification.
 class MessageForegroundNotificationPresenter {
   MessageForegroundNotificationPresenter({
@@ -37,23 +39,43 @@ class MessageForegroundNotificationPresenter {
   final AppLogger _logger;
 
   StreamSubscription<RemoteMessage>? _sub;
-  bool _started = false;
+  _ForegroundPresenterStartupState _startupState =
+      _ForegroundPresenterStartupState.idle;
+  Future<void>? _startInFlight;
+
+  bool get isStarted =>
+      _startupState == _ForegroundPresenterStartupState.started;
 
   /// Idempotent. Call after the first frame (same as [MessagePushTapHandler]).
   Future<void> start() async {
-    if (!Env.pushNotificationsEnabled || _started) {
+    if (!Env.pushNotificationsEnabled || isStarted) {
       return;
     }
-    if (!_firebaseAppReady()) {
-      _logger.warn(
-        'Skipping foreground message notifications: Firebase default app missing',
-      );
-      return;
+    final inFlight = _startInFlight;
+    if (inFlight != null) {
+      return inFlight;
     }
-
-    _started = true;
-
+    final attempt = _start();
+    _startInFlight = attempt;
     try {
+      await attempt;
+    } finally {
+      if (identical(_startInFlight, attempt)) {
+        _startInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _start() async {
+    _startupState = _ForegroundPresenterStartupState.starting;
+    try {
+      if (!_firebaseAppReady()) {
+        _logger.warn(
+          'Skipping foreground message notifications: Firebase default app missing',
+        );
+        _startupState = _ForegroundPresenterStartupState.idle;
+        return;
+      }
       _navigationCoordinator.ensureStarted();
       _listingNavigationCoordinator.ensureStarted();
       await _display.initialize();
@@ -65,7 +87,11 @@ class MessageForegroundNotificationPresenter {
           _logger.error('onMessage stream error', e, st);
         },
       );
+      _startupState = _ForegroundPresenterStartupState.started;
     } catch (e, st) {
+      await _sub?.cancel();
+      _sub = null;
+      _startupState = _ForegroundPresenterStartupState.idle;
       _logger.error(
         'MessageForegroundNotificationPresenter.start failed',
         e,
@@ -111,8 +137,13 @@ class MessageForegroundNotificationPresenter {
   }
 
   Future<void> dispose() async {
-    await _sub?.cancel();
+    final inFlight = _startInFlight;
+    if (inFlight != null) {
+      await inFlight;
+    }
+    final subscription = _sub;
     _sub = null;
-    _started = false;
+    await subscription?.cancel();
+    _startupState = _ForegroundPresenterStartupState.idle;
   }
 }

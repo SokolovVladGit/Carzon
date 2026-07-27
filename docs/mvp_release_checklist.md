@@ -8,7 +8,14 @@ one-command check or a manual dashboard/device step.
 This document is the source of truth for release prep. If something
 is missing here, the release is not ready.
 
-**Supabase ↔ client alignment:** Before staging/prod cuts, follow [`docs/RELEASE.md`](RELEASE.md) for migration inventory, RPC/backend parity, storage buckets, and hosted verification helpers. **Hosted Carzon (2026-06-22):** **68** migrations applied (Fuel Prices v1 closed); runtime contracts PASS at last audit — re-run helpers after any future hosted SQL change. Stale **45/45** references are pre–Fuel Prices baseline only.
+**Supabase ↔ client alignment:** Before staging/prod cuts, follow
+[`docs/RELEASE.md`](RELEASE.md) for migration inventory, RPC/backend parity,
+storage buckets, and hosted verification helpers. **Hosted Carzon (verified
+27 July 2026): 71/71** local migrations applied through
+`20260823120000_retain_pseudonymized_moderation_reports.sql`; hosted
+moderation-retention verification passed and no additional SQL remains pending
+from the current local chain. Re-run helpers after future hosted SQL changes.
+Historical **45/45**, **65**, and **68** counts are superseded.
 
 ## A. Code verification
 
@@ -62,7 +69,14 @@ migrations (Supabase Data API / PostgREST requires explicit **`GRANT`** on new *
 - [ ] **Auth → Email Templates**: sanity-check the sign-up
       confirmation and password-reset templates for wording and for
       the correct action link placeholder.
-- [ ] **Database → Migrations**: confirm all repo migrations are applied. **Authoritative check:** run `supabase/maintenance/check_hosted_migration_parity.sql` → expect **PASS** for full repo inventory (**68** hosted as of 2026-06-22, through Fuel Prices v1). Re-run after any new migration or manual SQL. Spot-check chain includes grants, notifications, filter-alert queue, VIN phases, contact hardening, official data workers, and **`20260822120000` … `20260822130000`** Fuel Prices migrations listed in [RELEASE.md](RELEASE.md) §3 and **`docs/ops_fuel_price_jobs.md`**.
+- [ ] **Database → Migrations**: confirm all repo migrations are applied.
+      **Authoritative check:** run
+      `supabase/maintenance/check_hosted_migration_parity.sql` → expect
+      **PASS** for the full **71/71** inventory, through
+      `20260823120000_retain_pseudonymized_moderation_reports.sql` (verified
+      27 July 2026). Re-run after any new migration or manual SQL. Spot-check
+      grants, notifications, filter-alert queue, VIN phases, contact
+      hardening, official data workers, Fuel Prices, and moderation retention.
 - [ ] **Fuel Prices worker (if shipping Fuel Prices UI):** Edge **`process-fuel-price-jobs`** deployed (ACTIVE v3 on hosted); Vault **`carzon_process_fuel_price_jobs_*`** synced; cron **`carzon_process_fuel_price_jobs_6h`** active; **`get_fuel_prices_for_app()`** returns fresh Moldova + PMR snapshots — see **`docs/ops_fuel_price_jobs.md`**. **Hosted: closed (2026-06-22).**
 - [ ] **Storage → Buckets**: confirm **`listing-images`** and
       **`seller-avatars`** exist after migrations (both created by

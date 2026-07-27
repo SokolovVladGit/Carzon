@@ -60,21 +60,39 @@ class SelfSellerVisualCubit extends Cubit<SelfSellerVisualState> {
 
   final GetMySellerProfile _getMySellerProfile;
 
+  String? _currentUserId;
+  bool _hasSynchronizedAuth = false;
+  int _sessionGeneration = 0;
+  int _primeGeneration = 0;
+
   Future<void> prime(AuthState auth) async {
-    if (auth.status != AuthStatus.authenticated || auth.user == null) {
-      emit(
-        state.copyWith(
-          loading: false,
-          clearSellerAvatarUrl: true,
-          clearSellerDisplayName: true,
-          clearLoadFailed: true,
-        ),
-      );
+    if (isClosed) return;
+    final userId = auth.status == AuthStatus.authenticated
+        ? auth.user?.id
+        : null;
+    final firstSynchronization = !_hasSynchronizedAuth;
+    final userChanged = !firstSynchronization && userId != _currentUserId;
+    final sessionChanged = firstSynchronization || userChanged;
+    if (sessionChanged) {
+      _hasSynchronizedAuth = true;
+      _currentUserId = userId;
+      _sessionGeneration += 1;
+      _primeGeneration += 1;
+      if (isClosed) return;
+      if (userId == null || userChanged) {
+        emit(const SelfSellerVisualState());
+      }
+    }
+
+    if (userId == null) {
       return;
     }
 
+    final sessionGeneration = _sessionGeneration;
+    final primeGeneration = ++_primeGeneration;
     emit(state.copyWith(loading: true, clearLoadFailed: true));
     final result = await _getMySellerProfile();
+    if (!_isCurrentPrime(userId, sessionGeneration, primeGeneration)) return;
 
     switch (result) {
       case FailureResult():
@@ -95,5 +113,16 @@ class SelfSellerVisualCubit extends Cubit<SelfSellerVisualState> {
           ),
         );
     }
+  }
+
+  bool _isCurrentPrime(
+    String userId,
+    int sessionGeneration,
+    int primeGeneration,
+  ) {
+    return !isClosed &&
+        _currentUserId == userId &&
+        _sessionGeneration == sessionGeneration &&
+        _primeGeneration == primeGeneration;
   }
 }

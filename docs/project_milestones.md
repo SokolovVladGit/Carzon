@@ -17,8 +17,19 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 
 ## 2. Current stage
 
-- **Stage 1 / Foundation** — largely implemented.
-- **Focus now:** release hardening + **Fuel Prices v1** hosted backend **complete** (2026-06-22); remaining gates are Auth config, structured manual QA, and optional product decisions — **not** feature expansion.
+- **Release candidate / feature scope closed (27 July 2026).**
+- **Hosted Supabase parity:** **71/71** local migrations applied. Latest:
+  **`20260823120000_retain_pseudonymized_moderation_reports.sql`**.
+- **Moderation retention verified on hosted:** all four report foreign keys use
+  `ON DELETE SET NULL`; original-evidence snapshots, immutability trigger, and
+  expected function security configuration are present.
+- **No additional hosted SQL is pending from the current local migration
+  chain.**
+- **Focus now:** owner-managed branch integration, signed iOS
+  release-candidate build, TestFlight upload, and physical-device/manual
+  release QA. The application is not yet declared production-ready.
+- **Android identity and release signing remain a separate release track if an
+  Android release is pursued.**
 
 ---
 
@@ -43,7 +54,7 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 - [x] **Notifications Phase 4B (filter alert client):** filter editor + notification settings toggles, explicit OS permission, `notifications_enabled` persistence, tap + foreground generic copy — real-device smoke pending.
 - [x] Release docs: [RELEASE.md](RELEASE.md), [mvp_release_checklist.md](mvp_release_checklist.md)
 - [x] **Seller contact exposure hardening** — migration `20260630120000`; hosted SQL metadata PASS; simulator smoke PASS
-- [x] **Hosted migration parity** — **68** hosted migrations recorded through Fuel Prices v1 (2026-06-22); prior **45/45** references are **stale** (June 2026 contact-hardening baseline only)
+- [x] **Hosted migration parity** — **71/71** local migrations applied through moderation-report retention (verified 27 July 2026); prior **45/45**, **65**, and **68** references are historical baselines only
 - [x] **Fuel Prices v1** — Flutter read-only UI + hosted SQL/Edge/cron/Vault closed; see **`docs/ops_fuel_price_jobs.md`**
 - [x] **Hosted runtime contract audit** — all app-critical objects PASS
 - [x] **Listings pagination failure UX** — retry footer implemented and tested
@@ -56,7 +67,7 @@ Living anchor for **what shipped**, **what was fixed recently**, **release gates
 - **Hosted backend hardening closure (2026-06)** — contact hardening applied; `check_contact_hardening.sql` PASS; migration parity **45/45 PASS at that time** (metadata reconciliation — prior STOP was drift only); `check_hosted_runtime_contracts.sql` PASS. **Superseded (2026-06-22):** hosted count is now **68** after Fuel Prices v1 (see §4 Fuel Prices bullet).
 - **Feed → listing details Hero** — cold flicker addressed: first-image continuity, stable `PageView`, Hero-bound path skips `AnimatedOpacity`, `gaplessPlayback` on Hero-bound images.
 - **Listing details dark mode** — removed forced-light scaffold/panels; theme-aware surfaces (see listing details page).
-- **Supabase hosted parity** — **closed (2026-06-22):** **68** hosted migrations (was **65** before Fuel Prices); Fuel Prices trilogy applied; **`process-fuel-price-jobs`** ACTIVE v3; cron + Vault verified; public RPC fresh. Re-run maintenance helpers after future hosted changes. Auth redirect allow-list includes **`carzon://auth-callback`**. Stale docs citing **45/45** or **65** migrations predate post–June 2026 and Fuel Prices apply.
+- **Supabase hosted parity** — **closed (27 July 2026):** **71/71** local migrations applied; latest **`20260823120000_retain_pseudonymized_moderation_reports.sql`**. Hosted moderation-retention verification passed (four nullable foreign keys use `ON DELETE SET NULL`; original-evidence snapshots and immutability protection are present with the expected function security settings). No additional SQL remains pending from the current local chain. Re-run maintenance helpers after future hosted changes. Historical **45/45**, **65**, and **68** counts are superseded.
 - **Fuel Prices hosted closure (2026-06-22)** — migrations `20260822120000`, `20260822123000`, `20260822130000` applied; Edge **`process-fuel-price-jobs`** v3; cron **`carzon_process_fuel_price_jobs_6h`** (`0 */6 * * *`); no pending Fuel Prices SQL/Edge deploy. Ops follow-up: first automatic cron observation in `cron.job_run_details` (non-blocker).
 - **`listings.updated_at`** — drift closed: fixed on hosted DB; repo migration **`20260524120000_listings_updated_at.sql`**; release docs updated.
 - **Layout / listing details** — small-phone + keyboard + sticky-footer hardening on high-traffic surfaces; fullscreen details gallery (**swipe / pinch-zoom / dismiss**).

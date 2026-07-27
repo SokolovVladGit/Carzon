@@ -498,7 +498,11 @@ PUSH_NOTIFICATIONS_ENABLED=true
           notificationsRepo: notificationsRepo,
           deliveryOrchestrator: MockFilterAlertDeliveryOrchestrator(),
         );
-        await alertsCubit.refresh();
+        await alertsCubit.onAuthChanged(
+          const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
 
         var sheetClosed = false;
         final formKey = GlobalKey<ListingsFilterFormState>();
@@ -652,7 +656,11 @@ PUSH_NOTIFICATIONS_ENABLED=true
           notificationsRepo: notificationsRepo,
           deliveryOrchestrator: MockFilterAlertDeliveryOrchestrator(),
         );
-        await alertsCubit.refresh();
+        await alertsCubit.onAuthChanged(
+          const AuthState.authenticated(
+            AuthUser(id: 'u', email: 'u@example.com'),
+          ),
+        );
 
         var sheetClosed = false;
         final formKey = GlobalKey<ListingsFilterFormState>();

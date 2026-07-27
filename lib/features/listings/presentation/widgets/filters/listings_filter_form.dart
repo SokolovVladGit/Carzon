@@ -319,7 +319,24 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
       l10n: context.l10n,
     );
     if (!mounted || picked == null) return;
-    _assignCatalogMake(picked);
+    _applyBrandPick(picked);
+  }
+
+  void _applyBrandPick(String picked) {
+    final applied = applyListingBrandPick(picked);
+    final prev = _catalogMake;
+    setState(() {
+      _catalogMake = applied.catalogKey;
+      if (applied.catalogKey == _brandOtherEnglish) {
+        _customBrand.text = applied.customMakeText;
+      } else {
+        _customBrand.clear();
+      }
+      if (prev != _catalogMake) {
+        _model.clear();
+      }
+    });
+    _notifyDraftMutated();
   }
 
   Future<void> _openBodyTypeSheet() async {
@@ -395,20 +412,6 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
   /// listeners already fire `_onDraftChanged`, which calls this too.
   void _notifyDraftMutated() {
     widget.onDraftMutated?.call();
-  }
-
-  void _assignCatalogMake(String englishCatalog) {
-    final prev = _catalogMake;
-    setState(() {
-      _catalogMake = englishCatalog;
-      if (englishCatalog != _brandOtherEnglish) {
-        _customBrand.clear();
-      }
-      if (prev != _catalogMake) {
-        _model.clear();
-      }
-    });
-    _notifyDraftMutated();
   }
 
   void _clearMakeSelection() {

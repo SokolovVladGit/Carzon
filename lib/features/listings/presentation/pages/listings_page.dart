@@ -80,13 +80,6 @@ class ListingsPage extends StatelessWidget {
       child: MultiBlocListener(
         listeners: [
           BlocListener<AuthCubit, AuthState>(
-            listener: (context, auth) {
-              context.read<BrowseCatalogFilterAlertsCubit>().onAuthChanged(
-                auth,
-              );
-            },
-          ),
-          BlocListener<AuthCubit, AuthState>(
             listenWhen: (prev, curr) =>
                 curr.publicFeedRefreshNonce > prev.publicFeedRefreshNonce,
             listener: (context, _) {
@@ -187,7 +180,6 @@ class _ListingsViewState extends State<_ListingsView> {
       final auth = context.read<AuthCubit>().state;
       unawaited(context.read<SelfSellerVisualCubit>().prime(auth));
       unawaited(context.read<MessagingUnreadSummaryCubit>().sync(auth));
-      context.read<BrowseCatalogFilterAlertsCubit>().onAuthChanged(auth);
       if (widget.openFilterSheetOnEntry) {
         unawaited(_openFiltersSheet(context));
       }

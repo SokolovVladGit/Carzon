@@ -11,12 +11,14 @@ import '../core/l10n/app_locale_cubit.dart';
 import '../core/theme/theme_mode_cubit.dart';
 import '../core/utils/logger.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
+import '../features/auth/presentation/bloc/auth_state.dart';
 import '../features/compare/presentation/cubit/compare_cubit.dart';
-import '../features/recent_searches/presentation/cubit/recent_searches_cubit.dart';
-import '../features/recently_viewed/presentation/cubit/recently_viewed_cubit.dart';
 import '../features/favorites/presentation/bloc/favorites_cubit.dart';
+import '../features/listings/presentation/cubit/browse_catalog_filter_alerts_cubit.dart';
 import '../features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import '../features/notifications/services/push_notification_registration_service.dart';
+import '../features/recent_searches/presentation/cubit/recent_searches_cubit.dart';
+import '../features/recently_viewed/presentation/cubit/recently_viewed_cubit.dart';
 import '../features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import 'app.dart';
 import 'bootstrap_splash_app.dart';
@@ -101,7 +103,10 @@ Future<void> bootstrap() async {
       final auth = sl<AuthCubit>();
       await auth.bootstrap();
 
-      await sl<FavoritesCubit>().syncWithAuth(auth.state.user);
+      final activeUser = auth.state.status == AuthStatus.authenticated
+          ? auth.state.user
+          : null;
+      await sl<FavoritesCubit>().syncWithAuth(activeUser);
 
       await sl<CompareCubit>().loadFromStorage();
       await sl<RecentlyViewedCubit>().loadFromStorage();
@@ -109,6 +114,7 @@ Future<void> bootstrap() async {
 
       await sl<SelfSellerVisualCubit>().prime(auth.state);
       await sl<MessagingUnreadSummaryCubit>().sync(auth.state);
+      unawaited(sl<BrowseCatalogFilterAlertsCubit>().onAuthChanged(auth.state));
 
       await sl<PushNotificationRegistrationService>().start();
 

@@ -15,7 +15,9 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../listings/domain/catalog/listing_brands.dart';
+import '../../../listings/domain/catalog/listing_city_catalog.dart';
 import '../../../listings/presentation/widgets/listing_brand_pick_sheet.dart';
+import '../../../listings/presentation/widgets/listing_city_pick_sheet.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../../listings/domain/constants/listing_text_limits.dart';
@@ -153,6 +155,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   final _price = TextEditingController();
   final _mileage = TextEditingController();
   final _city = TextEditingController();
+  final GlobalKey<FormFieldState<String>> _citySelectorKey =
+      GlobalKey<FormFieldState<String>>();
   final _phone = TextEditingController();
   final _telegram = TextEditingController();
 
@@ -160,6 +164,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   ListingType _type = ListingType.sale;
 
   MarketRegion _marketRegion = MarketRegion.transnistria;
+  String? _selectedCanonicalCity;
+  bool _manualCity = false;
 
   ListingBodyType? _bodyType;
 
@@ -203,14 +209,65 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     super.dispose();
   }
 
-  String _effectiveMakeForSubmit() {
-    final brandKey = _selectedBrandCatalogValue;
-    if (brandKey == null) return '';
-    if (brandKey == _kListingBrandCatalogOther) {
-      final trimmed = _customBrand.text.trim();
-      return trimmed.isNotEmpty ? trimmed : _kListingBrandCatalogOther;
+  String _effectiveMakeForSubmit() => effectiveListingMakeForSubmit(
+    catalogKey: _selectedBrandCatalogValue,
+    customMakeText: _customBrand.text,
+  );
+
+  void _applyBrandPick(String picked) {
+    final applied = applyListingBrandPick(picked);
+    _selectedBrandCatalogValue = applied.catalogKey;
+    if (applied.catalogKey == _kListingBrandCatalogOther) {
+      _customBrand.text = applied.customMakeText;
+    } else {
+      _customBrand.clear();
     }
-    return brandKey;
+  }
+
+  String _effectiveCityForSubmit() {
+    final trimmed = _city.text.trim();
+    if (!_manualCity) return _selectedCanonicalCity ?? trimmed;
+    return resolveListingCity(_marketRegion, trimmed)?.canonicalValue ??
+        trimmed;
+  }
+
+  void _resetCityValidation() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _citySelectorKey.currentState?.reset();
+    });
+  }
+
+  void _onRegionChanged(MarketRegion region) {
+    if (region == _marketRegion) return;
+    setState(() {
+      _marketRegion = region;
+      _selectedCanonicalCity = null;
+      _manualCity = false;
+      _city.clear();
+    });
+    _resetCityValidation();
+  }
+
+  Future<void> _openCitySheet() async {
+    final result = await showListingCityPickSheet(
+      context: context,
+      l10n: context.l10n,
+      region: _marketRegion,
+      selectedCanonicalCity: _selectedCanonicalCity,
+    );
+    if (!mounted || result == null) return;
+    setState(() {
+      if (result.manual) {
+        _selectedCanonicalCity = null;
+        _manualCity = true;
+        _city.clear();
+      } else {
+        _selectedCanonicalCity = result.canonicalValue;
+        _manualCity = false;
+        _city.text = result.canonicalValue!;
+      }
+    });
+    _resetCityValidation();
   }
 
   Future<void> _addPhoto(BuildContext outerContext) async {
@@ -281,16 +338,12 @@ class _CreateListingFormState extends State<_CreateListingForm> {
 
     if (!mounted || picked == null) return;
 
-    setState(() {
-      _selectedBrandCatalogValue = picked;
-      if (picked != _kListingBrandCatalogOther) {
-        _customBrand.clear();
-      }
-    });
+    setState(() => _applyBrandPick(picked));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _brandFieldKey.currentState?.didChange(_selectedBrandCatalogValue);
       _brandFieldKey.currentState?.validate();
+      _formKey.currentState?.validate();
     });
   }
 
@@ -370,7 +423,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       priceCurrency: _priceCurrency,
       mileageKm: int.parse(_mileage.text.trim()),
       type: _type,
-      city: _city.text.trim(),
+      city: _effectiveCityForSubmit(),
       marketRegion: _marketRegion,
       bodyType: _bodyType,
       fuelType: _fuelType,
@@ -507,12 +560,11 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       builder: (context, state) {
         final submitting = state.status == CreateListingStatus.submitting;
 
-        final brandDisplay = _selectedBrandCatalogValue == null
-            ? l10n.createListingChooseBrand
-            : localizedListingBrandCatalogLabel(
-                l10n,
-                _selectedBrandCatalogValue!,
-              );
+        final brandDisplay = listingBrandFieldDisplay(
+          l10n: l10n,
+          catalogKey: _selectedBrandCatalogValue,
+          customMakeText: _customBrand.text,
+        );
 
         return SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -536,6 +588,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                 CreateListingComposeHero(l10n: l10n),
                 const SizedBox(height: 20),
                 CreateListingPremiumSection(
+                  key: const ValueKey('create_listing_photos_section'),
                   stepIndex: 1,
                   tone: CreateListingSectionTone.hero,
                   title: l10n.createListingSectionPhotosLead,
@@ -568,6 +621,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                 const SizedBox(height: 30),
 
                 CreateListingPremiumSection(
+                  key: const ValueKey('create_listing_vehicle_section'),
                   stepIndex: 2,
                   tone: CreateListingSectionTone.identity,
                   title: l10n.createListingSectionVehicle,
@@ -575,16 +629,6 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      CreateListingFieldLabel(l10n.fieldCity),
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        controller: _city,
-                        decoration: createListingFieldDecoration(theme),
-                        textInputAction: TextInputAction.next,
-                        validator: (v) => _required(l10n, v),
-                        enabled: !submitting,
-                      ),
-                      const SizedBox(height: 22),
                       FormField<String?>(
                         key: _brandFieldKey,
                         validator: (_) {
@@ -640,6 +684,12 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                           ),
                           textInputAction: TextInputAction.next,
                           enabled: !submitting,
+                          onChanged: (_) => setState(() {}),
+                          validator: (v) => validateListingCustomMakeField(
+                            l10n,
+                            catalogKey: _selectedBrandCatalogValue,
+                            customMakeText: v ?? '',
+                          ),
                         ),
                       ],
 
@@ -922,6 +972,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                 const SizedBox(height: 30),
 
                 CreateListingPremiumSection(
+                  key: const ValueKey('create_listing_description_section'),
                   stepIndex: 3,
                   tone: CreateListingSectionTone.identity,
                   title: l10n.createListingSectionDescription,
@@ -943,6 +994,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                 const SizedBox(height: 30),
 
                 CreateListingPremiumSection(
+                  key: const ValueKey('create_listing_type_section'),
                   stepIndex: 4,
                   tone: CreateListingSectionTone.placement,
                   title: l10n.createListingSectionDeal,
@@ -959,18 +1011,6 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         submitting: submitting,
                         onChanged: (t) => setState(() => _type = t),
                       ),
-                      const SizedBox(height: 24),
-                      CreateListingFieldLabel(l10n.fieldRegion),
-                      const SizedBox(height: 6),
-                      CreateListingHelperText(l10n.fieldRegionHelper),
-                      const SizedBox(height: 12),
-                      MarketPlacementSelector(
-                        l10n: l10n,
-                        theme: theme,
-                        value: _marketRegion,
-                        submitting: submitting,
-                        onChanged: (r) => setState(() => _marketRegion = r),
-                      ),
                     ],
                   ),
                 ),
@@ -978,7 +1018,66 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                 const SizedBox(height: 30),
 
                 CreateListingPremiumSection(
+                  key: const ValueKey('create_listing_location_section'),
                   stepIndex: 5,
+                  tone: CreateListingSectionTone.placement,
+                  title: l10n.createListingSectionLocation,
+                  subtitle: l10n.createListingSectionLocationSubtitle,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      CreateListingFieldLabel(l10n.fieldRegion),
+                      const SizedBox(height: 6),
+                      CreateListingHelperText(l10n.fieldRegionHelper),
+                      const SizedBox(height: 12),
+                      MarketPlacementSelector(
+                        key: const ValueKey('create_listing_region_selector'),
+                        l10n: l10n,
+                        theme: theme,
+                        value: _marketRegion,
+                        submitting: submitting,
+                        onChanged: _onRegionChanged,
+                      ),
+                      const SizedBox(height: 22),
+                      CreateListingFieldLabel(l10n.fieldCity),
+                      const SizedBox(height: 10),
+                      ListingCitySelectorField(
+                        key: const ValueKey('create_listing_city_field'),
+                        formFieldKey: _citySelectorKey,
+                        l10n: l10n,
+                        enabled: !submitting,
+                        manualMode: _manualCity,
+                        canonicalCity: _selectedCanonicalCity,
+                        onTap: _openCitySheet,
+                        decoration: createListingFieldDecoration(theme),
+                      ),
+                      if (_manualCity) ...[
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          key: const ValueKey(
+                            'create_listing_manual_city_field',
+                          ),
+                          controller: _city,
+                          decoration: createListingFieldDecoration(
+                            theme,
+                            labelText: l10n.listingCityManualFieldLabel,
+                            helperText: l10n.listingCityManualHelper,
+                          ),
+                          textInputAction: TextInputAction.next,
+                          textCapitalization: TextCapitalization.words,
+                          validator: (v) => _required(l10n, v),
+                          enabled: !submitting,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                CreateListingPremiumSection(
+                  key: const ValueKey('create_listing_price_section'),
+                  stepIndex: 6,
                   tone: CreateListingSectionTone.metrics,
                   title: l10n.createListingSectionPrice,
                   subtitle: l10n.createListingSectionPriceSubtitle,
@@ -1032,7 +1131,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                 const SizedBox(height: 30),
 
                 CreateListingPremiumSection(
-                  stepIndex: 6,
+                  key: const ValueKey('create_listing_publish_section'),
+                  stepIndex: 7,
                   tone: CreateListingSectionTone.finale,
                   kicker: l10n.createListingPublishKicker,
                   title: l10n.createListingSectionPublish,

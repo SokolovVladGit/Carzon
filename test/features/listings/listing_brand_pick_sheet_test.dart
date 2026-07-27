@@ -97,4 +97,46 @@ void main() {
 
     expect(picked, 'Mercedes-Benz');
   });
+
+  testWidgets('zero-match search shows manual-entry CTA and returns custom make', (
+    tester,
+  ) async {
+    final l10n = ruStrings();
+    String? picked;
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: ElevatedButton(
+              onPressed: () async {
+                picked = await showListingBrandPickSheet(
+                  context: context,
+                  l10n: l10n,
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    const customMake = 'Zaporozhets';
+    await tester.enterText(find.byType(TextField), customMake);
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.brandPickNotFoundTitle), findsOneWidget);
+    expect(find.text(l10n.brandPickUseMake(customMake)), findsOneWidget);
+
+    await tester.tap(find.text(l10n.brandPickUseMake(customMake)));
+    await tester.pumpAndSettle();
+
+    expect(picked, customMake);
+  });
 }

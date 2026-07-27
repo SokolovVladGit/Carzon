@@ -11,6 +11,8 @@ class ComposeChoiceCard extends StatelessWidget {
     required this.theme,
     this.compact = false,
     this.labelTextAlign = TextAlign.start,
+    this.stableSelectionIndicator = false,
+    this.singleLineScaleDown = false,
   });
 
   final String label;
@@ -20,6 +22,8 @@ class ComposeChoiceCard extends StatelessWidget {
   final ThemeData theme;
   final bool compact;
   final TextAlign labelTextAlign;
+  final bool stableSelectionIndicator;
+  final bool singleLineScaleDown;
 
   @override
   Widget build(BuildContext context) {
@@ -84,26 +88,72 @@ class ComposeChoiceCard extends StatelessWidget {
                   : const <BoxShadow>[],
             ),
             padding: EdgeInsets.symmetric(
-              horizontal: compact ? 14 : 16,
+              horizontal: stableSelectionIndicator ? 12 : (compact ? 14 : 16),
               vertical: compact ? 12 : 15,
             ),
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    label,
-                    textAlign: labelTextAlign,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                      height: 1.2,
-                      letterSpacing: -0.12,
-                      color: cs.onSurface.withValues(
-                        alpha: selected ? 0.96 : 0.82,
-                      ),
-                    ),
-                  ),
+                  child: singleLineScaleDown
+                      ? FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            softWrap: false,
+                            textAlign: labelTextAlign,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: selected
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                              height: 1.2,
+                              letterSpacing: -0.12,
+                              color: cs.onSurface.withValues(
+                                alpha: selected ? 0.96 : 0.82,
+                              ),
+                            ),
+                          ),
+                        )
+                      : Text(
+                          label,
+                          textAlign: labelTextAlign,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: selected
+                                ? FontWeight.w800
+                                : FontWeight.w600,
+                            height: 1.2,
+                            letterSpacing: -0.12,
+                            color: cs.onSurface.withValues(
+                              alpha: selected ? 0.96 : 0.82,
+                            ),
+                          ),
+                        ),
                 ),
-                if (selected)
+                if (stableSelectionIndicator) const SizedBox(width: 8),
+                if (stableSelectionIndicator)
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: selected
+                        ? DecoratedBox(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: cs.primary.withValues(
+                                alpha: light ? 0.12 : 0.22,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.check_rounded,
+                              size: 17,
+                              color: cs.primary.withValues(
+                                alpha: light ? 0.90 : 0.98,
+                              ),
+                            ),
+                          )
+                        : null,
+                  ),
+                if (selected && !stableSelectionIndicator)
                   Container(
                     width: 24,
                     height: 24,

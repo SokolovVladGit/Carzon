@@ -17,6 +17,7 @@ import 'package:carzon/features/listings/domain/entities/listing_sort_option.dar
 import 'package:carzon/features/listings/presentation/bloc/listings_bloc.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_event.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
+import 'package:carzon/features/listings/presentation/cubit/browse_catalog_filter_alerts_cubit.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_alert_ui_constants.dart';
 import 'package:carzon/features/listings/presentation/pages/listings_page.dart';
 import 'package:carzon/features/notifications/domain/entities/notification_preferences.dart';
@@ -553,6 +554,7 @@ void main() {
           const Stream<ListingsState>.empty(),
           initialState: toyotaApplied,
         );
+        await sl<BrowseCatalogFilterAlertsCubit>().onAuthChanged(auth.state);
 
         await tester.pumpWidget(
           _host(
@@ -569,6 +571,8 @@ void main() {
           find.byKey(CatalogFilterAlertAccent.discoveryFilterFABAlertBellKey),
           findsOneWidget,
         );
+        verify(() => browseNotificationsRepo.getMyPreferences()).called(1);
+        verify(() => browseSavedSearchesRepo.list()).called(1);
       },
     );
 
@@ -689,6 +693,7 @@ void main() {
           const Stream<ListingsState>.empty(),
           initialState: toyotaApplied,
         );
+        await sl<BrowseCatalogFilterAlertsCubit>().onAuthChanged(auth.state);
 
         await tester.pumpWidget(
           _host(
@@ -748,6 +753,7 @@ void main() {
           const Stream<ListingsState>.empty(),
           initialState: toyotaApplied,
         );
+        await sl<BrowseCatalogFilterAlertsCubit>().onAuthChanged(auth.state);
 
         await tester.pumpWidget(
           _host(

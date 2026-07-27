@@ -36,7 +36,7 @@ Default when unset: **off** (no Firebase bootstrap, no token registration).
 
 ## iOS
 
-1. **Firebase Console** — register an iOS app with bundle id **`com.example.carzon`**
+1. **Firebase Console** — register an iOS app with bundle id **`com.carzon.app`**
    (must match `PRODUCT_BUNDLE_IDENTIFIER` in Xcode).
 2. Download **`GoogleService-Info.plist`** and place at:
    **`ios/Runner/GoogleService-Info.plist`**

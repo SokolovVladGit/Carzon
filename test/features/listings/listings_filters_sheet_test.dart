@@ -13,6 +13,7 @@ import 'package:carzon/features/listings/domain/entities/listing_discovery_crite
 import 'package:carzon/features/listings/domain/repositories/listings_repository.dart';
 import 'package:carzon/features/listings/domain/usecases/get_listings.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_bloc.dart';
+import 'package:carzon/features/listings/presentation/cubit/browse_catalog_filter_alerts_cubit.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_browse_filter_alert_sheet_bell.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_alert_ui_constants.dart';
 import 'package:carzon/features/listings/presentation/pages/listings_page.dart';
@@ -240,6 +241,7 @@ void main() {
           const AuthUser(id: 'id', email: 'e@m.com'),
         ),
       );
+      await sl<BrowseCatalogFilterAlertsCubit>().onAuthChanged(auth.state);
 
       await tester.pumpWidget(
         _host(

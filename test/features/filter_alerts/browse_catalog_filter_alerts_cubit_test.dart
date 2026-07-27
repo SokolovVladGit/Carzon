@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
+import 'package:carzon/features/auth/domain/entities/auth_user.dart';
+import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
+import 'package:carzon/features/filter_alerts/domain/entities/saved_search.dart';
 import 'package:carzon/features/filter_alerts/domain/repositories/saved_searches_repository.dart';
 import 'package:carzon/features/filter_alerts/domain/services/filter_alert_delivery_orchestrator.dart';
 import 'package:carzon/features/listings/domain/browse_state_for_alert_criteria.dart';
@@ -25,6 +30,10 @@ class _MockNotificationsRepository extends Mock
 
 class _MockDeliveryOrchestrator extends Mock
     implements FilterAlertDeliveryOrchestrator {}
+
+const _authenticated = AuthState.authenticated(
+  AuthUser(id: 'u', email: 'u@example.com'),
+);
 
 ListingDiscoveryCriteria _discoveryCriteriaWithSortOnly(
   ListingDiscoveryCriteria base,
@@ -66,6 +75,12 @@ void main() {
       testSavedSearch(criteria: const ListingDiscoveryCriteria()),
     );
     registerFallbackValue(const ListingDiscoveryCriteria());
+    registerFallbackValue(
+      FilterAlertDeliverySessionGuard(
+        expectedUserId: 'fallback',
+        isSessionCurrent: () => true,
+      ),
+    );
   });
 
   late _MockSavedSearchesRepository savedSearchesRepo;
@@ -107,7 +122,7 @@ void main() {
 
   test('baseline browse snapshot cannot enable alert deliveries', () async {
     final cubit = buildCubit();
-    await cubit.refresh();
+    await cubit.onAuthChanged(_authenticated);
 
     final outcome = await cubit.handleCatalogFilterBell(
       draftCriteria: listingDiscoveryCriteriaFromBrowseStateForAlert(
@@ -163,12 +178,15 @@ void main() {
         return Success(postSave);
       });
 
-      when(() => orchestrator.enableDeliveries(any())).thenAnswer((_) async {
-        return Success(postEnable);
-      });
+      when(
+        () => orchestrator.enableDeliveries(
+          any(),
+          sessionGuard: any(named: 'sessionGuard'),
+        ),
+      ).thenAnswer((_) async => Success(postEnable));
 
       final cubit = buildCubit();
-      await cubit.refresh();
+      await cubit.onAuthChanged(_authenticated);
 
       final outcome = await cubit.handleCatalogFilterBell(
         draftCriteria: bmwCrit,
@@ -189,7 +207,12 @@ void main() {
           alertsEnabled: false,
         ),
       ).called(1);
-      verify(() => orchestrator.enableDeliveries(any())).called(1);
+      verify(
+        () => orchestrator.enableDeliveries(
+          any(),
+          sessionGuard: any(named: 'sessionGuard'),
+        ),
+      ).called(1);
     },
   );
 
@@ -301,13 +324,18 @@ void main() {
       when(
         () => savedSearchesRepo.list(),
       ).thenAnswer((_) async => Success(List.of(searches)));
-      when(() => orchestrator.enableDeliveries(saved)).thenAnswer((_) async {
+      when(
+        () => orchestrator.enableDeliveries(
+          saved,
+          sessionGuard: any(named: 'sessionGuard'),
+        ),
+      ).thenAnswer((_) async {
         searches[0] = enabled;
         return Success(enabled);
       });
 
       final cubit = buildCubit();
-      await cubit.refresh();
+      await cubit.onAuthChanged(_authenticated);
 
       final outcome = await cubit.handleCatalogFilterBell(
         draftCriteria: toyotaCrit,
@@ -316,7 +344,12 @@ void main() {
       );
 
       expect(outcome, BrowseCatalogBellOutcome.deliveriesEnabled);
-      verify(() => orchestrator.enableDeliveries(saved)).called(1);
+      verify(
+        () => orchestrator.enableDeliveries(
+          saved,
+          sessionGuard: any(named: 'sessionGuard'),
+        ),
+      ).called(1);
       verifyNever(() => savedSearchesRepo.delete(any()));
       verifyNever(
         () => savedSearchesRepo.create(
@@ -378,7 +411,7 @@ void main() {
       ).thenAnswer((_) async => Success(cap));
 
       final cubit = buildCubit();
-      await cubit.refresh();
+      await cubit.onAuthChanged(_authenticated);
 
       final outcome = await cubit.handleCatalogFilterBell(
         draftCriteria: const ListingDiscoveryCriteria(
@@ -424,7 +457,7 @@ void main() {
         );
 
         final cubit = buildCubit();
-        await cubit.refresh();
+        await cubit.onAuthChanged(_authenticated);
 
         final outcome = await cubit.handleCatalogFilterBell(
           draftCriteria: toyotaCrit,
@@ -468,50 +501,55 @@ void main() {
       },
     );
 
-    test('matched saved search in push-disabled build returns delivery unavailable',
-        () async {
-      _setPushEnv(enabled: false);
+    test(
+      'matched saved search in push-disabled build returns delivery unavailable',
+      () async {
+        _setPushEnv(enabled: false);
 
-      final toyotaCrit = ListingDiscoveryCriteria(
-        make: 'Toyota',
-        marketRegion: MarketRegion.transnistria,
-      );
-      final saved = testSavedSearch(
-        id: 'ss-toyota',
-        criteria: toyotaCrit,
-        alertsEnabled: false,
-      );
+        final toyotaCrit = ListingDiscoveryCriteria(
+          make: 'Toyota',
+          marketRegion: MarketRegion.transnistria,
+        );
+        final saved = testSavedSearch(
+          id: 'ss-toyota',
+          criteria: toyotaCrit,
+          alertsEnabled: false,
+        );
 
-      when(
-        () => savedSearchesRepo.list(),
-      ).thenAnswer((_) async => Success([saved]));
+        when(
+          () => savedSearchesRepo.list(),
+        ).thenAnswer((_) async => Success([saved]));
 
-      final cubit = buildCubit();
-      await cubit.refresh();
+        final cubit = buildCubit();
+        await cubit.onAuthChanged(_authenticated);
 
-      final outcome = await cubit.handleCatalogFilterBell(
-        draftCriteria: toyotaCrit,
-        authenticated: true,
-        autoName: 'Toyota',
-      );
+        final outcome = await cubit.handleCatalogFilterBell(
+          draftCriteria: toyotaCrit,
+          authenticated: true,
+          autoName: 'Toyota',
+        );
 
-      expect(outcome, BrowseCatalogBellOutcome.criteriaSavedDeliveryUnavailable);
-      verifyNever(() => savedSearchesRepo.delete(any()));
-      verifyNever(
-        () => savedSearchesRepo.create(
-          name: any(named: 'name'),
-          criteria: any(named: 'criteria'),
-          alertsEnabled: any(named: 'alertsEnabled'),
-        ),
-      );
-      verifyNever(() => orchestrator.enableDeliveries(any()));
-    });
+        expect(
+          outcome,
+          BrowseCatalogBellOutcome.criteriaSavedDeliveryUnavailable,
+        );
+        verifyNever(() => savedSearchesRepo.delete(any()));
+        verifyNever(
+          () => savedSearchesRepo.create(
+            name: any(named: 'name'),
+            criteria: any(named: 'criteria'),
+            alertsEnabled: any(named: 'alertsEnabled'),
+          ),
+        );
+        verifyNever(() => orchestrator.enableDeliveries(any()));
+      },
+    );
 
     test('sort-only/default criteria remain ineligible (broad)', () async {
       _setPushEnv(enabled: false);
 
       final cubit = buildCubit();
-      await cubit.refresh();
+      await cubit.onAuthChanged(_authenticated);
 
       final outcome = await cubit.handleCatalogFilterBell(
         draftCriteria: listingDiscoveryCriteriaFromBrowseStateForAlert(
@@ -557,31 +595,33 @@ void main() {
       expect(cubit.browseBellShowsActiveDraft(critToyota), isFalse);
     });
 
-    test('alerts_enabled row does not show active badge when push env disabled',
-        () {
-      _setPushEnv(enabled: false);
-      const toyotaApplied = ListingsState(
-        make: 'Toyota',
-        regionFilter: MarketRegionFilter.transnistria,
-      );
-      final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
-        toyotaApplied,
-      );
+    test(
+      'alerts_enabled row does not show active badge when push env disabled',
+      () {
+        _setPushEnv(enabled: false);
+        const toyotaApplied = ListingsState(
+          make: 'Toyota',
+          regionFilter: MarketRegionFilter.transnistria,
+        );
+        final critToyota = listingDiscoveryCriteriaFromBrowseStateForAlert(
+          toyotaApplied,
+        );
 
-      final cubit = buildCubit();
-      cubit.emit(
-        BrowseCatalogFilterAlertsState(
-          phase: BrowseCatalogFilterAlertsLoadPhase.ready,
-          prefs: prefsAllOn(),
-          savedSearches: [
-            testSavedSearch(criteria: critToyota, alertsEnabled: true),
-          ],
-        ),
-      );
+        final cubit = buildCubit();
+        cubit.emit(
+          BrowseCatalogFilterAlertsState(
+            phase: BrowseCatalogFilterAlertsLoadPhase.ready,
+            prefs: prefsAllOn(),
+            savedSearches: [
+              testSavedSearch(criteria: critToyota, alertsEnabled: true),
+            ],
+          ),
+        );
 
-      expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isFalse);
-      _setPushEnv(enabled: true);
-    });
+        expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isFalse);
+        _setPushEnv(enabled: true);
+      },
+    );
 
     test('inactive badge when applied feed differs from saved criteria', () {
       _setPushEnv(enabled: false);
@@ -633,7 +673,7 @@ void main() {
         ).thenAnswer((_) async => Success([saved]));
 
         final cubit = buildCubit();
-        await cubit.refresh();
+        await cubit.onAuthChanged(_authenticated);
         const toyotaApplied = ListingsState(
           make: 'Toyota',
           regionFilter: MarketRegionFilter.transnistria,
@@ -666,9 +706,57 @@ void main() {
       },
     );
 
+    test('matched draft with delivery fully on: tap disables row alerts via '
+        'orchestrator and returns deliveriesDisabled', () async {
+      final toyotaCrit = ListingDiscoveryCriteria(
+        make: 'Toyota',
+        marketRegion: MarketRegion.transnistria,
+      );
+      final saved = testSavedSearch(
+        id: 'ss-toyota',
+        criteria: toyotaCrit,
+        alertsEnabled: true,
+      );
+      final disabled = testSavedSearch(
+        id: 'ss-toyota',
+        criteria: toyotaCrit,
+        alertsEnabled: false,
+      );
+
+      final searches = [saved];
+      when(
+        () => savedSearchesRepo.list(),
+      ).thenAnswer((_) async => Success(List.of(searches)));
+      when(() => orchestrator.disableDeliveries(saved)).thenAnswer((_) async {
+        searches[0] = disabled;
+        return Success(disabled);
+      });
+
+      final cubit = buildCubit();
+      await cubit.onAuthChanged(_authenticated);
+      const toyotaApplied = ListingsState(
+        make: 'Toyota',
+        regionFilter: MarketRegionFilter.transnistria,
+      );
+      expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isTrue);
+      expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isTrue);
+
+      final outcome = await cubit.handleCatalogFilterBell(
+        draftCriteria: toyotaCrit,
+        authenticated: true,
+        autoName: 'Toyota',
+      );
+
+      expect(outcome, BrowseCatalogBellOutcome.deliveriesDisabled);
+      verify(() => orchestrator.disableDeliveries(saved)).called(1);
+      verifyNever(() => savedSearchesRepo.delete(any()));
+
+      expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isFalse);
+      expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isFalse);
+    });
+
     test(
-      'matched draft with delivery fully on: tap disables row alerts via '
-      'orchestrator and returns deliveriesDisabled',
+      'disable failure returns prefsOrRowFailed and leaves saved row in place',
       () async {
         final toyotaCrit = ListingDiscoveryCriteria(
           make: 'Toyota',
@@ -679,29 +767,16 @@ void main() {
           criteria: toyotaCrit,
           alertsEnabled: true,
         );
-        final disabled = testSavedSearch(
-          id: 'ss-toyota',
-          criteria: toyotaCrit,
-          alertsEnabled: false,
-        );
 
-        final searches = [saved];
         when(
           () => savedSearchesRepo.list(),
-        ).thenAnswer((_) async => Success(List.of(searches)));
-        when(() => orchestrator.disableDeliveries(saved)).thenAnswer((_) async {
-          searches[0] = disabled;
-          return Success(disabled);
-        });
+        ).thenAnswer((_) async => Success([saved]));
+        when(
+          () => orchestrator.disableDeliveries(saved),
+        ).thenAnswer((_) async => const FailureResult(ServerFailure('boom')));
 
         final cubit = buildCubit();
-        await cubit.refresh();
-        const toyotaApplied = ListingsState(
-          make: 'Toyota',
-          regionFilter: MarketRegionFilter.transnistria,
-        );
-        expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isTrue);
-        expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isTrue);
+        await cubit.onAuthChanged(_authenticated);
 
         final outcome = await cubit.handleCatalogFilterBell(
           draftCriteria: toyotaCrit,
@@ -709,46 +784,209 @@ void main() {
           autoName: 'Toyota',
         );
 
-        expect(outcome, BrowseCatalogBellOutcome.deliveriesDisabled);
+        expect(outcome, BrowseCatalogBellOutcome.prefsOrRowFailed);
         verify(() => orchestrator.disableDeliveries(saved)).called(1);
-        verifyNever(() => savedSearchesRepo.delete(any()));
-
-        expect(cubit.browseBellShowsActiveDraft(toyotaCrit), isFalse);
-        expect(cubit.catalogBellBadgeVisibleForApplied(toyotaApplied), isFalse);
+        expect(cubit.state.bellBusy, isFalse);
       },
     );
+  });
 
-    test('disable failure returns prefsOrRowFailed and leaves saved row in place',
-        () async {
-      final toyotaCrit = ListingDiscoveryCriteria(
-        make: 'Toyota',
-        marketRegion: MarketRegion.transnistria,
-      );
+  group('session isolation', () {
+    test('stale delivery orchestration maps to no-op after sign-out', () async {
       final saved = testSavedSearch(
-        id: 'ss-toyota',
-        criteria: toyotaCrit,
-        alertsEnabled: true,
+        id: 'a-search',
+        criteria: const ListingDiscoveryCriteria(
+          make: 'Toyota',
+          marketRegion: MarketRegion.transnistria,
+        ),
       );
-
       when(
         () => savedSearchesRepo.list(),
       ).thenAnswer((_) async => Success([saved]));
-      when(() => orchestrator.disableDeliveries(saved)).thenAnswer(
-        (_) async => const FailureResult(ServerFailure('boom')),
-      );
-
+      final pendingEnable = Completer<Result<SavedSearch>>();
+      late FilterAlertDeliverySessionGuard capturedGuard;
+      when(
+        () => orchestrator.enableDeliveries(
+          saved,
+          sessionGuard: any(named: 'sessionGuard'),
+        ),
+      ).thenAnswer((invocation) {
+        capturedGuard =
+            invocation.namedArguments[#sessionGuard]
+                as FilterAlertDeliverySessionGuard;
+        return pendingEnable.future;
+      });
       final cubit = buildCubit();
-      await cubit.refresh();
+      await cubit.onAuthChanged(_authenticated);
 
-      final outcome = await cubit.handleCatalogFilterBell(
-        draftCriteria: toyotaCrit,
+      final mutation = cubit.handleCatalogFilterBell(
+        draftCriteria: saved.criteria,
         authenticated: true,
-        autoName: 'Toyota',
+        autoName: saved.name,
+      );
+      expect(capturedGuard.expectedUserId, 'u');
+      expect(capturedGuard.isSessionCurrent(), isTrue);
+
+      await cubit.onAuthChanged(const AuthState.unauthenticated());
+      expect(capturedGuard.isSessionCurrent(), isFalse);
+      pendingEnable.complete(
+        const FailureResult(UnknownFailure(filterAlertDeliverySessionStale)),
       );
 
-      expect(outcome, BrowseCatalogBellOutcome.prefsOrRowFailed);
-      verify(() => orchestrator.disableDeliveries(saved)).called(1);
-      expect(cubit.state.bellBusy, isFalse);
+      expect(await mutation, BrowseCatalogBellOutcome.noop);
+      expect(
+        cubit.state,
+        const BrowseCatalogFilterAlertsState(
+          phase: BrowseCatalogFilterAlertsLoadPhase.ready,
+        ),
+      );
+      await cubit.close();
     });
+
+    test('A refresh cannot repopulate state after sign-out', () async {
+      final pendingPrefs = Completer<Result<NotificationPreferences>>();
+      when(
+        () => notifRepo.getMyPreferences(),
+      ).thenAnswer((_) => pendingPrefs.future);
+      final cubit = buildCubit();
+
+      final loadA = cubit.onAuthChanged(_authenticated);
+      await cubit.onAuthChanged(const AuthState.unauthenticated());
+      expect(
+        cubit.state,
+        const BrowseCatalogFilterAlertsState(
+          phase: BrowseCatalogFilterAlertsLoadPhase.ready,
+        ),
+      );
+
+      pendingPrefs.complete(Success(prefsAllOn()));
+      await loadA;
+
+      expect(cubit.state.savedSearches, isEmpty);
+      expect(cubit.state.prefs, isNull);
+      verifyNever(() => savedSearchesRepo.list());
+      await cubit.close();
+    });
+
+    test('A refresh cannot overwrite B state', () async {
+      final prefsA = Completer<Result<NotificationPreferences>>();
+      final prefsB = Completer<Result<NotificationPreferences>>();
+      final searchesB = Completer<Result<List<SavedSearch>>>();
+      var prefsCall = 0;
+      when(
+        () => notifRepo.getMyPreferences(),
+      ).thenAnswer((_) => prefsCall++ == 0 ? prefsA.future : prefsB.future);
+      when(() => savedSearchesRepo.list()).thenAnswer((_) => searchesB.future);
+      final cubit = buildCubit();
+
+      final loadA = cubit.onAuthChanged(_authenticated);
+      final loadB = cubit.onAuthChanged(
+        const AuthState.authenticated(
+          AuthUser(id: 'b', email: 'b@example.com'),
+        ),
+      );
+      prefsB.complete(Success(prefsAllOn()));
+      final savedB = testSavedSearch(
+        id: 'b-search',
+        criteria: const ListingDiscoveryCriteria(make: 'BMW'),
+      );
+      searchesB.complete(Success([savedB]));
+      await loadB;
+
+      prefsA.complete(Success(prefsAllOn()));
+      await loadA;
+
+      expect(cubit.state.savedSearches, [savedB]);
+      await cubit.close();
+    });
+
+    test('newer same-user refresh remains authoritative', () async {
+      final olderPrefs = Completer<Result<NotificationPreferences>>();
+      final newerPrefs = Completer<Result<NotificationPreferences>>();
+      final newerSearches = Completer<Result<List<SavedSearch>>>();
+      var prefsCall = 0;
+      when(() => notifRepo.getMyPreferences()).thenAnswer(
+        (_) => prefsCall++ == 0 ? olderPrefs.future : newerPrefs.future,
+      );
+      when(
+        () => savedSearchesRepo.list(),
+      ).thenAnswer((_) => newerSearches.future);
+      final cubit = buildCubit();
+
+      final older = cubit.onAuthChanged(_authenticated);
+      final newer = cubit.onAuthChanged(_authenticated);
+      newerPrefs.complete(Success(prefsAllOn()));
+      final saved = testSavedSearch(
+        id: 'newer',
+        criteria: const ListingDiscoveryCriteria(make: 'Volvo'),
+      );
+      newerSearches.complete(Success([saved]));
+      await newer;
+      olderPrefs.complete(const FailureResult(NetworkFailure('stale failure')));
+      await older;
+
+      expect(cubit.state.phase, BrowseCatalogFilterAlertsLoadPhase.ready);
+      expect(cubit.state.savedSearches, [saved]);
+      await cubit.close();
+    });
+
+    test('stale refresh failure cannot replace signed-out state', () async {
+      final pendingPrefs = Completer<Result<NotificationPreferences>>();
+      when(
+        () => notifRepo.getMyPreferences(),
+      ).thenAnswer((_) => pendingPrefs.future);
+      final cubit = buildCubit();
+
+      final loadA = cubit.onAuthChanged(_authenticated);
+      await cubit.onAuthChanged(const AuthState.unauthenticated());
+      pendingPrefs.complete(
+        const FailureResult(NetworkFailure('stale failure')),
+      );
+      await loadA;
+
+      expect(cubit.state.phase, BrowseCatalogFilterAlertsLoadPhase.ready);
+      expect(cubit.state.prefs, isNull);
+      await cubit.close();
+    });
+
+    test(
+      'stale mutation failure cannot emit or roll back after sign-out',
+      () async {
+        final cubit = buildCubit();
+        await cubit.onAuthChanged(_authenticated);
+        final pendingCreate = Completer<Result<SavedSearch>>();
+        when(
+          () => savedSearchesRepo.create(
+            name: any(named: 'name'),
+            criteria: any(named: 'criteria'),
+            alertsEnabled: any(named: 'alertsEnabled'),
+          ),
+        ).thenAnswer((_) => pendingCreate.future);
+
+        final mutation = cubit.handleCatalogFilterBell(
+          draftCriteria: const ListingDiscoveryCriteria(
+            make: 'Toyota',
+            marketRegion: MarketRegion.transnistria,
+          ),
+          authenticated: true,
+          autoName: 'Toyota',
+        );
+        expect(cubit.state.bellBusy, isTrue);
+
+        await cubit.onAuthChanged(const AuthState.unauthenticated());
+        pendingCreate.complete(
+          const FailureResult(NetworkFailure('stale mutation failure')),
+        );
+
+        expect(await mutation, BrowseCatalogBellOutcome.noop);
+        expect(
+          cubit.state,
+          const BrowseCatalogFilterAlertsState(
+            phase: BrowseCatalogFilterAlertsLoadPhase.ready,
+          ),
+        );
+        await cubit.close();
+      },
+    );
   });
 }

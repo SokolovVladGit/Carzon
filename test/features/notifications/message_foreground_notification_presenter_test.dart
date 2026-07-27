@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 class _RecordingDisplay implements MessageForegroundNotificationDisplay {
   int initCount = 0;
+  Future<void> Function()? initializeOverride;
   final List<String> shownConversationIds = [];
   final List<String> shownListingIds = [];
   final List<String> titles = [];
@@ -24,6 +25,7 @@ class _RecordingDisplay implements MessageForegroundNotificationDisplay {
   @override
   Future<void> initialize() async {
     initCount++;
+    await initializeOverride?.call();
   }
 
   @override
@@ -45,6 +47,55 @@ class _RecordingDisplay implements MessageForegroundNotificationDisplay {
     shownListingIds.add(listingId);
     titles.add(PriceDropNotificationPublicCopy.title(AppLocalePreference.ru));
     bodies.add(PriceDropNotificationPublicCopy.body(AppLocalePreference.ru));
+  }
+}
+
+final class _PresenterRetryHarness {
+  _PresenterRetryHarness({
+    required this.display,
+    required bool Function() firebaseAppReady,
+  }) {
+    foregroundMessages = StreamController<RemoteMessage>.broadcast(
+      onListen: () => listenerCount++,
+      onCancel: () => cancellationCount++,
+    );
+    conversationCoordinator = MessageConversationNavigationCoordinator(
+      authStateStream: authStates.stream,
+      authStateSnapshot: () => auth,
+      navigateToConversation: (_) {},
+    );
+    listingCoordinator = FilterAlertListingNavigationCoordinator(
+      authStateStream: authStates.stream,
+      authStateSnapshot: () => auth,
+      navigateToListingDetail: (_) {},
+    );
+    presenter = MessageForegroundNotificationPresenter(
+      navigationCoordinator: conversationCoordinator,
+      listingNavigationCoordinator: listingCoordinator,
+      display: display,
+      foregroundMessageStream: foregroundMessages.stream,
+      firebaseAppReady: firebaseAppReady,
+    );
+  }
+
+  final _RecordingDisplay display;
+  final auth = const AuthState.authenticated(
+    AuthUser(id: 'retry-user', email: 'retry@example.com'),
+  );
+  final authStates = StreamController<AuthState>.broadcast();
+  late final StreamController<RemoteMessage> foregroundMessages;
+  late final MessageConversationNavigationCoordinator conversationCoordinator;
+  late final FilterAlertListingNavigationCoordinator listingCoordinator;
+  late final MessageForegroundNotificationPresenter presenter;
+  int listenerCount = 0;
+  int cancellationCount = 0;
+
+  Future<void> dispose() async {
+    await presenter.dispose();
+    await conversationCoordinator.dispose();
+    await listingCoordinator.dispose();
+    await foregroundMessages.close();
+    await authStates.close();
   }
 }
 
@@ -486,5 +537,119 @@ PUSH_NOTIFICATIONS_ENABLED=true
     await listingCoordinator.dispose();
     await opened.close();
     await authEmitter.close();
+  });
+
+  group('retryable startup', () {
+    setUp(() {
+      dotenv.testLoad(
+        fileInput: '''
+SUPABASE_URL=https://x.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=true
+''',
+      );
+    });
+
+    test(
+      'Firebase unavailable remains idle and later retry succeeds',
+      () async {
+        var firebaseReady = false;
+        final harness = _PresenterRetryHarness(
+          display: _RecordingDisplay(),
+          firebaseAppReady: () => firebaseReady,
+        );
+
+        await harness.presenter.start();
+        expect(harness.presenter.isStarted, isFalse);
+        expect(harness.display.initCount, 0);
+        expect(harness.listenerCount, 0);
+
+        firebaseReady = true;
+        await harness.presenter.start();
+        expect(harness.presenter.isStarted, isTrue);
+        expect(harness.display.initCount, 1);
+        expect(harness.listenerCount, 1);
+
+        await harness.dispose();
+      },
+    );
+
+    test(
+      'initialization failure resets state and later retry succeeds',
+      () async {
+        final display = _RecordingDisplay();
+        var shouldThrow = true;
+        display.initializeOverride = () async {
+          if (shouldThrow) {
+            shouldThrow = false;
+            throw StateError('temporary local notification failure');
+          }
+        };
+        final harness = _PresenterRetryHarness(
+          display: display,
+          firebaseAppReady: () => true,
+        );
+
+        await harness.presenter.start();
+        expect(harness.presenter.isStarted, isFalse);
+        expect(display.initCount, 1);
+        expect(harness.listenerCount, 0);
+
+        await harness.presenter.start();
+        expect(harness.presenter.isStarted, isTrue);
+        expect(display.initCount, 2);
+        expect(harness.listenerCount, 1);
+
+        await harness.dispose();
+      },
+    );
+
+    test(
+      'concurrent start calls share one initialization and listener',
+      () async {
+        final initializeGate = Completer<void>();
+        final display = _RecordingDisplay()
+          ..initializeOverride = () => initializeGate.future;
+        final harness = _PresenterRetryHarness(
+          display: display,
+          firebaseAppReady: () => true,
+        );
+
+        final first = harness.presenter.start();
+        final second = harness.presenter.start();
+        expect(display.initCount, 1);
+        expect(harness.listenerCount, 0);
+
+        initializeGate.complete();
+        await Future.wait([first, second]);
+        expect(harness.presenter.isStarted, isTrue);
+        expect(display.initCount, 1);
+        expect(harness.listenerCount, 1);
+
+        await harness.dispose();
+      },
+    );
+
+    test('repeated successful start presents each message once', () async {
+      final harness = _PresenterRetryHarness(
+        display: _RecordingDisplay(),
+        firebaseAppReady: () => true,
+      );
+
+      await harness.presenter.start();
+      await harness.presenter.start();
+      harness.foregroundMessages.add(
+        RemoteMessage(data: {'type': 'message', 'conversation_id': okId}),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(harness.presenter.isStarted, isTrue);
+      expect(harness.display.initCount, 1);
+      expect(harness.listenerCount, 1);
+      expect(harness.display.shownConversationIds, [okId]);
+
+      await harness.dispose();
+      expect(harness.cancellationCount, 1);
+    });
   });
 }
