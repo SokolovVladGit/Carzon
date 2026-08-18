@@ -17,13 +17,9 @@ String _stringData(Map<String, dynamic> data, String key) {
 
 /// Privacy-safe FCM **data** keys for filter-alert pushes (Edge `dataPayload`).
 class FilterAlertNotificationTapPayload {
-  const FilterAlertNotificationTapPayload({
-    required this.listingId,
-    this.eventId,
-  });
+  const FilterAlertNotificationTapPayload({required this.listingId});
 
   final String listingId;
-  final String? eventId;
 }
 
 /// Parses FCM data for `type=filter_alert`. Returns null if malformed.
@@ -38,11 +34,7 @@ FilterAlertNotificationTapPayload? parseFilterAlertNotificationTapPayload(
   if (!_isListingUuid(listingRaw)) {
     return null;
   }
-  final eventRaw = _stringData(data, 'event_id').trim();
-  return FilterAlertNotificationTapPayload(
-    listingId: listingRaw,
-    eventId: eventRaw.isEmpty || !_isListingUuid(eventRaw) ? null : eventRaw,
-  );
+  return FilterAlertNotificationTapPayload(listingId: listingRaw);
 }
 
 /// Prefix for [flutter_local_notifications] tap payload for filter alerts (not a bare UUID).

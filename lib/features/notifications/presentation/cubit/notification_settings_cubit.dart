@@ -73,6 +73,8 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
   }
 
   Future<void> load() async {
+    final session = _pushRegistration.captureSessionGuard();
+    if (session == null || !session.isCurrent) return;
     emit(
       state.copyWith(
         phase: NotificationSettingsLoadPhase.loading,
@@ -81,6 +83,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
     );
 
     final prefsResult = await _repository.getMyPreferences();
+    if (!_canApply(session)) return;
     switch (prefsResult) {
       case FailureResult():
         emit(
@@ -93,8 +96,11 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
       case Success(:final value):
         PushMessagingPermissionStatus? perm;
         if (Env.pushNotificationsEnabled) {
-          perm = await _pushRegistration.readOsNotificationPermissionStatus();
+          perm = await _pushRegistration.readOsNotificationPermissionStatus(
+            sessionGuard: session,
+          );
         }
+        if (!_canApply(session)) return;
         emit(
           NotificationSettingsState(
             phase: NotificationSettingsLoadPhase.ready,
@@ -121,13 +127,16 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
       );
       return;
     }
+    final session = _pushRegistration.captureSessionGuard();
+    if (session == null || !session.isCurrent) return;
 
     emit(state.copyWith(busy: true, notice: NotificationUserNotice.none));
 
     try {
       if (enabled) {
         final perm = await _pushRegistration
-            .resolvePermissionForPreferenceEnable();
+            .resolvePermissionForPreferenceEnable(sessionGuard: session);
+        if (!_canApply(session)) return;
         if (perm.blocksPreferenceEnable) {
           emit(
             state.copyWith(
@@ -144,6 +153,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           filterAlertsEnabled: prefs.filterAlertsEnabled,
           priceDropsEnabled: prefs.priceDropsEnabled,
         );
+        if (!_canApply(session)) return;
         switch (update) {
           case FailureResult():
             emit(
@@ -155,8 +165,12 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             return;
           case Success(:final value):
             final perm = await _pushRegistration
-                .readOsNotificationPermissionStatus();
-            await _pushRegistration.syncTokenWithBackendIfEligible();
+                .readOsNotificationPermissionStatus(sessionGuard: session);
+            if (!_canApply(session)) return;
+            await _pushRegistration.syncTokenWithBackendIfEligible(
+              isSessionCurrent: () => session.isCurrent,
+            );
+            if (!_canApply(session)) return;
             emit(
               state.copyWith(
                 busy: false,
@@ -172,6 +186,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           filterAlertsEnabled: false,
           priceDropsEnabled: false,
         );
+        if (!_canApply(session)) return;
         switch (update) {
           case FailureResult():
             emit(
@@ -182,9 +197,13 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             );
             return;
           case Success(:final value):
-            await _pushRegistration.revokeDevicePushRegistration();
+            await _pushRegistration.revokeDevicePushRegistration(
+              sessionGuard: session,
+            );
+            if (!_canApply(session)) return;
             final perm = await _pushRegistration
-                .readOsNotificationPermissionStatus();
+                .readOsNotificationPermissionStatus(sessionGuard: session);
+            if (!_canApply(session)) return;
             emit(
               state.copyWith(
                 busy: false,
@@ -195,9 +214,14 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
         }
       }
     } catch (_) {
-      emit(
-        state.copyWith(busy: false, notice: NotificationUserNotice.saveFailed),
-      );
+      if (_canApply(session)) {
+        emit(
+          state.copyWith(
+            busy: false,
+            notice: NotificationUserNotice.saveFailed,
+          ),
+        );
+      }
     }
   }
 
@@ -213,13 +237,16 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
     if (!Env.pushNotificationsEnabled) {
       return;
     }
+    final session = _pushRegistration.captureSessionGuard();
+    if (session == null || !session.isCurrent) return;
 
     emit(state.copyWith(busy: true, notice: NotificationUserNotice.none));
 
     try {
       if (enabled) {
         final perm = await _pushRegistration
-            .resolvePermissionForPreferenceEnable();
+            .resolvePermissionForPreferenceEnable(sessionGuard: session);
+        if (!_canApply(session)) return;
         if (perm.blocksPreferenceEnable) {
           emit(
             state.copyWith(
@@ -236,6 +263,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           filterAlertsEnabled: prefs.filterAlertsEnabled,
           priceDropsEnabled: prefs.priceDropsEnabled,
         );
+        if (!_canApply(session)) return;
         switch (update) {
           case FailureResult():
             emit(
@@ -247,8 +275,12 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             return;
           case Success(:final value):
             final p = await _pushRegistration
-                .readOsNotificationPermissionStatus();
-            await _pushRegistration.syncTokenWithBackendIfEligible();
+                .readOsNotificationPermissionStatus(sessionGuard: session);
+            if (!_canApply(session)) return;
+            await _pushRegistration.syncTokenWithBackendIfEligible(
+              isSessionCurrent: () => session.isCurrent,
+            );
+            if (!_canApply(session)) return;
             emit(
               state.copyWith(busy: false, preferences: value, osPermission: p),
             );
@@ -260,6 +292,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           filterAlertsEnabled: prefs.filterAlertsEnabled,
           priceDropsEnabled: prefs.priceDropsEnabled,
         );
+        if (!_canApply(session)) return;
         switch (update) {
           case FailureResult():
             emit(
@@ -271,16 +304,22 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             return;
           case Success(:final value):
             final p = await _pushRegistration
-                .readOsNotificationPermissionStatus();
+                .readOsNotificationPermissionStatus(sessionGuard: session);
+            if (!_canApply(session)) return;
             emit(
               state.copyWith(busy: false, preferences: value, osPermission: p),
             );
         }
       }
     } catch (_) {
-      emit(
-        state.copyWith(busy: false, notice: NotificationUserNotice.saveFailed),
-      );
+      if (_canApply(session)) {
+        emit(
+          state.copyWith(
+            busy: false,
+            notice: NotificationUserNotice.saveFailed,
+          ),
+        );
+      }
     }
   }
 
@@ -303,13 +342,16 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
       );
       return;
     }
+    final session = _pushRegistration.captureSessionGuard();
+    if (session == null || !session.isCurrent) return;
 
     emit(state.copyWith(busy: true, notice: NotificationUserNotice.none));
 
     try {
       if (enabled) {
         final perm = await _pushRegistration
-            .resolvePermissionForPreferenceEnable();
+            .resolvePermissionForPreferenceEnable(sessionGuard: session);
+        if (!_canApply(session)) return;
         if (perm.blocksPreferenceEnable) {
           emit(
             state.copyWith(
@@ -326,6 +368,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           filterAlertsEnabled: true,
           priceDropsEnabled: prefs.priceDropsEnabled,
         );
+        if (!_canApply(session)) return;
         switch (update) {
           case FailureResult():
             emit(
@@ -337,8 +380,12 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             return;
           case Success(:final value):
             final p = await _pushRegistration
-                .readOsNotificationPermissionStatus();
-            await _pushRegistration.syncTokenWithBackendIfEligible();
+                .readOsNotificationPermissionStatus(sessionGuard: session);
+            if (!_canApply(session)) return;
+            await _pushRegistration.syncTokenWithBackendIfEligible(
+              isSessionCurrent: () => session.isCurrent,
+            );
+            if (!_canApply(session)) return;
             emit(
               state.copyWith(busy: false, preferences: value, osPermission: p),
             );
@@ -350,6 +397,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           filterAlertsEnabled: false,
           priceDropsEnabled: prefs.priceDropsEnabled,
         );
+        if (!_canApply(session)) return;
         switch (update) {
           case FailureResult():
             emit(
@@ -361,16 +409,22 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             return;
           case Success(:final value):
             final p = await _pushRegistration
-                .readOsNotificationPermissionStatus();
+                .readOsNotificationPermissionStatus(sessionGuard: session);
+            if (!_canApply(session)) return;
             emit(
               state.copyWith(busy: false, preferences: value, osPermission: p),
             );
         }
       }
     } catch (_) {
-      emit(
-        state.copyWith(busy: false, notice: NotificationUserNotice.saveFailed),
-      );
+      if (_canApply(session)) {
+        emit(
+          state.copyWith(
+            busy: false,
+            notice: NotificationUserNotice.saveFailed,
+          ),
+        );
+      }
     }
   }
 
@@ -386,13 +440,16 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
     if (!Env.pushNotificationsEnabled) {
       return;
     }
+    final session = _pushRegistration.captureSessionGuard();
+    if (session == null || !session.isCurrent) return;
 
     emit(state.copyWith(busy: true, notice: NotificationUserNotice.none));
 
     try {
       if (enabled) {
         final perm = await _pushRegistration
-            .resolvePermissionForPreferenceEnable();
+            .resolvePermissionForPreferenceEnable(sessionGuard: session);
+        if (!_canApply(session)) return;
         if (perm.blocksPreferenceEnable) {
           emit(
             state.copyWith(
@@ -409,6 +466,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           filterAlertsEnabled: prefs.filterAlertsEnabled,
           priceDropsEnabled: true,
         );
+        if (!_canApply(session)) return;
         switch (update) {
           case FailureResult():
             emit(
@@ -420,8 +478,12 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             return;
           case Success(:final value):
             final p = await _pushRegistration
-                .readOsNotificationPermissionStatus();
-            await _pushRegistration.syncTokenWithBackendIfEligible();
+                .readOsNotificationPermissionStatus(sessionGuard: session);
+            if (!_canApply(session)) return;
+            await _pushRegistration.syncTokenWithBackendIfEligible(
+              isSessionCurrent: () => session.isCurrent,
+            );
+            if (!_canApply(session)) return;
             emit(
               state.copyWith(busy: false, preferences: value, osPermission: p),
             );
@@ -433,6 +495,7 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
           filterAlertsEnabled: prefs.filterAlertsEnabled,
           priceDropsEnabled: false,
         );
+        if (!_canApply(session)) return;
         switch (update) {
           case FailureResult():
             emit(
@@ -444,16 +507,26 @@ class NotificationSettingsCubit extends Cubit<NotificationSettingsState> {
             return;
           case Success(:final value):
             final p = await _pushRegistration
-                .readOsNotificationPermissionStatus();
+                .readOsNotificationPermissionStatus(sessionGuard: session);
+            if (!_canApply(session)) return;
             emit(
               state.copyWith(busy: false, preferences: value, osPermission: p),
             );
         }
       }
     } catch (_) {
-      emit(
-        state.copyWith(busy: false, notice: NotificationUserNotice.saveFailed),
-      );
+      if (_canApply(session)) {
+        emit(
+          state.copyWith(
+            busy: false,
+            notice: NotificationUserNotice.saveFailed,
+          ),
+        );
+      }
     }
+  }
+
+  bool _canApply(NotificationSessionGuard session) {
+    return !isClosed && session.isCurrent;
   }
 }

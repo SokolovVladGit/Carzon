@@ -6,6 +6,7 @@ import '../../../core/l10n/app_locale_cubit.dart';
 import '../../../core/config/env.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../auth/presentation/bloc/auth_cubit.dart';
+import '../../auth/presentation/bloc/auth_state.dart';
 import '../data/datasources/notifications_remote_datasource.dart';
 import '../data/repositories/notifications_repository_impl.dart';
 import '../domain/repositories/notifications_repository.dart';
@@ -43,6 +44,10 @@ void registerNotificationsFeature(GetIt sl) {
       messagingClient: sl<PushMessagingClient>(),
       notificationsRepository: sl<NotificationsRepository>(),
       authGate: sl<PushAuthGate>(),
+      readAuthenticatedUserId: () {
+        final auth = sl<AuthCubit>().state;
+        return auth.status == AuthStatus.authenticated ? auth.user?.id : null;
+      },
       readLocalePreference: () => sl<AppLocaleCubit>().state.preference,
     ),
   );

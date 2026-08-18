@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/filter_alerts/domain/entities/saved_search.dart';
 import 'package:carzon/features/filter_alerts/domain/repositories/saved_searches_repository.dart';
@@ -79,6 +80,19 @@ PUSH_NOTIFICATIONS_ENABLED=true
 ''',
     );
     when(
+      () => pushReg.captureSessionGuard(
+        additionalCheck: any(named: 'additionalCheck'),
+      ),
+    ).thenAnswer((invocation) {
+      final additional =
+          invocation.namedArguments[#additionalCheck] as bool Function()?;
+      return NotificationSessionGuard(
+        expectedUserId: 'u1',
+        generation: 1,
+        isCurrent: () => additional?.call() ?? true,
+      );
+    });
+    when(
       () => notifRepo.updateMyPreferences(
         globalEnabled: any(named: 'globalEnabled'),
         messagesEnabled: any(named: 'messagesEnabled'),
@@ -105,20 +119,24 @@ PUSH_NOTIFICATIONS_ENABLED=true
           globalEnabled: false,
           messagesEnabled: true,
           filterAlertsEnabled: false,
-    priceDropsEnabled: false,
+          priceDropsEnabled: false,
           createdAt: DateTime.utc(2026, 1, 1),
           updatedAt: DateTime.utc(2026, 1, 2),
         ),
       ),
     );
     when(
-      () => pushReg.resolvePermissionForPreferenceEnable(),
+      () => pushReg.resolvePermissionForPreferenceEnable(
+        sessionGuard: any(named: 'sessionGuard'),
+      ),
     ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
     when(
       () => pushReg.requestOsNotificationPermission(),
     ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
     when(
-      () => pushReg.syncTokenWithBackendIfEligible(),
+      () => pushReg.syncTokenWithBackendIfEligible(
+        isSessionCurrent: any(named: 'isSessionCurrent'),
+      ),
     ).thenAnswer((_) async {});
   });
 
@@ -137,7 +155,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
         () => savedSearchesRepo.list(),
       ).thenAnswer((_) async => Success([_audiRow()]));
       when(
-        () => pushReg.resolvePermissionForPreferenceEnable(),
+        () => pushReg.resolvePermissionForPreferenceEnable(
+          sessionGuard: any(named: 'sessionGuard'),
+        ),
       ).thenAnswer((_) async => PushMessagingPermissionStatus.denied);
     },
     build: buildCubit,
@@ -166,7 +186,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
         () => savedSearchesRepo.list(),
       ).thenAnswer((_) async => Success([_audiRow()]));
       when(
-        () => pushReg.resolvePermissionForPreferenceEnable(),
+        () => pushReg.resolvePermissionForPreferenceEnable(
+          sessionGuard: any(named: 'sessionGuard'),
+        ),
       ).thenAnswer((_) async => PushMessagingPermissionStatus.notDetermined);
       when(
         () => savedSearchesRepo.setAlertsEnabled('ss-audi', true),
@@ -189,7 +211,11 @@ PUSH_NOTIFICATIONS_ENABLED=true
       verify(
         () => savedSearchesRepo.setAlertsEnabled('ss-audi', true),
       ).called(1);
-      verify(() => pushReg.syncTokenWithBackendIfEligible()).called(1);
+      verify(
+        () => pushReg.syncTokenWithBackendIfEligible(
+          isSessionCurrent: any(named: 'isSessionCurrent'),
+        ),
+      ).called(1);
     },
   );
 
@@ -220,7 +246,11 @@ PUSH_NOTIFICATIONS_ENABLED=true
       verify(
         () => savedSearchesRepo.setAlertsEnabled('ss-audi', true),
       ).called(1);
-      verify(() => pushReg.syncTokenWithBackendIfEligible()).called(1);
+      verify(
+        () => pushReg.syncTokenWithBackendIfEligible(
+          isSessionCurrent: any(named: 'isSessionCurrent'),
+        ),
+      ).called(1);
     },
   );
 
@@ -251,6 +281,30 @@ PUSH_NOTIFICATIONS_ENABLED=true
           priceDropsEnabled: any(named: 'priceDropsEnabled'),
         ),
       );
+    },
+  );
+
+  blocTest<SavedSearchesCubit, SavedSearchesState>(
+    'stale alert mutation does not emit completion feedback under next user',
+    setUp: () {
+      when(
+        () => savedSearchesRepo.list(),
+      ).thenAnswer((_) async => Success([_audiRow()]));
+      when(() => orchestrator.enableDeliveries(any())).thenAnswer(
+        (_) async => const FailureResult(
+          UnknownFailure(filterAlertDeliverySessionStale),
+        ),
+      );
+    },
+    build: buildCubitWithMockOrchestrator,
+    act: (c) async {
+      await c.refresh();
+      await c.setAlertsEnabled('ss-audi', true);
+    },
+    verify: (c) {
+      expect(c.state.isToggling('ss-audi'), isTrue);
+      expect(c.state.userNotice, SavedSearchesUserNotice.none);
+      expect(c.state.savedSearches.single.alertsEnabled, isFalse);
     },
   );
 

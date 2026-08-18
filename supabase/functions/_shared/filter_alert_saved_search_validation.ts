@@ -64,11 +64,9 @@ export function isListingEligibleForFilterAlertDelivery(
 
 /** Minimal FCM data keys for filter-alert tap routing (no criteria or PII). */
 export function filterAlertNotificationDataPayload(event: {
-  id: string;
   listing_id: string | null;
 }): Record<string, string> {
   const d: Record<string, string> = { type: "filter_alert" };
   if (event.listing_id) d.listing_id = event.listing_id;
-  d.event_id = event.id;
   return d;
 }

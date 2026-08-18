@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const listingId = 'aaaaaaaa-bbbb-4ccc-a123-aaaaaaaaaaaa';
-  const eventId = 'bbbbbbbb-bbbb-4ccc-b456-bbbbbbbbbbbb';
 
   group('parsePriceDropNotificationTapPayload', () {
     test('parses minimal data payload', () {
@@ -15,16 +14,15 @@ void main() {
       });
       expect(p, isNotNull);
       expect(p!.listingId, listingId);
-      expect(p.eventId, isNull);
     });
 
-    test('parses optional event_id when uuid', () {
+    test('routing ignores legacy extra fields', () {
       final p = parsePriceDropNotificationTapPayload({
         'type': 'price_drop',
         'listing_id': listingId,
-        'event_id': eventId,
+        'event_id': 'legacy-internal-id',
       });
-      expect(p!.eventId, eventId);
+      expect(p!.listingId, listingId);
     });
 
     test('rejects wrong type', () {

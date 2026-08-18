@@ -84,7 +84,11 @@ void main() {
       ),
     );
     verifyNever(() => savedSearches.setAlertsEnabled(any(), any()));
-    verifyNever(() => pushRegistration.syncTokenWithBackendIfEligible());
+    verifyNever(
+      () => pushRegistration.syncTokenWithBackendIfEligible(
+        isSessionCurrent: any(named: 'isSessionCurrent'),
+      ),
+    );
   }
 
   setUp(() {
@@ -99,6 +103,19 @@ PUSH_NOTIFICATIONS_ENABLED=true
     notifications = _MockNotificationsRepository();
     pushRegistration = _MockPushRegistration();
     sessionCurrent = true;
+    when(
+      () => pushRegistration.captureSessionGuard(
+        additionalCheck: any(named: 'additionalCheck'),
+      ),
+    ).thenAnswer((invocation) {
+      final additional =
+          invocation.namedArguments[#additionalCheck] as bool Function()?;
+      return NotificationSessionGuard(
+        expectedUserId: 'user-a',
+        generation: 1,
+        isCurrent: () => sessionCurrent && (additional?.call() ?? true),
+      );
+    });
     orchestrator = FilterAlertDeliveryOrchestrator(
       notificationsRepository: notifications,
       pushRegistration: pushRegistration,
@@ -109,7 +126,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
   test('stops after session changes during permission resolution', () async {
     final permission = Completer<PushMessagingPermissionStatus>();
     when(
-      () => pushRegistration.resolvePermissionForPreferenceEnable(),
+      () => pushRegistration.resolvePermissionForPreferenceEnable(
+        sessionGuard: any(named: 'sessionGuard'),
+      ),
     ).thenAnswer((_) => permission.future);
 
     final operation = orchestrator.enableDeliveries(row, sessionGuard: guard());
@@ -123,7 +142,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
   test('stops after preference load before preference mutation', () async {
     final preferenceLoad = Completer<Result<NotificationPreferences>>();
     when(
-      () => pushRegistration.resolvePermissionForPreferenceEnable(),
+      () => pushRegistration.resolvePermissionForPreferenceEnable(
+        sessionGuard: any(named: 'sessionGuard'),
+      ),
     ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
     when(
       () => notifications.getMyPreferences(),
@@ -145,13 +166,47 @@ PUSH_NOTIFICATIONS_ENABLED=true
       ),
     );
     verifyNever(() => savedSearches.setAlertsEnabled(any(), any()));
-    verifyNever(() => pushRegistration.syncTokenWithBackendIfEligible());
+    verifyNever(
+      () => pushRegistration.syncTokenWithBackendIfEligible(
+        isSessionCurrent: any(named: 'isSessionCurrent'),
+      ),
+    );
+  });
+
+  test('saved-search management uses central account authority', () async {
+    final preferenceLoad = Completer<Result<NotificationPreferences>>();
+    when(
+      () => pushRegistration.resolvePermissionForPreferenceEnable(
+        sessionGuard: any(named: 'sessionGuard'),
+      ),
+    ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
+    when(
+      () => notifications.getMyPreferences(),
+    ).thenAnswer((_) => preferenceLoad.future);
+
+    final operation = orchestrator.enableDeliveries(row);
+    await untilCalled(() => notifications.getMyPreferences());
+    sessionCurrent = false;
+    preferenceLoad.complete(Success(prefs));
+
+    expectStale(await operation);
+    verifyNever(
+      () => notifications.updateMyPreferences(
+        globalEnabled: any(named: 'globalEnabled'),
+        messagesEnabled: any(named: 'messagesEnabled'),
+        filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+        priceDropsEnabled: any(named: 'priceDropsEnabled'),
+      ),
+    );
+    verifyNever(() => savedSearches.setAlertsEnabled(any(), any()));
   });
 
   test('stops after an already-transmitted preference update', () async {
     final preferenceUpdate = Completer<Result<NotificationPreferences>>();
     when(
-      () => pushRegistration.resolvePermissionForPreferenceEnable(),
+      () => pushRegistration.resolvePermissionForPreferenceEnable(
+        sessionGuard: any(named: 'sessionGuard'),
+      ),
     ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
     when(
       () => notifications.getMyPreferences(),
@@ -179,12 +234,18 @@ PUSH_NOTIFICATIONS_ENABLED=true
 
     expectStale(await operation);
     verifyNever(() => savedSearches.setAlertsEnabled(any(), any()));
-    verifyNever(() => pushRegistration.syncTokenWithBackendIfEligible());
+    verifyNever(
+      () => pushRegistration.syncTokenWithBackendIfEligible(
+        isSessionCurrent: any(named: 'isSessionCurrent'),
+      ),
+    );
   });
 
   test('current session executes every delivery step once', () async {
     when(
-      () => pushRegistration.resolvePermissionForPreferenceEnable(),
+      () => pushRegistration.resolvePermissionForPreferenceEnable(
+        sessionGuard: any(named: 'sessionGuard'),
+      ),
     ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
     when(
       () => notifications.getMyPreferences(),
@@ -218,7 +279,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
         expect(value, enabledRow);
     }
     verify(
-      () => pushRegistration.resolvePermissionForPreferenceEnable(),
+      () => pushRegistration.resolvePermissionForPreferenceEnable(
+        sessionGuard: any(named: 'sessionGuard'),
+      ),
     ).called(1);
     verify(() => notifications.getMyPreferences()).called(1);
     verify(
@@ -239,7 +302,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
 
   test('current-session preference failure remains meaningful', () async {
     when(
-      () => pushRegistration.resolvePermissionForPreferenceEnable(),
+      () => pushRegistration.resolvePermissionForPreferenceEnable(
+        sessionGuard: any(named: 'sessionGuard'),
+      ),
     ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
     when(
       () => notifications.getMyPreferences(),
@@ -265,6 +330,10 @@ PUSH_NOTIFICATIONS_ENABLED=true
       ),
     );
     verifyNever(() => savedSearches.setAlertsEnabled(any(), any()));
-    verifyNever(() => pushRegistration.syncTokenWithBackendIfEligible());
+    verifyNever(
+      () => pushRegistration.syncTokenWithBackendIfEligible(
+        isSessionCurrent: any(named: 'isSessionCurrent'),
+      ),
+    );
   });
 }

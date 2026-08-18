@@ -334,7 +334,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
       await authEmitter.close();
     });
 
-    test('defers navigation until authenticated', () async {
+    test('discards account-bound navigation across auth boundary', () async {
       dotenv.testLoad(
         fileInput: '''
 SUPABASE_URL=https://x.supabase.co
@@ -374,7 +374,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
       auth = AuthState.authenticated(user);
       authEmitter.add(auth);
       await Future<void>.delayed(Duration.zero);
-      expect(navigated, [okId]);
+      expect(navigated, isEmpty);
 
       await handler.dispose();
       await coordinator.dispose();

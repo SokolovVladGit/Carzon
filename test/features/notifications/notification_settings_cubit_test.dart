@@ -85,6 +85,7 @@ void main() {
   late _FakePushMessagingClient client;
   late _FakeAuthGate authGate;
   late PushNotificationRegistrationService pushRegistration;
+  late String? authenticatedUserId;
 
   void stubRepoSuccess() {
     when(
@@ -121,10 +122,12 @@ PUSH_NOTIFICATIONS_ENABLED=true
     repo = _MockNotificationsRepository();
     client = _FakePushMessagingClient();
     authGate = const _FakeAuthGate();
+    authenticatedUserId = 'user-1';
     pushRegistration = PushNotificationRegistrationService(
       messagingClient: client,
       notificationsRepository: repo,
       authGate: authGate,
+      readAuthenticatedUserId: () => authenticatedUserId,
       readLocalePreference: () => AppLocalePreference.ru,
     );
 
@@ -194,6 +197,57 @@ PUSH_NOTIFICATIONS_ENABLED=true
     ],
   );
 
+  test('load started for A cannot emit completion under B', () async {
+    final preferenceLoad = Completer<Result<NotificationPreferences>>();
+    when(
+      () => repo.getMyPreferences(),
+    ).thenAnswer((_) => preferenceLoad.future);
+    final cubit = buildCubit();
+
+    final load = cubit.load();
+    await untilCalled(() => repo.getMyPreferences());
+    authenticatedUserId = 'user-2';
+    pushRegistration.handleAuthStateChanged(authenticatedUserId);
+    preferenceLoad.complete(Success(_prefs()));
+    await load;
+
+    expect(cubit.state.phase, NotificationSettingsLoadPhase.loading);
+    expect(cubit.state.preferences, isNull);
+    await cubit.close();
+  });
+
+  test('preference mutation for A cannot emit completion under B', () async {
+    final update = Completer<Result<NotificationPreferences>>();
+    when(
+      () => repo.updateMyPreferences(
+        globalEnabled: any(named: 'globalEnabled'),
+        messagesEnabled: any(named: 'messagesEnabled'),
+        filterAlertsEnabled: any(named: 'filterAlertsEnabled'),
+        priceDropsEnabled: any(named: 'priceDropsEnabled'),
+      ),
+    ).thenAnswer((_) => update.future);
+    final cubit = buildCubit();
+    await cubit.load();
+
+    final mutation = cubit.setMessagesEnabled(true);
+    await untilCalled(
+      () => repo.updateMyPreferences(
+        globalEnabled: true,
+        messagesEnabled: true,
+        filterAlertsEnabled: false,
+        priceDropsEnabled: false,
+      ),
+    );
+    authenticatedUserId = 'user-2';
+    pushRegistration.handleAuthStateChanged(authenticatedUserId);
+    update.complete(Success(_prefs(global: true, messages: true)));
+    await mutation;
+
+    expect(cubit.state.busy, isTrue);
+    expect(cubit.state.preferences?.messagesEnabled, isFalse);
+    await cubit.close();
+  });
+
   group('push disabled via env', () {
     late PushNotificationRegistrationService regNoPush;
 
@@ -208,6 +262,7 @@ SUPABASE_ANON_KEY=anon
         messagingClient: client,
         notificationsRepository: repo,
         authGate: authGate,
+        readAuthenticatedUserId: () => 'user-1',
         readLocalePreference: () => AppLocalePreference.ru,
       );
     });
@@ -452,7 +507,8 @@ SUPABASE_ANON_KEY=anon
     'messages enabled saves prefs when permission stays notDetermined',
     setUp: () {
       client.permissionStatus = PushMessagingPermissionStatus.notDetermined;
-      client.permissionAfterRequest = PushMessagingPermissionStatus.notDetermined;
+      client.permissionAfterRequest =
+          PushMessagingPermissionStatus.notDetermined;
     },
     build: buildCubit,
     seed: () => NotificationSettingsState(
@@ -485,7 +541,8 @@ SUPABASE_ANON_KEY=anon
     'price drops enabled saves prefs when permission stays notDetermined',
     setUp: () {
       client.permissionStatus = PushMessagingPermissionStatus.notDetermined;
-      client.permissionAfterRequest = PushMessagingPermissionStatus.notDetermined;
+      client.permissionAfterRequest =
+          PushMessagingPermissionStatus.notDetermined;
     },
     build: buildCubit,
     seed: () => NotificationSettingsState(

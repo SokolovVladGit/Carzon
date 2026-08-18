@@ -17,13 +17,9 @@ String _stringData(Map<String, dynamic> data, String key) {
 
 /// Privacy-safe FCM **data** keys for price-drop pushes (Edge `dataPayload`).
 class PriceDropNotificationTapPayload {
-  const PriceDropNotificationTapPayload({
-    required this.listingId,
-    this.eventId,
-  });
+  const PriceDropNotificationTapPayload({required this.listingId});
 
   final String listingId;
-  final String? eventId;
 }
 
 /// Parses FCM data for `type=price_drop`. Returns null if malformed.
@@ -38,11 +34,7 @@ PriceDropNotificationTapPayload? parsePriceDropNotificationTapPayload(
   if (!_isListingUuid(listingRaw)) {
     return null;
   }
-  final eventRaw = _stringData(data, 'event_id').trim();
-  return PriceDropNotificationTapPayload(
-    listingId: listingRaw,
-    eventId: eventRaw.isEmpty || !_isListingUuid(eventRaw) ? null : eventRaw,
-  );
+  return PriceDropNotificationTapPayload(listingId: listingRaw);
 }
 
 /// Prefix for [flutter_local_notifications] tap payload for price drops.

@@ -71,14 +71,13 @@ Deno.test("isListingEligibleForFilterAlertDelivery requires active listing and a
 
 Deno.test("filterAlertNotificationDataPayload is minimal and safe", () => {
   const payload = filterAlertNotificationDataPayload({
-    id: "evt-1",
     listing_id: "listing-1",
   });
   assertEquals(payload, {
     type: "filter_alert",
     listing_id: "listing-1",
-    event_id: "evt-1",
   });
+  assertEquals(Object.keys(payload).includes("event_id"), false);
   assertEquals(Object.keys(payload).includes("criteria"), false);
   assertEquals(Object.keys(payload).includes("saved_search_id"), false);
   assertEquals(JSON.stringify(payload).toLowerCase().includes("vin"), false);

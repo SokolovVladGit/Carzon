@@ -183,6 +183,19 @@ SUPABASE_ANON_KEY=anon
     );
     registerFallbackValue(PushTokenPlatform.android);
     when(
+      () => pushRegistration.captureSessionGuard(
+        additionalCheck: any(named: 'additionalCheck'),
+      ),
+    ).thenAnswer((invocation) {
+      final additional =
+          invocation.namedArguments[#additionalCheck] as bool Function()?;
+      return NotificationSessionGuard(
+        expectedUserId: 'u1',
+        generation: 1,
+        isCurrent: () => additional?.call() ?? true,
+      );
+    });
+    when(
       () => notificationsRepo.getMyPreferences(),
     ).thenAnswer((_) async => Success(_defaultNotificationPreferences()));
     when(
@@ -197,8 +210,7 @@ SUPABASE_ANON_KEY=anon
       final messages = invocation.namedArguments[#messagesEnabled] as bool;
       final filterAlerts =
           invocation.namedArguments[#filterAlertsEnabled] as bool;
-      final priceDrops =
-          invocation.namedArguments[#priceDropsEnabled] as bool;
+      final priceDrops = invocation.namedArguments[#priceDropsEnabled] as bool;
       return Success(
         NotificationPreferences(
           userId: 'u1',
@@ -212,13 +224,17 @@ SUPABASE_ANON_KEY=anon
       );
     });
     when(
-      () => pushRegistration.resolvePermissionForPreferenceEnable(),
+      () => pushRegistration.resolvePermissionForPreferenceEnable(
+        sessionGuard: any(named: 'sessionGuard'),
+      ),
     ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
     when(
       () => pushRegistration.requestOsNotificationPermission(),
     ).thenAnswer((_) async => PushMessagingPermissionStatus.authorized);
     when(
-      () => pushRegistration.syncTokenWithBackendIfEligible(),
+      () => pushRegistration.syncTokenWithBackendIfEligible(
+        isSessionCurrent: any(named: 'isSessionCurrent'),
+      ),
     ).thenAnswer((_) async {});
   });
 
@@ -318,7 +334,9 @@ SUPABASE_ANON_KEY=anon
     expect(find.textContaining(l10n.regionTransnistria), findsOneWidget);
     expect(find.textContaining(l10n.listingBodyTypeSedan), findsOneWidget);
     expect(
-      find.byKey(const ValueKey<String>('filter_alert_management_summary_chips')),
+      find.byKey(
+        const ValueKey<String>('filter_alert_management_summary_chips'),
+      ),
       findsOneWidget,
     );
     expect(
@@ -365,22 +383,29 @@ SUPABASE_ANON_KEY=anon
 
     expect(find.text(l10n.savedSearchAlertsToggleTitle), findsOneWidget);
     expect(find.text(l10n.savedSearchAlertsToggleSubtitle), findsOneWidget);
-    expect(
-      find.text(l10n.filterAlertNotificationsPushDisabled),
-      findsNothing,
-    );
+    expect(find.text(l10n.filterAlertNotificationsPushDisabled), findsNothing);
     expect(find.text(l10n.savedSearchAlertsToggleSubtitle), findsOneWidget);
-    expect(find.text(l10n.savedSearchAlertsPushUnavailableHint), findsOneWidget);
+    expect(
+      find.text(l10n.savedSearchAlertsPushUnavailableHint),
+      findsOneWidget,
+    );
     expect(
       l10n.savedSearchAlertsPushUnavailableHint,
       'Оповещения пока недоступны. Вы сможете включить их позже.',
     );
-    expect(l10n.savedSearchAlertsPushUnavailableHint.toLowerCase(), isNot(contains('сборк')));
+    expect(
+      l10n.savedSearchAlertsPushUnavailableHint.toLowerCase(),
+      isNot(contains('сборк')),
+    );
     final tileFinder = find.byType(Switch);
     expect(tileFinder, findsOneWidget);
     expect(tester.widget<Switch>(tileFinder).onChanged, isNull);
     verifyNever(() => pushRegistration.requestOsNotificationPermission());
-    verifyNever(() => pushRegistration.syncTokenWithBackendIfEligible());
+    verifyNever(
+      () => pushRegistration.syncTokenWithBackendIfEligible(
+        isSessionCurrent: any(named: 'isSessionCurrent'),
+      ),
+    );
     verifyNever(
       () => notificationsRepo.updateMyPreferences(
         globalEnabled: any(named: 'globalEnabled'),
