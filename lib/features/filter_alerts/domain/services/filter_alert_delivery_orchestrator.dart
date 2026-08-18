@@ -39,14 +39,21 @@ class FilterAlertDeliveryOrchestrator {
     SavedSearch savedSearch, {
     FilterAlertDeliverySessionGuard? sessionGuard,
   }) async {
-    if (!_isCurrent(sessionGuard)) return _staleSessionResult();
+    final notificationSession = _pushRegistration.captureSessionGuard(
+      additionalCheck: sessionGuard?.isSessionCurrent,
+    );
+    bool isCurrent() =>
+        notificationSession != null && notificationSession.isCurrent;
+    if (!isCurrent()) return _staleSessionResult();
     if (!Env.pushNotificationsEnabled) {
       return const FailureResult(
         UnknownFailure('filter_alert_delivery_push_disabled'),
       );
     }
-    final perm = await _pushRegistration.resolvePermissionForPreferenceEnable();
-    if (!_isCurrent(sessionGuard)) return _staleSessionResult();
+    final perm = await _pushRegistration.resolvePermissionForPreferenceEnable(
+      sessionGuard: notificationSession,
+    );
+    if (!isCurrent()) return _staleSessionResult();
     if (perm.blocksPreferenceEnable) {
       return const FailureResult(
         UnknownFailure('filter_alert_delivery_permission_denied'),
@@ -54,9 +61,9 @@ class FilterAlertDeliveryOrchestrator {
     }
 
     NotificationPreferences prefs;
-    if (!_isCurrent(sessionGuard)) return _staleSessionResult();
+    if (!isCurrent()) return _staleSessionResult();
     final prefsLoad = await _notificationsRepository.getMyPreferences();
-    if (!_isCurrent(sessionGuard)) return _staleSessionResult();
+    if (!isCurrent()) return _staleSessionResult();
     switch (prefsLoad) {
       case FailureResult():
         return const FailureResult(
@@ -66,14 +73,14 @@ class FilterAlertDeliveryOrchestrator {
         prefs = value;
     }
 
-    if (!_isCurrent(sessionGuard)) return _staleSessionResult();
+    if (!isCurrent()) return _staleSessionResult();
     final prefUp = await _notificationsRepository.updateMyPreferences(
       globalEnabled: true,
       messagesEnabled: prefs.messagesEnabled,
       filterAlertsEnabled: true,
       priceDropsEnabled: prefs.priceDropsEnabled,
     );
-    if (!_isCurrent(sessionGuard)) return _staleSessionResult();
+    if (!isCurrent()) return _staleSessionResult();
     switch (prefUp) {
       case FailureResult():
         return const FailureResult(
@@ -83,32 +90,35 @@ class FilterAlertDeliveryOrchestrator {
         break;
     }
 
-    if (!_isCurrent(sessionGuard)) return _staleSessionResult();
+    if (!isCurrent()) return _staleSessionResult();
     final toggle = await _setAlertsEnabled(savedSearch.id, true);
-    if (!_isCurrent(sessionGuard)) return _staleSessionResult();
+    if (!isCurrent()) return _staleSessionResult();
     switch (toggle) {
       case FailureResult(:final failure):
         return FailureResult(failure);
       case Success(:final value):
-        if (!_isCurrent(sessionGuard)) return _staleSessionResult();
-        if (sessionGuard == null) {
-          await _pushRegistration.syncTokenWithBackendIfEligible();
-        } else {
-          await _pushRegistration.syncTokenWithBackendIfEligible(
-            isSessionCurrent: sessionGuard.isSessionCurrent,
-          );
-        }
-        if (!_isCurrent(sessionGuard)) return _staleSessionResult();
+        if (!isCurrent()) return _staleSessionResult();
+        await _pushRegistration.syncTokenWithBackendIfEligible(
+          isSessionCurrent: isCurrent,
+        );
+        if (!isCurrent()) return _staleSessionResult();
         return Success(value);
     }
   }
 
-  Future<Result<SavedSearch>> disableDeliveries(SavedSearch savedSearch) {
-    return _setAlertsEnabled(savedSearch.id, false);
-  }
-
-  bool _isCurrent(FilterAlertDeliverySessionGuard? guard) {
-    return guard?.isSessionCurrent() ?? true;
+  Future<Result<SavedSearch>> disableDeliveries(
+    SavedSearch savedSearch, {
+    FilterAlertDeliverySessionGuard? sessionGuard,
+  }) async {
+    final notificationSession = _pushRegistration.captureSessionGuard(
+      additionalCheck: sessionGuard?.isSessionCurrent,
+    );
+    if (notificationSession == null || !notificationSession.isCurrent) {
+      return _staleSessionResult();
+    }
+    final result = await _setAlertsEnabled(savedSearch.id, false);
+    if (!notificationSession.isCurrent) return _staleSessionResult();
+    return result;
   }
 
   FailureResult<SavedSearch> _staleSessionResult() {

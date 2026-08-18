@@ -22,7 +22,7 @@ class FilterAlertListingNavigationCoordinator {
 
   StreamSubscription<AuthState>? _authSub;
   bool _listening = false;
-  String? _pendingListingId;
+  String? _observedUserId;
   String? _lastNavigatedListingId;
   DateTime? _lastNavigationTime;
 
@@ -31,29 +31,23 @@ class FilterAlertListingNavigationCoordinator {
       return;
     }
     _listening = true;
-    _authSub = _authStateStream.listen((_) => _tryFlushPending());
+    _observedUserId = _authStateSnapshot().user?.id;
+    _authSub = _authStateStream.listen((state) {
+      final nextUserId = state.status == AuthStatus.authenticated
+          ? state.user?.id
+          : null;
+      if (_observedUserId != nextUserId) {
+        _observedUserId = nextUserId;
+        _lastNavigatedListingId = null;
+        _lastNavigationTime = null;
+      }
+    });
   }
 
   void requestOpenListing(String listingId) {
-    final state = _authStateSnapshot();
-    if (state.status == AuthStatus.authenticated && state.user != null) {
-      _navigateWithDedup(listingId);
-    } else {
-      _pendingListingId = listingId;
-    }
-  }
-
-  void _tryFlushPending() {
-    final pending = _pendingListingId;
-    if (pending == null) {
-      return;
-    }
-    final state = _authStateSnapshot();
-    if (state.status != AuthStatus.authenticated || state.user == null) {
-      return;
-    }
-    _pendingListingId = null;
-    _navigateWithDedup(pending);
+    // Listing details are public. Route immediately instead of retaining a
+    // recipient-specific intent across an authentication boundary.
+    _navigateWithDedup(listingId);
   }
 
   void _navigateWithDedup(String listingId) {
@@ -76,7 +70,7 @@ class FilterAlertListingNavigationCoordinator {
     await _authSub?.cancel();
     _authSub = null;
     _listening = false;
-    _pendingListingId = null;
+    _observedUserId = null;
     _lastNavigatedListingId = null;
     _lastNavigationTime = null;
   }

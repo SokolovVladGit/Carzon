@@ -176,6 +176,9 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
               final activeUser = state.status == AuthStatus.authenticated
                   ? state.user
                   : null;
+              sl<PushNotificationRegistrationService>().handleAuthStateChanged(
+                activeUser?.id,
+              );
               unawaited(
                 context.read<FavoritesCubit>().syncWithAuth(activeUser),
               );

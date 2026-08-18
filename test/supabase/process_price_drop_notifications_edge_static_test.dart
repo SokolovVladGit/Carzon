@@ -40,7 +40,7 @@ void main() {
       final block = shared.substring(start);
       expect(block, contains('price_drop'));
       expect(block, contains('listing_id'));
-      expect(block, contains('event_id'));
+      expect(block, isNot(contains('event_id')));
       expect(block.toLowerCase(), isNot(contains('old_price')));
       expect(block.toLowerCase(), isNot(contains('new_price')));
       expect(block.toLowerCase(), isNot(contains('seller')));

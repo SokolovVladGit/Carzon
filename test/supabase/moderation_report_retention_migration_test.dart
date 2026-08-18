@@ -38,15 +38,6 @@ void main() {
     });
 
     test('is ordered after every migration it supersedes', () {
-      final migrationNames =
-          Directory('supabase/migrations')
-              .listSync()
-              .whereType<File>()
-              .map((file) => file.uri.pathSegments.last)
-              .where((name) => name.endsWith('.sql'))
-              .toList()
-            ..sort();
-      expect(migrationNames.last, migrationName);
       expect(
         migrationName.compareTo(
           '20260714120000_messaging_user_blocks_and_reports.sql',

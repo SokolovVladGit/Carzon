@@ -23,7 +23,7 @@ class MessageConversationNavigationCoordinator {
 
   StreamSubscription<AuthState>? _authSub;
   bool _listening = false;
-  String? _pendingConversationId;
+  String? _observedUserId;
   String? _lastNavigatedConversationId;
   DateTime? _lastNavigationTime;
 
@@ -33,7 +33,17 @@ class MessageConversationNavigationCoordinator {
       return;
     }
     _listening = true;
-    _authSub = _authStateStream.listen((_) => _tryFlushPending());
+    _observedUserId = _authStateSnapshot().user?.id;
+    _authSub = _authStateStream.listen((state) {
+      final nextUserId = state.status == AuthStatus.authenticated
+          ? state.user?.id
+          : null;
+      if (_observedUserId != nextUserId) {
+        _observedUserId = nextUserId;
+        _lastNavigatedConversationId = null;
+        _lastNavigationTime = null;
+      }
+    });
   }
 
   /// Entry point for any message thread navigation intent.
@@ -42,21 +52,10 @@ class MessageConversationNavigationCoordinator {
     if (state.status == AuthStatus.authenticated && state.user != null) {
       _navigateWithDedup(conversationId);
     } else {
-      _pendingConversationId = conversationId;
+      // Conversation pushes are account-bound. Without a current authenticated
+      // recipient context, discard instead of flushing under a future account.
+      _logger.debug('Discarding account-bound notification navigation');
     }
-  }
-
-  void _tryFlushPending() {
-    final pending = _pendingConversationId;
-    if (pending == null) {
-      return;
-    }
-    final state = _authStateSnapshot();
-    if (state.status != AuthStatus.authenticated || state.user == null) {
-      return;
-    }
-    _pendingConversationId = null;
-    _navigateWithDedup(pending);
   }
 
   void _navigateWithDedup(String conversationId) {
@@ -79,7 +78,7 @@ class MessageConversationNavigationCoordinator {
     await _authSub?.cancel();
     _authSub = null;
     _listening = false;
-    _pendingConversationId = null;
+    _observedUserId = null;
     _lastNavigatedConversationId = null;
     _lastNavigationTime = null;
   }

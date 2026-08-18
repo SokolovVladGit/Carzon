@@ -91,6 +91,7 @@ class SavedSearchesCubit extends Cubit<SavedSearchesState> {
       ),
     );
     final result = await _listSavedSearches();
+    if (isClosed) return;
     switch (result) {
       case FailureResult():
         emit(const SavedSearchesState(status: SavedSearchesLoadStatus.failure));
@@ -112,6 +113,7 @@ class SavedSearchesCubit extends Cubit<SavedSearchesState> {
       ),
     );
     final result = await _deleteSavedSearch(id);
+    if (isClosed) return result;
     switch (result) {
       case FailureResult():
         emit(state.copyWith(deletingIds: {...state.deletingIds}..remove(id)));
@@ -148,6 +150,12 @@ class SavedSearchesCubit extends Cubit<SavedSearchesState> {
       result = await _deliveryOrchestrator.enableDeliveries(row);
     } else {
       result = await _deliveryOrchestrator.disableDeliveries(row);
+    }
+    if (isClosed) return result;
+    if (result case FailureResult(
+      :final failure,
+    ) when failure.message == filterAlertDeliverySessionStale) {
+      return result;
     }
 
     switch (result) {

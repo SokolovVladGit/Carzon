@@ -80,6 +80,7 @@ void main() {
   late _FakeAuthGate authGate;
   late PushNotificationRegistrationService sut;
   AppLocalePreference localePreference = AppLocalePreference.ru;
+  String? authenticatedUserId = 'user-a';
 
   setUp(() {
     dotenv.testLoad(
@@ -92,11 +93,13 @@ PUSH_NOTIFICATIONS_ENABLED=true
     client = _FakePushMessagingClient();
     repo = _MockNotificationsRepository();
     authGate = _FakeAuthGate(signedIn: true);
+    authenticatedUserId = 'user-a';
     localePreference = AppLocalePreference.ru;
     sut = PushNotificationRegistrationService(
       messagingClient: client,
       notificationsRepository: repo,
       authGate: authGate,
+      readAuthenticatedUserId: () => authenticatedUserId,
       readLocalePreference: () => localePreference,
     );
 
@@ -285,6 +288,74 @@ PUSH_NOTIFICATIONS_ENABLED=false
     },
   );
 
+  test('account switch reconciles an in-flight A registration for B', () async {
+    final firstRegistrationStarted = Completer<void>();
+    final releaseFirstRegistration = Completer<void>();
+    final registrationUsers = <String?>[];
+    when(
+      () => repo.registerPushToken(
+        token: any(named: 'token'),
+        platform: any(named: 'platform'),
+        appVersion: any(named: 'appVersion'),
+        deviceId: any(named: 'deviceId'),
+        locale: any(named: 'locale'),
+      ),
+    ).thenAnswer((_) async {
+      registrationUsers.add(authenticatedUserId);
+      if (registrationUsers.length == 1) {
+        firstRegistrationStarted.complete();
+        await releaseFirstRegistration.future;
+      }
+      return const Success<void>(null);
+    });
+
+    final userASync = sut.syncTokenWithBackendIfEligible();
+    await firstRegistrationStarted.future;
+
+    authenticatedUserId = 'user-b';
+    sut.handleAuthStateChanged(authenticatedUserId);
+    final userBSync = sut.syncTokenWithBackendIfEligible();
+    releaseFirstRegistration.complete();
+
+    await Future.wait([userASync, userBSync]);
+    expect(registrationUsers, ['user-a', 'user-b']);
+  });
+
+  test('sign-out cleanup runs after an in-flight registration', () async {
+    final registrationStarted = Completer<void>();
+    final releaseRegistration = Completer<void>();
+    final operations = <String>[];
+    when(
+      () => repo.registerPushToken(
+        token: any(named: 'token'),
+        platform: any(named: 'platform'),
+        appVersion: any(named: 'appVersion'),
+        deviceId: any(named: 'deviceId'),
+        locale: any(named: 'locale'),
+      ),
+    ).thenAnswer((_) async {
+      operations.add('register');
+      registrationStarted.complete();
+      await releaseRegistration.future;
+      operations.add('register-complete');
+      return const Success<void>(null);
+    });
+    when(() => repo.deactivateMyPushTokens()).thenAnswer((_) async {
+      operations.add('deactivate');
+      return const Success<void>(null);
+    });
+
+    final sync = sut.syncTokenWithBackendIfEligible();
+    await registrationStarted.future;
+    final signOut = sut.beforeSignOut();
+    await Future<void>.delayed(Duration.zero);
+    expect(operations, ['register']);
+
+    releaseRegistration.complete();
+    await Future.wait([sync, signOut]);
+    expect(operations, ['register', 'register-complete', 'deactivate']);
+  });
+
   test('concurrent sync calls share one backend registration', () async {
     final gate = Completer<void>();
     when(
@@ -401,6 +472,55 @@ PUSH_NOTIFICATIONS_ENABLED=false
     ).called(1);
   });
 
+  test('token refresh queued during A to B switch finishes for B', () async {
+    await sut.start();
+    clearInteractions(repo);
+
+    final firstRegistrationStarted = Completer<void>();
+    final releaseFirstRegistration = Completer<void>();
+    final registrations = <(String?, String)>[];
+    when(
+      () => repo.registerPushToken(
+        token: any(named: 'token'),
+        platform: any(named: 'platform'),
+        appVersion: any(named: 'appVersion'),
+        deviceId: any(named: 'deviceId'),
+        locale: any(named: 'locale'),
+      ),
+    ).thenAnswer((invocation) async {
+      registrations.add((
+        authenticatedUserId,
+        invocation.namedArguments[#token] as String,
+      ));
+      if (registrations.length == 1) {
+        firstRegistrationStarted.complete();
+        await releaseFirstRegistration.future;
+      }
+      return const Success<void>(null);
+    });
+
+    client.emitRefresh('user-a-refresh');
+    await firstRegistrationStarted.future;
+    authenticatedUserId = 'user-b';
+    sut.handleAuthStateChanged(authenticatedUserId);
+    client.emitRefresh('user-b-refresh');
+    releaseFirstRegistration.complete();
+    await untilCalled(
+      () => repo.registerPushToken(
+        token: 'user-b-refresh',
+        platform: any(named: 'platform'),
+        appVersion: any(named: 'appVersion'),
+        deviceId: any(named: 'deviceId'),
+        locale: any(named: 'locale'),
+      ),
+    );
+
+    expect(registrations, [
+      ('user-a', 'user-a-refresh'),
+      ('user-b', 'user-b-refresh'),
+    ]);
+  });
+
   test(
     'resolvePermissionForPreferenceEnable returns denied without prompting',
     () async {
@@ -415,7 +535,8 @@ PUSH_NOTIFICATIONS_ENABLED=false
     'resolvePermissionForPreferenceEnable prompts when notDetermined then returns status',
     () async {
       client.permissionStatus = PushMessagingPermissionStatus.notDetermined;
-      client.permissionAfterRequest = PushMessagingPermissionStatus.notDetermined;
+      client.permissionAfterRequest =
+          PushMessagingPermissionStatus.notDetermined;
       final status = await sut.resolvePermissionForPreferenceEnable();
       expect(status, PushMessagingPermissionStatus.notDetermined);
       expect(client.permissionRequestCalls, 1);

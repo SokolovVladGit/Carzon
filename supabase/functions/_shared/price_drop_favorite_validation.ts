@@ -35,11 +35,9 @@ export function isListingEligibleForPriceDropDelivery(
 
 /** Minimal FCM data keys for price-drop tap routing (no price or PII). */
 export function priceDropNotificationDataPayload(event: {
-  id: string;
   listing_id: string | null;
 }): Record<string, string> {
   const d: Record<string, string> = { type: "price_drop" };
   if (event.listing_id) d.listing_id = event.listing_id;
-  d.event_id = event.id;
   return d;
 }

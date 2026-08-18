@@ -54,7 +54,7 @@ void main() {
       final block = shared.substring(start);
       expect(block, contains('filter_alert'));
       expect(block, contains('listing_id'));
-      expect(block, contains('event_id'));
+      expect(block, isNot(contains('event_id')));
       expect(block.toLowerCase(), isNot(contains('seller')));
       expect(block.toLowerCase(), isNot(contains('price')));
       expect(block.toLowerCase(), isNot(contains('criteria')));

@@ -10,13 +10,11 @@ import {
 
 Deno.test("priceDropNotificationDataPayload is minimal and safe", () => {
   const payload = priceDropNotificationDataPayload({
-    id: "bbbbbbbb-bbbb-4ccc-b456-bbbbbbbbbbbb",
     listing_id: "aaaaaaaa-bbbb-4ccc-a123-aaaaaaaaaaaa",
   });
   assertEquals(payload.type, "price_drop");
   assertEquals(payload.listing_id, "aaaaaaaa-bbbb-4ccc-a123-aaaaaaaaaaaa");
-  assertEquals(payload.event_id, "bbbbbbbb-bbbb-4ccc-b456-bbbbbbbbbbbb");
-  assertEquals(Object.keys(payload).sort(), ["event_id", "listing_id", "type"]);
+  assertEquals(Object.keys(payload).sort(), ["listing_id", "type"]);
 });
 
 Deno.test("isListingEligibleForPriceDropDelivery requires active listing and actor seller", () => {

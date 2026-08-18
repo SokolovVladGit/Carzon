@@ -195,6 +195,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
       messagingClient: pushClient,
       notificationsRepository: repo,
       authGate: const _FakeAuthGate(),
+      readAuthenticatedUserId: () => 'user-1',
       readLocalePreference: () => AppLocalePreference.ru,
     );
 
@@ -248,7 +249,10 @@ PUSH_NOTIFICATIONS_ENABLED=true
       findsOneWidget,
     );
     expect(find.textContaining('PUSH_NOTIFICATIONS'), findsNothing);
-    expect(find.text(l10n.notificationSettingsMessagesSubtitle), findsOneWidget);
+    expect(
+      find.text(l10n.notificationSettingsMessagesSubtitle),
+      findsOneWidget,
+    );
     expect(
       find.text(l10n.notificationSettingsSavedSearchAlertsNote),
       findsOneWidget,
@@ -309,31 +313,32 @@ PUSH_NOTIFICATIONS_ENABLED=true
     ).called(1);
   });
 
-  testWidgets('push enabled build keeps message and price-drop toggles active', (
-    tester,
-  ) async {
-    await pumpUntilContent(tester);
+  testWidgets(
+    'push enabled build keeps message and price-drop toggles active',
+    (tester) async {
+      await pumpUntilContent(tester);
 
-    final messagesSwitch = tester.widget<Switch>(
-      find.descendant(
-        of: find.byKey(
-          const ValueKey<String>('notification_settings_messages_card'),
+      final messagesSwitch = tester.widget<Switch>(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey<String>('notification_settings_messages_card'),
+          ),
+          matching: find.byType(Switch),
         ),
-        matching: find.byType(Switch),
-      ),
-    );
-    expect(messagesSwitch.onChanged, isNotNull);
+      );
+      expect(messagesSwitch.onChanged, isNotNull);
 
-    final priceDropsSwitch = tester.widget<Switch>(
-      find.descendant(
-        of: find.byKey(
-          const ValueKey<String>('notification_settings_price_drops_card'),
+      final priceDropsSwitch = tester.widget<Switch>(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey<String>('notification_settings_price_drops_card'),
+          ),
+          matching: find.byType(Switch),
         ),
-        matching: find.byType(Switch),
-      ),
-    );
-    expect(priceDropsSwitch.onChanged, isNotNull);
-  });
+      );
+      expect(priceDropsSwitch.onChanged, isNotNull);
+    },
+  );
 
   testWidgets('push-disabled build disables toggles without technical copy', (
     tester,
@@ -348,7 +353,10 @@ SUPABASE_ANON_KEY=anon
     await pumpUntilContent(tester);
 
     expect(find.textContaining('PUSH_NOTIFICATIONS'), findsNothing);
-    expect(find.text(l10n.notificationSettingsPushBuildDisabledBanner), findsNothing);
+    expect(
+      find.text(l10n.notificationSettingsPushBuildDisabledBanner),
+      findsNothing,
+    );
 
     final messagesSwitch = tester.widget<Switch>(
       find.descendant(
