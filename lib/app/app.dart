@@ -36,12 +36,13 @@ class CarzonApp extends StatefulWidget {
 class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
   Future<void>? _pushListenersStartInFlight;
   Future<void>? _pushResumeRecoveryInFlight;
+  Future<void>? _unreadResumeSyncInFlight;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (Env.pushNotificationsEnabled) {
-      WidgetsBinding.instance.addObserver(this);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         unawaited(_ensurePushListenersStarted());
       });
@@ -50,9 +51,7 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    if (Env.pushNotificationsEnabled) {
-      WidgetsBinding.instance.removeObserver(this);
-    }
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -61,10 +60,25 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
     if (state != AppLifecycleState.resumed) {
       return;
     }
+    unawaited(_syncUnreadAfterResume());
     if (!Env.pushNotificationsEnabled) {
       return;
     }
     unawaited(_recoverPushAfterResume());
+  }
+
+  Future<void> _syncUnreadAfterResume() async {
+    final inFlight = _unreadResumeSyncInFlight;
+    if (inFlight != null) return inFlight;
+    final sync = sl<MessagingUnreadSummaryCubit>().sync(sl<AuthCubit>().state);
+    _unreadResumeSyncInFlight = sync;
+    try {
+      await sync;
+    } finally {
+      if (identical(_unreadResumeSyncInFlight, sync)) {
+        _unreadResumeSyncInFlight = null;
+      }
+    }
   }
 
   Future<void> _recoverPushAfterResume() async {

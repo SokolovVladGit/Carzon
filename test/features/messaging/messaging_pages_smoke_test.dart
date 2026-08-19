@@ -266,13 +266,67 @@ void main() {
     expect(find.text('BMW 3'), findsOneWidget);
   });
 
+  testWidgets(
+    'visible inbox polls, pauses, resumes immediately, and updates unread',
+    (tester) async {
+      var hits = 0;
+      final initial = sampleConversation();
+      final incoming = Conversation(
+        id: 'conv-2',
+        listingId: 'list-2',
+        buyerId: 'u1',
+        sellerId: 's2',
+        createdAt: t0,
+        updatedAt: t0.add(const Duration(minutes: 1)),
+        lastMessageAt: t0.add(const Duration(minutes: 1)),
+        lastMessagePreview: 'Incoming',
+        listingTitle: 'Live BMW',
+        hasUnread: true,
+      );
+      when(() => messagingRepo.getConversations()).thenAnswer((_) async {
+        hits++;
+        return Success<List<Conversation>>(
+          hits == 1 ? [initial] : [incoming, initial],
+        );
+      });
+
+      await tester.pumpWidget(testedInbox(const MessagesInboxPage()));
+      await tester.pumpAndSettle();
+      expect(hits, 1);
+
+      await tester.pump(const Duration(seconds: 16));
+      await tester.pump();
+      expect(hits, 2);
+      expect(find.text('Live BMW'), findsOneWidget);
+      expect(
+        sl<MessagingUnreadSummaryCubit>().state.unreadConversationCount,
+        1,
+      );
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump(const Duration(seconds: 16));
+      expect(hits, 2);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      await tester.pump();
+      expect(hits, 3);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 16));
+      expect(hits, 3);
+    },
+  );
+
   testWidgets('inbox conversation tap navigates to thread route', (
     tester,
   ) async {
     final conv = sampleConversation();
-    when(
-      () => messagingRepo.getConversations(),
-    ).thenAnswer((_) async => Success<List<Conversation>>([conv]));
+    var inboxHits = 0;
+    when(() => messagingRepo.getConversations()).thenAnswer((_) async {
+      inboxHits++;
+      return Success<List<Conversation>>([conv]);
+    });
 
     final router = GoRouter(
       initialLocation: '/messages',
@@ -301,6 +355,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('thread:conv-1'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 16));
+    expect(inboxHits, 1);
   });
 
   testWidgets('thread empty state shows dedicated copy', (tester) async {

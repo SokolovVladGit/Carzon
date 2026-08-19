@@ -100,8 +100,17 @@ class MessagesInboxPage extends StatelessWidget {
         }
 
         return BlocProvider(
-          create: (_) =>
-              MessagesInboxCubit(sl<MessagingRepository>())..refresh(),
+          create: (_) => MessagesInboxCubit(
+            sl<MessagingRepository>(),
+            onAuthoritativeSnapshot: (conversations) {
+              sl<MessagingUnreadSummaryCubit>().applyAuthoritativeInboxCount(
+                auth,
+                conversations
+                    .where((conversation) => conversation.hasUnread)
+                    .length,
+              );
+            },
+          )..refresh(),
           child: PopScope(
             onPopInvokedWithResult: (didPop, _) {
               if (didPop) {
@@ -187,8 +196,84 @@ class _InboxEditorialPanel extends StatelessWidget {
   }
 }
 
-class _MessagesInboxView extends StatelessWidget {
+class _MessagesInboxView extends StatefulWidget {
   const _MessagesInboxView();
+
+  @override
+  State<_MessagesInboxView> createState() => _MessagesInboxViewState();
+}
+
+class _MessagesInboxViewState extends State<_MessagesInboxView>
+    with WidgetsBindingObserver {
+  static const _pollInterval = Duration(seconds: 15);
+
+  Timer? _timer;
+  AppLifecycleState? _lifecycleState = WidgetsBinding.instance.lifecycleState;
+  bool _routeActive = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _restartTimer());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    _lifecycleState = state;
+    switch (state) {
+      case AppLifecycleState.resumed:
+        if (_routeActive) {
+          unawaited(_refreshNow());
+          _restartTimer();
+        }
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        _stopTimer();
+    }
+  }
+
+  bool get _shouldPoll {
+    final state = _lifecycleState;
+    return _routeActive &&
+        (state == null || state == AppLifecycleState.resumed);
+  }
+
+  Future<void> _refreshNow() async {
+    if (!mounted || !_shouldPoll) return;
+    await context.read<MessagesInboxCubit>().silentRefresh();
+  }
+
+  void _restartTimer() {
+    _stopTimer();
+    if (!mounted || !_shouldPoll) return;
+    _timer = Timer.periodic(_pollInterval, (_) => unawaited(_refreshNow()));
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  Future<void> _openConversation(String conversationId) async {
+    _routeActive = false;
+    _stopTimer();
+    await context.push<void>(AppRoutes.messagesThreadPath(conversationId));
+    if (!mounted) return;
+    _routeActive = true;
+    await _refreshNow();
+    _restartTimer();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -330,15 +415,7 @@ class _MessagesInboxView extends StatelessWidget {
                         headline: headline,
                         messagePreview: preview,
                         timeText: time,
-                        onTap: () async {
-                          await context.push<void>(
-                            AppRoutes.messagesThreadPath(c.id),
-                          );
-                          if (!context.mounted) return;
-                          await context
-                              .read<MessagesInboxCubit>()
-                              .silentRefresh();
-                        },
+                        onTap: () => _openConversation(c.id),
                       );
                     },
                   ),
