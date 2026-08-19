@@ -384,6 +384,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
 
       verify(() => pushTapHandler.start()).called(1);
       verify(() => foregroundPresenter.start()).called(1);
+      verify(
+        () => messagingUnreadSummaryCubit.sync(any<AuthState>()),
+      ).called(1);
     });
 
     testWidgets('rapid resumes share a pending listener startup', (
@@ -426,12 +429,16 @@ PUSH_NOTIFICATIONS_ENABLED=false
 
       await tester.pumpWidget(const CarzonApp());
       await tester.pump();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pump();
 
       verifyNever(() => pushTapHandler.start());
       verifyNever(() => foregroundPresenter.start());
       verifyNever(() => pushRegistration.syncTokenWithBackendIfEligible());
+      verify(
+        () => messagingUnreadSummaryCubit.sync(any<AuthState>()),
+      ).called(1);
     });
   });
 }

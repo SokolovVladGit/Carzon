@@ -70,7 +70,11 @@ class FirebasePushMessagingClient implements PushMessagingClient {
   @override
   Future<PushMessagingPermissionStatus> requestPermission() async {
     try {
-      final settings = await _messaging.requestPermission();
+      final settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
       return _mapAuthorization(settings.authorizationStatus);
     } catch (e, st) {
       _logger.error('requestPermission failed', e, st);
@@ -97,14 +101,18 @@ class FirebasePushMessagingClient implements PushMessagingClient {
       if (FirebasePushMessagingClient._needsApnsPrecheck()) {
         final apns = await _messaging.getAPNSToken();
         if (apns == null || apns.isEmpty) {
-          _logger.debug(
-            'APNs token not available yet; skipping FCM getToken until '
-            'Apple registration completes.',
+          _logger.warn(
+            'APNs token unavailable; FCM token registration remains pending',
           );
           return null;
         }
       }
-      return await _messaging.getToken();
+      final token = await _messaging.getToken();
+      if (token == null || token.isEmpty) {
+        _logger.warn('FCM token unavailable after Firebase token request');
+        return null;
+      }
+      return token;
     } on FirebaseException catch (e, st) {
       if (e.code == 'apns-token-not-set') {
         _logger.warn(

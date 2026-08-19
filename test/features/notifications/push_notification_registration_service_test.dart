@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/l10n/app_locale_preference.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/notifications/domain/entities/push_token_platform.dart';
@@ -26,6 +27,7 @@ class _FakePushMessagingClient implements PushMessagingClient {
   String? token = 'fake-token';
   Future<String?>? pendingToken;
   Completer<void>? tokenReadStarted;
+  int tokenCalls = 0;
   final StreamController<String> _refresh = StreamController.broadcast();
 
   @override
@@ -48,6 +50,7 @@ class _FakePushMessagingClient implements PushMessagingClient {
 
   @override
   Future<String?> getFcmToken() async {
+    tokenCalls++;
     tokenReadStarted?.complete();
     final pending = pendingToken;
     if (pending != null) return pending;
@@ -117,6 +120,18 @@ PUSH_NOTIFICATIONS_ENABLED=true
       () => repo.deactivateMyPushTokens(),
     ).thenAnswer((_) async => const Success<void>(null));
   });
+
+  Future<void> useRetryDelay(Duration delay) async {
+    await sut.dispose();
+    sut = PushNotificationRegistrationService(
+      messagingClient: client,
+      notificationsRepository: repo,
+      authGate: authGate,
+      readAuthenticatedUserId: () => authenticatedUserId,
+      readLocalePreference: () => localePreference,
+      retryDelay: delay,
+    );
+  }
 
   tearDown(() async {
     await sut.dispose();
@@ -242,6 +257,92 @@ PUSH_NOTIFICATIONS_ENABLED=false
       );
     },
   );
+
+  test('temporarily unavailable token retries and registers', () async {
+    await useRetryDelay(const Duration(milliseconds: 5));
+    client.token = null;
+
+    await sut.syncTokenWithBackendIfEligible();
+    expect(client.tokenCalls, 1);
+
+    client.token = 'recovered-token';
+    await untilCalled(
+      () => repo.registerPushToken(
+        token: 'recovered-token',
+        platform: any(named: 'platform'),
+        appVersion: any(named: 'appVersion'),
+        deviceId: any(named: 'deviceId'),
+        locale: any(named: 'locale'),
+      ),
+    );
+
+    expect(client.tokenCalls, greaterThanOrEqualTo(2));
+  });
+
+  test('later explicit resume-style sync retries and succeeds', () async {
+    client.token = null;
+    await sut.syncTokenWithBackendIfEligible();
+
+    client.token = 'resume-token';
+    await sut.syncTokenWithBackendIfEligible();
+
+    verify(
+      () => repo.registerPushToken(
+        token: 'resume-token',
+        platform: any(named: 'platform'),
+        appVersion: null,
+        deviceId: null,
+        locale: 'ru',
+      ),
+    ).called(1);
+  });
+
+  test('RPC failure remains retryable', () async {
+    await useRetryDelay(const Duration(milliseconds: 5));
+    var calls = 0;
+    when(
+      () => repo.registerPushToken(
+        token: any(named: 'token'),
+        platform: any(named: 'platform'),
+        appVersion: any(named: 'appVersion'),
+        deviceId: any(named: 'deviceId'),
+        locale: any(named: 'locale'),
+      ),
+    ).thenAnswer((_) async {
+      calls++;
+      if (calls == 1) {
+        return const FailureResult<void>(ServerFailure('temporary'));
+      }
+      return const Success<void>(null);
+    });
+
+    await sut.syncTokenWithBackendIfEligible();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(calls, 2);
+  });
+
+  test('sign-out cancels a pending token retry', () async {
+    await useRetryDelay(const Duration(milliseconds: 5));
+    client.token = null;
+    await sut.syncTokenWithBackendIfEligible();
+
+    authenticatedUserId = null;
+    authGate.signedIn = false;
+    await sut.beforeSignOut();
+    client.token = 'must-not-register';
+    await Future<void>.delayed(const Duration(milliseconds: 15));
+
+    verifyNever(
+      () => repo.registerPushToken(
+        token: any(named: 'token'),
+        platform: any(named: 'platform'),
+        appVersion: any(named: 'appVersion'),
+        deviceId: any(named: 'deviceId'),
+        locale: any(named: 'locale'),
+      ),
+    );
+  });
 
   test(
     'sync registers when push enabled, signed in, permission ok, token set',

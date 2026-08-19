@@ -104,6 +104,30 @@ void main() {
       },
     );
 
+    test('authoritative snapshots notify unread summary owner', () async {
+      final snapshots = <List<Conversation>>[];
+      var calls = 0;
+      when(() => repository.getConversations()).thenAnswer((_) async {
+        calls++;
+        return Success<List<Conversation>>(
+          calls == 1 ? [conversation] : [conversation2, conversation],
+        );
+      });
+      final cubit = MessagesInboxCubit(
+        repository,
+        onAuthoritativeSnapshot: snapshots.add,
+      );
+      addTearDown(cubit.close);
+
+      await cubit.refresh();
+      await cubit.silentRefresh();
+
+      expect(snapshots, [
+        [conversation],
+        [conversation2, conversation],
+      ]);
+    });
+
     blocTest<MessagesInboxCubit, MessagesInboxState>(
       'silentRefresh failure keeps prior success data',
       build: () {

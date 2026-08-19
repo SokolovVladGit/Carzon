@@ -77,6 +77,27 @@ class MessagingUnreadSummaryCubit extends Cubit<MessagingUnreadSummaryState> {
     }
   }
 
+  /// Applies the unread count from an authoritative, complete inbox snapshot.
+  /// This avoids a second hosted unread-count RPC on every inbox poll.
+  void applyAuthoritativeInboxCount(AuthState auth, int unreadCount) {
+    if (isClosed || auth.status != AuthStatus.authenticated) return;
+    final userId = auth.user?.id;
+    if (userId == null || userId.isEmpty) return;
+
+    if (!_hasSynchronizedAuth || _currentUserId != userId) {
+      _hasSynchronizedAuth = true;
+      _currentUserId = userId;
+      _sessionGeneration += 1;
+    }
+    _syncGeneration += 1;
+    emit(
+      MessagingUnreadSummaryState(
+        phase: MessagingUnreadSummaryPhase.loaded,
+        unreadConversationCount: unreadCount < 0 ? 0 : unreadCount,
+      ),
+    );
+  }
+
   bool _isCurrentSync(
     String userId,
     int sessionGeneration,

@@ -1,5 +1,6 @@
 import 'package:carzon/core/utils/logger.dart';
 import 'package:carzon/features/notifications/services/firebase_push_messaging_client.dart';
+import 'package:carzon/features/notifications/services/push_messaging_permission_status.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -24,6 +25,18 @@ void main() {
   });
 
   group('getFcmToken', () {
+    test('on iOS, APNs readiness allows FCM token resolution', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      when(() => messaging.getAPNSToken()).thenAnswer((_) async => 'apns');
+      when(() => messaging.getToken()).thenAnswer((_) async => 'ios-fcm');
+
+      final token = await sut.getFcmToken();
+
+      expect(token, 'ios-fcm');
+      verify(() => messaging.getAPNSToken()).called(1);
+      verify(() => messaging.getToken()).called(1);
+    });
+
     test(
       'on iOS, when APNs token is null, skips getToken and returns null without throwing',
       () async {
@@ -97,4 +110,38 @@ void main() {
       },
     );
   });
+
+  test(
+    'permission request explicitly includes alert, badge, and sound',
+    () async {
+      when(
+        () =>
+            messaging.requestPermission(alert: true, badge: true, sound: true),
+      ).thenAnswer(
+        (_) async => const NotificationSettings(
+          authorizationStatus: AuthorizationStatus.authorized,
+          alert: AppleNotificationSetting.enabled,
+          announcement: AppleNotificationSetting.notSupported,
+          badge: AppleNotificationSetting.enabled,
+          carPlay: AppleNotificationSetting.notSupported,
+          criticalAlert: AppleNotificationSetting.notSupported,
+          lockScreen: AppleNotificationSetting.enabled,
+          notificationCenter: AppleNotificationSetting.enabled,
+          showPreviews: AppleShowPreviewSetting.always,
+          sound: AppleNotificationSetting.enabled,
+          timeSensitive: AppleNotificationSetting.enabled,
+          providesAppNotificationSettings:
+              AppleNotificationSetting.notSupported,
+        ),
+      );
+
+      final status = await sut.requestPermission();
+
+      expect(status, PushMessagingPermissionStatus.authorized);
+      verify(
+        () =>
+            messaging.requestPermission(alert: true, badge: true, sound: true),
+      ).called(1);
+    },
+  );
 }

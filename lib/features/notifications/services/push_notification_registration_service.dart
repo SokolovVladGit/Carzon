@@ -32,6 +32,8 @@ final class _PendingTokenSync {
   final String? tokenOverride;
 }
 
+enum _TokenRegistrationResult { registered, retryableFailure, ineligible }
+
 /// Coordinates FCM token lifecycle with [NotificationsRepository] (RPC-only).
 ///
 /// Does not request OS permission on startup; does not show UI; does not
@@ -43,12 +45,14 @@ class PushNotificationRegistrationService {
     required PushAuthGate authGate,
     required String? Function() readAuthenticatedUserId,
     required AppLocalePreference Function() readLocalePreference,
+    Duration retryDelay = const Duration(seconds: 15),
     AppLogger? logger,
   }) : _messagingClient = messagingClient,
        _notificationsRepository = notificationsRepository,
        _authGate = authGate,
        _readAuthenticatedUserId = readAuthenticatedUserId,
        _readLocalePreference = readLocalePreference,
+       _retryDelay = retryDelay,
        _authorityUserId = readAuthenticatedUserId(),
        _logger = logger ?? AppLogger('PushNotificationRegistration');
 
@@ -57,6 +61,7 @@ class PushNotificationRegistrationService {
   final PushAuthGate _authGate;
   final String? Function() _readAuthenticatedUserId;
   final AppLocalePreference Function() _readLocalePreference;
+  final Duration _retryDelay;
   final AppLogger _logger;
 
   bool _firebaseReady = false;
@@ -68,6 +73,8 @@ class PushNotificationRegistrationService {
   _PendingTokenSync? _activeTokenSync;
   _PendingTokenSync? _pendingTokenSync;
   final Set<String> _tokensBeingRegistered = <String>{};
+  Timer? _retryTimer;
+  bool _disposed = false;
 
   /// Updates notification authority before auth-transition side effects run.
   void handleAuthStateChanged(String? authenticatedUserId) {
@@ -77,6 +84,7 @@ class PushNotificationRegistrationService {
     _authorityGeneration += 1;
     _authorityUserId = next;
     _pendingTokenSync = null;
+    _cancelRetry();
   }
 
   /// Captures the current authenticated session for user-bound notification
@@ -107,7 +115,7 @@ class PushNotificationRegistrationService {
   Future<void> start() async {
     try {
       if (!Env.pushNotificationsEnabled) {
-        _logger.debug('Push disabled via PUSH_NOTIFICATIONS_ENABLED');
+        _logger.info('Push registration disabled by build configuration');
         return;
       }
       if (!await _ensureFirebaseReady()) {
@@ -124,6 +132,7 @@ class PushNotificationRegistrationService {
   Future<void> syncTokenWithBackendIfEligible({
     bool Function()? isSessionCurrent,
   }) async {
+    _cancelRetry();
     final guard = captureSessionGuard(additionalCheck: isSessionCurrent);
     if (guard == null || !guard.isCurrent) return;
     return _queueTokenSync(_PendingTokenSync(guard: guard));
@@ -185,10 +194,12 @@ class PushNotificationRegistrationService {
     final guard = request.guard;
     try {
       if (!Env.pushNotificationsEnabled) {
+        _logger.info('Push registration disabled by build configuration');
         return;
       }
       if (!guard.isCurrent) return;
       if (!await _ensureFirebaseReady()) {
+        _scheduleRetry(guard);
         return;
       }
       if (!guard.isCurrent) return;
@@ -198,17 +209,33 @@ class PushNotificationRegistrationService {
       final status = await _messagingClient.getPermissionStatus();
       if (!guard.isCurrent) return;
       if (!status.allowsTokenRegistration) {
+        _logger.info(
+          status.blocksPreferenceEnable
+              ? 'Push registration skipped: notification permission denied'
+              : 'Push registration skipped: notification permission not granted',
+        );
         return;
       }
       final token =
           request.tokenOverride ?? await _messagingClient.getFcmToken();
       if (!guard.isCurrent) return;
       if (token == null || token.trim().isEmpty) {
+        _logger.warn('Push registration pending: FCM token unavailable');
+        _scheduleRetry(guard);
         return;
       }
-      await _registerWithRepository(token.trim());
+      final result = await _registerWithRepository(token.trim());
+      if (!guard.isCurrent) return;
+      if (result == _TokenRegistrationResult.registered) {
+        _cancelRetry();
+      } else if (result == _TokenRegistrationResult.retryableFailure) {
+        _scheduleRetry(guard);
+      }
     } catch (e, st) {
       _logger.error('syncTokenWithBackendIfEligible failed', e, st);
+      if (guard.isCurrent) {
+        _scheduleRetry(guard);
+      }
     }
   }
 
@@ -300,6 +327,7 @@ class PushNotificationRegistrationService {
   Future<void> revokeDevicePushRegistration({
     NotificationSessionGuard? sessionGuard,
   }) async {
+    _cancelRetry();
     try {
       if (sessionGuard != null && !sessionGuard.isCurrent) return;
       if (!Env.pushNotificationsEnabled) {
@@ -326,6 +354,7 @@ class PushNotificationRegistrationService {
     _authorityGeneration += 1;
     _authorityUserId = null;
     _pendingTokenSync = null;
+    _cancelRetry();
     await _syncLoopInFlight;
     try {
       if (!Env.pushNotificationsEnabled) {
@@ -348,6 +377,8 @@ class PushNotificationRegistrationService {
 
   /// Disposes token-refresh subscription (tests / tear-down).
   Future<void> dispose() async {
+    _disposed = true;
+    _cancelRetry();
     await _syncLoopInFlight;
     await _tokenRefreshSub?.cancel();
     _tokenRefreshSub = null;
@@ -397,6 +428,7 @@ class PushNotificationRegistrationService {
       }
       final guard = captureSessionGuard();
       if (guard == null || !guard.isCurrent) return;
+      _cancelRetry();
       await _queueTokenSync(
         _PendingTokenSync(guard: guard, tokenOverride: trimmed),
       );
@@ -412,9 +444,9 @@ class PushNotificationRegistrationService {
     };
   }
 
-  Future<void> _registerWithRepository(String token) async {
+  Future<_TokenRegistrationResult> _registerWithRepository(String token) async {
     if (!_tokensBeingRegistered.add(token)) {
-      return;
+      return _TokenRegistrationResult.ineligible;
     }
     final platform = detectClientPushTokenPlatform();
     try {
@@ -423,13 +455,35 @@ class PushNotificationRegistrationService {
         platform: platform,
         locale: _pushTokenLocaleTag(),
       );
-      result.fold(
-        (failure) =>
-            _logger.warn('registerPushToken failed: ${failure.message}'),
-        (_) => _logger.debug('registerPushToken success'),
+      return result.fold(
+        (failure) {
+          _logger.warn(
+            'Push token registration RPC failed (${failure.runtimeType})',
+          );
+          return _TokenRegistrationResult.retryableFailure;
+        },
+        (_) {
+          _logger.info('Push token registration succeeded');
+          return _TokenRegistrationResult.registered;
+        },
       );
     } finally {
       _tokensBeingRegistered.remove(token);
     }
+  }
+
+  void _scheduleRetry(NotificationSessionGuard guard) {
+    if (_disposed || !guard.isCurrent || _retryTimer != null) return;
+    _logger.info('Push token registration retry scheduled');
+    _retryTimer = Timer(_retryDelay, () {
+      _retryTimer = null;
+      if (_disposed || !guard.isCurrent) return;
+      unawaited(_queueTokenSync(_PendingTokenSync(guard: guard)));
+    });
+  }
+
+  void _cancelRetry() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
   }
 }

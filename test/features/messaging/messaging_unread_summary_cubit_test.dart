@@ -224,5 +224,26 @@ void main() {
       expect(cubit.state.hasLoadError, isFalse);
       await cubit.close();
     });
+
+    test(
+      'authoritative inbox count replaces an in-flight RPC result',
+      () async {
+        final gate = Completer<Result<int>>();
+        when(
+          () => repository.getUnreadConversationCount(),
+        ).thenAnswer((_) => gate.future);
+        final cubit = MessagingUnreadSummaryCubit(repository);
+        addTearDown(cubit.close);
+
+        final sync = cubit.sync(auth);
+        await Future<void>.delayed(Duration.zero);
+        cubit.applyAuthoritativeInboxCount(auth, 3);
+        gate.complete(const Success(9));
+        await sync;
+
+        expect(cubit.state.phase, MessagingUnreadSummaryPhase.loaded);
+        expect(cubit.state.unreadConversationCount, 3);
+      },
+    );
   });
 }
