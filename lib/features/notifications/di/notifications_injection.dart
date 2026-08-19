@@ -7,6 +7,7 @@ import '../../../core/config/env.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../auth/presentation/bloc/auth_cubit.dart';
 import '../../auth/presentation/bloc/auth_state.dart';
+import '../../messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import '../data/datasources/notifications_remote_datasource.dart';
 import '../data/repositories/notifications_repository_impl.dart';
 import '../domain/repositories/notifications_repository.dart';
@@ -111,6 +112,8 @@ void registerNotificationsFeature(GetIt sl) {
       listingNavigationCoordinator:
           sl<FilterAlertListingNavigationCoordinator>(),
       display: sl<MessageForegroundNotificationDisplay>(),
+      syncMessageUnread: () =>
+          sl<MessagingUnreadSummaryCubit>().sync(sl<AuthCubit>().state),
     ),
   );
 

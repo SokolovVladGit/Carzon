@@ -83,6 +83,7 @@ class CarzonMessageLocalNotificationsDisplay
     if (_initialized) {
       return;
     }
+    _logger.info('foreground_local_plugin_initialization_attempted');
     try {
       const androidSettings = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
@@ -102,13 +103,9 @@ class CarzonMessageLocalNotificationsDisplay
         settings: settings,
         onDidReceiveNotificationResponse: _onNotificationResponse,
       );
-      // `false` is returned in some environments (notably the iOS Simulator
-      // before notification surfaces are fully available, or when plugin
-      // init is a no-op). It does not throw — foreground presentation may
-      // be limited on simulator, but the presenter can still attempt
-      // [show] when a message arrives; log only at WARN, non-blocking.
-      if (ok == false) {
-        _logger.warn('flutter_local_notifications initialize returned false');
+      if (ok != true) {
+        _logger.warn('foreground_local_plugin_initialization_returned_false');
+        throw const _LocalNotificationInitializationReturnedFalse();
       }
 
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
@@ -144,12 +141,12 @@ class CarzonMessageLocalNotificationsDisplay
       }
 
       _initialized = true;
+      _logger.info('foreground_local_plugin_initialization_succeeded');
+    } on _LocalNotificationInitializationReturnedFalse {
+      rethrow;
     } catch (e, st) {
-      _logger.error(
-        'CarzonMessageLocalNotificationsDisplay.init failed',
-        e,
-        st,
-      );
+      _initialized = false;
+      _logger.error('foreground_local_plugin_initialization_threw', e, st);
       rethrow;
     }
   }
@@ -186,6 +183,7 @@ class CarzonMessageLocalNotificationsDisplay
       );
     } catch (e, st) {
       _logger.error('showMessageForegroundNotification failed', e, st);
+      rethrow;
     }
   }
 
@@ -221,6 +219,7 @@ class CarzonMessageLocalNotificationsDisplay
       );
     } catch (e, st) {
       _logger.error('showFilterAlertForegroundNotification failed', e, st);
+      rethrow;
     }
   }
 
@@ -256,6 +255,7 @@ class CarzonMessageLocalNotificationsDisplay
       );
     } catch (e, st) {
       _logger.error('showPriceDropForegroundNotification failed', e, st);
+      rethrow;
     }
   }
 
@@ -266,4 +266,8 @@ class CarzonMessageLocalNotificationsDisplay
       Locale(appLocalePreferenceToLanguageCode(preference)),
     );
   }
+}
+
+class _LocalNotificationInitializationReturnedFalse implements Exception {
+  const _LocalNotificationInitializationReturnedFalse();
 }

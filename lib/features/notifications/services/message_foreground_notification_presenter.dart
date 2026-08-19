@@ -21,12 +21,14 @@ class MessageForegroundNotificationPresenter {
     required FilterAlertListingNavigationCoordinator
     listingNavigationCoordinator,
     required MessageForegroundNotificationDisplay display,
+    Future<void> Function()? syncMessageUnread,
     Stream<RemoteMessage>? foregroundMessageStream,
     bool Function()? firebaseAppReady,
     AppLogger? logger,
   }) : _navigationCoordinator = navigationCoordinator,
        _listingNavigationCoordinator = listingNavigationCoordinator,
        _display = display,
+       _syncMessageUnread = syncMessageUnread,
        _foregroundMessageStream = foregroundMessageStream,
        _firebaseAppReady = firebaseAppReady ?? (() => Firebase.apps.isNotEmpty),
        _logger = logger ?? AppLogger('MessageForegroundNotificationPresenter');
@@ -34,6 +36,7 @@ class MessageForegroundNotificationPresenter {
   final MessageConversationNavigationCoordinator _navigationCoordinator;
   final FilterAlertListingNavigationCoordinator _listingNavigationCoordinator;
   final MessageForegroundNotificationDisplay _display;
+  final Future<void> Function()? _syncMessageUnread;
   final Stream<RemoteMessage>? _foregroundMessageStream;
   final bool Function() _firebaseAppReady;
   final AppLogger _logger;
@@ -67,6 +70,7 @@ class MessageForegroundNotificationPresenter {
   }
 
   Future<void> _start() async {
+    _logger.info('foreground_presenter_start_attempt');
     _startupState = _ForegroundPresenterStartupState.starting;
     try {
       if (!_firebaseAppReady()) {
@@ -88,6 +92,7 @@ class MessageForegroundNotificationPresenter {
         },
       );
       _startupState = _ForegroundPresenterStartupState.started;
+      _logger.info('foreground_presenter_started');
     } catch (e, st) {
       await _sub?.cancel();
       _sub = null;
@@ -106,19 +111,29 @@ class MessageForegroundNotificationPresenter {
 
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     try {
+      _logger.info('foreground_on_message_received');
       final msgPayload = parseMessageNotificationTapPayload(message.data);
       if (msgPayload != null) {
-        await _display.showMessageForegroundNotification(
-          msgPayload.conversationId,
-        );
+        _logger.info('foreground_payload_accepted');
+        await Future.wait([
+          _presentLocally(
+            () => _display.showMessageForegroundNotification(
+              msgPayload.conversationId,
+            ),
+          ),
+          _syncUnreadIndependently(),
+        ]);
         return;
       }
       final filterPayload = parseFilterAlertNotificationTapPayload(
         message.data,
       );
       if (filterPayload != null) {
-        await _display.showFilterAlertForegroundNotification(
-          filterPayload.listingId,
+        _logger.info('foreground_payload_accepted');
+        await _presentLocally(
+          () => _display.showFilterAlertForegroundNotification(
+            filterPayload.listingId,
+          ),
         );
         return;
       }
@@ -126,14 +141,47 @@ class MessageForegroundNotificationPresenter {
         message.data,
       );
       if (priceDropPayload != null) {
-        await _display.showPriceDropForegroundNotification(
-          priceDropPayload.listingId,
+        _logger.info('foreground_payload_accepted');
+        await _presentLocally(
+          () => _display.showPriceDropForegroundNotification(
+            priceDropPayload.listingId,
+          ),
         );
         return;
       }
+      _logger.warn(_payloadRejectionReason(message.data));
     } catch (e, st) {
       _logger.error('_handleForegroundMessage failed', e, st);
     }
+  }
+
+  Future<void> _presentLocally(Future<void> Function() show) async {
+    _logger.info('foreground_local_display_attempt');
+    try {
+      await show();
+      _logger.info('foreground_local_display_completed');
+    } catch (_) {
+      _logger.error('foreground_local_display_failed');
+    }
+  }
+
+  Future<void> _syncUnreadIndependently() async {
+    final sync = _syncMessageUnread;
+    if (sync == null) return;
+    try {
+      await sync();
+    } catch (_) {
+      _logger.error('foreground_unread_sync_failed');
+    }
+  }
+
+  String _payloadRejectionReason(Map<String, dynamic> data) {
+    final type = data['type']?.toString().trim().toLowerCase() ?? '';
+    return switch (type) {
+      '' || 'message' || 'message_created' => 'invalid_conversation_id',
+      'filter_alert' || 'price_drop' => 'invalid_listing_id',
+      _ => 'unsupported_type',
+    };
   }
 
   Future<void> dispose() async {
