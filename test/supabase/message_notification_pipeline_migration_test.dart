@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:carzon/features/notifications/services/message_notification_tap_payload.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Static checks for `20260528120000_message_notification_delivery_pipeline.sql`.
@@ -293,11 +294,25 @@ void main() {
       expect(ts, contains('body: copy.body'));
     });
 
-    test('FCM data payload keys are minimal (no email/body)', () {
+    test('FCM data fields are minimal and accepted by the client parser', () {
       expect(ts, contains('type: "message"'));
+      expect(ts, contains('d.conversation_id = event.conversation_id'));
+      expect(ts, contains('d.message_id = event.message_id'));
+      expect(ts, contains('d.listing_id = event.listing_id'));
       expect(ts.toLowerCase(), isNot(contains('mailto')));
       expect(ts, isNot(contains('message_body')));
       expect(ts, isNot(contains('p_body')));
+
+      final parsed = parseMessageNotificationTapPayload(const {
+        'type': 'message',
+        'conversation_id': 'cccccccc-cccc-4ccc-a789-cccccccccccc',
+        'message_id': 'dddddddd-dddd-4ddd-a123-dddddddddddd',
+        'listing_id': 'eeeeeeee-eeee-4eee-b123-eeeeeeeeeeee',
+      });
+      expect(parsed, isNotNull);
+      expect(parsed?.conversationId, 'cccccccc-cccc-4ccc-a789-cccccccccccc');
+      expect(parsed?.messageId, 'dddddddd-dddd-4ddd-a123-dddddddddddd');
+      expect(parsed?.listingId, 'eeeeeeee-eeee-4eee-b123-eeeeeeeeeeee');
     });
 
     test('Phase B: calls carzon_users_are_blocked before FCM send', () {

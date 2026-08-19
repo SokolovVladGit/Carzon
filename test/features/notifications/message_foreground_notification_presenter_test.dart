@@ -9,6 +9,7 @@ import 'package:carzon/features/notifications/services/message_conversation_navi
 import 'package:carzon/features/notifications/services/message_foreground_notification_display.dart';
 import 'package:carzon/features/notifications/services/message_foreground_notification_presenter.dart';
 import 'package:carzon/core/l10n/app_locale_preference.dart';
+import 'package:carzon/core/utils/logger.dart';
 import 'package:carzon/features/notifications/services/message_notification_public_copy.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -21,6 +22,7 @@ class _RecordingDisplay implements MessageForegroundNotificationDisplay {
   final List<String> shownListingIds = [];
   final List<String> titles = [];
   final List<String> bodies = [];
+  Future<void> Function(String conversationId)? showMessageOverride;
 
   @override
   Future<void> initialize() async {
@@ -31,6 +33,7 @@ class _RecordingDisplay implements MessageForegroundNotificationDisplay {
   @override
   Future<void> showMessageForegroundNotification(String conversationId) async {
     shownConversationIds.add(conversationId);
+    await showMessageOverride?.call(conversationId);
     titles.add(MessageNotificationPublicCopy.title(AppLocalePreference.ru));
     bodies.add(MessageNotificationPublicCopy.body(AppLocalePreference.ru));
   }
@@ -50,10 +53,29 @@ class _RecordingDisplay implements MessageForegroundNotificationDisplay {
   }
 }
 
+class _RecordingLogger extends AppLogger {
+  _RecordingLogger() : super('test');
+
+  final List<String> events = [];
+
+  @override
+  void info(String message) => events.add(message);
+
+  @override
+  void warn(String message) => events.add(message);
+
+  @override
+  void error(String message, [Object? error, StackTrace? stackTrace]) {
+    events.add(message);
+  }
+}
+
 final class _PresenterRetryHarness {
   _PresenterRetryHarness({
     required this.display,
     required bool Function() firebaseAppReady,
+    Future<void> Function()? syncMessageUnread,
+    AppLogger? logger,
   }) {
     foregroundMessages = StreamController<RemoteMessage>.broadcast(
       onListen: () => listenerCount++,
@@ -73,8 +95,10 @@ final class _PresenterRetryHarness {
       navigationCoordinator: conversationCoordinator,
       listingNavigationCoordinator: listingCoordinator,
       display: display,
+      syncMessageUnread: syncMessageUnread,
       foregroundMessageStream: foregroundMessages.stream,
       firebaseAppReady: firebaseAppReady,
+      logger: logger,
     );
   }
 
@@ -650,6 +674,173 @@ PUSH_NOTIFICATIONS_ENABLED=true
 
       await harness.dispose();
       expect(harness.cancellationCount, 1);
+    });
+  });
+
+  group('foreground diagnostics and unread synchronization', () {
+    setUp(() {
+      dotenv.testLoad(
+        fileInput: '''
+SUPABASE_URL=https://x.supabase.co
+SUPABASE_ANON_KEY=anon
+PUSH_NOTIFICATIONS_ENABLED=true
+''',
+      );
+    });
+
+    test('valid message logs safe stages and synchronizes unread', () async {
+      final logger = _RecordingLogger();
+      var unreadSyncs = 0;
+      final harness = _PresenterRetryHarness(
+        display: _RecordingDisplay(),
+        firebaseAppReady: () => true,
+        syncMessageUnread: () async => unreadSyncs++,
+        logger: logger,
+      );
+
+      await harness.presenter.start();
+      harness.foregroundMessages.add(
+        RemoteMessage(
+          data: {
+            'type': 'message',
+            'conversation_id': okId,
+            'message_id': 'dddddddd-dddd-4ddd-a123-dddddddddddd',
+            'listing_id': 'eeeeeeee-eeee-4eee-b123-eeeeeeeeeeee',
+          },
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(unreadSyncs, 1);
+      expect(
+        logger.events,
+        containsAllInOrder([
+          'foreground_presenter_start_attempt',
+          'foreground_presenter_started',
+          'foreground_on_message_received',
+          'foreground_payload_accepted',
+          'foreground_local_display_attempt',
+          'foreground_local_display_completed',
+        ]),
+      );
+      expect(logger.events.join(' '), isNot(contains(okId)));
+      expect(
+        logger.events.join(' '),
+        isNot(contains('dddddddd-dddd-4ddd-a123-dddddddddddd')),
+      );
+
+      await harness.dispose();
+    });
+
+    test(
+      'display failure remains observable and does not block unread',
+      () async {
+        final logger = _RecordingLogger();
+        var unreadSyncs = 0;
+        final display = _RecordingDisplay()
+          ..showMessageOverride = (_) async =>
+              throw StateError('display failed');
+        final harness = _PresenterRetryHarness(
+          display: display,
+          firebaseAppReady: () => true,
+          syncMessageUnread: () async => unreadSyncs++,
+          logger: logger,
+        );
+
+        await harness.presenter.start();
+        harness.foregroundMessages.add(
+          RemoteMessage(data: {'type': 'message', 'conversation_id': okId}),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(display.shownConversationIds, [okId]);
+        expect(unreadSyncs, 1);
+        expect(logger.events, contains('foreground_local_display_failed'));
+        expect(
+          logger.events,
+          isNot(contains('foreground_local_display_completed')),
+        );
+
+        await harness.dispose();
+      },
+    );
+
+    test('unread failure does not block local display', () async {
+      final logger = _RecordingLogger();
+      final harness = _PresenterRetryHarness(
+        display: _RecordingDisplay(),
+        firebaseAppReady: () => true,
+        syncMessageUnread: () async => throw StateError('unread failed'),
+        logger: logger,
+      );
+
+      await harness.presenter.start();
+      harness.foregroundMessages.add(
+        RemoteMessage(data: {'type': 'message', 'conversation_id': okId}),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(harness.display.shownConversationIds, [okId]);
+      expect(logger.events, contains('foreground_local_display_completed'));
+      expect(logger.events, contains('foreground_unread_sync_failed'));
+
+      await harness.dispose();
+    });
+
+    test(
+      'rejected payload logs reason only and does not synchronize unread',
+      () async {
+        final logger = _RecordingLogger();
+        var unreadSyncs = 0;
+        final harness = _PresenterRetryHarness(
+          display: _RecordingDisplay(),
+          firebaseAppReady: () => true,
+          syncMessageUnread: () async => unreadSyncs++,
+          logger: logger,
+        );
+
+        await harness.presenter.start();
+        harness.foregroundMessages.add(
+          RemoteMessage(
+            data: {
+              'type': 'message',
+              'conversation_id': 'private-invalid-conversation-value',
+            },
+          ),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(unreadSyncs, 0);
+        expect(logger.events, contains('invalid_conversation_id'));
+        expect(
+          logger.events.join(' '),
+          isNot(contains('private-invalid-conversation-value')),
+        );
+
+        await harness.dispose();
+      },
+    );
+
+    test('repeated valid messages synchronize unread independently', () async {
+      var unreadSyncs = 0;
+      final harness = _PresenterRetryHarness(
+        display: _RecordingDisplay(),
+        firebaseAppReady: () => true,
+        syncMessageUnread: () async => unreadSyncs++,
+      );
+
+      await harness.presenter.start();
+      for (var i = 0; i < 2; i++) {
+        harness.foregroundMessages.add(
+          RemoteMessage(data: {'type': 'message', 'conversation_id': okId}),
+        );
+      }
+      await Future<void>.delayed(Duration.zero);
+
+      expect(unreadSyncs, 2);
+      expect(harness.display.shownConversationIds, [okId, okId]);
+
+      await harness.dispose();
     });
   });
 }

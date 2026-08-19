@@ -15,12 +15,7 @@ Future<String?> showListingBrandPickSheet({
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (sheetCtx) => Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(sheetCtx).bottom,
-      ),
-      child: ListingBrandPickSheet(appL10n: l10n),
-    ),
+    builder: (_) => ListingBrandPickSheet(appL10n: l10n),
   );
 }
 

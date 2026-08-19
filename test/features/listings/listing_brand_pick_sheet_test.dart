@@ -139,4 +139,65 @@ void main() {
 
     expect(picked, customMake);
   });
+
+  testWidgets(
+    'software keyboard inset keeps empty and filtered results usable',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(375, 667));
+      tester.view.viewInsets = const FakeViewPadding(bottom: 291);
+      addTearDown(() async {
+        tester.view.resetViewInsets();
+        await tester.binding.setSurfaceSize(null);
+      });
+
+      final l10n = ruStrings();
+      String? picked;
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: ElevatedButton(
+                onPressed: () async {
+                  picked = await showListingBrandPickSheet(
+                    context: context,
+                    l10n: l10n,
+                  );
+                },
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      final search = find.byType(TextField);
+      await tester.tap(search);
+      await tester.showKeyboard(search);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Toyota'), findsOneWidget);
+      final results = find.byType(ListView);
+      expect(results, findsOneWidget);
+      expect(tester.getSize(results).height, greaterThan(100));
+      expect(tester.takeException(), isNull);
+
+      await tester.enterText(search, 'byd');
+      await tester.pumpAndSettle();
+
+      expect(find.text('BYD'), findsOneWidget);
+      expect(find.text('Toyota'), findsNothing);
+      expect(tester.getSize(results).height, greaterThan(100));
+      expect(tester.takeException(), isNull);
+
+      await tester.tap(find.text('BYD'));
+      await tester.pumpAndSettle();
+      expect(picked, 'BYD');
+    },
+  );
 }
