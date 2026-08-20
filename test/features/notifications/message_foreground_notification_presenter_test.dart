@@ -17,7 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 class _RecordingDisplay implements MessageForegroundNotificationDisplay {
   int initCount = 0;
-  Future<void> Function()? initializeOverride;
+  Future<bool> Function()? initializeOverride;
   final List<String> shownConversationIds = [];
   final List<String> shownListingIds = [];
   final List<String> titles = [];
@@ -25,9 +25,9 @@ class _RecordingDisplay implements MessageForegroundNotificationDisplay {
   Future<void> Function(String conversationId)? showMessageOverride;
 
   @override
-  Future<void> initialize() async {
+  Future<bool> initialize() async {
     initCount++;
-    await initializeOverride?.call();
+    return await initializeOverride?.call() ?? true;
   }
 
   @override
@@ -57,6 +57,7 @@ class _RecordingLogger extends AppLogger {
   _RecordingLogger() : super('test');
 
   final List<String> events = [];
+  final List<String> errorEvents = [];
 
   @override
   void info(String message) => events.add(message);
@@ -67,6 +68,7 @@ class _RecordingLogger extends AppLogger {
   @override
   void error(String message, [Object? error, StackTrace? stackTrace]) {
     events.add(message);
+    errorEvents.add(message);
   }
 }
 
@@ -599,8 +601,9 @@ PUSH_NOTIFICATIONS_ENABLED=true
     );
 
     test(
-      'initialization failure resets state and later retry succeeds',
+      'initialization exception keeps listener active and later retry succeeds',
       () async {
+        final logger = _RecordingLogger();
         final display = _RecordingDisplay();
         var shouldThrow = true;
         display.initializeOverride = () async {
@@ -608,19 +611,27 @@ PUSH_NOTIFICATIONS_ENABLED=true
             shouldThrow = false;
             throw StateError('temporary local notification failure');
           }
+          return true;
         };
         final harness = _PresenterRetryHarness(
           display: display,
           firebaseAppReady: () => true,
+          logger: logger,
         );
 
         await harness.presenter.start();
-        expect(harness.presenter.isStarted, isFalse);
+        expect(harness.presenter.isStarted, isTrue);
+        expect(harness.presenter.isDisplayReady, isFalse);
         expect(display.initCount, 1);
-        expect(harness.listenerCount, 0);
+        expect(harness.listenerCount, 1);
+        expect(
+          logger.errorEvents,
+          contains('foreground_local_display_initialization_failed'),
+        );
 
         await harness.presenter.start();
         expect(harness.presenter.isStarted, isTrue);
+        expect(harness.presenter.isDisplayReady, isTrue);
         expect(display.initCount, 2);
         expect(harness.listenerCount, 1);
 
@@ -631,7 +642,7 @@ PUSH_NOTIFICATIONS_ENABLED=true
     test(
       'concurrent start calls share one initialization and listener',
       () async {
-        final initializeGate = Completer<void>();
+        final initializeGate = Completer<bool>();
         final display = _RecordingDisplay()
           ..initializeOverride = () => initializeGate.future;
         final harness = _PresenterRetryHarness(
@@ -642,13 +653,78 @@ PUSH_NOTIFICATIONS_ENABLED=true
         final first = harness.presenter.start();
         final second = harness.presenter.start();
         expect(display.initCount, 1);
-        expect(harness.listenerCount, 0);
+        expect(harness.listenerCount, 1);
 
-        initializeGate.complete();
+        initializeGate.complete(true);
         await Future.wait([first, second]);
         expect(harness.presenter.isStarted, isTrue);
         expect(display.initCount, 1);
         expect(harness.listenerCount, 1);
+
+        await harness.dispose();
+      },
+    );
+
+    test(
+      'initialize false keeps listener active and unread sync works',
+      () async {
+        final logger = _RecordingLogger();
+        var unreadSyncs = 0;
+        final display = _RecordingDisplay()
+          ..initializeOverride = () async => false;
+        final harness = _PresenterRetryHarness(
+          display: display,
+          firebaseAppReady: () => true,
+          syncMessageUnread: () async => unreadSyncs++,
+          logger: logger,
+        );
+
+        await harness.presenter.start();
+        expect(harness.presenter.isStarted, isTrue);
+        expect(harness.presenter.isDisplayReady, isFalse);
+        expect(harness.listenerCount, 1);
+
+        harness.foregroundMessages.add(
+          RemoteMessage(data: {'type': 'message', 'conversation_id': okId}),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(unreadSyncs, 1);
+        expect(display.shownConversationIds, isEmpty);
+        expect(logger.events, contains('foreground_local_display_unavailable'));
+        expect(logger.errorEvents, isEmpty);
+
+        await harness.dispose();
+      },
+    );
+
+    test(
+      'display retry after failure does not duplicate onMessage listener',
+      () async {
+        final display = _RecordingDisplay();
+        var attempts = 0;
+        display.initializeOverride = () async {
+          if (attempts++ == 0) return false;
+          return true;
+        };
+        final harness = _PresenterRetryHarness(
+          display: display,
+          firebaseAppReady: () => true,
+        );
+
+        await harness.presenter.start();
+        await harness.presenter.start();
+
+        harness.foregroundMessages.add(
+          RemoteMessage(data: {'type': 'message', 'conversation_id': okId}),
+        );
+        await Future<void>.delayed(Duration.zero);
+
+        expect(display.initCount, 2);
+        expect(harness.presenter.isDisplayReady, isTrue);
+        expect(harness.listenerCount, 1);
+        expect(harness.cancellationCount, 0);
+        expect(display.shownConversationIds, [okId]);
 
         await harness.dispose();
       },

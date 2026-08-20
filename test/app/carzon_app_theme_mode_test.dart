@@ -97,6 +97,7 @@ void main() {
   late List<AuthState> browseAuthSynchronizations;
   late bool pushTapStarted;
   late bool foregroundPresenterStarted;
+  late bool foregroundDisplayReady;
 
   setUpAll(() {
     registerFallbackValue(const AuthState.unauthenticated());
@@ -117,6 +118,7 @@ void main() {
     browseAuthSynchronizations = [];
     pushTapStarted = false;
     foregroundPresenterStarted = false;
+    foregroundDisplayReady = false;
     await sl.reset();
     dotenv.testLoad(
       fileInput: '''
@@ -190,8 +192,12 @@ PUSH_NOTIFICATIONS_ENABLED=false
     when(
       () => foregroundPresenter.isStarted,
     ).thenAnswer((_) => foregroundPresenterStarted);
+    when(
+      () => foregroundPresenter.isDisplayReady,
+    ).thenAnswer((_) => foregroundDisplayReady);
     when(() => foregroundPresenter.start()).thenAnswer((_) async {
       foregroundPresenterStarted = true;
+      foregroundDisplayReady = true;
     });
 
     sl.registerSingleton<AuthCubit>(authCubit);
@@ -384,9 +390,31 @@ PUSH_NOTIFICATIONS_ENABLED=true
 
       verify(() => pushTapHandler.start()).called(1);
       verify(() => foregroundPresenter.start()).called(1);
-      verify(
-        () => messagingUnreadSummaryCubit.sync(any<AuthState>()),
-      ).called(1);
+      verifyNever(() => messagingUnreadSummaryCubit.sync(any<AuthState>()));
+    });
+
+    testWidgets('resume retries unavailable display without restarting tap', (
+      tester,
+    ) async {
+      foregroundPresenterStarted = true;
+      foregroundDisplayReady = false;
+      await sl<ThemeModeCubit>().load();
+      await sl<AppLocaleCubit>().load();
+      await tester.pumpWidget(const CarzonApp());
+      await tester.pump();
+
+      verify(() => foregroundPresenter.start()).called(1);
+      verify(() => pushTapHandler.start()).called(1);
+      clearInteractions(foregroundPresenter);
+      clearInteractions(pushTapHandler);
+
+      foregroundDisplayReady = false;
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      verify(() => foregroundPresenter.start()).called(1);
+      verifyNever(() => pushTapHandler.start());
     });
 
     testWidgets('rapid resumes share a pending listener startup', (
@@ -436,9 +464,97 @@ PUSH_NOTIFICATIONS_ENABLED=false
       verifyNever(() => pushTapHandler.start());
       verifyNever(() => foregroundPresenter.start());
       verifyNever(() => pushRegistration.syncTokenWithBackendIfEligible());
-      verify(
-        () => messagingUnreadSummaryCubit.sync(any<AuthState>()),
-      ).called(1);
+      verifyNever(() => messagingUnreadSummaryCubit.sync(any<AuthState>()));
+    });
+  });
+
+  group('global unread polling lifecycle', () {
+    const authenticated = AuthState.authenticated(
+      AuthUser(id: 'poll-user', email: 'poll@example.com'),
+    );
+
+    Future<void> mountAuthenticated(WidgetTester tester) async {
+      await sl<ThemeModeCubit>().load();
+      await sl<AppLocaleCubit>().load();
+      await tester.pumpWidget(const CarzonApp());
+      await tester.pump();
+      authStates.add(authenticated);
+      await tester.pump();
+    }
+
+    testWidgets('foreground polling runs every 15 seconds with push disabled', (
+      tester,
+    ) async {
+      await mountAuthenticated(tester);
+      clearInteractions(messagingUnreadSummaryCubit);
+
+      await tester.pump(const Duration(seconds: 30));
+
+      verify(() => messagingUnreadSummaryCubit.sync(authenticated)).called(2);
+      verifyNever(() => foregroundPresenter.start());
+      verifyNever(() => pushTapHandler.start());
+    });
+
+    testWidgets('polling stops while backgrounded and resumes immediately', (
+      tester,
+    ) async {
+      await mountAuthenticated(tester);
+      clearInteractions(messagingUnreadSummaryCubit);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump(const Duration(seconds: 30));
+      verifyNever(() => messagingUnreadSummaryCubit.sync(any<AuthState>()));
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      verify(() => messagingUnreadSummaryCubit.sync(authenticated)).called(1);
+    });
+
+    testWidgets('sign-out cancels foreground polling', (tester) async {
+      await mountAuthenticated(tester);
+      authStates.add(const AuthState.unauthenticated());
+      await tester.pump();
+      clearInteractions(messagingUnreadSummaryCubit);
+
+      await tester.pump(const Duration(seconds: 30));
+
+      verifyNever(() => messagingUnreadSummaryCubit.sync(any<AuthState>()));
+    });
+
+    testWidgets('same-session polling does not overlap an active sync', (
+      tester,
+    ) async {
+      final gate = Completer<void>();
+      when(
+        () => messagingUnreadSummaryCubit.sync(authenticated),
+      ).thenAnswer((_) => gate.future);
+
+      await mountAuthenticated(tester);
+      await tester.pump(const Duration(seconds: 30));
+
+      verify(() => messagingUnreadSummaryCubit.sync(authenticated)).called(1);
+      gate.complete();
+      await tester.pump();
+    });
+
+    testWidgets('account switch reaches generation-safe cubit immediately', (
+      tester,
+    ) async {
+      final gate = Completer<void>();
+      when(
+        () => messagingUnreadSummaryCubit.sync(authenticated),
+      ).thenAnswer((_) => gate.future);
+      await mountAuthenticated(tester);
+
+      const switched = AuthState.authenticated(
+        AuthUser(id: 'other-user', email: 'other@example.com'),
+      );
+      authStates.add(switched);
+      await tester.pump();
+
+      verify(() => messagingUnreadSummaryCubit.sync(switched)).called(1);
+      gate.complete();
+      await tester.pump();
     });
   });
 }

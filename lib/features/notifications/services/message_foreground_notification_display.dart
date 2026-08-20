@@ -1,7 +1,8 @@
 /// Shows a privacy-safe local notification for an incoming message while the
 /// app is foregrounded. No-op on unsupported platforms (e.g. tests).
 abstract interface class MessageForegroundNotificationDisplay {
-  Future<void> initialize();
+  /// Returns whether local foreground presentation is currently available.
+  Future<bool> initialize();
 
   Future<void> showMessageForegroundNotification(String conversationId);
 
