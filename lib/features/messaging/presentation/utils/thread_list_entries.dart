@@ -76,11 +76,7 @@ List<ThreadListEntry> buildThreadListEntries(List<ChatMessage> messages) {
     );
 
     out.add(
-      ThreadMessageEntry(
-        m,
-        groupPosition: groupPosition,
-        showTimestamp: !groupedWithNext,
-      ),
+      ThreadMessageEntry(m, groupPosition: groupPosition, showTimestamp: true),
     );
   }
   return out;

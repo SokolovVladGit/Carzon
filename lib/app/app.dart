@@ -34,14 +34,23 @@ class CarzonApp extends StatefulWidget {
 }
 
 class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
+  static const _unreadPollInterval = Duration(seconds: 15);
+
   Future<void>? _pushListenersStartInFlight;
   Future<void>? _pushResumeRecoveryInFlight;
-  Future<void>? _unreadResumeSyncInFlight;
+  Future<void>? _unreadSyncInFlight;
+  String? _unreadSyncUserId;
+  Timer? _unreadPollTimer;
+  bool _isForeground = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _updateUnreadPolling(sl<AuthCubit>().state);
+    });
     if (Env.pushNotificationsEnabled) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         unawaited(_ensurePushListenersStarted());
@@ -51,32 +60,55 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _unreadPollTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _isForeground = state == AppLifecycleState.resumed;
     if (state != AppLifecycleState.resumed) {
+      _unreadPollTimer?.cancel();
+      _unreadPollTimer = null;
       return;
     }
-    unawaited(_syncUnreadAfterResume());
+    final auth = sl<AuthCubit>().state;
+    _updateUnreadPolling(auth);
+    if (auth.status == AuthStatus.authenticated) {
+      unawaited(_requestUnreadSync(auth));
+    }
     if (!Env.pushNotificationsEnabled) {
       return;
     }
     unawaited(_recoverPushAfterResume());
   }
 
-  Future<void> _syncUnreadAfterResume() async {
-    final inFlight = _unreadResumeSyncInFlight;
-    if (inFlight != null) return inFlight;
-    final sync = sl<MessagingUnreadSummaryCubit>().sync(sl<AuthCubit>().state);
-    _unreadResumeSyncInFlight = sync;
+  void _updateUnreadPolling(AuthState auth) {
+    _unreadPollTimer?.cancel();
+    _unreadPollTimer = null;
+    if (!_isForeground || auth.status != AuthStatus.authenticated) return;
+    _unreadPollTimer = Timer.periodic(_unreadPollInterval, (_) {
+      unawaited(_requestUnreadSync(sl<AuthCubit>().state));
+    });
+  }
+
+  Future<void> _requestUnreadSync(AuthState auth) async {
+    final userId = auth.status == AuthStatus.authenticated
+        ? auth.user?.id
+        : null;
+    final inFlight = _unreadSyncInFlight;
+    if (inFlight != null && userId == _unreadSyncUserId) return inFlight;
+
+    final sync = sl<MessagingUnreadSummaryCubit>().sync(auth);
+    _unreadSyncInFlight = sync;
+    _unreadSyncUserId = userId;
     try {
       await sync;
     } finally {
-      if (identical(_unreadResumeSyncInFlight, sync)) {
-        _unreadResumeSyncInFlight = null;
+      if (identical(_unreadSyncInFlight, sync)) {
+        _unreadSyncInFlight = null;
+        _unreadSyncUserId = null;
       }
     }
   }
@@ -132,7 +164,7 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
     final foregroundPresenter = sl<MessageForegroundNotificationPresenter>();
     await Future.wait([
       if (!tapHandler.isStarted) _startPushTapHandler(tapHandler),
-      if (!foregroundPresenter.isStarted)
+      if (!foregroundPresenter.isStarted || !foregroundPresenter.isDisplayReady)
         _startForegroundPresenter(foregroundPresenter),
     ]);
   }
@@ -187,6 +219,7 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
             listenWhen: (prev, curr) =>
                 prev.user?.id != curr.user?.id || prev.status != curr.status,
             listener: (context, state) {
+              _updateUnreadPolling(state);
               final activeUser = state.status == AuthStatus.authenticated
                   ? state.user
                   : null;
@@ -197,9 +230,7 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
                 context.read<FavoritesCubit>().syncWithAuth(activeUser),
               );
               unawaited(context.read<SelfSellerVisualCubit>().prime(state));
-              unawaited(
-                context.read<MessagingUnreadSummaryCubit>().sync(state),
-              );
+              unawaited(_requestUnreadSync(state));
               unawaited(
                 sl<BrowseCatalogFilterAlertsCubit>().onAuthChanged(state),
               );

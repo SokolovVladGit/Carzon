@@ -12,6 +12,7 @@ class _RecordingLogger extends AppLogger {
   _RecordingLogger() : super('test');
 
   final List<String> events = [];
+  final List<String> errorEvents = [];
 
   @override
   void info(String message) => events.add(message);
@@ -22,6 +23,7 @@ class _RecordingLogger extends AppLogger {
   @override
   void error(String message, [Object? error, StackTrace? stackTrace]) {
     events.add(message);
+    errorEvents.add(message);
   }
 }
 
@@ -48,6 +50,30 @@ void main() {
     );
   });
 
+  test('initialize true returns ready and remains initialized', () async {
+    when(
+      () => plugin.initialize(
+        settings: any(named: 'settings'),
+        onDidReceiveNotificationResponse: any(
+          named: 'onDidReceiveNotificationResponse',
+        ),
+      ),
+    ).thenAnswer((_) async => true);
+
+    expect(await display.initialize(), isTrue);
+    expect(await display.initialize(), isTrue);
+
+    verify(
+      () => plugin.initialize(
+        settings: any(named: 'settings'),
+        onDidReceiveNotificationResponse: any(
+          named: 'onDidReceiveNotificationResponse',
+        ),
+      ),
+    ).called(1);
+    expect(logger.errorEvents, isEmpty);
+  });
+
   test('initialize false remains retryable and later true succeeds', () async {
     var attempts = 0;
     when(
@@ -59,9 +85,9 @@ void main() {
       ),
     ).thenAnswer((_) async => attempts++ > 0);
 
-    await expectLater(display.initialize(), throwsA(isA<Exception>()));
-    await display.initialize();
-    await display.initialize();
+    expect(await display.initialize(), isFalse);
+    expect(await display.initialize(), isTrue);
+    expect(await display.initialize(), isTrue);
 
     expect(attempts, 2);
     expect(
@@ -72,6 +98,7 @@ void main() {
         'foreground_local_plugin_initialization_succeeded',
       ]),
     );
+    expect(logger.errorEvents, isEmpty);
   });
 
   test('initialize exception remains retryable', () async {
@@ -94,7 +121,7 @@ void main() {
     expect(attempts, 2);
     expect(
       logger.events,
-      contains('foreground_local_plugin_initialization_threw'),
+      contains('foreground_local_plugin_initialization_failed'),
     );
     expect(
       logger.events,

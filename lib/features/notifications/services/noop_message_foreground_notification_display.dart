@@ -6,7 +6,7 @@ class NoopMessageForegroundNotificationDisplay
   const NoopMessageForegroundNotificationDisplay();
 
   @override
-  Future<void> initialize() async {}
+  Future<bool> initialize() async => false;
 
   @override
   Future<void> showMessageForegroundNotification(String _) async {}

@@ -79,9 +79,9 @@ class CarzonMessageLocalNotificationsDisplay
   }
 
   @override
-  Future<void> initialize() async {
+  Future<bool> initialize() async {
     if (_initialized) {
-      return;
+      return true;
     }
     _logger.info('foreground_local_plugin_initialization_attempted');
     try {
@@ -105,7 +105,7 @@ class CarzonMessageLocalNotificationsDisplay
       );
       if (ok != true) {
         _logger.warn('foreground_local_plugin_initialization_returned_false');
-        throw const _LocalNotificationInitializationReturnedFalse();
+        return false;
       }
 
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
@@ -142,20 +142,17 @@ class CarzonMessageLocalNotificationsDisplay
 
       _initialized = true;
       _logger.info('foreground_local_plugin_initialization_succeeded');
-    } on _LocalNotificationInitializationReturnedFalse {
-      rethrow;
+      return true;
     } catch (e, st) {
       _initialized = false;
-      _logger.error('foreground_local_plugin_initialization_threw', e, st);
+      _logger.error('foreground_local_plugin_initialization_failed', e, st);
       rethrow;
     }
   }
 
   @override
   Future<void> showMessageForegroundNotification(String conversationId) async {
-    if (!_initialized) {
-      await initialize();
-    }
+    if (!_initialized && !await initialize()) return;
     try {
       final preference = _readLocalePreference();
       final l10n = _l10nFor(preference);
@@ -189,9 +186,7 @@ class CarzonMessageLocalNotificationsDisplay
 
   @override
   Future<void> showFilterAlertForegroundNotification(String listingId) async {
-    if (!_initialized) {
-      await initialize();
-    }
+    if (!_initialized && !await initialize()) return;
     try {
       final preference = _readLocalePreference();
       final l10n = _l10nFor(preference);
@@ -225,9 +220,7 @@ class CarzonMessageLocalNotificationsDisplay
 
   @override
   Future<void> showPriceDropForegroundNotification(String listingId) async {
-    if (!_initialized) {
-      await initialize();
-    }
+    if (!_initialized && !await initialize()) return;
     try {
       final preference = _readLocalePreference();
       final l10n = _l10nFor(preference);
@@ -266,8 +259,4 @@ class CarzonMessageLocalNotificationsDisplay
       Locale(appLocalePreferenceToLanguageCode(preference)),
     );
   }
-}
-
-class _LocalNotificationInitializationReturnedFalse implements Exception {
-  const _LocalNotificationInitializationReturnedFalse();
 }

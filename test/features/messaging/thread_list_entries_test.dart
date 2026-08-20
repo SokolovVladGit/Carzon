@@ -19,12 +19,74 @@ void main() {
     createdAt: createdAt,
   );
 
-  test('groups consecutive same-sender messages within three minutes', () {
+  test(
+    'grouped outgoing messages preserve positions and all show timestamps',
+    () {
+      final messages = [
+        message(id: 'm1', senderId: 'u1', createdAt: base),
+        message(
+          id: 'm2',
+          senderId: 'u1',
+          createdAt: base.add(const Duration(minutes: 1)),
+        ),
+        message(
+          id: 'm3',
+          senderId: 'u1',
+          createdAt: base.add(const Duration(minutes: 2)),
+        ),
+        message(
+          id: 'm4',
+          senderId: 'u2',
+          createdAt: base.add(const Duration(minutes: 3)),
+        ),
+      ];
+
+      final entries = buildThreadListEntries(messages);
+      final messageEntries = entries.whereType<ThreadMessageEntry>().toList();
+
+      expect(messageEntries, hasLength(4));
+      expect(messageEntries[0].groupPosition, MessageBubbleGroupPosition.first);
+      expect(messageEntries[0].showTimestamp, isTrue);
+      expect(
+        messageEntries[1].groupPosition,
+        MessageBubbleGroupPosition.middle,
+      );
+      expect(messageEntries[1].showTimestamp, isTrue);
+      expect(messageEntries[2].groupPosition, MessageBubbleGroupPosition.last);
+      expect(messageEntries[2].showTimestamp, isTrue);
+      expect(
+        messageEntries[3].groupPosition,
+        MessageBubbleGroupPosition.single,
+      );
+      expect(messageEntries[3].showTimestamp, isTrue);
+    },
+  );
+
+  test('grouped incoming messages all show timestamps', () {
+    final messages = [
+      message(id: 'm1', senderId: 'peer', createdAt: base),
+      message(
+        id: 'm2',
+        senderId: 'peer',
+        createdAt: base.add(const Duration(minutes: 1)),
+      ),
+    ];
+
+    final entries = buildThreadListEntries(
+      messages,
+    ).whereType<ThreadMessageEntry>().toList();
+
+    expect(entries[0].groupPosition, MessageBubbleGroupPosition.first);
+    expect(entries[1].groupPosition, MessageBubbleGroupPosition.last);
+    expect(entries.every((e) => e.showTimestamp), isTrue);
+  });
+
+  test('alternating senders remain single and all show timestamps', () {
     final messages = [
       message(id: 'm1', senderId: 'u1', createdAt: base),
       message(
         id: 'm2',
-        senderId: 'u1',
+        senderId: 'peer',
         createdAt: base.add(const Duration(minutes: 1)),
       ),
       message(
@@ -32,25 +94,19 @@ void main() {
         senderId: 'u1',
         createdAt: base.add(const Duration(minutes: 2)),
       ),
-      message(
-        id: 'm4',
-        senderId: 'u2',
-        createdAt: base.add(const Duration(minutes: 3)),
-      ),
     ];
 
-    final entries = buildThreadListEntries(messages);
-    final messageEntries = entries.whereType<ThreadMessageEntry>().toList();
+    final entries = buildThreadListEntries(
+      messages,
+    ).whereType<ThreadMessageEntry>().toList();
 
-    expect(messageEntries, hasLength(4));
-    expect(messageEntries[0].groupPosition, MessageBubbleGroupPosition.first);
-    expect(messageEntries[0].showTimestamp, isFalse);
-    expect(messageEntries[1].groupPosition, MessageBubbleGroupPosition.middle);
-    expect(messageEntries[1].showTimestamp, isFalse);
-    expect(messageEntries[2].groupPosition, MessageBubbleGroupPosition.last);
-    expect(messageEntries[2].showTimestamp, isTrue);
-    expect(messageEntries[3].groupPosition, MessageBubbleGroupPosition.single);
-    expect(messageEntries[3].showTimestamp, isTrue);
+    expect(
+      entries.every(
+        (e) => e.groupPosition == MessageBubbleGroupPosition.single,
+      ),
+      isTrue,
+    );
+    expect(entries.every((e) => e.showTimestamp), isTrue);
   });
 
   test('does not group messages separated by more than three minutes', () {
@@ -85,8 +141,15 @@ void main() {
 
     expect(entries.whereType<ThreadDateHeaderEntry>(), hasLength(2));
     expect(entries.whereType<ThreadMessageEntry>(), hasLength(2));
-    expect(entries.whereType<ThreadMessageEntry>().every(
-      (e) => e.groupPosition == MessageBubbleGroupPosition.single,
-    ), isTrue);
+    expect(
+      entries.whereType<ThreadMessageEntry>().every(
+        (e) => e.groupPosition == MessageBubbleGroupPosition.single,
+      ),
+      isTrue,
+    );
+    expect(
+      entries.whereType<ThreadMessageEntry>().every((e) => e.showTimestamp),
+      isTrue,
+    );
   });
 }

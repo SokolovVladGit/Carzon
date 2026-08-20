@@ -490,49 +490,69 @@ void main() {
     );
   });
 
-  testWidgets('grouped consecutive messages still render bodies', (
-    tester,
-  ) async {
-    final conv = sampleConversation();
-    when(
-      () => messagingRepo.getConversation('conv-1'),
-    ).thenAnswer((_) async => Success(conv));
-    when(() => messagingRepo.getMessages('conv-1')).thenAnswer(
-      (_) async => Success<List<ChatMessage>>([
-        ChatMessage(
-          id: 'm1',
-          conversationId: 'conv-1',
-          senderId: 'u1',
-          body: 'First grouped',
-          createdAt: t0,
-        ),
-        ChatMessage(
-          id: 'm2',
-          conversationId: 'conv-1',
-          senderId: 'u1',
-          body: 'Second grouped',
-          createdAt: t0.add(const Duration(minutes: 1)),
-        ),
-        ChatMessage(
-          id: 'm3',
-          conversationId: 'conv-1',
-          senderId: 's1',
-          body: 'Reply',
-          createdAt: t0.add(const Duration(minutes: 2)),
-        ),
-      ]),
-    );
+  testWidgets(
+    'grouped incoming and outgoing messages each render a timestamp',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final conv = sampleConversation();
+      when(
+        () => messagingRepo.getConversation('conv-1'),
+      ).thenAnswer((_) async => Success(conv));
+      when(() => messagingRepo.getMessages('conv-1')).thenAnswer(
+        (_) async => Success<List<ChatMessage>>([
+          ChatMessage(
+            id: 'm1',
+            conversationId: 'conv-1',
+            senderId: 'u1',
+            body: 'First grouped',
+            createdAt: t0,
+          ),
+          ChatMessage(
+            id: 'm2',
+            conversationId: 'conv-1',
+            senderId: 'u1',
+            body: 'Second grouped',
+            createdAt: t0.add(const Duration(minutes: 1)),
+          ),
+          ChatMessage(
+            id: 'm3',
+            conversationId: 'conv-1',
+            senderId: 's1',
+            body: 'Reply',
+            createdAt: t0.add(const Duration(minutes: 2)),
+          ),
+          ChatMessage(
+            id: 'm4',
+            conversationId: 'conv-1',
+            senderId: 's1',
+            body: 'Second reply',
+            createdAt: t0.add(const Duration(minutes: 3)),
+          ),
+        ]),
+      );
 
-    await tester.pumpWidget(
-      testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        testedInbox(const ConversationThreadPage(conversationId: 'conv-1')),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('First grouped'), findsOneWidget);
-    expect(find.text('Second grouped'), findsOneWidget);
-    expect(find.text('Reply'), findsOneWidget);
-    expect(find.byType(ChatMessageBubble), findsNWidgets(3));
-  });
+      expect(find.text('First grouped'), findsOneWidget);
+      expect(find.text('Second grouped'), findsOneWidget);
+      expect(find.text('Reply'), findsOneWidget);
+      expect(find.text('Second reply'), findsOneWidget);
+      expect(find.byType(ChatMessageBubble), findsNWidgets(4));
+      for (var i = 0; i < 4; i++) {
+        final label = DateFormat.Hm(
+          'ru',
+        ).format(t0.add(Duration(minutes: i)).toLocal());
+        expect(find.text(label), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('thread quick reply inserts text and does not send', (
     tester,
