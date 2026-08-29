@@ -54,6 +54,7 @@ String _failureMessage(AppLocalizations l10n, EditListingFailureKind? kind) {
     EditListingFailureKind.load => l10n.editListingLoadFailed,
     EditListingFailureKind.notAllowed => l10n.notAllowedEdit,
     EditListingFailureKind.invalidDetails => l10n.checkDetailsAndRetry,
+    EditListingFailureKind.contentRejected => l10n.contentModerationRejected,
     EditListingFailureKind.uploadFailed => l10n.createListingPhotosUploadFailed,
     EditListingFailureKind.galleryReplaceFailed =>
       l10n.editListingGalleryReplaceFailed,

@@ -82,6 +82,26 @@ void main() {
         MessagingFailureKind.messagingBlocked,
       );
     });
+
+    test('maps stable moderation rejection for send and report feedback', () {
+      expect(
+        messagingFailureKindFrom(
+          const ServerFailure(
+            'carzon_content_rejected',
+            postgrestCode: 'P0001',
+          ),
+        ),
+        MessagingFailureKind.contentRejected,
+      );
+      expect(
+        messagingFailureMessage(
+          l10n,
+          MessagingFailureKind.contentRejected,
+          isSendAction: true,
+        ),
+        l10n.contentModerationRejected,
+      );
+    });
   });
 
   group('messagingFailureMessage', () {

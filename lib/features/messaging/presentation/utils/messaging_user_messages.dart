@@ -16,6 +16,7 @@ String messagingFailureMessage(
       MessagingFailureKind.notAuthenticated => l10n.messagingSignInRequired,
       MessagingFailureKind.network => l10n.userErrorNetworkCheckConnection,
       MessagingFailureKind.messageValidation => l10n.messagingInvalidMessage,
+      MessagingFailureKind.contentRejected => l10n.contentModerationRejected,
       MessagingFailureKind.conversationNotFound =>
         l10n.messagingConversationNotFound,
       MessagingFailureKind.messagingBlocked =>
@@ -31,6 +32,7 @@ String messagingFailureMessage(
     MessagingFailureKind.conversationNotFound =>
       l10n.messagingConversationNotFound,
     MessagingFailureKind.messageValidation => l10n.messagingInvalidMessage,
+    MessagingFailureKind.contentRejected => l10n.contentModerationRejected,
     MessagingFailureKind.messagingBlocked =>
       l10n.messagingSafetySendUnavailable,
     MessagingFailureKind.unknown => l10n.messagingServerError,

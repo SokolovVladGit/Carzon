@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/config/env.dart';
 import '../../core/l10n/app_localizations_x.dart';
 import '../../features/compare/presentation/pages/compare_page.dart';
 import '../../features/account/presentation/pages/delete_account_page.dart';
@@ -16,6 +15,7 @@ import '../../features/favorites/presentation/pages/favorites_page.dart';
 import '../../features/filter_alerts/presentation/pages/filter_alert_settings_page.dart';
 import '../../features/fuel_prices/presentation/pages/fuel_prices_page.dart';
 import '../../features/legal/presentation/pages/legal_page.dart';
+import '../../features/legal/presentation/models/legal_document_content.dart';
 import '../../features/listings/presentation/pages/listing_details_page.dart';
 import '../../features/listings/domain/entities/listing_discovery_criteria.dart';
 import '../../features/listings/presentation/pages/listings_page.dart';
@@ -53,6 +53,8 @@ class AppRoutes {
   static const deleteAccount = '/delete-account';
   static const menu = '/menu';
   static const legal = '/legal';
+  static const privacy = '/privacy';
+  static const terms = '/terms';
   static const fuelPrices = '/fuel-prices';
   static const messages = '/messages';
   static const notificationSettings = '/notification-settings';
@@ -162,7 +164,6 @@ class AppRouter {
                 : null;
             return ListingDetailsPage(
               id: state.pathParameters['id']!,
-              reportEmail: Env.reportEmail,
               initialCoverImageUrl: initialCoverImageUrl,
               coverHeroFlightTopRadius: coverHeroFlightTopRadius,
             );
@@ -232,7 +233,18 @@ class AppRouter {
             conversationId: state.pathParameters['conversationId']!,
           ),
         ),
-        GoRoute(path: AppRoutes.legal, builder: (_, _) => const LegalPage()),
+        GoRoute(
+          path: AppRoutes.privacy,
+          builder: (_, _) => const LegalPage(kind: LegalDocumentKind.privacy),
+        ),
+        GoRoute(
+          path: AppRoutes.terms,
+          builder: (_, _) => const LegalPage(kind: LegalDocumentKind.terms),
+        ),
+        GoRoute(
+          path: AppRoutes.legal,
+          builder: (_, _) => const LegalPage(kind: LegalDocumentKind.notices),
+        ),
         GoRoute(
           path: AppRoutes.fuelPrices,
           builder: (_, _) => const FuelPricesPage(),

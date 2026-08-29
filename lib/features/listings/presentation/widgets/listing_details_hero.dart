@@ -268,13 +268,15 @@ class _HeroTopControls extends StatelessWidget {
           ),
           const Spacer(),
           if (listing != null) ...[
-            _HeroGlassTile(
-              child: ListingShareButton(
-                listing: listing!,
-                shareLauncher: shareLauncher,
+            if (ListingShareButton.isAvailable) ...[
+              _HeroGlassTile(
+                child: ListingShareButton(
+                  listing: listing!,
+                  shareLauncher: shareLauncher,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
+              const SizedBox(width: 8),
+            ],
             _HeroGlassTile(
               child: CompareToggleButton.fromListing(
                 listing!,

@@ -24,6 +24,18 @@ Flutter reads **`get_fuel_prices_for_app()`** only (Menu / Settings → `/fuel-p
 
 **Ops follow-up (non-blocker):** confirm first automatic cron run in `cron.job_run_details` (join `cron.job` for job name).
 
+The six-hour schedule remains unchanged. On each run, the SQL invoker first keeps
+the existing **`enqueue_all_fuel_price_fetch_jobs()`** behavior, then checks for an
+eligible queued job before reading Vault or invoking the Edge Function. A fresh
+cache with no queued refresh therefore produces no pg_net request. The claim RPC
+remains authoritative; work queued immediately after a false preflight waits for
+the next scheduled run. Manual Edge invocation retains its own enqueue behavior.
+
+Migration **`20260825120000_reduce_idle_background_worker_io.sql`** also retains
+14 days of completed pg_cron history through a daily cleanup capped at 10,000
+rows. Existing historical rows require separate observed hosted cleanup. The
+migration does not perform pg_net physical bloat recovery.
+
 ### Applied migrations (hosted)
 
 1. **`20260822120000_fuel_prices_foundation.sql`**

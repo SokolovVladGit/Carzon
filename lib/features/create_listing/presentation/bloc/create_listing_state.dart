@@ -33,6 +33,9 @@ enum CreateListingFailureKind {
   /// Server rejected input (validation/business-rule style messages).
   validationRejected,
 
+  /// Server-authoritative UGC filter rejected user-authored text.
+  contentRejected,
+
   /// Other server/transient failures — generic retry messaging.
   genericCreate,
 }

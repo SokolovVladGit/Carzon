@@ -23,10 +23,22 @@ These are **different** storage systems. The cron worker **never** reads Edge Fu
 After migration **`20260529120000_schedule_process_message_notifications_cron.sql`** is applied:
 
 1. **`pg_cron`** runs job **`carzon_process_message_notifications_1m`** every **minute** (`* * * * *`).
-2. The job executes **`public.carzon_invoke_process_message_notifications_worker()`**, which **`POST`s** the full function URL stored in **Supabase Vault**, with header **`x-carzon-internal-secret`** set from a second Vault secret.
+2. The job executes **`public.carzon_invoke_process_message_notifications_worker()`**. The SQL invoker first checks for a due pending **`message_created`** event; only then does it read Vault and **`POST`** the Edge Function URL.
 3. The Edge Function **`process-message-notifications`** (same as manual runs) claims rows via **`claim_notification_events_for_processing`** ( **`service_role`** only on DB), sends FCM when prefs/tokens allow, and updates **`notification_delivery_events`** / **`notification_delivery_attempts`**.
 
 No secrets are stored in the migration file or in app repos. **Flutter never sees** the internal secret.
+
+The message, filter-alert, and price-drop cron schedules remain independent and
+run every minute. Each SQL invoker now applies its exact event-type eligibility
+preflight, so an empty queue does not invoke its Edge Function. Claim RPCs remain
+the authoritative concurrency control. Work inserted immediately after a false
+preflight waits for the next one-minute run; it is not lost.
+
+Migration **`20260825120000_reduce_idle_background_worker_io.sql`** also schedules
+daily bounded cleanup of completed **`cron.job_run_details`** rows older than 14
+days. It removes at most 10,000 rows per run. Existing historical rows require a
+separate observed hosted cleanup; this migration does not perform pg_net physical
+bloat recovery.
 
 ## One-time setup per Supabase project
 
@@ -160,13 +172,14 @@ curl -sS -X POST \
   -d '{}'
 ```
 
-**Verify cron jobs (two schedules):**
+**Verify notification cron jobs (three unchanged schedules):**
 
 ```sql
 select jobid, jobname, schedule, command, active from cron.job
  where jobname in (
    'carzon_process_message_notifications_1m',
-   'carzon_process_filter_alert_notifications_1m'
+   'carzon_process_filter_alert_notifications_1m',
+   'carzon_process_price_drop_notifications_1m'
  )
  order by jobname;
 ```

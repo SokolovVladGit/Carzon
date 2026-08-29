@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../../../core/errors/content_moderation_failure.dart';
 import '../../domain/entities/my_seller_profile.dart';
 import '../../domain/usecases/clear_seller_avatar.dart';
 import '../../domain/usecases/get_my_seller_profile.dart';
@@ -57,12 +58,29 @@ class PublicSellerIdentityCubit extends Cubit<PublicSellerIdentityState> {
     final trimmed = rawInput.trim();
     final toPersist = trimmed.isEmpty ? null : trimmed;
 
-    emit(state.copyWith(saving: true, saveFailed: false));
+    emit(
+      state.copyWith(
+        saving: true,
+        saveFailed: false,
+        saveContentRejected: false,
+      ),
+    );
     final result = await _updateMySellerDisplayName(toPersist);
     result.fold(
-      (_) => emit(state.copyWith(saving: false, saveFailed: true)),
+      (failure) => emit(
+        state.copyWith(
+          saving: false,
+          saveFailed: true,
+          saveContentRejected: isContentRejectedFailure(failure),
+        ),
+      ),
       (profile) => emit(
-        state.copyWith(saving: false, profile: profile, saveFailed: false),
+        state.copyWith(
+          saving: false,
+          profile: profile,
+          saveFailed: false,
+          saveContentRejected: false,
+        ),
       ),
     );
   }

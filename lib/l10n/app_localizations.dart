@@ -1830,6 +1830,102 @@ abstract class AppLocalizations {
   /// **'Не удалось открыть почтовое приложение.'**
   String get reportListingMailFailed;
 
+  /// No description provided for @reportListingSignInTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите, чтобы отправить жалобу'**
+  String get reportListingSignInTitle;
+
+  /// No description provided for @reportListingSignInBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Действие доступно всем, но для защиты от злоупотреблений отправить жалобу можно после входа.'**
+  String get reportListingSignInBody;
+
+  /// No description provided for @reportListingSheetTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Причина жалобы'**
+  String get reportListingSheetTitle;
+
+  /// No description provided for @reportListingReasonScam.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мошенничество или обман'**
+  String get reportListingReasonScam;
+
+  /// No description provided for @reportListingReasonSpam.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спам'**
+  String get reportListingReasonSpam;
+
+  /// No description provided for @reportListingReasonInappropriate.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оскорбительный или недопустимый контент'**
+  String get reportListingReasonInappropriate;
+
+  /// No description provided for @reportListingReasonMisleading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вводящее в заблуждение объявление'**
+  String get reportListingReasonMisleading;
+
+  /// No description provided for @reportListingReasonProhibited.
+  ///
+  /// In ru, this message translates to:
+  /// **'Запрещённый контент'**
+  String get reportListingReasonProhibited;
+
+  /// No description provided for @reportListingReasonOther.
+  ///
+  /// In ru, this message translates to:
+  /// **'Другое'**
+  String get reportListingReasonOther;
+
+  /// No description provided for @reportListingNoteLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комментарий (необязательно)'**
+  String get reportListingNoteLabel;
+
+  /// No description provided for @reportListingNotePlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Что именно нарушает правила?'**
+  String get reportListingNotePlaceholder;
+
+  /// No description provided for @reportListingNoteTooLong.
+  ///
+  /// In ru, this message translates to:
+  /// **'Комментарий не должен превышать 1000 символов.'**
+  String get reportListingNoteTooLong;
+
+  /// No description provided for @reportListingSubmit.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить жалобу'**
+  String get reportListingSubmit;
+
+  /// No description provided for @reportListingSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Жалоба отправлена. Мы проверим её в течение 24 часов.'**
+  String get reportListingSuccess;
+
+  /// No description provided for @reportListingSubmitFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось отправить жалобу. Попробуйте ещё раз.'**
+  String get reportListingSubmitFailed;
+
+  /// No description provided for @contentModerationRejected.
+  ///
+  /// In ru, this message translates to:
+  /// **'Текст содержит недопустимые выражения. Измените его и попробуйте снова.'**
+  String get contentModerationRejected;
+
   /// No description provided for @listingShareAction.
   ///
   /// In ru, this message translates to:
@@ -2967,13 +3063,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsRequestDataTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Запросить мои данные'**
+  /// **'Конфиденциальность и мои данные'**
   String get settingsRequestDataTitle;
 
   /// No description provided for @settingsRequestDataSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Связаться с поддержкой по вопросам персональных данных'**
+  /// **'Удаление, исправление и другие запросы'**
   String get settingsRequestDataSubtitle;
 
   /// No description provided for @settingsDeleteAccountTitle.
@@ -3039,7 +3135,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteAccountWarningBody.
   ///
   /// In ru, this message translates to:
-  /// **'Ваш аккаунт и доступ к приложению будут удалены.\n\n• Активные объявления исчезнут с публичной витрины\n• Избранное, фильтры-оповещения, профиль продавца и настройки push будут удалены\n• Переписки и история сообщений могут быть удалены\n\nПосле подтверждения восстановить аккаунт будет невозможно.'**
+  /// **'Ваш аккаунт и доступ к приложению будут удалены.\n\n• Объявления, фотографии, избранное, оповещения, профиль, настройки push, переписки и сообщения будут удалены\n• Для безопасности могут сохраниться псевдонимизированные материалы жалоб без активного профиля и контактов\n• Могут сохраниться хеш VIN, нормализованные сведения об автомобиле и общие кэши моделей, отзывов и цен на топливо; они не сохраняются как данные активного аккаунта или профиля\n\nПосле подтверждения восстановить аккаунт будет невозможно.'**
   String get deleteAccountWarningBody;
 
   /// No description provided for @deleteAccountConfirmationKeyword.
@@ -3167,6 +3263,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не удалось открыть чат с поддержкой. Попробуйте позже.'**
   String get contactSupportOpenFailure;
+
+  /// No description provided for @contactSupportEmail.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поддержка'**
+  String get contactSupportEmail;
+
+  /// No description provided for @contactSupportEmailSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Помощь по аккаунту, объявлениям и приложению'**
+  String get contactSupportEmailSubtitle;
+
+  /// No description provided for @contactSupportEmailOpenFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось открыть страницу.'**
+  String get contactSupportEmailOpenFailed;
+
+  /// No description provided for @contactSupportConfigMissing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Адрес поддержки не настроен. Сообщите владельцу приложения.'**
+  String get contactSupportConfigMissing;
 
   /// No description provided for @contactSupportSelfFailure.
   ///
@@ -4086,6 +4206,42 @@ abstract class AppLocalizations {
   /// **'Условия и конфиденциальность'**
   String get legalLink;
 
+  /// No description provided for @settingsPrivacyPolicyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Политика конфиденциальности'**
+  String get settingsPrivacyPolicyTitle;
+
+  /// No description provided for @settingsPrivacyPolicySubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Какие данные использует CARZON и какие настройки доступны'**
+  String get settingsPrivacyPolicySubtitle;
+
+  /// No description provided for @settingsTermsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Условия использования'**
+  String get settingsTermsTitle;
+
+  /// No description provided for @settingsTermsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Правила площадки, контента и сделок'**
+  String get settingsTermsSubtitle;
+
+  /// No description provided for @settingsDataSourcesTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источники данных и уведомления'**
+  String get settingsDataSourcesTitle;
+
+  /// No description provided for @settingsDataSourcesSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'NHTSA, EPA, ANRE, Sheriff и товарные знаки'**
+  String get settingsDataSourcesSubtitle;
+
   /// No description provided for @signUpTitle.
   ///
   /// In ru, this message translates to:
@@ -4365,13 +4521,13 @@ abstract class AppLocalizations {
   /// No description provided for @legalDisclaimerLabel.
   ///
   /// In ru, this message translates to:
-  /// **'Справочная информация'**
+  /// **'Документы CARZON'**
   String get legalDisclaimerLabel;
 
   /// No description provided for @legalDisclaimer.
   ///
   /// In ru, this message translates to:
-  /// **'Это ознакомительная версия условий и уведомления о конфиденциальности. Документ описывает, как сейчас работает Carzon, и не заменяет юридически выверенные условия. Пользуйтесь им как информационным материалом на ранней стадии продукта.'**
+  /// **'Актуальные Политика конфиденциальности, Условия использования и уведомления об источниках данных доступны отдельными разделами в настройках CARZON.'**
   String get legalDisclaimer;
 
   /// No description provided for @legalSectionAboutHeading.
@@ -4488,6 +4644,12 @@ abstract class AppLocalizations {
   /// **'Вы отвечаете за сохранность своего пароля и за любые действия, выполненные из вашего аккаунта. Если вы подозреваете, что кто-то получил доступ к вашему аккаунту, выйдите из него и смените пароль.'**
   String get legalSectionAccountP2;
 
+  /// No description provided for @legalSectionAccountP3.
+  ///
+  /// In ru, this message translates to:
+  /// **'При удалении аккаунта связанные объявления, фотографии, сообщения, профиль и настройки удаляются. Для безопасности и разбора злоупотреблений могут сохраняться псевдонимизированные материалы жалоб. Также могут оставаться хеш VIN, нормализованные сведения об автомобиле и общие кэши моделей, отзывов и цен на топливо, не связанные с активным аккаунтом или профилем.'**
+  String get legalSectionAccountP3;
+
   /// No description provided for @legalSectionFavoritesHeading.
   ///
   /// In ru, this message translates to:
@@ -4499,6 +4661,66 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Избранное видно только вам. Другие пользователи не знают, какие объявления вы добавили в избранное.'**
   String get legalSectionFavoritesP1;
+
+  /// No description provided for @legalSectionDataSourcesHeading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Внешние источники данных'**
+  String get legalSectionDataSourcesHeading;
+
+  /// No description provided for @legalSectionDataSourcesP1.
+  ///
+  /// In ru, this message translates to:
+  /// **'Carzon использует открытые справочные данные из следующих внешних источников:'**
+  String get legalSectionDataSourcesP1;
+
+  /// No description provided for @legalSectionDataSourcesB1.
+  ///
+  /// In ru, this message translates to:
+  /// **'NHTSA vPIC — данные для расшифровки VIN и идентификации автомобиля.'**
+  String get legalSectionDataSourcesB1;
+
+  /// No description provided for @legalSectionDataSourcesB2.
+  ///
+  /// In ru, this message translates to:
+  /// **'NHTSA — данные о кампаниях отзыва.'**
+  String get legalSectionDataSourcesB2;
+
+  /// No description provided for @legalSectionDataSourcesB3.
+  ///
+  /// In ru, this message translates to:
+  /// **'EPA / FuelEconomy.gov — данные о моделях и расходе топлива.'**
+  String get legalSectionDataSourcesB3;
+
+  /// No description provided for @legalSectionDataSourcesB4.
+  ///
+  /// In ru, this message translates to:
+  /// **'ANRE e-Carburanți — информация о ценах на топливо в Молдове.'**
+  String get legalSectionDataSourcesB4;
+
+  /// No description provided for @legalSectionDataSourcesB5.
+  ///
+  /// In ru, this message translates to:
+  /// **'Sheriff — публичная информация о ценах на топливо в Приднестровье.'**
+  String get legalSectionDataSourcesB5;
+
+  /// No description provided for @legalSectionDataSourcesP2.
+  ///
+  /// In ru, this message translates to:
+  /// **'Carzon не связан с указанными организациями и не является их официальным представителем, если прямо не указано иное.'**
+  String get legalSectionDataSourcesP2;
+
+  /// No description provided for @legalSectionTrademarksHeading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Товарные знаки производителей'**
+  String get legalSectionTrademarksHeading;
+
+  /// No description provided for @legalSectionTrademarksP1.
+  ///
+  /// In ru, this message translates to:
+  /// **'Названия, логотипы и товарные знаки производителей автомобилей принадлежат их соответствующим владельцам. Они используются в Carzon исключительно для идентификации марок и автомобилей. Carzon не связан с производителями и не является их официальным представителем.'**
+  String get legalSectionTrademarksP1;
 
   /// No description provided for @legalSectionSafetyHeading.
   ///
@@ -5853,7 +6075,7 @@ abstract class AppLocalizations {
   /// No description provided for @listingModelPassportSectionTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Официальные данные модели'**
+  /// **'Данные о модели от EPA / FuelEconomy.gov'**
   String get listingModelPassportSectionTitle;
 
   /// No description provided for @listingModelPassportFuelEconomyTitle.
@@ -5913,13 +6135,13 @@ abstract class AppLocalizations {
   /// No description provided for @listingModelPassportPendingTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Официальные данные модели загружаются'**
+  /// **'Данные о модели загружаются'**
   String get listingModelPassportPendingTitle;
 
   /// No description provided for @listingModelPassportPendingBody.
   ///
   /// In ru, this message translates to:
-  /// **'Обычно это занимает до 30 минут после публикации. Данные появятся автоматически, если официальный источник найдёт информацию по этой модели.'**
+  /// **'Обычно это занимает до 30 минут после публикации. Данные появятся автоматически, если источник найдёт информацию по этой модели.'**
   String get listingModelPassportPendingBody;
 
   /// No description provided for @listingModelPassportLimitationsTitle.
@@ -5933,6 +6155,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'EPA · FuelEconomy.gov'**
   String get listingModelPassportSourceEpa;
+
+  /// No description provided for @listingModelPassportEpaSourceNote.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные относятся к рынку США и могут отличаться в зависимости от комплектации. Carzon не связан с EPA или Министерством энергетики США и не является их официальным представителем.'**
+  String get listingModelPassportEpaSourceNote;
 
   /// No description provided for @listingModelPassportUnitLPer100km.
   ///
@@ -6449,6 +6677,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Источник: {source}'**
   String fuelPricesSourceLabel(String source);
+
+  /// No description provided for @fuelPricesSourceInfoAction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подробнее об источнике'**
+  String get fuelPricesSourceInfoAction;
+
+  /// No description provided for @fuelPricesSourceInfoTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Источник данных'**
+  String get fuelPricesSourceInfoTitle;
+
+  /// No description provided for @fuelPricesSheriffSourceInfoBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цены основаны на публично доступной информации о ценах сети Sheriff в Приднестровье.\n\nCarzon не связан с Sheriff, не является партнёром или официальным представителем сети.\n\nИнформация носит справочный характер и может отличаться от фактической цены на конкретной АЗС.'**
+  String get fuelPricesSheriffSourceInfoBody;
 
   /// No description provided for @fuelPricesEffectiveDate.
   ///

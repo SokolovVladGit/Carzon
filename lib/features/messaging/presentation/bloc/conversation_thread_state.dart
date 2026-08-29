@@ -19,6 +19,7 @@ class ConversationThreadState extends Equatable {
     this.messagingUnavailable = false,
     this.blockActionInProgress = false,
     this.reportActionInProgress = false,
+    this.lastReportContentRejected = false,
   });
 
   final ConversationThreadStatus status;
@@ -39,6 +40,7 @@ class ConversationThreadState extends Equatable {
 
   final bool blockActionInProgress;
   final bool reportActionInProgress;
+  final bool lastReportContentRejected;
 
   bool get composerDisabled => peerBlockedByMe || messagingUnavailable;
 
@@ -57,6 +59,7 @@ class ConversationThreadState extends Equatable {
     bool? messagingUnavailable,
     bool? blockActionInProgress,
     bool? reportActionInProgress,
+    bool? lastReportContentRejected,
   }) {
     return ConversationThreadState(
       status: status ?? this.status,
@@ -76,6 +79,8 @@ class ConversationThreadState extends Equatable {
           blockActionInProgress ?? this.blockActionInProgress,
       reportActionInProgress:
           reportActionInProgress ?? this.reportActionInProgress,
+      lastReportContentRejected:
+          lastReportContentRejected ?? this.lastReportContentRejected,
     );
   }
 
@@ -92,5 +97,6 @@ class ConversationThreadState extends Equatable {
     messagingUnavailable,
     blockActionInProgress,
     reportActionInProgress,
+    lastReportContentRejected,
   ];
 }

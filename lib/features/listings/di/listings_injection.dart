@@ -16,6 +16,7 @@ import '../domain/usecases/get_listings.dart';
 import '../../recent_searches/domain/usecases/record_recent_search.dart';
 import '../../recently_viewed/domain/usecases/record_recently_viewed.dart';
 import '../domain/usecases/record_listing_view.dart';
+import '../domain/usecases/report_listing.dart';
 import '../domain/usecases/set_listing_status.dart';
 import '../presentation/bloc/listing_details_cubit.dart';
 import '../presentation/bloc/listings_bloc.dart';
@@ -33,6 +34,7 @@ void registerListingsFeature(GetIt sl) {
   sl.registerFactory(() => GetListingPublicContact(sl<ListingsRepository>()));
   sl.registerFactory(() => SetListingStatus(sl<ListingsRepository>()));
   sl.registerFactory(() => DeleteListing(sl<ListingsRepository>()));
+  sl.registerFactory(() => ReportListing(sl<ListingsRepository>()));
   sl.registerLazySingleton<LastAppliedListingDiscoveryRepository>(
     () => SharedPreferencesLastAppliedListingDiscoveryRepository(),
   );

@@ -20,7 +20,9 @@ class _FakeModelDataRepository implements ModelDataRepository {
   getListingModelDataForBuyer(String listingId) async => _result;
 }
 
-Future<void> _registerUseCase(Result<List<BuyerListingModelDataSourceResult>> result) async {
+Future<void> _registerUseCase(
+  Result<List<BuyerListingModelDataSourceResult>> result,
+) async {
   await sl.reset();
   sl.registerFactory<GetListingModelDataForBuyer>(
     () => GetListingModelDataForBuyer(_FakeModelDataRepository(result)),
@@ -52,7 +54,9 @@ BuyerListingModelDataSourceResult _fullEpaRow() {
 void main() {
   final ru = ruStrings();
 
-  testWidgets('renders source badge, metrics, and section title', (tester) async {
+  testWidgets('renders source badge, metrics, and section title', (
+    tester,
+  ) async {
     await _registerUseCase(Success([_fullEpaRow()]));
 
     await tester.pumpWidget(
@@ -64,17 +68,77 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('listing_model_passport_section')), findsOneWidget);
-    expect(find.byKey(const ValueKey('listing_model_passport_metric_tiles')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('listing_model_passport_section')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('listing_model_passport_metric_tiles')),
+      findsOneWidget,
+    );
     expect(find.text(ru.listingModelPassportSectionTitle), findsOneWidget);
+    expect(
+      ru.listingModelPassportSectionTitle,
+      'Данные о модели от EPA / FuelEconomy.gov',
+    );
     expect(find.text('EPA · FuelEconomy.gov'), findsOneWidget);
-    expect(find.textContaining('7.4 ${ru.listingModelPassportUnitLPer100km}'), findsOneWidget);
-    expect(find.textContaining('8.1 ${ru.listingModelPassportUnitLPer100km}'), findsOneWidget);
-    expect(find.textContaining('6.8 ${ru.listingModelPassportUnitLPer100km}'), findsOneWidget);
-    expect(find.textContaining('176 ${ru.listingModelPassportUnitGPerKm}'), findsOneWidget);
-    expect(find.text(ru.listingModelPassportFuelRegularGasoline), findsOneWidget);
+    expect(find.text(ru.listingModelPassportEpaSourceNote), findsOneWidget);
+    expect(
+      ru.listingModelPassportEpaSourceNote,
+      contains('не является их официальным представителем'),
+    );
+    expect(find.textContaining('Официальные данные модели'), findsNothing);
+    expect(
+      find.textContaining('7.4 ${ru.listingModelPassportUnitLPer100km}'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('8.1 ${ru.listingModelPassportUnitLPer100km}'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('6.8 ${ru.listingModelPassportUnitLPer100km}'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('176 ${ru.listingModelPassportUnitGPerKm}'),
+      findsOneWidget,
+    );
+    expect(
+      find.text(ru.listingModelPassportFuelRegularGasoline),
+      findsOneWidget,
+    );
     expect(find.text('Regular Gasoline'), findsNothing);
     expect(find.text('regular_gasoline'), findsNothing);
+  });
+
+  testWidgets('renders neutral EPA title and limitations in RO', (
+    tester,
+  ) async {
+    final ro = roStrings();
+    await _registerUseCase(Success([_fullEpaRow()]));
+
+    await tester.pumpWidget(
+      localizedApp(
+        locale: const Locale('ro'),
+        home: const Scaffold(
+          body: ListingDetailsModelPassportSection(listingId: 'l1'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      ro.listingModelPassportSectionTitle,
+      'Date despre model de la EPA / FuelEconomy.gov',
+    );
+    expect(find.text(ro.listingModelPassportSectionTitle), findsOneWidget);
+    expect(find.text(ro.listingModelPassportEpaSourceNote), findsOneWidget);
+    expect(
+      ro.listingModelPassportEpaSourceNote,
+      contains('nu este reprezentantul lor oficial'),
+    );
+    expect(find.textContaining('Date oficiale despre model'), findsNothing);
   });
 
   testWidgets('shows pending card for pending EPA row', (tester) async {
@@ -97,7 +161,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('listing_model_passport_pending')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('listing_model_passport_pending')),
+      findsOneWidget,
+    );
     expect(find.text(ru.listingModelPassportSectionTitle), findsOneWidget);
     expect(find.text(ru.listingModelPassportPendingTitle), findsOneWidget);
     expect(find.text(ru.listingModelPassportPendingBody), findsOneWidget);
@@ -116,7 +183,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('listing_model_passport_hidden')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('listing_model_passport_hidden')),
+      findsOneWidget,
+    );
     expect(find.text(ru.listingModelPassportSectionTitle), findsNothing);
   });
 
@@ -134,7 +204,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('listing_model_passport_hidden')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('listing_model_passport_hidden')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('does not show forbidden v1 fields', (tester) async {
@@ -157,7 +230,9 @@ void main() {
     expect(find.textContaining('VIN', findRichText: true), findsNothing);
   });
 
-  testWidgets('hides when EPA row has only forbidden summary fields', (tester) async {
+  testWidgets('hides when EPA row has only forbidden summary fields', (
+    tester,
+  ) async {
     await _registerUseCase(
       Success([
         BuyerListingModelDataSourceResult(
@@ -183,7 +258,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('listing_model_passport_hidden')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('listing_model_passport_hidden')),
+      findsOneWidget,
+    );
     expect(find.text(ru.listingModelPassportSectionTitle), findsNothing);
   });
 
@@ -208,7 +286,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.byKey(const ValueKey('listing_model_passport_hidden')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('listing_model_passport_hidden')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('limitations are collapsed by default', (tester) async {
@@ -233,10 +314,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(ru.listingModelPassportLimitationsTitle), findsOneWidget);
-    expect(find.text(ru.listingModelPassportLimitationUsMarketOnly), findsNothing);
+    expect(
+      find.text(ru.listingModelPassportLimitationUsMarketOnly),
+      findsNothing,
+    );
   });
 
-  testWidgets('unknown limitation code shows generic text when expanded', (tester) async {
+  testWidgets('unknown limitation code shows generic text when expanded', (
+    tester,
+  ) async {
     await _registerUseCase(
       Success([
         BuyerListingModelDataSourceResult(

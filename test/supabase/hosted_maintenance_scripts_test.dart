@@ -121,11 +121,7 @@ void main() {
     );
 
     test('includes Fuel Prices v1 migrations', () {
-      const fuelPrices = [
-        '20260822120000',
-        '20260822123000',
-        '20260822130000',
-      ];
+      const fuelPrices = ['20260822120000', '20260822123000', '20260822130000'];
       for (final version in fuelPrices) {
         expect(expectedVersions, contains(version));
       }
@@ -247,6 +243,12 @@ void main() {
       ]) {
         expectReferenced(needle);
       }
+    });
+
+    test('covers native listing-report moderation runtime contract', () {
+      expect(runtimeSql, contains("'table_listing_reports'"));
+      expect(runtimeSql, contains("'rpc_report_listing'"));
+      expect(runtimeSql, contains("f.proname = 'report_listing'"));
     });
   });
 }

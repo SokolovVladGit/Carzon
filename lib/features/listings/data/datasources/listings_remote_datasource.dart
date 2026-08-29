@@ -41,6 +41,11 @@ abstract interface class ListingsRemoteDataSource {
     String listingId,
     String anonymousViewerId,
   );
+  Future<void> reportListing({
+    required String listingId,
+    required String reason,
+    String? note,
+  });
 }
 
 class SupabaseListingsRemoteDataSource implements ListingsRemoteDataSource {
@@ -501,6 +506,32 @@ view_count
     } catch (e, st) {
       throw ServerException(
         'Failed to delete listing $id',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<void> reportListing({
+    required String listingId,
+    required String reason,
+    String? note,
+  }) async {
+    try {
+      await _supabase.client.rpc(
+        'report_listing',
+        params: <String, dynamic>{
+          'p_listing_id': listingId,
+          'p_reason': reason,
+          'p_note': note,
+        },
+      );
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      throw ServerException(
+        'Failed to report listing $listingId',
         cause: e,
         stackTrace: st,
       );

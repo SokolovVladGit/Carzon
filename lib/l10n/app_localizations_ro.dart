@@ -962,7 +962,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get phoneNotProvided => 'Numărul de telefon nu este specificat';
 
   @override
-  String get reportListing => 'Plângeți-vă de un anunț';
+  String get reportListing => 'Raportează anunțul';
 
   @override
   String get reportListingDescription =>
@@ -971,6 +971,61 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get reportListingMailFailed =>
       'Aplicația de e-mail nu a putut fi deschisă.';
+
+  @override
+  String get reportListingSignInTitle =>
+      'Autentificați-vă pentru a trimite raportul';
+
+  @override
+  String get reportListingSignInBody =>
+      'Acțiunea este vizibilă tuturor, dar, pentru prevenirea abuzurilor, raportul poate fi trimis după autentificare.';
+
+  @override
+  String get reportListingSheetTitle => 'Motivul raportului';
+
+  @override
+  String get reportListingReasonScam => 'Înșelătorie sau fraudă';
+
+  @override
+  String get reportListingReasonSpam => 'Spam';
+
+  @override
+  String get reportListingReasonInappropriate =>
+      'Conținut ofensator sau inadecvat';
+
+  @override
+  String get reportListingReasonMisleading => 'Anunț înșelător';
+
+  @override
+  String get reportListingReasonProhibited => 'Conținut interzis';
+
+  @override
+  String get reportListingReasonOther => 'Alt motiv';
+
+  @override
+  String get reportListingNoteLabel => 'Comentariu (opțional)';
+
+  @override
+  String get reportListingNotePlaceholder => 'Ce anume încalcă regulile?';
+
+  @override
+  String get reportListingNoteTooLong =>
+      'Comentariul nu poate depăși 1000 de caractere.';
+
+  @override
+  String get reportListingSubmit => 'Trimite raportul';
+
+  @override
+  String get reportListingSuccess =>
+      'Raport trimis. Îl vom verifica în cel mult 24 de ore.';
+
+  @override
+  String get reportListingSubmitFailed =>
+      'Raportul nu a putut fi trimis. Încercați din nou.';
+
+  @override
+  String get contentModerationRejected =>
+      'Textul conține expresii nepermise. Modificați-l și încercați din nou.';
 
   @override
   String get listingShareAction => 'Distribuie';
@@ -1601,11 +1656,11 @@ class AppLocalizationsRo extends AppLocalizations {
       'Termeni, politica de confidențialitate și sfaturi de siguranță';
 
   @override
-  String get settingsRequestDataTitle => 'Solicită datele mele';
+  String get settingsRequestDataTitle => 'Confidențialitate și datele mele';
 
   @override
   String get settingsRequestDataSubtitle =>
-      'Contactează suportul pentru întrebări despre datele personale';
+      'Ștergere, corectare și alte solicitări';
 
   @override
   String get settingsDeleteAccountTitle => 'Șterge contul';
@@ -1642,7 +1697,7 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get deleteAccountWarningBody =>
-      'Contul și accesul la aplicație vor fi eliminate.\n\n• Anunțurile active vor dispărea de pe vitrina publică\n• Favoritele, alertele de filtre, profilul vânzătorului și setările push vor fi șterse\n• Conversațiile și istoricul mesajelor pot fi șterse\n\nDupă confirmare, contul nu poate fi recuperat.';
+      'Contul și accesul la aplicație vor fi eliminate.\n\n• Anunțurile, fotografiile, favoritele, alertele, profilul, setările push, conversațiile și mesajele vor fi șterse\n• Pentru siguranță, pot fi păstrate dovezi pseudonimizate din rapoarte, fără profilul activ și datele de contact\n• Pot rămâne hash-ul VIN, date auto normalizate și cache-uri generale pentru modele, rechemări și prețuri la combustibil; acestea nu sunt păstrate ca date ale unui cont sau profil activ\n\nDupă confirmare, contul nu poate fi recuperat.';
 
   @override
   String get deleteAccountConfirmationKeyword => 'ȘTERGE';
@@ -1716,6 +1771,20 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get contactSupportOpenFailure =>
       'Nu s-a putut deschide chatul cu asistența. Încercați mai târziu.';
+
+  @override
+  String get contactSupportEmail => 'Asistență';
+
+  @override
+  String get contactSupportEmailSubtitle =>
+      'Ajutor pentru cont, anunțuri și aplicație';
+
+  @override
+  String get contactSupportEmailOpenFailed => 'Pagina nu a putut fi deschisă.';
+
+  @override
+  String get contactSupportConfigMissing =>
+      'Adresa de asistență nu este configurată. Informați proprietarul aplicației.';
 
   @override
   String get contactSupportSelfFailure =>
@@ -2249,6 +2318,27 @@ class AppLocalizationsRo extends AppLocalizations {
   String get legalLink => 'Termeni și confidențialitate';
 
   @override
+  String get settingsPrivacyPolicyTitle => 'Politica de confidențialitate';
+
+  @override
+  String get settingsPrivacyPolicySubtitle =>
+      'Datele utilizate de CARZON și opțiunile disponibile';
+
+  @override
+  String get settingsTermsTitle => 'Termeni de utilizare';
+
+  @override
+  String get settingsTermsSubtitle =>
+      'Regulile platformei, conținutului și tranzacțiilor';
+
+  @override
+  String get settingsDataSourcesTitle => 'Surse de date și notificări';
+
+  @override
+  String get settingsDataSourcesSubtitle =>
+      'NHTSA, EPA, ANRE, Sheriff și mărci comerciale';
+
+  @override
   String get signUpTitle => 'Creați un cont';
 
   @override
@@ -2402,11 +2492,11 @@ class AppLocalizationsRo extends AppLocalizations {
   String get legalTitle => 'Termeni și confidențialitate';
 
   @override
-  String get legalDisclaimerLabel => 'Informații orientative';
+  String get legalDisclaimerLabel => 'Documente CARZON';
 
   @override
   String get legalDisclaimer =>
-      'Aceasta este o previzualizare a termenilor și a notificării de confidențialitate. Documentul descrie modul în care Carzon operează în prezent și nu înlocuiește condițiile verificate legal. Utilizați-l ca material informativ într-un stadiu incipient al produsului.';
+      'Politica de confidențialitate, Termenii de utilizare și notificările despre sursele de date sunt disponibile ca secțiuni separate în setările CARZON.';
 
   @override
   String get legalSectionAboutHeading => 'Despre Carzon';
@@ -2479,11 +2569,53 @@ class AppLocalizationsRo extends AppLocalizations {
       'Sunteți responsabil pentru menținerea securității parolei și pentru orice activitate desfășurată în contul dvs. Dacă bănuiți că cineva a obținut acces la contul dvs., deconectați-vă și schimbați-vă parola.';
 
   @override
+  String get legalSectionAccountP3 =>
+      'La ștergerea contului sunt eliminate anunțurile, fotografiile, mesajele, profilul și setările asociate. Pentru siguranță și investigarea abuzurilor pot fi păstrate dovezi pseudonimizate din rapoarte. Pot rămâne și hash-ul VIN, date auto normalizate și cache-uri generale pentru modele, rechemări și prețuri la combustibil, fără asociere cu un cont sau profil activ.';
+
+  @override
   String get legalSectionFavoritesHeading => 'Favorite';
 
   @override
   String get legalSectionFavoritesP1 =>
       'Favoritele tale sunt vizibile doar pentru tine. Alți utilizatori nu știu ce înregistrări ați preferat.';
+
+  @override
+  String get legalSectionDataSourcesHeading => 'Surse externe de date';
+
+  @override
+  String get legalSectionDataSourcesP1 =>
+      'Carzon utilizează date informative deschise din următoarele surse externe:';
+
+  @override
+  String get legalSectionDataSourcesB1 =>
+      'NHTSA vPIC — date pentru decodarea VIN și identificarea vehiculului.';
+
+  @override
+  String get legalSectionDataSourcesB2 =>
+      'NHTSA — date despre campaniile de rechemare.';
+
+  @override
+  String get legalSectionDataSourcesB3 =>
+      'EPA / FuelEconomy.gov — date despre modele și consumul de combustibil.';
+
+  @override
+  String get legalSectionDataSourcesB4 =>
+      'ANRE e-Carburanți — informații despre prețurile combustibilului în Moldova.';
+
+  @override
+  String get legalSectionDataSourcesB5 =>
+      'Sheriff — informații publice despre prețurile combustibilului în Transnistria.';
+
+  @override
+  String get legalSectionDataSourcesP2 =>
+      'Carzon nu este afiliat cu organizațiile menționate și nu este reprezentantul lor oficial, dacă nu este indicat în mod expres contrariul.';
+
+  @override
+  String get legalSectionTrademarksHeading => 'Mărci comerciale auto';
+
+  @override
+  String get legalSectionTrademarksP1 =>
+      'Denumirile, logo-urile și mărcile comerciale ale producătorilor auto aparțin proprietarilor respectivi. Acestea sunt utilizate în Carzon exclusiv pentru identificarea mărcilor și vehiculelor. Carzon nu este afiliat cu producătorii și nu este reprezentantul lor oficial.';
 
   @override
   String get legalSectionSafetyHeading => 'Siguranță și responsabilitate';
@@ -3260,7 +3392,8 @@ class AppLocalizationsRo extends AppLocalizations {
       'Sursa: NHTSA vPIC Base Transcript.';
 
   @override
-  String get listingModelPassportSectionTitle => 'Date oficiale despre model';
+  String get listingModelPassportSectionTitle =>
+      'Date despre model de la EPA / FuelEconomy.gov';
 
   @override
   String get listingModelPassportFuelEconomyTitle => 'Consum conform sursei';
@@ -3291,17 +3424,21 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get listingModelPassportPendingTitle =>
-      'Se încarcă datele oficiale ale modelului';
+      'Se încarcă datele despre model';
 
   @override
   String get listingModelPassportPendingBody =>
-      'De obicei durează până la 30 de minute după publicare. Datele vor apărea automat dacă sursa oficială găsește informații pentru acest model.';
+      'De obicei durează până la 30 de minute după publicare. Datele vor apărea automat dacă sursa găsește informații pentru acest model.';
 
   @override
   String get listingModelPassportLimitationsTitle => 'Limitări';
 
   @override
   String get listingModelPassportSourceEpa => 'EPA · FuelEconomy.gov';
+
+  @override
+  String get listingModelPassportEpaSourceNote =>
+      'Datele se referă la piața din SUA și pot diferi în funcție de configurație. Carzon nu este afiliat cu EPA sau Departamentul Energiei al SUA și nu este reprezentantul lor oficial.';
 
   @override
   String get listingModelPassportUnitLPer100km => 'l/100 km';
@@ -3611,6 +3748,16 @@ class AppLocalizationsRo extends AppLocalizations {
   String fuelPricesSourceLabel(String source) {
     return 'Sursă: $source';
   }
+
+  @override
+  String get fuelPricesSourceInfoAction => 'Detalii despre sursă';
+
+  @override
+  String get fuelPricesSourceInfoTitle => 'Sursa datelor';
+
+  @override
+  String get fuelPricesSheriffSourceInfoBody =>
+      'Prețurile se bazează pe informații disponibile public despre prețurile rețelei Sheriff din Transnistria.\n\nCarzon nu este afiliat cu Sheriff și nu este partener sau reprezentant oficial al rețelei.\n\nInformațiile au caracter orientativ și pot diferi de prețul efectiv de la o anumită stație.';
 
   @override
   String fuelPricesEffectiveDate(String date) {

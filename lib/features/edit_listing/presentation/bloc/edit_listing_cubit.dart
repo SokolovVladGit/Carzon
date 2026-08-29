@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../../../core/errors/content_moderation_failure.dart';
 import '../../../../core/utils/result.dart';
 import '../../../create_listing/domain/constants/listing_gallery_limits.dart';
 import '../../../create_listing/domain/entities/uploaded_listing_image.dart';
@@ -430,6 +431,9 @@ class EditListingCubit extends Cubit<EditListingState> {
   }
 
   static EditListingFailureKind _saveFailureKind(Failure failure) {
+    if (isContentRejectedFailure(failure)) {
+      return EditListingFailureKind.contentRejected;
+    }
     final raw = failure.message.toLowerCase();
     if (raw.contains('not authenticated') ||
         raw.contains('not owned') ||

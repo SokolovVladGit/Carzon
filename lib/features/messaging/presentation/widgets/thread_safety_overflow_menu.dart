@@ -87,12 +87,18 @@ class ThreadSafetyOverflowMenu extends StatelessWidget {
       note: submitted.note,
     );
     if (!context.mounted) return;
+    final rejected = context
+        .read<ConversationThreadCubit>()
+        .state
+        .lastReportContentRejected;
     final l10n = context.l10n;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           ok
               ? l10n.messagingSafetyReportSuccess
+              : rejected
+              ? l10n.contentModerationRejected
               : l10n.messagingSafetyReportError,
         ),
       ),

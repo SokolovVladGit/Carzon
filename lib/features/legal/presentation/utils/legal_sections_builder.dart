@@ -32,11 +32,31 @@ List<LegalSectionContent> buildLegalSections(AppLocalizations l10n) {
     ),
     LegalSectionContent(
       heading: l10n.legalSectionAccountHeading,
-      paragraphs: [l10n.legalSectionAccountP1, l10n.legalSectionAccountP2],
+      paragraphs: [
+        l10n.legalSectionAccountP1,
+        l10n.legalSectionAccountP2,
+        l10n.legalSectionAccountP3,
+      ],
     ),
     LegalSectionContent(
       heading: l10n.legalSectionFavoritesHeading,
       paragraphs: [l10n.legalSectionFavoritesP1],
+    ),
+    LegalSectionContent(
+      heading: l10n.legalSectionDataSourcesHeading,
+      paragraphs: [l10n.legalSectionDataSourcesP1],
+      bullets: [
+        l10n.legalSectionDataSourcesB1,
+        l10n.legalSectionDataSourcesB2,
+        l10n.legalSectionDataSourcesB3,
+        l10n.legalSectionDataSourcesB4,
+        l10n.legalSectionDataSourcesB5,
+      ],
+      trailingParagraphs: [l10n.legalSectionDataSourcesP2],
+    ),
+    LegalSectionContent(
+      heading: l10n.legalSectionTrademarksHeading,
+      paragraphs: [l10n.legalSectionTrademarksP1],
     ),
     LegalSectionContent(
       heading: l10n.legalSectionSafetyHeading,

@@ -109,6 +109,15 @@ void main() {
     );
   });
 
+  test('stable moderation rejection maps before generic P0001 handling', () {
+    expect(
+      createListingFailureKindFor(
+        const ServerFailure('carzon_content_rejected', postgrestCode: 'P0001'),
+      ),
+      CreateListingFailureKind.contentRejected,
+    );
+  });
+
   test('ambiguous ServerFailure maps to genericCreate', () {
     expect(
       createListingFailureKindFor(ServerFailure('db down')),

@@ -49,9 +49,7 @@ class _SignInPageState extends State<SignInPage> {
             context.go(AppRoutes.listings);
           } else if (state.status == AuthStatus.error) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(_authErrorMessage(l10n, state.errorKind)),
-              ),
+              SnackBar(content: Text(_authErrorMessage(l10n, state.errorKind))),
             );
           }
         },
@@ -144,7 +142,7 @@ class _SignInPageState extends State<SignInPage> {
                         label: l10n.legalLink,
                         loading: loading,
                         muted: true,
-                        onPressed: () => context.go(AppRoutes.legal),
+                        onPressed: () => context.go(AppRoutes.terms),
                       ),
                     ],
                   ),

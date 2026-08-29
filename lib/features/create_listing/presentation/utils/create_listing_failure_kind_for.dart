@@ -1,4 +1,5 @@
 import '../../../../core/errors/failures.dart';
+import '../../../../core/errors/content_moderation_failure.dart';
 import '../bloc/create_listing_state.dart';
 
 /// Maps domain [Failure]s to localized UI buckets — no raw wire text surfaced.
@@ -16,6 +17,9 @@ CreateListingFailureKind createListingFailureKindFor(Failure failure) {
 }
 
 CreateListingFailureKind _kindForServerFailure(ServerFailure f) {
+  if (isContentRejectedFailure(f)) {
+    return CreateListingFailureKind.contentRejected;
+  }
   final code = (f.postgrestCode ?? '').trim();
   final codeUpper = code.toUpperCase();
   final blob = '${f.message}\n${f.diagnosticsDetails ?? ''}'.toLowerCase();

@@ -83,6 +83,17 @@ Flutter uses this RPC only. The listing-details UI displays an allowlisted subse
 
 ## Manual invoke
 
+The pg_cron job **`carzon_process_model_data_jobs_30m`** remains on its existing
+30-minute schedule. Its SQL invoker now checks for a queued, retry-eligible model
+job before reading Vault or invoking the Edge Function, so an empty queue produces
+no pg_net request. The claim RPC remains authoritative; a job inserted just after
+a false preflight waits for the next scheduled run.
+
+Migration **`20260825120000_reduce_idle_background_worker_io.sql`** also retains
+14 days of completed pg_cron history with one daily cleanup capped at 10,000 rows.
+Existing historical rows require separate observed hosted cleanup. The migration
+does not perform pg_net physical bloat recovery.
+
 ```bash
 curl -sS -X POST \
   "$SUPABASE_URL/functions/v1/process-model-data-jobs" \

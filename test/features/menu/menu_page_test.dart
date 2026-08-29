@@ -137,7 +137,15 @@ void main() {
       expect(find.text(l10n.profileMyListings), findsOneWidget);
       expect(find.text(l10n.menuAccount), findsOneWidget);
       expect(find.text(l10n.menuSettings), findsOneWidget);
-      expect(find.text(l10n.profileLegal), findsOneWidget);
+      expect(find.text(l10n.profileLegal), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('menu_settings_row')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('menu_fuel_prices_row')),
+        findsOneWidget,
+      );
     },
   );
 

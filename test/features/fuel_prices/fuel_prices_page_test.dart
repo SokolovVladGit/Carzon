@@ -39,7 +39,7 @@ FuelPricesCubit _readyCubit(_MockGetFuelPricesForApp useCase) {
         status: 'succeeded',
         isStale: false,
         sourceLabel: 'Sheriff',
-        fetchedAt: null,
+        effectiveDate: '2026-06-23',
         currency: 'PMR_RUB',
         unit: 'liter',
         items: [
@@ -67,9 +67,7 @@ FuelPricesCubit _pmrUnavailableCubit(_MockGetFuelPricesForApp useCase) {
         effectiveDate: '2026-06-22',
         currency: 'MDL',
         unit: 'liter',
-        items: [
-          FuelPriceItem(fuelCode: 'gasoline_95', price: 27.99),
-        ],
+        items: [FuelPriceItem(fuelCode: 'gasoline_95', price: 27.99)],
         limitationCodes: ['national_ceiling'],
       ),
       const FuelPriceSnapshot(
@@ -98,9 +96,7 @@ FuelPricesCubit _staleMoldovaCubit(_MockGetFuelPricesForApp useCase) {
         effectiveDate: '2026-06-22',
         currency: 'MDL',
         unit: 'liter',
-        items: [
-          FuelPriceItem(fuelCode: 'gasoline_95', price: 27.99),
-        ],
+        items: [FuelPriceItem(fuelCode: 'gasoline_95', price: 27.99)],
         limitationCodes: ['national_ceiling'],
       ),
       const FuelPriceSnapshot(
@@ -110,9 +106,7 @@ FuelPricesCubit _staleMoldovaCubit(_MockGetFuelPricesForApp useCase) {
         sourceLabel: 'Sheriff',
         currency: 'PMR_RUB',
         unit: 'liter',
-        items: [
-          FuelPriceItem(fuelCode: 'ai_95', price: 26),
-        ],
+        items: [FuelPriceItem(fuelCode: 'ai_95', price: 26)],
         limitationCodes: ['sheriff_network'],
       ),
     ]),
@@ -132,10 +126,7 @@ Widget _wrap({
     darkTheme: AppTheme.dark(),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: fuelPricesTestHarness(
-      cubit: cubit,
-      child: const FuelPricesChrome(),
-    ),
+    home: fuelPricesTestHarness(cubit: cubit, child: const FuelPricesChrome()),
   );
 }
 
@@ -204,17 +195,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.fuelPricesPmrScopeNote), findsOneWidget);
-    expect(find.text('Sheriff'), findsOneWidget);
+    expect(find.text(l10n.fuelPricesSourceLabel('Sheriff')), findsOneWidget);
+    expect(find.text('Sheriff'), findsNothing);
+    expect(find.byKey(FuelPricesBoard.sourceInfoButtonKey), findsOneWidget);
     expect(find.text(l10n.fuelPricesFuelAi98), findsOneWidget);
     expect(find.text(l10n.fuelPricesFuelAi95Premium), findsOneWidget);
     expect(find.text(l10n.fuelPricesFuelAi95), findsOneWidget);
     expect(find.text(l10n.fuelPricesFuelDieselEuro), findsOneWidget);
     expect(find.text(l10n.fuelPricesFuelDiesel), findsOneWidget);
+
+    await tester.tap(find.byKey(FuelPricesBoard.sourceInfoButtonKey));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(FuelPricesBoard.sourceInfoSheetKey), findsOneWidget);
+    expect(find.text(l10n.fuelPricesSourceInfoTitle), findsOneWidget);
+    expect(find.text(l10n.fuelPricesSheriffSourceInfoBody), findsOneWidget);
+    expect(
+      l10n.fuelPricesSheriffSourceInfoBody,
+      contains('не является партнёром или официальным представителем'),
+    );
   });
 
-  testWidgets('FuelPricesPage shows stale notice inside board', (
-    tester,
-  ) async {
+  testWidgets('FuelPricesPage shows stale notice inside board', (tester) async {
     final l10n = ruStrings();
     await tester.pumpWidget(_wrap(cubit: _staleMoldovaCubit(useCase)));
     await tester.pumpAndSettle();
@@ -241,9 +243,9 @@ void main() {
     tester,
   ) async {
     final l10n = ruStrings();
-    when(() => useCase()).thenAnswer(
-      (_) async => const FailureResult(UnknownFailure('x')),
-    );
+    when(
+      () => useCase(),
+    ).thenAnswer((_) async => const FailureResult(UnknownFailure('x')));
     final cubit = FuelPricesCubit(getFuelPricesForApp: useCase)..load();
     await tester.pumpWidget(_wrap(cubit: cubit));
     await tester.pumpAndSettle();
@@ -255,15 +257,28 @@ void main() {
   testWidgets('FuelPricesPage renders in RO locale', (tester) async {
     final l10n = roStrings();
     await tester.pumpWidget(
-      _wrap(
-        cubit: _readyCubit(useCase),
-        locale: const Locale('ro'),
-      ),
+      _wrap(cubit: _readyCubit(useCase), locale: const Locale('ro')),
     );
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(AppBar, l10n.fuelPricesTitle), findsOneWidget);
     expect(find.text(l10n.fuelPricesIntroLine), findsOneWidget);
+
+    await tester.tap(find.byKey(FuelPricesTerritoryControl.pmrTabKey));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.fuelPricesSourceLabel('Sheriff')), findsOneWidget);
+    expect(find.byKey(FuelPricesBoard.sourceInfoButtonKey), findsOneWidget);
+
+    await tester.tap(find.byKey(FuelPricesBoard.sourceInfoButtonKey));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.fuelPricesSourceInfoTitle), findsOneWidget);
+    expect(find.text(l10n.fuelPricesSheriffSourceInfoBody), findsOneWidget);
+    expect(
+      l10n.fuelPricesSheriffSourceInfoBody,
+      contains('nu este partener sau reprezentant oficial'),
+    );
   });
 
   testWidgets('FuelPricesPage Moldova at 320px light theme has no overflow', (
@@ -272,10 +287,7 @@ void main() {
     final l10n = ruStrings();
     await _pumpAt320(
       tester,
-      _wrap(
-        cubit: _readyCubit(useCase),
-        themeMode: ThemeMode.light,
-      ),
+      _wrap(cubit: _readyCubit(useCase), themeMode: ThemeMode.light),
     );
 
     expect(find.byType(FuelPricesChrome), findsOneWidget);
@@ -289,10 +301,7 @@ void main() {
     final l10n = ruStrings();
     await _pumpAt320(
       tester,
-      _wrap(
-        cubit: _readyCubit(useCase),
-        themeMode: ThemeMode.dark,
-      ),
+      _wrap(cubit: _readyCubit(useCase), themeMode: ThemeMode.dark),
     );
 
     await tester.tap(find.byKey(FuelPricesTerritoryControl.pmrTabKey));
@@ -302,11 +311,26 @@ void main() {
     expect(find.text(l10n.fuelPricesFuelAi95Premium), findsOneWidget);
     expect(find.text(l10n.fuelPricesUnitPmrRubPerLiter), findsNWidgets(5));
     expect(find.text(l10n.fuelPricesTerritoryPmr), findsOneWidget);
+    expect(find.text(l10n.fuelPricesSourceLabel('Sheriff')), findsOneWidget);
+    expect(find.byKey(FuelPricesBoard.sourceInfoButtonKey), findsOneWidget);
+    expect(
+      find.text(l10n.fuelPricesEffectiveDate('2026-06-23')),
+      findsOneWidget,
+    );
+
+    final dateText = tester.widget<Text>(
+      find.byKey(FuelPricesBoard.dateLabelKey),
+    );
+    expect(dateText.maxLines, isNull);
+    expect(dateText.overflow, isNull);
+
+    await tester.tap(find.byKey(FuelPricesBoard.sourceInfoButtonKey));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(FuelPricesBoard.sourceInfoSheetKey), findsOneWidget);
   });
 
-  testWidgets('FuelPricesPage RO PMR at 320px has no overflow', (
-    tester,
-  ) async {
+  testWidgets('FuelPricesPage RO PMR at 320px has no overflow', (tester) async {
     final l10n = roStrings();
     await _pumpAt320(
       tester,
@@ -323,5 +347,17 @@ void main() {
 
     expect(find.text(l10n.fuelPricesTerritoryPmr), findsOneWidget);
     expect(find.text(l10n.fuelPricesFuelAi95Premium), findsOneWidget);
+    expect(find.text(l10n.fuelPricesSourceLabel('Sheriff')), findsOneWidget);
+    expect(find.byKey(FuelPricesBoard.sourceInfoButtonKey), findsOneWidget);
+    expect(
+      find.text(l10n.fuelPricesEffectiveDate('2026-06-23')),
+      findsOneWidget,
+    );
+
+    final dateText = tester.widget<Text>(
+      find.byKey(FuelPricesBoard.dateLabelKey),
+    );
+    expect(dateText.maxLines, isNull);
+    expect(dateText.overflow, isNull);
   });
 }

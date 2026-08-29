@@ -8,17 +8,30 @@ import '../utils/fuel_price_formatters.dart';
 
 /// Editorial fuel price board with integrated source metadata and scope note.
 class FuelPricesBoard extends StatelessWidget {
-  const FuelPricesBoard({
-    super.key,
-    required this.snapshot,
-  });
+  const FuelPricesBoard({super.key, required this.snapshot});
 
   final FuelPriceSnapshot snapshot;
 
-  static const Key sourceBadgeKey = ValueKey<String>('fuel_prices_source_badge');
+  static const Key sourceBadgeKey = ValueKey<String>(
+    'fuel_prices_source_badge',
+  );
+  static const Key sourceInfoButtonKey = ValueKey<String>(
+    'fuel_prices_source_info_button',
+  );
+  static const Key sourceInfoSheetKey = ValueKey<String>(
+    'fuel_prices_source_info_sheet',
+  );
+  static const Key sourceInfoTitleKey = ValueKey<String>(
+    'fuel_prices_source_info_title',
+  );
+  static const Key sourceInfoBodyKey = ValueKey<String>(
+    'fuel_prices_source_info_body',
+  );
   static const Key dateLabelKey = ValueKey<String>('fuel_prices_date_label');
   static const Key scopeNoteKey = ValueKey<String>('fuel_prices_scope_note');
-  static const Key staleNoticeKey = ValueKey<String>('fuel_prices_stale_notice');
+  static const Key staleNoticeKey = ValueKey<String>(
+    'fuel_prices_stale_notice',
+  );
 
   static const double _radius = 22;
 
@@ -35,6 +48,12 @@ class FuelPricesBoard extends StatelessWidget {
       effectiveDate: snapshot.effectiveDate,
       fetchedAt: snapshot.fetchedAt,
     );
+    final isSheriffSource =
+        snapshot.territory == 'pmr' &&
+        snapshot.sourceLabel.trim().toLowerCase() == 'sheriff';
+    final sourceLabel = isSheriffSource
+        ? l10n.fuelPricesSourceLabel(snapshot.sourceLabel)
+        : snapshot.sourceLabel;
 
     final sideBorder = BorderSide(
       color: scheme.outlineVariant.withValues(alpha: isDark ? 0.18 : 0.16),
@@ -59,14 +78,30 @@ class FuelPricesBoard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (snapshot.sourceLabel.isNotEmpty)
+              if (snapshot.sourceLabel.isNotEmpty) ...[
                 OfficialDataSourceHeader(
                   theme: theme,
-                  sourceLabel: snapshot.sourceLabel,
+                  sourceLabel: sourceLabel,
                   sourceKey: sourceBadgeKey,
-                  updatedDateLabel: dateLabel,
-                  updatedDateKey: dateLabel != null ? dateLabelKey : null,
+                  onInfoPressed: isSheriffSource
+                      ? () => _showSheriffSourceInfo(context)
+                      : null,
+                  infoButtonKey: sourceInfoButtonKey,
+                  infoTooltip: l10n.fuelPricesSourceInfoAction,
                 ),
+                if (dateLabel != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    key: dateLabelKey,
+                    dateLabel,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: scheme.onSurfaceVariant.withValues(
+                        alpha: isDark ? 0.76 : 0.82,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
               if (snapshot.sourceLabel.isNotEmpty) const SizedBox(height: 18),
               for (var i = 0; i < snapshot.items.length; i++) ...[
                 if (i > 0)
@@ -100,6 +135,44 @@ class FuelPricesBoard extends StatelessWidget {
                 ),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showSheriffSourceInfo(BuildContext context) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        key: sourceInfoSheetKey,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  key: sourceInfoTitleKey,
+                  l10n.fuelPricesSourceInfoTitle,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  key: sourceInfoBodyKey,
+                  l10n.fuelPricesSheriffSourceInfoBody,
+                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+                ),
+              ],
+            ),
           ),
         ),
       ),

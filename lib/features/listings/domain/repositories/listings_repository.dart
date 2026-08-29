@@ -4,6 +4,7 @@ import '../entities/listing.dart';
 import '../entities/listing_contact.dart';
 import '../entities/listing_currency.dart';
 import '../entities/listing_image.dart';
+import '../entities/listing_report_reason.dart';
 import '../entities/listing_sort_option.dart';
 import '../entities/listing_view_stats.dart';
 
@@ -135,4 +136,13 @@ abstract interface class ListingsRepository {
     String listingId,
     String anonymousViewerId,
   );
+
+  /// Submits an authenticated, structured moderation report. Reporter and
+  /// listing snapshots are derived by the server; direct table writes are not
+  /// exposed to the client.
+  Future<Result<void>> reportListing({
+    required String listingId,
+    required ListingReportReason reason,
+    String? note,
+  });
 }

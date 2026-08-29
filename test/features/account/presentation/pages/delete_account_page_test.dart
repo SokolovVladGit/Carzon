@@ -57,6 +57,7 @@ void main() {
   late _MockAuthCubit authCubit;
   late _MockDeleteAccountCubit deleteAccountCubit;
   final l10n = ruStrings();
+  final roL10n = roStrings();
 
   const testUser = AuthUser(
     id: 'user-1',
@@ -72,14 +73,16 @@ void main() {
     );
     when(() => authCubit.stream).thenAnswer((_) => const Stream.empty());
     when(() => deleteAccountCubit.state).thenReturn(const DeleteAccountState());
-    when(() => deleteAccountCubit.stream).thenAnswer((_) => const Stream.empty());
+    when(
+      () => deleteAccountCubit.stream,
+    ).thenAnswer((_) => const Stream.empty());
     when(() => deleteAccountCubit.submit()).thenAnswer((_) async {});
     when(() => authCubit.markUnauthenticatedAfterAccountDeletion()).thenAnswer((
       _,
     ) {
-      when(() => authCubit.state).thenReturn(
-        const AuthState.unauthenticated(publicFeedRefreshNonce: 1),
-      );
+      when(
+        () => authCubit.state,
+      ).thenReturn(const AuthState.unauthenticated(publicFeedRefreshNonce: 1));
     });
 
     if (sl.isRegistered<DeleteAccountCubit>()) {
@@ -100,11 +103,29 @@ void main() {
 
     expect(find.text(l10n.deleteAccountTitle), findsOneWidget);
     expect(find.text(l10n.deleteAccountWarningTitle), findsOneWidget);
-    expect(find.textContaining('объявления'), findsWidgets);
-    expect(find.textContaining('сообщений'), findsWidgets);
+    expect(find.text(l10n.deleteAccountWarningBody), findsOneWidget);
+    expect(l10n.deleteAccountWarningBody, contains('псевдонимизированные'));
+    expect(l10n.deleteAccountWarningBody, contains('хеш VIN'));
   });
 
-  testWidgets('submit disabled until confirmation keyword typed', (tester) async {
+  test(
+    'RU and RO deletion disclosure names retained safety/cache categories',
+    () {
+      expect(l10n.deleteAccountWarningBody, contains('псевдонимизированные'));
+      expect(l10n.deleteAccountWarningBody, contains('хеш VIN'));
+      expect(l10n.deleteAccountWarningBody, contains('цен на топливо'));
+      expect(roL10n.deleteAccountWarningBody, contains('pseudonimizate'));
+      expect(roL10n.deleteAccountWarningBody, contains('hash-ul VIN'));
+      expect(
+        roL10n.deleteAccountWarningBody,
+        contains('prețuri la combustibil'),
+      );
+    },
+  );
+
+  testWidgets('submit disabled until confirmation keyword typed', (
+    tester,
+  ) async {
     await tester.pumpWidget(_deleteAccountTestApp(authCubit: authCubit));
     await tester.pumpAndSettle();
 
@@ -155,9 +176,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      tester.widget<FilledButton>(
-        find.byKey(const ValueKey('delete_account_submit_button')),
-      ).onPressed,
+      tester
+          .widget<FilledButton>(
+            find.byKey(const ValueKey('delete_account_submit_button')),
+          )
+          .onPressed,
       isNotNull,
     );
   });

@@ -5,10 +5,12 @@ import '../../../../app/di/injection.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/presentation/localized_user_failure_message.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../domain/usecases/report_listing.dart';
+import '../../domain/entities/listing_report_reason.dart';
 import '../bloc/listing_details_cubit.dart';
 import '../bloc/listing_details_state.dart';
-import '../utils/listing_details_uri_launcher.dart';
 import '../utils/listing_share_launcher.dart';
+import '../utils/listing_report_submitter.dart';
 import '../widgets/listing_details_contact_bar.dart';
 import '../widgets/listing_details_content_panel.dart';
 import '../widgets/listing_details_hero.dart';
@@ -23,8 +25,7 @@ class ListingDetailsPage extends StatelessWidget {
   const ListingDetailsPage({
     super.key,
     required this.id,
-    this.reportEmail,
-    this.uriLauncher,
+    this.reportSubmitter,
     this.shareLauncher,
     this.initialCoverImageUrl,
     this.coverHeroFlightTopRadius,
@@ -32,13 +33,7 @@ class ListingDetailsPage extends StatelessWidget {
 
   final String id;
 
-  /// Optional ops/moderation inbox for the "Report listing" action.
-  /// When `null` or empty, the report surface is hidden entirely —
-  /// the MVP must never synthesize a fake recipient.
-  final String? reportEmail;
-
-  /// Test seam for the "Report listing" mailto launcher.
-  final ListingDetailsUriLauncher? uriLauncher;
+  final ListingReportSubmitter? reportSubmitter;
 
   /// Test seam for the hero "Share listing" action.
   final ListingShareLauncher? shareLauncher;
@@ -60,8 +55,17 @@ class ListingDetailsPage extends StatelessWidget {
             ..load(id, initialCoverImageUrl: initialCoverImageUrl),
       child: _ListingDetailsView(
         id: id,
-        reportEmail: reportEmail,
-        uriLauncher: uriLauncher,
+        reportSubmitter:
+            reportSubmitter ??
+            ({
+              required String listingId,
+              required ListingReportReason reason,
+              String? note,
+            }) => sl<ReportListing>()(
+              listingId: listingId,
+              reason: reason,
+              note: note,
+            ),
         shareLauncher: shareLauncher,
         initialCoverImageUrl: initialCoverImageUrl,
         heroFlightSourceTopRadius: coverHeroFlightTopRadius ?? 20,
@@ -73,16 +77,14 @@ class ListingDetailsPage extends StatelessWidget {
 class _ListingDetailsView extends StatefulWidget {
   const _ListingDetailsView({
     required this.id,
-    required this.reportEmail,
-    required this.uriLauncher,
+    required this.reportSubmitter,
     required this.shareLauncher,
     required this.initialCoverImageUrl,
     required this.heroFlightSourceTopRadius,
   });
 
   final String id;
-  final String? reportEmail;
-  final ListingDetailsUriLauncher? uriLauncher;
+  final ListingReportSubmitter reportSubmitter;
   final ListingShareLauncher? shareLauncher;
   final String? initialCoverImageUrl;
   final double heroFlightSourceTopRadius;
@@ -227,8 +229,7 @@ class _ListingDetailsViewState extends State<_ListingDetailsView> {
                               viewStats: state.viewStats,
                               carouselPageZeroBased: clipped,
                               carouselPhotoCount: n,
-                              reportEmail: widget.reportEmail,
-                              uriLauncher: widget.uriLauncher,
+                              reportSubmitter: widget.reportSubmitter,
                             );
                         }
                       },
