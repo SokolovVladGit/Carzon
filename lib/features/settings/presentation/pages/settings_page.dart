@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/config/env.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/app_back_button.dart';
@@ -21,11 +22,14 @@ import '../../../profile/presentation/widgets/profile_settings_navigation_row.da
 import '../widgets/settings_about_section.dart';
 import '../widgets/settings_dark_theme_row.dart';
 import '../widgets/settings_language_row.dart';
+import '../utils/support_email_launcher.dart';
 
 /// Standalone app settings hub: account shortcuts, preferences, notifications,
 /// privacy, and support/legal links.
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.externalUrlLauncher});
+
+  final ExternalUrlLauncher? externalUrlLauncher;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -33,6 +37,24 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _openingSupport = false;
+
+  Future<void> _openExternalUrl(BuildContext context, String value) async {
+    try {
+      final launcher = widget.externalUrlLauncher ?? launchExternalUrl;
+      final opened = await launcher(Uri.parse(value));
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.contactSupportEmailOpenFailed)),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.contactSupportEmailOpenFailed)),
+        );
+      }
+    }
+  }
 
   Future<void> _onContactSupportTap(BuildContext context) async {
     if (_openingSupport) return;
@@ -239,14 +261,15 @@ class _SettingsPageState extends State<SettingsPage> {
                             rowKey: const ValueKey<String>(
                               'settings_request_data_row',
                             ),
-                            icon: CarzonIcons.chat,
+                            icon: CarzonIcons.privacy,
                             title: l10n.settingsRequestDataTitle,
                             subtitle: l10n.settingsRequestDataSubtitle,
                             theme: theme,
                             scheme: scheme,
-                            onTap: _openingSupport
-                                ? () {}
-                                : () => _onContactSupportTap(context),
+                            onTap: () => _openExternalUrl(
+                              context,
+                              Env.privacyChoicesUrl,
+                            ),
                           ),
                           ProfileMutedDivider(scheme: scheme, isDark: isDark),
                           ProfileSettingsNavigationRow(
@@ -271,7 +294,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (authenticated)
+                        if (authenticated) ...[
                           ProfileSettingsNavigationRow(
                             rowKey: const ValueKey<String>(
                               'settings_support_row',
@@ -285,8 +308,21 @@ class _SettingsPageState extends State<SettingsPage> {
                                 ? () {}
                                 : () => _onContactSupportTap(context),
                           ),
-                        if (authenticated)
-                          ProfileMutedDivider(scheme: scheme, isDark: isDark),
+                        ] else ...[
+                          ProfileSettingsNavigationRow(
+                            rowKey: const ValueKey<String>(
+                              'settings_public_support_row',
+                            ),
+                            icon: CarzonIcons.chat,
+                            title: l10n.contactSupportEmail,
+                            subtitle: l10n.contactSupportEmailSubtitle,
+                            theme: theme,
+                            scheme: scheme,
+                            onTap: () =>
+                                _openExternalUrl(context, Env.supportUrl),
+                          ),
+                        ],
+                        ProfileMutedDivider(scheme: scheme, isDark: isDark),
                         ProfileSettingsNavigationRow(
                           rowKey: const ValueKey<String>(
                             'settings_fuel_prices_row',
@@ -300,10 +336,34 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         ProfileMutedDivider(scheme: scheme, isDark: isDark),
                         ProfileSettingsNavigationRow(
-                          rowKey: const ValueKey<String>('settings_legal_row'),
+                          rowKey: const ValueKey<String>(
+                            'settings_privacy_policy_row',
+                          ),
                           icon: CarzonIcons.privacy,
-                          title: l10n.profileLegal,
-                          subtitle: l10n.settingsLegalLinkSubtitle,
+                          title: l10n.settingsPrivacyPolicyTitle,
+                          subtitle: l10n.settingsPrivacyPolicySubtitle,
+                          theme: theme,
+                          scheme: scheme,
+                          onTap: () => context.push(AppRoutes.privacy),
+                        ),
+                        ProfileMutedDivider(scheme: scheme, isDark: isDark),
+                        ProfileSettingsNavigationRow(
+                          rowKey: const ValueKey<String>('settings_terms_row'),
+                          icon: CarzonIcons.info,
+                          title: l10n.settingsTermsTitle,
+                          subtitle: l10n.settingsTermsSubtitle,
+                          theme: theme,
+                          scheme: scheme,
+                          onTap: () => context.push(AppRoutes.terms),
+                        ),
+                        ProfileMutedDivider(scheme: scheme, isDark: isDark),
+                        ProfileSettingsNavigationRow(
+                          rowKey: const ValueKey<String>(
+                            'settings_data_sources_row',
+                          ),
+                          icon: CarzonIcons.info,
+                          title: l10n.settingsDataSourcesTitle,
+                          subtitle: l10n.settingsDataSourcesSubtitle,
                           theme: theme,
                           scheme: scheme,
                           onTap: () => context.push(AppRoutes.legal),

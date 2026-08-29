@@ -29,10 +29,18 @@ The cron worker **never** reads Edge secrets; it only reads **Vault**. The Edge 
 After **`20260621120000_schedule_process_vin_decode_jobs_cron.sql`** is applied:
 
 1. **`pg_cron`** runs job **`carzon_process_vin_decode_jobs_5m`** every **5 minutes** (`*/5 * * * *`).
-2. The job runs **`select public.carzon_invoke_process_vin_decode_jobs_worker();`**, which **`POST`s** the Vault URL with headers **`Content-Type: application/json`** and **`x-carzon-internal-secret`**, body **`{"limit":10}`** (JSON). When the queue is empty, the Edge response is still **`200`** with **`{"ok":true,"claimed":0,"succeeded":0,"failed":0}`** (exact field order may vary).
+2. The job runs **`select public.carzon_invoke_process_vin_decode_jobs_worker();`**. The SQL invoker checks for a due, retry-eligible pending decode job before reading Vault or issuing **`net.http_post`**. An empty queue does not invoke the Edge Function. Eligible calls retain headers **`Content-Type: application/json`** and **`x-carzon-internal-secret`** and body **`{"limit":10}`**.
 3. The Edge worker claims jobs, calls **`get_vin_for_decode_job`** per claimed row, decodes via configured provider, and completes via **`complete_vin_decode_job_*`** RPCs. **No full VIN or `vin_hash`** appears in HTTP responses or scheduled SQL.
 
 Until both Vault secrets exist, the worker logs a **WARNING** and skips HTTP (no crash).
+
+The five-minute schedule is unchanged. The SQL preflight is only an optimization;
+the claim RPC remains authoritative. A job inserted immediately after a false
+preflight waits for the next five-minute run. Migration
+**`20260825120000_reduce_idle_background_worker_io.sql`** also retains 14 days of
+completed pg_cron history through a daily cleanup capped at 10,000 rows. Existing
+historical rows need separate observed hosted cleanup, and pg_net physical bloat
+recovery is not performed by the migration.
 
 ## One-time Vault setup (per project)
 

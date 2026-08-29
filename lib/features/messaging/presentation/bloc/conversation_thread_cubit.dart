@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/utils/result.dart';
+import '../../../../core/errors/content_moderation_failure.dart';
 import '../../domain/entities/chat_attachment_upload.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/conversation.dart';
@@ -329,18 +330,33 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
     String? note,
   }) async {
     if (state.reportActionInProgress) return false;
-    emit(state.copyWith(reportActionInProgress: true));
+    emit(
+      state.copyWith(
+        reportActionInProgress: true,
+        lastReportContentRejected: false,
+      ),
+    );
     final result = await _repository.reportUser(
       conversationId: _conversationId,
       reason: reason,
       note: note,
     );
     switch (result) {
-      case FailureResult():
-        emit(state.copyWith(reportActionInProgress: false));
+      case FailureResult(:final failure):
+        emit(
+          state.copyWith(
+            reportActionInProgress: false,
+            lastReportContentRejected: isContentRejectedFailure(failure),
+          ),
+        );
         return false;
       case Success():
-        emit(state.copyWith(reportActionInProgress: false));
+        emit(
+          state.copyWith(
+            reportActionInProgress: false,
+            lastReportContentRejected: false,
+          ),
+        );
         return true;
     }
   }

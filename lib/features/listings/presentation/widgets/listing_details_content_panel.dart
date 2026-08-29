@@ -10,7 +10,7 @@ import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_view_stats.dart';
 import '../utils/listing_details_header_titles.dart';
 import 'listing_details_metadata_chips.dart';
-import '../utils/listing_details_uri_launcher.dart';
+import '../utils/listing_report_submitter.dart';
 import '../utils/listing_formatters.dart';
 import 'listing_details_body.dart';
 
@@ -36,8 +36,7 @@ class SuccessBelowHero extends StatelessWidget {
     required this.listing,
     required this.carouselPageZeroBased,
     required this.carouselPhotoCount,
-    required this.reportEmail,
-    required this.uriLauncher,
+    required this.reportSubmitter,
     this.viewStats,
   });
 
@@ -47,8 +46,7 @@ class SuccessBelowHero extends StatelessWidget {
 
   /// Number of carousel photos from `listing_images` (+ cover fallback).
   final int carouselPhotoCount;
-  final String? reportEmail;
-  final ListingDetailsUriLauncher? uriLauncher;
+  final ListingReportSubmitter reportSubmitter;
 
   @override
   Widget build(BuildContext context) {
@@ -75,8 +73,7 @@ class SuccessBelowHero extends StatelessWidget {
         ),
         body: BelowHeroContent(
           listing: listing,
-          reportEmail: reportEmail,
-          uriLauncher: uriLauncher,
+          reportSubmitter: reportSubmitter,
         ),
       ),
     );

@@ -1,0 +1,21 @@
+:root { color-scheme: light dark; font-family: Inter, system-ui, -apple-system, sans-serif; }
+body { margin: 0; background: #f5f7f8; color: #172126; line-height: 1.6; }
+.shell { width: min(820px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0 56px; }
+header { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.brand { font-weight: 900; letter-spacing: .08em; }
+.language-switch { margin-left: auto; }
+nav { display: flex; gap: 14px; flex-wrap: wrap; margin: 24px 0; }
+a { color: #006b55; text-underline-offset: 3px; }
+nav a[aria-current="page"] { font-weight: 800; }
+h1 { font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.08; margin: 28px 0 12px; }
+h2 { margin: 34px 0 10px; font-size: 1.25rem; }
+p, li { max-width: 72ch; }
+.intro { color: #4d5c62; font-size: 1.05rem; }
+.contact { border: 1px solid #94bdb2; border-radius: 14px; padding: 16px; margin: 26px 0; background: #eaf5f1; font-weight: 700; }
+footer { margin-top: 48px; color: #617076; font-size: .9rem; }
+@media (prefers-color-scheme: dark) {
+  body { background: #101718; color: #edf4f1; }
+  .intro, footer { color: #aebeba; }
+  a { color: #73dabb; }
+  .contact { background: #152b25; border-color: #356e5e; }
+}

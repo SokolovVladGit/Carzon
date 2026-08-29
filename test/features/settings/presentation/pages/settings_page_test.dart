@@ -14,11 +14,13 @@ import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/messaging/domain/repositories/messaging_repository.dart';
 import 'package:carzon/features/messaging/domain/usecases/get_or_create_support_conversation.dart';
 import 'package:carzon/features/settings/presentation/pages/settings_page.dart';
+import 'package:carzon/features/settings/presentation/utils/support_email_launcher.dart';
 import 'package:carzon/features/settings/presentation/widgets/settings_about_section.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -99,6 +101,7 @@ GoRouter _settingsTestRouter({
   required AuthCubit authCubit,
   required ThemeModeCubit themeModeCubit,
   required AppLocaleCubit appLocaleCubit,
+  ExternalUrlLauncher? externalUrlLauncher,
 }) {
   return GoRouter(
     initialLocation: AppRoutes.settings,
@@ -115,7 +118,7 @@ GoRouter _settingsTestRouter({
             BlocProvider<ThemeModeCubit>.value(value: themeModeCubit),
             BlocProvider<AppLocaleCubit>.value(value: appLocaleCubit),
           ],
-          child: const SettingsPage(),
+          child: SettingsPage(externalUrlLauncher: externalUrlLauncher),
         ),
       ),
       GoRoute(
@@ -152,6 +155,17 @@ GoRouter _settingsTestRouter({
           key: _settingsTestLegalStubKey,
           body: Text('legal_stub'),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.privacy,
+        builder: (_, _) => const Scaffold(
+          key: _settingsTestLegalStubKey,
+          body: Text('privacy_stub'),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.terms,
+        builder: (_, _) => const Scaffold(body: Text('terms_stub')),
       ),
       GoRoute(
         path: AppRoutes.profile,
@@ -194,6 +208,7 @@ Widget _settingsTestApp({
   required ThemeModeCubit themeModeCubit,
   required AppLocaleCubit appLocaleCubit,
   Locale locale = const Locale('ru'),
+  ExternalUrlLauncher? externalUrlLauncher,
 }) {
   return MaterialApp.router(
     locale: locale,
@@ -203,6 +218,7 @@ Widget _settingsTestApp({
       authCubit: authCubit,
       themeModeCubit: themeModeCubit,
       appLocaleCubit: appLocaleCubit,
+      externalUrlLauncher: externalUrlLauncher,
     ),
   );
 }
@@ -245,6 +261,10 @@ void main() {
       }
       return null;
     });
+  });
+
+  setUp(() {
+    dotenv.testLoad(fileInput: '');
   });
 
   tearDownAll(() {
@@ -317,6 +337,20 @@ void main() {
     expect(
       formatSettingsVersionLabel(l10n, version: '0.1.0', build: '1'),
       l10n.settingsAboutVersion('0.1.0', '1'),
+    );
+  });
+
+  test('privacy and data wording is accurate in RU and RO', () {
+    expect(l10n.settingsRequestDataTitle, 'Конфиденциальность и мои данные');
+    expect(
+      l10n.settingsRequestDataSubtitle,
+      'Удаление, исправление и другие запросы',
+    );
+    final ro = lookupAppLocalizations(const Locale('ro'));
+    expect(ro.settingsRequestDataTitle, 'Confidențialitate și datele mele');
+    expect(
+      ro.settingsRequestDataSubtitle,
+      'Ștergere, corectare și alte solicitări',
     );
   });
 
@@ -411,7 +445,7 @@ void main() {
     expect(find.byKey(_settingsTestBlockedUsersStubKey), findsOneWidget);
   });
 
-  testWidgets('Settings omits duplicate privacy legal row', (tester) async {
+  testWidgets('Settings exposes distinct legal documents', (tester) async {
     await tester.pumpWidget(
       _settingsTestApp(
         authCubit: authCubit,
@@ -422,11 +456,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.byKey(const ValueKey<String>('settings_privacy_legal_row')),
-      findsNothing,
+      find.byKey(const ValueKey<String>('settings_privacy_policy_row')),
+      findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey<String>('settings_legal_row')),
+      find.byKey(const ValueKey<String>('settings_terms_row')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('settings_data_sources_row')),
       findsOneWidget,
     );
   });
@@ -568,7 +606,7 @@ void main() {
     expect(find.byKey(_settingsTestFuelPricesStubKey), findsOneWidget);
   });
 
-  testWidgets('Settings navigates to legal from support section', (
+  testWidgets('Settings navigates to privacy policy from support section', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -582,11 +620,51 @@ void main() {
 
     await _scrollToSettingsRow(
       tester,
-      const ValueKey<String>('settings_legal_row'),
+      const ValueKey<String>('settings_privacy_policy_row'),
     );
-    await tester.tap(find.byKey(const ValueKey<String>('settings_legal_row')));
+    await tester.tap(
+      find.byKey(const ValueKey<String>('settings_privacy_policy_row')),
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(_settingsTestLegalStubKey), findsOneWidget);
+  });
+
+  testWidgets('Settings keeps Terms and Data Sources accessible', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _scrollToSettingsRow(
+      tester,
+      const ValueKey<String>('settings_terms_row'),
+    );
+    await tester.tap(find.byKey(const ValueKey<String>('settings_terms_row')));
+    await tester.pumpAndSettle();
+    expect(find.text('terms_stub'), findsOneWidget);
+
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _scrollToSettingsRow(
+      tester,
+      const ValueKey<String>('settings_data_sources_row'),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('settings_data_sources_row')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('legal_stub'), findsOneWidget);
   });
 
   testWidgets('Settings opens support conversation when authenticated', (
@@ -616,6 +694,64 @@ void main() {
 
     expect(find.byKey(_settingsTestSupportThreadStubKey), findsOneWidget);
     expect(find.text('thread:support-conv-1'), findsOneWidget);
+  });
+
+  testWidgets('authenticated Settings exposes exactly one support path', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('settings_support_row')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('settings_public_support_row')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('settings_support_email_row')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('privacy and my data opens canonical Privacy Choices URL', (
+    tester,
+  ) async {
+    Uri? launchedUri;
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+        externalUrlLauncher: (uri) async {
+          launchedUri = uri;
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _scrollToSettingsRow(
+      tester,
+      const ValueKey<String>('settings_request_data_row'),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('settings_request_data_row')),
+    );
+    await tester.pump();
+
+    expect(
+      launchedUri,
+      Uri.parse('https://carzon-legal.netlify.app/privacy-choices/'),
+    );
+    verifyNever(() => messagingRepo.getOrCreateSupportConversation());
   });
 
   testWidgets('Settings dark theme switch toggles theme mode', (tester) async {
@@ -713,16 +849,57 @@ void main() {
       findsNothing,
     );
     expect(
-      find.byKey(const ValueKey<String>('settings_legal_row')),
+      find.byKey(const ValueKey<String>('settings_privacy_policy_row')),
       findsOneWidget,
     );
     expect(
       find.byKey(const ValueKey<String>('settings_support_row')),
       findsNothing,
     );
+    expect(
+      find.byKey(const ValueKey<String>('settings_public_support_row')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('settings_support_email_row')),
+      findsNothing,
+    );
   });
 
-  testWidgets('Settings legal row subtitle mentions safety tips', (
+  testWidgets('guest support opens canonical public HTTPS page', (
+    tester,
+  ) async {
+    when(
+      () => authCubit.state,
+    ).thenReturn(const AuthState(status: AuthStatus.unauthenticated));
+    Uri? launchedUri;
+
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+        externalUrlLauncher: (uri) async {
+          launchedUri = uri;
+          return true;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _scrollToSettingsRow(
+      tester,
+      const ValueKey<String>('settings_public_support_row'),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('settings_public_support_row')),
+    );
+    await tester.pump();
+
+    expect(launchedUri, Uri.parse('https://carzon-legal.netlify.app/support/'));
+    expect(launchedUri?.scheme, 'https');
+  });
+
+  testWidgets('Settings legal rows describe policy and sources', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -736,10 +913,9 @@ void main() {
 
     await _scrollToSettingsRow(
       tester,
-      const ValueKey<String>('settings_legal_row'),
+      const ValueKey<String>('settings_privacy_policy_row'),
     );
-    expect(find.text(l10n.settingsLegalLinkSubtitle), findsOneWidget);
-    expect(find.textContaining('безопасности'), findsOneWidget);
+    expect(find.text(l10n.settingsPrivacyPolicySubtitle), findsOneWidget);
   });
 
   testWidgets('Settings shows delete account row when authenticated', (

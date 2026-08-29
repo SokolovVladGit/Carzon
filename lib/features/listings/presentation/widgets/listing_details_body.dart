@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/app_router.dart';
+import '../../../../core/errors/content_moderation_failure.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/utils/result.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../../sellers/presentation/widgets/seller_trust_section.dart';
 import '../../domain/entities/listing.dart';
-import '../utils/listing_details_uri_launcher.dart';
 import '../utils/listing_formatters.dart';
-import '../utils/report_listing_mailto.dart';
+import '../../domain/entities/listing_report_reason.dart';
+import '../utils/listing_report_submitter.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import 'listing_details_vin_entry.dart';
 import '../../../vehicle_model_data/presentation/widgets/listing_details_model_passport_section.dart';
 import '../../../vehicle_recall_data/presentation/widgets/listing_details_recall_section.dart';
@@ -27,19 +34,16 @@ class BelowHeroContent extends StatelessWidget {
   const BelowHeroContent({
     super.key,
     required this.listing,
-    required this.reportEmail,
-    required this.uriLauncher,
+    required this.reportSubmitter,
   });
 
   final Listing listing;
-  final String? reportEmail;
-  final ListingDetailsUriLauncher? uriLauncher;
+  final ListingReportSubmitter reportSubmitter;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = context.l10n;
-    final hasReport = reportEmail != null && reportEmail!.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,14 +67,8 @@ class BelowHeroContent extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        if (hasReport) ...[
-          const SizedBox(height: 16),
-          _ReportLink(
-            listing: listing,
-            recipientEmail: reportEmail!,
-            launcher: uriLauncher ?? launchExternalUri,
-          ),
-        ],
+        const SizedBox(height: 16),
+        _ReportLink(listing: listing, submitter: reportSubmitter),
       ],
     );
   }
@@ -265,38 +263,73 @@ class _ListingSpecRow extends StatelessWidget {
   }
 }
 
-/// Low-emphasis "Report listing" link kept at the bottom of scroll
-/// content. Launch behavior unchanged from the previous surface so
-/// the existing mailto unit/widget tests keep asserting the same URI.
-class _ReportLink extends StatelessWidget {
-  const _ReportLink({
-    required this.listing,
-    required this.recipientEmail,
-    required this.launcher,
-  });
+/// Always-present native listing-report flow. Guests see the action and a
+/// deterministic explanation that sign-in is required before submission.
+class _ReportLink extends StatefulWidget {
+  const _ReportLink({required this.listing, required this.submitter});
 
   final Listing listing;
-  final String recipientEmail;
-  final ListingDetailsUriLauncher launcher;
+  final ListingReportSubmitter submitter;
+
+  @override
+  State<_ReportLink> createState() => _ReportLinkState();
+}
+
+class _ReportLinkState extends State<_ReportLink> {
+  bool _submitting = false;
 
   Future<void> _onTap(BuildContext context) async {
-    final uri = buildReportListingMailto(
-      l10n: context.l10n,
-      listing: listing,
-      recipientEmail: recipientEmail,
-    );
-    try {
-      final ok = await launcher(uri);
-      if (!ok && context.mounted) _showError(context);
-    } catch (_) {
-      if (context.mounted) _showError(context);
+    if (_submitting) return;
+    final l10n = context.l10n;
+    final auth = context.read<AuthCubit>().state;
+    final authenticated =
+        auth.status == AuthStatus.authenticated && auth.user != null;
+    if (!authenticated) {
+      final shouldSignIn = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(l10n.reportListingSignInTitle),
+          content: Text(l10n.reportListingSignInBody),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l10n.commonSignIn),
+            ),
+          ],
+        ),
+      );
+      if (shouldSignIn == true && context.mounted) {
+        await context.push(AppRoutes.signIn);
+      }
+      return;
     }
-  }
 
-  void _showError(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.reportListingMailFailed)),
+    final submission = await showListingReportSheet(context);
+    if (!context.mounted || submission == null) return;
+    setState(() => _submitting = true);
+    final result = await widget.submitter(
+      listingId: widget.listing.id,
+      reason: submission.reason,
+      note: submission.note,
     );
+    if (!context.mounted) return;
+    setState(() => _submitting = false);
+    final message = switch (result) {
+      Success<void>() => l10n.reportListingSuccess,
+      FailureResult(:final failure) when isContentRejectedFailure(failure) =>
+        l10n.contentModerationRejected,
+      FailureResult(:final failure)
+          when failure.message.toLowerCase().contains('not authenticated') =>
+        l10n.reportListingSignInBody,
+      FailureResult() => l10n.reportListingSubmitFailed,
+    };
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -316,12 +349,137 @@ class _ReportLink extends StatelessWidget {
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed: () => _onTap(context),
-            icon: const Icon(CarzonIcons.report),
+            onPressed: _submitting ? null : () => _onTap(context),
+            icon: _submitting
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(CarzonIcons.report),
             label: Text(l10n.reportListing),
           ),
         ),
       ],
+    );
+  }
+}
+
+class ListingReportSubmission {
+  const ListingReportSubmission({required this.reason, this.note});
+
+  final ListingReportReason reason;
+  final String? note;
+}
+
+Future<ListingReportSubmission?> showListingReportSheet(BuildContext context) {
+  return showModalBottomSheet<ListingReportSubmission>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (_) => const _ListingReportSheet(),
+  );
+}
+
+class _ListingReportSheet extends StatefulWidget {
+  const _ListingReportSheet();
+
+  @override
+  State<_ListingReportSheet> createState() => _ListingReportSheetState();
+}
+
+class _ListingReportSheetState extends State<_ListingReportSheet> {
+  ListingReportReason _reason = ListingReportReason.scam;
+  final _noteController = TextEditingController();
+  String? _noteError;
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  String _reasonLabel(ListingReportReason reason) => switch (reason) {
+    ListingReportReason.scam => context.l10n.reportListingReasonScam,
+    ListingReportReason.spam => context.l10n.reportListingReasonSpam,
+    ListingReportReason.inappropriate =>
+      context.l10n.reportListingReasonInappropriate,
+    ListingReportReason.misleading =>
+      context.l10n.reportListingReasonMisleading,
+    ListingReportReason.prohibited =>
+      context.l10n.reportListingReasonProhibited,
+    ListingReportReason.other => context.l10n.reportListingReasonOther,
+  };
+
+  void _submit() {
+    final note = _noteController.text.trim();
+    if (note.length > kListingReportNoteMaxLength) {
+      setState(() => _noteError = context.l10n.reportListingNoteTooLong);
+      return;
+    }
+    Navigator.pop(
+      context,
+      ListingReportSubmission(
+        reason: _reason,
+        note: note.isEmpty ? null : note,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + bottomInset),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              context.l10n.reportListingSheetTitle,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            RadioGroup<ListingReportReason>(
+              groupValue: _reason,
+              onChanged: (value) {
+                if (value != null) setState(() => _reason = value);
+              },
+              child: Column(
+                children: [
+                  for (final reason in ListingReportReason.values)
+                    RadioListTile<ListingReportReason>(
+                      contentPadding: EdgeInsets.zero,
+                      value: reason,
+                      title: Text(_reasonLabel(reason)),
+                    ),
+                ],
+              ),
+            ),
+            TextField(
+              controller: _noteController,
+              maxLines: 4,
+              maxLength: kListingReportNoteMaxLength,
+              decoration: InputDecoration(
+                labelText: context.l10n.reportListingNoteLabel,
+                hintText: context.l10n.reportListingNotePlaceholder,
+                errorText: _noteError,
+              ),
+              onChanged: (_) {
+                if (_noteError != null) setState(() => _noteError = null);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              key: const ValueKey<String>('listing_report_submit'),
+              onPressed: _submit,
+              child: Text(context.l10n.reportListingSubmit),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

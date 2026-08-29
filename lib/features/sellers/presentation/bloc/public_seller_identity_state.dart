@@ -19,6 +19,7 @@ class PublicSellerIdentityState extends Equatable {
     this.profile,
     this.loadFailed = false,
     this.saveFailed = false,
+    this.saveContentRejected = false,
     this.avatarBusy = false,
     this.avatarSnack = PublicSellerAvatarSnack.none,
   });
@@ -28,6 +29,7 @@ class PublicSellerIdentityState extends Equatable {
   final MySellerProfile? profile;
   final bool loadFailed;
   final bool saveFailed;
+  final bool saveContentRejected;
 
   final bool avatarBusy;
   final PublicSellerAvatarSnack avatarSnack;
@@ -38,6 +40,7 @@ class PublicSellerIdentityState extends Equatable {
     MySellerProfile? profile,
     bool? loadFailed,
     bool? saveFailed,
+    bool? saveContentRejected,
     bool? avatarBusy,
     PublicSellerAvatarSnack? avatarSnack,
   }) {
@@ -47,6 +50,7 @@ class PublicSellerIdentityState extends Equatable {
       profile: profile ?? this.profile,
       loadFailed: loadFailed ?? this.loadFailed,
       saveFailed: saveFailed ?? this.saveFailed,
+      saveContentRejected: saveContentRejected ?? this.saveContentRejected,
       avatarBusy: avatarBusy ?? this.avatarBusy,
       avatarSnack: avatarSnack ?? this.avatarSnack,
     );
@@ -59,6 +63,7 @@ class PublicSellerIdentityState extends Equatable {
     profile,
     loadFailed,
     saveFailed,
+    saveContentRejected,
     avatarBusy,
     avatarSnack,
   ];

@@ -121,6 +121,31 @@ void main() {
   );
 
   blocTest<PublicSellerIdentityCubit, PublicSellerIdentityState>(
+    'save exposes stable moderation rejection separately',
+    build: () {
+      when(() => update('blocked')).thenAnswer(
+        (_) async => const FailureResult(
+          ServerFailure('carzon_content_rejected', postgrestCode: 'P0001'),
+        ),
+      );
+      return buildCubit();
+    },
+    seed: () => PublicSellerIdentityState(profile: _row(dn: 'Old')),
+    act: (c) => c.save('blocked'),
+    expect: () => [
+      isA<PublicSellerIdentityState>().having(
+        (s) => s.saving,
+        'saving',
+        isTrue,
+      ),
+      isA<PublicSellerIdentityState>()
+          .having((s) => s.saving, 'saving', isFalse)
+          .having((s) => s.saveFailed, 'failed', isTrue)
+          .having((s) => s.saveContentRejected, 'content rejection', isTrue),
+    ],
+  );
+
+  blocTest<PublicSellerIdentityCubit, PublicSellerIdentityState>(
     'uploadAvatarFromPicker success updates profile',
     build: () {
       final updated = _row(

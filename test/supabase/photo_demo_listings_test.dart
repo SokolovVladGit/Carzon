@@ -14,6 +14,19 @@ import 'package:flutter_test/flutter_test.dart';
 ///   * no schema / RLS / policy / function / grant / revoke escape,
 ///   * cleanup targets only the explicit demo ids and nothing else.
 void main() {
+  test('Kareta photo demo is documented as non-production-only', () {
+    final demoReadme = File('supabase/demo/README.md').readAsStringSync();
+    final mainSeed = File('supabase/seed.sql').readAsStringSync();
+
+    expect(demoReadme, contains('Temporary Photo Demo Dataset'));
+    expect(demoReadme, contains('never'));
+    expect(demoReadme, contains('normal migration/seed flow'));
+    expect(demoReadme, contains('Not production-safe'));
+    expect(demoReadme, contains('do **not** import this file into a'));
+    expect(demoReadme, contains('production project'));
+    expect(mainSeed.toLowerCase(), isNot(contains('kareta')));
+  });
+
   group('supabase/demo/photo_demo_listings.sql', () {
     late String sql;
     late String sqlLower;

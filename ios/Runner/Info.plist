@@ -6,6 +6,11 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Carzon</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>ro</string>
+		<string>ru</string>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -24,6 +29,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -46,9 +53,9 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Carzon needs access to your photos so you can attach a cover photo to your car listing.</string>
+	<string>Carzon uses your photos to add listing galleries, your profile photo, and chat attachments.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Carzon needs camera access so you can take photos to send in chat.</string>
+	<string>Carzon uses the camera so you can take a photo to send in chat.</string>
 	<!--
 		Supabase auth callback deep link (password recovery / email
 		confirmation). Keep in sync with the Android intent-filter and

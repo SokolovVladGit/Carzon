@@ -14,9 +14,15 @@ Ship the matching client **only after** the backend for that environment exposes
 |---------|----------|--------|
 | `SUPABASE_URL` | Yes | Project API URL. |
 | `SUPABASE_ANON_KEY` | Yes | Public anon key (client-safe). |
-| `SUPABASE_PASSWORD_RESET_REDIRECT_URL` | No | Deep-link target for recovery emails (e.g. custom scheme); if unset, Supabase uses project Site URL. |
-| `CARZON_REPORT_EMAIL` | No | If unset, in-app listing report mailto is hidden. |
-| `PUSH_NOTIFICATIONS_ENABLED` | No | Default **off**. Enables **Phase 2** Firebase client bootstrap + **`register_push_token`**. **Live push** still requires hosted pipelines: **messages** — migration **`20260528120000_...`**, Edge **`process-message-notifications`**, FCM secrets, **`20260529120000_...`** cron/Vault (§2b). **Filter alerts** — **`20260601120000_...`**, Edge **`process-filter-alert-notifications`**, same FCM setup, second cron/Vault (see **`ops_message_notifications.md`**). |
+| `SUPABASE_PASSWORD_RESET_REDIRECT_URL` | **Release: yes** | Approved recovery deep link (`carzon://auth-callback`) or production HTTPS fallback. |
+| `CARZON_PRIVACY_POLICY_URL` | Canonical default provided | `https://carzon-legal.netlify.app/privacy/`; public, client-safe, overridable. |
+| `CARZON_TERMS_OF_SERVICE_URL` | Canonical default provided | `https://carzon-legal.netlify.app/terms/`; public, client-safe, overridable. |
+| `CARZON_SUPPORT_URL` | Canonical default provided | `https://carzon-legal.netlify.app/support/`; public, client-safe, overridable. |
+| `CARZON_PRIVACY_CHOICES_URL` | Canonical default provided | `https://carzon-legal.netlify.app/privacy-choices/`; public, client-safe, overridable. |
+| `CARZON_SUPPORT_EMAIL` | Canonical default provided | `carzonsupport@gmail.com`; public contact shown before login, client-safe, overridable. |
+| `CARZON_REPORT_EMAIL` | No | Legacy secondary moderation inbox only. Native listing reporting uses `report_listing` and does not depend on email. |
+| `CARZON_LISTING_SHARE_BASE_URL` | **Optional for MVP** | Leave unset until CARZON has an owner-controlled public listing page or universal-link surface. Sharing is hidden when unset. If supplied, it must be a production HTTPS base; never use the legal Netlify host. |
+| `PUSH_NOTIFICATIONS_ENABLED` | **Release: yes (explicit true/false)** | Default **off**. Enables **Phase 2** Firebase client bootstrap + **`register_push_token`**. **Live push** still requires hosted pipelines: **messages** — migration **`20260528120000_...`**, Edge **`process-message-notifications`**, FCM secrets, **`20260529120000_...`** cron/Vault (§2b). **Filter alerts** — **`20260601120000_...`**, Edge **`process-filter-alert-notifications`**, same FCM setup, second cron/Vault (see **`ops_message_notifications.md`**). |
 
 **Security**
 
@@ -24,6 +30,28 @@ Ship the matching client **only after** the backend for that environment exposes
 - Client config is compile-time via `--dart-define-from-file=.env.client` (see `.env.client.example`). Bundle **only** client-safe values (URL + anon key + optional redirects/report email + optional push flag). **No** `.env` Flutter asset.
 
 See also: `lib/core/config/env.dart` (`Env.requiredKeys`). Optional push flag: `Env.pushNotificationsEnabled`.
+
+Release-mode startup also applies `Env.releaseConfigurationIssues()`. It
+rejects invalid or placeholder legal/support URLs and support email, an invalid
+password-reset redirect, an invalid configured listing share URL, an
+unspecified push flag, and a configured placeholder legacy report email.
+Canonical legal/support defaults are production values and are not secrets.
+
+Owner-supplied values still required before archive:
+
+- `SUPABASE_PASSWORD_RESET_REDIRECT_URL` (`carzon://auth-callback` or the
+  approved production HTTPS fallback);
+- explicit `PUSH_NOTIFICATIONS_ENABLED=true|false` after the release decision;
+- optional real `CARZON_REPORT_EMAIL` only if the secondary email route is used.
+
+For the first App Store release, leave `CARZON_LISTING_SHARE_BASE_URL` unset.
+The listing Share action remains hidden until an owner-controlled listing page
+or universal-link surface exists. Do not point it at
+`https://carzon-legal.netlify.app`; that site contains legal/support pages only.
+
+Also confirm that the hosted `admin@carzon.com` support bootstrap account exists
+and is operator-controlled. This internal account identifier is separate from
+the public App Store Support URL and `carzonsupport@gmail.com` contact inbox.
 
 **Local IDE / terminal:** Copy `.env.client.example` → `.env.client`, fill client-safe values only. In Cursor/VS Code use launch config **Carzon Debug** (see `.vscode/launch.json`). Terminal: `flutter run --dart-define-from-file=.env.client` or `./tools/run_dev.sh`.
 
@@ -155,15 +183,18 @@ Local **last-applied listing filters** persist on-device (`ListingDiscoveryCrite
 
 Later migrations add **filter-alert notification queue/cron**, **VIN decode/report phases** (`20260616120000` … `20260629120000`), and **public contact projection hardening** (`20260630120000`). **Hosted Carzon (2026-06):** contact hardening closed; parity **45/45 at that baseline** (metadata reconciliation).
 
-**Current hosted chain (verified 27 July 2026):** all **71/71** local
-migrations are applied through
+**Hosted baseline (verified 27 July 2026):** all **71/71** migrations in that
+baseline are applied through
 **`20260823120000_retain_pseudonymized_moderation_reports.sql`**. Hosted
 moderation-retention verification passed: all four report foreign keys use
 `ON DELETE SET NULL`, original-evidence snapshot columns and the immutability
 trigger exist, and the affected functions have the expected security/search
-path configuration. **No additional SQL remains pending from the current local
-migration chain.** Fuel Prices operations remain documented in
-**`docs/ops_fuel_price_jobs.md`**.
+path configuration. The Phase 1 release now additionally requires manual
+application of
+**`20260826120000_app_store_content_moderation_foundation.sql`** before its
+client is shipped; see **`docs/ops_content_moderation.md`**. This document does
+not claim hosted parity after new local migrations. Fuel Prices operations
+remain documented in **`docs/ops_fuel_price_jobs.md`**.
 
 > **Stale doc warning:** Counts of **45/45**, **65**, or **68** describe
 > historical hosted baselines, not the current 71/71 state.
@@ -178,10 +209,10 @@ migration chain.** Fuel Prices operations remain documented in
 
 Runbooks: `docs/hosted_migration_parity_verification.md`, `docs/hosted_migration_metadata_reconciliation.md` (if parity STOP + runtime PASS), **`docs/ops_fuel_price_jobs.md`** (Fuel Prices worker).
 
-**Full repo migration range:** `20260423120000_create_listings.sql` …
-`20260823120000_retain_pseudonymized_moderation_reports.sql` (**71** files
-under `supabase/migrations/`; **71/71** applied on hosted as verified
-27 July 2026).
+**Verified hosted baseline range:** `20260423120000_create_listings.sql` …
+`20260823120000_retain_pseudonymized_moderation_reports.sql` (**71** migrations
+at verification time). Newer repository migrations are not covered by that
+27 July 2026 parity result.
 
 **Important**
 

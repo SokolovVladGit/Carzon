@@ -1,7 +1,7 @@
 name: carzon
 description: "Carzon — Moldova car marketplace (Flutter mobile client)."
 publish_to: 'none'
-version: 1.0.0+4
+version: 1.0.0+6
 
 environment:
   sdk: ^3.10.7
@@ -82,6 +82,7 @@ flutter:
     - assets/icons/carzon_logo.svg
     - assets/animation/
     - assets/bg/bg_chat.jpg
+    - web/legal/legal_content.json
 
 flutter_launcher_icons:
   android: true

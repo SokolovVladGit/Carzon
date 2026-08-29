@@ -149,9 +149,15 @@ class _PublicSellerNameSectionState extends State<PublicSellerNameSection> {
         BlocListener<PublicSellerIdentityCubit, PublicSellerIdentityState>(
           listenWhen: (prev, curr) =>
               prev.saving && !curr.saving && curr.saveFailed,
-          listener: (context, _) {
+          listener: (context, state) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.profilePublicSellerNameSaveFailed)),
+              SnackBar(
+                content: Text(
+                  state.saveContentRejected
+                      ? l10n.contentModerationRejected
+                      : l10n.profilePublicSellerNameSaveFailed,
+                ),
+              ),
             );
           },
         ),

@@ -12,9 +12,12 @@ import '../utils/model_passport_formatters.dart';
 import '../utils/model_passport_limitation_labels.dart';
 import '../utils/model_passport_ui_state.dart';
 
-/// Buyer-facing official model data on listing details (EPA fuel economy in v1).
+/// Buyer-facing EPA model data on listing details (fuel economy in v1).
 class ListingDetailsModelPassportSection extends StatefulWidget {
-  const ListingDetailsModelPassportSection({super.key, required this.listingId});
+  const ListingDetailsModelPassportSection({
+    super.key,
+    required this.listingId,
+  });
 
   final String listingId;
 
@@ -105,7 +108,10 @@ class _ListingDetailsModelPassportSectionState
       l10n,
       row.normalizedSummary,
     );
-    final co2Tile = buildModelPassportCo2MetricTile(l10n, row.normalizedSummary);
+    final co2Tile = buildModelPassportCo2MetricTile(
+      l10n,
+      row.normalizedSummary,
+    );
     if (metrics.isEmpty) {
       return const SizedBox.shrink(
         key: ValueKey('listing_model_passport_empty_metrics'),
@@ -150,9 +156,7 @@ class _ListingDetailsModelPassportSectionState
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               letterSpacing: -0.2,
-              color: isDark
-                  ? scheme.onSurface.withValues(alpha: 0.96)
-                  : null,
+              color: isDark ? scheme.onSurface.withValues(alpha: 0.96) : null,
             ),
           ),
           const SizedBox(height: 12),
@@ -165,7 +169,9 @@ class _ListingDetailsModelPassportSectionState
                 children: [
                   OfficialDataSourceHeader(
                     theme: theme,
-                    sourceKey: const ValueKey('listing_model_passport_source_badge'),
+                    sourceKey: const ValueKey(
+                      'listing_model_passport_source_badge',
+                    ),
                     sourceLabel: sourceLabel,
                     updatedDateKey: lastUpdated != null
                         ? const ValueKey('listing_model_passport_last_updated')
@@ -204,6 +210,14 @@ class _ListingDetailsModelPassportSectionState
                       bullets: limitations,
                     ),
                   ],
+                  const SizedBox(height: 10),
+                  OfficialDataPendingFootnote(
+                    theme: theme,
+                    text: l10n.listingModelPassportEpaSourceNote,
+                    textKey: const ValueKey(
+                      'listing_model_passport_epa_source_note',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -271,7 +285,12 @@ class _ModelPassportStatTile extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(12, isPrimary ? 11 : 10, 12, isPrimary ? 11 : 10),
+        padding: EdgeInsets.fromLTRB(
+          12,
+          isPrimary ? 11 : 10,
+          12,
+          isPrimary ? 11 : 10,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -290,15 +309,18 @@ class _ModelPassportStatTile extends StatelessWidget {
             SizedBox(height: isPrimary ? 7 : 5),
             Text(
               valueText,
-              style: (isPrimary
-                      ? theme.textTheme.titleMedium
-                      : theme.textTheme.titleSmall)
-                  ?.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.25,
-                height: 1.1,
-                color: scheme.onSurface.withValues(alpha: isDark ? 0.96 : 1),
-              ),
+              style:
+                  (isPrimary
+                          ? theme.textTheme.titleMedium
+                          : theme.textTheme.titleSmall)
+                      ?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.25,
+                        height: 1.1,
+                        color: scheme.onSurface.withValues(
+                          alpha: isDark ? 0.96 : 1,
+                        ),
+                      ),
             ),
           ],
         ),

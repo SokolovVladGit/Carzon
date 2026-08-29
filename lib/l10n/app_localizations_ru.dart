@@ -978,6 +978,61 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не удалось открыть почтовое приложение.';
 
   @override
+  String get reportListingSignInTitle => 'Войдите, чтобы отправить жалобу';
+
+  @override
+  String get reportListingSignInBody =>
+      'Действие доступно всем, но для защиты от злоупотреблений отправить жалобу можно после входа.';
+
+  @override
+  String get reportListingSheetTitle => 'Причина жалобы';
+
+  @override
+  String get reportListingReasonScam => 'Мошенничество или обман';
+
+  @override
+  String get reportListingReasonSpam => 'Спам';
+
+  @override
+  String get reportListingReasonInappropriate =>
+      'Оскорбительный или недопустимый контент';
+
+  @override
+  String get reportListingReasonMisleading =>
+      'Вводящее в заблуждение объявление';
+
+  @override
+  String get reportListingReasonProhibited => 'Запрещённый контент';
+
+  @override
+  String get reportListingReasonOther => 'Другое';
+
+  @override
+  String get reportListingNoteLabel => 'Комментарий (необязательно)';
+
+  @override
+  String get reportListingNotePlaceholder => 'Что именно нарушает правила?';
+
+  @override
+  String get reportListingNoteTooLong =>
+      'Комментарий не должен превышать 1000 символов.';
+
+  @override
+  String get reportListingSubmit => 'Отправить жалобу';
+
+  @override
+  String get reportListingSuccess =>
+      'Жалоба отправлена. Мы проверим её в течение 24 часов.';
+
+  @override
+  String get reportListingSubmitFailed =>
+      'Не удалось отправить жалобу. Попробуйте ещё раз.';
+
+  @override
+  String get contentModerationRejected =>
+      'Текст содержит недопустимые выражения. Измените его и попробуйте снова.';
+
+  @override
   String get listingShareAction => 'Поделиться';
 
   @override
@@ -1604,11 +1659,11 @@ class AppLocalizationsRu extends AppLocalizations {
       'Условия, политика конфиденциальности и советы по безопасности';
 
   @override
-  String get settingsRequestDataTitle => 'Запросить мои данные';
+  String get settingsRequestDataTitle => 'Конфиденциальность и мои данные';
 
   @override
   String get settingsRequestDataSubtitle =>
-      'Связаться с поддержкой по вопросам персональных данных';
+      'Удаление, исправление и другие запросы';
 
   @override
   String get settingsDeleteAccountTitle => 'Удалить аккаунт';
@@ -1645,7 +1700,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get deleteAccountWarningBody =>
-      'Ваш аккаунт и доступ к приложению будут удалены.\n\n• Активные объявления исчезнут с публичной витрины\n• Избранное, фильтры-оповещения, профиль продавца и настройки push будут удалены\n• Переписки и история сообщений могут быть удалены\n\nПосле подтверждения восстановить аккаунт будет невозможно.';
+      'Ваш аккаунт и доступ к приложению будут удалены.\n\n• Объявления, фотографии, избранное, оповещения, профиль, настройки push, переписки и сообщения будут удалены\n• Для безопасности могут сохраниться псевдонимизированные материалы жалоб без активного профиля и контактов\n• Могут сохраниться хеш VIN, нормализованные сведения об автомобиле и общие кэши моделей, отзывов и цен на топливо; они не сохраняются как данные активного аккаунта или профиля\n\nПосле подтверждения восстановить аккаунт будет невозможно.';
 
   @override
   String get deleteAccountConfirmationKeyword => 'УДАЛИТЬ';
@@ -1718,6 +1773,20 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get contactSupportOpenFailure =>
       'Не удалось открыть чат с поддержкой. Попробуйте позже.';
+
+  @override
+  String get contactSupportEmail => 'Поддержка';
+
+  @override
+  String get contactSupportEmailSubtitle =>
+      'Помощь по аккаунту, объявлениям и приложению';
+
+  @override
+  String get contactSupportEmailOpenFailed => 'Не удалось открыть страницу.';
+
+  @override
+  String get contactSupportConfigMissing =>
+      'Адрес поддержки не настроен. Сообщите владельцу приложения.';
 
   @override
   String get contactSupportSelfFailure =>
@@ -2252,6 +2321,26 @@ class AppLocalizationsRu extends AppLocalizations {
   String get legalLink => 'Условия и конфиденциальность';
 
   @override
+  String get settingsPrivacyPolicyTitle => 'Политика конфиденциальности';
+
+  @override
+  String get settingsPrivacyPolicySubtitle =>
+      'Какие данные использует CARZON и какие настройки доступны';
+
+  @override
+  String get settingsTermsTitle => 'Условия использования';
+
+  @override
+  String get settingsTermsSubtitle => 'Правила площадки, контента и сделок';
+
+  @override
+  String get settingsDataSourcesTitle => 'Источники данных и уведомления';
+
+  @override
+  String get settingsDataSourcesSubtitle =>
+      'NHTSA, EPA, ANRE, Sheriff и товарные знаки';
+
+  @override
   String get signUpTitle => 'Создать аккаунт';
 
   @override
@@ -2402,11 +2491,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get legalTitle => 'Условия и конфиденциальность';
 
   @override
-  String get legalDisclaimerLabel => 'Справочная информация';
+  String get legalDisclaimerLabel => 'Документы CARZON';
 
   @override
   String get legalDisclaimer =>
-      'Это ознакомительная версия условий и уведомления о конфиденциальности. Документ описывает, как сейчас работает Carzon, и не заменяет юридически выверенные условия. Пользуйтесь им как информационным материалом на ранней стадии продукта.';
+      'Актуальные Политика конфиденциальности, Условия использования и уведомления об источниках данных доступны отдельными разделами в настройках CARZON.';
 
   @override
   String get legalSectionAboutHeading => 'О Carzon';
@@ -2479,11 +2568,52 @@ class AppLocalizationsRu extends AppLocalizations {
       'Вы отвечаете за сохранность своего пароля и за любые действия, выполненные из вашего аккаунта. Если вы подозреваете, что кто-то получил доступ к вашему аккаунту, выйдите из него и смените пароль.';
 
   @override
+  String get legalSectionAccountP3 =>
+      'При удалении аккаунта связанные объявления, фотографии, сообщения, профиль и настройки удаляются. Для безопасности и разбора злоупотреблений могут сохраняться псевдонимизированные материалы жалоб. Также могут оставаться хеш VIN, нормализованные сведения об автомобиле и общие кэши моделей, отзывов и цен на топливо, не связанные с активным аккаунтом или профилем.';
+
+  @override
   String get legalSectionFavoritesHeading => 'Избранное';
 
   @override
   String get legalSectionFavoritesP1 =>
       'Избранное видно только вам. Другие пользователи не знают, какие объявления вы добавили в избранное.';
+
+  @override
+  String get legalSectionDataSourcesHeading => 'Внешние источники данных';
+
+  @override
+  String get legalSectionDataSourcesP1 =>
+      'Carzon использует открытые справочные данные из следующих внешних источников:';
+
+  @override
+  String get legalSectionDataSourcesB1 =>
+      'NHTSA vPIC — данные для расшифровки VIN и идентификации автомобиля.';
+
+  @override
+  String get legalSectionDataSourcesB2 => 'NHTSA — данные о кампаниях отзыва.';
+
+  @override
+  String get legalSectionDataSourcesB3 =>
+      'EPA / FuelEconomy.gov — данные о моделях и расходе топлива.';
+
+  @override
+  String get legalSectionDataSourcesB4 =>
+      'ANRE e-Carburanți — информация о ценах на топливо в Молдове.';
+
+  @override
+  String get legalSectionDataSourcesB5 =>
+      'Sheriff — публичная информация о ценах на топливо в Приднестровье.';
+
+  @override
+  String get legalSectionDataSourcesP2 =>
+      'Carzon не связан с указанными организациями и не является их официальным представителем, если прямо не указано иное.';
+
+  @override
+  String get legalSectionTrademarksHeading => 'Товарные знаки производителей';
+
+  @override
+  String get legalSectionTrademarksP1 =>
+      'Названия, логотипы и товарные знаки производителей автомобилей принадлежат их соответствующим владельцам. Они используются в Carzon исключительно для идентификации марок и автомобилей. Carzon не связан с производителями и не является их официальным представителем.';
 
   @override
   String get legalSectionSafetyHeading => 'Безопасность и ответственность';
@@ -3256,7 +3386,8 @@ class AppLocalizationsRu extends AppLocalizations {
       'Источник: базовая расшифровка NHTSA vPIC.';
 
   @override
-  String get listingModelPassportSectionTitle => 'Официальные данные модели';
+  String get listingModelPassportSectionTitle =>
+      'Данные о модели от EPA / FuelEconomy.gov';
 
   @override
   String get listingModelPassportFuelEconomyTitle => 'Расход по источнику';
@@ -3286,18 +3417,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingModelPassportLoading => 'Загрузка данных модели…';
 
   @override
-  String get listingModelPassportPendingTitle =>
-      'Официальные данные модели загружаются';
+  String get listingModelPassportPendingTitle => 'Данные о модели загружаются';
 
   @override
   String get listingModelPassportPendingBody =>
-      'Обычно это занимает до 30 минут после публикации. Данные появятся автоматически, если официальный источник найдёт информацию по этой модели.';
+      'Обычно это занимает до 30 минут после публикации. Данные появятся автоматически, если источник найдёт информацию по этой модели.';
 
   @override
   String get listingModelPassportLimitationsTitle => 'Ограничения';
 
   @override
   String get listingModelPassportSourceEpa => 'EPA · FuelEconomy.gov';
+
+  @override
+  String get listingModelPassportEpaSourceNote =>
+      'Данные относятся к рынку США и могут отличаться в зависимости от комплектации. Carzon не связан с EPA или Министерством энергетики США и не является их официальным представителем.';
 
   @override
   String get listingModelPassportUnitLPer100km => 'л/100 км';
@@ -3610,6 +3744,16 @@ class AppLocalizationsRu extends AppLocalizations {
   String fuelPricesSourceLabel(String source) {
     return 'Источник: $source';
   }
+
+  @override
+  String get fuelPricesSourceInfoAction => 'Подробнее об источнике';
+
+  @override
+  String get fuelPricesSourceInfoTitle => 'Источник данных';
+
+  @override
+  String get fuelPricesSheriffSourceInfoBody =>
+      'Цены основаны на публично доступной информации о ценах сети Sheriff в Приднестровье.\n\nCarzon не связан с Sheriff, не является партнёром или официальным представителем сети.\n\nИнформация носит справочный характер и может отличаться от фактической цены на конкретной АЗС.';
 
   @override
   String fuelPricesEffectiveDate(String date) {

@@ -9,7 +9,11 @@ import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_cubit.dart';
 import 'package:carzon/features/listings/presentation/bloc/listing_details_state.dart';
 import 'package:carzon/features/listings/presentation/pages/listing_details_page.dart';
-import 'package:carzon/features/listings/presentation/utils/listing_details_uri_launcher.dart';
+import 'package:carzon/features/listings/presentation/utils/listing_report_submitter.dart';
+import 'package:carzon/features/listings/domain/entities/listing_report_reason.dart';
+import 'package:carzon/core/errors/failures.dart';
+import 'package:carzon/core/utils/result.dart';
+import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/sellers/domain/usecases/get_seller_public_profile.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:carzon/shared/ui/carzon_icons.dart';
@@ -104,48 +108,30 @@ void main() {
     await sl.reset();
   });
 
-  Widget wrap({String? reportEmail, ListingDetailsUriLauncher? launcher}) =>
-      MaterialApp(
-        locale: const Locale('ru'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: MultiBlocProvider(
-          providers: [
-            BlocProvider<AuthCubit>.value(value: authCubit),
-            BlocProvider<FavoritesCubit>.value(value: favoritesCubit),
-            BlocProvider<CompareCubit>.value(value: compareCubit),
-          ],
-          child: ListingDetailsPage(
-            id: 'listing-007',
-            reportEmail: reportEmail,
-            uriLauncher: launcher,
-          ),
-        ),
-      );
+  Widget wrap({ListingReportSubmitter? submitter}) => MaterialApp(
+    locale: const Locale('ru'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthCubit>.value(value: authCubit),
+        BlocProvider<FavoritesCubit>.value(value: favoritesCubit),
+        BlocProvider<CompareCubit>.value(value: compareCubit),
+      ],
+      child: ListingDetailsPage(
+        id: 'listing-007',
+        reportSubmitter:
+            submitter ??
+            ({required listingId, required reason, note}) async =>
+                const Success(null),
+      ),
+    ),
+  );
 
-  testWidgets('report email unset: Report listing surface is hidden', (
+  testWidgets('Report listing is always visible when email config is absent', (
     tester,
   ) async {
     await tester.pumpWidget(wrap());
-    await tester.pump();
-
-    expect(find.text(l10n.reportListing), findsNothing);
-    expect(find.byIcon(CarzonIcons.report), findsNothing);
-    expect(find.text(l10n.reportListingDescription), findsNothing);
-  });
-
-  testWidgets('report email empty string: Report listing surface is hidden', (
-    tester,
-  ) async {
-    await tester.pumpWidget(wrap(reportEmail: ''));
-    await tester.pump();
-
-    expect(find.text(l10n.reportListing), findsNothing);
-  });
-
-  testWidgets('report email configured: renders the Report listing action with '
-      'supporting copy', (tester) async {
-    await tester.pumpWidget(wrap(reportEmail: 'reports@carzon.example'));
     await tester.pump();
 
     final reportLabel = find.text(l10n.reportListing);
@@ -157,79 +143,84 @@ void main() {
     expect(find.text(l10n.reportListingDescription), findsOneWidget);
   });
 
-  testWidgets(
-    'tapping Report listing launches the mailto URI with correct content',
-    (tester) async {
-      Uri? launched;
-      Future<bool> launcher(Uri uri) async {
-        launched = uri;
-        return true;
-      }
+  testWidgets('guest action explains that sign-in is required', (tester) async {
+    await tester.pumpWidget(wrap());
+    await tester.pump();
 
-      await tester.pumpWidget(
-        wrap(reportEmail: 'reports@carzon.example', launcher: launcher),
-      );
-      await tester.pump();
+    final reportLabel = find.text(l10n.reportListing);
+    await tester.ensureVisible(reportLabel);
+    await tester.tap(reportLabel);
+    await tester.pumpAndSettle();
 
-      final reportLabel = find.text(l10n.reportListing);
-      await tester.ensureVisible(reportLabel);
-      await tester.pumpAndSettle();
-      await tester.tap(reportLabel);
-      await tester.pumpAndSettle();
+    expect(find.text(l10n.reportListingSignInTitle), findsOneWidget);
+    expect(find.text(l10n.reportListingSignInBody), findsOneWidget);
+  });
 
-      expect(launched, isNotNull);
-      expect(launched!.scheme, 'mailto');
-      expect(launched!.path, 'reports@carzon.example');
-      final subject = launched!.queryParameters['subject']!;
-      expect(subject, contains(l10n.reportSubjectPrefix));
-      expect(subject, contains('listing-007'));
-      final body = launched!.queryParameters['body']!;
-      expect(body, contains('listing-007'));
-      expect(body, contains('Skoda Octavia 1.8 TSI'));
-      expect(body, contains('Tiraspol'));
-      expect(body, contains(l10n.regionTransnistria));
-    },
-  );
+  testWidgets('authenticated user submits one structured native report', (
+    tester,
+  ) async {
+    const user = AuthUser(id: 'buyer-1', email: 'buyer@carzon.test');
+    when(() => authCubit.state).thenReturn(const AuthState.authenticated(user));
 
-  testWidgets(
-    'when the launcher returns false, a friendly SnackBar is shown and '
-    'the app does not crash',
-    (tester) async {
-      Future<bool> launcher(Uri _) async => false;
+    var calls = 0;
+    String? capturedListingId;
+    ListingReportReason? capturedReason;
+    String? capturedNote;
+    Future<Result<void>> submit({
+      required String listingId,
+      required ListingReportReason reason,
+      String? note,
+    }) async {
+      calls += 1;
+      capturedListingId = listingId;
+      capturedReason = reason;
+      capturedNote = note;
+      return const Success(null);
+    }
 
-      await tester.pumpWidget(
-        wrap(reportEmail: 'reports@carzon.example', launcher: launcher),
-      );
-      await tester.pump();
+    await tester.pumpWidget(wrap(submitter: submit));
+    await tester.pump();
+    final reportLabel = find.text(l10n.reportListing);
+    await tester.ensureVisible(reportLabel);
+    await tester.tap(reportLabel);
+    await tester.pumpAndSettle();
 
-      final reportLabel = find.text(l10n.reportListing);
-      await tester.ensureVisible(reportLabel);
-      await tester.pumpAndSettle();
-      await tester.tap(reportLabel);
-      await tester.pump();
+    await tester.tap(find.text(l10n.reportListingReasonMisleading));
+    await tester.enterText(find.byType(TextField).last, 'Цена неверна');
+    final submitButton = find.byKey(const ValueKey('listing_report_submit'));
+    await tester.ensureVisible(submitButton);
+    await tester.pumpAndSettle();
+    await tester.tap(submitButton);
+    await tester.pumpAndSettle();
 
-      expect(find.text(l10n.reportListingMailFailed), findsOneWidget);
-    },
-  );
+    expect(calls, 1);
+    expect(capturedListingId, 'listing-007');
+    expect(capturedReason, ListingReportReason.misleading);
+    expect(capturedNote, 'Цена неверна');
+    expect(find.text(l10n.reportListingSuccess), findsOneWidget);
+  });
 
-  testWidgets(
-    'when the launcher throws, a friendly SnackBar is shown instead of '
-    'propagating the exception',
-    (tester) async {
-      Future<bool> launcher(Uri _) async => throw StateError('no mail app');
+  testWidgets('server moderation rejection is localized', (tester) async {
+    const user = AuthUser(id: 'buyer-1', email: 'buyer@carzon.test');
+    when(() => authCubit.state).thenReturn(const AuthState.authenticated(user));
 
-      await tester.pumpWidget(
-        wrap(reportEmail: 'reports@carzon.example', launcher: launcher),
-      );
-      await tester.pump();
+    await tester.pumpWidget(
+      wrap(
+        submitter: ({required listingId, required reason, note}) async =>
+            const FailureResult(ServerFailure('carzon_content_rejected')),
+      ),
+    );
+    await tester.pump();
+    final reportLabel = find.text(l10n.reportListing);
+    await tester.ensureVisible(reportLabel);
+    await tester.tap(reportLabel);
+    await tester.pumpAndSettle();
+    final submitButton = find.byKey(const ValueKey('listing_report_submit'));
+    await tester.ensureVisible(submitButton);
+    await tester.pumpAndSettle();
+    await tester.tap(submitButton);
+    await tester.pumpAndSettle();
 
-      final reportLabel = find.text(l10n.reportListing);
-      await tester.ensureVisible(reportLabel);
-      await tester.pumpAndSettle();
-      await tester.tap(reportLabel);
-      await tester.pump();
-
-      expect(find.text(l10n.reportListingMailFailed), findsOneWidget);
-    },
-  );
+    expect(find.text(l10n.contentModerationRejected), findsOneWidget);
+  });
 }

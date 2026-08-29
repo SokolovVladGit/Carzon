@@ -32,6 +32,9 @@ enum EditListingFailureKind {
   /// validation reasons (bad year range, missing required field, …).
   invalidDetails,
 
+  /// Server-authoritative UGC filter rejected user-authored text.
+  contentRejected,
+
   /// Generic details-update failure that is neither auth nor
   /// validation.
   detailsFailed,

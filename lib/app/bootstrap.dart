@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/config/env.dart';
@@ -61,6 +62,23 @@ Future<void> bootstrap() async {
           ),
         );
         return;
+      }
+
+      if (kReleaseMode) {
+        final issues = Env.releaseConfigurationIssues();
+        if (issues.isNotEmpty) {
+          logger.error('Invalid release client configuration: $issues');
+          runApp(
+            StartupErrorApp(
+              title: 'Release configuration error',
+              message:
+                  'This release is missing required production-safe client '
+                  'configuration.',
+              details: issues,
+            ),
+          );
+          return;
+        }
       }
 
       runApp(const BootstrapSplashApp());

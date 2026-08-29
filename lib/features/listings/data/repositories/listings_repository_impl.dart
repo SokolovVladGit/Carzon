@@ -6,6 +6,7 @@ import '../../domain/entities/buyer_listing_vin_report_source_result.dart';
 import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_contact.dart';
 import '../../domain/entities/listing_image.dart';
+import '../../domain/entities/listing_report_reason.dart';
 import '../../domain/entities/listing_view_stats.dart';
 import '../../domain/repositories/listings_repository.dart';
 import '../datasources/listings_remote_datasource.dart';
@@ -68,6 +69,32 @@ class ListingsRepositoryImpl implements ListingsRepository {
     } catch (e, st) {
       _logger.error('deleteListing unknown error', e, st);
       return const FailureResult(UnknownFailure('Failed to delete listing.'));
+    }
+  }
+
+  @override
+  Future<Result<void>> reportListing({
+    required String listingId,
+    required ListingReportReason reason,
+    String? note,
+  }) async {
+    try {
+      final normalizedNote = note?.trim();
+      await _remote.reportListing(
+        listingId: listingId,
+        reason: reason.toDbValue(),
+        note: normalizedNote == null || normalizedNote.isEmpty
+            ? null
+            : normalizedNote,
+      );
+      return const Success(null);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('reportListing unknown error', e, st);
+      return const FailureResult(
+        UnknownFailure('Failed to submit listing report.'),
+      );
     }
   }
 

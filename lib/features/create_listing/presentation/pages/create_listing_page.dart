@@ -548,6 +548,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
               l10n.listingCreateCheckConstraint,
             CreateListingFailureKind.validationRejected =>
               l10n.checkDetailsAndRetry,
+            CreateListingFailureKind.contentRejected =>
+              l10n.contentModerationRejected,
             CreateListingFailureKind.genericCreate =>
               l10n.listingCreateFailedRetry,
             null => l10n.listingCreateFailedRetry,

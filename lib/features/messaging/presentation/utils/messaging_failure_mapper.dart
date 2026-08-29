@@ -1,4 +1,5 @@
 import '../../../../core/errors/failures.dart';
+import '../../../../core/errors/content_moderation_failure.dart';
 import '../../domain/messaging_failure_kind.dart';
 
 /// Maps repository [Failure] values to [MessagingFailureKind] for UI.
@@ -11,6 +12,9 @@ MessagingFailureKind messagingFailureKindFrom(Failure failure) {
     };
   }
   final m = failure.message.toLowerCase();
+  if (isContentRejectedFailure(failure)) {
+    return MessagingFailureKind.contentRejected;
+  }
   if (m.contains('not authenticated')) {
     return MessagingFailureKind.notAuthenticated;
   }

@@ -112,9 +112,10 @@ void main() {
 
   group('buildListingShareUrl', () {
     test('builds normalized listing URL from base', () {
+      const listingId = 'c476a9b2-9c42-4cee-b0f1-f95923dcce01';
       expect(
-        buildListingShareUrl('https://carzon.example/', 'listing-007'),
-        'https://carzon.example/listings/listing-007',
+        buildListingShareUrl('https://carzon.md/', listingId),
+        'https://carzon.md/listings/$listingId',
       );
     });
 

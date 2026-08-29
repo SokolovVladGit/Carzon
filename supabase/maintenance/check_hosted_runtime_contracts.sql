@@ -281,6 +281,28 @@ check_rows AS (
                 ) THEN 'PASS' ELSE 'WARN' END,
            'Backend consistency trigger; not required for basic client reads'
 
+    UNION ALL
+
+    SELECT 27, 'moderation', 'table_listing_reports',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'listing_reports'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Structured listing-report storage; direct client table access must remain revoked'
+
+    UNION ALL
+
+    SELECT 28, 'moderation', 'rpc_report_listing',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'report_listing')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'report_listing'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'report_listing'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Native listing reporting requires authenticated EXECUTE and no anon EXECUTE'
+
     -- seller profiles ---------------------------------------------------------
     UNION ALL
 

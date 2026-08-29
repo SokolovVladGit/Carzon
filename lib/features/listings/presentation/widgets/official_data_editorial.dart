@@ -208,6 +208,9 @@ class OfficialDataSourceHeader extends StatelessWidget {
     required this.sourceKey,
     this.updatedDateLabel,
     this.updatedDateKey,
+    this.onInfoPressed,
+    this.infoButtonKey,
+    this.infoTooltip,
   });
 
   final ThemeData theme;
@@ -215,6 +218,9 @@ class OfficialDataSourceHeader extends StatelessWidget {
   final Key sourceKey;
   final String? updatedDateLabel;
   final Key? updatedDateKey;
+  final VoidCallback? onInfoPressed;
+  final Key? infoButtonKey;
+  final String? infoTooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -224,27 +230,49 @@ class OfficialDataSourceHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: scheme.primary.withValues(alpha: isDark ? 0.14 : 0.08),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            child: Text(
-              key: sourceKey,
-              sourceLabel,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.12,
-                color: scheme.primary.withValues(alpha: isDark ? 0.94 : 0.9),
+        Flexible(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: scheme.primary.withValues(alpha: isDark ? 0.14 : 0.08),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              child: Text(
+                key: sourceKey,
+                sourceLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.12,
+                  color: scheme.primary.withValues(alpha: isDark ? 0.94 : 0.9),
+                ),
               ),
             ),
           ),
         ),
+        if (onInfoPressed != null) ...[
+          const SizedBox(width: 4),
+          IconButton(
+            key: infoButtonKey,
+            onPressed: onInfoPressed,
+            tooltip: infoTooltip,
+            visualDensity: VisualDensity.compact,
+            constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              Icons.info_outline_rounded,
+              size: 17,
+              color: scheme.onSurfaceVariant.withValues(
+                alpha: isDark ? 0.78 : 0.74,
+              ),
+            ),
+          ),
+        ],
         if (updatedDateLabel != null) ...[
           const SizedBox(width: 8),
-          Expanded(
+          Flexible(
             child: Text(
               key: updatedDateKey,
               updatedDateLabel!,

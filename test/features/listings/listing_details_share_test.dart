@@ -17,6 +17,7 @@ import 'package:carzon/l10n/app_localizations.dart';
 import 'package:carzon/shared/ui/carzon_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -62,6 +63,9 @@ void main() {
   late MockGetSellerPublicProfile sellerProfileUseCase;
 
   setUp(() async {
+    dotenv.testLoad(
+      fileInput: 'CARZON_LISTING_SHARE_BASE_URL=https://carzon.md',
+    );
     await sl.reset();
     detailsCubit = _MockDetailsCubit();
     authCubit = _MockAuthCubit();
@@ -102,6 +106,7 @@ void main() {
   });
 
   tearDown(() async {
+    dotenv.testLoad(fileInput: '');
     await compareCubit.close();
     await sl.reset();
   });
@@ -147,6 +152,18 @@ void main() {
     expect(find.byTooltip(l10n.listingShareAction), findsOneWidget);
   });
 
+  testWidgets('share button hidden when no production base URL is configured', (
+    tester,
+  ) async {
+    dotenv.testLoad(fileInput: '');
+
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    expect(find.byIcon(CarzonIcons.share), findsNothing);
+    expect(find.byTooltip(l10n.listingShareAction), findsNothing);
+  });
+
   testWidgets('share button hidden on unavailable listing failure', (
     tester,
   ) async {
@@ -183,7 +200,7 @@ void main() {
     expect(sharedText!, contains('Skoda Octavia 1.8 TSI'));
     expect(sharedText!, contains('€10 800'));
     expect(sharedText!, contains('Tiraspol'));
-    expect(sharedText!, contains(l10n.listingShareFallbackLine('listing-007')));
+    expect(sharedText!, contains('https://carzon.md/listings/listing-007'));
     expect(sharedText!, isNot(contains('+373')));
   });
 

@@ -90,6 +90,17 @@ Migration **`20260707123000_schedule_process_recall_data_jobs_cron.sql`** regist
 
 If Vault secrets are missing, the invoke helper logs a **WARNING** and skips HTTP (no crash).
 
+The 30-minute schedule is unchanged. The SQL invoker now checks for a due,
+retry-eligible queued recall job before reading Vault or invoking the Edge
+Function, so an empty queue produces no pg_net request. The claim RPC remains
+authoritative; work inserted immediately after a false preflight waits for the
+next scheduled run.
+
+Migration **`20260825120000_reduce_idle_background_worker_io.sql`** also retains
+14 days of completed pg_cron history through a daily cleanup capped at 10,000
+rows. Existing historical rows require separate observed hosted cleanup, and the
+migration does not perform pg_net physical bloat recovery.
+
 ## fake_sample QA checklist
 
 1. Set Edge `CARZON_RECALL_DATA_PROVIDER_MODE=fake_sample`

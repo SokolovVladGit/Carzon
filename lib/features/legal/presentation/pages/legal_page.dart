@@ -5,113 +5,148 @@ import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_back_button.dart';
+import '../models/legal_document_content.dart';
 import '../models/legal_section_content.dart';
-import '../utils/legal_sections_builder.dart';
 
-/// Static Terms & Privacy surface for the Carzon MVP.
-///
-/// Editorial in-app policy layout: localized sections, no remote fetch.
-class LegalPage extends StatelessWidget {
-  const LegalPage({super.key});
+/// Final localized legal document rendered from the same structured source used
+/// by the portable public legal site.
+class LegalPage extends StatefulWidget {
+  const LegalPage({super.key, this.kind = LegalDocumentKind.notices});
+
+  final LegalDocumentKind kind;
+
+  @override
+  State<LegalPage> createState() => _LegalPageState();
+}
+
+class _LegalPageState extends State<LegalPage> {
+  Future<LegalDocumentContent>? _documentFuture;
+  String? _languageCode;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final languageCode = Localizations.localeOf(context).languageCode;
+    if (_documentFuture == null || _languageCode != languageCode) {
+      _languageCode = languageCode;
+      _documentFuture = loadLegalDocumentContent(
+        kind: widget.kind,
+        languageCode: languageCode,
+      );
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant LegalPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.kind != widget.kind) {
+      _documentFuture = loadLegalDocumentContent(
+        kind: widget.kind,
+        languageCode: _languageCode ?? 'ru',
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: _legalPageBackground(context),
-      appBar: AppBar(
-        leading: const AppBackButton(fallback: AppRoutes.listings),
-        title: Text(l10n.legalTitle),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        foregroundColor: scheme.onSurface,
-        systemOverlayStyle: isDark
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark,
-      ),
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: _legalCanvasGradient(context),
-            stops: const [0, 0.42, 1],
+    final languageCode = _languageCode ?? 'ru';
+    return FutureBuilder<LegalDocumentContent>(
+      future: _documentFuture,
+      builder: (context, snapshot) {
+        final document = snapshot.data;
+        final scheme = Theme.of(context).colorScheme;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Scaffold(
+          backgroundColor: _legalPageBackground(context),
+          appBar: AppBar(
+            leading: const AppBackButton(fallback: AppRoutes.settings),
+            title: Text(document?.title ?? context.l10n.legalTitle),
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            foregroundColor: scheme.onSurface,
+            systemOverlayStyle: isDark
+                ? SystemUiOverlayStyle.light
+                : SystemUiOverlayStyle.dark,
           ),
-        ),
-        child: const _LegalBody(),
-      ),
+          body: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: _legalCanvasGradient(context),
+                stops: const [0, 0.42, 1],
+              ),
+            ),
+            child: switch (snapshot.connectionState) {
+              ConnectionState.waiting || ConnectionState.active => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              _ when snapshot.hasError => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    languageCode == 'ro'
+                        ? 'Documentul nu a putut fi încărcat.'
+                        : 'Не удалось загрузить документ.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              _ => _LegalBody(document: document!),
+            },
+          ),
+        );
+      },
     );
   }
 }
 
 class _LegalBody extends StatelessWidget {
-  const _LegalBody();
+  const _LegalBody({required this.document});
 
-  static const double _sectionGap = 28;
+  final LegalDocumentContent document;
 
   @override
   Widget build(BuildContext context) {
-    final sections = buildLegalSections(context.l10n);
     final bottomInset = MediaQuery.paddingOf(context).bottom;
-
     return ListView(
       padding: EdgeInsets.fromLTRB(16, 4, 16, 32 + bottomInset),
       children: [
-        const _LegalDisclaimerCallout(),
-        for (var i = 0; i < sections.length; i++) ...[
-          SizedBox(height: i == 0 ? 24 : _sectionGap),
-          _LegalSectionBlock(section: sections[i]),
+        _LegalIntro(text: document.intro),
+        for (final section in document.sections) ...[
+          const SizedBox(height: 28),
+          _LegalSectionBlock(section: section),
         ],
       ],
     );
   }
 }
 
-class _LegalDisclaimerCallout extends StatelessWidget {
-  const _LegalDisclaimerCallout();
+class _LegalIntro extends StatelessWidget {
+  const _LegalIntro({required this.text});
+
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final l10n = context.l10n;
-
     return DecoratedBox(
-      key: const ValueKey<String>('legal_disclaimer_callout'),
-      decoration: AppTheme.filterAlertManagementSurface(scheme, borderRadius: 20),
+      key: const ValueKey<String>('legal_document_intro'),
+      decoration: AppTheme.filterAlertManagementSurface(
+        scheme,
+        borderRadius: 20,
+      ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 17),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.legalDisclaimerLabel,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: AppTheme.editorialAccentColor(
-                  scheme,
-                ).withValues(alpha: isDark ? 0.88 : 0.82),
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.legalDisclaimer,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant.withValues(
-                  alpha: isDark ? 0.86 : 0.88,
-                ),
-                height: 1.48,
-              ),
-            ),
-          ],
+        child: Text(
+          text,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: scheme.onSurfaceVariant,
+            height: 1.5,
+          ),
         ),
       ),
     );
@@ -128,14 +163,9 @@ class _LegalSectionBlock extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-
     final bodyStyle = theme.textTheme.bodyMedium?.copyWith(
       color: scheme.onSurface.withValues(alpha: isDark ? 0.90 : 0.88),
       height: 1.55,
-    );
-    final metaStyle = theme.textTheme.bodySmall?.copyWith(
-      color: scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.82 : 0.86),
-      height: 1.48,
     );
 
     return Column(
@@ -145,7 +175,6 @@ class _LegalSectionBlock extends StatelessWidget {
           section.heading,
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w800,
-            letterSpacing: -0.08,
             height: 1.3,
           ),
         ),
@@ -156,55 +185,28 @@ class _LegalSectionBlock extends StatelessWidget {
         ],
         if (section.bullets.isNotEmpty) ...[
           if (section.paragraphs.isNotEmpty) const SizedBox(height: 12),
-          _LegalBulletList(items: section.bullets, style: bodyStyle),
-        ],
-        for (var i = 0; i < section.trailingParagraphs.length; i++) ...[
-          const SizedBox(height: 12),
-          Text(section.trailingParagraphs[i], style: metaStyle),
-        ],
-      ],
-    );
-  }
-}
-
-class _LegalBulletList extends StatelessWidget {
-  const _LegalBulletList({required this.items, this.style});
-
-  final List<String> items;
-  final TextStyle? style;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bulletColor = scheme.onSurfaceVariant.withValues(
-      alpha: isDark ? 0.72 : 0.68,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final item in items)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 9, right: 10),
-                  child: Container(
-                    width: 4,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: bulletColor,
-                      shape: BoxShape.circle,
+          for (final item in section.bullets)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 9, right: 10),
+                    child: Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: scheme.onSurfaceVariant,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                ),
-                Expanded(child: Text(item, style: style)),
-              ],
+                  Expanded(child: Text(item, style: bodyStyle)),
+                ],
+              ),
             ),
-          ),
+        ],
       ],
     );
   }
@@ -212,40 +214,25 @@ class _LegalBulletList extends StatelessWidget {
 
 Color _legalPageBackground(BuildContext context) {
   final scheme = Theme.of(context).colorScheme;
-  final isDark = scheme.brightness == Brightness.dark;
-  if (isDark) {
-    return Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.050),
-      scheme.surface,
-    );
-  }
   return Color.alphaBlend(
-    scheme.primary.withValues(alpha: 0.018),
+    scheme.primary.withValues(
+      alpha: scheme.brightness == Brightness.dark ? 0.05 : 0.018,
+    ),
     scheme.surface,
   );
 }
 
 List<Color> _legalCanvasGradient(BuildContext context) {
   final scheme = Theme.of(context).colorScheme;
-  final isDark = scheme.brightness == Brightness.dark;
-  if (isDark) {
+  if (scheme.brightness == Brightness.dark) {
     return AppTheme.editorialDarkFilterCanvasGradient(scheme);
   }
-
-  final top = Color.alphaBlend(
-    scheme.surfaceTint.withValues(alpha: 0.008),
-    scheme.surface,
-  );
-  final mid = Color.alphaBlend(
-    scheme.primary.withValues(alpha: 0.032),
-    scheme.surfaceContainerLowest,
-  );
-  final bottom = Color.alphaBlend(
-    scheme.onSurface.withValues(alpha: 0.024),
+  return [
     Color.alphaBlend(
-      scheme.primary.withValues(alpha: 0.070),
-      scheme.surfaceContainerLow,
+      scheme.surfaceTint.withValues(alpha: 0.008),
+      scheme.surface,
     ),
-  );
-  return [top, mid, bottom];
+    Color.alphaBlend(scheme.primary.withValues(alpha: 0.032), scheme.surface),
+    scheme.surface,
+  ];
 }

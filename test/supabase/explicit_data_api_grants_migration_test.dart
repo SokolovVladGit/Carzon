@@ -51,6 +51,8 @@ void main() {
     'carzon_invoke_process_message_notifications_worker',
     // Phase 4A: pg_cron-only worker; REVOKE from anon/authenticated in 20260601 migration.
     'carzon_invoke_process_filter_alert_notifications_worker',
+    // Internal pg_cron-only maintenance; client execution is explicitly revoked.
+    'carzon_cleanup_cron_job_run_details',
     // P2 V1 price drop favorites (enqueue on listing edit + Edge claim + pg_cron worker only).
     'enqueue_price_drop_favorite_notification_events',
     'claim_price_drop_notification_events_for_processing',
@@ -113,6 +115,10 @@ void main() {
     'carzon_messaging_peer_from_conversation',
     // Retained moderation evidence guard: table trigger only, never app-called.
     'protect_user_report_original_evidence',
+    // App Store moderation: trigger-only filter/evidence helpers. Client access
+    // is through report_listing; operator RPCs are service_role-only.
+    'carzon_enforce_user_text',
+    'protect_listing_report_original_evidence',
   };
 
   /// Internal `public` tables with RLS that must **not** receive `GRANT` to
@@ -142,6 +148,7 @@ void main() {
     'fuel_price_fetch_jobs',
     // M0.3 reports: RPC-only writes; no client table access.
     'user_reports',
+    'listing_reports',
   };
 
   /// `public` tables created by this repo: must match migrations exactly.
@@ -177,6 +184,7 @@ void main() {
     'fuel_price_fetch_jobs',
     'user_blocks',
     'user_reports',
+    'listing_reports',
   };
 
   setUpAll(() {

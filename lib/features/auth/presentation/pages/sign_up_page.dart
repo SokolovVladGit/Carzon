@@ -196,7 +196,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         label: l10n.legalLink,
                         loading: loading,
                         muted: true,
-                        onPressed: () => context.go(AppRoutes.legal),
+                        onPressed: () => context.go(AppRoutes.terms),
                       ),
                     ],
                   ),

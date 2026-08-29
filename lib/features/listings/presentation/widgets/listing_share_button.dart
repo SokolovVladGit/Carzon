@@ -23,6 +23,10 @@ class ListingShareButton extends StatelessWidget {
   final ListingShareLauncher? shareLauncher;
   final ListingShareUrlBuilder? shareUrlBuilder;
 
+  /// Central capability check used by the hero before it allocates chrome for
+  /// this action. The button repeats the guard for safe standalone use.
+  static bool get isAvailable => Env.listingSharingEnabled;
+
   Future<void> _handleTap(BuildContext context) async {
     final l10n = context.l10n;
     final shareUrl =
@@ -42,6 +46,10 @@ class ListingShareButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!isAvailable && shareUrlBuilder == null) {
+      return const SizedBox.shrink();
+    }
+
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final iconColor = scheme.onSurface.withValues(alpha: 0.92);
