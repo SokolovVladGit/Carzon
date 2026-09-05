@@ -28,7 +28,18 @@ enum ListingBodyType {
 }
 
 /// Stored as `listings.fuel_type` (CHECK-constrained nullable text).
-enum ListingFuelType { petrol, diesel, hybrid, electric, lpg, cng, other }
+///
+/// [plugInHybrid] persists as `plug_in_hybrid` (not Dart `.name`).
+enum ListingFuelType {
+  petrol,
+  diesel,
+  hybrid,
+  plugInHybrid,
+  electric,
+  lpg,
+  cng,
+  other,
+}
 
 /// Stored as `listings.drivetrain`; `fourWheel` ↔ DB `four_wheel`.
 enum ListingDrivetrain { fwd, rwd, awd, fourWheel }
@@ -52,6 +63,7 @@ class Listing extends Equatable {
     required this.title,
     required this.make,
     required this.model,
+    this.variant,
     required this.year,
     required this.priceEur,
     this.priceCurrency = ListingCurrency.eur,
@@ -82,6 +94,10 @@ class Listing extends Equatable {
   final String title;
   final String make;
   final String model;
+
+  /// Optional seller-authored derivative (`listings.variant`).
+  final String? variant;
+
   final int year;
   final num priceEur;
 
@@ -147,6 +163,7 @@ class Listing extends Equatable {
     title,
     make,
     model,
+    variant,
     year,
     priceEur,
     priceCurrency,
@@ -220,12 +237,25 @@ ListingTransmissionType? listingTransmissionTypeFromDb(String? raw) {
   return null;
 }
 
+/// DB / discovery-wire value for [ListingFuelType.plugInHybrid].
+const String kListingPlugInHybridDbValue = 'plug_in_hybrid';
+
+String listingFuelTypeToDbValue(ListingFuelType value) {
+  return switch (value) {
+    ListingFuelType.plugInHybrid => kListingPlugInHybridDbValue,
+    _ => value.name,
+  };
+}
+
 ListingFuelType? listingFuelTypeFromDb(String? raw) {
   if (raw == null) return null;
   final v = raw.trim().toLowerCase();
   if (v.isEmpty) return null;
+  if (v == kListingPlugInHybridDbValue || v == 'pluginhybrid') {
+    return ListingFuelType.plugInHybrid;
+  }
   for (final e in ListingFuelType.values) {
-    if (e.name == v) return e;
+    if (e != ListingFuelType.plugInHybrid && e.name == v) return e;
   }
   return null;
 }

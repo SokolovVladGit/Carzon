@@ -141,6 +141,7 @@ class ListingModel extends Listing {
     required super.type,
     required super.city,
     required super.marketRegion,
+    super.variant,
     super.bodyType,
     super.fuelType,
     super.engineDisplacementLiters,
@@ -166,6 +167,7 @@ class ListingModel extends Listing {
       title: _optionalTextWithFallback(json['title'], ''),
       make: _optionalTextWithFallback(json['make'], ''),
       model: _optionalTextWithFallback(json['model'], ''),
+      variant: _nonEmptyTrimmedOptional(json['variant']),
       year: _intFromDynamic(json['year']),
       priceEur: _numFromDynamic(json['price_eur']),
       priceCurrency: listingCurrencyFromDbString(
@@ -295,6 +297,7 @@ class ListingModel extends Listing {
     'title': title,
     'make': make,
     'model': model,
+    'variant': variant,
     'year': year,
     'price_eur': priceEur,
     'price_currency': listingCurrencyToDbString(priceCurrency),
@@ -303,7 +306,7 @@ class ListingModel extends Listing {
     'city': city,
     'market_region': marketRegion.name,
     'body_type': bodyType?.name,
-    'fuel_type': fuelType?.name,
+    'fuel_type': fuelType == null ? null : listingFuelTypeToDbValue(fuelType!),
     'engine_displacement_liters': engineDisplacementLiters,
     'engine_power_hp': enginePowerHp,
     'drivetrain': drivetrain == null

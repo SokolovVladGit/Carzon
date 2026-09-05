@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../../app/di/injection.dart';
 import '../../../../../core/l10n/app_localizations_x.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../domain/entities/listing.dart';
+import '../../../domain/repositories/vehicle_model_catalog_repository.dart';
 import '../../../domain/entities/listing_currency.dart';
 import '../../../domain/entities/listing_sort_option.dart';
 import '../../../domain/catalog/listing_brands.dart';
@@ -22,6 +24,7 @@ import 'listings_filter_summary_strip.dart';
 import 'listings_filter_vehicle_spec_selector_field.dart';
 import '../../../../create_listing/presentation/widgets/listing_body_type_pick_sheet.dart';
 import '../listing_brand_pick_sheet.dart';
+import '../listing_model_pick_sheet.dart';
 import '../listing_vehicle_spec_pickers.dart';
 import '../listing_year_pick_sheet.dart';
 
@@ -43,6 +46,7 @@ class ListingsFilterForm extends StatefulWidget {
     required this.seed,
     this.showDraftSummaryStrip = true,
     this.onDraftMutated,
+    this.vehicleModelCatalog,
   });
 
   final ListingsFilterFormSeed seed;
@@ -52,6 +56,9 @@ class ListingsFilterForm extends StatefulWidget {
 
   /// Optional hook when any controlled draft field updates (browse filter bell).
   final VoidCallback? onDraftMutated;
+
+  @visibleForTesting
+  final VehicleModelCatalogRepository? vehicleModelCatalog;
 
   @override
   State<ListingsFilterForm> createState() => ListingsFilterFormState();
@@ -82,6 +89,9 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
   late ListingPriceCurrencyFilter _priceCurrency;
 
   String? _catalogMake;
+  String? _selectedCanonicalModel;
+  bool _manualModel = false;
+  int _modelCatalogEpoch = 0;
   int? _minYearValue;
   int? _maxYearValue;
 
@@ -98,6 +108,16 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     _model = TextEditingController(text: w.model ?? '');
     _customBrand = TextEditingController();
     _hydrateCatalogMake(make: w.make);
+    if (_catalogMake == null) {
+      _model.clear();
+    } else if (_catalogMake == _brandOtherEnglish) {
+      _manualModel = true;
+    } else if ((w.model ?? '').trim().isNotEmpty) {
+      _manualModel = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _hydrateCanonicalFilterModel(_catalogMake!, w.model!.trim());
+      });
+    }
     _minYearValue = w.minYear;
     _maxYearValue = w.maxYear;
     _minPrice = TextEditingController(
@@ -190,7 +210,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
   /// Draft criteria reflecting current field values (for live summary / previews).
   ListingsFilterFormSeed get draftSeed => ListingsFilterFormSeed(
     make: _effectiveMakeFilter(),
-    model: _model.text.trim().isEmpty ? null : _model.text.trim(),
+    model: _effectiveModelFilter(),
     minYear: _minYearValue,
     maxYear: _maxYearValue,
     minPrice: _parsePrice(_minPrice.text),
@@ -211,7 +231,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
   void resetDraftToVanilla() {
     _catalogMake = null;
     _customBrand.clear();
-    _model.clear();
+    _clearModelDraft();
     _minYearValue = null;
     _maxYearValue = null;
     _minPrice.clear();
@@ -301,6 +321,70 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     return _catalogMake;
   }
 
+  bool get _isCustomMake => _catalogMake == _brandOtherEnglish;
+
+  String? _effectiveModelFilter() {
+    if (_catalogMake == null) return null;
+    if (_manualModel || _isCustomMake) {
+      final t = _model.text.trim();
+      return t.isEmpty ? null : t;
+    }
+    final canonical = _selectedCanonicalModel?.trim();
+    return (canonical == null || canonical.isEmpty) ? null : canonical;
+  }
+
+  void _clearModelDraft() {
+    _modelCatalogEpoch += 1;
+    _selectedCanonicalModel = null;
+    _manualModel = _isCustomMake;
+    _model.clear();
+  }
+
+  Future<void> _hydrateCanonicalFilterModel(
+    String make,
+    String rawModel,
+  ) async {
+    final catalog = widget.vehicleModelCatalog;
+    if (catalog == null && !sl.isRegistered<VehicleModelCatalogRepository>()) {
+      return;
+    }
+    final repo = catalog ?? sl<VehicleModelCatalogRepository>();
+    final epoch = ++_modelCatalogEpoch;
+    final result = await repo.listVehicleModelsForMake(make);
+    if (!mounted || epoch != _modelCatalogEpoch) return;
+    if (_catalogMake != make) return;
+    result.fold((_) {}, (models) {
+      if (!models.contains(rawModel)) return;
+      setState(() {
+        _selectedCanonicalModel = rawModel;
+        _manualModel = false;
+      });
+    });
+  }
+
+  Future<void> _openModelSheet() async {
+    if (_catalogMake == null || _isCustomMake) return;
+    final picked = await showListingModelPickSheet(
+      context: context,
+      l10n: context.l10n,
+      make: _catalogMake!,
+      selectedCanonicalModel: _selectedCanonicalModel,
+      catalog: widget.vehicleModelCatalog,
+    );
+    if (!mounted || picked == null) return;
+    setState(() {
+      if (picked.manual) {
+        _manualModel = true;
+        _selectedCanonicalModel = null;
+      } else {
+        _manualModel = false;
+        _selectedCanonicalModel = picked.canonicalValue;
+        _model.clear();
+      }
+    });
+    _notifyDraftMutated();
+  }
+
   String _makeRowDisplay(AppLocalizations l10n) {
     if (_catalogMake == null) return l10n.createListingChooseBrand;
     if (_catalogMake == _brandOtherEnglish) {
@@ -333,7 +417,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
         _customBrand.clear();
       }
       if (prev != _catalogMake) {
-        _model.clear();
+        _clearModelDraft();
       }
     });
     _notifyDraftMutated();
@@ -419,7 +503,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     setState(() {
       _catalogMake = null;
       _customBrand.clear();
-      _model.clear();
+      _clearModelDraft();
     });
     _notifyDraftMutated();
   }
@@ -826,7 +910,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     required bool mutateInlineErrors,
   }) {
     final makeDraft = _effectiveMakeFilter();
-    final model = _model.text.trim();
+    final model = _effectiveModelFilter() ?? '';
     final minYear = _minYearValue;
     final maxYear = _maxYearValue;
     final minPrice = _parsePrice(_minPrice.text);
@@ -1075,15 +1159,32 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
                 ),
               ],
               const SizedBox(height: 15),
-              TextField(
-                controller: _model,
-                textCapitalization: TextCapitalization.words,
-                decoration: _fieldDeco(
-                  theme,
-                  label: l10n.filterModel,
-                  hint: l10n.filterModelHint,
-                ),
+              ListingModelSelectorField(
+                key: const ValueKey('listings_filter_model_field'),
+                l10n: l10n,
+                enabled: _catalogMake != null && !_isCustomMake,
+                manualMode: _manualModel || _isCustomMake,
+                canonicalModel: _selectedCanonicalModel,
+                requiredWhenEnabled: false,
+                onTap: _openModelSheet,
+                placeholder: _catalogMake == null
+                    ? l10n.listingModelChooseMakeFirst
+                    : l10n.filterModelHint,
+                decoration: _fieldDeco(theme, label: l10n.filterModel),
               ),
+              if (_catalogMake != null && (_manualModel || _isCustomMake)) ...[
+                const SizedBox(height: 15),
+                TextField(
+                  key: const ValueKey('listings_filter_manual_model'),
+                  controller: _model,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: _fieldDeco(
+                    theme,
+                    label: l10n.listingModelManualFieldLabel,
+                    hint: l10n.filterModelHint,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

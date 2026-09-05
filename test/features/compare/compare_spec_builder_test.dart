@@ -15,12 +15,14 @@ CompareResolvedSlot _slot({
   required int year,
   ListingVinStatus vin = ListingVinStatus.notProvided,
   ListingTransmissionType? transmissionType,
+  String? variant,
 }) {
   final listing = Listing(
     id: id,
     title: 'T',
     make: 'BMW',
     model: '3',
+    variant: variant,
     year: year,
     priceEur: price,
     mileageKm: mileage,
@@ -115,6 +117,20 @@ void main() {
         .firstWhere((r) => r.id == 'transmission');
     expect(row.label, ru.compareRowTransmission);
     expect(row.values.first, ru.listingTransmissionManual);
+    expect(row.values.last, CompareSpecRow.missingToken);
+  });
+
+  test('variant row distinguishes listing-only derivatives', () {
+    final slots = [
+      _slot(id: 'a', price: 1, mileage: 1, year: 2018, variant: 'M340i'),
+      _slot(id: 'b', price: 2, mileage: 2, year: 2019),
+    ];
+    final sections = CompareSpecBuilder(ru, slots).buildSections();
+    final row = sections
+        .expand((s) => s.rows)
+        .firstWhere((r) => r.id == 'variant');
+    expect(row.label, ru.compareRowVariant);
+    expect(row.values.first, 'M340i');
     expect(row.values.last, CompareSpecRow.missingToken);
   });
 }

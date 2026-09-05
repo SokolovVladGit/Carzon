@@ -584,6 +584,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingFuelTypeHybrid => 'Гибрид';
 
   @override
+  String get listingFuelTypePlugInHybrid => 'Подключаемый гибрид';
+
+  @override
   String get listingFuelTypeElectric => 'Электро';
 
   @override
@@ -1291,6 +1294,57 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get listingCityManualFieldLabel => 'Населённый пункт';
+
+  @override
+  String get listingModelSelectPlaceholder => 'Выберите модель';
+
+  @override
+  String get listingModelPickerTitle => 'Выберите модель';
+
+  @override
+  String get listingModelSearchHint => 'Поиск модели';
+
+  @override
+  String get listingModelNoResults => 'Модель не найдена';
+
+  @override
+  String get listingModelNotListed => 'Модели нет в списке';
+
+  @override
+  String get listingModelManualHelper =>
+      'Не нашли нужную модель? Укажите её вручную.';
+
+  @override
+  String get listingModelManualFieldLabel => 'Модель';
+
+  @override
+  String get listingModelLoading => 'Загрузка моделей…';
+
+  @override
+  String get listingModelLoadFailed => 'Не удалось загрузить модели.';
+
+  @override
+  String get listingModelRetry => 'Повторить';
+
+  @override
+  String get listingModelChooseMakeFirst => 'Сначала выберите марку';
+
+  @override
+  String get listingModelBaseHelper =>
+      'Выберите базовую модель. Версию, например M340i или C 63 AMG, укажите отдельно.';
+
+  @override
+  String get listingVariantLabel => 'Версия / модификация';
+
+  @override
+  String get listingVariantHint => 'Например: M340i, C 63 AMG';
+
+  @override
+  String get listingVariantHelper =>
+      'Не указывайте здесь гибрид, кузов или коробку — для них есть отдельные поля.';
+
+  @override
+  String get listingVariantTooLong => 'Не длиннее 80 символов.';
 
   @override
   String get fieldPhone => 'Номер телефона';
@@ -2980,6 +3034,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get compareRowModel => 'Модель';
+
+  @override
+  String get compareRowVariant => 'Версия';
 
   @override
   String get compareRowBody => 'Кузов';

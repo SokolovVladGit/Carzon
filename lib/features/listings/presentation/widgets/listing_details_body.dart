@@ -125,6 +125,8 @@ class _DetailsList extends StatelessWidget {
         _DetailsRowData(l10n.listingFieldMake, listing.make.trim()),
       if (hasValue(listing.model))
         _DetailsRowData(l10n.listingFieldModel, listing.model.trim()),
+      if (listing.variant != null && listing.variant!.trim().isNotEmpty)
+        _DetailsRowData(l10n.listingVariantLabel, listing.variant!.trim()),
       _DetailsRowData(l10n.listingFieldYear, listing.year.toString()),
       _DetailsRowData(
         l10n.listingFieldMileage,

@@ -63,6 +63,8 @@ String formatListingFuelType(AppLocalizations l10n, ListingFuelType type) {
       return l10n.listingFuelTypeDiesel;
     case ListingFuelType.hybrid:
       return l10n.listingFuelTypeHybrid;
+    case ListingFuelType.plugInHybrid:
+      return l10n.listingFuelTypePlugInHybrid;
     case ListingFuelType.electric:
       return l10n.listingFuelTypeElectric;
     case ListingFuelType.lpg:

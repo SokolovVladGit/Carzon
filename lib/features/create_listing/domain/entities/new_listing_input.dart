@@ -12,6 +12,7 @@ class NewListingInput extends Equatable {
     required this.title,
     required this.make,
     required this.model,
+    this.variant,
     required this.year,
     required this.priceEur,
     this.priceCurrency = ListingCurrency.eur,
@@ -39,6 +40,7 @@ class NewListingInput extends Equatable {
   final String title;
   final String make;
   final String model;
+  final String? variant;
   final int year;
   final num priceEur;
   final ListingCurrency priceCurrency;
@@ -94,11 +96,13 @@ class NewListingInput extends Equatable {
     String? registration,
     String? description,
     String? vin,
+    String? variant,
   }) => NewListingInput(
     sellerId: sellerId,
     title: title,
     make: make,
     model: model,
+    variant: variant ?? this.variant,
     year: year,
     priceEur: priceEur,
     priceCurrency: priceCurrency ?? this.priceCurrency,
@@ -129,6 +133,7 @@ class NewListingInput extends Equatable {
     title,
     make,
     model,
+    variant,
     year,
     priceEur,
     priceCurrency,

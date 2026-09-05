@@ -50,6 +50,7 @@ class CompareSpecBuilder {
         rows: [
           _row('make', l10n.compareRowMake, _makeValues()),
           _row('model', l10n.compareRowModel, _modelValues()),
+          _row('variant', l10n.compareRowVariant, _variantValues()),
           _row('body', l10n.compareRowBody, _bodyValues()),
           _row('type', l10n.compareRowVehicleType, _vehicleTypeValues()),
           _row(
@@ -151,6 +152,9 @@ class CompareSpecBuilder {
   List<String> _modelValues() => _snapshotAware(
     (slot) => _fmt.formatModel(slot.listing, slot.item.snapshot),
   );
+
+  List<String> _variantValues() =>
+      _listingOnly((slot) => _fmt.formatVariant(slot.listing));
 
   List<String> _bodyValues() =>
       _listingOnly((slot) => _fmt.formatBody(slot.listing));

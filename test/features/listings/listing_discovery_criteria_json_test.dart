@@ -102,6 +102,18 @@ void main() {
       );
     });
 
+    test('plug_in_hybrid fuel wire round-trips and is not Dart .name', () {
+      assertRoundTrip(
+        const ListingDiscoveryCriteria(fuelType: ListingFuelType.plugInHybrid),
+      );
+      final encoded = listingDiscoveryCriteriaToJson(
+        const ListingDiscoveryCriteria(fuelType: ListingFuelType.plugInHybrid),
+      );
+      expect(encoded['fuelType'], 'plug_in_hybrid');
+      expect(encoded.containsKey('variant'), isFalse);
+      expect(encoded['schemaVersion'], 1);
+    });
+
     test('fuel and transmission round-trip with dual_clutch wire', () {
       assertRoundTrip(
         const ListingDiscoveryCriteria(

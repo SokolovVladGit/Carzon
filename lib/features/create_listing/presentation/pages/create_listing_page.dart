@@ -16,8 +16,10 @@ import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../listings/domain/catalog/listing_brands.dart';
 import '../../../listings/domain/catalog/listing_city_catalog.dart';
+import '../../../listings/domain/repositories/vehicle_model_catalog_repository.dart';
 import '../../../listings/presentation/widgets/listing_brand_pick_sheet.dart';
 import '../../../listings/presentation/widgets/listing_city_pick_sheet.dart';
+import '../../../listings/presentation/widgets/listing_model_pick_sheet.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../../listings/domain/constants/listing_text_limits.dart';
@@ -59,24 +61,35 @@ const double _kCreateListingScrollBottomInsetFloor = 14;
 final String _kListingBrandCatalogOther = kListingBrandCatalog.last; // "Other"
 
 class CreateListingPage extends StatelessWidget {
-  const CreateListingPage({super.key, @visibleForTesting this.imagePicker});
+  const CreateListingPage({
+    super.key,
+    @visibleForTesting this.imagePicker,
+    @visibleForTesting this.vehicleModelCatalog,
+  });
 
   @visibleForTesting
   final CreateListingImagePicker? imagePicker;
+
+  @visibleForTesting
+  final VehicleModelCatalogRepository? vehicleModelCatalog;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<CreateListingCubit>(),
-      child: _CreateListingView(imagePicker: imagePicker),
+      child: _CreateListingView(
+        imagePicker: imagePicker,
+        vehicleModelCatalog: vehicleModelCatalog,
+      ),
     );
   }
 }
 
 class _CreateListingView extends StatelessWidget {
-  const _CreateListingView({this.imagePicker});
+  const _CreateListingView({this.imagePicker, this.vehicleModelCatalog});
 
   final CreateListingImagePicker? imagePicker;
+  final VehicleModelCatalogRepository? vehicleModelCatalog;
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +131,7 @@ class _CreateListingView extends StatelessWidget {
             return _CreateListingForm(
               sellerId: authState.user!.id,
               imagePicker: imagePicker,
+              vehicleModelCatalog: vehicleModelCatalog,
             );
           },
         ),
@@ -127,10 +141,15 @@ class _CreateListingView extends StatelessWidget {
 }
 
 class _CreateListingForm extends StatefulWidget {
-  const _CreateListingForm({required this.sellerId, this.imagePicker});
+  const _CreateListingForm({
+    required this.sellerId,
+    this.imagePicker,
+    this.vehicleModelCatalog,
+  });
 
   final String sellerId;
   final CreateListingImagePicker? imagePicker;
+  final VehicleModelCatalogRepository? vehicleModelCatalog;
 
   @override
   State<_CreateListingForm> createState() => _CreateListingFormState();
@@ -149,6 +168,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
 
   final _title = TextEditingController();
   final _model = TextEditingController();
+  final _variant = TextEditingController();
   final _customBrand = TextEditingController();
 
   /// Free-text controllers preserved from the legacy layout.
@@ -156,6 +176,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   final _mileage = TextEditingController();
   final _city = TextEditingController();
   final GlobalKey<FormFieldState<String>> _citySelectorKey =
+      GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _modelSelectorKey =
       GlobalKey<FormFieldState<String>>();
   final _phone = TextEditingController();
   final _telegram = TextEditingController();
@@ -180,6 +202,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
 
   ListingCurrency _priceCurrency = ListingCurrency.eur;
   String? _selectedBrandCatalogValue;
+  String? _selectedCanonicalModel;
+  bool _manualModel = false;
 
   final List<CreateListingPhotoDraft> _photoDrafts = [];
 
@@ -192,6 +216,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     for (final c in [
       _title,
       _model,
+      _variant,
       _customBrand,
       _price,
       _mileage,
@@ -214,6 +239,31 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     customMakeText: _customBrand.text,
   );
 
+  bool get _isCustomMake =>
+      _selectedBrandCatalogValue == _kListingBrandCatalogOther;
+
+  VehicleModelCatalogRepository? get _catalog => widget.vehicleModelCatalog;
+
+  void _clearModelSelection() {
+    _selectedCanonicalModel = null;
+    _manualModel = _isCustomMake;
+    _model.clear();
+    _variant.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _modelSelectorKey.currentState?.reset();
+    });
+  }
+
+  String? _variantForSubmit() {
+    final t = _variant.text.trim();
+    return t.isEmpty ? null : t;
+  }
+
+  String _effectiveModelForSubmit() {
+    if (_manualModel || _isCustomMake) return _model.text.trim();
+    return _selectedCanonicalModel?.trim() ?? '';
+  }
+
   void _applyBrandPick(String picked) {
     final applied = applyListingBrandPick(picked);
     _selectedBrandCatalogValue = applied.catalogKey;
@@ -222,6 +272,31 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     } else {
       _customBrand.clear();
     }
+    _clearModelSelection();
+  }
+
+  Future<void> _openModelSheet() async {
+    if (_selectedBrandCatalogValue == null || _isCustomMake) return;
+    final picked = await showListingModelPickSheet(
+      context: context,
+      l10n: context.l10n,
+      make: _selectedBrandCatalogValue!,
+      selectedCanonicalModel: _selectedCanonicalModel,
+      catalog: _catalog,
+    );
+    if (!mounted || picked == null) return;
+    setState(() {
+      if (picked.manual) {
+        _manualModel = true;
+        _selectedCanonicalModel = null;
+      } else {
+        _manualModel = false;
+        _selectedCanonicalModel = picked.canonicalValue;
+        _model.clear();
+      }
+      _variant.clear();
+    });
+    _modelSelectorKey.currentState?.didChange(_selectedCanonicalModel);
   }
 
   String _effectiveCityForSubmit() {
@@ -412,12 +487,14 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       title: resolvedListingTitleForSubmit(
         trimmedUserTitle: _title.text.trim(),
         make: _effectiveMakeForSubmit(),
-        model: _model.text.trim(),
+        model: _effectiveModelForSubmit(),
         year: _yearFieldKey.currentState!.value!,
         l10n: l10n,
+        variant: _variantForSubmit(),
       ),
       make: _effectiveMakeForSubmit(),
-      model: _model.text.trim(),
+      model: _effectiveModelForSubmit(),
+      variant: _variantForSubmit(),
       year: _yearFieldKey.currentState!.value!,
       priceEur: num.parse(_price.text.trim()),
       priceCurrency: _priceCurrency,
@@ -495,6 +572,14 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   String? _validateOptionalVin(AppLocalizations l10n, String? v) {
     if (ListingVin.isBlankInput(v)) return null;
     if (!ListingVin.isOptionalInputValid(v)) return l10n.validationVinInvalid;
+    return null;
+  }
+
+  String? _validateOptionalVariant(AppLocalizations l10n, String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    if (v.trim().length > kListingVariantMaxLength) {
+      return l10n.listingVariantTooLong;
+    }
     return null;
   }
 
@@ -696,14 +781,61 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                       ],
 
                       const SizedBox(height: 22),
-                      TextFormField(
-                        controller: _model,
+                      ListingModelSelectorField(
+                        key: const ValueKey('create_listing_model_field'),
+                        formFieldKey: _modelSelectorKey,
+                        l10n: l10n,
+                        enabled:
+                            !submitting &&
+                            _selectedBrandCatalogValue != null &&
+                            !_isCustomMake,
+                        manualMode: _manualModel || _isCustomMake,
+                        canonicalModel: _selectedCanonicalModel,
+                        onTap: _openModelSheet,
+                        placeholder: _selectedBrandCatalogValue == null
+                            ? l10n.listingModelChooseMakeFirst
+                            : null,
                         decoration: createListingFieldDecoration(
                           theme,
                           labelText: l10n.fieldModel,
                         ),
+                      ),
+                      if (_manualModel || _isCustomMake) ...[
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          key: const ValueKey('create_listing_manual_model'),
+                          controller: _model,
+                          decoration: createListingFieldDecoration(
+                            theme,
+                            labelText: l10n.listingModelManualFieldLabel,
+                          ),
+                          textInputAction: TextInputAction.next,
+                          validator: (v) => _required(l10n, v),
+                          enabled: !submitting,
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      CreateListingHelperText(l10n.listingModelBaseHelper),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        key: const ValueKey('create_listing_variant_field'),
+                        controller: _variant,
+                        decoration: createListingFieldDecoration(
+                          theme,
+                          labelText: l10n.listingVariantLabel,
+                          hintText: l10n.listingVariantHint,
+                          helperText: l10n.listingVariantHelper,
+                        ),
                         textInputAction: TextInputAction.next,
-                        validator: (v) => _required(l10n, v),
+                        maxLength: kListingVariantMaxLength,
+                        buildCounter:
+                            (
+                              context, {
+                              required currentLength,
+                              required isFocused,
+                              maxLength,
+                            }) => null,
+                        validator: (v) => _validateOptionalVariant(l10n, v),
                         enabled: !submitting,
                       ),
 

@@ -22,6 +22,7 @@ void main() {
       });
 
       expect(m.fuelType, isNull);
+      expect(m.variant, isNull);
       expect(m.engineDisplacementLiters, isNull);
       expect(m.enginePowerHp, isNull);
       expect(m.drivetrain, isNull);
@@ -140,5 +141,49 @@ void main() {
         expect(out['transmission_type'], 'dual_clutch');
       },
     );
+
+    test('parses variant and plug_in_hybrid fuel, never unknown-null', () {
+      final m = ListingModel.fromJson({
+        'id': 'a',
+        'title': 't',
+        'make': 'BMW',
+        'model': '3 Series',
+        'variant': '  M340i  ',
+        'year': 2022,
+        'price_eur': 1000,
+        'price_currency': 'eur',
+        'mileage_km': 10,
+        'type': 'sale',
+        'city': 'Chi',
+        'market_region': 'moldova',
+        'fuel_type': 'plug_in_hybrid',
+        'created_at': '2026-03-01T12:00:00.000Z',
+        'whatsapp_enabled': false,
+      });
+      expect(m.variant, 'M340i');
+      expect(m.fuelType, ListingFuelType.plugInHybrid);
+      expect(m.toJson()['fuel_type'], 'plug_in_hybrid');
+      expect(m.toJson()['variant'], 'M340i');
+    });
+
+    test('legacy hybrid fuel still parses', () {
+      final m = ListingModel.fromJson({
+        'id': 'a',
+        'title': 't',
+        'make': 'Toyota',
+        'model': 'RAV4',
+        'year': 2022,
+        'price_eur': 1000,
+        'price_currency': 'eur',
+        'mileage_km': 10,
+        'type': 'sale',
+        'city': 'Chi',
+        'market_region': 'moldova',
+        'fuel_type': 'hybrid',
+        'created_at': '2026-03-01T12:00:00.000Z',
+        'whatsapp_enabled': false,
+      });
+      expect(m.fuelType, ListingFuelType.hybrid);
+    });
   });
 }

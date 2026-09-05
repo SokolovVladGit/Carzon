@@ -149,6 +149,8 @@ void main() {
     // M0.3 reports: RPC-only writes; no client table access.
     'user_reports',
     'listing_reports',
+    // Canonical model catalog: RPC-only public read; no Data API table grants.
+    'vehicle_model_catalog',
   };
 
   /// `public` tables created by this repo: must match migrations exactly.
@@ -185,6 +187,7 @@ void main() {
     'user_blocks',
     'user_reports',
     'listing_reports',
+    'vehicle_model_catalog',
   };
 
   setUpAll(() {

@@ -124,16 +124,13 @@ ListingBodyType? listingBodyTypeFromWire(String? raw) {
 String? listingBodyTypeToWire(ListingBodyType? t) => t?.name;
 
 ListingFuelType? listingFuelTypeFromWire(String? raw) {
-  if (raw == null) return null;
-  final v = raw.trim().toLowerCase();
-  if (v.isEmpty) return null;
-  for (final e in ListingFuelType.values) {
-    if (e.name == v) return e;
-  }
-  return null;
+  return listingFuelTypeFromDb(raw);
 }
 
-String? listingFuelTypeToWire(ListingFuelType? t) => t?.name;
+String? listingFuelTypeToWire(ListingFuelType? t) {
+  if (t == null) return null;
+  return listingFuelTypeToDbValue(t);
+}
 
 ListingTransmissionType? listingTransmissionTypeFromWire(String? raw) {
   if (raw == null) return null;

@@ -16,20 +16,25 @@ String resolvedListingTitleForSubmit({
   required String model,
   required int year,
   required AppLocalizations l10n,
+  String? variant,
 }) {
   if (trimmedUserTitle.isNotEmpty) return trimmedUserTitle;
   final m = make.trim();
   final mo = model.trim();
+  final vr = variant?.trim() ?? '';
   final yearOk = year > 0;
 
+  String withYear(String identity) => yearOk ? '$identity, $year' : identity;
+
   if (m.isNotEmpty && mo.isNotEmpty) {
-    return yearOk ? '$m $mo, $year' : '$m $mo';
+    final identity = vr.isEmpty ? '$m $mo' : '$m $mo $vr';
+    return withYear(identity);
   }
   if (m.isNotEmpty) {
-    return yearOk ? '$m, $year' : m;
+    return withYear(m);
   }
   if (mo.isNotEmpty) {
-    return yearOk ? '$mo, $year' : mo;
+    return withYear(mo);
   }
   return l10n.listingTitleFallbackDefault;
 }

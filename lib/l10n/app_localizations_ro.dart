@@ -583,6 +583,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingFuelTypeHybrid => 'Hibrid';
 
   @override
+  String get listingFuelTypePlugInHybrid => 'Hibrid plug-in';
+
+  @override
   String get listingFuelTypeElectric => 'Electro';
 
   @override
@@ -1289,6 +1292,57 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get listingCityManualFieldLabel => 'Localitate';
+
+  @override
+  String get listingModelSelectPlaceholder => 'Selectați modelul';
+
+  @override
+  String get listingModelPickerTitle => 'Selectați modelul';
+
+  @override
+  String get listingModelSearchHint => 'Căutați modelul';
+
+  @override
+  String get listingModelNoResults => 'Modelul nu a fost găsit';
+
+  @override
+  String get listingModelNotListed => 'Modelul nu este în listă';
+
+  @override
+  String get listingModelManualHelper =>
+      'Nu ați găsit modelul? Introduceți-l manual.';
+
+  @override
+  String get listingModelManualFieldLabel => 'Model';
+
+  @override
+  String get listingModelLoading => 'Se încarcă modelele…';
+
+  @override
+  String get listingModelLoadFailed => 'Modelele nu au putut fi încărcate.';
+
+  @override
+  String get listingModelRetry => 'Reîncercați';
+
+  @override
+  String get listingModelChooseMakeFirst => 'Selectați mai întâi marca';
+
+  @override
+  String get listingModelBaseHelper =>
+      'Selectați modelul de bază. Versiunea, de exemplu M340i sau C 63 AMG, introduceți separat.';
+
+  @override
+  String get listingVariantLabel => 'Versiune / variantă';
+
+  @override
+  String get listingVariantHint => 'De exemplu: M340i, C 63 AMG';
+
+  @override
+  String get listingVariantHelper =>
+      'Nu introduceți aici hibridul, caroseria sau cutia — există câmpuri separate.';
+
+  @override
+  String get listingVariantTooLong => 'Maximum 80 de caractere.';
 
   @override
   String get fieldPhone => 'Număr de telefon';
@@ -2983,6 +3037,9 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get compareRowModel => 'Model';
+
+  @override
+  String get compareRowVariant => 'Versiune';
 
   @override
   String get compareRowBody => 'Corp';
