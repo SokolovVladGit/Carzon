@@ -1134,6 +1134,12 @@ abstract class AppLocalizations {
   /// **'Гибрид'**
   String get listingFuelTypeHybrid;
 
+  /// No description provided for @listingFuelTypePlugInHybrid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подключаемый гибрид'**
+  String get listingFuelTypePlugInHybrid;
+
   /// No description provided for @listingFuelTypeElectric.
   ///
   /// In ru, this message translates to:
@@ -2405,6 +2411,102 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Населённый пункт'**
   String get listingCityManualFieldLabel;
+
+  /// No description provided for @listingModelSelectPlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите модель'**
+  String get listingModelSelectPlaceholder;
+
+  /// No description provided for @listingModelPickerTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите модель'**
+  String get listingModelPickerTitle;
+
+  /// No description provided for @listingModelSearchHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск модели'**
+  String get listingModelSearchHint;
+
+  /// No description provided for @listingModelNoResults.
+  ///
+  /// In ru, this message translates to:
+  /// **'Модель не найдена'**
+  String get listingModelNoResults;
+
+  /// No description provided for @listingModelNotListed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Модели нет в списке'**
+  String get listingModelNotListed;
+
+  /// No description provided for @listingModelManualHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не нашли нужную модель? Укажите её вручную.'**
+  String get listingModelManualHelper;
+
+  /// No description provided for @listingModelManualFieldLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Модель'**
+  String get listingModelManualFieldLabel;
+
+  /// No description provided for @listingModelLoading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Загрузка моделей…'**
+  String get listingModelLoading;
+
+  /// No description provided for @listingModelLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить модели.'**
+  String get listingModelLoadFailed;
+
+  /// No description provided for @listingModelRetry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторить'**
+  String get listingModelRetry;
+
+  /// No description provided for @listingModelChooseMakeFirst.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала выберите марку'**
+  String get listingModelChooseMakeFirst;
+
+  /// No description provided for @listingModelBaseHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите базовую модель. Версию, например M340i или C 63 AMG, укажите отдельно.'**
+  String get listingModelBaseHelper;
+
+  /// No description provided for @listingVariantLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия / модификация'**
+  String get listingVariantLabel;
+
+  /// No description provided for @listingVariantHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Например: M340i, C 63 AMG'**
+  String get listingVariantHint;
+
+  /// No description provided for @listingVariantHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не указывайте здесь гибрид, кузов или коробку — для них есть отдельные поля.'**
+  String get listingVariantHelper;
+
+  /// No description provided for @listingVariantTooLong.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не длиннее 80 символов.'**
+  String get listingVariantTooLong;
 
   /// No description provided for @fieldPhone.
   ///
@@ -5369,6 +5471,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Модель'**
   String get compareRowModel;
+
+  /// No description provided for @compareRowVariant.
+  ///
+  /// In ru, this message translates to:
+  /// **'Версия'**
+  String get compareRowVariant;
 
   /// No description provided for @compareRowBody.
   ///

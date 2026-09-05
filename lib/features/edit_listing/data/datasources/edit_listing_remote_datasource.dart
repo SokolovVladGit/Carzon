@@ -203,7 +203,10 @@ class SupabaseEditListingRemoteDataSource
   Future<ListingModel> updateDetailsV2(EditListingInput input) {
     final params = _detailsParams(input, currency: true)
       ..['p_body_type'] = input.bodyType?.name
-      ..['p_fuel_type'] = input.fuelType?.name
+      ..['p_fuel_type'] = input.fuelType == null
+          ? null
+          : listingFuelTypeToDbValue(input.fuelType!)
+      ..['p_variant'] = _nullableTrimListingField(input.variant)
       ..['p_engine_displacement_liters'] = input.engineDisplacementLiters
       ..['p_engine_power_hp'] = input.enginePowerHp
       ..['p_drivetrain'] = input.drivetrain == null

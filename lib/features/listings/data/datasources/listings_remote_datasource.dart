@@ -61,6 +61,7 @@ id,
 title,
 make,
 model,
+variant,
 year,
 price_eur,
 price_currency,
@@ -134,7 +135,10 @@ view_count
         filterQuery = filterQuery.eq('body_type', query.bodyType!.name);
       }
       if (query.fuelType != null) {
-        filterQuery = filterQuery.eq('fuel_type', query.fuelType!.name);
+        filterQuery = filterQuery.eq(
+          'fuel_type',
+          listingFuelTypeToDbValue(query.fuelType!),
+        );
       }
       if (query.transmissionType != null) {
         filterQuery = filterQuery.eq(

@@ -78,6 +78,11 @@ class CompareSpecFormatters {
     return (model == null || model.isEmpty) ? missing : model;
   }
 
+  String formatVariant(Listing? listing) {
+    final variant = listing?.variant?.trim();
+    return (variant == null || variant.isEmpty) ? missing : variant;
+  }
+
   String formatBody(Listing? listing) {
     if (listing?.bodyType == null) return missing;
     return listing_fmt.formatListingBodyType(l10n, listing!.bodyType!);

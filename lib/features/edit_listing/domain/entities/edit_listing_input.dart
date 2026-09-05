@@ -17,6 +17,7 @@ class EditListingInput extends Equatable {
     required this.title,
     required this.make,
     required this.model,
+    this.variant,
     required this.year,
     required this.priceEur,
     required this.mileageKm,
@@ -43,6 +44,7 @@ class EditListingInput extends Equatable {
   final String title;
   final String make;
   final String model;
+  final String? variant;
   final int year;
   final num priceEur;
 
@@ -87,6 +89,7 @@ class EditListingInput extends Equatable {
     title,
     make,
     model,
+    variant,
     year,
     priceEur,
     priceCurrency,

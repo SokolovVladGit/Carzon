@@ -250,5 +250,23 @@ void main() {
       expect(runtimeSql, contains("'rpc_report_listing'"));
       expect(runtimeSql, contains("f.proname = 'report_listing'"));
     });
+
+    test('covers listing variant and plug-in hybrid runtime contract', () {
+      for (final needle in [
+        'column_listings_variant',
+        'listings_fuel_type_chk_plugin_hybrid',
+      ]) {
+        expectReferenced(needle);
+      }
+    });
+
+    test('covers vehicle model catalog runtime contract', () {
+      expect(runtimeSql, contains("'table_vehicle_model_catalog'"));
+      expect(runtimeSql, contains("'rpc_list_vehicle_models_for_make'"));
+      expect(
+        runtimeSql,
+        contains("f.proname = 'list_vehicle_models_for_make'"),
+      );
+    });
   });
 }

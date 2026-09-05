@@ -31,8 +31,10 @@ import '../../../listings/domain/validation/listing_valid_years.dart';
 import '../../../listings/domain/validation/listing_vin.dart';
 import '../../../listings/presentation/utils/contact_format.dart';
 import '../../../listings/presentation/utils/listing_formatters.dart';
+import '../../../listings/domain/repositories/vehicle_model_catalog_repository.dart';
 import '../../../listings/presentation/widgets/listing_brand_pick_sheet.dart';
 import '../../../listings/presentation/widgets/listing_city_pick_sheet.dart';
+import '../../../listings/presentation/widgets/listing_model_pick_sheet.dart';
 import '../../../listings/presentation/widgets/listing_year_pick_sheet.dart';
 import '../../../listings/presentation/widgets/public_contact_notice.dart';
 import '../../domain/entities/edit_listing_input.dart';
@@ -77,12 +79,16 @@ class EditListingPage extends StatelessWidget {
     super.key,
     required this.listingId,
     @visibleForTesting this.imagePicker,
+    @visibleForTesting this.vehicleModelCatalog,
   });
 
   final String listingId;
 
   @visibleForTesting
   final EditListingImagePicker? imagePicker;
+
+  @visibleForTesting
+  final VehicleModelCatalogRepository? vehicleModelCatalog;
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +118,7 @@ class EditListingPage extends StatelessWidget {
             listingId: listingId,
             ownerId: authState.user!.id,
             imagePicker: imagePicker,
+            vehicleModelCatalog: vehicleModelCatalog,
           ),
         );
       },
@@ -124,11 +131,13 @@ class _EditListingView extends StatelessWidget {
     required this.listingId,
     required this.ownerId,
     this.imagePicker,
+    this.vehicleModelCatalog,
   });
 
   final String listingId;
   final String ownerId;
   final EditListingImagePicker? imagePicker;
+  final VehicleModelCatalogRepository? vehicleModelCatalog;
 
   @override
   Widget build(BuildContext context) {
@@ -185,6 +194,7 @@ class _EditListingView extends StatelessWidget {
                 ownerVinSourceResults: state.ownerVinSourceResults,
                 ownerVinSourceResultsLookupFailed:
                     state.ownerVinSourceResultsLookupFailed,
+                vehicleModelCatalog: vehicleModelCatalog,
               );
             case EditListingStatus.ready:
               return _EditListingForm(
@@ -200,6 +210,7 @@ class _EditListingView extends StatelessWidget {
                 ownerVinSourceResults: state.ownerVinSourceResults,
                 ownerVinSourceResultsLookupFailed:
                     state.ownerVinSourceResultsLookupFailed,
+                vehicleModelCatalog: vehicleModelCatalog,
               );
             case EditListingStatus.submitting:
               return _EditListingForm(
@@ -215,6 +226,7 @@ class _EditListingView extends StatelessWidget {
                 ownerVinSourceResults: state.ownerVinSourceResults,
                 ownerVinSourceResultsLookupFailed:
                     state.ownerVinSourceResultsLookupFailed,
+                vehicleModelCatalog: vehicleModelCatalog,
               );
             case EditListingStatus.success:
               return const LoadingView();
@@ -238,6 +250,7 @@ class _EditListingForm extends StatefulWidget {
     required this.ownerVinReportLookupFailed,
     required this.ownerVinSourceResults,
     required this.ownerVinSourceResultsLookupFailed,
+    this.vehicleModelCatalog,
   });
 
   final Listing listing;
@@ -259,6 +272,7 @@ class _EditListingForm extends StatefulWidget {
   final List<OwnerListingVinSourceResult> ownerVinSourceResults;
 
   final bool ownerVinSourceResultsLookupFailed;
+  final VehicleModelCatalogRepository? vehicleModelCatalog;
 
   @override
   State<_EditListingForm> createState() => _EditListingFormState();
@@ -270,9 +284,12 @@ class _EditListingFormState extends State<_EditListingForm> {
       GlobalKey<FormFieldState<String?>>();
   final GlobalKey<FormFieldState<int?>> _yearFieldKey =
       GlobalKey<FormFieldState<int?>>();
+  final GlobalKey<FormFieldState<String>> _modelSelectorKey =
+      GlobalKey<FormFieldState<String>>();
 
   late final TextEditingController _title;
   late final TextEditingController _model;
+  late final TextEditingController _variant;
   late final TextEditingController _customBrand;
   late final TextEditingController _price;
   late final TextEditingController _mileage;
@@ -300,6 +317,9 @@ class _EditListingFormState extends State<_EditListingForm> {
   late ListingCurrency _priceCurrency;
 
   String? _selectedBrandCatalogValue;
+  String? _selectedCanonicalModel;
+  late bool _manualModel;
+  int _modelCatalogEpoch = 0;
   late List<EditListingGallerySlot> _galleryDraft;
 
   final ImagePicker _defaultPicker = ImagePicker();
@@ -324,6 +344,7 @@ class _EditListingFormState extends State<_EditListingForm> {
     final l = widget.listing;
     _title = TextEditingController(text: l.title);
     _model = TextEditingController(text: l.model);
+    _variant = TextEditingController(text: l.variant ?? '');
     _customBrand = TextEditingController();
     _price = TextEditingController(text: _priceText(l.priceEur));
     _mileage = TextEditingController(text: l.mileageKm.toString());
@@ -361,9 +382,14 @@ class _EditListingFormState extends State<_EditListingForm> {
     final normalized = listingBrandNormalizeForLookup(l.make);
     if (normalized != null) {
       _selectedBrandCatalogValue = normalized;
+      _manualModel = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _hydrateCanonicalModelIfExact(normalized, l.model);
+      });
     } else {
       _selectedBrandCatalogValue = _kListingBrandCatalogOther;
       _customBrand.text = l.make;
+      _manualModel = true;
     }
 
     _galleryDraft = List<EditListingGallerySlot>.from(
@@ -384,6 +410,7 @@ class _EditListingFormState extends State<_EditListingForm> {
     for (final c in [
       _title,
       _model,
+      _variant,
       _customBrand,
       _price,
       _mileage,
@@ -406,6 +433,53 @@ class _EditListingFormState extends State<_EditListingForm> {
     customMakeText: _customBrand.text,
   );
 
+  bool get _isCustomMake =>
+      _selectedBrandCatalogValue == _kListingBrandCatalogOther;
+
+  void _clearModelSelection() {
+    _modelCatalogEpoch += 1;
+    _selectedCanonicalModel = null;
+    _manualModel = _isCustomMake;
+    _model.clear();
+    _variant.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _modelSelectorKey.currentState?.reset();
+    });
+  }
+
+  String? _variantForSubmit() {
+    final t = _variant.text.trim();
+    return t.isEmpty ? null : t;
+  }
+
+  String _effectiveModelForSubmit() {
+    if (_manualModel || _isCustomMake) return _model.text.trim();
+    return _selectedCanonicalModel?.trim() ?? '';
+  }
+
+  Future<void> _hydrateCanonicalModelIfExact(
+    String make,
+    String rawModel,
+  ) async {
+    final catalog = widget.vehicleModelCatalog;
+    if (catalog == null && !sl.isRegistered<VehicleModelCatalogRepository>()) {
+      return;
+    }
+    final repo = catalog ?? sl<VehicleModelCatalogRepository>();
+    final epoch = ++_modelCatalogEpoch;
+    final result = await repo.listVehicleModelsForMake(make);
+    if (!mounted || epoch != _modelCatalogEpoch) return;
+    if (_selectedBrandCatalogValue != make || _isCustomMake) return;
+    result.fold((_) {}, (models) {
+      final exact = models.where((m) => m == rawModel).firstOrNull;
+      if (exact == null) return;
+      setState(() {
+        _selectedCanonicalModel = exact;
+        _manualModel = false;
+      });
+    });
+  }
+
   void _applyBrandPick(String picked) {
     final applied = applyListingBrandPick(picked);
     _selectedBrandCatalogValue = applied.catalogKey;
@@ -414,6 +488,31 @@ class _EditListingFormState extends State<_EditListingForm> {
     } else {
       _customBrand.clear();
     }
+    _clearModelSelection();
+  }
+
+  Future<void> _openModelSheet() async {
+    if (_selectedBrandCatalogValue == null || _isCustomMake) return;
+    final picked = await showListingModelPickSheet(
+      context: context,
+      l10n: context.l10n,
+      make: _selectedBrandCatalogValue!,
+      selectedCanonicalModel: _selectedCanonicalModel,
+      catalog: widget.vehicleModelCatalog,
+    );
+    if (!mounted || picked == null) return;
+    setState(() {
+      if (picked.manual) {
+        _manualModel = true;
+        _selectedCanonicalModel = null;
+      } else {
+        _manualModel = false;
+        _selectedCanonicalModel = picked.canonicalValue;
+        _model.clear();
+      }
+      _variant.clear();
+    });
+    _modelSelectorKey.currentState?.didChange(_selectedCanonicalModel);
   }
 
   String _effectiveCityForSubmit() {
@@ -574,6 +673,14 @@ class _EditListingFormState extends State<_EditListingForm> {
     return null;
   }
 
+  String? _validateOptionalVariant(AppLocalizations l10n, String? v) {
+    if (v == null || v.trim().isEmpty) return null;
+    if (v.trim().length > kListingVariantMaxLength) {
+      return l10n.listingVariantTooLong;
+    }
+    return null;
+  }
+
   String? _validateOptionalRegistration(AppLocalizations l10n, String? v) {
     if (v == null || v.trim().isEmpty) return null;
     if (v.trim().length > kListingRegistrationMaxLength) {
@@ -616,12 +723,14 @@ class _EditListingFormState extends State<_EditListingForm> {
       title: resolvedListingTitleForSubmit(
         trimmedUserTitle: _title.text.trim(),
         make: _effectiveMakeForSubmit(),
-        model: _model.text.trim(),
+        model: _effectiveModelForSubmit(),
         year: year,
         l10n: l10n,
+        variant: _variantForSubmit(),
       ),
       make: _effectiveMakeForSubmit(),
-      model: _model.text.trim(),
+      model: _effectiveModelForSubmit(),
+      variant: _variantForSubmit(),
       year: year,
       priceEur: num.parse(_price.text.trim()),
       mileageKm: int.parse(_mileage.text.trim()),
@@ -839,8 +948,14 @@ class _EditListingFormState extends State<_EditListingForm> {
                     ),
                   ],
                   const SizedBox(height: 18),
-                  TextFormField(
-                    controller: _model,
+                  ListingModelSelectorField(
+                    key: const ValueKey('edit_listing_model_field'),
+                    formFieldKey: _modelSelectorKey,
+                    l10n: l10n,
+                    enabled: !submitting && !_isCustomMake,
+                    manualMode: _manualModel || _isCustomMake,
+                    canonicalModel: _selectedCanonicalModel,
+                    onTap: _openModelSheet,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -851,8 +966,61 @@ class _EditListingFormState extends State<_EditListingForm> {
                       ),
                       labelText: l10n.fieldModel,
                     ),
+                  ),
+                  if (_manualModel || _isCustomMake) ...[
+                    const SizedBox(height: 14),
+                    TextFormField(
+                      key: const ValueKey('edit_listing_manual_model'),
+                      controller: _model,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        filled: true,
+                        fillColor: theme.colorScheme.surface.withValues(
+                          alpha: .22,
+                        ),
+                        labelText: l10n.listingModelManualFieldLabel,
+                      ),
+                      textInputAction: TextInputAction.next,
+                      validator: (v) => _required(l10n, v),
+                      enabled: !submitting,
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  Text(
+                    l10n.listingModelBaseHelper,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    key: const ValueKey('edit_listing_variant_field'),
+                    controller: _variant,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.listingVariantLabel,
+                      hintText: l10n.listingVariantHint,
+                      helperText: l10n.listingVariantHelper,
+                    ),
                     textInputAction: TextInputAction.next,
-                    validator: (v) => _required(l10n, v),
+                    maxLength: kListingVariantMaxLength,
+                    buildCounter:
+                        (
+                          context, {
+                          required currentLength,
+                          required isFocused,
+                          maxLength,
+                        }) => null,
+                    validator: (v) => _validateOptionalVariant(l10n, v),
                     enabled: !submitting,
                   ),
                   const SizedBox(height: 18),

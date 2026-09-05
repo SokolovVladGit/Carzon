@@ -1,6 +1,7 @@
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:carzon/features/listings/domain/entities/listing_sort_option.dart';
+import 'package:carzon/features/listings/domain/listing_discovery_criteria_json.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
 import 'package:carzon/features/listings/presentation/utils/listing_filter_apply_to_criteria.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/listings_filter_apply_result.dart';
@@ -55,4 +56,34 @@ void main() {
       expect(c.minPrice, isNull);
     },
   );
+
+  test('plug_in_hybrid fuel maps and variant stays out of criteria', () {
+    const result = ListingsFilterApplyResult.apply(
+      make: null,
+      model: null,
+      minYear: null,
+      maxYear: null,
+      minPrice: null,
+      maxPrice: null,
+      maxMileage: null,
+      city: null,
+      typeFilter: ListingTypeFilter.any,
+      sort: ListingSortOption.newestFirst,
+      region: MarketRegionFilter.both,
+      bodyType: null,
+      fuelType: ListingFuelType.plugInHybrid,
+      transmissionType: null,
+      drivetrain: null,
+      priceCurrencyFilter: ListingPriceCurrencyFilter.any,
+    );
+    final c = listingDiscoveryCriteriaFromFilterApply(
+      result,
+      preservedSearch: null,
+    );
+    expect(c.fuelType, ListingFuelType.plugInHybrid);
+    final encoded = listingDiscoveryCriteriaToJson(c);
+    expect(encoded['fuelType'], 'plug_in_hybrid');
+    expect(encoded.containsKey('variant'), isFalse);
+    expect(encoded['schemaVersion'], 1);
+  });
 }

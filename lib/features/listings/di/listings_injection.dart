@@ -6,8 +6,11 @@ import '../data/local/anonymous_viewer_id_repository.dart';
 import '../domain/repositories/anonymous_viewer_id_repository.dart';
 import '../data/local/last_applied_listing_discovery_repository.dart';
 import '../data/datasources/listings_remote_datasource.dart';
+import '../data/datasources/vehicle_model_catalog_remote_datasource.dart';
 import '../data/repositories/listings_repository_impl.dart';
+import '../data/repositories/vehicle_model_catalog_repository_impl.dart';
 import '../domain/repositories/listings_repository.dart';
+import '../domain/repositories/vehicle_model_catalog_repository.dart';
 import '../domain/usecases/delete_listing.dart';
 import '../domain/usecases/get_listing_by_id.dart';
 import '../domain/usecases/get_listing_images.dart';
@@ -22,6 +25,14 @@ import '../presentation/bloc/listing_details_cubit.dart';
 import '../presentation/bloc/listings_bloc.dart';
 
 void registerListingsFeature(GetIt sl) {
+  sl.registerLazySingleton<VehicleModelCatalogRemoteDataSource>(
+    () => SupabaseVehicleModelCatalogRemoteDataSource(sl<SupabaseService>()),
+  );
+  sl.registerLazySingleton<VehicleModelCatalogRepository>(
+    () => VehicleModelCatalogRepositoryImpl(
+      sl<VehicleModelCatalogRemoteDataSource>(),
+    ),
+  );
   sl.registerLazySingleton<ListingsRemoteDataSource>(
     () => SupabaseListingsRemoteDataSource(sl<SupabaseService>()),
   );

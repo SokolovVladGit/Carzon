@@ -303,6 +303,37 @@ check_rows AS (
            END,
            'Native listing reporting requires authenticated EXECUTE and no anon EXECUTE'
 
+    UNION ALL
+
+    SELECT 29, 'listings', 'table_vehicle_model_catalog',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_model_catalog'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Canonical model-line catalog; direct client table access must remain revoked'
+
+    UNION ALL
+
+    SELECT 29, 'listings', 'rpc_list_vehicle_models_for_make',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_model_catalog'
+                )
+                  OR NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'list_vehicle_models_for_make'
+                )
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'list_vehicle_models_for_make'), false)
+                  AND COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'list_vehicle_models_for_make'), false)
+                  AND NOT has_table_privilege('anon', 'public.vehicle_model_catalog', 'SELECT')
+                  AND NOT has_table_privilege('authenticated', 'public.vehicle_model_catalog', 'SELECT')
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Public catalog read RPC for anon+authenticated; table SELECT remains revoked'
+
     -- seller profiles ---------------------------------------------------------
     UNION ALL
 
@@ -1201,6 +1232,28 @@ check_rows AS (
                        AND i.indexname = 'listings_feed_active_region_drivetrain_created_idx'
                 ) THEN 'PASS' ELSE 'STOP' END,
            'Partial index for active feed drivetrain filter (20260803120000)'
+
+    UNION ALL
+
+    SELECT 804, 'listings', 'column_listings_variant',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM col_exists c
+                     WHERE c.table_name = 'listings'
+                       AND c.column_name = 'variant'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Optional seller-authored listing.variant (20260905120000)'
+
+    UNION ALL
+
+    SELECT 805, 'listings', 'listings_fuel_type_chk_plugin_hybrid',
+           CASE WHEN EXISTS (
+                    SELECT 1
+                      FROM pg_constraint x
+                     WHERE x.conrelid = 'public.listings'::regclass
+                       AND x.conname = 'listings_fuel_type_chk'
+                       AND pg_get_constraintdef(x.oid) ILIKE '%plug_in_hybrid%'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'listings.fuel_type CHECK accepts plug_in_hybrid'
 
     UNION ALL
 

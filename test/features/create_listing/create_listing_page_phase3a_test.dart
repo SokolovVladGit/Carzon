@@ -24,6 +24,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/fake_vehicle_model_catalog_repository.dart';
 import '../../helpers/l10n_test_helpers.dart';
 
 class _MockCreateCubit extends MockCubit<CreateListingState>
@@ -123,10 +124,12 @@ void main() {
 
   late _MockCreateCubit createCubit;
   late _MockAuthCubit authCubit;
+  late FakeVehicleModelCatalogRepository catalog;
   final l10n = ruStrings();
 
   setUp(() async {
     await sl.reset();
+    catalog = FakeVehicleModelCatalogRepository();
     createCubit = _MockCreateCubit();
     authCubit = _MockAuthCubit();
 
@@ -165,7 +168,10 @@ void main() {
     supportedLocales: AppLocalizations.supportedLocales,
     home: BlocProvider<AuthCubit>.value(
       value: authCubit,
-      child: CreateListingPage(imagePicker: imagePicker),
+      child: CreateListingPage(
+        imagePicker: imagePicker,
+        vehicleModelCatalog: catalog,
+      ),
     ),
   );
 
@@ -217,10 +223,12 @@ void main() {
     await tester.tap(find.widgetWithText(ListTile, 'Toyota'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.fieldModel),
-      'Corolla',
-    );
+    final modelField = find.byKey(const ValueKey('create_listing_model_field'));
+    await tester.ensureVisible(modelField);
+    await tester.tap(modelField);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('listing_model_Corolla')));
+    await tester.pumpAndSettle();
     final year = find.byKey(const ValueKey('create_listing_year_field'));
     await tester.ensureVisible(year);
     await tester.tap(year);
@@ -543,7 +551,12 @@ void main() {
     );
     await tester.pump();
     await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.fieldModel),
+      find
+          .descendant(
+            of: find.byKey(const ValueKey('create_listing_photos_section')),
+            matching: find.byType(TextFormField),
+          )
+          .first,
       'Golf',
     );
 
