@@ -299,6 +299,7 @@ class ListingModelSelectorField extends StatelessWidget {
     this.placeholder,
     this.formFieldKey,
     this.requiredWhenEnabled = true,
+    this.borderRadius = 16,
   });
 
   final AppLocalizations l10n;
@@ -310,6 +311,7 @@ class ListingModelSelectorField extends StatelessWidget {
   final String? placeholder;
   final GlobalKey<FormFieldState<String>>? formFieldKey;
   final bool requiredWhenEnabled;
+  final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -321,7 +323,7 @@ class ListingModelSelectorField extends StatelessWidget {
         return canonicalModel == null ? l10n.validationRequired : null;
       },
       builder: (field) => InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(borderRadius),
         onTap: enabled ? onTap : null,
         child: InputDecorator(
           decoration: decoration.copyWith(errorText: field.errorText),

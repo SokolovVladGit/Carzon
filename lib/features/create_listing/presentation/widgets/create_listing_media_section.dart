@@ -3,11 +3,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/constants/listing_gallery_limits.dart';
 import '../models/create_listing_photo_draft.dart';
+import 'create_listing_compose_layout.dart';
 
 /// Hero + optional thumbnails for the create-listing staging gallery (≤ [kMaxListingPhotos]).
 class CreateListingMediaSection extends StatelessWidget {
@@ -18,7 +18,6 @@ class CreateListingMediaSection extends StatelessWidget {
     required this.disabled,
     required this.onAddPhoto,
     required this.onRemovePhotoAt,
-    this.showHeading = true,
   });
 
   final List<CreateListingPhotoDraft> photos;
@@ -26,11 +25,10 @@ class CreateListingMediaSection extends StatelessWidget {
   final bool disabled;
   final VoidCallback onAddPhoto;
   final void Function(int index) onRemovePhotoAt;
-  final bool showHeading;
 
   static const phase3TestKey = ValueKey('create_listing_media_section');
 
-  static const double _frameRadius = 20;
+  static const double _frameRadius = kCreateListingFieldRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +38,6 @@ class CreateListingMediaSection extends StatelessWidget {
     final l10n = context.l10n;
     final canMutate = !disabled && !pickingImage;
     final quiet = cs.onSurfaceVariant.withValues(alpha: light ? 0.62 : 0.82);
-    final premiumAccent = light
-        ? cs.primary.withValues(alpha: 0.78)
-        : AppTheme.editorialAccentColor(cs).withValues(alpha: 0.95);
 
     final heroBytes = photos.isNotEmpty ? photos.first.bytes : null;
 
@@ -50,306 +45,92 @@ class CreateListingMediaSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       key: phase3TestKey,
       children: [
-        if (showHeading) ...[
-          Text(
-            l10n.createListingMediaTitle,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.12,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            l10n.createListingMediaSubtitle,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: quiet,
-              height: 1.38,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
         DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(_frameRadius + 6),
-            border: Border.all(
-              color: light
-                  ? cs.primary.withValues(alpha: 0.24)
-                  : AppTheme.editorialAccentColor(cs).withValues(alpha: 0.30),
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color.alphaBlend(
-                  cs.primary.withValues(alpha: light ? 0.075 : 0.16),
-                  light ? cs.surfaceContainerLowest : cs.surfaceContainerHigh,
-                ),
-                Color.alphaBlend(
-                  cs.onSurface.withValues(alpha: light ? 0.012 : 0.035),
-                  light ? cs.surface : cs.surfaceContainerLow,
-                ),
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: cs.shadow.withValues(alpha: light ? 0.070 : 0.24),
-                blurRadius: 28,
-                offset: const Offset(0, 12),
-              ),
-              BoxShadow(
-                color: cs.primary.withValues(alpha: light ? 0.055 : 0.08),
-                blurRadius: 22,
-                offset: const Offset(0, 6),
-              ),
-            ],
+          decoration: createListingSoftSurfaceDecoration(
+            theme,
+            lift: CreateListingSurfaceLift.photo,
+            visualState: heroBytes == null
+                ? CreateListingFieldVisualState.empty
+                : CreateListingFieldVisualState.filled,
+            hasValue: heroBytes != null,
           ),
-          child: Padding(
-            padding: EdgeInsets.zero,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(_frameRadius),
             child: AspectRatio(
-              aspectRatio: 16 / 9,
+              aspectRatio: heroBytes == null ? 2.95 : 16 / 9,
               child: Material(
                 color: Colors.transparent,
-                borderRadius: BorderRadius.circular(_frameRadius + 6),
-                clipBehavior: Clip.antiAlias,
                 child: InkWell(
                   onTap: (heroBytes == null && canMutate) ? onAddPhoto : null,
-                  borderRadius: BorderRadius.circular(_frameRadius + 6),
                   splashColor: cs.onSurface.withValues(alpha: 0.04),
                   highlightColor: cs.onSurface.withValues(alpha: 0.02),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      gradient: heroBytes != null
-                          ? null
-                          : LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Color.alphaBlend(
-                                  cs.primary.withValues(
-                                    alpha: light ? 0.030 : 0.10,
-                                  ),
-                                  light
-                                      ? cs.surfaceContainerLowest
-                                      : cs.surfaceContainerHigh,
-                                ),
-                                Color.alphaBlend(
-                                  cs.onSurface.withValues(
-                                    alpha: light ? 0.018 : 0.040,
-                                  ),
-                                  light ? cs.surface : cs.surfaceContainerLow,
-                                ),
-                              ],
+                  child: heroBytes != null
+                      ? Image.memory(heroBytes, fit: BoxFit.cover)
+                      : pickingImage
+                      ? Center(
+                          child: SizedBox.square(
+                            dimension: 26,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: quiet,
                             ),
-                      color: heroBytes != null ? cs.surfaceContainerLow : null,
-                    ),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (heroBytes != null)
-                          Image.memory(heroBytes, fit: BoxFit.cover)
-                        else
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              if (pickingImage) {
-                                return Center(
-                                  child: SizedBox.square(
-                                    dimension: 28,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                          ),
+                        )
+                      : Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    CarzonIcons.addPhoto,
+                                    size: 26,
+                                    color: cs.onSurface.withValues(alpha: 0.58),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    l10n.createListingHeroEmptyTitle,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: -0.15,
+                                      height: 1.2,
+                                      color: cs.onSurface.withValues(
+                                        alpha: 0.88,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    l10n.createListingHeroEmptyDetail,
+                                    textAlign: TextAlign.center,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.bodySmall?.copyWith(
                                       color: quiet,
+                                      height: 1.25,
+                                      fontSize: 12,
                                     ),
                                   ),
-                                );
-                              }
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.center,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      maxWidth: constraints.maxWidth - 16,
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        DecoratedBox(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                            gradient: light
-                                                ? LinearGradient(
-                                                    begin: Alignment.topLeft,
-                                                    end: Alignment.bottomRight,
-                                                    colors: [
-                                                      Color.alphaBlend(
-                                                        cs.primary.withValues(
-                                                          alpha: 0.10,
-                                                        ),
-                                                        cs.surface,
-                                                      ),
-                                                      cs.surface,
-                                                    ],
-                                                  )
-                                                : RadialGradient(
-                                                    colors: [
-                                                      Color.alphaBlend(
-                                                        cs.primary.withValues(
-                                                          alpha: 0.22,
-                                                        ),
-                                                        cs.surfaceContainerHigh,
-                                                      ),
-                                                      cs.surfaceContainerLow,
-                                                    ],
-                                                  ),
-                                            border: Border.all(
-                                              color: light
-                                                  ? cs.primary.withValues(
-                                                      alpha: 0.28,
-                                                    )
-                                                  : AppTheme.editorialAccentColor(
-                                                      cs,
-                                                    ).withValues(alpha: 0.40),
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color:
-                                                    (light
-                                                            ? cs.shadow
-                                                            : cs.primary)
-                                                        .withValues(
-                                                          alpha: light
-                                                              ? 0.065
-                                                              : 0.14,
-                                                        ),
-                                                blurRadius: 20,
-                                                offset: const Offset(0, 7),
-                                                spreadRadius: -2,
-                                              ),
-                                            ],
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(13),
-                                            child: Icon(
-                                              CarzonIcons.addPhoto,
-                                              size: 27,
-                                              color: premiumAccent,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 11),
-                                        Text(
-                                          l10n.createListingHeroEmptyTitle,
-                                          textAlign: TextAlign.center,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: theme.textTheme.titleMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w700,
-                                                letterSpacing: -0.24,
-                                                height: 1.12,
-                                                fontSize: 16,
-                                                color: cs.onSurface.withValues(
-                                                  alpha: 0.93,
-                                                ),
-                                              ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          l10n.createListingHeroEmptyDetail,
-                                          textAlign: TextAlign.center,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: theme.textTheme.bodySmall
-                                              ?.copyWith(
-                                                color: quiet.withValues(
-                                                  alpha: 0.92,
-                                                ),
-                                                height: 1.34,
-                                                fontSize: 11.5,
-                                              ),
-                                        ),
-                                        const SizedBox(height: 11),
-                                        DecoratedBox(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                            border: Border.all(
-                                              color: light
-                                                  ? cs.primary.withValues(
-                                                      alpha: 0.30,
-                                                    )
-                                                  : AppTheme.editorialAccentColor(
-                                                      cs,
-                                                    ).withValues(alpha: 0.38),
-                                            ),
-                                            color: light
-                                                ? Color.alphaBlend(
-                                                    cs.primary.withValues(
-                                                      alpha: 0.050,
-                                                    ),
-                                                    cs.surface,
-                                                  )
-                                                : Color.alphaBlend(
-                                                    cs.primary.withValues(
-                                                      alpha: 0.12,
-                                                    ),
-                                                    cs.surfaceContainerHigh,
-                                                  ),
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 14,
-                                              vertical: 8.5,
-                                            ),
-                                            child: Text(
-                                              l10n.createListingAddPhoto,
-                                              style: theme.textTheme.labelMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w700,
-                                                    letterSpacing: 0.04,
-                                                    color: cs.onSurface
-                                                        .withValues(
-                                                          alpha: light
-                                                              ? 0.82
-                                                              : 0.92,
-                                                        ),
-                                                  ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        if (heroBytes == null)
-                          Positioned(
-                            left: 12,
-                            top: 12,
-                            child: _CoverHintChip(
-                              label: l10n.createListingMediaCoverHint,
-                              theme: theme,
+                                ],
+                              ),
                             ),
                           ),
-                      ],
-                    ),
-                  ),
+                        ),
                 ),
               ),
             ),
           ),
         ),
         if (photos.isNotEmpty) ...[
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           _ThumbnailStrip(
             photos: photos,
             disabled: disabled,
@@ -360,50 +141,6 @@ class CreateListingMediaSection extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-class _CoverHintChip extends StatelessWidget {
-  const _CoverHintChip({required this.label, required this.theme});
-
-  final String label;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = theme.colorScheme;
-    final light = theme.brightness == Brightness.light;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(
-          color: light
-              ? cs.primary.withValues(alpha: 0.20)
-              : AppTheme.editorialAccentColor(cs).withValues(alpha: 0.28),
-        ),
-        color: light
-            ? Color.alphaBlend(
-                cs.primary.withValues(alpha: 0.030),
-                cs.surface.withValues(alpha: 0.94),
-              )
-            : Color.alphaBlend(
-                cs.primary.withValues(alpha: 0.08),
-                cs.surfaceContainerHigh,
-              ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            fontWeight: FontWeight.w500,
-            fontSize: 10,
-            letterSpacing: 0.2,
-            color: cs.onSurfaceVariant.withValues(alpha: light ? 0.68 : 0.74),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -498,7 +235,7 @@ class _PhotoThumb extends StatelessWidget {
         child: AspectRatio(
           aspectRatio: 16 / 9,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -591,29 +328,13 @@ class _AddTile extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: enabled && !busy ? onTap : null,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             splashColor: cs.onSurface.withValues(alpha: 0.04),
             highlightColor: cs.onSurface.withValues(alpha: 0.02),
             child: Ink(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: enabled && !light
-                      ? AppTheme.editorialAccentColor(
-                          cs,
-                        ).withValues(alpha: 0.26)
-                      : cs.outlineVariant.withValues(
-                          alpha: enabled ? (light ? 0.32 : 0.34) : 0.2,
-                        ),
-                  strokeAlign: BorderSide.strokeAlignInside,
-                ),
-                color: Color.alphaBlend(
-                  (light ? cs.outlineVariant : cs.primary).withValues(
-                    alpha: enabled ? (light ? 0.03 : 0.06) : 0.02,
-                  ),
-                  light ? cs.surface : cs.surfaceContainerLow,
-                ),
-              ),
+              decoration: createListingInsetDecoration(
+                theme,
+              ).copyWith(borderRadius: BorderRadius.circular(14)),
               child: busy
                   ? Center(
                       child: SizedBox.square(

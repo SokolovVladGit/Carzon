@@ -11,6 +11,7 @@ import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/widgets/app_back_button.dart';
 import '../../../../core/widgets/auth_required_prompt.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -29,7 +30,6 @@ import '../../../listings/presentation/utils/contact_format.dart';
 import '../../../listings/presentation/utils/listing_formatters.dart';
 import '../../../listings/presentation/widgets/listing_vehicle_spec_pickers.dart';
 import '../../../listings/presentation/widgets/listing_year_pick_sheet.dart';
-import '../../../listings/presentation/widgets/public_contact_notice.dart';
 import '../../domain/constants/listing_gallery_limits.dart';
 import '../../domain/entities/cover_image_upload.dart';
 import '../../domain/entities/new_listing_input.dart';
@@ -37,7 +37,9 @@ import '../bloc/create_listing_cubit.dart';
 import '../bloc/create_listing_state.dart';
 import '../models/create_listing_photo_draft.dart';
 import '../widgets/create_listing_compose_layout.dart';
+import '../widgets/create_listing_contact_notice.dart';
 import '../widgets/create_listing_media_section.dart';
+import '../widgets/create_listing_picker_field.dart';
 import '../widgets/listing_body_type_pick_sheet.dart';
 import '../widgets/listing_type_deal_selector.dart';
 import '../widgets/market_placement_selector.dart';
@@ -656,9 +658,9 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         return SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(
+            kCreateListingPageHorizontalPadding,
             16,
-            16,
-            16,
+            kCreateListingPageHorizontalPadding,
             math.max(
                   MediaQuery.paddingOf(context).bottom,
                   _kCreateListingScrollBottomInsetFloor,
@@ -672,14 +674,9 @@ class _CreateListingFormState extends State<_CreateListingForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                CreateListingComposeHero(l10n: l10n),
-                const SizedBox(height: 20),
-                CreateListingPremiumSection(
+                CreateListingFormSection(
                   key: const ValueKey('create_listing_photos_section'),
-                  stepIndex: 1,
-                  tone: CreateListingSectionTone.hero,
                   title: l10n.createListingSectionPhotosLead,
-                  subtitle: l10n.createListingSectionPhotosLeadSubtitle,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -689,30 +686,33 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         disabled: submitting,
                         onAddPhoto: () => _addPhoto(context),
                         onRemovePhotoAt: _removePhotoAt,
-                        showHeading: false,
                       ),
-                      const SizedBox(height: 26),
-                      CreateListingFieldLabel(l10n.fieldTitleOptional),
-                      const SizedBox(height: 10),
-                      TextFormField(
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingTextSurface(
                         controller: _title,
-                        decoration: createListingFieldDecoration(theme),
-                        textInputAction: TextInputAction.next,
-                        validator: (_) => null,
-                        enabled: !submitting,
+                        builder: (context, hasValue) {
+                          return TextFormField(
+                            controller: _title,
+                            decoration: createListingFieldDecoration(
+                              theme,
+                              hintText: l10n.fieldTitleOptional,
+                              hasValue: hasValue,
+                            ),
+                            textInputAction: TextInputAction.next,
+                            validator: (_) => null,
+                            enabled: !submitting,
+                          );
+                        },
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: kCreateListingInterSectionGap),
 
-                CreateListingPremiumSection(
+                CreateListingFormSection(
                   key: const ValueKey('create_listing_vehicle_section'),
-                  stepIndex: 2,
-                  tone: CreateListingSectionTone.identity,
                   title: l10n.createListingSectionVehicle,
-                  subtitle: l10n.createListingSectionVehicleSubtitle,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -724,122 +724,140 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                               : null;
                         },
                         builder: (fieldState) {
-                          return InkWell(
-                            borderRadius: BorderRadius.circular(14),
-                            key: const ValueKey('create_listing_brand_field'),
-                            splashColor: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.04,
+                          return CreateListingPickerField(
+                            fieldKey: const ValueKey(
+                              'create_listing_brand_field',
                             ),
-                            highlightColor: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.02),
-                            onTap: submitting
-                                ? null
-                                : () async {
-                                    await _openBrandSheet();
-                                    fieldState.didChange(
-                                      _selectedBrandCatalogValue,
-                                    );
-                                  },
-                            child: InputDecorator(
+                            label: l10n.createListingChooseBrand,
+                            value: brandDisplay,
+                            empty: _selectedBrandCatalogValue == null,
+                            enabled: !submitting,
+                            errorText: fieldState.errorText,
+                            onTap: () async {
+                              await _openBrandSheet();
+                              fieldState.didChange(_selectedBrandCatalogValue);
+                            },
+                          );
+                        },
+                      ),
+                      if (_selectedBrandCatalogValue ==
+                          _kListingBrandCatalogOther) ...[
+                        const SizedBox(height: kCreateListingFieldGap),
+                        CreateListingTextSurface(
+                          controller: _customBrand,
+                          builder: (context, hasValue) {
+                            return TextFormField(
+                              controller: _customBrand,
                               decoration: createListingFieldDecoration(
                                 theme,
-                                labelText: l10n.createListingBrandLabel,
-                              ).copyWith(errorText: fieldState.errorText),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
+                                hintText: l10n.createListingCustomBrandHint,
+                                hasValue: hasValue,
+                              ),
+                              textInputAction: TextInputAction.next,
+                              enabled: !submitting,
+                              onChanged: (_) => setState(() {}),
+                              validator: (v) => validateListingCustomMakeField(
+                                l10n,
+                                catalogKey: _selectedBrandCatalogValue,
+                                customMakeText: v ?? '',
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: kCreateListingFieldGap),
+                      Builder(
+                        builder: (context) {
+                          final modelEnabled =
+                              !submitting &&
+                              _selectedBrandCatalogValue != null &&
+                              !_isCustomMake;
+                          final modelEmpty =
+                              _selectedCanonicalModel == null &&
+                              !_manualModel &&
+                              !_isCustomMake;
+                          return Opacity(
+                            opacity: modelEnabled ? 1 : 0.48,
+                            child: IconTheme(
+                              data: IconThemeData(
+                                color: createListingPickerChevronColor(
+                                  theme,
+                                  enabled: modelEnabled,
+                                  empty: modelEmpty,
                                 ),
-                                child: Text(
-                                  brandDisplay,
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: theme.textTheme.bodyLarge,
+                              ),
+                              child: ListingModelSelectorField(
+                                key: const ValueKey(
+                                  'create_listing_model_field',
+                                ),
+                                formFieldKey: _modelSelectorKey,
+                                l10n: l10n,
+                                enabled: modelEnabled,
+                                manualMode: _manualModel || _isCustomMake,
+                                canonicalModel: _selectedCanonicalModel,
+                                onTap: _openModelSheet,
+                                placeholder: _selectedBrandCatalogValue == null
+                                    ? l10n.listingModelChooseMakeFirst
+                                    : null,
+                                borderRadius: kCreateListingFieldRadius,
+                                decoration: createListingFieldDecoration(
+                                  theme,
+                                  hasValue: !modelEmpty,
                                 ),
                               ),
                             ),
                           );
                         },
                       ),
-                      if (_selectedBrandCatalogValue ==
-                          _kListingBrandCatalogOther) ...[
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: _customBrand,
-                          decoration: createListingFieldDecoration(
-                            theme,
-                            hintText: l10n.createListingCustomBrandHint,
-                          ),
-                          textInputAction: TextInputAction.next,
-                          enabled: !submitting,
-                          onChanged: (_) => setState(() {}),
-                          validator: (v) => validateListingCustomMakeField(
-                            l10n,
-                            catalogKey: _selectedBrandCatalogValue,
-                            customMakeText: v ?? '',
-                          ),
-                        ),
-                      ],
-
-                      const SizedBox(height: 22),
-                      ListingModelSelectorField(
-                        key: const ValueKey('create_listing_model_field'),
-                        formFieldKey: _modelSelectorKey,
-                        l10n: l10n,
-                        enabled:
-                            !submitting &&
-                            _selectedBrandCatalogValue != null &&
-                            !_isCustomMake,
-                        manualMode: _manualModel || _isCustomMake,
-                        canonicalModel: _selectedCanonicalModel,
-                        onTap: _openModelSheet,
-                        placeholder: _selectedBrandCatalogValue == null
-                            ? l10n.listingModelChooseMakeFirst
-                            : null,
-                        decoration: createListingFieldDecoration(
-                          theme,
-                          labelText: l10n.fieldModel,
-                        ),
-                      ),
                       if (_manualModel || _isCustomMake) ...[
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          key: const ValueKey('create_listing_manual_model'),
+                        const SizedBox(height: kCreateListingFieldGap),
+                        CreateListingTextSurface(
                           controller: _model,
-                          decoration: createListingFieldDecoration(
-                            theme,
-                            labelText: l10n.listingModelManualFieldLabel,
-                          ),
-                          textInputAction: TextInputAction.next,
-                          validator: (v) => _required(l10n, v),
-                          enabled: !submitting,
+                          builder: (context, hasValue) {
+                            return TextFormField(
+                              key: const ValueKey(
+                                'create_listing_manual_model',
+                              ),
+                              controller: _model,
+                              decoration: createListingFieldDecoration(
+                                theme,
+                                hintText: l10n.listingModelManualFieldLabel,
+                                hasValue: hasValue,
+                              ),
+                              textInputAction: TextInputAction.next,
+                              validator: (v) => _required(l10n, v),
+                              enabled: !submitting,
+                            );
+                          },
                         ),
                       ],
-                      const SizedBox(height: 8),
-                      CreateListingHelperText(l10n.listingModelBaseHelper),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        key: const ValueKey('create_listing_variant_field'),
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingTextSurface(
                         controller: _variant,
-                        decoration: createListingFieldDecoration(
-                          theme,
-                          labelText: l10n.listingVariantLabel,
-                          hintText: l10n.listingVariantHint,
-                          helperText: l10n.listingVariantHelper,
-                        ),
-                        textInputAction: TextInputAction.next,
-                        maxLength: kListingVariantMaxLength,
-                        buildCounter:
-                            (
-                              context, {
-                              required currentLength,
-                              required isFocused,
-                              maxLength,
-                            }) => null,
-                        validator: (v) => _validateOptionalVariant(l10n, v),
-                        enabled: !submitting,
+                        builder: (context, hasValue) {
+                          return TextFormField(
+                            key: const ValueKey('create_listing_variant_field'),
+                            controller: _variant,
+                            decoration: createListingFieldDecoration(
+                              theme,
+                              hintText: l10n.listingVariantLabel,
+                              hasValue: hasValue,
+                            ),
+                            textInputAction: TextInputAction.next,
+                            maxLength: kListingVariantMaxLength,
+                            buildCounter:
+                                (
+                                  context, {
+                                  required currentLength,
+                                  required isFocused,
+                                  maxLength,
+                                }) => null,
+                            validator: (v) => _validateOptionalVariant(l10n, v),
+                            enabled: !submitting,
+                          );
+                        },
                       ),
-
-                      const SizedBox(height: 22),
+                      const SizedBox(height: kCreateListingFieldGap),
                       FormField<int?>(
                         key: _yearFieldKey,
                         initialValue: null,
@@ -847,323 +865,228 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                             y == null ? l10n.validationRequired : null,
                         builder: (fieldState) {
                           final yr = fieldState.value;
-                          return InkWell(
-                            borderRadius: BorderRadius.circular(14),
-                            key: const ValueKey('create_listing_year_field'),
-                            splashColor: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.04,
+                          return CreateListingPickerField(
+                            fieldKey: const ValueKey(
+                              'create_listing_year_field',
                             ),
-                            highlightColor: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.02),
-                            onTap: submitting
-                                ? null
-                                : () async {
-                                    final picked =
-                                        await showListingYearPickSheet(
-                                          context: context,
-                                          l10n: l10n,
-                                          selectedYear: yr,
-                                        );
-                                    if (!context.mounted) return;
-                                    if (picked != null) {
-                                      fieldState.didChange(picked);
-                                      fieldState.validate();
-                                    }
-                                  },
-                            child: InputDecorator(
-                              decoration: createListingFieldDecoration(
-                                theme,
-                                labelText: l10n.createListingYearLabel,
-                              ).copyWith(errorText: fieldState.errorText),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 4,
-                                ),
-                                child: Text(
-                                  yr == null
-                                      ? l10n.createListingChooseYear
-                                      : '$yr',
-                                  style: theme.textTheme.bodyLarge,
-                                ),
-                              ),
-                            ),
+                            label: l10n.createListingYearLabel,
+                            value: yr == null ? '' : '$yr',
+                            empty: yr == null,
+                            enabled: !submitting,
+                            errorText: fieldState.errorText,
+                            onTap: () async {
+                              final picked = await showListingYearPickSheet(
+                                context: context,
+                                l10n: l10n,
+                                selectedYear: yr,
+                              );
+                              if (!context.mounted) return;
+                              if (picked != null) {
+                                fieldState.didChange(picked);
+                                fieldState.validate();
+                              }
+                            },
                           );
                         },
                       ),
-                      const SizedBox(height: 22),
-                      CreateListingFieldLabel(l10n.listingBodyTypeSectionTitle),
-                      const SizedBox(height: 6),
-                      CreateListingHelperText(
-                        l10n.listingBodyTypeSectionSubtitle,
-                      ),
-                      const SizedBox(height: 10),
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          key: const ValueKey('create_listing_body_type_field'),
-                          borderRadius: BorderRadius.circular(14),
-                          splashColor: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.038,
-                          ),
-                          highlightColor: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.018),
-                          onTap: submitting ? null : _openBodyTypeSheet,
-                          child: Ink(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: theme.colorScheme.primary.withValues(
-                                  alpha: theme.brightness == Brightness.light
-                                      ? 0.18
-                                      : 0.34,
-                                ),
-                              ),
-                              color: Color.alphaBlend(
-                                theme.colorScheme.primary.withValues(
-                                  alpha: theme.brightness == Brightness.light
-                                      ? 0.036
-                                      : 0.085,
-                                ),
-                                theme.colorScheme.surface,
-                              ),
-                            ),
-                            padding: const EdgeInsets.fromLTRB(17, 15, 12, 15),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _bodyType == null
-                                        ? l10n.listingBodyTypeNotSpecified
-                                        : formatListingBodyType(
-                                            l10n,
-                                            _bodyType!,
-                                          ),
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: -0.2,
-                                      height: 1.22,
-                                      color: theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.94),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
-                                    color: Color.alphaBlend(
-                                      theme.colorScheme.primary.withValues(
-                                        alpha:
-                                            theme.brightness == Brightness.light
-                                            ? 0.070
-                                            : 0.16,
-                                      ),
-                                      theme.colorScheme.surface,
-                                    ),
-                                    border: Border.all(
-                                      color: theme.colorScheme.primary
-                                          .withValues(alpha: 0.18),
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(5),
-                                    child: Icon(
-                                      Icons.expand_more_rounded,
-                                      size: 20,
-                                      color: theme.colorScheme.onSurfaceVariant
-                                          .withValues(alpha: 0.62),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingPickerField(
+                        fieldKey: const ValueKey(
+                          'create_listing_body_type_field',
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      CreateListingHelperText(
-                        l10n.createListingSectionSpecsSubtitle,
-                      ),
-                      const SizedBox(height: 14),
-                      CreateListingFieldLabel(l10n.listingFuelType),
-                      const SizedBox(height: 8),
-                      ListingVehicleSpecPickerRow(
-                        valueText: _fuelType == null
-                            ? l10n.listingBodyTypeNotSpecified
-                            : formatListingFuelType(l10n, _fuelType!),
+                        label: l10n.listingBodyTypeSectionTitle,
+                        value: _bodyType == null
+                            ? ''
+                            : formatListingBodyType(l10n, _bodyType!),
+                        empty: _bodyType == null,
                         enabled: !submitting,
-                        onTap: submitting ? null : () => _openFuelTypeSheet(),
+                        onTap: _openBodyTypeSheet,
+                      ),
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingPickerField(
                         fieldKey: const ValueKey('create_listing_fuel_field'),
+                        label: l10n.listingFuelType,
+                        value: _fuelType == null
+                            ? ''
+                            : formatListingFuelType(l10n, _fuelType!),
+                        empty: _fuelType == null,
+                        enabled: !submitting,
+                        onTap: _openFuelTypeSheet,
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingTextSurface(
                         controller: _engineDisplacement,
-                        decoration: createListingFieldDecoration(
-                          theme,
-                          labelText: l10n.listingEngineDisplacement,
-                          hintText: l10n.listingEngineDisplacementHint,
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        validator: (v) =>
-                            _validateOptionalDisplacement(l10n, v),
-                        enabled: !submitting,
+                        builder: (context, hasValue) {
+                          return TextFormField(
+                            controller: _engineDisplacement,
+                            decoration: createListingFieldDecoration(
+                              theme,
+                              hintText:
+                                  l10n.createListingEngineLitersPlaceholder,
+                              hasValue: hasValue,
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            validator: (v) =>
+                                _validateOptionalDisplacement(l10n, v),
+                            enabled: !submitting,
+                          );
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingTextSurface(
                         controller: _enginePower,
-                        decoration: createListingFieldDecoration(
-                          theme,
-                          labelText: l10n.listingEnginePower,
-                          hintText: l10n.listingEnginePowerHint,
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (v) => _validateOptionalPower(l10n, v),
-                        enabled: !submitting,
+                        builder: (context, hasValue) {
+                          return TextFormField(
+                            controller: _enginePower,
+                            decoration: createListingFieldDecoration(
+                              theme,
+                              hintText:
+                                  l10n.createListingEnginePowerPlaceholder,
+                              hasValue: hasValue,
+                            ),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            validator: (v) => _validateOptionalPower(l10n, v),
+                            enabled: !submitting,
+                          );
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      CreateListingFieldLabel(l10n.listingDrivetrain),
-                      const SizedBox(height: 8),
-                      ListingVehicleSpecPickerRow(
-                        valueText: _drivetrain == null
-                            ? l10n.listingBodyTypeNotSpecified
-                            : formatListingDrivetrain(l10n, _drivetrain!),
-                        enabled: !submitting,
-                        onTap: submitting ? null : () => _openDrivetrainSheet(),
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingPickerField(
                         fieldKey: const ValueKey(
                           'create_listing_drivetrain_field',
                         ),
+                        label: l10n.listingDrivetrain,
+                        value: _drivetrain == null
+                            ? ''
+                            : formatListingDrivetrain(l10n, _drivetrain!),
+                        empty: _drivetrain == null,
+                        enabled: !submitting,
+                        onTap: _openDrivetrainSheet,
                       ),
-                      const SizedBox(height: 16),
-                      CreateListingFieldLabel(l10n.listingTransmission),
-                      const SizedBox(height: 8),
-                      ListingVehicleSpecPickerRow(
-                        valueText: _transmissionType == null
-                            ? l10n.listingBodyTypeNotSpecified
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingPickerField(
+                        fieldKey: const ValueKey(
+                          'create_listing_transmission_field',
+                        ),
+                        label: l10n.listingTransmission,
+                        value: _transmissionType == null
+                            ? ''
                             : formatListingTransmissionType(
                                 l10n,
                                 _transmissionType!,
                               ),
+                        empty: _transmissionType == null,
                         enabled: !submitting,
-                        onTap: submitting
-                            ? null
-                            : () => _openTransmissionSheet(),
-                        fieldKey: const ValueKey(
-                          'create_listing_transmission_field',
-                        ),
+                        onTap: _openTransmissionSheet,
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingTextSurface(
                         controller: _registration,
-                        decoration: createListingFieldDecoration(
-                          theme,
-                          labelText: l10n.listingRegistration,
-                          hintText: l10n.listingRegistrationHint,
-                          helperText: l10n.listingRegistrationHelper,
-                        ),
-                        maxLength: kListingRegistrationMaxLength,
-                        maxLines: 1,
-                        buildCounter:
-                            (
-                              context, {
-                              required currentLength,
-                              required isFocused,
-                              maxLength,
-                            }) => null,
-                        validator: (v) =>
-                            _validateOptionalRegistration(l10n, v),
-                        enabled: !submitting,
+                        builder: (context, hasValue) {
+                          return TextFormField(
+                            controller: _registration,
+                            decoration: createListingFieldDecoration(
+                              theme,
+                              hintText:
+                                  l10n.createListingRegistrationPlaceholder,
+                              hasValue: hasValue,
+                            ),
+                            maxLength: kListingRegistrationMaxLength,
+                            maxLines: 1,
+                            buildCounter:
+                                (
+                                  context, {
+                                  required currentLength,
+                                  required isFocused,
+                                  maxLength,
+                                }) => null,
+                            validator: (v) =>
+                                _validateOptionalRegistration(l10n, v),
+                            enabled: !submitting,
+                          );
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingTextSurface(
                         controller: _vin,
+                        builder: (context, hasValue) {
+                          return TextFormField(
+                            controller: _vin,
+                            decoration: createListingFieldDecoration(
+                              theme,
+                              hintText: l10n.listingVinFieldLabel,
+                              helperText: l10n.createListingVinPrivacyHelper,
+                              hasValue: hasValue,
+                            ),
+                            textCapitalization: TextCapitalization.characters,
+                            maxLength: 32,
+                            buildCounter:
+                                (
+                                  context, {
+                                  required currentLength,
+                                  required isFocused,
+                                  maxLength,
+                                }) => null,
+                            validator: (v) => _validateOptionalVin(l10n, v),
+                            enabled: !submitting,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: kCreateListingInterSectionGap),
+
+                CreateListingFormSection(
+                  key: const ValueKey('create_listing_description_section'),
+                  title: l10n.createListingSectionDescription,
+                  child: CreateListingTextSurface(
+                    controller: _description,
+                    builder: (context, hasValue) {
+                      return TextFormField(
+                        controller: _description,
+                        minLines: 3,
+                        maxLines: 12,
+                        maxLength: kListingDescriptionMaxLength,
                         decoration: createListingFieldDecoration(
                           theme,
-                          labelText: l10n.listingVinFieldLabel,
-                          helperText: l10n.listingVinFieldHelper,
+                          hintText: l10n.createListingDescriptionHint,
+                          hasValue: hasValue,
                         ),
-                        textCapitalization: TextCapitalization.characters,
-                        maxLength: 32,
-                        buildCounter:
-                            (
-                              context, {
-                              required currentLength,
-                              required isFocused,
-                              maxLength,
-                            }) => null,
-                        validator: (v) => _validateOptionalVin(l10n, v),
                         enabled: !submitting,
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: kCreateListingInterSectionGap),
 
-                CreateListingPremiumSection(
-                  key: const ValueKey('create_listing_description_section'),
-                  stepIndex: 3,
-                  tone: CreateListingSectionTone.identity,
-                  title: l10n.createListingSectionDescription,
-                  subtitle: l10n.createListingSectionDescriptionSubtitle,
-                  child: TextFormField(
-                    controller: _description,
-                    minLines: 4,
-                    maxLines: 12,
-                    maxLength: kListingDescriptionMaxLength,
-                    decoration: createListingFieldDecoration(
-                      theme,
-                      labelText: l10n.createListingDescriptionLabel,
-                      hintText: l10n.createListingDescriptionHint,
-                    ),
-                    enabled: !submitting,
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                CreateListingPremiumSection(
+                CreateListingFormSection(
                   key: const ValueKey('create_listing_type_section'),
-                  stepIndex: 4,
-                  tone: CreateListingSectionTone.placement,
                   title: l10n.createListingSectionDeal,
-                  subtitle: l10n.createListingSectionDealSubtitle,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      CreateListingFieldLabel(l10n.fieldType),
-                      const SizedBox(height: 12),
-                      ListingTypeDealSelector(
-                        l10n: l10n,
-                        theme: theme,
-                        value: _type,
-                        submitting: submitting,
-                        onChanged: (t) => setState(() => _type = t),
-                      ),
-                    ],
+                  child: ListingTypeDealSelector(
+                    l10n: l10n,
+                    theme: theme,
+                    value: _type,
+                    submitting: submitting,
+                    onChanged: (t) => setState(() => _type = t),
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: kCreateListingInterSectionGap),
 
-                CreateListingPremiumSection(
+                CreateListingFormSection(
                   key: const ValueKey('create_listing_location_section'),
-                  stepIndex: 5,
-                  tone: CreateListingSectionTone.placement,
                   title: l10n.createListingSectionLocation,
-                  subtitle: l10n.createListingSectionLocationSubtitle,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      CreateListingFieldLabel(l10n.fieldRegion),
-                      const SizedBox(height: 6),
-                      CreateListingHelperText(l10n.fieldRegionHelper),
-                      const SizedBox(height: 12),
                       MarketPlacementSelector(
                         key: const ValueKey('create_listing_region_selector'),
                         l10n: l10n,
@@ -1172,54 +1095,71 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         submitting: submitting,
                         onChanged: _onRegionChanged,
                       ),
-                      const SizedBox(height: 22),
-                      CreateListingFieldLabel(l10n.fieldCity),
-                      const SizedBox(height: 10),
-                      ListingCitySelectorField(
-                        key: const ValueKey('create_listing_city_field'),
-                        formFieldKey: _citySelectorKey,
-                        l10n: l10n,
-                        enabled: !submitting,
-                        manualMode: _manualCity,
-                        canonicalCity: _selectedCanonicalCity,
-                        onTap: _openCitySheet,
-                        decoration: createListingFieldDecoration(theme),
+                      const SizedBox(height: kCreateListingFieldGap),
+                      Opacity(
+                        opacity: submitting ? 0.48 : 1,
+                        child: IconTheme(
+                          data: IconThemeData(
+                            color: createListingPickerChevronColor(
+                              theme,
+                              enabled: !submitting,
+                              empty:
+                                  _selectedCanonicalCity == null &&
+                                  !_manualCity,
+                            ),
+                          ),
+                          child: ListingCitySelectorField(
+                            key: const ValueKey('create_listing_city_field'),
+                            formFieldKey: _citySelectorKey,
+                            l10n: l10n,
+                            enabled: !submitting,
+                            manualMode: _manualCity,
+                            canonicalCity: _selectedCanonicalCity,
+                            onTap: _openCitySheet,
+                            borderRadius: kCreateListingFieldRadius,
+                            decoration: createListingFieldDecoration(
+                              theme,
+                              hasValue:
+                                  _selectedCanonicalCity != null || _manualCity,
+                            ),
+                          ),
+                        ),
                       ),
                       if (_manualCity) ...[
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          key: const ValueKey(
-                            'create_listing_manual_city_field',
-                          ),
+                        const SizedBox(height: kCreateListingFieldGap),
+                        CreateListingTextSurface(
                           controller: _city,
-                          decoration: createListingFieldDecoration(
-                            theme,
-                            labelText: l10n.listingCityManualFieldLabel,
-                            helperText: l10n.listingCityManualHelper,
-                          ),
-                          textInputAction: TextInputAction.next,
-                          textCapitalization: TextCapitalization.words,
-                          validator: (v) => _required(l10n, v),
-                          enabled: !submitting,
+                          builder: (context, hasValue) {
+                            return TextFormField(
+                              key: const ValueKey(
+                                'create_listing_manual_city_field',
+                              ),
+                              controller: _city,
+                              decoration: createListingFieldDecoration(
+                                theme,
+                                hintText: l10n.listingCityManualFieldLabel,
+                                hasValue: hasValue,
+                              ),
+                              textInputAction: TextInputAction.next,
+                              textCapitalization: TextCapitalization.words,
+                              validator: (v) => _required(l10n, v),
+                              enabled: !submitting,
+                            );
+                          },
                         ),
                       ],
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: kCreateListingInterSectionGap),
 
-                CreateListingPremiumSection(
+                CreateListingFormSection(
                   key: const ValueKey('create_listing_price_section'),
-                  stepIndex: 6,
-                  tone: CreateListingSectionTone.metrics,
                   title: l10n.createListingSectionPrice,
-                  subtitle: l10n.createListingSectionPriceSubtitle,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      CreateListingFieldLabel(l10n.createListingCurrency),
-                      const SizedBox(height: 10),
                       PremiumListingCurrencyBar(
                         key: const ValueKey('create_listing_currency_selector'),
                         theme: theme,
@@ -1229,76 +1169,108 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         usdLabel: l10n.currencyCodeUsd,
                         onChanged: (c) => setState(() => _priceCurrency = c),
                       ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _price,
-                        decoration: createListingFieldDecoration(
-                          theme,
-                          labelText: l10n.createListingPriceAmount,
-                          hintText:
-                              '${l10n.createListingCurrency} ${_priceCurrency == ListingCurrency.eur ? '€' : '\$'}',
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingResponsiveFieldRow(
+                        start: CreateListingTextSurface(
+                          controller: _price,
+                          builder: (context, hasValue) {
+                            return TextFormField(
+                              key: const ValueKey('create_listing_price_field'),
+                              controller: _price,
+                              decoration: createListingFieldDecoration(
+                                theme,
+                                hintText: l10n.createListingPricePlaceholder,
+                                hasValue: hasValue,
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              validator: (v) => _validatePrice(l10n, v),
+                              enabled: !submitting,
+                            );
+                          },
                         ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
+                        end: CreateListingTextSurface(
+                          controller: _mileage,
+                          builder: (context, hasValue) {
+                            return TextFormField(
+                              key: const ValueKey(
+                                'create_listing_mileage_field',
+                              ),
+                              controller: _mileage,
+                              decoration: createListingFieldDecoration(
+                                theme,
+                                hintText: l10n.createListingMileagePlaceholder,
+                                hasValue: hasValue,
+                              ),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              validator: (v) => _validateMileage(l10n, v),
+                              enabled: !submitting,
+                            );
+                          },
                         ),
-                        validator: (v) => _validatePrice(l10n, v),
-                        enabled: !submitting,
-                      ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _mileage,
-                        decoration: createListingFieldDecoration(
-                          theme,
-                          labelText: l10n.fieldMileageKm,
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (v) => _validateMileage(l10n, v),
-                        enabled: !submitting,
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: kCreateListingInterSectionGap),
 
-                CreateListingPremiumSection(
+                CreateListingFormSection(
                   key: const ValueKey('create_listing_publish_section'),
-                  stepIndex: 7,
-                  tone: CreateListingSectionTone.finale,
-                  kicker: l10n.createListingPublishKicker,
                   title: l10n.createListingSectionPublish,
-                  subtitle: l10n.createListingSectionPublishSubtitle,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const PublicContactNotice(),
-                      const SizedBox(height: 18),
-                      TextFormField(
+                      const CreateListingContactNotice(),
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingTextSurface(
                         controller: _phone,
-                        decoration: createListingFieldDecoration(
-                          theme,
-                          labelText: l10n.fieldPhone,
-                          hintText: l10n.fieldPhoneHint,
-                        ),
-                        keyboardType: TextInputType.phone,
-                        validator: (v) => validatePhone(l10n, v),
-                        enabled: !submitting,
+                        builder: (context, hasValue) {
+                          return TextFormField(
+                            controller: _phone,
+                            decoration: createListingFieldDecoration(
+                              theme,
+                              hintText: l10n.fieldPhone,
+                              hasValue: hasValue,
+                              prefixIcon: Icon(
+                                CarzonIcons.phone,
+                                size: kCreateListingContactIconSize,
+                                color: createListingContactIconColor(theme),
+                              ),
+                            ),
+                            keyboardType: TextInputType.phone,
+                            validator: (v) => validatePhone(l10n, v),
+                            enabled: !submitting,
+                          );
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
+                      const SizedBox(height: kCreateListingFieldGap),
+                      CreateListingTextSurface(
                         controller: _telegram,
-                        decoration: createListingFieldDecoration(
-                          theme,
-                          labelText: l10n.fieldTelegram,
-                          hintText: l10n.fieldTelegramHint,
-                        ),
-                        validator: (v) => validateTelegramUsername(l10n, v),
-                        enabled: !submitting,
+                        builder: (context, hasValue) {
+                          return TextFormField(
+                            controller: _telegram,
+                            decoration: createListingFieldDecoration(
+                              theme,
+                              hintText: l10n.createListingTelegramPlaceholder,
+                              hasValue: hasValue,
+                              prefixIcon: Icon(
+                                CarzonIcons.send,
+                                size: kCreateListingContactIconSize,
+                                color: createListingContactIconColor(theme),
+                              ),
+                            ),
+                            validator: (v) => validateTelegramUsername(l10n, v),
+                            enabled: !submitting,
+                          );
+                        },
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: kCreateListingFieldGap),
                       PremiumWhatsAppToggleRow(
                         theme: theme,
                         l10n: l10n,
@@ -1306,7 +1278,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         submitting: submitting,
                         onChanged: (v) => setState(() => _whatsappEnabled = v),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       PremiumPublishActionButton(
                         theme: theme,
                         l10n: l10n,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../listings/domain/entities/listing.dart';
-import 'compose_choice_card.dart';
+import 'create_listing_segmented_control.dart';
 
 class MarketPlacementSelector extends StatelessWidget {
   const MarketPlacementSelector({
@@ -22,46 +22,22 @@ class MarketPlacementSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final disabled = submitting;
-    return LayoutBuilder(
-      builder: (context, c) {
-        final gap = 10.0;
-        final half = (c.maxWidth - gap) / 2;
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(
-                width: half,
-                child: ComposeChoiceCard(
-                  key: const ValueKey('market_region_transnistria'),
-                  label: l10n.regionTransnistria,
-                  selected: value == MarketRegion.transnistria,
-                  enabled: !disabled,
-                  onTap: () => onChanged(MarketRegion.transnistria),
-                  theme: theme,
-                  stableSelectionIndicator: true,
-                  singleLineScaleDown: true,
-                ),
-              ),
-              SizedBox(width: gap),
-              SizedBox(
-                width: half,
-                child: ComposeChoiceCard(
-                  key: const ValueKey('market_region_moldova'),
-                  label: l10n.regionMoldova,
-                  selected: value == MarketRegion.moldova,
-                  enabled: !disabled,
-                  onTap: () => onChanged(MarketRegion.moldova),
-                  theme: theme,
-                  stableSelectionIndicator: true,
-                  singleLineScaleDown: true,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    return CreateListingSegmentedControl<MarketRegion>(
+      value: value,
+      enabled: !submitting,
+      onChanged: onChanged,
+      options: [
+        CreateListingSegmentOption(
+          key: const ValueKey('market_region_transnistria'),
+          value: MarketRegion.transnistria,
+          label: l10n.regionTransnistria,
+        ),
+        CreateListingSegmentOption(
+          key: const ValueKey('market_region_moldova'),
+          value: MarketRegion.moldova,
+          label: l10n.regionMoldova,
+        ),
+      ],
     );
   }
 }

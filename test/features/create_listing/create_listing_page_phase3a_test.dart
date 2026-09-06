@@ -15,9 +15,11 @@ import 'package:carzon/features/create_listing/presentation/widgets/create_listi
 import 'package:carzon/features/listings/domain/catalog/listing_brands.dart';
 import 'package:carzon/features/listings/presentation/widgets/listing_brand_pick_sheet.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
-import 'package:carzon/features/listings/presentation/widgets/public_contact_notice.dart';
+import 'package:carzon/features/create_listing/presentation/widgets/create_listing_contact_notice.dart';
+import 'package:carzon/features/create_listing/presentation/widgets/create_listing_segmented_control.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -162,8 +164,11 @@ void main() {
     await sl.reset();
   });
 
-  Widget wrap({CreateListingImagePicker? imagePicker}) => MaterialApp(
-    locale: const Locale('ru'),
+  Widget wrap({
+    CreateListingImagePicker? imagePicker,
+    Locale locale = const Locale('ru'),
+  }) => MaterialApp(
+    locale: locale,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     home: BlocProvider<AuthCubit>.value(
@@ -238,7 +243,7 @@ void main() {
 
     final price = find.widgetWithText(
       TextFormField,
-      l10n.createListingPriceAmount,
+      l10n.createListingPricePlaceholder,
     );
     await tester.scrollUntilVisible(
       price,
@@ -247,7 +252,7 @@ void main() {
     );
     await tester.enterText(price, '9000');
     await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.fieldMileageKm),
+      find.widgetWithText(TextFormField, l10n.createListingMileagePlaceholder),
       '100000',
     );
 
@@ -305,13 +310,22 @@ void main() {
         find.byKey(const ValueKey('create_listing_body_type_field')),
         findsOneWidget,
       );
-      expect(find.text(l10n.listingBodyTypeSectionSubtitle), findsOneWidget);
-      expect(find.byType(PublicContactNotice), findsOneWidget);
-      expect(find.text(l10n.publicContactNotice), findsOneWidget);
+      expect(find.text(l10n.listingBodyTypeSectionTitle), findsOneWidget);
+      expect(find.text(l10n.createListingChooseBrand), findsOneWidget);
+      expect(find.text(l10n.listingFuelType), findsOneWidget);
+      expect(find.text(l10n.listingDrivetrain), findsOneWidget);
+      expect(find.text(l10n.listingTransmission), findsOneWidget);
+      expect(find.text(l10n.listingBodyTypeNotSpecified), findsNothing);
+      expect(find.text(l10n.createListingPricePlaceholder), findsOneWidget);
+      expect(find.text(l10n.createListingMileagePlaceholder), findsOneWidget);
+      expect(find.text(l10n.createListingVinPrivacyHelper), findsOneWidget);
+      expect(find.text(l10n.listingVinFieldHelper), findsNothing);
+      expect(find.byType(CreateListingContactNotice), findsOneWidget);
+      expect(find.text(l10n.createListingContactNotice), findsOneWidget);
       expect(find.text(l10n.publishListing), findsWidgets);
 
       final noticeAppearsAbovePhone =
-          tester.getCenter(find.byType(PublicContactNotice)).dy <
+          tester.getCenter(find.byType(CreateListingContactNotice)).dy <
           tester
               .getCenter(find.widgetWithText(TextFormField, l10n.fieldPhone))
               .dy;
@@ -351,8 +365,6 @@ void main() {
     final vehicle = sections[1];
     final type = sections[3];
     final location = sections[4];
-    final price = sections[5];
-    final publish = sections[6];
     final city = find.byKey(const ValueKey('create_listing_city_field'));
     final region = find.byKey(const ValueKey('create_listing_region_selector'));
 
@@ -365,18 +377,9 @@ void main() {
     expect(find.descendant(of: location, matching: region), findsOneWidget);
     expect(find.descendant(of: location, matching: city), findsOneWidget);
     expect(tester.getTopLeft(region).dy, lessThan(tester.getTopLeft(city).dy));
-    expect(
-      find.descendant(of: location, matching: find.text('05')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: price, matching: find.text('06')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: publish, matching: find.text('07')),
-      findsOneWidget,
-    );
+    expect(find.text('05'), findsNothing);
+    expect(find.text('06'), findsNothing);
+    expect(find.text('07'), findsNothing);
   });
 
   testWidgets('city picker follows region and region change clears selection', (
@@ -509,8 +512,276 @@ void main() {
         find.byKey(CreateListingMediaSection.phase3TestKey),
         findsOneWidget,
       );
+      expect(find.text(l10n.createListingHeroEmptyTitle), findsOneWidget);
+      expect(find.text(l10n.createListingHeroEmptyDetail), findsOneWidget);
+      expect(find.text(l10n.createListingMediaCoverHint), findsNothing);
     },
   );
+
+  testWidgets('compact form: no overflow at 320 and 375 with text scale 1.3', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    addTearDown(() async {
+      await binding.setSurfaceSize(null);
+    });
+
+    const sectionKeys = [
+      'create_listing_photos_section',
+      'create_listing_vehicle_section',
+      'create_listing_description_section',
+      'create_listing_type_section',
+      'create_listing_location_section',
+      'create_listing_price_section',
+      'create_listing_publish_section',
+    ];
+
+    for (final size in const [Size(320, 568), Size(375, 667)]) {
+      await binding.setSurfaceSize(size);
+      await tester.pumpWidget(
+        MediaQuery(
+          data: MediaQueryData(
+            size: size,
+            textScaler: const TextScaler.linear(1.3),
+          ),
+          child: wrap(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      for (final key in sectionKeys) {
+        await tester.ensureVisible(find.byKey(ValueKey(key)));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      }
+    }
+  });
+
+  testWidgets('compact form: no overflow in RO at 320 with text scale 1.3', (
+    tester,
+  ) async {
+    final ro = roStrings();
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    await binding.setSurfaceSize(const Size(320, 568));
+    addTearDown(() async {
+      await binding.setSurfaceSize(null);
+    });
+
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(
+          size: Size(320, 568),
+          textScaler: TextScaler.linear(1.3),
+        ),
+        child: wrap(locale: const Locale('ro')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('create_listing_vehicle_section')),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('create_listing_publish_section')),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    expect(find.text(ro.createListingVinPrivacyHelper), findsOneWidget);
+    expect(find.text(ro.listingFuelType), findsOneWidget);
+    expect(find.text(ro.listingDrivetrain), findsOneWidget);
+    expect(find.text(ro.listingTransmission), findsOneWidget);
+  });
+
+  testWidgets('price and mileage share a row at 390 and stack at 320', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    addTearDown(() async {
+      await binding.setSurfaceSize(null);
+    });
+
+    Future<void> pumpAt(Size size) async {
+      await binding.setSurfaceSize(size);
+      await tester.pumpWidget(
+        MediaQuery(
+          data: MediaQueryData(size: size),
+          child: wrap(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('create_listing_price_section')),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await pumpAt(const Size(390, 844));
+    expect(
+      tester
+          .getTopLeft(find.byKey(const ValueKey('create_listing_price_field')))
+          .dy,
+      tester
+          .getTopLeft(
+            find.byKey(const ValueKey('create_listing_mileage_field')),
+          )
+          .dy,
+    );
+
+    await pumpAt(const Size(320, 568));
+    expect(
+      tester
+          .getTopLeft(find.byKey(const ValueKey('create_listing_price_field')))
+          .dy,
+      lessThan(
+        tester
+            .getTopLeft(
+              find.byKey(const ValueKey('create_listing_mileage_field')),
+            )
+            .dy,
+      ),
+    );
+  });
+
+  testWidgets('optional picker placeholder is replaced by the selected value', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.listingFuelType), findsOneWidget);
+    expect(find.text(l10n.listingBodyTypeNotSpecified), findsNothing);
+
+    final fuel = find.byKey(const ValueKey('create_listing_fuel_field'));
+    await tester.ensureVisible(fuel);
+    await tester.tap(fuel);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.listingFuelTypePetrol));
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.listingFuelTypePetrol), findsOneWidget);
+    expect(find.text(l10n.listingFuelType), findsNothing);
+  });
+
+  testWidgets('deal selector uses a composed compact shell at 320', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    addTearDown(() async {
+      await binding.setSurfaceSize(null);
+    });
+
+    await binding.setSurfaceSize(const Size(320, 568));
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(320, 568)),
+        child: wrap(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('create_listing_type_section')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('create_listing_type_section')),
+        matching: find.byKey(CreateListingSegmentedControl.compactLayoutKey),
+      ),
+      findsOneWidget,
+    );
+    _expectDealLabelsFullyReadable(
+      tester,
+      sale: l10n.formatTypeSale,
+      exchange: l10n.formatTypeExchange,
+      both: l10n.formatTypeBoth,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'deal selector compact fallback keeps RO labels readable at 320',
+    (tester) async {
+      final ro = roStrings();
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      addTearDown(() async {
+        await binding.setSurfaceSize(null);
+      });
+
+      await binding.setSurfaceSize(const Size(320, 568));
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(size: Size(320, 568)),
+          child: wrap(locale: const Locale('ro')),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('create_listing_type_section')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('create_listing_type_section')),
+          matching: find.byKey(CreateListingSegmentedControl.compactLayoutKey),
+        ),
+        findsOneWidget,
+      );
+      _expectDealLabelsFullyReadable(
+        tester,
+        sale: ro.formatTypeSale,
+        exchange: ro.formatTypeExchange,
+        both: ro.formatTypeBoth,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('deal selector stays compact and untruncated at 375 and 390', (
+    tester,
+  ) async {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    addTearDown(() async {
+      await binding.setSurfaceSize(null);
+    });
+
+    for (final width in const [375.0, 390.0]) {
+      await binding.setSurfaceSize(Size(width, 800));
+      await tester.pumpWidget(
+        MediaQuery(
+          data: MediaQueryData(size: Size(width, 800)),
+          child: wrap(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('create_listing_type_section')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('create_listing_type_section')),
+          matching: find.byKey(CreateListingSegmentedControl.compactLayoutKey),
+        ),
+        findsOneWidget,
+      );
+      _expectDealLabelsFullyReadable(
+        tester,
+        sale: l10n.formatTypeSale,
+        exchange: l10n.formatTypeExchange,
+        both: l10n.formatTypeBoth,
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
 
   testWidgets(
     'gallery upload failure shows localized snackbar, not raw backend text',
@@ -698,4 +969,26 @@ void main() {
 
     expect(find.text(customMake), findsWidgets);
   });
+}
+
+void _expectDealLabelsFullyReadable(
+  WidgetTester tester, {
+  required String sale,
+  required String exchange,
+  required String both,
+}) {
+  expect(find.text(sale), findsOneWidget);
+  expect(find.text(exchange), findsOneWidget);
+  expect(find.text(both), findsOneWidget);
+
+  final saleText = tester.widget<Text>(find.text(sale));
+  final bothText = tester.widget<Text>(find.text(both));
+  expect(bothText.style?.fontSize, saleText.style?.fontSize);
+  expect(saleText.overflow, isNot(TextOverflow.ellipsis));
+  expect(bothText.overflow, isNot(TextOverflow.ellipsis));
+
+  for (final label in [sale, exchange, both]) {
+    final paragraph = tester.renderObject<RenderParagraph>(find.text(label));
+    expect(paragraph.didExceedMaxLines, isFalse);
+  }
 }

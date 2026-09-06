@@ -1178,11 +1178,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createListingMediaCoverHint => 'Обложка каталога';
 
   @override
-  String get createListingHeroEmptyTitle => 'Добавьте фотографии автомобиля';
+  String get createListingHeroEmptyTitle => 'Добавить фотографии';
 
   @override
-  String get createListingHeroEmptyDetail =>
-      'До девяти снимков из галереи. Начните с удачного ракурса.';
+  String get createListingHeroEmptyDetail => 'До 9 фото';
 
   @override
   String get createListingAddPhoto => 'Добавить фото';
@@ -2807,6 +2806,38 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get listingVinFieldHelper =>
       'Необязательно. VIN помогает добавить к объявлению базовую информацию об автомобиле и повышает доверие покупателей. Полный VIN публично не показывается.';
+
+  @override
+  String get createListingVinPrivacyHelper =>
+      'Не публикуется. Используется для проверки данных автомобиля.';
+
+  @override
+  String get createListingEngineLitersPlaceholder => 'Объём двигателя, л';
+
+  @override
+  String get createListingEnginePowerPlaceholder => 'Мощность, л.с.';
+
+  @override
+  String get createListingRegistrationPlaceholder => 'Место регистрации';
+
+  @override
+  String get createListingPricePlaceholder => 'Цена';
+
+  @override
+  String get createListingMileagePlaceholder => 'Пробег, км';
+
+  @override
+  String get createListingTelegramPlaceholder => 'Telegram (необязательно)';
+
+  @override
+  String get createListingContactNotice =>
+      'Контакты в объявлении публичные. Указывайте только те, что готовы открыть.';
+
+  @override
+  String get createListingWhatsAppTitle => 'WhatsApp';
+
+  @override
+  String get createListingWhatsAppSubtitle => 'Использовать этот номер';
 
   @override
   String get validationVinInvalid =>

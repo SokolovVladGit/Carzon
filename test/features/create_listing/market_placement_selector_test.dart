@@ -62,13 +62,6 @@ void main() {
       final transnistriaText = tester.widget<Text>(find.text('Приднестровье'));
       expect(transnistriaText.maxLines, 1);
       expect(transnistriaText.softWrap, isFalse);
-      expect(
-        find.descendant(
-          of: find.byKey(transnistriaTile),
-          matching: find.byIcon(Icons.check_rounded),
-        ),
-        findsOneWidget,
-      );
 
       final initialTransnistriaSize = tester.getSize(
         find.byKey(transnistriaTile),
@@ -82,21 +75,6 @@ void main() {
 
       await tester.tap(find.byKey(moldovaTile));
       await tester.pumpAndSettle();
-
-      expect(
-        find.descendant(
-          of: find.byKey(moldovaTile),
-          matching: find.byIcon(Icons.check_rounded),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: find.byKey(transnistriaTile),
-          matching: find.byIcon(Icons.check_rounded),
-        ),
-        findsNothing,
-      );
       expect(
         tester.getSize(find.byKey(transnistriaTile)),
         initialTransnistriaSize,

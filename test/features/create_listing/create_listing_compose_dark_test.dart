@@ -11,7 +11,7 @@ void main() {
   final l10n = ruStrings();
 
   group('Create listing compose dark editorial', () {
-    testWidgets('hero and section render with headline and photo block', (
+    testWidgets('flattened section renders heading and photo block', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -24,25 +24,15 @@ void main() {
             backgroundColor: createListingCanvasColor(AppTheme.dark()),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  CreateListingComposeHero(l10n: l10n),
-                  const SizedBox(height: 16),
-                  CreateListingPremiumSection(
-                    stepIndex: 1,
-                    title: l10n.createListingMediaTitle,
-                    subtitle: l10n.createListingMediaSubtitle,
-                    child: CreateListingMediaSection(
-                      photos: const [],
-                      pickingImage: false,
-                      disabled: false,
-                      onAddPhoto: () {},
-                      onRemovePhotoAt: (_) {},
-                      showHeading: false,
-                    ),
-                  ),
-                ],
+              child: CreateListingFormSection(
+                title: l10n.createListingMediaTitle,
+                child: CreateListingMediaSection(
+                  photos: const [],
+                  pickingImage: false,
+                  disabled: false,
+                  onAddPhoto: () {},
+                  onRemovePhotoAt: (_) {},
+                ),
               ),
             ),
           ),
@@ -50,8 +40,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text(l10n.createListingComposeHeadline), findsOneWidget);
-      expect(find.text(l10n.createListingAddPhoto), findsOneWidget);
+      expect(find.text(l10n.createListingMediaTitle), findsOneWidget);
+      expect(find.text(l10n.createListingHeroEmptyTitle), findsOneWidget);
       expect(
         find.byKey(CreateListingMediaSection.phase3TestKey),
         findsOneWidget,
