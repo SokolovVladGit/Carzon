@@ -1099,7 +1099,7 @@ class AppLocalizationsRo extends AppLocalizations {
       'Coperta catalogului și titlu opțional.';
 
   @override
-  String get createListingSectionVehicle => 'Despre masina';
+  String get createListingSectionVehicle => 'Despre mașină';
 
   @override
   String get createListingSectionVehicleSubtitle =>
@@ -1175,11 +1175,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get createListingMediaCoverHint => 'Coperta catalogului';
 
   @override
-  String get createListingHeroEmptyTitle => 'Adăugați fotografii cu mașină';
+  String get createListingHeroEmptyTitle => 'Adăugați fotografii';
 
   @override
-  String get createListingHeroEmptyDetail =>
-      'Până la nouă imagini din galerie. Începeți cu un unghi bun.';
+  String get createListingHeroEmptyDetail => 'Până la 9 foto';
 
   @override
   String get createListingAddPhoto => 'Adăugați o fotografie';
@@ -2810,6 +2809,38 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get listingVinFieldHelper =>
       'Opțional. VIN ajută la adăugarea informațiilor de bază despre vehicul într-un anunț și crește încrederea cumpărătorului. Numărul VIN complet nu este afișat public.';
+
+  @override
+  String get createListingVinPrivacyHelper =>
+      'Nu este publicat. Este folosit pentru verificarea datelor automobilului.';
+
+  @override
+  String get createListingEngineLitersPlaceholder => 'Capacitatea motorului, l';
+
+  @override
+  String get createListingEnginePowerPlaceholder => 'Putere, CP';
+
+  @override
+  String get createListingRegistrationPlaceholder => 'Locul înmatriculării';
+
+  @override
+  String get createListingPricePlaceholder => 'Preț';
+
+  @override
+  String get createListingMileagePlaceholder => 'Kilometraj, km';
+
+  @override
+  String get createListingTelegramPlaceholder => 'Telegram (opțional)';
+
+  @override
+  String get createListingContactNotice =>
+      'Contactele din anunț sunt publice. Indicați doar cele pe care sunteți dispus să le publicați.';
+
+  @override
+  String get createListingWhatsAppTitle => 'WhatsApp';
+
+  @override
+  String get createListingWhatsAppSubtitle => 'Utilizați acest număr';
 
   @override
   String get validationVinInvalid =>

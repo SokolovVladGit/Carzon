@@ -123,7 +123,7 @@ void main() {
 
     final price = find.widgetWithText(
       TextFormField,
-      l10n.createListingPriceAmount,
+      l10n.createListingPricePlaceholder,
     );
     await tester.scrollUntilVisible(
       price,
@@ -132,7 +132,7 @@ void main() {
     );
     await tester.enterText(price, '9000');
     await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.fieldMileageKm),
+      find.widgetWithText(TextFormField, l10n.createListingMileagePlaceholder),
       '100000',
     );
 

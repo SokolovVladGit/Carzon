@@ -2193,13 +2193,13 @@ abstract class AppLocalizations {
   /// No description provided for @createListingHeroEmptyTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Добавьте фотографии автомобиля'**
+  /// **'Добавить фотографии'**
   String get createListingHeroEmptyTitle;
 
   /// No description provided for @createListingHeroEmptyDetail.
   ///
   /// In ru, this message translates to:
-  /// **'До девяти снимков из галереи. Начните с удачного ракурса.'**
+  /// **'До 9 фото'**
   String get createListingHeroEmptyDetail;
 
   /// No description provided for @createListingAddPhoto.
@@ -5057,6 +5057,66 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Необязательно. VIN помогает добавить к объявлению базовую информацию об автомобиле и повышает доверие покупателей. Полный VIN публично не показывается.'**
   String get listingVinFieldHelper;
+
+  /// No description provided for @createListingVinPrivacyHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не публикуется. Используется для проверки данных автомобиля.'**
+  String get createListingVinPrivacyHelper;
+
+  /// No description provided for @createListingEngineLitersPlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Объём двигателя, л'**
+  String get createListingEngineLitersPlaceholder;
+
+  /// No description provided for @createListingEnginePowerPlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мощность, л.с.'**
+  String get createListingEnginePowerPlaceholder;
+
+  /// No description provided for @createListingRegistrationPlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Место регистрации'**
+  String get createListingRegistrationPlaceholder;
+
+  /// No description provided for @createListingPricePlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена'**
+  String get createListingPricePlaceholder;
+
+  /// No description provided for @createListingMileagePlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пробег, км'**
+  String get createListingMileagePlaceholder;
+
+  /// No description provided for @createListingTelegramPlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Telegram (необязательно)'**
+  String get createListingTelegramPlaceholder;
+
+  /// No description provided for @createListingContactNotice.
+  ///
+  /// In ru, this message translates to:
+  /// **'Контакты в объявлении публичные. Указывайте только те, что готовы открыть.'**
+  String get createListingContactNotice;
+
+  /// No description provided for @createListingWhatsAppTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'WhatsApp'**
+  String get createListingWhatsAppTitle;
+
+  /// No description provided for @createListingWhatsAppSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Использовать этот номер'**
+  String get createListingWhatsAppSubtitle;
 
   /// No description provided for @validationVinInvalid.
   ///

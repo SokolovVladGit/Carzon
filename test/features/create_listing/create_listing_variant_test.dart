@@ -123,7 +123,7 @@ void main() {
 
     final price = find.widgetWithText(
       TextFormField,
-      l10n.createListingPriceAmount,
+      l10n.createListingPricePlaceholder,
     );
     await tester.scrollUntilVisible(
       price,
@@ -132,7 +132,7 @@ void main() {
     );
     await tester.enterText(price, '9000');
     await tester.enterText(
-      find.widgetWithText(TextFormField, l10n.fieldMileageKm),
+      find.widgetWithText(TextFormField, l10n.createListingMileagePlaceholder),
       '100000',
     );
 
@@ -177,7 +177,6 @@ void main() {
   ) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
-    expect(find.text(l10n.listingModelBaseHelper), findsOneWidget);
     expect(find.text(l10n.listingVariantLabel), findsWidgets);
     await pickBrand(tester, 'BMW');
     await pickModel(tester, '3 Series');

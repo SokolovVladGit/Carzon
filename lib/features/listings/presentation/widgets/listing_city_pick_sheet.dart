@@ -222,6 +222,7 @@ class ListingCitySelectorField extends StatelessWidget {
     required this.onTap,
     required this.decoration,
     this.formFieldKey,
+    this.borderRadius = 16,
   });
 
   final AppLocalizations l10n;
@@ -231,6 +232,7 @@ class ListingCitySelectorField extends StatelessWidget {
   final VoidCallback onTap;
   final InputDecoration decoration;
   final GlobalKey<FormFieldState<String>>? formFieldKey;
+  final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
@@ -240,7 +242,7 @@ class ListingCitySelectorField extends StatelessWidget {
       validator: (_) =>
           !manualMode && canonicalCity == null ? l10n.validationRequired : null,
       builder: (field) => InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(borderRadius),
         onTap: enabled ? onTap : null,
         child: InputDecorator(
           decoration: decoration.copyWith(errorText: field.errorText),
