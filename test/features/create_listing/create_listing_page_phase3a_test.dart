@@ -12,10 +12,12 @@ import 'package:carzon/features/create_listing/presentation/bloc/create_listing_
 import 'package:carzon/features/create_listing/presentation/pages/create_listing_page.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/market_placement_selector.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_media_section.dart';
+import 'package:carzon/features/create_listing/presentation/widgets/listing_type_deal_selector.dart';
 import 'package:carzon/features/listings/domain/catalog/listing_brands.dart';
 import 'package:carzon/features/listings/presentation/widgets/listing_brand_pick_sheet.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_contact_notice.dart';
+import 'package:carzon/features/create_listing/presentation/widgets/listing_preview_card.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_segmented_control.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +28,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/create_listing_test_stubs.dart';
 import '../../helpers/fake_vehicle_model_catalog_repository.dart';
 import '../../helpers/l10n_test_helpers.dart';
 
@@ -156,6 +159,7 @@ void main() {
         orderedPhotos: any(named: 'orderedPhotos'),
       ),
     ).thenAnswer((_) async {});
+    stubCreateListingVinResolve(createCubit);
 
     sl.registerFactory<CreateListingCubit>(() => createCubit);
   });
@@ -214,6 +218,7 @@ void main() {
   }
 
   Future<void> fillRequiredFieldsExceptCity(WidgetTester tester) async {
+    await openCreateListingManualIdentity(tester);
     final brand = find.byKey(const ValueKey('create_listing_brand_field'));
     await tester.scrollUntilVisible(
       brand,
@@ -299,27 +304,39 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.byKey(const ValueKey('create_listing_brand_field')),
+        find.byKey(const ValueKey('create_listing_enter_manually')),
         findsOneWidget,
       );
       expect(
+        find.byKey(const ValueKey('create_listing_brand_field')),
+        findsNothing,
+      );
+      expect(
         find.byKey(const ValueKey('create_listing_year_field')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('create_listing_vin_field')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('create_listing_additional_details')),
         findsOneWidget,
       );
       expect(
         find.byKey(const ValueKey('create_listing_body_type_field')),
-        findsOneWidget,
+        findsNothing,
       );
-      expect(find.text(l10n.listingBodyTypeSectionTitle), findsOneWidget);
-      expect(find.text(l10n.createListingChooseBrand), findsOneWidget);
-      expect(find.text(l10n.listingFuelType), findsOneWidget);
-      expect(find.text(l10n.listingDrivetrain), findsOneWidget);
-      expect(find.text(l10n.listingTransmission), findsOneWidget);
+      expect(find.text(l10n.createListingChooseBrand), findsNothing);
+      expect(find.text(l10n.createListingEnterManually), findsOneWidget);
+      expect(find.text(l10n.createListingVinAutofillHint), findsOneWidget);
+      expect(find.text(l10n.createListingAdditionalDetails), findsOneWidget);
       expect(find.text(l10n.listingBodyTypeNotSpecified), findsNothing);
       expect(find.text(l10n.createListingPricePlaceholder), findsOneWidget);
       expect(find.text(l10n.createListingMileagePlaceholder), findsOneWidget);
-      expect(find.text(l10n.createListingVinPrivacyHelper), findsOneWidget);
+      expect(find.text(l10n.createListingVinPrivacyHelper), findsNothing);
       expect(find.text(l10n.listingVinFieldHelper), findsNothing);
+      expect(find.text(l10n.fieldTitleOptional), findsNothing);
       expect(find.byType(CreateListingContactNotice), findsOneWidget);
       expect(find.text(l10n.createListingContactNotice), findsOneWidget);
       expect(find.text(l10n.publishListing), findsWidgets);
@@ -335,52 +352,94 @@ void main() {
     },
   );
 
-  testWidgets('location is a dedicated fifth section between type and price', (
-    tester,
-  ) async {
-    await tester.pumpWidget(wrap());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'primary sections follow vehicle-first publish-before-advanced order',
+    (tester) async {
+      await tester.pumpWidget(wrap());
+      await tester.pumpAndSettle();
 
-    const sectionKeys = [
-      'create_listing_photos_section',
-      'create_listing_vehicle_section',
-      'create_listing_description_section',
-      'create_listing_type_section',
-      'create_listing_location_section',
-      'create_listing_price_section',
-      'create_listing_publish_section',
-    ];
-    final sections = [for (final key in sectionKeys) find.byKey(ValueKey(key))];
+      const sectionKeys = [
+        'create_listing_vehicle_section',
+        'create_listing_photos_section',
+        'create_listing_type_section',
+        'create_listing_location_section',
+        'create_listing_contact_section',
+        'create_listing_publish_section',
+        'create_listing_additional_details',
+      ];
+      final sections = [
+        for (final key in sectionKeys) find.byKey(ValueKey(key)),
+      ];
 
-    for (final section in sections) {
-      expect(section, findsOneWidget);
-    }
-    for (var i = 1; i < sections.length; i++) {
-      expect(
-        tester.getTopLeft(sections[i - 1]).dy,
-        lessThan(tester.getTopLeft(sections[i]).dy),
+      for (final section in sections) {
+        expect(section, findsOneWidget);
+      }
+      for (var i = 1; i < sections.length; i++) {
+        expect(
+          tester.getTopLeft(sections[i - 1]).dy,
+          lessThan(tester.getTopLeft(sections[i]).dy),
+        );
+      }
+
+      final vehicle = sections[0];
+      final type = sections[2];
+      final location = sections[3];
+      final contact = sections[4];
+      final publish = sections[5];
+      final advanced = sections[6];
+      final city = find.byKey(const ValueKey('create_listing_city_field'));
+      final region = find.byKey(
+        const ValueKey('create_listing_region_selector'),
       );
-    }
+      final preview = find.byKey(ListingPreviewCard.headingKey);
+      final price = find.byKey(const ValueKey('create_listing_price_field'));
+      final dealType = find.byType(ListingTypeDealSelector);
 
-    final vehicle = sections[1];
-    final type = sections[3];
-    final location = sections[4];
-    final city = find.byKey(const ValueKey('create_listing_city_field'));
-    final region = find.byKey(const ValueKey('create_listing_region_selector'));
-
-    expect(find.text(l10n.createListingSectionLocation), findsOneWidget);
-    expect(city, findsOneWidget);
-    expect(region, findsOneWidget);
-    expect(find.byType(MarketPlacementSelector), findsOneWidget);
-    expect(find.descendant(of: vehicle, matching: city), findsNothing);
-    expect(find.descendant(of: type, matching: region), findsNothing);
-    expect(find.descendant(of: location, matching: region), findsOneWidget);
-    expect(find.descendant(of: location, matching: city), findsOneWidget);
-    expect(tester.getTopLeft(region).dy, lessThan(tester.getTopLeft(city).dy));
-    expect(find.text('05'), findsNothing);
-    expect(find.text('06'), findsNothing);
-    expect(find.text('07'), findsNothing);
-  });
+      expect(find.text(l10n.createListingSectionLocation), findsOneWidget);
+      expect(city, findsOneWidget);
+      expect(region, findsOneWidget);
+      expect(find.byType(MarketPlacementSelector), findsOneWidget);
+      expect(find.descendant(of: vehicle, matching: city), findsNothing);
+      expect(find.descendant(of: type, matching: region), findsNothing);
+      expect(find.descendant(of: location, matching: region), findsOneWidget);
+      expect(find.descendant(of: location, matching: city), findsOneWidget);
+      expect(
+        find.descendant(
+          of: contact,
+          matching: find.byType(CreateListingContactNotice),
+        ),
+        findsOneWidget,
+      );
+      expect(find.descendant(of: publish, matching: preview), findsOneWidget);
+      expect(
+        tester.getTopLeft(region).dy,
+        lessThan(tester.getTopLeft(city).dy),
+      );
+      expect(
+        tester.getTopLeft(price).dy,
+        lessThan(tester.getTopLeft(dealType).dy),
+      );
+      expect(
+        tester.getTopLeft(preview).dy,
+        lessThan(tester.getTopLeft(advanced).dy),
+      );
+      expect(
+        tester
+            .getTopLeft(find.byKey(const ValueKey('create_listing_vin_field')))
+            .dy,
+        lessThan(
+          tester
+              .getTopLeft(
+                find.byKey(const ValueKey('create_listing_photos_section')),
+              )
+              .dy,
+        ),
+      );
+      expect(find.text('05'), findsNothing);
+      expect(find.text('06'), findsNothing);
+      expect(find.text('07'), findsNothing);
+    },
+  );
 
   testWidgets('city picker follows region and region change clears selection', (
     tester,
@@ -393,7 +452,7 @@ void main() {
     expect(find.text('Chișinău'), findsNothing);
     await tester.tap(find.text('Тирасполь'));
     await tester.pumpAndSettle();
-    expect(find.text('Тирасполь'), findsOneWidget);
+    expect(find.text('Тирасполь'), findsWidgets);
 
     await chooseRegion(tester, l10n.regionMoldova);
     expect(find.text(l10n.listingCitySelectPlaceholder), findsOneWidget);
@@ -527,13 +586,13 @@ void main() {
     });
 
     const sectionKeys = [
-      'create_listing_photos_section',
       'create_listing_vehicle_section',
-      'create_listing_description_section',
+      'create_listing_photos_section',
       'create_listing_type_section',
       'create_listing_location_section',
-      'create_listing_price_section',
+      'create_listing_contact_section',
       'create_listing_publish_section',
+      'create_listing_additional_details',
     ];
 
     for (final size in const [Size(320, 568), Size(375, 667)]) {
@@ -592,10 +651,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
-    expect(find.text(ro.createListingVinPrivacyHelper), findsOneWidget);
-    expect(find.text(ro.listingFuelType), findsOneWidget);
-    expect(find.text(ro.listingDrivetrain), findsOneWidget);
-    expect(find.text(ro.listingTransmission), findsOneWidget);
+    expect(find.text(ro.createListingVinAutofillHint), findsOneWidget);
+    expect(find.text(ro.createListingAdditionalDetails), findsOneWidget);
   });
 
   testWidgets('price and mileage share a row at 390 and stack at 320', (
@@ -654,6 +711,7 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
 
+    await expandCreateListingAdditionalDetails(tester);
     expect(find.text(l10n.listingFuelType), findsOneWidget);
     expect(find.text(l10n.listingBodyTypeNotSpecified), findsNothing);
 
@@ -664,7 +722,7 @@ void main() {
     await tester.tap(find.text(l10n.listingFuelTypePetrol));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.listingFuelTypePetrol), findsOneWidget);
+    expect(find.text(l10n.listingFuelTypePetrol), findsWidgets);
     expect(find.text(l10n.listingFuelType), findsNothing);
   });
 
@@ -822,20 +880,15 @@ void main() {
     );
     await tester.pump();
     await tester.enterText(
-      find
-          .descendant(
-            of: find.byKey(const ValueKey('create_listing_photos_section')),
-            matching: find.byType(TextFormField),
-          )
-          .first,
-      'Golf',
+      find.byKey(const ValueKey('create_listing_vin_field')),
+      '1HGBH41JXMN109186',
     );
 
     await tapEmptyPhotoHero(tester);
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.imagePickerLoadFailed), findsNothing);
-    expect(find.text('Golf'), findsOneWidget);
+    expect(find.text('1HGBH41JXMN109186'), findsOneWidget);
     expect(find.byType(Image), findsNothing);
   });
 
@@ -907,6 +960,7 @@ void main() {
     (tester) async {
       await tester.pumpWidget(wrap());
       await tester.pumpAndSettle();
+      await openCreateListingManualIdentity(tester);
 
       final brandField = find.byKey(
         const ValueKey('create_listing_brand_field'),
@@ -951,6 +1005,7 @@ void main() {
   testWidgets('manual brand pick prefills custom make display', (tester) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
+    await openCreateListingManualIdentity(tester);
 
     const customMake = 'Zaporozhets';
     final brandField = find.byKey(const ValueKey('create_listing_brand_field'));

@@ -24,9 +24,12 @@ void main() {
     expect(
       info,
       contains(
-        'Carzon uses the camera so you can take a photo to send in chat.',
+        'Carzon uses the camera to take listing photos and scan a vehicle VIN on device.',
       ),
     );
+    expect(info, isNot(contains('folosește camera')));
+    expect(info, isNot(contains('использует камеру')));
+    expect(info, isNot(contains('take a photo to send in chat')));
     expect(info, isNot(contains('NSMicrophoneUsageDescription')));
     expect(info, isNot(contains('NSLocationWhenInUseUsageDescription')));
     expect(ru, contains('NSPhotoLibraryUsageDescription'));
@@ -34,15 +37,17 @@ void main() {
     expect(
       ru,
       contains(
-        'Carzon использует камеру, чтобы вы могли сделать фотографию и отправить её в чате.',
+        'Carzon использует камеру для фотографий и сканирования VIN на устройстве.',
       ),
     );
+    expect(ru, isNot(contains('отправить её в чате')));
     expect(
       ro,
       contains(
-        'Carzon folosește camera pentru a putea face o fotografie și a o trimite în chat.',
+        'Carzon folosește camera pentru fotografii și scanarea VIN-ului pe dispozitiv.',
       ),
     );
+    expect(ro, isNot(contains('trimite în chat')));
     expect(project, contains('InfoPlist.strings'));
     expect(project, contains('ru.lproj'));
     expect(project, contains('ro.lproj'));

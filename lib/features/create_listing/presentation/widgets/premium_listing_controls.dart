@@ -163,10 +163,10 @@ class PremiumPublishActionButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         clipBehavior: Clip.antiAlias,
-        borderRadius: BorderRadius.circular(kCreateListingFieldRadius),
+        borderRadius: BorderRadius.circular(kCreateListingPublishRadius),
         child: InkWell(
           onTap: canTap ? onPressed : null,
-          borderRadius: BorderRadius.circular(kCreateListingFieldRadius),
+          borderRadius: BorderRadius.circular(kCreateListingPublishRadius),
           splashColor: onFill.withValues(alpha: 0.08),
           highlightColor: onFill.withValues(alpha: 0.04),
           child: ConstrainedBox(

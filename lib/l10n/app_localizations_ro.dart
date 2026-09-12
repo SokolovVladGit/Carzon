@@ -1092,25 +1092,25 @@ class AppLocalizationsRo extends AppLocalizations {
       'Pregătiți un card de mașină: fotografii, caracteristici și contacte îngrijite - astfel încât cumpărătorul să vadă imediat principalul lucru.';
 
   @override
-  String get createListingSectionPhotosLead => 'Fotografie și antet';
+  String get createListingSectionPhotosLead => 'Fotografii';
 
   @override
   String get createListingSectionPhotosLeadSubtitle =>
-      'Coperta catalogului și titlu opțional.';
+      'Fotografii reale ale acestui automobil.';
 
   @override
-  String get createListingSectionVehicle => 'Despre mașină';
+  String get createListingSectionVehicle => 'Automobilul';
 
   @override
   String get createListingSectionVehicleSubtitle =>
-      'Marcă, model, an și specificații.';
+      'VIN-ul ajută la completarea mărcii, modelului și anului.';
 
   @override
-  String get createListingSectionDeal => 'Tipul anunțului';
+  String get createListingSectionDeal => 'Ofertă';
 
   @override
   String get createListingSectionDealSubtitle =>
-      'Alegeți vânzare, schimb sau ambele opțiuni.';
+      'Tipul, prețul și kilometrajul.';
 
   @override
   String get createListingSectionLocation => 'Locație';
@@ -1131,6 +1131,26 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get createListingSectionPublishSubtitle =>
       'Persoanele de contact vor fi vizibile în anunțul activ.';
+
+  @override
+  String get createListingPreviewHeading => 'Previzualizarea anunțului';
+
+  @override
+  String get createListingPreviewVehiclePlaceholder => 'Automobil';
+
+  @override
+  String get createListingPreviewCoverLabel => 'Fotografia de copertă';
+
+  @override
+  String get createListingPreviewCoverEmptyLabel =>
+      'Fotografia nu a fost selectată';
+
+  @override
+  String get createListingPreviewAddPhotoHint =>
+      'Adăugați fotografia automobilului';
+
+  @override
+  String get createListingPreviewEnterPrice => 'Indicați prețul';
 
   @override
   String get createListingPublishKicker => 'Pasul final';
@@ -2815,6 +2835,92 @@ class AppLocalizationsRo extends AppLocalizations {
       'Nu este publicat. Este folosit pentru verificarea datelor automobilului.';
 
   @override
+  String get createListingVinAutofillHint =>
+      'Introduceți sau scanați VIN-ul. Carzon va identifica automat marca, modelul și anul.';
+
+  @override
+  String get createListingVinResolving => 'Identificăm automobilul…';
+
+  @override
+  String get createListingVehicleFound => 'Automobil găsit';
+
+  @override
+  String get createListingConfirmVehicle => 'Confirmă';
+
+  @override
+  String get createListingEnterManually => 'Introduceți manual';
+
+  @override
+  String get createListingChangeManually => 'Modificați manual';
+
+  @override
+  String get createListingChange => 'Modificați';
+
+  @override
+  String get createListingVehicleIdentifiedFromVin =>
+      'Automobil identificat după VIN';
+
+  @override
+  String get createListingVinChecksumHint =>
+      'Verificați VIN-ul. Este posibil ca unul dintre caractere să fie introdus greșit.';
+
+  @override
+  String get createListingVinPartialTitle =>
+      'Nu am putut identifica complet automobilul.';
+
+  @override
+  String get createListingVinPartial => 'Completați datele manual.';
+
+  @override
+  String get createListingVinNoData =>
+      'Nu am putut identifica automat automobilul.';
+
+  @override
+  String get createListingVinResolverFailed =>
+      'Completarea automată este temporar indisponibilă.';
+
+  @override
+  String get createListingVinMayMiss =>
+      'Carzon nu poate identifica automat orice automobil.';
+
+  @override
+  String get createListingVinSpecCaution =>
+      'Unele caracteristici pot diferi. Verificați datele automobilului.';
+
+  @override
+  String get createListingSmartFillLoading => 'Completăm caracteristicile…';
+
+  @override
+  String get createListingSmartFillSeveralVersions => 'Mai multe versiuni';
+
+  @override
+  String get createListingSmartFillAskBody => 'Ce caroserie are automobilul?';
+
+  @override
+  String get createListingSmartFillAskFuel => 'Ce combustibil?';
+
+  @override
+  String get createListingSmartFillAskTransmission => 'Ce cutie de viteze?';
+
+  @override
+  String get createListingSmartFillDontKnow => 'Nu știu';
+
+  @override
+  String get createListingSmartFillNoData =>
+      'Caracteristicile pot fi adăugate manual.';
+
+  @override
+  String get createListingSmartFillFailed =>
+      'Nu am putut completa caracteristicile.';
+
+  @override
+  String get createListingAdditionalDetails => 'Detalii suplimentare';
+
+  @override
+  String get createListingAdditionalDetailsSubtitle =>
+      'Caroserie, motor, cutie de viteze, descriere';
+
+  @override
   String get createListingEngineLitersPlaceholder => 'Capacitatea motorului, l';
 
   @override
@@ -3898,4 +4004,59 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get fuelPricesFuelDieselRegular => 'Motorină';
+
+  @override
+  String get vinScannerTitle => 'Scanează VIN';
+
+  @override
+  String get vinScannerInstruction => 'Îndreaptă camera spre VIN';
+
+  @override
+  String get vinScannerHint =>
+      'Pe un document sau pe eticheta mașinii. VIN-ul trebuie să încapă complet în cadru.';
+
+  @override
+  String get vinScannerInitializing => 'Se pregătește camera…';
+
+  @override
+  String get vinScannerFound => 'VIN detectat';
+
+  @override
+  String get vinScannerUse => 'Folosește VIN';
+
+  @override
+  String get vinScannerAgain => 'Scanează din nou';
+
+  @override
+  String get vinScannerClose => 'Închide scanerul';
+
+  @override
+  String get vinScannerDeniedTitle => 'Este necesar accesul la cameră';
+
+  @override
+  String get vinScannerDenied =>
+      'Permite accesul la cameră din configurări sau închide scanerul și introdu VIN-ul manual.';
+
+  @override
+  String get vinScannerUnavailableTitle => 'Camera nu este disponibilă';
+
+  @override
+  String get vinScannerUnavailable =>
+      'Încearcă din nou sau introdu VIN-ul manual.';
+
+  @override
+  String get vinScannerSettings => 'Deschide configurările';
+
+  @override
+  String get vinScannerTorchOn => 'Aprinde lanterna';
+
+  @override
+  String get vinScannerTorchOff => 'Stinge lanterna';
+
+  @override
+  String get vinScannerRetry => 'Reîncearcă';
+
+  @override
+  String get vinScannerInvalid =>
+      'Nu a fost recunoscut un VIN valid. Încearcă din nou sau introdu-l manual.';
 }

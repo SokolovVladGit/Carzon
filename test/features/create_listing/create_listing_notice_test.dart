@@ -16,6 +16,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/create_listing_test_stubs.dart';
 import '../../helpers/l10n_test_helpers.dart';
 
 class _MockCreateCubit extends MockCubit<CreateListingState>
@@ -48,6 +49,7 @@ void main() {
       initialState: const AuthState.authenticated(user),
     );
 
+    stubCreateListingVinResolve(createCubit);
     sl.registerFactory<CreateListingCubit>(() => createCubit);
   });
 

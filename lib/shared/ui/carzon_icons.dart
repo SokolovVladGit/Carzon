@@ -85,6 +85,7 @@ class CarzonIcons {
   static const IconData myListings = LucideIcons.listChecks;
   static const IconData inventoryEmpty = LucideIcons.package;
   static const IconData moreActions = LucideIcons.moreVertical;
+  static const IconData scan = LucideIcons.scanLine;
   static const IconData addPhoto = LucideIcons.camera;
   static const IconData photoLibrary = LucideIcons.image;
   static const IconData attach = LucideIcons.paperclip;

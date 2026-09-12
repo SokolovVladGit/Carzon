@@ -6,10 +6,13 @@ import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/create_listing/domain/entities/cover_image_upload.dart';
 import 'package:carzon/features/create_listing/domain/entities/new_listing_input.dart';
+import 'package:carzon/features/create_listing/domain/entities/vehicle_resolve_result.dart';
 import 'package:carzon/features/create_listing/domain/entities/uploaded_listing_image.dart';
 import 'package:carzon/features/create_listing/domain/repositories/create_listing_repository.dart';
+import 'package:carzon/features/create_listing/domain/repositories/vehicle_resolver_repository.dart';
 import 'package:carzon/features/create_listing/domain/usecases/create_listing_v2.dart';
 import 'package:carzon/features/create_listing/domain/usecases/delete_uploaded_listing_images_best_effort.dart';
+import 'package:carzon/features/create_listing/domain/usecases/resolve_vehicle.dart';
 import 'package:carzon/features/create_listing/domain/usecases/upload_listing_images_sequential.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_cubit.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_state.dart';
@@ -21,6 +24,13 @@ import 'package:mocktail/mocktail.dart';
 class _MockCreateRepo extends Mock implements CreateListingRepository {}
 
 class _MockImageRepo extends Mock implements ListingImageRepository {}
+
+class _NoopResolver implements VehicleResolverRepository {
+  @override
+  Future<Result<VehicleResolveResult>> resolveVehicle({required String vin}) {
+    throw StateError('resolve-vehicle must not run in submit tests');
+  }
+}
 
 NewListingInput _input({
   ListingCurrency? priceCurrency,
@@ -96,15 +106,19 @@ void main() {
     late _MockCreateRepo createRepo;
     late _MockImageRepo imageRepo;
     late CreateListingCubit cubit;
+    String? currentUserId;
 
     setUp(() {
       createRepo = _MockCreateRepo();
       imageRepo = _MockImageRepo();
+      currentUserId = 's1';
       cubit = CreateListingCubit(
+        currentUserId: () => currentUserId,
         createListingV2: CreateListingV2(createRepo),
         uploadListingImagesSequential: UploadListingImagesSequential(imageRepo),
         deleteUploadedListingImagesBestEffort:
             DeleteUploadedListingImagesBestEffort(imageRepo),
+        resolveVehicle: ResolveVehicle(_NoopResolver()),
       );
       when(
         () => imageRepo.deleteUploadedBatchBestEffort(
@@ -115,6 +129,136 @@ void main() {
     });
 
     tearDown(() => cubit.close());
+
+    test(
+      'account change between images stops upload and create without cleanup',
+      () async {
+        final gate = Completer<Result<List<UploadedListingImage>>>();
+        when(
+          () => imageRepo.uploadSequential(any()),
+        ).thenAnswer((_) => gate.future);
+        final pending = cubit.submit(
+          listingInput: _input(),
+          orderedPhotos: [_upload(), _upload()],
+        );
+        currentUserId = 'user-b';
+        gate.complete(
+          const Success([UploadedListingImage(publicUrl: 'https://cdn/a.jpg')]),
+        );
+        await pending;
+        verify(() => imageRepo.uploadSequential(any())).called(1);
+        verifyNever(() => createRepo.createV2(any()));
+        verifyNever(
+          () => imageRepo.deleteUploadedBatchBestEffort(
+            images: any(named: 'images'),
+            sellerId: any(named: 'sellerId'),
+          ),
+        );
+        expect(cubit.state.status, CreateListingStatus.idle);
+      },
+    );
+
+    test('A to B to A invalidates pending create success', () async {
+      final gate = Completer<Result<Listing>>();
+      when(() => createRepo.createV2(any())).thenAnswer((_) => gate.future);
+      final pending = cubit.submit(listingInput: _input(), orderedPhotos: []);
+      currentUserId = 'user-b';
+      cubit.syncWithAuth(currentUserId);
+      currentUserId = 's1';
+      cubit.syncWithAuth(currentUserId);
+      gate.complete(Success(_listing()));
+      await pending;
+      expect(cubit.state.status, CreateListingStatus.idle);
+      expect(cubit.state.created, isNull);
+    });
+
+    test('closed cubit ignores create completion', () async {
+      final gate = Completer<Result<Listing>>();
+      when(() => createRepo.createV2(any())).thenAnswer((_) => gate.future);
+      final pending = cubit.submit(listingInput: _input(), orderedPhotos: []);
+      await cubit.close();
+      gate.complete(Success(_listing()));
+      await pending;
+      expect(cubit.state.status, isNot(CreateListingStatus.success));
+    });
+
+    test('ambiguous create failure preserves uploaded objects', () async {
+      when(() => imageRepo.uploadSequential(any())).thenAnswer(
+        (_) async => const Success([
+          UploadedListingImage(publicUrl: 'https://cdn/a.jpg'),
+        ]),
+      );
+      when(() => createRepo.createV2(any())).thenAnswer(
+        (_) async => const FailureResult(ServerFailure('response lost')),
+      );
+      await cubit.submit(listingInput: _input(), orderedPhotos: [_upload()]);
+      expect(cubit.state.status, CreateListingStatus.failure);
+      verifyNever(
+        () => imageRepo.deleteUploadedBatchBestEffort(
+          images: any(named: 'images'),
+          sellerId: any(named: 'sellerId'),
+        ),
+      );
+    });
+
+    test(
+      'account change during rejection cleanup stops remaining deletes',
+      () async {
+        when(() => imageRepo.uploadSequential(any())).thenAnswer(
+          (_) async => const Success([
+            UploadedListingImage(publicUrl: 'https://cdn/a.jpg'),
+          ]),
+        );
+        when(() => createRepo.createV2(any())).thenAnswer(
+          (_) async => const FailureResult(
+            ServerFailure('rejected', postgrestCode: '22023'),
+          ),
+        );
+        when(
+          () => imageRepo.deleteUploadedBatchBestEffort(
+            images: any(named: 'images'),
+            sellerId: any(named: 'sellerId'),
+          ),
+        ).thenAnswer((_) async {
+          currentUserId = 'user-b';
+          return const Success(null);
+        });
+        await cubit.submit(
+          listingInput: _input(),
+          orderedPhotos: [_upload(), _upload()],
+        );
+        verify(
+          () => imageRepo.deleteUploadedBatchBestEffort(
+            images: any(named: 'images'),
+            sellerId: 's1',
+          ),
+        ).called(1);
+        expect(cubit.state.status, CreateListingStatus.idle);
+      },
+    );
+
+    test('known partial upload failure cleans earlier images', () async {
+      var count = 0;
+      when(() => imageRepo.uploadSequential(any())).thenAnswer(
+        (_) async => ++count == 1
+            ? const Success([
+                UploadedListingImage(publicUrl: 'https://cdn/a.jpg'),
+              ])
+            : const FailureResult(ServerFailure('upload rejected')),
+      );
+      await cubit.submit(
+        listingInput: _input(),
+        orderedPhotos: [_upload(), _upload()],
+      );
+      verify(
+        () => imageRepo.deleteUploadedBatchBestEffort(
+          images: any(named: 'images'),
+          sellerId: 's1',
+        ),
+      ).called(1);
+      verifyNever(() => createRepo.createV2(any()));
+      expect(cubit.state.failureKind, CreateListingFailureKind.upload);
+    });
 
     blocTest<CreateListingCubit, CreateListingState>(
       'no photos → skips upload and passes null gallery/default EUR via createV2',
@@ -144,9 +288,17 @@ void main() {
       '(order preserved); cover URL param remains null — gallery drives cover',
       setUp: () {
         when(() => imageRepo.uploadSequential(any())).thenAnswer(
-          (_) async => Success([
-            const UploadedListingImage(publicUrl: 'https://cdn/a.jpg'),
-            const UploadedListingImage(publicUrl: 'https://cdn/b.jpg'),
+          (call) async => Success([
+            UploadedListingImage(
+              publicUrl:
+                  (call.positionalArguments.single as List<CoverImageUpload>)
+                          .single
+                          .bytes
+                          .first ==
+                      10
+                  ? 'https://cdn/a.jpg'
+                  : 'https://cdn/b.jpg',
+            ),
           ]),
         );
         when(() => createRepo.createV2(any())).thenAnswer(
@@ -168,15 +320,12 @@ void main() {
         ),
       ],
       verify: (_) {
-        final uploadArg =
-            verify(
-                  () => imageRepo.uploadSequential(captureAny()),
-                ).captured.single
-                as List<CoverImageUpload>;
-        expect(uploadArg.length, 2);
-        expect(uploadArg.first.bytes.first, 10);
-        expect(uploadArg[1].bytes.length, 2);
-        expect(uploadArg[1].bytes.first, 20);
+        final uploadArgs = verify(
+          () => imageRepo.uploadSequential(captureAny()),
+        ).captured.cast<List<CoverImageUpload>>();
+        expect(uploadArgs.length, 2);
+        expect(uploadArgs[0].single.bytes.first, 10);
+        expect(uploadArgs[1].single.bytes.first, 20);
 
         final io =
             verify(() => createRepo.createV2(captureAny())).captured.single
@@ -262,20 +411,28 @@ void main() {
     );
 
     blocTest<CreateListingCubit, CreateListingState>(
-      'after successful uploads createV2 fails ⇒ batch delete invoked; '
-      'surface failure still generic mapped kind',
+      'definite create rejection cleans staged images in guarded steps',
       setUp: () {
-        final staged = [
-          const UploadedListingImage(publicUrl: 'https://cdn/a.jpg'),
-          const UploadedListingImage(publicUrl: 'https://cdn/b.jpg'),
-        ];
-        when(
-          () => imageRepo.uploadSequential(any()),
-        ).thenAnswer((_) async => Success(staged));
+        when(() => imageRepo.uploadSequential(any())).thenAnswer(
+          (call) async => Success([
+            UploadedListingImage(
+              publicUrl:
+                  (call.positionalArguments.single as List<CoverImageUpload>)
+                          .single
+                          .bytes
+                          .first ==
+                      1
+                  ? 'https://cdn/a.jpg'
+                  : 'https://cdn/b.jpg',
+            ),
+          ]),
+        );
 
-        when(
-          () => createRepo.createV2(any()),
-        ).thenAnswer((_) async => const FailureResult(ServerFailure('db')));
+        when(() => createRepo.createV2(any())).thenAnswer(
+          (_) async => const FailureResult(
+            ServerFailure('rejected', postgrestCode: '22023'),
+          ),
+        );
       },
       build: () => cubit,
       act: (c) => c.submit(
@@ -296,14 +453,16 @@ void main() {
               named: 'images',
               that: predicate<List<UploadedListingImage>>(
                 (imgs) =>
-                    imgs.length == 2 &&
-                    imgs[0].publicUrl == 'https://cdn/a.jpg' &&
-                    imgs[1].publicUrl == 'https://cdn/b.jpg',
+                    imgs.length == 1 &&
+                    [
+                      'https://cdn/a.jpg',
+                      'https://cdn/b.jpg',
+                    ].contains(imgs[0].publicUrl),
               ),
             ),
             sellerId: 's1',
           ),
-        ).called(1);
+        ).called(2);
       },
     );
 

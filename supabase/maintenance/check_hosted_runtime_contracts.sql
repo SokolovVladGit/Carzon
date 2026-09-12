@@ -1509,6 +1509,146 @@ check_rows AS (
 
     UNION ALL
 
+    SELECT 93, 'smart fill', 'table_vehicle_open_data_configuration',
+           CASE WHEN EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_open_data_configuration'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'Manual Smart Fill M1 catalog; clients use resolve_vehicle_by_identity only'
+
+    UNION ALL
+
+    SELECT 93, 'smart fill', 'rpc_resolve_vehicle_by_identity',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'resolve_vehicle_by_identity'
+                )
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'resolve_vehicle_by_identity'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'resolve_vehicle_by_identity'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Authenticated read-only MMY resolver; anon EXECUTE revoked'
+
+    UNION ALL
+
+    SELECT 93, 'smart fill', 'smart_fill_catalog_not_client_exposed',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_open_data_configuration'
+                )
+                  AND EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_identity_alias'
+                )
+                  AND EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_nameplate_identity'
+                )
+                  AND EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_open_data_import_batch'
+                )
+                  AND NOT has_table_privilege('anon', 'public.vehicle_open_data_configuration', 'SELECT')
+                  AND NOT has_table_privilege('authenticated', 'public.vehicle_open_data_configuration', 'SELECT')
+                  AND NOT has_table_privilege('anon', 'public.vehicle_identity_alias', 'SELECT')
+                  AND NOT has_table_privilege('authenticated', 'public.vehicle_identity_alias', 'SELECT')
+                  AND NOT has_table_privilege('anon', 'public.vehicle_nameplate_identity', 'SELECT')
+                  AND NOT has_table_privilege('authenticated', 'public.vehicle_nameplate_identity', 'SELECT')
+                  AND NOT has_table_privilege('anon', 'public.vehicle_open_data_import_batch', 'SELECT')
+                  AND NOT has_table_privilege('authenticated', 'public.vehicle_open_data_import_batch', 'SELECT')
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Open-data catalog tables must not be PostgREST surfaces'
+
+    UNION ALL
+
+    SELECT 93, 'smart fill', 'smart_fill_importer_not_client',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'carzon_open_data_upsert_configurations'
+                )
+                  AND NOT COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'carzon_open_data_upsert_configurations'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'carzon_open_data_upsert_configurations'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'carzon_open_data_merge_rdw_body'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'carzon_open_data_begin_import_batch'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Importer RPCs are service_role only'
+
+    UNION ALL
+
+    SELECT 93, 'smart fill', 'smart_fill_tgk_importer_not_client',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'carzon_open_data_upsert_tgk_transmissions'
+                )
+                  AND NOT COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'carzon_open_data_upsert_tgk_transmissions'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'carzon_open_data_upsert_tgk_transmissions'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'carzon_open_data_map_tgk_gearbox'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'TGK transmission importer is service_role only'
+
+    UNION ALL
+
+    SELECT 93, 'smart fill', 'smart_fill_drivetrain_still_null',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1
+                      FROM pg_constraint c
+                      JOIN pg_class t ON t.oid = c.conrelid
+                      JOIN pg_namespace n ON n.oid = t.relnamespace
+                     WHERE n.nspname = 'public'
+                       AND t.relname = 'vehicle_open_data_configuration'
+                       AND c.conname = 'vehicle_open_data_configuration_m1_drive_null_chk'
+                )
+                  AND NOT EXISTS (
+                    SELECT 1
+                      FROM public.vehicle_open_data_configuration
+                     WHERE drivetrain IS NOT NULL
+                )
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Drivetrain remains null-only on the Smart Fill catalog path'
+
+    UNION ALL
+
+    SELECT 93, 'smart fill', 'smart_fill_no_plate_vin_columns',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM tbl_exists t
+                     WHERE t.table_name = 'vehicle_open_data_configuration'
+                )
+                  AND NOT EXISTS (
+                      SELECT 1 FROM col_exists c
+                       WHERE c.table_name IN (
+                           'vehicle_open_data_configuration',
+                           'vehicle_open_data_import_batch',
+                           'vehicle_identity_alias',
+                           'vehicle_nameplate_identity'
+                       )
+                         AND c.column_name IN (
+                           'kenteken', 'license_plate', 'vin',
+                           'chassisnummer', 'tenaamstelling'
+                       )
+                  )
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Catalog must not persist plate/VIN/owner columns'
+
+    UNION ALL
+
     SELECT 92, 'grants', 'listing_view_analytics_not_client_exposed',
            CASE
              WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'listing_view_daily')

@@ -15,6 +15,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/create_listing_test_stubs.dart';
 import '../../helpers/fake_vehicle_model_catalog_repository.dart';
 import '../../helpers/l10n_test_helpers.dart';
 
@@ -72,6 +73,7 @@ void main() {
         orderedPhotos: any(named: 'orderedPhotos'),
       ),
     ).thenAnswer((_) async {});
+    stubCreateListingVinResolve(createCubit);
     sl.registerFactory<CreateListingCubit>(() => createCubit);
   });
 
@@ -90,6 +92,7 @@ void main() {
   );
 
   Future<void> pickBrand(WidgetTester tester, String query) async {
+    await openCreateListingManualIdentity(tester);
     final brand = find.byKey(const ValueKey('create_listing_brand_field'));
     await tester.scrollUntilVisible(
       brand,
@@ -177,6 +180,7 @@ void main() {
   ) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
+    await openCreateListingManualIdentity(tester);
     expect(find.text(l10n.listingVariantLabel), findsWidgets);
     await pickBrand(tester, 'BMW');
     await pickModel(tester, '3 Series');
@@ -255,6 +259,7 @@ void main() {
     await tester.pumpAndSettle();
     await pickBrand(tester, 'Honda');
     await pickModel(tester, 'CR-V');
+    await expandCreateListingAdditionalDetails(tester);
     final fuel = find.byKey(const ValueKey('create_listing_fuel_field'));
     await tester.ensureVisible(fuel);
     await tester.tap(fuel);

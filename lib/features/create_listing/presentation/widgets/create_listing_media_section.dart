@@ -28,7 +28,7 @@ class CreateListingMediaSection extends StatelessWidget {
 
   static const phase3TestKey = ValueKey('create_listing_media_section');
 
-  static const double _frameRadius = kCreateListingFieldRadius;
+  static const double _frameRadius = kCreateListingCardRadius;
 
   @override
   Widget build(BuildContext context) {
