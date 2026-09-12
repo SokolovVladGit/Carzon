@@ -51,3 +51,27 @@ class UnknownFailure extends Failure {
 class SellerAvatarUnsupportedFormat extends Failure {
   const SellerAvatarUnsupportedFormat() : super('');
 }
+
+/// Safe Create Listing VIN resolver failures. Never carries raw upstream bodies.
+enum VehicleResolveFailureKind {
+  invalidVin,
+  unauthorized,
+  upstreamTimeout,
+  upstreamUnavailable,
+  invalidRequest,
+  internalError,
+}
+
+class VehicleResolveFailure extends Failure {
+  const VehicleResolveFailure(this.kind) : super('');
+
+  final VehicleResolveFailureKind kind;
+
+  @override
+  List<Object?> get props => [kind, runtimeType];
+}
+
+/// Manual Smart Fill RPC/network failure. Never carries raw upstream bodies.
+class ManualSmartFillFailure extends Failure {
+  const ManualSmartFillFailure() : super('');
+}

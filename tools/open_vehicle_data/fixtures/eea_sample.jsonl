@@ -1,0 +1,5 @@
+{"make":"SKODA","model":"OCTAVIA","year":2018,"tan":"e8*2007/46*0318*00","type_code":"5E","variant_code":"ACDDYAX0","version_code":"NFM5A","ft":"Diesel","fm":"M","ec_cm3":1598,"ep_kw":85,"status":"F"}
+{"make":"SKODA","model":"OCTAVIA","year":2018,"tan":"e11*2007/46*0243*25","type_code":"5E","variant_code":"ACCZDAX0","version_code":"NFM6B","ft":"Petrol","fm":"M","ec_cm3":1395,"ep_kw":110,"status":"F"}
+{"make":"TESLA","model":"MODEL 3","year":2021,"tan":"E4*2007/46*1293*15","type_code":"003","variant_code":"E6R","version_code":"PGb1s5N","ft":"ELECTRIC","fm":"E","ec_cm3":null,"ep_kw":100,"status":"F"}
+{"make":"HYUNDAI","model":"TUCSON","year":2021,"tan":"e5*2018/858*00001*09","type_code":"NX4","variant_code":"A","version_code":"B","ft":"PETROL","fm":"M","ec_cm3":1598,"ep_kw":110,"status":"F"}
+{"make":"HYUNDAI","model":"TUCSON","year":2021,"tan":"e5*2018/858*00001*09","type_code":"NX4","variant_code":"A","version_code":"C","ft":"PETROL","fm":"H","ec_cm3":1598,"ep_kw":132,"status":"F"}

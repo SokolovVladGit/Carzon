@@ -2043,37 +2043,37 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSectionPhotosLead.
   ///
   /// In ru, this message translates to:
-  /// **'Фото и заголовок'**
+  /// **'Фотографии'**
   String get createListingSectionPhotosLead;
 
   /// No description provided for @createListingSectionPhotosLeadSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Обложка каталога и необязательный заголовок.'**
+  /// **'Реальные фото этого автомобиля.'**
   String get createListingSectionPhotosLeadSubtitle;
 
   /// No description provided for @createListingSectionVehicle.
   ///
   /// In ru, this message translates to:
-  /// **'Об автомобиле'**
+  /// **'Автомобиль'**
   String get createListingSectionVehicle;
 
   /// No description provided for @createListingSectionVehicleSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Марка, модель, год и характеристики.'**
+  /// **'VIN поможет заполнить марку, модель и год.'**
   String get createListingSectionVehicleSubtitle;
 
   /// No description provided for @createListingSectionDeal.
   ///
   /// In ru, this message translates to:
-  /// **'Тип объявления'**
+  /// **'Сделка'**
   String get createListingSectionDeal;
 
   /// No description provided for @createListingSectionDealSubtitle.
   ///
   /// In ru, this message translates to:
-  /// **'Выберите продажу, обмен или оба варианта.'**
+  /// **'Тип, цена и пробег.'**
   String get createListingSectionDealSubtitle;
 
   /// No description provided for @createListingSectionLocation.
@@ -2111,6 +2111,42 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Контакты будут видны в активном объявлении.'**
   String get createListingSectionPublishSubtitle;
+
+  /// No description provided for @createListingPreviewHeading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Предпросмотр объявления'**
+  String get createListingPreviewHeading;
+
+  /// No description provided for @createListingPreviewVehiclePlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Автомобиль'**
+  String get createListingPreviewVehiclePlaceholder;
+
+  /// No description provided for @createListingPreviewCoverLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото обложки'**
+  String get createListingPreviewCoverLabel;
+
+  /// No description provided for @createListingPreviewCoverEmptyLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото ещё не выбрано'**
+  String get createListingPreviewCoverEmptyLabel;
+
+  /// No description provided for @createListingPreviewAddPhotoHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавьте фото автомобиля'**
+  String get createListingPreviewAddPhotoHint;
+
+  /// No description provided for @createListingPreviewEnterPrice.
+  ///
+  /// In ru, this message translates to:
+  /// **'Укажите цену'**
+  String get createListingPreviewEnterPrice;
 
   /// No description provided for @createListingPublishKicker.
   ///
@@ -5064,6 +5100,156 @@ abstract class AppLocalizations {
   /// **'Не публикуется. Используется для проверки данных автомобиля.'**
   String get createListingVinPrivacyHelper;
 
+  /// No description provided for @createListingVinAutofillHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите или отсканируйте VIN. Carzon автоматически определит марку, модель и год.'**
+  String get createListingVinAutofillHint;
+
+  /// No description provided for @createListingVinResolving.
+  ///
+  /// In ru, this message translates to:
+  /// **'Определяем автомобиль…'**
+  String get createListingVinResolving;
+
+  /// No description provided for @createListingVehicleFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найден автомобиль'**
+  String get createListingVehicleFound;
+
+  /// No description provided for @createListingConfirmVehicle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подтвердить'**
+  String get createListingConfirmVehicle;
+
+  /// No description provided for @createListingEnterManually.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ввести вручную'**
+  String get createListingEnterManually;
+
+  /// No description provided for @createListingChangeManually.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить вручную'**
+  String get createListingChangeManually;
+
+  /// No description provided for @createListingChange.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить'**
+  String get createListingChange;
+
+  /// No description provided for @createListingVehicleIdentifiedFromVin.
+  ///
+  /// In ru, this message translates to:
+  /// **'Автомобиль определён по VIN'**
+  String get createListingVehicleIdentifiedFromVin;
+
+  /// No description provided for @createListingVinChecksumHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверьте VIN. Возможно, один из символов указан неверно.'**
+  String get createListingVinChecksumHint;
+
+  /// No description provided for @createListingVinPartialTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось полностью определить автомобиль.'**
+  String get createListingVinPartialTitle;
+
+  /// No description provided for @createListingVinPartial.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дополните данные вручную.'**
+  String get createListingVinPartial;
+
+  /// No description provided for @createListingVinNoData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось определить автомобиль автоматически.'**
+  String get createListingVinNoData;
+
+  /// No description provided for @createListingVinResolverFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Автозаполнение временно недоступно.'**
+  String get createListingVinResolverFailed;
+
+  /// No description provided for @createListingVinMayMiss.
+  ///
+  /// In ru, this message translates to:
+  /// **'Carzon может определить не каждый автомобиль.'**
+  String get createListingVinMayMiss;
+
+  /// No description provided for @createListingVinSpecCaution.
+  ///
+  /// In ru, this message translates to:
+  /// **'Некоторые характеристики могут отличаться. Проверьте данные автомобиля.'**
+  String get createListingVinSpecCaution;
+
+  /// No description provided for @createListingSmartFillLoading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подставляем характеристики…'**
+  String get createListingSmartFillLoading;
+
+  /// No description provided for @createListingSmartFillSeveralVersions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Несколько версий'**
+  String get createListingSmartFillSeveralVersions;
+
+  /// No description provided for @createListingSmartFillAskBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Какой кузов у автомобиля?'**
+  String get createListingSmartFillAskBody;
+
+  /// No description provided for @createListingSmartFillAskFuel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Какое топливо?'**
+  String get createListingSmartFillAskFuel;
+
+  /// No description provided for @createListingSmartFillAskTransmission.
+  ///
+  /// In ru, this message translates to:
+  /// **'Какая коробка передач?'**
+  String get createListingSmartFillAskTransmission;
+
+  /// No description provided for @createListingSmartFillDontKnow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не знаю'**
+  String get createListingSmartFillDontKnow;
+
+  /// No description provided for @createListingSmartFillNoData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Характеристики можно указать вручную.'**
+  String get createListingSmartFillNoData;
+
+  /// No description provided for @createListingSmartFillFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось подставить характеристики.'**
+  String get createListingSmartFillFailed;
+
+  /// No description provided for @createListingAdditionalDetails.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дополнительные сведения'**
+  String get createListingAdditionalDetails;
+
+  /// No description provided for @createListingAdditionalDetailsSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Кузов, двигатель, коробка, описание'**
+  String get createListingAdditionalDetailsSubtitle;
+
   /// No description provided for @createListingEngineLitersPlaceholder.
   ///
   /// In ru, this message translates to:
@@ -6953,6 +7139,108 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Дизель'**
   String get fuelPricesFuelDieselRegular;
+
+  /// No description provided for @vinScannerTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сканировать VIN'**
+  String get vinScannerTitle;
+
+  /// No description provided for @vinScannerInstruction.
+  ///
+  /// In ru, this message translates to:
+  /// **'Наведите камеру на VIN'**
+  String get vinScannerInstruction;
+
+  /// No description provided for @vinScannerHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'На документе или табличке автомобиля. VIN должен целиком помещаться в рамке.'**
+  String get vinScannerHint;
+
+  /// No description provided for @vinScannerInitializing.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подготовка камеры…'**
+  String get vinScannerInitializing;
+
+  /// No description provided for @vinScannerFound.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обнаружен VIN'**
+  String get vinScannerFound;
+
+  /// No description provided for @vinScannerUse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Использовать VIN'**
+  String get vinScannerUse;
+
+  /// No description provided for @vinScannerAgain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сканировать снова'**
+  String get vinScannerAgain;
+
+  /// No description provided for @vinScannerClose.
+  ///
+  /// In ru, this message translates to:
+  /// **'Закрыть сканер'**
+  String get vinScannerClose;
+
+  /// No description provided for @vinScannerDeniedTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Нужен доступ к камере'**
+  String get vinScannerDeniedTitle;
+
+  /// No description provided for @vinScannerDenied.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разрешите доступ к камере в настройках или закройте сканер и введите VIN вручную.'**
+  String get vinScannerDenied;
+
+  /// No description provided for @vinScannerUnavailableTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Камера недоступна'**
+  String get vinScannerUnavailableTitle;
+
+  /// No description provided for @vinScannerUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Попробуйте снова или введите VIN вручную.'**
+  String get vinScannerUnavailable;
+
+  /// No description provided for @vinScannerSettings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Открыть настройки'**
+  String get vinScannerSettings;
+
+  /// No description provided for @vinScannerTorchOn.
+  ///
+  /// In ru, this message translates to:
+  /// **'Включить фонарик'**
+  String get vinScannerTorchOn;
+
+  /// No description provided for @vinScannerTorchOff.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выключить фонарик'**
+  String get vinScannerTorchOff;
+
+  /// No description provided for @vinScannerRetry.
+  ///
+  /// In ru, this message translates to:
+  /// **'Повторить'**
+  String get vinScannerRetry;
+
+  /// No description provided for @vinScannerInvalid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось распознать корректный VIN. Попробуйте снова или введите его вручную.'**
+  String get vinScannerInvalid;
 }
 
 class _AppLocalizationsDelegate

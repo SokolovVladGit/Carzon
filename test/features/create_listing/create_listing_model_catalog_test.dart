@@ -15,6 +15,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
+import '../../helpers/create_listing_test_stubs.dart';
 import '../../helpers/fake_vehicle_model_catalog_repository.dart';
 import '../../helpers/l10n_test_helpers.dart';
 
@@ -72,6 +73,7 @@ void main() {
         orderedPhotos: any(named: 'orderedPhotos'),
       ),
     ).thenAnswer((_) async {});
+    stubCreateListingVinResolve(createCubit);
     sl.registerFactory<CreateListingCubit>(() => createCubit);
   });
 
@@ -90,6 +92,7 @@ void main() {
   );
 
   Future<void> pickBrand(WidgetTester tester, String query) async {
+    await openCreateListingManualIdentity(tester);
     final brand = find.byKey(const ValueKey('create_listing_brand_field'));
     await tester.scrollUntilVisible(
       brand,
@@ -229,12 +232,7 @@ void main() {
       findsOneWidget,
     );
     await tester.enterText(
-      find
-          .descendant(
-            of: find.byKey(const ValueKey('create_listing_vehicle_section')),
-            matching: find.byType(TextFormField),
-          )
-          .first,
+      find.byKey(const ValueKey('create_listing_custom_brand_field')),
       'Homemade',
     );
     await tester.enterText(

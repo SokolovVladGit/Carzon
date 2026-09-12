@@ -51,3 +51,7 @@ app.*.map.json
 .env.client
 .env.client.local
 
+# Open-data importer scratch (never commit government dumps)
+/tools/open_vehicle_data/.cache/
+/tools/open_vehicle_data/data/
+

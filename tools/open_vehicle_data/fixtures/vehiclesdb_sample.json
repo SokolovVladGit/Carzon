@@ -1,0 +1,33 @@
+{
+  "source_version": "2026.09.1",
+  "attribution": {
+    "license": "CC BY 4.0",
+    "notice": "Vehicle data by VehiclesDB. Upstream register notices apply."
+  },
+  "models": [
+    {
+      "make": "Skoda",
+      "name": "Octavia",
+      "body_types": ["hatchback", "wagon"],
+      "aliases": ["Octavia Combi"],
+      "xrefs": { "tan": ["e8*2007/46*0318*00"] }
+    },
+    {
+      "make": "Hyundai",
+      "name": "Tucson",
+      "body_types": ["suv"],
+      "xrefs": { "tan": ["e5*2018/858*00001*09"] }
+    },
+    {
+      "make": "Tesla",
+      "name": "Model 3",
+      "body_types": ["sedan"],
+      "aliases": ["Model3"]
+    },
+    {
+      "make": "BMW",
+      "name": "3 Series",
+      "body_types": ["sedan", "wagon"]
+    }
+  ]
+}

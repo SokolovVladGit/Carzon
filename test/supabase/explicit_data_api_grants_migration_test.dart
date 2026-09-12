@@ -119,6 +119,25 @@ void main() {
     // is through report_listing; operator RPCs are service_role-only.
     'carzon_enforce_user_text',
     'protect_listing_report_original_evidence',
+    // Manual Smart Fill M1 internals (service_role importer / resolver helpers).
+    'carzon_open_data_mapping_version',
+    'carzon_open_data_fold_ascii',
+    'carzon_open_data_normalize_tan_base',
+    'carzon_open_data_configuration_key',
+    'carzon_open_data_normalize_fuel',
+    'carzon_open_data_normalize_rdw_body',
+    'carzon_open_data_normalize_nameplate_body',
+    'carzon_open_data_kw_to_hp',
+    'carzon_open_data_cm3_to_liters',
+    'carzon_open_data_resolve_identity_keys',
+    'carzon_open_data_begin_import_batch',
+    'carzon_open_data_complete_import_batch',
+    'carzon_open_data_upsert_configurations',
+    'carzon_open_data_merge_rdw_body',
+    'carzon_open_data_upsert_nameplates',
+    'carzon_open_data_upsert_aliases',
+    'carzon_open_data_map_tgk_gearbox',
+    'carzon_open_data_upsert_tgk_transmissions',
   };
 
   /// Internal `public` tables with RLS that must **not** receive `GRANT` to
@@ -151,6 +170,13 @@ void main() {
     'listing_reports',
     // Canonical model catalog: RPC-only public read; no Data API table grants.
     'vehicle_model_catalog',
+    // Private seller Create Listing defaults: RPC-only.
+    'seller_listing_defaults',
+    // Manual Smart Fill M1 catalog: RPC-only resolver; importer is service_role.
+    'vehicle_open_data_import_batch',
+    'vehicle_identity_alias',
+    'vehicle_nameplate_identity',
+    'vehicle_open_data_configuration',
   };
 
   /// `public` tables created by this repo: must match migrations exactly.
@@ -188,6 +214,11 @@ void main() {
     'user_reports',
     'listing_reports',
     'vehicle_model_catalog',
+    'seller_listing_defaults',
+    'vehicle_open_data_import_batch',
+    'vehicle_identity_alias',
+    'vehicle_nameplate_identity',
+    'vehicle_open_data_configuration',
   };
 
   setUpAll(() {

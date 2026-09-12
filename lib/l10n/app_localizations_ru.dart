@@ -1096,25 +1096,24 @@ class AppLocalizationsRu extends AppLocalizations {
       'Подготовьте карточку автомобиля: фото, характеристики и аккуратные контакты — чтобы покупатель сразу увидел главное.';
 
   @override
-  String get createListingSectionPhotosLead => 'Фото и заголовок';
+  String get createListingSectionPhotosLead => 'Фотографии';
 
   @override
   String get createListingSectionPhotosLeadSubtitle =>
-      'Обложка каталога и необязательный заголовок.';
+      'Реальные фото этого автомобиля.';
 
   @override
-  String get createListingSectionVehicle => 'Об автомобиле';
+  String get createListingSectionVehicle => 'Автомобиль';
 
   @override
   String get createListingSectionVehicleSubtitle =>
-      'Марка, модель, год и характеристики.';
+      'VIN поможет заполнить марку, модель и год.';
 
   @override
-  String get createListingSectionDeal => 'Тип объявления';
+  String get createListingSectionDeal => 'Сделка';
 
   @override
-  String get createListingSectionDealSubtitle =>
-      'Выберите продажу, обмен или оба варианта.';
+  String get createListingSectionDealSubtitle => 'Тип, цена и пробег.';
 
   @override
   String get createListingSectionLocation => 'Местоположение';
@@ -1135,6 +1134,24 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get createListingSectionPublishSubtitle =>
       'Контакты будут видны в активном объявлении.';
+
+  @override
+  String get createListingPreviewHeading => 'Предпросмотр объявления';
+
+  @override
+  String get createListingPreviewVehiclePlaceholder => 'Автомобиль';
+
+  @override
+  String get createListingPreviewCoverLabel => 'Фото обложки';
+
+  @override
+  String get createListingPreviewCoverEmptyLabel => 'Фото ещё не выбрано';
+
+  @override
+  String get createListingPreviewAddPhotoHint => 'Добавьте фото автомобиля';
+
+  @override
+  String get createListingPreviewEnterPrice => 'Укажите цену';
 
   @override
   String get createListingPublishKicker => 'Финальный шаг';
@@ -2812,6 +2829,92 @@ class AppLocalizationsRu extends AppLocalizations {
       'Не публикуется. Используется для проверки данных автомобиля.';
 
   @override
+  String get createListingVinAutofillHint =>
+      'Введите или отсканируйте VIN. Carzon автоматически определит марку, модель и год.';
+
+  @override
+  String get createListingVinResolving => 'Определяем автомобиль…';
+
+  @override
+  String get createListingVehicleFound => 'Найден автомобиль';
+
+  @override
+  String get createListingConfirmVehicle => 'Подтвердить';
+
+  @override
+  String get createListingEnterManually => 'Ввести вручную';
+
+  @override
+  String get createListingChangeManually => 'Изменить вручную';
+
+  @override
+  String get createListingChange => 'Изменить';
+
+  @override
+  String get createListingVehicleIdentifiedFromVin =>
+      'Автомобиль определён по VIN';
+
+  @override
+  String get createListingVinChecksumHint =>
+      'Проверьте VIN. Возможно, один из символов указан неверно.';
+
+  @override
+  String get createListingVinPartialTitle =>
+      'Не удалось полностью определить автомобиль.';
+
+  @override
+  String get createListingVinPartial => 'Дополните данные вручную.';
+
+  @override
+  String get createListingVinNoData =>
+      'Не удалось определить автомобиль автоматически.';
+
+  @override
+  String get createListingVinResolverFailed =>
+      'Автозаполнение временно недоступно.';
+
+  @override
+  String get createListingVinMayMiss =>
+      'Carzon может определить не каждый автомобиль.';
+
+  @override
+  String get createListingVinSpecCaution =>
+      'Некоторые характеристики могут отличаться. Проверьте данные автомобиля.';
+
+  @override
+  String get createListingSmartFillLoading => 'Подставляем характеристики…';
+
+  @override
+  String get createListingSmartFillSeveralVersions => 'Несколько версий';
+
+  @override
+  String get createListingSmartFillAskBody => 'Какой кузов у автомобиля?';
+
+  @override
+  String get createListingSmartFillAskFuel => 'Какое топливо?';
+
+  @override
+  String get createListingSmartFillAskTransmission => 'Какая коробка передач?';
+
+  @override
+  String get createListingSmartFillDontKnow => 'Не знаю';
+
+  @override
+  String get createListingSmartFillNoData =>
+      'Характеристики можно указать вручную.';
+
+  @override
+  String get createListingSmartFillFailed =>
+      'Не удалось подставить характеристики.';
+
+  @override
+  String get createListingAdditionalDetails => 'Дополнительные сведения';
+
+  @override
+  String get createListingAdditionalDetailsSubtitle =>
+      'Кузов, двигатель, коробка, описание';
+
+  @override
   String get createListingEngineLitersPlaceholder => 'Объём двигателя, л';
 
   @override
@@ -3893,4 +3996,59 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get fuelPricesFuelDieselRegular => 'Дизель';
+
+  @override
+  String get vinScannerTitle => 'Сканировать VIN';
+
+  @override
+  String get vinScannerInstruction => 'Наведите камеру на VIN';
+
+  @override
+  String get vinScannerHint =>
+      'На документе или табличке автомобиля. VIN должен целиком помещаться в рамке.';
+
+  @override
+  String get vinScannerInitializing => 'Подготовка камеры…';
+
+  @override
+  String get vinScannerFound => 'Обнаружен VIN';
+
+  @override
+  String get vinScannerUse => 'Использовать VIN';
+
+  @override
+  String get vinScannerAgain => 'Сканировать снова';
+
+  @override
+  String get vinScannerClose => 'Закрыть сканер';
+
+  @override
+  String get vinScannerDeniedTitle => 'Нужен доступ к камере';
+
+  @override
+  String get vinScannerDenied =>
+      'Разрешите доступ к камере в настройках или закройте сканер и введите VIN вручную.';
+
+  @override
+  String get vinScannerUnavailableTitle => 'Камера недоступна';
+
+  @override
+  String get vinScannerUnavailable =>
+      'Попробуйте снова или введите VIN вручную.';
+
+  @override
+  String get vinScannerSettings => 'Открыть настройки';
+
+  @override
+  String get vinScannerTorchOn => 'Включить фонарик';
+
+  @override
+  String get vinScannerTorchOff => 'Выключить фонарик';
+
+  @override
+  String get vinScannerRetry => 'Повторить';
+
+  @override
+  String get vinScannerInvalid =>
+      'Не удалось распознать корректный VIN. Попробуйте снова или введите его вручную.';
 }

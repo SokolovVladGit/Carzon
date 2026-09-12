@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 const double kCreateListingPageHorizontalPadding = 20;
 
 /// Gap before a new major heading.
-const double kCreateListingInterSectionGap = 23;
+const double kCreateListingInterSectionGap = 28;
 
 /// Heading → first control.
-const double kCreateListingHeadingToContentGap = 12;
+const double kCreateListingHeadingToContentGap = 8;
 
 /// Field-to-field rhythm.
 const double kCreateListingFieldGap = 10;
@@ -18,8 +18,17 @@ const double kCreateListingFieldRowGap = 10;
 /// Stack price/mileage when the row is narrower than this.
 const double kCreateListingTwoFieldMinWidth = 300;
 
-/// Soft pill radius — fields, pickers, segments, photo, publish.
-const double kCreateListingFieldRadius = 23;
+/// Rounded-rectangle radius for ordinary form fields.
+const double kCreateListingFieldRadius = 15;
+
+/// Larger radius for meaningful content cards (photos, resolved vehicle).
+const double kCreateListingCardRadius = 20;
+
+/// Flatter radius for segmented tracks and thumbs.
+const double kCreateListingSegmentRadius = 12;
+
+/// Publish CTA — aligned to the refined system, not a capsule.
+const double kCreateListingPublishRadius = 16;
 
 /// Default single-line control height at text scale 1.0.
 const double kCreateListingFieldMinHeight = 54;
@@ -195,8 +204,8 @@ Color createListingFieldBorder(
   }
   if (focused) {
     return light
-        ? cs.primary.withValues(alpha: 0.36)
-        : cs.primary.withValues(alpha: 0.50);
+        ? cs.onSurface.withValues(alpha: 0.28)
+        : cs.onSurface.withValues(alpha: 0.42);
   }
   if (light) {
     return Color.alphaBlend(
@@ -205,71 +214,6 @@ Color createListingFieldBorder(
     );
   }
   return cs.onSurface.withValues(alpha: 0.13);
-}
-
-List<Color> createListingRaisedGradient(
-  ThemeData theme, {
-  Color? fill,
-  CreateListingSurfaceLift lift = CreateListingSurfaceLift.field,
-  CreateListingFieldVisualState visualState =
-      CreateListingFieldVisualState.filled,
-  bool hasValue = false,
-}) {
-  final cs = theme.colorScheme;
-  final light = theme.brightness == Brightness.light;
-  final base =
-      fill ??
-      createListingFieldFill(theme, state: visualState, hasValue: hasValue);
-
-  if (lift == CreateListingSurfaceLift.publish && fill != null) {
-    return [
-      Color.alphaBlend(
-        Colors.white.withValues(alpha: light ? 0.10 : 0.12),
-        base,
-      ),
-      base,
-      Color.alphaBlend(
-        Colors.black.withValues(alpha: light ? 0.12 : 0.20),
-        base,
-      ),
-    ];
-  }
-
-  final highlightStrength = switch (visualState) {
-    CreateListingFieldVisualState.disabled => light ? 0.12 : 0.020,
-    CreateListingFieldVisualState.empty => light ? 0.28 : 0.032,
-    CreateListingFieldVisualState.filled => light ? 0.84 : 0.088,
-    CreateListingFieldVisualState.focused => light ? 0.92 : 0.12,
-    CreateListingFieldVisualState.error =>
-      hasValue ? (light ? 0.84 : 0.088) : (light ? 0.28 : 0.032),
-  };
-  final highlight = light
-      ? Color.alphaBlend(
-          Colors.white.withValues(alpha: highlightStrength),
-          base,
-        )
-      : Color.alphaBlend(
-          cs.onSurface.withValues(alpha: highlightStrength),
-          base,
-        );
-  final shade = light
-      ? Color.alphaBlend(
-          cs.onSurface.withValues(
-            alpha: visualState == CreateListingFieldVisualState.disabled
-                ? 0.008
-                : 0.016,
-          ),
-          base,
-        )
-      : Color.alphaBlend(
-          Colors.black.withValues(
-            alpha: visualState == CreateListingFieldVisualState.disabled
-                ? 0.08
-                : 0.16,
-          ),
-          base,
-        );
-  return [highlight, base, shade];
 }
 
 List<BoxShadow> createListingSoftShadows(
@@ -294,30 +238,26 @@ List<BoxShadow> createListingSoftShadows(
   }
 
   final (alpha, blur, dy) = switch (lift) {
-    CreateListingSurfaceLift.thumb => (light ? 0.090 : 0.27, 10.0, 2.2),
-    CreateListingSurfaceLift.publish => (light ? 0.155 : 0.34, 16.0, 5.0),
+    CreateListingSurfaceLift.thumb => (light ? 0.020 : 0.10, 4.0, 0.6),
+    CreateListingSurfaceLift.publish => (light ? 0.12 : 0.28, 12.0, 3.0),
     CreateListingSurfaceLift.photo => switch (visualState) {
       CreateListingFieldVisualState.filled ||
       CreateListingFieldVisualState.focused => (
-        light ? 0.068 : 0.26,
-        14.0,
-        3.5,
+        light ? 0.040 : 0.18,
+        10.0,
+        2.0,
       ),
-      _ => (light ? 0.046 : 0.18, 12.0, 2.8),
+      _ => (light ? 0.024 : 0.12, 8.0, 1.4),
     },
     CreateListingSurfaceLift.field => switch (visualState) {
-      CreateListingFieldVisualState.empty => (light ? 0.034 : 0.13, 8.0, 1.8),
+      CreateListingFieldVisualState.empty => (light ? 0.012 : 0.06, 3.0, 0.4),
       CreateListingFieldVisualState.filled ||
-      CreateListingFieldVisualState.error => (light ? 0.054 : 0.20, 12.0, 2.7),
-      CreateListingFieldVisualState.focused => (
-        light ? 0.066 : 0.24,
-        13.0,
-        3.0,
-      ),
+      CreateListingFieldVisualState.error => (light ? 0.018 : 0.08, 4.0, 0.6),
+      CreateListingFieldVisualState.focused => (light ? 0.026 : 0.10, 5.0, 0.8),
       CreateListingFieldVisualState.disabled => (
-        light ? 0.012 : 0.06,
-        5.0,
-        0.8,
+        light ? 0.008 : 0.04,
+        2.0,
+        0.3,
       ),
     },
   };
@@ -340,6 +280,7 @@ BoxDecoration createListingSoftSurfaceDecoration(
   bool enabled = true,
   bool hasValue = false,
   Color? fill,
+  double? radius,
 }) {
   final usesOccupancy =
       lift == CreateListingSurfaceLift.field ||
@@ -353,19 +294,11 @@ BoxDecoration createListingSoftSurfaceDecoration(
               error: error,
             ))
       : CreateListingFieldVisualState.filled;
+  final resolvedRadius = radius ?? createListingRadiusForLift(lift);
   return BoxDecoration(
-    borderRadius: BorderRadius.circular(kCreateListingFieldRadius),
-    gradient: LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: createListingRaisedGradient(
-        theme,
-        fill: fill,
-        lift: lift,
-        visualState: state,
-        hasValue: hasValue,
-      ),
-    ),
+    color:
+        fill ?? createListingFieldFill(theme, state: state, hasValue: hasValue),
+    borderRadius: BorderRadius.circular(resolvedRadius),
     border: Border.all(
       color: createListingFieldBorder(
         theme,
@@ -380,6 +313,15 @@ BoxDecoration createListingSoftSurfaceDecoration(
     ),
     boxShadow: createListingSoftShadows(theme, lift: lift, visualState: state),
   );
+}
+
+double createListingRadiusForLift(CreateListingSurfaceLift lift) {
+  return switch (lift) {
+    CreateListingSurfaceLift.field => kCreateListingFieldRadius,
+    CreateListingSurfaceLift.photo => kCreateListingCardRadius,
+    CreateListingSurfaceLift.thumb => kCreateListingSegmentRadius,
+    CreateListingSurfaceLift.publish => kCreateListingPublishRadius,
+  };
 }
 
 /// Soft-raised field chrome. Name kept so existing Create-only call sites stay stable.
@@ -399,32 +341,49 @@ BoxDecoration createListingInsetDecoration(
   );
 }
 
-/// Recessed track under segmented thumbs — quieter than field pills.
+/// Recessed track under segmented thumbs — quieter than field chrome.
 BoxDecoration createListingTrackDecoration(ThemeData theme) {
   final cs = theme.colorScheme;
   final light = theme.brightness == Brightness.light;
   final fill = light
       ? Color.alphaBlend(cs.onSurface.withValues(alpha: 0.034), cs.surface)
       : Color.alphaBlend(cs.onSurface.withValues(alpha: 0.06), cs.surface);
-  final top = Color.alphaBlend(
-    cs.onSurface.withValues(alpha: light ? 0.028 : 0.05),
-    fill,
-  );
-  final bottom = Color.alphaBlend(
-    (light ? cs.surface : cs.surfaceContainerHighest).withValues(
-      alpha: light ? 0.55 : 0.18,
-    ),
-    fill,
-  );
   return BoxDecoration(
-    borderRadius: BorderRadius.circular(kCreateListingFieldRadius),
-    gradient: LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [top, fill, bottom],
-    ),
+    color: fill,
+    borderRadius: BorderRadius.circular(kCreateListingSegmentRadius),
     border: Border.all(
-      color: cs.onSurface.withValues(alpha: light ? 0.04 : 0.10),
+      color: cs.onSurface.withValues(alpha: light ? 0.05 : 0.10),
+      width: 0.7,
+    ),
+  );
+}
+
+BoxDecoration createListingIdentityCardDecoration(ThemeData theme) {
+  return BoxDecoration(
+    color: createListingFieldFill(theme, hasValue: true),
+    borderRadius: BorderRadius.circular(kCreateListingCardRadius),
+    border: Border.all(
+      color: createListingFieldBorder(theme, focused: false),
+      width: 0.8,
+    ),
+  );
+}
+
+BoxDecoration createListingSegmentThumbDecoration(
+  ThemeData theme, {
+  required bool selected,
+}) {
+  if (!selected) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(kCreateListingSegmentRadius),
+      color: Colors.transparent,
+    );
+  }
+  return BoxDecoration(
+    color: createListingFieldFill(theme, hasValue: true),
+    borderRadius: BorderRadius.circular(kCreateListingSegmentRadius),
+    border: Border.all(
+      color: createListingFieldBorder(theme, focused: false),
       width: 0.7,
     ),
   );
@@ -439,6 +398,68 @@ BoxDecoration createListingRaisedDecoration(
       ? CreateListingSurfaceLift.publish
       : CreateListingSurfaceLift.thumb;
   return createListingSoftSurfaceDecoration(theme, lift: lift, fill: fill);
+}
+
+ButtonStyle createListingConfirmButtonStyle(ThemeData theme) {
+  final cs = theme.colorScheme;
+  final light = theme.brightness == Brightness.light;
+  return FilledButton.styleFrom(
+    backgroundColor: cs.onSurface.withValues(alpha: light ? 0.92 : 0.94),
+    foregroundColor: cs.surface,
+    disabledBackgroundColor: cs.onSurface.withValues(alpha: 0.22),
+    disabledForegroundColor: cs.surface.withValues(alpha: 0.70),
+    elevation: 0,
+    shadowColor: Colors.transparent,
+    minimumSize: const Size(44, 44),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(kCreateListingFieldRadius),
+    ),
+    textStyle: theme.textTheme.labelLarge?.copyWith(
+      fontWeight: FontWeight.w600,
+      letterSpacing: -0.1,
+    ),
+  );
+}
+
+ButtonStyle createListingSecondaryActionStyle(ThemeData theme) {
+  final cs = theme.colorScheme;
+  final light = theme.brightness == Brightness.light;
+  return TextButton.styleFrom(
+    foregroundColor: cs.onSurface.withValues(alpha: light ? 0.78 : 0.86),
+    disabledForegroundColor: cs.onSurface.withValues(alpha: 0.32),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+    minimumSize: const Size(44, 44),
+    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    textStyle: theme.textTheme.labelLarge?.copyWith(
+      fontWeight: FontWeight.w500,
+      letterSpacing: -0.1,
+    ),
+  );
+}
+
+/// Graphite tertiary action — not a system-blue link.
+class CreateListingSecondaryAction extends StatelessWidget {
+  const CreateListingSecondaryAction({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.enabled = true,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return TextButton(
+      onPressed: enabled ? onPressed : null,
+      style: createListingSecondaryActionStyle(theme),
+      child: Text(label),
+    );
+  }
 }
 
 /// Soft drop shadow under a filled [InputDecorator] without wrapping helper/error.

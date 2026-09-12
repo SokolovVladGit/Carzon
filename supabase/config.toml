@@ -44,3 +44,8 @@ verify_jwt = false
 # Authenticated self-service account deletion (user JWT required).
 [functions.delete-own-account]
 verify_jwt = true
+
+# Authenticated pre-listing VIN vehicle resolver (user JWT required).
+# Suggestions only; does not enqueue listing-bound VIN jobs.
+[functions.resolve-vehicle]
+verify_jwt = true

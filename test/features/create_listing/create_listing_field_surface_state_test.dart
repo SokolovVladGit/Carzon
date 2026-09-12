@@ -1,9 +1,51 @@
+import 'package:carzon/features/create_listing/domain/entities/vehicle_resolve_result.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_compose_layout.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_picker_field.dart';
+import 'package:carzon/features/create_listing/presentation/widgets/create_listing_vehicle_resolve_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('Create Listing radii stay rounded-rect, not capsule', () {
+    expect(kCreateListingFieldRadius, 15);
+    expect(kCreateListingCardRadius, 20);
+    expect(kCreateListingSegmentRadius, 12);
+    expect(kCreateListingPublishRadius, 16);
+    expect(kCreateListingFieldRadius, lessThan(20));
+    expect(kCreateListingInterSectionGap, 28);
+    expect(kCreateListingHeadingToContentGap, 8);
+  });
+
+  test('resolved identity subtitle joins year and variant', () {
+    expect(
+      createListingResolvedIdentitySubtitle(
+        const VehicleResolveSuggestion(
+          make: 'BMW',
+          model: 'X5',
+          year: 2020,
+          trim: 'xDrive30d',
+        ),
+      ),
+      '2020 · xDrive30d',
+    );
+    expect(
+      createListingResolvedIdentitySubtitle(
+        const VehicleResolveSuggestion(year: 2018),
+      ),
+      '2018',
+    );
+    expect(
+      createListingResolvedIdentitySubtitle(
+        const VehicleResolveSuggestion(trim: 'M Sport'),
+      ),
+      'M Sport',
+    );
+    expect(
+      createListingResolvedIdentitySubtitle(const VehicleResolveSuggestion()),
+      isEmpty,
+    );
+  });
+
   group('resolveCreateListingFieldVisualState', () {
     test('null / unselected resolves to empty', () {
       expect(

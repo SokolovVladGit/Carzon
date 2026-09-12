@@ -116,22 +116,18 @@ class CreateListingSegmentedControl<T> extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           key: option.key,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(kCreateListingSegmentRadius),
           onTap: enabled && !selected ? () => onChanged(option.value) : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 160),
             curve: Curves.easeOutCubic,
-            margin: const EdgeInsets.all(3),
+            margin: const EdgeInsets.all(2),
             constraints: const BoxConstraints(minHeight: 44),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-            decoration: selected
-                ? createListingRaisedDecoration(
-                    theme,
-                  ).copyWith(borderRadius: BorderRadius.circular(20))
-                : BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.transparent,
-                  ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: createListingSegmentThumbDecoration(
+              theme,
+              selected: selected,
+            ),
             alignment: Alignment.center,
             child: Text(
               option.label,

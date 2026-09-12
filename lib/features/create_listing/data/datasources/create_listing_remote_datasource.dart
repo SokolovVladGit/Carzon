@@ -104,6 +104,10 @@ class SupabaseCreateListingRemoteDataSource
   Future<ListingModel> insertV2(NewListingInput input) async {
     Map<String, dynamic>? rpcParamsSent;
     try {
+      final session = _supabase.client.auth.currentSession;
+      if (session == null || session.user.id != input.sellerId) {
+        throw ServerException('Not authenticated as the submitting seller.');
+      }
       final telegram = input.telegramUsername?.trim();
       final normalizedTelegram = (telegram == null || telegram.isEmpty)
           ? null
@@ -184,7 +188,11 @@ class SupabaseCreateListingRemoteDataSource
       applyOptionalVinToCreateListingV2Params(params, input.vin);
 
       rpcParamsSent = params;
-      final dynamic data = await _supabase.client.rpc(_rpcV2, params: params);
+      // Keep request attribution stable if the SDK refreshes its token while
+      // the active account changes. An expired snapshot may safely reject.
+      final dynamic data = await _supabase.client
+          .rpc(_rpcV2, params: params)
+          .setHeader('Authorization', 'Bearer ${session.accessToken}');
 
       Map<String, dynamic>? row;
       if (data is Map<String, dynamic>) {

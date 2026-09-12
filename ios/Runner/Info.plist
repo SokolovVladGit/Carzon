@@ -55,7 +55,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Carzon uses your photos to add listing galleries, your profile photo, and chat attachments.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Carzon uses the camera so you can take a photo to send in chat.</string>
+	<string>Carzon uses the camera to take listing photos and scan a vehicle VIN on device.</string>
 	<!--
 		Supabase auth callback deep link (password recovery / email
 		confirmation). Keep in sync with the Android intent-filter and
