@@ -124,9 +124,7 @@ String formatEngineDisplacementForDisplay(
   if (v >= kCcDisplacementThreshold && v.round() == v) {
     return '${v.toInt()} ${l10n.listingEngineDisplacementCcSuffix}';
   }
-  final fixed = v.toStringAsFixed(3);
-  final trimmed = fixed.replaceFirst(RegExp(r'\.?0+$'), '');
-  return '$trimmed ${l10n.listingEngineDisplacementLitersSuffix}';
+  return '${v.toStringAsFixed(1)} ${l10n.listingEngineDisplacementLitersSuffix}';
 }
 
 String formatEnginePowerHpDisplay(AppLocalizations l10n, int? hp) {

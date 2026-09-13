@@ -99,7 +99,9 @@ expected AS (
             ('20260905120000', 'listing_variant_and_plugin_hybrid',          'listings'),
             ('20260907120000', 'seller_listing_defaults',                    'listings'),
             ('20260912180000', 'manual_smart_fill_open_data',                'listings'),
-            ('20260912193000', 'manual_smart_fill_transmission_tgk',         'listings')
+            ('20260912193000', 'manual_smart_fill_transmission_tgk',         'listings'),
+            ('20260913170000', 'manual_smart_fill_progressive_refinement',   'listings'),
+            ('20260913180000', 'manual_smart_fill_terminal_transmission',    'listings')
            ) AS t(version, migration_name, category)
 ),
 hosted AS (
@@ -154,7 +156,7 @@ info_rows AS (
            'parity_check_scope'::text AS migration_name,
            'meta'::text AS category,
            'INFO'::text AS status,
-           'Read-only parity check for 79 repo migrations under supabase/migrations/. '
+           'Read-only parity check for 81 repo migrations under supabase/migrations/. '
            || 'Compares hosted supabase_migrations.schema_migrations by version only. '
            || 'Staging preferred; safe on a single production project (SELECT only).'::text
            AS details,

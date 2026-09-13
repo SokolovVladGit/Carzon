@@ -1,4 +1,5 @@
 import '../../../../core/utils/result.dart';
+import '../entities/manual_smart_fill_refinement.dart';
 import '../entities/manual_smart_fill_result.dart';
 
 abstract interface class ManualSmartFillRepository {
@@ -6,6 +7,7 @@ abstract interface class ManualSmartFillRepository {
     required String make,
     required String model,
     required int year,
-    ManualSmartFillAnswer? answer,
+    List<ManualSmartFillRefinementAnswer> answers = const [],
+    List<ManualSmartFillRefinementKind> skippedKinds = const [],
   });
 }

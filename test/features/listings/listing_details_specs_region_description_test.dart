@@ -172,7 +172,7 @@ void main() {
       expect(find.text(ru.listingDrivetrainAwd), findsOneWidget);
       expect(find.text('190 ${ru.listingEnginePowerHpSuffix}'), findsOneWidget);
       expect(
-        find.text('2 ${ru.listingEngineDisplacementLitersSuffix}'),
+        find.text('2.0 ${ru.listingEngineDisplacementLitersSuffix}'),
         findsOneWidget,
       );
       expect(find.text('Chișinău'), findsOneWidget);

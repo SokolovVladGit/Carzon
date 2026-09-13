@@ -4,10 +4,16 @@ import 'package:flutter/material.dart';
 const double kCreateListingPageHorizontalPadding = 20;
 
 /// Gap before a new major heading.
-const double kCreateListingInterSectionGap = 28;
+const double kCreateListingInterSectionGap = 24;
 
 /// Heading → first control.
-const double kCreateListingHeadingToContentGap = 8;
+const double kCreateListingHeadingToContentGap = 10;
+
+/// Inner padding of grouped modules (Smart Fill, Characteristics).
+const double kCreateListingModulePad = 16;
+
+/// Preview → Publish breathing room.
+const double kCreateListingFinishingGap = 20;
 
 /// Field-to-field rhythm.
 const double kCreateListingFieldGap = 10;
@@ -159,7 +165,55 @@ Color createListingFieldFill(
 Color createListingPlaceholderColor(ThemeData theme) {
   final cs = theme.colorScheme;
   final light = theme.brightness == Brightness.light;
-  return cs.onSurface.withValues(alpha: light ? 0.58 : 0.70);
+  return cs.onSurface.withValues(alpha: light ? 0.64 : 0.74);
+}
+
+Color createListingHairlineColor(ThemeData theme) {
+  final light = theme.brightness == Brightness.light;
+  return theme.colorScheme.onSurface.withValues(alpha: light ? 0.08 : 0.14);
+}
+
+TextStyle? createListingAppBarTitleStyle(ThemeData theme) {
+  final light = theme.brightness == Brightness.light;
+  return theme.textTheme.titleLarge?.copyWith(
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.44,
+    height: 1.08,
+    fontSize: 20,
+    color: theme.colorScheme.onSurface.withValues(alpha: light ? 0.94 : 0.96),
+  );
+}
+
+TextStyle? createListingSectionTitleStyle(ThemeData theme) {
+  final light = theme.brightness == Brightness.light;
+  return theme.textTheme.titleMedium?.copyWith(
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.28,
+    height: 1.15,
+    fontSize: 16,
+    color: theme.colorScheme.onSurface.withValues(alpha: light ? 0.90 : 0.94),
+  );
+}
+
+TextStyle? createListingSupportStyle(ThemeData theme) {
+  final light = theme.brightness == Brightness.light;
+  return theme.textTheme.bodySmall?.copyWith(
+    color: theme.colorScheme.onSurface.withValues(alpha: light ? 0.50 : 0.58),
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+    fontSize: 13,
+  );
+}
+
+TextStyle? createListingQuestionStyle(ThemeData theme) {
+  final light = theme.brightness == Brightness.light;
+  return theme.textTheme.titleSmall?.copyWith(
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.22,
+    height: 1.25,
+    fontSize: 16,
+    color: theme.colorScheme.onSurface.withValues(alpha: light ? 0.92 : 0.96),
+  );
 }
 
 Color createListingPickerChevronColor(
@@ -422,18 +476,27 @@ ButtonStyle createListingConfirmButtonStyle(ThemeData theme) {
   );
 }
 
-ButtonStyle createListingSecondaryActionStyle(ThemeData theme) {
+ButtonStyle createListingSecondaryActionStyle(
+  ThemeData theme, {
+  bool footer = false,
+}) {
   final cs = theme.colorScheme;
   final light = theme.brightness == Brightness.light;
   return TextButton.styleFrom(
-    foregroundColor: cs.onSurface.withValues(alpha: light ? 0.78 : 0.86),
+    foregroundColor: cs.onSurface.withValues(
+      alpha: footer ? (light ? 0.70 : 0.78) : (light ? 0.64 : 0.72),
+    ),
     disabledForegroundColor: cs.onSurface.withValues(alpha: 0.32),
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-    minimumSize: const Size(44, 44),
+    padding: EdgeInsets.symmetric(
+      horizontal: footer ? 4 : 8,
+      vertical: footer ? 10 : 8,
+    ),
+    minimumSize: const Size(44, 40),
     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
     textStyle: theme.textTheme.labelLarge?.copyWith(
       fontWeight: FontWeight.w500,
-      letterSpacing: -0.1,
+      letterSpacing: -0.08,
+      fontSize: footer ? 14 : 13.5,
     ),
   );
 }
@@ -445,18 +508,20 @@ class CreateListingSecondaryAction extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.enabled = true,
+    this.footer = false,
   });
 
   final String label;
   final VoidCallback onPressed;
   final bool enabled;
+  final bool footer;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return TextButton(
       onPressed: enabled ? onPressed : null,
-      style: createListingSecondaryActionStyle(theme),
+      style: createListingSecondaryActionStyle(theme, footer: footer),
       child: Text(label),
     );
   }
@@ -598,7 +663,9 @@ InputDecoration createListingFieldDecoration(
     counterStyle: TextStyle(
       color: helperColor,
       fontWeight: FontWeight.w400,
-      fontSize: 11,
+      fontSize: 12,
+      height: 1.25,
+      letterSpacing: 0.1,
     ),
     border: borderFor(color: Colors.transparent, width: 0),
     enabledBorder: borderFor(
@@ -709,21 +776,10 @@ class CreateListingFormSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final light = theme.brightness == Brightness.light;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          title,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
-            height: 1.2,
-            fontSize: 17,
-            color: cs.onSurface.withValues(alpha: light ? 0.92 : 0.96),
-          ),
-        ),
+        Text(title, style: createListingSectionTitleStyle(theme)),
         const SizedBox(height: kCreateListingHeadingToContentGap),
         child,
       ],

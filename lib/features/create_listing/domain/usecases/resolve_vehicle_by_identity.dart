@@ -1,4 +1,5 @@
 import '../../../../core/utils/result.dart';
+import '../entities/manual_smart_fill_refinement.dart';
 import '../entities/manual_smart_fill_result.dart';
 import '../repositories/manual_smart_fill_repository.dart';
 
@@ -11,13 +12,15 @@ class ResolveVehicleByIdentity {
     required String make,
     required String model,
     required int year,
-    ManualSmartFillAnswer? answer,
+    List<ManualSmartFillRefinementAnswer> answers = const [],
+    List<ManualSmartFillRefinementKind> skippedKinds = const [],
   }) {
     return _repository.resolveByIdentity(
       make: make,
       model: model,
       year: year,
-      answer: answer,
+      answers: answers,
+      skippedKinds: skippedKinds,
     );
   }
 }

@@ -1534,6 +1534,22 @@ check_rows AS (
 
     UNION ALL
 
+    SELECT 93, 'smart fill', 'rpc_resolve_vehicle_by_identity_v2',
+           CASE
+             WHEN NOT EXISTS (
+                    SELECT 1 FROM fn_exists f
+                     WHERE f.proname = 'resolve_vehicle_by_identity_v2'
+                )
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'resolve_vehicle_by_identity_v2'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'resolve_vehicle_by_identity_v2'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Authenticated progressive MMY resolver v2; anon EXECUTE revoked; v1 remains'
+
+    UNION ALL
+
     SELECT 93, 'smart fill', 'smart_fill_catalog_not_client_exposed',
            CASE
              WHEN EXISTS (

@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 
-enum ManualSmartFillResolution { ok, noData }
+import 'manual_smart_fill_refinement.dart';
+
+enum ManualSmartFillResolution { ok, noData, invalidRefinement }
 
 class ManualSmartFillIdentity extends Equatable {
   const ManualSmartFillIdentity({
@@ -87,6 +89,7 @@ class ManualSmartFillClarification extends Equatable {
   bool get isSupported =>
       attribute == 'body' ||
       attribute == 'fuel' ||
+      attribute == 'engine' ||
       attribute == 'transmission';
 
   @override
@@ -114,6 +117,8 @@ class ManualSmartFillResult extends Equatable {
     required this.identity,
     required this.consensus,
     this.clarification,
+    this.nextRefinement,
+    this.refinementState,
     this.candidateCount = 0,
     this.confidence,
     this.mappingVersion,
@@ -123,14 +128,17 @@ class ManualSmartFillResult extends Equatable {
   final ManualSmartFillIdentity identity;
   final ManualSmartFillConsensusSpecs consensus;
   final ManualSmartFillClarification? clarification;
+  final ManualSmartFillNextRefinement? nextRefinement;
+  final ManualSmartFillRefinementState? refinementState;
   final int candidateCount;
   final String? confidence;
   final String? mappingVersion;
 
   bool get hasSupportedClarification =>
-      clarification != null &&
-      clarification!.isSupported &&
-      clarification!.options.isNotEmpty;
+      (nextRefinement?.isUsable ?? false) ||
+      (clarification != null &&
+          clarification!.isSupported &&
+          clarification!.options.isNotEmpty);
 
   @override
   List<Object?> get props => [
@@ -138,6 +146,8 @@ class ManualSmartFillResult extends Equatable {
     identity,
     consensus,
     clarification,
+    nextRefinement,
+    refinementState,
     candidateCount,
     confidence,
     mappingVersion,

@@ -11,7 +11,9 @@ const _keys = [
   'createListingSmartFillAskBody',
   'createListingSmartFillAskFuel',
   'createListingSmartFillAskTransmission',
+  'createListingSmartFillAskEngine',
   'createListingSmartFillDontKnow',
+  'createListingSmartFillRestart',
   'createListingSmartFillNoData',
   'createListingSmartFillFailed',
 ];
@@ -40,10 +42,19 @@ void main() {
       ru.createListingSmartFillDontKnow,
       isNot(ro.createListingSmartFillDontKnow),
     );
+    expect(ru.createListingSmartFillSeveralVersions, 'Уточним версию');
+    expect(ro.createListingSmartFillSeveralVersions, 'Precizăm versiunea');
     expect(ru.createListingSmartFillAskBody, contains('кузов'));
     expect(ro.createListingSmartFillAskFuel, contains('combustibil'));
     expect(ru.createListingSmartFillAskTransmission, contains('коробка'));
     expect(ro.createListingSmartFillAskTransmission, contains('cutie'));
+    expect(ru.createListingSmartFillAskEngine, contains('двигатель'));
+    expect(ro.createListingSmartFillAskEngine, contains('motor'));
+    expect(ru.createListingSmartFillRestart, contains('заново'));
+    expect(
+      ru.createListingSmartFillRestart,
+      isNot(ro.createListingSmartFillRestart),
+    );
     expect(
       ru.createListingSmartFillFailed,
       isNot(ru.createListingVinResolverFailed),
