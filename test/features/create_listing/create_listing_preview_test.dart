@@ -237,14 +237,23 @@ void main() {
         transmissionType: ListingTransmissionType.automatic,
         drivetrain: ListingDrivetrain.fourWheel,
         engineDisplacementLiters: 6.2,
+        enginePowerHp: 702,
       );
       expect(data.bodyType, ListingBodyType.pickup);
       expect(data.fuelType, ListingFuelType.petrol);
       expect(data.transmissionType, ListingTransmissionType.automatic);
       expect(data.drivetrain, ListingDrivetrain.fourWheel);
       expect(data.engineDisplacementLiters, 6.2);
+      expect(data.enginePowerHp, 702);
       expect(listingPreviewDisplacementLiters(0), isNull);
       expect(listingPreviewDisplacementLiters(31), isNull);
+      expect(listingPreviewEnginePowerHp(0), isNull);
+      expect(listingPreviewEnginePowerHp(3001), isNull);
+      expect(listingPreviewEnginePowerHp(150), 150);
+      expect(
+        formatEngineDisplacementForDisplay(ru, 1.0),
+        '1.0 ${ru.listingEngineDisplacementLitersSuffix}',
+      );
     });
 
     test('listingPreviewJoin omits empty fragments and separators', () {
@@ -552,6 +561,7 @@ void main() {
         transmissionType: ListingTransmissionType.automatic,
         drivetrain: ListingDrivetrain.fourWheel,
         engineDisplacementLiters: 6.2,
+        enginePowerHp: 702,
       );
       await tester.pumpWidget(host(withSpecs));
       await tester.pump();
@@ -562,6 +572,7 @@ void main() {
           ru.listingTransmissionAutomatic,
           ru.listingDrivetrainFourWheel,
           formatEngineDisplacementForDisplay(ru, 6.2),
+          formatEnginePowerHpDisplay(ru, 702),
           ru.listingBodyTypePickup,
         ]),
       );

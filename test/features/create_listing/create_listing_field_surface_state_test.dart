@@ -12,8 +12,8 @@ void main() {
     expect(kCreateListingSegmentRadius, 12);
     expect(kCreateListingPublishRadius, 16);
     expect(kCreateListingFieldRadius, lessThan(20));
-    expect(kCreateListingInterSectionGap, 28);
-    expect(kCreateListingHeadingToContentGap, 8);
+    expect(kCreateListingInterSectionGap, 24);
+    expect(kCreateListingHeadingToContentGap, 10);
   });
 
   test('resolved identity subtitle joins year and variant', () {

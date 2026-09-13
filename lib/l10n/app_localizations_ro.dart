@@ -2891,10 +2891,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get createListingSmartFillLoading => 'Completăm caracteristicile…';
 
   @override
-  String get createListingSmartFillSeveralVersions => 'Mai multe versiuni';
+  String get createListingSmartFillSeveralVersions => 'Precizăm versiunea';
 
   @override
-  String get createListingSmartFillAskBody => 'Ce caroserie are automobilul?';
+  String get createListingSmartFillAskBody => 'Ce caroserie?';
 
   @override
   String get createListingSmartFillAskFuel => 'Ce combustibil?';
@@ -2903,7 +2903,13 @@ class AppLocalizationsRo extends AppLocalizations {
   String get createListingSmartFillAskTransmission => 'Ce cutie de viteze?';
 
   @override
+  String get createListingSmartFillAskEngine => 'Ce motor?';
+
+  @override
   String get createListingSmartFillDontKnow => 'Nu știu';
+
+  @override
+  String get createListingSmartFillRestart => 'Precizează din nou';
 
   @override
   String get createListingSmartFillNoData =>
@@ -2919,6 +2925,15 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get createListingAdditionalDetailsSubtitle =>
       'Caroserie, motor, cutie de viteze, descriere';
+
+  @override
+  String get createListingEditCharacteristics => 'Editează caracteristicile';
+
+  @override
+  String get createListingCharacteristicsEmpty => 'Încă nu sunt indicate';
+
+  @override
+  String get createListingDrivetrainNotSpecified => 'Nespecificat';
 
   @override
   String get createListingEngineLitersPlaceholder => 'Capacitatea motorului, l';

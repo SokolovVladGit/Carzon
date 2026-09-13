@@ -324,7 +324,7 @@ void main() {
         find.widgetWithText(TextFormField, ru.fieldPhone),
         '+37369000001',
       );
-      final additional = find.text(ru.createListingAdditionalDetails);
+      final additional = find.text(ru.createListingEditCharacteristics);
       await tester.ensureVisible(additional);
       await tester.tap(additional);
       await tester.pumpAndSettle();
@@ -410,10 +410,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text(ru.createListingChangeManually), findsOneWidget);
-    expect(
-      find.text(ru.createListingAdditionalDetailsSubtitle),
-      findsOneWidget,
-    );
+    expect(find.text(ru.createListingEditCharacteristics), findsOneWidget);
     expect(find.text(ru.publishListing), findsWidgets);
     expect(find.text(ru.fieldPhone), findsOneWidget);
     expect(find.text(ru.createListingWhatsAppTitle), findsOneWidget);
@@ -1021,18 +1018,14 @@ void main() {
     verify(createCubit.retryResolve).called(1);
   });
 
-  testWidgets('additional details stay collapsed', (tester) async {
+  testWidgets('edit characteristics editor stays collapsed', (tester) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('create_listing_additional_details')),
       findsOneWidget,
     );
-    expect(find.text(ru.createListingAdditionalDetails), findsOneWidget);
-    expect(
-      find.text(ru.createListingAdditionalDetailsSubtitle),
-      findsOneWidget,
-    );
+    expect(find.text(ru.createListingEditCharacteristics), findsOneWidget);
     expect(
       find.byKey(const ValueKey('create_listing_body_type_field')),
       findsNothing,
@@ -1057,21 +1050,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(ru.createListingVinAutofillHint), findsOneWidget);
     expect(find.text(ru.createListingEnterManually), findsOneWidget);
-    expect(find.text(ru.createListingAdditionalDetails), findsOneWidget);
-    expect(
-      find.text(ru.createListingAdditionalDetailsSubtitle),
-      findsOneWidget,
-    );
+    expect(find.text(ru.createListingEditCharacteristics), findsOneWidget);
 
     await tester.pumpWidget(wrap(locale: const Locale('ro')));
     await tester.pumpAndSettle();
     expect(find.text(ro.createListingVinAutofillHint), findsOneWidget);
     expect(find.text(ro.createListingEnterManually), findsOneWidget);
-    expect(find.text(ro.createListingAdditionalDetails), findsOneWidget);
-    expect(
-      find.text(ro.createListingAdditionalDetailsSubtitle),
-      findsOneWidget,
-    );
+    expect(find.text(ro.createListingEditCharacteristics), findsOneWidget);
   });
 
   testWidgets('confirm applies identity without overwriting variant', (
@@ -1443,8 +1428,9 @@ void main() {
         'create_listing_type_section',
         'create_listing_location_section',
         'create_listing_contact_section',
+        'create_listing_characteristics_section',
+        'create_listing_description_section',
         'create_listing_publish_section',
-        'create_listing_additional_details',
       ];
       for (var i = 1; i < sectionKeys.length; i++) {
         expect(

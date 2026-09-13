@@ -12,6 +12,7 @@ import '../../../listings/presentation/utils/listing_details_header_titles.dart'
 import '../../../listings/presentation/utils/listing_formatters.dart';
 import '../../../listings/presentation/widgets/listing_card.dart';
 import '../models/listing_preview_data.dart';
+import 'create_listing_compose_layout.dart';
 
 /// Create-listing live preview. Looks like a regular marketplace card
 /// but is not a [Listing] and has no marketplace actions.
@@ -77,6 +78,8 @@ class ListingPreviewCard extends StatelessWidget {
         formatListingDrivetrain(l10n, data.drivetrain!),
       if (data.engineDisplacementLiters != null)
         formatEngineDisplacementForDisplay(l10n, data.engineDisplacementLiters),
+      if (data.enginePowerHp != null)
+        formatEnginePowerHpDisplay(l10n, data.enginePowerHp),
       if (data.bodyType != null) formatListingBodyType(l10n, data.bodyType!),
     ]);
     final variant = data.variant;
@@ -99,14 +102,11 @@ class ListingPreviewCard extends StatelessWidget {
       children: [
         Text(
           l10n.createListingPreviewHeading,
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.2,
-          ),
+          style: createListingSectionTitleStyle(theme),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: kCreateListingHeadingToContentGap),
         Semantics(
           container: true,
           label: semantics,
@@ -298,10 +298,10 @@ class _PreviewCompactEmptyCover extends StatelessWidget {
                     hint,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
+                    style: createListingSupportStyle(theme)?.copyWith(
                       color: muted,
                       fontWeight: FontWeight.w500,
-                      height: 1.2,
+                      height: 1.25,
                     ),
                   ),
                 ),

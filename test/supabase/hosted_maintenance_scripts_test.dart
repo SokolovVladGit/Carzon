@@ -273,10 +273,12 @@ void main() {
       for (final needle in [
         'table_vehicle_open_data_configuration',
         'rpc_resolve_vehicle_by_identity',
+        'rpc_resolve_vehicle_by_identity_v2',
         'smart_fill_catalog_not_client_exposed',
         'smart_fill_importer_not_client',
         'smart_fill_no_plate_vin_columns',
         'resolve_vehicle_by_identity',
+        'resolve_vehicle_by_identity_v2',
         'carzon_open_data_upsert_configurations',
         'carzon_open_data_upsert_tgk_transmissions',
         'smart_fill_tgk_importer_not_client',

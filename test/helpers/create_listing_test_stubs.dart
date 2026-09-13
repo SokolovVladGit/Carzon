@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/features/create_listing/domain/entities/manual_smart_fill_refinement.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_cubit.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/manual_smart_fill_cubit.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/manual_smart_fill_state.dart';
@@ -27,6 +28,14 @@ void stubCreateListingVinResolve(
 }
 
 MockManualSmartFillCubit registerIdleManualSmartFillCubit() {
+  registerFallbackValue(
+    const ManualSmartFillRefinementOption(
+      id: 'fallback',
+      kind: ManualSmartFillRefinementKind.body,
+      candidateCount: 0,
+      bodyType: 'hatchback',
+    ),
+  );
   final cubit = MockManualSmartFillCubit();
   when(() => cubit.state).thenReturn(const ManualSmartFillState.idle());
   whenListen(
@@ -47,9 +56,13 @@ MockManualSmartFillCubit registerIdleManualSmartFillCubit() {
       value: any(named: 'value'),
     ),
   ).thenAnswer((_) async {});
+  when(() => cubit.selectOption(any())).thenAnswer((_) async {});
+  when(cubit.skipCurrent).thenAnswer((_) async {});
   when(cubit.dismissClarification).thenReturn(null);
+  when(cubit.restart).thenAnswer((_) async {});
   when(cubit.reset).thenReturn(null);
   when(cubit.cancelForVinAuthority).thenReturn(null);
+  when(cubit.cancelForManualOverride).thenReturn(null);
   when(cubit.retry).thenAnswer((_) async {});
   sl.registerFactory<ManualSmartFillCubit>(() => cubit);
   return cubit;

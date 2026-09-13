@@ -5,6 +5,7 @@ import 'package:carzon/app/di/injection.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
+import 'package:carzon/features/create_listing/domain/entities/manual_smart_fill_refinement.dart';
 import 'package:carzon/features/create_listing/domain/entities/manual_smart_fill_result.dart';
 import 'package:carzon/features/create_listing/domain/entities/new_listing_input.dart';
 import 'package:carzon/features/create_listing/domain/entities/vehicle_resolve_result.dart';
@@ -43,6 +44,14 @@ void main() {
   final newestYear = listingYearsOrderedNewestFirst().first;
 
   setUpAll(() {
+    registerFallbackValue(
+      const ManualSmartFillRefinementOption(
+        id: 'fallback',
+        kind: ManualSmartFillRefinementKind.body,
+        candidateCount: 0,
+        bodyType: 'hatchback',
+      ),
+    );
     registerFallbackValue(
       NewListingInput(
         sellerId: 'fallback',
@@ -99,7 +108,11 @@ void main() {
         value: any(named: 'value'),
       ),
     ).thenAnswer((_) async {});
+    when(() => smartFill.selectOption(any())).thenAnswer((_) async {});
+    when(smartFill.skipCurrent).thenAnswer((_) async {});
+    when(smartFill.restart).thenAnswer((_) async {});
     when(smartFill.dismissClarification).thenReturn(null);
+    when(smartFill.cancelForManualOverride).thenReturn(null);
     void emitSmartFillIdle() {
       when(() => smartFill.state).thenReturn(const ManualSmartFillState.idle());
       smartFillEvents.add(const ManualSmartFillState.idle());
@@ -175,6 +188,7 @@ void main() {
     int? hp,
     String? transmission,
     ManualSmartFillClarification? clarification,
+    ManualSmartFillNextRefinement? next,
   }) {
     return ManualSmartFillResult(
       resolution: ManualSmartFillResolution.ok,
@@ -192,7 +206,8 @@ void main() {
         drivetrain: 'awd',
       ),
       clarification: clarification,
-      mappingVersion: 'm1.1',
+      nextRefinement: next,
+      mappingVersion: 'm1.2',
     );
   }
 
@@ -445,14 +460,19 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(const ValueKey('create_listing_transmission_field')),
-          matching: find.text(formatListingTransmissionType(ru, ListingTransmissionType.automatic)),
+          matching: find.text(
+            formatListingTransmissionType(
+              ru,
+              ListingTransmissionType.automatic,
+            ),
+          ),
         ),
         findsOneWidget,
       );
       expect(
         find.descendant(
           of: find.byKey(const ValueKey('create_listing_drivetrain_field')),
-          matching: find.text(ru.listingDrivetrain),
+          matching: find.text(ru.createListingDrivetrainNotSpecified),
         ),
         findsOneWidget,
       );
@@ -528,7 +548,7 @@ void main() {
     await tester.tap(
       find.byKey(const ValueKey('create_listing_smart_fill_dont_know')),
     );
-    verify(smartFill.dismissClarification).called(1);
+    verify(smartFill.skipCurrent).called(1);
   });
 
   testWidgets('answer option calls resolver once', (tester) async {
@@ -554,9 +574,7 @@ void main() {
     await tester.tap(
       find.byKey(const ValueKey('create_listing_smart_fill_option_diesel')),
     );
-    verify(
-      () => smartFill.answer(attribute: 'fuel', value: 'diesel'),
-    ).called(1);
+    verify(() => smartFill.selectOption(any())).called(1);
   });
 
   testWidgets('noData and failure stay non-blocking', (tester) async {
@@ -819,7 +837,9 @@ void main() {
     expect(
       find.descendant(
         of: bodyTypeField(),
-        matching: find.text(formatListingBodyType(ru, ListingBodyType.hatchback)),
+        matching: find.text(
+          formatListingBodyType(ru, ListingBodyType.hatchback),
+        ),
       ),
       findsOneWidget,
     );
@@ -961,9 +981,7 @@ void main() {
     );
     expect(
       tester.widget<Text>(find.byKey(ListingPreviewCard.specsKey)).data,
-      contains(
-        formatListingTransmissionType(ru, ListingTransmissionType.cvt),
-      ),
+      contains(formatListingTransmissionType(ru, ListingTransmissionType.cvt)),
     );
     await fillRequiredDeal(tester);
     final publish = find.text(ru.publishListing).last;
@@ -1056,42 +1074,46 @@ void main() {
     expect(find.byType(CreateListingPage), findsNothing);
   });
 
-  testWidgets('catalog transmission fills Advanced and keeps drivetrain empty', (
-    tester,
-  ) async {
-    await tester.pumpWidget(wrap());
-    await tester.pumpAndSettle();
-    await completeSkodaOctavia(tester);
-    await emitSmartFill(
-      ManualSmartFillState(
-        status: ManualSmartFillStatus.filled,
-        result: okResult(transmission: 'dual_clutch'),
-        applyRevision: 1,
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(
-      find.byKey(const ValueKey('create_listing_smart_fill_summary')),
-      findsNothing,
-    );
-    await expandCreateListingAdditionalDetails(tester);
-    expect(
-      find.descendant(
-        of: transmissionField(),
-        matching: find.text(
-          formatListingTransmissionType(ru, ListingTransmissionType.dualClutch),
+  testWidgets(
+    'catalog transmission fills Advanced and keeps drivetrain empty',
+    (tester) async {
+      await tester.pumpWidget(wrap());
+      await tester.pumpAndSettle();
+      await completeSkodaOctavia(tester);
+      await emitSmartFill(
+        ManualSmartFillState(
+          status: ManualSmartFillStatus.filled,
+          result: okResult(transmission: 'dual_clutch'),
+          applyRevision: 1,
         ),
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey('create_listing_drivetrain_field')),
-        matching: find.text(ru.listingDrivetrain),
-      ),
-      findsOneWidget,
-    );
-  });
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('create_listing_smart_fill_summary')),
+        findsNothing,
+      );
+      await expandCreateListingAdditionalDetails(tester);
+      expect(
+        find.descendant(
+          of: transmissionField(),
+          matching: find.text(
+            formatListingTransmissionType(
+              ru,
+              ListingTransmissionType.dualClutch,
+            ),
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('create_listing_drivetrain_field')),
+          matching: find.text(ru.createListingDrivetrainNotSpecified),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('seller transmission edit is not overwritten', (tester) async {
     await tester.pumpWidget(wrap());
@@ -1106,7 +1128,9 @@ void main() {
     await tester.tap(transmissionField());
     await tester.pumpAndSettle();
     await tester.tap(
-      find.text(formatListingTransmissionType(ru, ListingTransmissionType.manual)),
+      find.text(
+        formatListingTransmissionType(ru, ListingTransmissionType.manual),
+      ),
     );
     await tester.pumpAndSettle();
     await emitSmartFill(
@@ -1220,7 +1244,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(ru.createListingSmartFillAskTransmission), findsOneWidget);
     expect(
-      find.text(formatListingTransmissionType(ru, ListingTransmissionType.manual)),
+      find.text(
+        formatListingTransmissionType(ru, ListingTransmissionType.manual),
+      ),
       findsOneWidget,
     );
     expect(
@@ -1283,8 +1309,187 @@ void main() {
       find.byKey(const ValueKey('create_listing_smart_fill_clarification')),
       findsNothing,
     );
-    verify(
-      () => smartFill.answer(attribute: 'fuel', value: 'diesel'),
-    ).called(1);
+    verify(() => smartFill.selectOption(any())).called(1);
+  });
+
+  testWidgets('engine option fills catalog-owned specs and summary', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        query: ManualSmartFillQuery(
+          make: 'Skoda',
+          model: 'Octavia',
+          year: newestYear,
+        ),
+        result: okResult(
+          next: const ManualSmartFillNextRefinement(
+            kind: ManualSmartFillRefinementKind.engine,
+            options: [
+              ManualSmartFillRefinementOption(
+                id: 'eng-95',
+                kind: ManualSmartFillRefinementKind.engine,
+                candidateCount: 3,
+                fuelType: 'petrol',
+                engineDisplacementLiters: 1.0,
+                enginePowerHp: 95,
+              ),
+              ManualSmartFillRefinementOption(
+                id: 'eng-110',
+                kind: ManualSmartFillRefinementKind.engine,
+                candidateCount: 1,
+                fuelType: 'petrol',
+                engineDisplacementLiters: 1.0,
+                enginePowerHp: 110,
+              ),
+            ],
+          ),
+        ),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(ru.createListingSmartFillAskEngine), findsOneWidget);
+    expect(find.textContaining('1.0'), findsWidgets);
+    await tester.tap(
+      find.byKey(const ValueKey('create_listing_smart_fill_option_eng-95')),
+    );
+    verify(() => smartFill.selectOption(any())).called(1);
+
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        answers: const [
+          ManualSmartFillRefinementAnswer(
+            kind: ManualSmartFillRefinementKind.engine,
+            optionId: 'eng-95',
+          ),
+        ],
+        result: okResult(
+          fuel: 'petrol',
+          liters: 1.0,
+          hp: 95,
+          next: const ManualSmartFillNextRefinement(
+            kind: ManualSmartFillRefinementKind.transmission,
+            options: [
+              ManualSmartFillRefinementOption(
+                id: 'tr-man',
+                kind: ManualSmartFillRefinementKind.transmission,
+                candidateCount: 2,
+                transmissionType: 'manual',
+              ),
+              ManualSmartFillRefinementOption(
+                id: 'tr-auto',
+                kind: ManualSmartFillRefinementKind.transmission,
+                candidateCount: 1,
+                transmissionType: 'automatic',
+              ),
+            ],
+          ),
+        ),
+        applyRevision: 2,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(ru.createListingSmartFillAskTransmission), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('create_listing_characteristics_summary')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_body_type_field')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_publish_section')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('I do not know continues to the next eligible question', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        result: okResult(
+          next: const ManualSmartFillNextRefinement(
+            kind: ManualSmartFillRefinementKind.engine,
+            options: [
+              ManualSmartFillRefinementOption(
+                id: 'eng-95',
+                kind: ManualSmartFillRefinementKind.engine,
+                candidateCount: 1,
+                fuelType: 'petrol',
+                engineDisplacementLiters: 1.0,
+                enginePowerHp: 95,
+              ),
+              ManualSmartFillRefinementOption(
+                id: 'eng-110',
+                kind: ManualSmartFillRefinementKind.engine,
+                candidateCount: 1,
+                fuelType: 'petrol',
+                engineDisplacementLiters: 1.0,
+                enginePowerHp: 110,
+              ),
+            ],
+          ),
+        ),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('create_listing_smart_fill_dont_know')),
+    );
+    verify(smartFill.skipCurrent).called(1);
+  });
+
+  testWidgets('seller technical edit cancels later progressive results', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        result: okResult(
+          fuel: 'petrol',
+          liters: 1.0,
+          hp: 95,
+          next: const ManualSmartFillNextRefinement(
+            kind: ManualSmartFillRefinementKind.transmission,
+            options: [
+              ManualSmartFillRefinementOption(
+                id: 'tr-man',
+                kind: ManualSmartFillRefinementKind.transmission,
+                candidateCount: 1,
+                transmissionType: 'manual',
+              ),
+              ManualSmartFillRefinementOption(
+                id: 'tr-auto',
+                kind: ManualSmartFillRefinementKind.transmission,
+                candidateCount: 1,
+                transmissionType: 'automatic',
+              ),
+            ],
+          ),
+        ),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await expandCreateListingAdditionalDetails(tester);
+    await tester.enterText(powerField(), '110');
+    await tester.pump();
+    verify(smartFill.cancelForManualOverride).called(greaterThanOrEqualTo(1));
   });
 }

@@ -34,6 +34,7 @@ class ListingPreviewData {
     this.transmissionType,
     this.drivetrain,
     this.engineDisplacementLiters,
+    this.enginePowerHp,
   });
 
   final Uint8List? coverBytes;
@@ -54,6 +55,7 @@ class ListingPreviewData {
   final ListingTransmissionType? transmissionType;
   final ListingDrivetrain? drivetrain;
   final double? engineDisplacementLiters;
+  final int? enginePowerHp;
 
   bool get hasCover => coverBytes != null && coverBytes!.isNotEmpty;
 }
@@ -107,6 +109,7 @@ ListingPreviewData listingPreviewDataFromCreateForm({
   ListingTransmissionType? transmissionType,
   ListingDrivetrain? drivetrain,
   double? engineDisplacementLiters,
+  int? enginePowerHp,
 }) {
   final yearForTitle = year != null && year > 0 ? year : 0;
   return ListingPreviewData(
@@ -139,5 +142,12 @@ ListingPreviewData listingPreviewDataFromCreateForm({
     engineDisplacementLiters: listingPreviewDisplacementLiters(
       engineDisplacementLiters,
     ),
+    enginePowerHp: listingPreviewEnginePowerHp(enginePowerHp),
   );
+}
+
+/// Guards engine power to the same bounds the publish RPC accepts (0, 3000].
+int? listingPreviewEnginePowerHp(int? raw) {
+  if (raw == null || raw <= 0 || raw > 3000) return null;
+  return raw;
 }

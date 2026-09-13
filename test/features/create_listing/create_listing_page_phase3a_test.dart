@@ -330,7 +330,7 @@ void main() {
       expect(find.text(l10n.createListingChooseBrand), findsNothing);
       expect(find.text(l10n.createListingEnterManually), findsOneWidget);
       expect(find.text(l10n.createListingVinAutofillHint), findsOneWidget);
-      expect(find.text(l10n.createListingAdditionalDetails), findsOneWidget);
+      expect(find.text(l10n.createListingEditCharacteristics), findsOneWidget);
       expect(find.text(l10n.listingBodyTypeNotSpecified), findsNothing);
       expect(find.text(l10n.createListingPricePlaceholder), findsOneWidget);
       expect(find.text(l10n.createListingMileagePlaceholder), findsOneWidget);
@@ -353,7 +353,7 @@ void main() {
   );
 
   testWidgets(
-    'primary sections follow vehicle-first publish-before-advanced order',
+    'primary sections follow vehicle-first characteristics-and-description-before-publish order',
     (tester) async {
       await tester.pumpWidget(wrap());
       await tester.pumpAndSettle();
@@ -364,8 +364,9 @@ void main() {
         'create_listing_type_section',
         'create_listing_location_section',
         'create_listing_contact_section',
+        'create_listing_characteristics_section',
+        'create_listing_description_section',
         'create_listing_publish_section',
-        'create_listing_additional_details',
       ];
       final sections = [
         for (final key in sectionKeys) find.byKey(ValueKey(key)),
@@ -385,8 +386,8 @@ void main() {
       final type = sections[2];
       final location = sections[3];
       final contact = sections[4];
-      final publish = sections[5];
-      final advanced = sections[6];
+      final characteristics = sections[5];
+      final publish = sections[7];
       final city = find.byKey(const ValueKey('create_listing_city_field'));
       final region = find.byKey(
         const ValueKey('create_listing_region_selector'),
@@ -420,8 +421,8 @@ void main() {
         lessThan(tester.getTopLeft(dealType).dy),
       );
       expect(
-        tester.getTopLeft(preview).dy,
-        lessThan(tester.getTopLeft(advanced).dy),
+        tester.getTopLeft(characteristics).dy,
+        lessThan(tester.getTopLeft(preview).dy),
       );
       expect(
         tester
@@ -591,8 +592,9 @@ void main() {
       'create_listing_type_section',
       'create_listing_location_section',
       'create_listing_contact_section',
+      'create_listing_characteristics_section',
+      'create_listing_description_section',
       'create_listing_publish_section',
-      'create_listing_additional_details',
     ];
 
     for (final size in const [Size(320, 568), Size(375, 667)]) {
@@ -652,7 +654,7 @@ void main() {
     expect(tester.takeException(), isNull);
 
     expect(find.text(ro.createListingVinAutofillHint), findsOneWidget);
-    expect(find.text(ro.createListingAdditionalDetails), findsOneWidget);
+    expect(find.text(ro.createListingEditCharacteristics), findsOneWidget);
   });
 
   testWidgets('price and mileage share a row at 390 and stack at 320', (

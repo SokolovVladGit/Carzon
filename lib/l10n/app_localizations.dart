@@ -5199,13 +5199,13 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSmartFillSeveralVersions.
   ///
   /// In ru, this message translates to:
-  /// **'Несколько версий'**
+  /// **'Уточним версию'**
   String get createListingSmartFillSeveralVersions;
 
   /// No description provided for @createListingSmartFillAskBody.
   ///
   /// In ru, this message translates to:
-  /// **'Какой кузов у автомобиля?'**
+  /// **'Какой кузов?'**
   String get createListingSmartFillAskBody;
 
   /// No description provided for @createListingSmartFillAskFuel.
@@ -5220,11 +5220,23 @@ abstract class AppLocalizations {
   /// **'Какая коробка передач?'**
   String get createListingSmartFillAskTransmission;
 
+  /// No description provided for @createListingSmartFillAskEngine.
+  ///
+  /// In ru, this message translates to:
+  /// **'Какой двигатель?'**
+  String get createListingSmartFillAskEngine;
+
   /// No description provided for @createListingSmartFillDontKnow.
   ///
   /// In ru, this message translates to:
   /// **'Не знаю'**
   String get createListingSmartFillDontKnow;
+
+  /// No description provided for @createListingSmartFillRestart.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточнить заново'**
+  String get createListingSmartFillRestart;
 
   /// No description provided for @createListingSmartFillNoData.
   ///
@@ -5249,6 +5261,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Кузов, двигатель, коробка, описание'**
   String get createListingAdditionalDetailsSubtitle;
+
+  /// No description provided for @createListingEditCharacteristics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Изменить характеристики'**
+  String get createListingEditCharacteristics;
+
+  /// No description provided for @createListingCharacteristicsEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока не указаны'**
+  String get createListingCharacteristicsEmpty;
+
+  /// No description provided for @createListingDrivetrainNotSpecified.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не указан'**
+  String get createListingDrivetrainNotSpecified;
 
   /// No description provided for @createListingEngineLitersPlaceholder.
   ///

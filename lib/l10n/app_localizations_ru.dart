@@ -2885,10 +2885,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createListingSmartFillLoading => 'Подставляем характеристики…';
 
   @override
-  String get createListingSmartFillSeveralVersions => 'Несколько версий';
+  String get createListingSmartFillSeveralVersions => 'Уточним версию';
 
   @override
-  String get createListingSmartFillAskBody => 'Какой кузов у автомобиля?';
+  String get createListingSmartFillAskBody => 'Какой кузов?';
 
   @override
   String get createListingSmartFillAskFuel => 'Какое топливо?';
@@ -2897,7 +2897,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createListingSmartFillAskTransmission => 'Какая коробка передач?';
 
   @override
+  String get createListingSmartFillAskEngine => 'Какой двигатель?';
+
+  @override
   String get createListingSmartFillDontKnow => 'Не знаю';
+
+  @override
+  String get createListingSmartFillRestart => 'Уточнить заново';
 
   @override
   String get createListingSmartFillNoData =>
@@ -2913,6 +2919,15 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get createListingAdditionalDetailsSubtitle =>
       'Кузов, двигатель, коробка, описание';
+
+  @override
+  String get createListingEditCharacteristics => 'Изменить характеристики';
+
+  @override
+  String get createListingCharacteristicsEmpty => 'Пока не указаны';
+
+  @override
+  String get createListingDrivetrainNotSpecified => 'Не указан';
 
   @override
   String get createListingEngineLitersPlaceholder => 'Объём двигателя, л';

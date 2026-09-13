@@ -138,6 +138,12 @@ void main() {
     'carzon_open_data_upsert_aliases',
     'carzon_open_data_map_tgk_gearbox',
     'carzon_open_data_upsert_tgk_transmissions',
+    'carzon_open_data_mapping_version_v2',
+    'carzon_open_data_seller_liters',
+    'carzon_open_data_v2_option_id',
+    'carzon_open_data_v2_options',
+    'carzon_open_data_v2_filter',
+    'carzon_open_data_v2_payload',
   };
 
   /// Internal `public` tables with RLS that must **not** receive `GRANT` to
