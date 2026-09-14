@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/di/injection.dart';
 import '../../../../core/config/env.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../shared/ui/carzon_icons.dart';
+import '../../../listing_engagement/domain/entities/listing_engagement_event_type.dart';
+import '../../../listing_engagement/domain/usecases/record_listing_engagement.dart';
 import '../../domain/entities/listing.dart';
 import '../utils/listing_share_launcher.dart';
 import '../utils/listing_share_text.dart';
@@ -17,11 +21,13 @@ class ListingShareButton extends StatelessWidget {
     required this.listing,
     this.shareLauncher,
     this.shareUrlBuilder,
+    this.recordEngagement,
   });
 
   final Listing listing;
   final ListingShareLauncher? shareLauncher;
   final ListingShareUrlBuilder? shareUrlBuilder;
+  final RecordListingEngagement? recordEngagement;
 
   /// Central capability check used by the hero before it allocates chrome for
   /// this action. The button repeats the guard for safe standalone use.
@@ -35,6 +41,7 @@ class ListingShareButton extends StatelessWidget {
     final text = buildListingShareText(l10n, listing, shareUrl: shareUrl);
 
     try {
+      _recordShare();
       await (shareLauncher ?? launchListingShare)(text);
     } catch (_) {
       if (!context.mounted) return;
@@ -66,5 +73,21 @@ class ListingShareButton extends StatelessWidget {
         icon: const Icon(CarzonIcons.share, size: 20),
       ),
     );
+  }
+
+  void _recordShare() {
+    try {
+      final recorder =
+          recordEngagement ??
+          (sl.isRegistered<RecordListingEngagement>()
+              ? sl<RecordListingEngagement>()
+              : null);
+      recorder?.recordFireAndForget(
+        listingId: listing.id,
+        eventType: ListingEngagementEventType.share,
+      );
+    } catch (e, st) {
+      AppLogger('ListingShareButton').error('share engagement threw', e, st);
+    }
   }
 }

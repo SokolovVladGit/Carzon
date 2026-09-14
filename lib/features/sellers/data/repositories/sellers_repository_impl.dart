@@ -4,8 +4,10 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/utils/logger.dart';
 import '../../../../core/utils/result.dart';
+import '../../domain/entities/my_seller_context.dart';
 import '../../domain/entities/my_seller_profile.dart';
 import '../../domain/entities/seller_public_profile.dart';
+import '../../domain/entities/seller_type.dart';
 import '../../domain/repositories/sellers_repository.dart';
 import '../datasources/seller_avatar_remote_datasource.dart';
 import '../datasources/sellers_remote_datasource.dart';
@@ -130,6 +132,34 @@ class SellersRepositoryImpl implements SellersRepository {
       _logger.error('clearSellerAvatar unknown error', e, st);
       return const FailureResult(
         UnknownFailure('Failed to remove public seller photo.'),
+      );
+    }
+  }
+
+  @override
+  Future<Result<MySellerContext>> getMySellerContext() async {
+    try {
+      final row = await _remote.fetchMySellerContext();
+      return Success(row);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('getMySellerContext unknown error', e, st);
+      return const FailureResult(UnknownFailure('Failed to load seller mode.'));
+    }
+  }
+
+  @override
+  Future<Result<MySellerContext>> setMySellerType(SellerType sellerType) async {
+    try {
+      final row = await _remote.setMySellerType(sellerType);
+      return Success(row);
+    } on ServerException catch (e) {
+      return FailureResult(ServerFailure(e.message));
+    } catch (e, st) {
+      _logger.error('setMySellerType unknown error', e, st);
+      return const FailureResult(
+        UnknownFailure('Failed to update seller mode.'),
       );
     }
   }

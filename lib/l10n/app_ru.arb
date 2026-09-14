@@ -1277,7 +1277,7 @@
   "sellerTypePrivate": "Частный продавец",
   "@sellerTypePrivate": {},
 
-  "sellerTypeDealer": "Дилер",
+  "sellerTypeDealer": "Профессиональный продавец",
   "@sellerTypeDealer": {},
 
   "sellerProfileLoadFailed": "Не удалось загрузить профиль продавца.",
@@ -1999,6 +1999,127 @@
   "@fuelPricesFuelDieselEuro": {},
   "fuelPricesFuelDieselRegular": "Дизель",
   "@fuelPricesFuelDieselRegular": {},
+  "statisticsTitle": "Статистика",
+  "statisticsSignInRequired": "Войдите, чтобы увидеть статистику объявлений.",
+  "statisticsPeriodSelectorLabel": "Период",
+  "statisticsPeriod7": "7 дней",
+  "statisticsPeriod30": "30 дней",
+  "statisticsPeriod90": "90 дней",
+  "statisticsMetricViews": "Просмотры",
+  "statisticsMetricFavorites": "В избранном",
+  "statisticsMetricInquiries": "Обращения",
+  "statisticsMetricConversion": "Конверсия",
+  "statisticsValueUnavailable": "—",
+  "statisticsActiveListings": "Активные",
+  "statisticsSoldListings": "Проданные",
+  "statisticsYourListings": "Ваши объявления",
+  "statisticsChartSemantics": "Просмотры за выбранный период: {count}",
+  "@statisticsChartSemantics": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingViews": "Просмотры: {count}",
+  "@statisticsListingViews": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingFavorites": "В избранном: {count}",
+  "@statisticsListingFavorites": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingInquiries": "Обращения: {count}",
+  "@statisticsListingInquiries": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListedForDays": "{count, plural, one{{count} день в продаже} few{{count} дня в продаже} many{{count} дней в продаже} other{{count} дней в продаже}}",
+  "@statisticsListedForDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsSoldAfterDays": "{count, plural, one{продано за {count} день} few{продано за {count} дня} many{продано за {count} дней} other{продано за {count} дней}}",
+  "@statisticsSoldAfterDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsEmptyTitle": "Пока нет объявлений",
+  "statisticsEmptyBody": "Опубликуйте объявление — здесь появятся просмотры, избранное и обращения.",
+  "statisticsEmptyCta": "Подать объявление",
+  "statisticsLoadFailed": "Не удалось загрузить статистику",
+  "statisticsProfessionalLabel": "Профессиональный продавец",
+  "statisticsInventoryTotal": "Всего",
+  "statisticsTopListings": "Топ объявлений",
+  "statisticsTopListingsEmpty": "Пока нет откликов — топ появится, когда будут просмотры или обращения.",
+  "statisticsInventoryPerformance": "Эффективность объявлений",
+  "statisticsSortMostInquiries": "По обращениям",
+  "statisticsSortMostViewed": "По просмотрам",
+  "statisticsSortMostFavorited": "По избранному",
+  "statisticsSortNewest": "Сначала новые",
+  "statisticsSortLongestListed": "Дольше в продаже",
+  "statisticsFilterAll": "Все",
+  "statisticsFilterActive": "Активные",
+  "statisticsFilterSold": "Проданные",
+  "statisticsInterestFunnel": "Воронка интереса",
+  "statisticsFunnelImpressions": "Показы",
+  "statisticsFunnelViews": "Просмотры",
+  "statisticsFunnelInquiries": "Обращения",
+  "statisticsContactActions": "Контактные действия",
+  "statisticsContactActionsTotal": "Контактные действия",
+  "statisticsMetricPhone": "Телефон",
+  "statisticsMetricWhatsapp": "WhatsApp",
+  "statisticsMetricTelegram": "Telegram",
+  "statisticsMetricShares": "Поделились",
+  "statisticsListingImpressions": "Показы: {count}",
+  "@statisticsListingImpressions": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingContactActions": "Контактные действия: {count}",
+  "@statisticsListingContactActions": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingShares": "Поделились: {count}",
+  "@statisticsListingShares": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsDemandTitle": "Спрос покупателей",
+  "statisticsDemandExplanation": "Показывает, сколько пользователей CARZON имеют сохранённый поиск, подходящий вашим активным объявлениям.",
+  "statisticsDemandMatchingUsers": "Пользователей с подходящим поиском",
+  "statisticsDemandInsufficient": "Недостаточно данных",
+  "statisticsDemandPrivacyBody": "CARZON покажет количество, когда данных будет достаточно для сохранения конфиденциальности.",
+  "statisticsDemandZeroBody": "Пока нет совпадений с сохранёнными поисками.",
+  "statisticsDemandTop": "Наибольший интерес",
+  "statisticsDemandUnavailable": "Спрос покупателей сейчас недоступен.",
+  "statisticsDemandLoading": "Загружаем спрос покупателей",
+  "statisticsListingDemandVisible": "{count, plural, one{Интерес: {count} пользователь} few{Интерес: {count} пользователя} many{Интерес: {count} пользователей} other{Интерес: {count} пользователей}}",
+  "@statisticsListingDemandVisible": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingDemandSuppressed": "Интерес: недостаточно данных",
+  "statisticsListingDemandZero": "Интерес: 0 пользователей",
+  "sellerModeTitle": "Режим продавца",
+  "sellerModeRowHint": "Как статистика показывает ваши объявления.",
+  "sellerModeLoadFailed": "Не удалось загрузить режим продавца",
+  "sellerModeSaveFailed": "Не удалось сохранить режим продавца",
+  "sellerModePrivateTitle": "Частный продавец",
+  "sellerModePrivateBody": "Продаёте личный автомобиль. Компактная статистика объявлений.",
+  "sellerModeProfessionalTitle": "Профессиональный продавец",
+  "sellerModeProfessionalBody": "Регулярно продаёте автомобили. Расширенная статистика инвентаря.",
+  "sellerModeVerified": "Проверенный продавец",
   "vinScannerTitle": "Сканировать VIN",
   "vinScannerInstruction": "Наведите камеру на VIN",
   "vinScannerHint": "На документе или табличке автомобиля. VIN должен целиком помещаться в рамке.",

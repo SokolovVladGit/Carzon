@@ -5061,7 +5061,7 @@ abstract class AppLocalizations {
   /// No description provided for @sellerTypeDealer.
   ///
   /// In ru, this message translates to:
-  /// **'Дилер'**
+  /// **'Профессиональный продавец'**
   String get sellerTypeDealer;
 
   /// No description provided for @sellerProfileLoadFailed.
@@ -7169,6 +7169,432 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Дизель'**
   String get fuelPricesFuelDieselRegular;
+
+  /// No description provided for @statisticsTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Статистика'**
+  String get statisticsTitle;
+
+  /// No description provided for @statisticsSignInRequired.
+  ///
+  /// In ru, this message translates to:
+  /// **'Войдите, чтобы увидеть статистику объявлений.'**
+  String get statisticsSignInRequired;
+
+  /// No description provided for @statisticsPeriodSelectorLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Период'**
+  String get statisticsPeriodSelectorLabel;
+
+  /// No description provided for @statisticsPeriod7.
+  ///
+  /// In ru, this message translates to:
+  /// **'7 дней'**
+  String get statisticsPeriod7;
+
+  /// No description provided for @statisticsPeriod30.
+  ///
+  /// In ru, this message translates to:
+  /// **'30 дней'**
+  String get statisticsPeriod30;
+
+  /// No description provided for @statisticsPeriod90.
+  ///
+  /// In ru, this message translates to:
+  /// **'90 дней'**
+  String get statisticsPeriod90;
+
+  /// No description provided for @statisticsMetricViews.
+  ///
+  /// In ru, this message translates to:
+  /// **'Просмотры'**
+  String get statisticsMetricViews;
+
+  /// No description provided for @statisticsMetricFavorites.
+  ///
+  /// In ru, this message translates to:
+  /// **'В избранном'**
+  String get statisticsMetricFavorites;
+
+  /// No description provided for @statisticsMetricInquiries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обращения'**
+  String get statisticsMetricInquiries;
+
+  /// No description provided for @statisticsMetricConversion.
+  ///
+  /// In ru, this message translates to:
+  /// **'Конверсия'**
+  String get statisticsMetricConversion;
+
+  /// No description provided for @statisticsValueUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'—'**
+  String get statisticsValueUnavailable;
+
+  /// No description provided for @statisticsActiveListings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активные'**
+  String get statisticsActiveListings;
+
+  /// No description provided for @statisticsSoldListings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проданные'**
+  String get statisticsSoldListings;
+
+  /// No description provided for @statisticsYourListings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ваши объявления'**
+  String get statisticsYourListings;
+
+  /// No description provided for @statisticsChartSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Просмотры за выбранный период: {count}'**
+  String statisticsChartSemantics(int count);
+
+  /// No description provided for @statisticsListingViews.
+  ///
+  /// In ru, this message translates to:
+  /// **'Просмотры: {count}'**
+  String statisticsListingViews(int count);
+
+  /// No description provided for @statisticsListingFavorites.
+  ///
+  /// In ru, this message translates to:
+  /// **'В избранном: {count}'**
+  String statisticsListingFavorites(int count);
+
+  /// No description provided for @statisticsListingInquiries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обращения: {count}'**
+  String statisticsListingInquiries(int count);
+
+  /// No description provided for @statisticsListedForDays.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{{count} день в продаже} few{{count} дня в продаже} many{{count} дней в продаже} other{{count} дней в продаже}}'**
+  String statisticsListedForDays(int count);
+
+  /// No description provided for @statisticsSoldAfterDays.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{продано за {count} день} few{продано за {count} дня} many{продано за {count} дней} other{продано за {count} дней}}'**
+  String statisticsSoldAfterDays(int count);
+
+  /// No description provided for @statisticsEmptyTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока нет объявлений'**
+  String get statisticsEmptyTitle;
+
+  /// No description provided for @statisticsEmptyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Опубликуйте объявление — здесь появятся просмотры, избранное и обращения.'**
+  String get statisticsEmptyBody;
+
+  /// No description provided for @statisticsEmptyCta.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подать объявление'**
+  String get statisticsEmptyCta;
+
+  /// No description provided for @statisticsLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить статистику'**
+  String get statisticsLoadFailed;
+
+  /// No description provided for @statisticsProfessionalLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Профессиональный продавец'**
+  String get statisticsProfessionalLabel;
+
+  /// No description provided for @statisticsInventoryTotal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Всего'**
+  String get statisticsInventoryTotal;
+
+  /// No description provided for @statisticsTopListings.
+  ///
+  /// In ru, this message translates to:
+  /// **'Топ объявлений'**
+  String get statisticsTopListings;
+
+  /// No description provided for @statisticsTopListingsEmpty.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока нет откликов — топ появится, когда будут просмотры или обращения.'**
+  String get statisticsTopListingsEmpty;
+
+  /// No description provided for @statisticsInventoryPerformance.
+  ///
+  /// In ru, this message translates to:
+  /// **'Эффективность объявлений'**
+  String get statisticsInventoryPerformance;
+
+  /// No description provided for @statisticsSortMostInquiries.
+  ///
+  /// In ru, this message translates to:
+  /// **'По обращениям'**
+  String get statisticsSortMostInquiries;
+
+  /// No description provided for @statisticsSortMostViewed.
+  ///
+  /// In ru, this message translates to:
+  /// **'По просмотрам'**
+  String get statisticsSortMostViewed;
+
+  /// No description provided for @statisticsSortMostFavorited.
+  ///
+  /// In ru, this message translates to:
+  /// **'По избранному'**
+  String get statisticsSortMostFavorited;
+
+  /// No description provided for @statisticsSortNewest.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сначала новые'**
+  String get statisticsSortNewest;
+
+  /// No description provided for @statisticsSortLongestListed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Дольше в продаже'**
+  String get statisticsSortLongestListed;
+
+  /// No description provided for @statisticsFilterAll.
+  ///
+  /// In ru, this message translates to:
+  /// **'Все'**
+  String get statisticsFilterAll;
+
+  /// No description provided for @statisticsFilterActive.
+  ///
+  /// In ru, this message translates to:
+  /// **'Активные'**
+  String get statisticsFilterActive;
+
+  /// No description provided for @statisticsFilterSold.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проданные'**
+  String get statisticsFilterSold;
+
+  /// No description provided for @statisticsInterestFunnel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Воронка интереса'**
+  String get statisticsInterestFunnel;
+
+  /// No description provided for @statisticsFunnelImpressions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показы'**
+  String get statisticsFunnelImpressions;
+
+  /// No description provided for @statisticsFunnelViews.
+  ///
+  /// In ru, this message translates to:
+  /// **'Просмотры'**
+  String get statisticsFunnelViews;
+
+  /// No description provided for @statisticsFunnelInquiries.
+  ///
+  /// In ru, this message translates to:
+  /// **'Обращения'**
+  String get statisticsFunnelInquiries;
+
+  /// No description provided for @statisticsContactActions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Контактные действия'**
+  String get statisticsContactActions;
+
+  /// No description provided for @statisticsContactActionsTotal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Контактные действия'**
+  String get statisticsContactActionsTotal;
+
+  /// No description provided for @statisticsMetricPhone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Телефон'**
+  String get statisticsMetricPhone;
+
+  /// No description provided for @statisticsMetricWhatsapp.
+  ///
+  /// In ru, this message translates to:
+  /// **'WhatsApp'**
+  String get statisticsMetricWhatsapp;
+
+  /// No description provided for @statisticsMetricTelegram.
+  ///
+  /// In ru, this message translates to:
+  /// **'Telegram'**
+  String get statisticsMetricTelegram;
+
+  /// No description provided for @statisticsMetricShares.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поделились'**
+  String get statisticsMetricShares;
+
+  /// No description provided for @statisticsListingImpressions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показы: {count}'**
+  String statisticsListingImpressions(int count);
+
+  /// No description provided for @statisticsListingContactActions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Контактные действия: {count}'**
+  String statisticsListingContactActions(int count);
+
+  /// No description provided for @statisticsListingShares.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поделились: {count}'**
+  String statisticsListingShares(int count);
+
+  /// No description provided for @statisticsDemandTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спрос покупателей'**
+  String get statisticsDemandTitle;
+
+  /// No description provided for @statisticsDemandExplanation.
+  ///
+  /// In ru, this message translates to:
+  /// **'Показывает, сколько пользователей CARZON имеют сохранённый поиск, подходящий вашим активным объявлениям.'**
+  String get statisticsDemandExplanation;
+
+  /// No description provided for @statisticsDemandMatchingUsers.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пользователей с подходящим поиском'**
+  String get statisticsDemandMatchingUsers;
+
+  /// No description provided for @statisticsDemandInsufficient.
+  ///
+  /// In ru, this message translates to:
+  /// **'Недостаточно данных'**
+  String get statisticsDemandInsufficient;
+
+  /// No description provided for @statisticsDemandPrivacyBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'CARZON покажет количество, когда данных будет достаточно для сохранения конфиденциальности.'**
+  String get statisticsDemandPrivacyBody;
+
+  /// No description provided for @statisticsDemandZeroBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Пока нет совпадений с сохранёнными поисками.'**
+  String get statisticsDemandZeroBody;
+
+  /// No description provided for @statisticsDemandTop.
+  ///
+  /// In ru, this message translates to:
+  /// **'Наибольший интерес'**
+  String get statisticsDemandTop;
+
+  /// No description provided for @statisticsDemandUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Спрос покупателей сейчас недоступен.'**
+  String get statisticsDemandUnavailable;
+
+  /// No description provided for @statisticsDemandLoading.
+  ///
+  /// In ru, this message translates to:
+  /// **'Загружаем спрос покупателей'**
+  String get statisticsDemandLoading;
+
+  /// No description provided for @statisticsListingDemandVisible.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Интерес: {count} пользователь} few{Интерес: {count} пользователя} many{Интерес: {count} пользователей} other{Интерес: {count} пользователей}}'**
+  String statisticsListingDemandVisible(int count);
+
+  /// No description provided for @statisticsListingDemandSuppressed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Интерес: недостаточно данных'**
+  String get statisticsListingDemandSuppressed;
+
+  /// No description provided for @statisticsListingDemandZero.
+  ///
+  /// In ru, this message translates to:
+  /// **'Интерес: 0 пользователей'**
+  String get statisticsListingDemandZero;
+
+  /// No description provided for @sellerModeTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Режим продавца'**
+  String get sellerModeTitle;
+
+  /// No description provided for @sellerModeRowHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Как статистика показывает ваши объявления.'**
+  String get sellerModeRowHint;
+
+  /// No description provided for @sellerModeLoadFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось загрузить режим продавца'**
+  String get sellerModeLoadFailed;
+
+  /// No description provided for @sellerModeSaveFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось сохранить режим продавца'**
+  String get sellerModeSaveFailed;
+
+  /// No description provided for @sellerModePrivateTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Частный продавец'**
+  String get sellerModePrivateTitle;
+
+  /// No description provided for @sellerModePrivateBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продаёте личный автомобиль. Компактная статистика объявлений.'**
+  String get sellerModePrivateBody;
+
+  /// No description provided for @sellerModeProfessionalTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Профессиональный продавец'**
+  String get sellerModeProfessionalTitle;
+
+  /// No description provided for @sellerModeProfessionalBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Регулярно продаёте автомобили. Расширенная статистика инвентаря.'**
+  String get sellerModeProfessionalBody;
+
+  /// No description provided for @sellerModeVerified.
+  ///
+  /// In ru, this message translates to:
+  /// **'Проверенный продавец'**
+  String get sellerModeVerified;
 
   /// No description provided for @vinScannerTitle.
   ///

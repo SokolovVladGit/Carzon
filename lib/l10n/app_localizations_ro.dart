@@ -2811,7 +2811,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get sellerTypePrivate => 'Vânzător privat';
 
   @override
-  String get sellerTypeDealer => 'Dealer';
+  String get sellerTypeDealer => 'Vânzător profesionist';
 
   @override
   String get sellerProfileLoadFailed =>
@@ -4019,6 +4019,270 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get fuelPricesFuelDieselRegular => 'Motorină';
+
+  @override
+  String get statisticsTitle => 'Statistici';
+
+  @override
+  String get statisticsSignInRequired =>
+      'Conectați-vă pentru a vedea statisticile anunțurilor.';
+
+  @override
+  String get statisticsPeriodSelectorLabel => 'Perioadă';
+
+  @override
+  String get statisticsPeriod7 => '7 zile';
+
+  @override
+  String get statisticsPeriod30 => '30 zile';
+
+  @override
+  String get statisticsPeriod90 => '90 zile';
+
+  @override
+  String get statisticsMetricViews => 'Vizualizări';
+
+  @override
+  String get statisticsMetricFavorites => 'În favorite';
+
+  @override
+  String get statisticsMetricInquiries => 'Solicitări';
+
+  @override
+  String get statisticsMetricConversion => 'Conversie';
+
+  @override
+  String get statisticsValueUnavailable => '—';
+
+  @override
+  String get statisticsActiveListings => 'Active';
+
+  @override
+  String get statisticsSoldListings => 'Vândute';
+
+  @override
+  String get statisticsYourListings => 'Anunțurile dvs.';
+
+  @override
+  String statisticsChartSemantics(int count) {
+    return 'Vizualizări în perioada selectată: $count';
+  }
+
+  @override
+  String statisticsListingViews(int count) {
+    return 'Vizualizări: $count';
+  }
+
+  @override
+  String statisticsListingFavorites(int count) {
+    return 'În favorite: $count';
+  }
+
+  @override
+  String statisticsListingInquiries(int count) {
+    return 'Solicitări: $count';
+  }
+
+  @override
+  String statisticsListedForDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count de zile listate',
+      few: '$count zile listate',
+      one: '$count zi listată',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statisticsSoldAfterDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'vândut în $count de zile',
+      few: 'vândut în $count zile',
+      one: 'vândut în $count zi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statisticsEmptyTitle => 'Încă nu aveți anunțuri';
+
+  @override
+  String get statisticsEmptyBody =>
+      'Publicați un anunț — aici vor apărea vizualizările, favoritele și solicitările.';
+
+  @override
+  String get statisticsEmptyCta => 'Postați un anunț';
+
+  @override
+  String get statisticsLoadFailed => 'Nu am putut încărca statisticile';
+
+  @override
+  String get statisticsProfessionalLabel => 'Vânzător profesionist';
+
+  @override
+  String get statisticsInventoryTotal => 'Total';
+
+  @override
+  String get statisticsTopListings => 'Anunțuri de top';
+
+  @override
+  String get statisticsTopListingsEmpty =>
+      'Încă nu există interes — topul apare după vizualizări sau solicitări.';
+
+  @override
+  String get statisticsInventoryPerformance => 'Performanța anunțurilor';
+
+  @override
+  String get statisticsSortMostInquiries => 'După solicitări';
+
+  @override
+  String get statisticsSortMostViewed => 'După vizualizări';
+
+  @override
+  String get statisticsSortMostFavorited => 'După favorite';
+
+  @override
+  String get statisticsSortNewest => 'Cele mai noi';
+
+  @override
+  String get statisticsSortLongestListed => 'Cel mai mult listate';
+
+  @override
+  String get statisticsFilterAll => 'Toate';
+
+  @override
+  String get statisticsFilterActive => 'Active';
+
+  @override
+  String get statisticsFilterSold => 'Vândute';
+
+  @override
+  String get statisticsInterestFunnel => 'Pâlnie de interes';
+
+  @override
+  String get statisticsFunnelImpressions => 'Impresii';
+
+  @override
+  String get statisticsFunnelViews => 'Vizualizări';
+
+  @override
+  String get statisticsFunnelInquiries => 'Solicitări';
+
+  @override
+  String get statisticsContactActions => 'Acțiuni de contact';
+
+  @override
+  String get statisticsContactActionsTotal => 'Acțiuni de contact';
+
+  @override
+  String get statisticsMetricPhone => 'Telefon';
+
+  @override
+  String get statisticsMetricWhatsapp => 'WhatsApp';
+
+  @override
+  String get statisticsMetricTelegram => 'Telegram';
+
+  @override
+  String get statisticsMetricShares => 'Distribuiri';
+
+  @override
+  String statisticsListingImpressions(int count) {
+    return 'Impresii: $count';
+  }
+
+  @override
+  String statisticsListingContactActions(int count) {
+    return 'Acțiuni de contact: $count';
+  }
+
+  @override
+  String statisticsListingShares(int count) {
+    return 'Distribuiri: $count';
+  }
+
+  @override
+  String get statisticsDemandTitle => 'Cererea cumpărătorilor';
+
+  @override
+  String get statisticsDemandExplanation =>
+      'Arată câți utilizatori CARZON au o căutare salvată care se potrivește anunțurilor dvs. active.';
+
+  @override
+  String get statisticsDemandMatchingUsers =>
+      'Utilizatori cu o căutare potrivită';
+
+  @override
+  String get statisticsDemandInsufficient => 'Date insuficiente';
+
+  @override
+  String get statisticsDemandPrivacyBody =>
+      'CARZON va afișa numărul când vor fi suficiente date pentru a păstra confidențialitatea.';
+
+  @override
+  String get statisticsDemandZeroBody =>
+      'Deocamdată nu există coincidențe cu căutările salvate.';
+
+  @override
+  String get statisticsDemandTop => 'Cel mai mare interes';
+
+  @override
+  String get statisticsDemandUnavailable =>
+      'Cererea cumpărătorilor nu este disponibilă momentan.';
+
+  @override
+  String get statisticsDemandLoading => 'Se încarcă cererea cumpărătorilor';
+
+  @override
+  String statisticsListingDemandVisible(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Interes: $count de utilizatori',
+      few: 'Interes: $count utilizatori',
+      one: 'Interes: $count utilizator',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statisticsListingDemandSuppressed => 'Interes: date insuficiente';
+
+  @override
+  String get statisticsListingDemandZero => 'Interes: 0 utilizatori';
+
+  @override
+  String get sellerModeTitle => 'Regimul vânzătorului';
+
+  @override
+  String get sellerModeRowHint => 'Cum statisticile afișează anunțurile dvs.';
+
+  @override
+  String get sellerModeLoadFailed => 'Nu am putut încărca regimul vânzătorului';
+
+  @override
+  String get sellerModeSaveFailed => 'Nu am putut salva regimul vânzătorului';
+
+  @override
+  String get sellerModePrivateTitle => 'Vânzător privat';
+
+  @override
+  String get sellerModePrivateBody =>
+      'Vindeți un autovehicul personal. Statistică compactă a anunțurilor.';
+
+  @override
+  String get sellerModeProfessionalTitle => 'Vânzător profesionist';
+
+  @override
+  String get sellerModeProfessionalBody =>
+      'Vindeți autovehicule în mod regulat. Statistică extinsă a stocului.';
+
+  @override
+  String get sellerModeVerified => 'Vânzător verificat';
 
   @override
   String get vinScannerTitle => 'Scanează VIN';

@@ -28,6 +28,7 @@ bool compareTrayUsesBottomNavClearance(String location) {
     AppRoutes.createListing,
     AppRoutes.menu,
     AppRoutes.myListings,
+    AppRoutes.statistics,
   };
   return withNav.contains(path);
 }

@@ -135,6 +135,7 @@ void main() {
       // The menu destinations are always visible so users can browse
       // legal/content surfaces even when logged out.
       expect(find.text(l10n.profileMyListings), findsOneWidget);
+      expect(find.text(l10n.statisticsTitle), findsOneWidget);
       expect(find.text(l10n.menuAccount), findsOneWidget);
       expect(find.text(l10n.menuSettings), findsOneWidget);
       expect(find.text(l10n.profileLegal), findsNothing);
@@ -412,6 +413,96 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(fuelPricesStubKey), findsOneWidget);
+  });
+
+  testWidgets('Statistics sits immediately after My Listings', (tester) async {
+    when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.unauthenticated(),
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        const MenuPage(),
+        cubit,
+        sellersRepo: sellersRepo,
+        messagingRepo: messagingRepo,
+        compareCubit: compareCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final myListings = tester.getCenter(find.text(l10n.profileMyListings));
+    final statistics = tester.getCenter(find.text(l10n.statisticsTitle));
+    final account = tester.getCenter(find.text(l10n.menuAccount));
+    final favorites = tester.getCenter(find.text(l10n.profileFavorites));
+    final compare = tester.getCenter(find.text(l10n.menuCompare));
+
+    expect(statistics.dy, greaterThan(myListings.dy));
+    expect(account.dy, greaterThan(statistics.dy));
+    expect(favorites.dy, greaterThan(account.dy));
+    expect(compare.dy, greaterThan(favorites.dy));
+  });
+
+  testWidgets('Statistics row opens /statistics', (tester) async {
+    when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.unauthenticated(),
+    );
+
+    const statisticsStubKey = ValueKey<String>('menu_test_statistics_stub');
+
+    late final GoRouter router;
+    router = GoRouter(
+      initialLocation: AppRoutes.menu,
+      routes: [
+        GoRoute(
+          path: AppRoutes.menu,
+          builder: (_, _) => MultiBlocProvider(
+            providers: [
+              BlocProvider<AuthCubit>.value(value: cubit),
+              BlocProvider(
+                create: (_) =>
+                    SelfSellerVisualCubit(GetMySellerProfile(sellersRepo)),
+              ),
+              BlocProvider(
+                create: (_) => MessagingUnreadSummaryCubit(messagingRepo),
+              ),
+            ],
+            child: const MenuPage(),
+          ),
+        ),
+        GoRoute(
+          path: AppRoutes.statistics,
+          builder: (_, _) => const Scaffold(
+            key: statisticsStubKey,
+            body: Text('menu_statistics_stub'),
+          ),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      BlocProvider<CompareCubit>.value(
+        value: compareCubit,
+        child: MaterialApp.router(
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey<String>('menu_statistics_row')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(statisticsStubKey), findsOneWidget);
   });
 
   testWidgets('identity avatar prefers seller_profiles URL when present', (

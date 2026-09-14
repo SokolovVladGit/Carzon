@@ -23,11 +23,16 @@ import 'package:carzon/features/profile/presentation/pages/profile_page.dart';
 import 'package:carzon/features/sellers/data/models/my_seller_profile_model.dart';
 import 'package:carzon/features/sellers/domain/repositories/sellers_repository.dart';
 import 'package:carzon/features/sellers/domain/seller_display_name_constraints.dart';
+import 'package:carzon/features/sellers/domain/entities/my_seller_context.dart';
+import 'package:carzon/features/sellers/domain/entities/seller_type.dart';
 import 'package:carzon/features/sellers/domain/usecases/clear_seller_avatar.dart';
+import 'package:carzon/features/sellers/domain/usecases/get_my_seller_context.dart';
 import 'package:carzon/features/sellers/domain/usecases/get_my_seller_profile.dart';
+import 'package:carzon/features/sellers/domain/usecases/set_my_seller_type.dart';
 import 'package:carzon/features/sellers/domain/usecases/update_my_seller_display_name.dart';
 import 'package:carzon/features/sellers/domain/usecases/upload_seller_avatar.dart';
 import 'package:carzon/features/sellers/presentation/bloc/public_seller_identity_cubit.dart';
+import 'package:carzon/features/sellers/presentation/bloc/seller_mode_cubit.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:carzon/shared/ui/carzon_icons.dart';
 import 'package:flutter/material.dart';
@@ -60,6 +65,10 @@ const _profileTestChangePasswordStubKey = ValueKey<String>(
 
 const _profileTestSettingsStubKey = ValueKey<String>(
   'profile_test_settings_stub',
+);
+
+const _profileTestSellerModeStubKey = ValueKey<String>(
+  'profile_test_seller_mode_stub',
 );
 
 const _profileTestSupportThreadStubKey = ValueKey<String>(
@@ -141,6 +150,13 @@ GoRouter _profileTestGoRouter({
         builder: (_, _) => const Scaffold(
           key: _profileTestNotificationSettingsStubKey,
           body: Text('profile_test_notification_settings_placeholder'),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.sellerMode,
+        builder: (_, _) => const Scaffold(
+          key: _profileTestSellerModeStubKey,
+          body: Text('profile_test_seller_mode_placeholder'),
         ),
       ),
       GoRoute(
@@ -228,6 +244,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(Uint8List(0));
+    registerFallbackValue(SellerType.private);
   });
 
   setUp(() async {
@@ -242,6 +259,16 @@ void main() {
     when(
       () => sellersRepo.getMySellerProfile(),
     ).thenAnswer((_) async => Success(_myProfile(displayName: 'Saved Shop')));
+    when(() => sellersRepo.getMySellerContext()).thenAnswer(
+      (_) async => const Success(
+        MySellerContext(sellerType: SellerType.private, verifiedDealer: false),
+      ),
+    );
+    when(() => sellersRepo.setMySellerType(any())).thenAnswer(
+      (_) async => const Success(
+        MySellerContext(sellerType: SellerType.private, verifiedDealer: false),
+      ),
+    );
     when(() => sellersRepo.updateMySellerDisplayName(any())).thenAnswer(
       (inv) async => Success(
         _myProfile(displayName: inv.positionalArguments[0] as String?),
@@ -266,6 +293,14 @@ void main() {
     unreadSummaryCubit = MessagingUnreadSummaryCubit(messagingRepo);
     sl.registerLazySingleton<SellersRepository>(() => sellersRepo);
     sl.registerFactory(() => GetMySellerProfile(sl<SellersRepository>()));
+    sl.registerFactory(() => GetMySellerContext(sl<SellersRepository>()));
+    sl.registerFactory(() => SetMySellerType(sl<SellersRepository>()));
+    sl.registerFactory(
+      () => SellerModeCubit(
+        getMySellerContext: sl<GetMySellerContext>(),
+        setMySellerType: sl<SetMySellerType>(),
+      ),
+    );
     sl.registerFactory(
       () => UpdateMySellerDisplayName(sl<SellersRepository>()),
     );
@@ -462,9 +497,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final row = find.byKey(
-      const ValueKey<String>('profile_open_settings_row'),
-    );
+    final row = find.byKey(const ValueKey<String>('profile_open_settings_row'));
     await tester.scrollUntilVisible(
       row,
       80,
@@ -474,6 +507,80 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(_profileTestSettingsStubKey), findsOneWidget);
+  });
+
+  testWidgets('authenticated: seller mode row opens /seller-mode', (
+    tester,
+  ) async {
+    const user = AuthUser(
+      id: 'u1',
+      email: 'seller@example.com',
+      fullName: 'Ana Popescu',
+    );
+    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(user),
+    );
+
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
+    await tester.pumpAndSettle();
+
+    final row = find.byKey(const ValueKey<String>('profile_seller_mode_row'));
+    await tester.scrollUntilVisible(
+      row,
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text(l10n.sellerModeTitle), findsOneWidget);
+    expect(find.text(l10n.sellerModePrivateTitle), findsOneWidget);
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+    expect(find.byKey(_profileTestSellerModeStubKey), findsOneWidget);
+  });
+
+  testWidgets('authenticated: seller mode row shows professional subtitle', (
+    tester,
+  ) async {
+    when(() => sellersRepo.getMySellerContext()).thenAnswer(
+      (_) async => const Success(
+        MySellerContext(sellerType: SellerType.dealer, verifiedDealer: true),
+      ),
+    );
+    const user = AuthUser(
+      id: 'u1',
+      email: 'seller@example.com',
+      fullName: 'Ana Popescu',
+    );
+    when(() => cubit.state).thenReturn(const AuthState.authenticated(user));
+    whenListen(
+      cubit,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(user),
+    );
+
+    await tester.pumpWidget(
+      _profileTestApp(cubit: cubit, messagingUnread: unreadSummaryCubit),
+    );
+    await tester.pumpAndSettle();
+
+    final row = find.byKey(const ValueKey<String>('profile_seller_mode_row'));
+    await tester.scrollUntilVisible(
+      row,
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(
+      find.descendant(
+        of: row,
+        matching: find.text(l10n.sellerModeProfessionalTitle),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.sellerModeVerified), findsNothing);
   });
 
   testWidgets(

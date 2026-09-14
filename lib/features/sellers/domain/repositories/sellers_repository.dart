@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 
 import '../../../../core/utils/result.dart';
+import '../entities/my_seller_context.dart';
 import '../entities/my_seller_profile.dart';
 import '../entities/seller_public_profile.dart';
+import '../entities/seller_type.dart';
 
 abstract interface class SellersRepository {
   /// [Success] with `null` when the seller has no public-visible profile row.
@@ -27,4 +29,8 @@ abstract interface class SellersRepository {
   Future<Result<MySellerProfile>> clearSellerAvatar({
     String? previousAvatarStoragePath,
   });
+
+  Future<Result<MySellerContext>> getMySellerContext();
+
+  Future<Result<MySellerContext>> setMySellerType(SellerType sellerType);
 }

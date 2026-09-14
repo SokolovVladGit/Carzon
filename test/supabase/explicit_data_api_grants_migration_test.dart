@@ -162,6 +162,9 @@ void main() {
     // Listing view analytics (RPC-only writes; hashed dedupe store).
     'listing_view_daily',
     'listing_view_dedupe',
+    // Listing engagement telemetry (RPC-only writes; hashed dedupe store).
+    'listing_engagement_daily',
+    'listing_engagement_dedupe',
     // Model Passport worker cache/queue (service_role / Edge only).
     'vehicle_model_source_cache',
     'vehicle_model_fetch_jobs',
@@ -209,6 +212,9 @@ void main() {
     'listing_vin_source_results',
     'listing_view_daily',
     'listing_view_dedupe',
+    // Listing engagement telemetry (RPC-only writes; hashed dedupe store).
+    'listing_engagement_daily',
+    'listing_engagement_dedupe',
     'message_attachments',
     'vehicle_model_source_cache',
     'vehicle_model_fetch_jobs',

@@ -121,8 +121,36 @@ void main() {
       expect(find.text('Premium Motors'), findsOneWidget);
       expect(find.text(ru.sellerListingsSectionTitle), findsOneWidget);
       expect(find.byType(SellerProfileHeaderCard), findsOneWidget);
+      expect(find.text(ru.sellerTypeDealer), findsOneWidget);
+      expect(find.text(ru.sellerTypePrivate), findsNothing);
     },
   );
+
+  testWidgets('public profile keeps seller type and verified independent', (
+    tester,
+  ) async {
+    await pumpProfile(
+      tester,
+      seller: SellerPublicProfile(
+        userId: 'seller-1',
+        displayName: 'Private Owner',
+        avatarUrl: null,
+        memberSince: DateTime.utc(2026, 3, 1),
+        sellerType: SellerType.private,
+        activeListingsCount: 1,
+        ratingAverage: null,
+        ratingCount: 0,
+        reviewCount: 0,
+        verifiedPhone: false,
+        verifiedEmail: false,
+        verifiedDealer: true,
+      ),
+    );
+
+    expect(find.text(ru.sellerTypePrivate), findsOneWidget);
+    expect(find.text(ru.sellerTypeDealer), findsNothing);
+    expect(find.text(ru.sellerModeProfessionalTitle), findsNothing);
+  });
 
   testWidgets('seller profile empty listings state renders in dark theme', (
     tester,

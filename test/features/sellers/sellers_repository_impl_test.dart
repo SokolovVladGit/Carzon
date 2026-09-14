@@ -7,6 +7,7 @@ import 'package:carzon/features/sellers/data/datasources/sellers_remote_datasour
 import 'package:carzon/features/sellers/data/models/my_seller_profile_model.dart';
 import 'package:carzon/features/sellers/data/models/seller_public_profile_model.dart';
 import 'package:carzon/features/sellers/data/repositories/sellers_repository_impl.dart';
+import 'package:carzon/features/sellers/domain/entities/my_seller_context.dart';
 import 'package:carzon/features/sellers/domain/entities/seller_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -234,5 +235,37 @@ void main() {
     verify(
       () => avatarStorage.deleteByStoragePathBestEffort('avatars/u1/x.jpg'),
     ).called(1);
+  });
+
+  test('getMySellerContext returns authoritative server state', () async {
+    when(() => remote.fetchMySellerContext()).thenAnswer(
+      (_) async => const MySellerContext(
+        sellerType: SellerType.dealer,
+        verifiedDealer: true,
+      ),
+    );
+
+    final out = await repo.getMySellerContext();
+    final value = out.fold((_) => throw StateError('failure'), (v) => v);
+    expect(value.sellerType, SellerType.dealer);
+    expect(value.verifiedDealer, isTrue);
+  });
+
+  test('setMySellerType returns server context and maps errors', () async {
+    when(() => remote.setMySellerType(SellerType.dealer)).thenAnswer(
+      (_) async => const MySellerContext(
+        sellerType: SellerType.dealer,
+        verifiedDealer: false,
+      ),
+    );
+
+    final ok = await repo.setMySellerType(SellerType.dealer);
+    expect(ok.fold((_) => null, (v) => v.sellerType), SellerType.dealer);
+
+    when(
+      () => remote.setMySellerType(SellerType.private),
+    ).thenThrow(ServerException('denied'));
+    final fail = await repo.setMySellerType(SellerType.private);
+    expect(fail.fold((f) => f, (_) => null), isA<ServerFailure>());
   });
 }
