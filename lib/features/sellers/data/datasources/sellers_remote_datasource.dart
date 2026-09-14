@@ -2,6 +2,9 @@ import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/services/supabase_service.dart';
+import '../../domain/entities/my_seller_context.dart';
+import '../../domain/entities/seller_type.dart';
+import '../mappers/my_seller_context_mapper.dart';
 import '../models/my_seller_profile_model.dart';
 import '../models/seller_public_profile_model.dart';
 
@@ -23,6 +26,12 @@ abstract interface class SellersRemoteDataSource {
 
   /// Authenticated: clears own avatar columns (Storage cleanup is client-side).
   Future<MySellerProfileModel> clearMySellerAvatar();
+
+  /// Authenticated: own `seller_type` + `verified_dealer`.
+  Future<MySellerContext> fetchMySellerContext();
+
+  /// Authenticated: persist `private`/`dealer`. Returns server context.
+  Future<MySellerContext> setMySellerType(SellerType sellerType);
 }
 
 class SupabaseSellersRemoteDataSource implements SellersRemoteDataSource {
@@ -143,6 +152,51 @@ class SupabaseSellersRemoteDataSource implements SellersRemoteDataSource {
       if (e is ServerException) rethrow;
       throw ServerException(
         'Failed to clear seller avatar',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<MySellerContext> fetchMySellerContext() async {
+    try {
+      final row = requireSellerContextRow(
+        await _supabase.client.rpc('get_my_seller_context'),
+        'get_my_seller_context',
+      );
+      return mySellerContextFromRow(row);
+    } on ServerException {
+      rethrow;
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      throw ServerException(
+        'Failed to load seller mode',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<MySellerContext> setMySellerType(SellerType sellerType) async {
+    try {
+      final row = requireSellerContextRow(
+        await _supabase.client.rpc(
+          'set_my_seller_type',
+          params: <String, dynamic>{'p_seller_type': sellerType.wireValue},
+        ),
+        'set_my_seller_type',
+      );
+      return mySellerContextFromRow(row);
+    } on ServerException {
+      rethrow;
+    } on sb.PostgrestException catch (e, st) {
+      throw ServerException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      throw ServerException(
+        'Failed to update seller mode',
         cause: e,
         stackTrace: st,
       );

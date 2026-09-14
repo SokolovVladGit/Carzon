@@ -417,6 +417,32 @@ check_rows AS (
            END,
            'Avatar clear RPC'
 
+    UNION ALL
+
+    SELECT 37, 'seller profiles', 'rpc_get_my_seller_context',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'get_my_seller_context')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'get_my_seller_context'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'get_my_seller_context'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Seller-mode read: seller_type + verified_dealer for auth.uid()'
+
+    UNION ALL
+
+    SELECT 38, 'seller profiles', 'rpc_set_my_seller_type',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'set_my_seller_type')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'set_my_seller_type'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'set_my_seller_type'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Self-service private↔dealer; must not grant anon'
+
     -- messaging ---------------------------------------------------------------
     UNION ALL
 
@@ -1680,6 +1706,149 @@ check_rows AS (
              ELSE 'WARN'
            END,
            'Analytics tables must not be direct PostgREST surfaces for anon/authenticated'
+
+    UNION ALL
+
+    SELECT 94, 'seller analytics', 'column_listings_sold_at',
+           CASE
+             WHEN EXISTS (
+                    SELECT 1 FROM col_exists c
+                     WHERE c.table_name = 'listings' AND c.column_name = 'sold_at'
+                ) THEN 'PASS' ELSE 'STOP' END,
+           'listings.sold_at required for sold lifecycle / analytics'
+
+    UNION ALL
+
+    SELECT 95, 'seller analytics', 'rpc_get_my_seller_analytics_summary',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'get_my_seller_analytics_summary')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'get_my_seller_analytics_summary'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'get_my_seller_analytics_summary'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Seller-owned summary RPC; authenticated only'
+
+    UNION ALL
+
+    SELECT 96, 'seller analytics', 'rpc_get_my_seller_analytics_daily',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'get_my_seller_analytics_daily')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'get_my_seller_analytics_daily'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'get_my_seller_analytics_daily'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Zero-filled Moldova-local daily series; authenticated only'
+
+    UNION ALL
+
+    SELECT 97, 'seller analytics', 'rpc_get_my_seller_analytics_listings',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'get_my_seller_analytics_listings')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'get_my_seller_analytics_listings'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'get_my_seller_analytics_listings'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Per-listing seller analytics; authenticated only'
+
+    UNION ALL
+
+    SELECT 98, 'listing engagement', 'table_listing_engagement_daily',
+           CASE WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'listing_engagement_daily')
+                THEN 'PASS' ELSE 'STOP' END,
+           'Daily unique engagement aggregates (impression/phone/whatsapp/telegram/share)'
+
+    UNION ALL
+
+    SELECT 98, 'listing engagement', 'table_listing_engagement_dedupe',
+           CASE WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'listing_engagement_dedupe')
+                THEN 'PASS' ELSE 'STOP' END,
+           'Daily unique viewer-hash dedupe for engagement telemetry'
+
+    UNION ALL
+
+    SELECT 98, 'listing engagement', 'listing_engagement_not_client_exposed',
+           CASE
+             WHEN EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'listing_engagement_daily')
+                  AND EXISTS (SELECT 1 FROM tbl_exists t WHERE t.table_name = 'listing_engagement_dedupe')
+                  AND NOT has_table_privilege('anon', 'public.listing_engagement_daily', 'SELECT')
+                  AND NOT has_table_privilege('authenticated', 'public.listing_engagement_daily', 'SELECT')
+                  AND NOT has_table_privilege('anon', 'public.listing_engagement_dedupe', 'SELECT')
+                  AND NOT has_table_privilege('authenticated', 'public.listing_engagement_dedupe', 'SELECT')
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Engagement tables must not be direct PostgREST surfaces'
+
+    UNION ALL
+
+    SELECT 98, 'listing engagement', 'rpc_record_listing_engagement_event',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'record_listing_engagement_event')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'record_listing_engagement_event'), false)
+                  AND COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'record_listing_engagement_event'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Public record RPC for unique daily engagement; anon + authenticated'
+
+    UNION ALL
+
+    SELECT 98, 'listing engagement', 'rpc_get_my_seller_engagement_summary',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'get_my_seller_engagement_summary')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'get_my_seller_engagement_summary'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'get_my_seller_engagement_summary'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Seller-owned engagement summary; authenticated only'
+
+    UNION ALL
+
+    SELECT 98, 'listing engagement', 'rpc_get_my_seller_engagement_listings',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'get_my_seller_engagement_listings')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'get_my_seller_engagement_listings'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'get_my_seller_engagement_listings'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Per-listing seller engagement; authenticated only'
+
+    UNION ALL
+
+    SELECT 98, 'seller demand', 'rpc_get_my_seller_listing_demand',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'get_my_seller_listing_demand')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'get_my_seller_listing_demand'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'get_my_seller_listing_demand'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Per-listing buyer demand; authenticated dealer-only RPC'
+
+    UNION ALL
+
+    SELECT 98, 'seller demand', 'rpc_get_my_seller_inventory_demand',
+           CASE
+             WHEN NOT EXISTS (SELECT 1 FROM fn_exists f WHERE f.proname = 'get_my_seller_inventory_demand')
+             THEN 'STOP'
+             WHEN COALESCE((SELECT ok FROM fn_auth_exec f WHERE f.proname = 'get_my_seller_inventory_demand'), false)
+                  AND NOT COALESCE((SELECT ok FROM fn_anon_exec f WHERE f.proname = 'get_my_seller_inventory_demand'), false)
+             THEN 'PASS'
+             ELSE 'STOP'
+           END,
+           'Portfolio buyer demand; authenticated dealer-only RPC'
 ),
 blocking AS (
     SELECT COUNT(*) FILTER (WHERE status = 'STOP') AS stop_count,

@@ -24,11 +24,13 @@ import '../../features/messaging/presentation/pages/blocked_users_page.dart';
 import '../../features/messaging/presentation/pages/conversation_thread_page.dart';
 import '../../features/messaging/presentation/pages/messages_inbox_page.dart';
 import '../../features/my_listings/presentation/pages/my_listings_page.dart';
+import '../../features/seller_analytics/presentation/pages/statistics_page.dart';
 import '../../features/notifications/presentation/pages/notification_settings_page.dart';
 import '../../features/recent_searches/presentation/pages/recent_searches_page.dart';
 import '../../features/recently_viewed/presentation/pages/recently_viewed_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/sellers/presentation/pages/seller_mode_page.dart';
 import '../../features/sellers/presentation/pages/seller_profile_page.dart';
 
 class AppRoutes {
@@ -44,11 +46,13 @@ class AppRoutes {
   static const editListing = '/listings/:id/edit';
   static const createListing = '/create-listing';
   static const myListings = '/my-listings';
+  static const statistics = '/statistics';
   static const favorites = '/favorites';
   static const compare = '/compare';
   static const recentlyViewed = '/recently-viewed';
   static const recentSearches = '/recent-searches';
   static const profile = '/profile';
+  static const sellerMode = '/seller-mode';
   static const settings = '/settings';
   static const deleteAccount = '/delete-account';
   static const menu = '/menu';
@@ -183,6 +187,10 @@ class AppRouter {
           builder: (_, _) => const MyListingsPage(),
         ),
         GoRoute(
+          path: AppRoutes.statistics,
+          builder: (_, _) => const StatisticsPage(),
+        ),
+        GoRoute(
           path: AppRoutes.favorites,
           builder: (_, _) => const FavoritesPage(),
         ),
@@ -201,6 +209,10 @@ class AppRouter {
         GoRoute(
           path: AppRoutes.profile,
           builder: (_, _) => const ProfilePage(),
+        ),
+        GoRoute(
+          path: AppRoutes.sellerMode,
+          builder: (_, _) => const SellerModePage(),
         ),
         GoRoute(
           path: AppRoutes.settings,

@@ -73,6 +73,7 @@ class CarzonIcons {
   static const IconData signIn = LucideIcons.logIn;
   static const IconData signOut = LucideIcons.logOut;
   static const IconData user = LucideIcons.user;
+  static const IconData sellerMode = LucideIcons.store;
   static const IconData settings = LucideIcons.settings;
   static const IconData privacy = LucideIcons.lock;
 
@@ -83,6 +84,7 @@ class CarzonIcons {
 
   // ---- My listings / edit / create ----
   static const IconData myListings = LucideIcons.listChecks;
+  static const IconData statistics = LucideIcons.barChart2;
   static const IconData inventoryEmpty = LucideIcons.package;
   static const IconData moreActions = LucideIcons.moreVertical;
   static const IconData scan = LucideIcons.scanLine;

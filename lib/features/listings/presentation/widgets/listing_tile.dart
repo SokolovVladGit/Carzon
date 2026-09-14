@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../compare/presentation/widgets/compare_toggle_button.dart';
 import '../../../favorites/presentation/widgets/favorite_toggle_button.dart';
+import '../../../listing_engagement/presentation/listing_impression_tracker.dart';
 import '../../domain/entities/listing.dart';
 import 'listing_card.dart';
 
@@ -44,33 +45,36 @@ class _ListingTileState extends State<ListingTile> {
 
   @override
   Widget build(BuildContext context) {
-    return ListingCard(
-      listing: widget.listing,
-      onTap: widget.onTap,
-      trailingWide: true,
-      compareFlySourceKey: _compareFlySourceKey,
-      trailing: IconButtonTheme(
-        data: IconButtonThemeData(
-          style: IconButton.styleFrom(
-            minimumSize: const Size(36, 36),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            padding: EdgeInsets.zero,
+    return ListingImpressionTracker(
+      listingId: widget.listing.id,
+      child: ListingCard(
+        listing: widget.listing,
+        onTap: widget.onTap,
+        trailingWide: true,
+        compareFlySourceKey: _compareFlySourceKey,
+        trailing: IconButtonTheme(
+          data: IconButtonThemeData(
+            style: IconButton.styleFrom(
+              minimumSize: const Size(36, 36),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: EdgeInsets.zero,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CompareToggleButton.fromListing(
+                widget.listing,
+                density: CompareToggleDensity.compact,
+                flySourceKey: _compareFlySourceKey,
+              ),
+              FavoriteToggleButton(listingId: widget.listing.id),
+            ],
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CompareToggleButton.fromListing(
-              widget.listing,
-              density: CompareToggleDensity.compact,
-              flySourceKey: _compareFlySourceKey,
-            ),
-            FavoriteToggleButton(listingId: widget.listing.id),
-          ],
-        ),
+        variant: widget.variant,
+        coverParallax: widget.coverParallax,
       ),
-      variant: widget.variant,
-      coverParallax: widget.coverParallax,
     );
   }
 }

@@ -15,7 +15,10 @@ import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import '../../../messaging/presentation/bloc/messaging_unread_summary_state.dart';
+import '../../../sellers/domain/entities/seller_type.dart';
 import '../../../sellers/presentation/bloc/public_seller_identity_cubit.dart';
+import '../../../sellers/presentation/bloc/seller_mode_cubit.dart';
+import '../../../sellers/presentation/bloc/seller_mode_state.dart';
 import '../widgets/profile_account_header_card.dart';
 import '../widgets/profile_activity_messages_row.dart';
 import '../widgets/profile_grouped_card.dart';
@@ -60,8 +63,13 @@ class ProfilePage extends StatelessWidget {
         },
         builder: (context, state) {
           if (state.status == AuthStatus.authenticated && state.user != null) {
-            return BlocProvider(
-              create: (_) => sl<PublicSellerIdentityCubit>()..load(),
+            return MultiBlocProvider(
+              providers: [
+                BlocProvider(
+                  create: (_) => sl<PublicSellerIdentityCubit>()..load(),
+                ),
+                BlocProvider(create: (_) => sl<SellerModeCubit>()..load()),
+              ],
               child: _ProfileShowroomBackground(
                 child: _AccountView(user: state.user!),
               ),
@@ -220,6 +228,33 @@ class _AccountViewState extends State<_AccountView> {
           ProfileSellerIdentitySection(
             title: l10n.profilePublicSellerProfileSectionTitle,
             subtitle: l10n.profilePublicSellerProfileSectionSubtitle,
+          ),
+          const SizedBox(height: 16),
+          ProfileGroupedCard(
+            childPadding: const EdgeInsets.symmetric(vertical: 6),
+            child: BlocBuilder<SellerModeCubit, SellerModeState>(
+              builder: (context, mode) {
+                final subtitle = switch (mode.context?.sellerType) {
+                  SellerType.dealer => l10n.sellerModeProfessionalTitle,
+                  SellerType.private => l10n.sellerModePrivateTitle,
+                  null => l10n.sellerModeRowHint,
+                };
+                return ProfileSettingsNavigationRow(
+                  rowKey: const ValueKey<String>('profile_seller_mode_row'),
+                  icon: CarzonIcons.sellerMode,
+                  title: l10n.sellerModeTitle,
+                  subtitle: subtitle,
+                  theme: theme,
+                  scheme: scheme,
+                  onTap: () async {
+                    await context.push(AppRoutes.sellerMode);
+                    if (context.mounted) {
+                      await context.read<SellerModeCubit>().load();
+                    }
+                  },
+                );
+              },
+            ),
           ),
           const SizedBox(height: 16),
           ProfileGroupedCard(

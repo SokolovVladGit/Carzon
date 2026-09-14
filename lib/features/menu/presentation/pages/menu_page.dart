@@ -36,6 +36,7 @@ enum _MenuFooterVariant { neutral, accent }
 ///     (email / full name) so the tab isn't a cold navigation wall,
 ///   * offer entries for the authenticated sub-surfaces:
 ///       - My Listings,
+///       - Statistics,
 ///       - Account (Profile page),
 ///       - Favorites (mirror of the tab — accessible from here too
 ///         so Menu reads as the account hub),
@@ -126,6 +127,12 @@ class _MenuPageState extends State<MenuPage> {
                         icon: CarzonIcons.myListings,
                         title: l10n.profileMyListings,
                         onTap: () => context.go(AppRoutes.myListings),
+                      ),
+                      _PremiumMenuRow(
+                        rowKey: const ValueKey<String>('menu_statistics_row'),
+                        icon: CarzonIcons.statistics,
+                        title: l10n.statisticsTitle,
+                        onTap: () => context.go(AppRoutes.statistics),
                       ),
                       _PremiumMenuRow(
                         icon: CarzonIcons.user,

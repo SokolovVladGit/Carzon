@@ -2805,7 +2805,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sellerTypePrivate => 'Частный продавец';
 
   @override
-  String get sellerTypeDealer => 'Дилер';
+  String get sellerTypeDealer => 'Профессиональный продавец';
 
   @override
   String get sellerProfileLoadFailed =>
@@ -4011,6 +4011,274 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get fuelPricesFuelDieselRegular => 'Дизель';
+
+  @override
+  String get statisticsTitle => 'Статистика';
+
+  @override
+  String get statisticsSignInRequired =>
+      'Войдите, чтобы увидеть статистику объявлений.';
+
+  @override
+  String get statisticsPeriodSelectorLabel => 'Период';
+
+  @override
+  String get statisticsPeriod7 => '7 дней';
+
+  @override
+  String get statisticsPeriod30 => '30 дней';
+
+  @override
+  String get statisticsPeriod90 => '90 дней';
+
+  @override
+  String get statisticsMetricViews => 'Просмотры';
+
+  @override
+  String get statisticsMetricFavorites => 'В избранном';
+
+  @override
+  String get statisticsMetricInquiries => 'Обращения';
+
+  @override
+  String get statisticsMetricConversion => 'Конверсия';
+
+  @override
+  String get statisticsValueUnavailable => '—';
+
+  @override
+  String get statisticsActiveListings => 'Активные';
+
+  @override
+  String get statisticsSoldListings => 'Проданные';
+
+  @override
+  String get statisticsYourListings => 'Ваши объявления';
+
+  @override
+  String statisticsChartSemantics(int count) {
+    return 'Просмотры за выбранный период: $count';
+  }
+
+  @override
+  String statisticsListingViews(int count) {
+    return 'Просмотры: $count';
+  }
+
+  @override
+  String statisticsListingFavorites(int count) {
+    return 'В избранном: $count';
+  }
+
+  @override
+  String statisticsListingInquiries(int count) {
+    return 'Обращения: $count';
+  }
+
+  @override
+  String statisticsListedForDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дней в продаже',
+      many: '$count дней в продаже',
+      few: '$count дня в продаже',
+      one: '$count день в продаже',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String statisticsSoldAfterDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'продано за $count дней',
+      many: 'продано за $count дней',
+      few: 'продано за $count дня',
+      one: 'продано за $count день',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statisticsEmptyTitle => 'Пока нет объявлений';
+
+  @override
+  String get statisticsEmptyBody =>
+      'Опубликуйте объявление — здесь появятся просмотры, избранное и обращения.';
+
+  @override
+  String get statisticsEmptyCta => 'Подать объявление';
+
+  @override
+  String get statisticsLoadFailed => 'Не удалось загрузить статистику';
+
+  @override
+  String get statisticsProfessionalLabel => 'Профессиональный продавец';
+
+  @override
+  String get statisticsInventoryTotal => 'Всего';
+
+  @override
+  String get statisticsTopListings => 'Топ объявлений';
+
+  @override
+  String get statisticsTopListingsEmpty =>
+      'Пока нет откликов — топ появится, когда будут просмотры или обращения.';
+
+  @override
+  String get statisticsInventoryPerformance => 'Эффективность объявлений';
+
+  @override
+  String get statisticsSortMostInquiries => 'По обращениям';
+
+  @override
+  String get statisticsSortMostViewed => 'По просмотрам';
+
+  @override
+  String get statisticsSortMostFavorited => 'По избранному';
+
+  @override
+  String get statisticsSortNewest => 'Сначала новые';
+
+  @override
+  String get statisticsSortLongestListed => 'Дольше в продаже';
+
+  @override
+  String get statisticsFilterAll => 'Все';
+
+  @override
+  String get statisticsFilterActive => 'Активные';
+
+  @override
+  String get statisticsFilterSold => 'Проданные';
+
+  @override
+  String get statisticsInterestFunnel => 'Воронка интереса';
+
+  @override
+  String get statisticsFunnelImpressions => 'Показы';
+
+  @override
+  String get statisticsFunnelViews => 'Просмотры';
+
+  @override
+  String get statisticsFunnelInquiries => 'Обращения';
+
+  @override
+  String get statisticsContactActions => 'Контактные действия';
+
+  @override
+  String get statisticsContactActionsTotal => 'Контактные действия';
+
+  @override
+  String get statisticsMetricPhone => 'Телефон';
+
+  @override
+  String get statisticsMetricWhatsapp => 'WhatsApp';
+
+  @override
+  String get statisticsMetricTelegram => 'Telegram';
+
+  @override
+  String get statisticsMetricShares => 'Поделились';
+
+  @override
+  String statisticsListingImpressions(int count) {
+    return 'Показы: $count';
+  }
+
+  @override
+  String statisticsListingContactActions(int count) {
+    return 'Контактные действия: $count';
+  }
+
+  @override
+  String statisticsListingShares(int count) {
+    return 'Поделились: $count';
+  }
+
+  @override
+  String get statisticsDemandTitle => 'Спрос покупателей';
+
+  @override
+  String get statisticsDemandExplanation =>
+      'Показывает, сколько пользователей CARZON имеют сохранённый поиск, подходящий вашим активным объявлениям.';
+
+  @override
+  String get statisticsDemandMatchingUsers =>
+      'Пользователей с подходящим поиском';
+
+  @override
+  String get statisticsDemandInsufficient => 'Недостаточно данных';
+
+  @override
+  String get statisticsDemandPrivacyBody =>
+      'CARZON покажет количество, когда данных будет достаточно для сохранения конфиденциальности.';
+
+  @override
+  String get statisticsDemandZeroBody =>
+      'Пока нет совпадений с сохранёнными поисками.';
+
+  @override
+  String get statisticsDemandTop => 'Наибольший интерес';
+
+  @override
+  String get statisticsDemandUnavailable =>
+      'Спрос покупателей сейчас недоступен.';
+
+  @override
+  String get statisticsDemandLoading => 'Загружаем спрос покупателей';
+
+  @override
+  String statisticsListingDemandVisible(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Интерес: $count пользователей',
+      many: 'Интерес: $count пользователей',
+      few: 'Интерес: $count пользователя',
+      one: 'Интерес: $count пользователь',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get statisticsListingDemandSuppressed =>
+      'Интерес: недостаточно данных';
+
+  @override
+  String get statisticsListingDemandZero => 'Интерес: 0 пользователей';
+
+  @override
+  String get sellerModeTitle => 'Режим продавца';
+
+  @override
+  String get sellerModeRowHint => 'Как статистика показывает ваши объявления.';
+
+  @override
+  String get sellerModeLoadFailed => 'Не удалось загрузить режим продавца';
+
+  @override
+  String get sellerModeSaveFailed => 'Не удалось сохранить режим продавца';
+
+  @override
+  String get sellerModePrivateTitle => 'Частный продавец';
+
+  @override
+  String get sellerModePrivateBody =>
+      'Продаёте личный автомобиль. Компактная статистика объявлений.';
+
+  @override
+  String get sellerModeProfessionalTitle => 'Профессиональный продавец';
+
+  @override
+  String get sellerModeProfessionalBody =>
+      'Регулярно продаёте автомобили. Расширенная статистика инвентаря.';
+
+  @override
+  String get sellerModeVerified => 'Проверенный продавец';
 
   @override
   String get vinScannerTitle => 'Сканировать VIN';

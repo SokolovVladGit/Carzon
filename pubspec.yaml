@@ -54,6 +54,11 @@ dependencies:
   # External actions (Call / Telegram / WhatsApp buttons on listing details)
   url_launcher: ^6.3.2
 
+  # Viewport fraction for listing-card impression telemetry.
+  # No local scroll-geometry helper existed; this is the smallest
+  # established package that can do >=50% visible without custom math.
+  visibility_detector: 0.4.0+2
+
   # SVG rendering for curated car-brand icons. Icons are resolved via
   # `lib/shared/brands/brand_icon_resolver.dart` which maps free-text
   # `make` values to assets under `assets/brands/svg/`.

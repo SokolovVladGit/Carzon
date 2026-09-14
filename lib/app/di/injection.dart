@@ -17,9 +17,11 @@ import '../../features/favorites/di/favorites_injection.dart';
 import '../../features/filter_alerts/di/filter_alerts_injection.dart';
 import '../../features/fuel_prices/di/fuel_prices_injection.dart';
 import '../../features/legal/di/legal_injection.dart';
+import '../../features/listing_engagement/di/listing_engagement_injection.dart';
 import '../../features/listings/di/listings_injection.dart';
 import '../../features/messaging/di/messaging_injection.dart';
 import '../../features/my_listings/di/my_listings_injection.dart';
+import '../../features/seller_analytics/di/seller_analytics_injection.dart';
 import '../../features/notifications/di/notifications_injection.dart';
 import '../../features/profile/di/profile_injection.dart';
 import '../../features/sellers/di/sellers_injection.dart';
@@ -62,6 +64,7 @@ Future<void> configureDependencies(SupabaseService supabaseService) async {
   registerRecentlyViewedFeature(sl);
   registerRecentSearchesFeature(sl);
   registerListingsFeature(sl);
+  registerListingEngagementFeature(sl);
   registerVehicleModelDataFeature(sl);
   registerVehicleRecallDataFeature(sl);
   registerSellersFeature(sl);
@@ -72,6 +75,7 @@ Future<void> configureDependencies(SupabaseService supabaseService) async {
   registerCompareFeature(sl);
   registerCreateListingFeature(sl);
   registerMyListingsFeature(sl);
+  registerSellerAnalyticsFeature(sl);
   registerEditListingFeature(sl);
   registerLegalFeature(sl);
   registerFuelPricesFeature(sl);

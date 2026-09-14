@@ -2,22 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../app/di/injection.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../shared/ui/carzon_icons.dart';
 import '../../../../shared/ui/whatsapp_contact_icon.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../listing_engagement/domain/entities/listing_engagement_event_type.dart';
+import '../../../listing_engagement/domain/usecases/record_listing_engagement.dart';
 import '../../../messaging/presentation/utils/messaging_failure_mapper.dart';
 import '../../../messaging/presentation/utils/messaging_user_messages.dart';
 import '../../domain/entities/listing.dart';
 import '../../domain/entities/listing_contact.dart';
 import '../bloc/listing_details_cubit.dart';
 import '../utils/contact_format.dart';
+import '../utils/listing_details_uri_launcher.dart';
 
 /// Sticky bottom contact bar for the listing details screen: chat action
 /// plus phone reveal/copy.
@@ -27,9 +31,16 @@ import '../utils/contact_format.dart';
 /// so the chat/auth gating and conversation-start behavior are identical to
 /// the previous same-library `part`. Only [listing] is passed explicitly.
 class ListingDetailsContactBar extends StatefulWidget {
-  const ListingDetailsContactBar({super.key, required this.listing});
+  const ListingDetailsContactBar({
+    super.key,
+    required this.listing,
+    this.uriLauncher,
+    this.recordEngagement,
+  });
 
   final Listing listing;
+  final ListingDetailsUriLauncher? uriLauncher;
+  final RecordListingEngagement? recordEngagement;
 
   @override
   State<ListingDetailsContactBar> createState() =>
@@ -75,11 +86,9 @@ class _ListingDetailsContactBarState extends State<ListingDetailsContactBar> {
     if (tel == null) {
       return;
     }
+    _recordAction(ListingEngagementEventType.phone);
     try {
-      final ok = await launchUrl(
-        Uri.parse(tel),
-        mode: LaunchMode.externalApplication,
-      );
+      final ok = await _launchUri(Uri.parse(tel));
       if (!ok && context.mounted) _showError(context);
     } catch (_) {
       if (context.mounted) _showError(context);
@@ -94,6 +103,7 @@ class _ListingDetailsContactBarState extends State<ListingDetailsContactBar> {
       _showError(context);
       return;
     }
+    _recordAction(ListingEngagementEventType.telegram);
     await _launchExternal(context, Uri.parse('https://t.me/$username'));
   }
 
@@ -107,6 +117,7 @@ class _ListingDetailsContactBarState extends State<ListingDetailsContactBar> {
       _showError(context);
       return;
     }
+    _recordAction(ListingEngagementEventType.whatsapp);
     await _launchExternal(context, Uri.parse('https://wa.me/$digits'));
   }
 
@@ -133,10 +144,34 @@ class _ListingDetailsContactBarState extends State<ListingDetailsContactBar> {
 
   Future<void> _launchExternal(BuildContext context, Uri uri) async {
     try {
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final ok = await _launchUri(uri);
       if (!ok && context.mounted) _showError(context);
     } catch (_) {
       if (context.mounted) _showError(context);
+    }
+  }
+
+  Future<bool> _launchUri(Uri uri) {
+    final launcher = widget.uriLauncher ?? launchExternalUri;
+    return launcher(uri);
+  }
+
+  /// Phone event is the Call tap after reveal, not the reveal itself.
+  void _recordAction(ListingEngagementEventType type) {
+    try {
+      final recorder =
+          widget.recordEngagement ??
+          (sl.isRegistered<RecordListingEngagement>()
+              ? sl<RecordListingEngagement>()
+              : null);
+      recorder?.recordFireAndForget(
+        listingId: widget.listing.id,
+        eventType: type,
+      );
+    } catch (e, st) {
+      AppLogger(
+        'ListingDetailsContactBar',
+      ).error('engagement ${type.wireValue} threw', e, st);
     }
   }
 

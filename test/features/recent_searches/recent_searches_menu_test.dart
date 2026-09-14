@@ -186,6 +186,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(ru.menuRecentSearches), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text(ru.menuRecentSearches),
+      80,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text(ru.menuRecentSearches));
     await tester.pumpAndSettle();
 

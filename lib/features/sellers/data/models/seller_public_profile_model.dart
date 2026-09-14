@@ -46,7 +46,7 @@ class SellerPublicProfileModel extends SellerPublicProfile {
       displayName: json['display_name'] as String?,
       avatarUrl: json['avatar_url'] as String?,
       memberSince: memberSince,
-      sellerType: _parseSellerType(json['seller_type'] as String?),
+      sellerType: SellerType.fromWire(json['seller_type']),
       activeListingsCount: activeListingsCount,
       ratingAverage: ratingAverage,
       ratingCount: (json['rating_count'] as num?)?.toInt() ?? 0,
@@ -55,14 +55,5 @@ class SellerPublicProfileModel extends SellerPublicProfile {
       verifiedEmail: json['verified_email'] as bool? ?? false,
       verifiedDealer: json['verified_dealer'] as bool? ?? false,
     );
-  }
-
-  static SellerType _parseSellerType(String? raw) {
-    switch (raw?.trim().toLowerCase()) {
-      case 'dealer':
-        return SellerType.dealer;
-      default:
-        return SellerType.private;
-    }
   }
 }

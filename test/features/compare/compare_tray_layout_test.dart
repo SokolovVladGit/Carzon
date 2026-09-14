@@ -47,6 +47,7 @@ void main() {
     test('true for top-level routes with floating nav', () {
       expect(compareTrayUsesBottomNavClearance(AppRoutes.favorites), isTrue);
       expect(compareTrayUsesBottomNavClearance(AppRoutes.menu), isTrue);
+      expect(compareTrayUsesBottomNavClearance(AppRoutes.statistics), isTrue);
     });
 
     test('false for listing details', () {

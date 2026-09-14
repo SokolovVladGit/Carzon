@@ -926,7 +926,7 @@
   "sellerMemberSince": "Pe Carzon din {monthYear}",
   "sellerActiveListingsCount": "{count, plural, one{{count} anunț activ} few{{count} anunțuri active} other{{count} anunțuri active}}",
   "sellerTypePrivate": "Vânzător privat",
-  "sellerTypeDealer": "Dealer",
+  "sellerTypeDealer": "Vânzător profesionist",
   "sellerProfileLoadFailed": "Nu s-a încărcat profilul vânzătorului.",
   "sellerListingsLoadFailed": "Nu s-au încărcat anunțurile.",
   "sellerLoadMore": "Arată mai multe",
@@ -1867,6 +1867,127 @@
   "@fuelPricesFuelDieselEuro": {},
   "fuelPricesFuelDieselRegular": "Motorină",
   "@fuelPricesFuelDieselRegular": {},
+  "statisticsTitle": "Statistici",
+  "statisticsSignInRequired": "Conectați-vă pentru a vedea statisticile anunțurilor.",
+  "statisticsPeriodSelectorLabel": "Perioadă",
+  "statisticsPeriod7": "7 zile",
+  "statisticsPeriod30": "30 zile",
+  "statisticsPeriod90": "90 zile",
+  "statisticsMetricViews": "Vizualizări",
+  "statisticsMetricFavorites": "În favorite",
+  "statisticsMetricInquiries": "Solicitări",
+  "statisticsMetricConversion": "Conversie",
+  "statisticsValueUnavailable": "—",
+  "statisticsActiveListings": "Active",
+  "statisticsSoldListings": "Vândute",
+  "statisticsYourListings": "Anunțurile dvs.",
+  "statisticsChartSemantics": "Vizualizări în perioada selectată: {count}",
+  "@statisticsChartSemantics": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingViews": "Vizualizări: {count}",
+  "@statisticsListingViews": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingFavorites": "În favorite: {count}",
+  "@statisticsListingFavorites": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingInquiries": "Solicitări: {count}",
+  "@statisticsListingInquiries": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListedForDays": "{count, plural, one{{count} zi listată} few{{count} zile listate} other{{count} de zile listate}}",
+  "@statisticsListedForDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsSoldAfterDays": "{count, plural, one{vândut în {count} zi} few{vândut în {count} zile} other{vândut în {count} de zile}}",
+  "@statisticsSoldAfterDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsEmptyTitle": "Încă nu aveți anunțuri",
+  "statisticsEmptyBody": "Publicați un anunț — aici vor apărea vizualizările, favoritele și solicitările.",
+  "statisticsEmptyCta": "Postați un anunț",
+  "statisticsLoadFailed": "Nu am putut încărca statisticile",
+  "statisticsProfessionalLabel": "Vânzător profesionist",
+  "statisticsInventoryTotal": "Total",
+  "statisticsTopListings": "Anunțuri de top",
+  "statisticsTopListingsEmpty": "Încă nu există interes — topul apare după vizualizări sau solicitări.",
+  "statisticsInventoryPerformance": "Performanța anunțurilor",
+  "statisticsSortMostInquiries": "După solicitări",
+  "statisticsSortMostViewed": "După vizualizări",
+  "statisticsSortMostFavorited": "După favorite",
+  "statisticsSortNewest": "Cele mai noi",
+  "statisticsSortLongestListed": "Cel mai mult listate",
+  "statisticsFilterAll": "Toate",
+  "statisticsFilterActive": "Active",
+  "statisticsFilterSold": "Vândute",
+  "statisticsInterestFunnel": "Pâlnie de interes",
+  "statisticsFunnelImpressions": "Impresii",
+  "statisticsFunnelViews": "Vizualizări",
+  "statisticsFunnelInquiries": "Solicitări",
+  "statisticsContactActions": "Acțiuni de contact",
+  "statisticsContactActionsTotal": "Acțiuni de contact",
+  "statisticsMetricPhone": "Telefon",
+  "statisticsMetricWhatsapp": "WhatsApp",
+  "statisticsMetricTelegram": "Telegram",
+  "statisticsMetricShares": "Distribuiri",
+  "statisticsListingImpressions": "Impresii: {count}",
+  "@statisticsListingImpressions": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingContactActions": "Acțiuni de contact: {count}",
+  "@statisticsListingContactActions": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingShares": "Distribuiri: {count}",
+  "@statisticsListingShares": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsDemandTitle": "Cererea cumpărătorilor",
+  "statisticsDemandExplanation": "Arată câți utilizatori CARZON au o căutare salvată care se potrivește anunțurilor dvs. active.",
+  "statisticsDemandMatchingUsers": "Utilizatori cu o căutare potrivită",
+  "statisticsDemandInsufficient": "Date insuficiente",
+  "statisticsDemandPrivacyBody": "CARZON va afișa numărul când vor fi suficiente date pentru a păstra confidențialitatea.",
+  "statisticsDemandZeroBody": "Deocamdată nu există coincidențe cu căutările salvate.",
+  "statisticsDemandTop": "Cel mai mare interes",
+  "statisticsDemandUnavailable": "Cererea cumpărătorilor nu este disponibilă momentan.",
+  "statisticsDemandLoading": "Se încarcă cererea cumpărătorilor",
+  "statisticsListingDemandVisible": "{count, plural, one{Interes: {count} utilizator} few{Interes: {count} utilizatori} other{Interes: {count} de utilizatori}}",
+  "@statisticsListingDemandVisible": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "statisticsListingDemandSuppressed": "Interes: date insuficiente",
+  "statisticsListingDemandZero": "Interes: 0 utilizatori",
+  "sellerModeTitle": "Regimul vânzătorului",
+  "sellerModeRowHint": "Cum statisticile afișează anunțurile dvs.",
+  "sellerModeLoadFailed": "Nu am putut încărca regimul vânzătorului",
+  "sellerModeSaveFailed": "Nu am putut salva regimul vânzătorului",
+  "sellerModePrivateTitle": "Vânzător privat",
+  "sellerModePrivateBody": "Vindeți un autovehicul personal. Statistică compactă a anunțurilor.",
+  "sellerModeProfessionalTitle": "Vânzător profesionist",
+  "sellerModeProfessionalBody": "Vindeți autovehicule în mod regulat. Statistică extinsă a stocului.",
+  "sellerModeVerified": "Vânzător verificat",
   "vinScannerTitle": "Scanează VIN",
   "vinScannerInstruction": "Îndreaptă camera spre VIN",
   "vinScannerHint": "Pe un document sau pe eticheta mașinii. VIN-ul trebuie să încapă complet în cadru.",

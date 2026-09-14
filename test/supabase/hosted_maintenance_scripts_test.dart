@@ -269,6 +269,51 @@ void main() {
       );
     });
 
+    test('covers seller listing demand runtime contract', () {
+      for (final needle in [
+        'rpc_get_my_seller_listing_demand',
+        'rpc_get_my_seller_inventory_demand',
+        'get_my_seller_listing_demand',
+        'get_my_seller_inventory_demand',
+      ]) {
+        expectReferenced(needle);
+      }
+    });
+
+    test('covers listing engagement telemetry runtime contract', () {
+      for (final needle in [
+        'table_listing_engagement_daily',
+        'table_listing_engagement_dedupe',
+        'listing_engagement_not_client_exposed',
+        'rpc_record_listing_engagement_event',
+        'rpc_get_my_seller_engagement_summary',
+        'rpc_get_my_seller_engagement_listings',
+        'record_listing_engagement_event',
+        'get_my_seller_engagement_summary',
+        'listing_engagement_daily',
+        'listing_engagement_dedupe',
+      ]) {
+        expectReferenced(needle);
+      }
+    });
+
+    test('covers seller analytics Phase 1 runtime contract', () {
+      for (final needle in [
+        'column_listings_sold_at',
+        'rpc_get_my_seller_context',
+        'rpc_set_my_seller_type',
+        'rpc_get_my_seller_analytics_summary',
+        'rpc_get_my_seller_analytics_daily',
+        'rpc_get_my_seller_analytics_listings',
+        'get_my_seller_context',
+        'set_my_seller_type',
+        'get_my_seller_analytics_summary',
+        'sold_at',
+      ]) {
+        expectReferenced(needle);
+      }
+    });
+
     test('covers Manual Smart Fill M1 runtime contract', () {
       for (final needle in [
         'table_vehicle_open_data_configuration',
