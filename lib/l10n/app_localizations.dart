@@ -302,6 +302,12 @@ abstract class AppLocalizations {
   /// **'Очистить поиск'**
   String get listingsSearchClearTooltip;
 
+  /// No description provided for @listingsSearchSubmitTooltip.
+  ///
+  /// In ru, this message translates to:
+  /// **'Найти'**
+  String get listingsSearchSubmitTooltip;
+
   /// No description provided for @listingsDiscoveryFilterRemoveTooltip.
   ///
   /// In ru, this message translates to:
@@ -7247,6 +7253,12 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Проданные'**
   String get statisticsSoldListings;
+
+  /// No description provided for @statisticsCurrentInventory.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сейчас'**
+  String get statisticsCurrentInventory;
 
   /// No description provided for @statisticsYourListings.
   ///

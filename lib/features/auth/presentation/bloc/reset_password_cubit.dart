@@ -28,6 +28,7 @@ class ResetPasswordCubit extends Cubit<ResetPasswordState> {
     required String newPassword,
     required String confirmPassword,
   }) async {
+    if (isClosed) return;
     if (state.status == ResetPasswordStatus.submitting) {
       return;
     }
@@ -54,6 +55,7 @@ class ResetPasswordCubit extends Cubit<ResetPasswordState> {
 
     emit(const ResetPasswordState.submitting());
     final result = await _updatePassword(newPassword: newPassword);
+    if (isClosed) return;
     result.fold(
       (_) => emit(
         const ResetPasswordState.failure(ResetPasswordFailureKind.updateFailed),

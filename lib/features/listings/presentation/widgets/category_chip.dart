@@ -43,27 +43,27 @@ class CategoryChip extends StatelessWidget {
   final VoidCallback onTap;
   final String? svgAssetPath;
 
-  static const double _allBodiesIconSize = 42;
+  static const double _allBodiesIconSize = 36;
 
   static const double _normalChipSelectedPillWidth = 24;
   static const double _normalChipSelectedPillHeight = 3;
-  static const double _normalChipSelectedPillBottomInset = 4;
+  static const double _normalChipSelectedPillBottomInset = 3;
 
   /// Fallback [IconData] size when SVG decode fails (vehicle + All chips).
   static const double _fallbackIconSize = 36;
 
   /// Width for wide vehicle silhouette SVGs; height follows asset aspect ratio.
-  static const double _vehicleIconWidth = 56;
+  static const double _vehicleIconWidth = 48;
 
   /// Fixed layout slot for the icon row; decoupled from glyph render sizing.
-  static const double _iconSlotHeight = 44;
+  static const double _iconSlotHeight = 36;
 
   /// Fixed chip label size; must not track icon scaling.
   static const double _labelFontSize = 11;
 
   /// Slightly wide for long Cyrillic labels (e.g. «Универсал», «Минивэн»).
   static const double _chipWidth = 84;
-  static const double _chipHeight = 58;
+  static const double _chipHeight = 48;
   static const double _cornerRadius = 16;
 
   static const double _chipHorizontalPadding = 5;
@@ -306,8 +306,8 @@ class CategoryChipsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      // Matches [_BrandFilterRow] horizontal gutter (20) and vertical air (8).
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+      // Matches brand-row horizontal gutter (20) and compact vertical air (4).
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -10,7 +10,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/auth_required_prompt.dart';
 import '../../../../core/widgets/empty_state_view.dart';
 import '../../../../core/widgets/error_view.dart';
-import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../../../core/widgets/top_level_scaffold.dart';
 import '../../../../shared/ui/carzon_icons.dart';
@@ -23,6 +22,7 @@ import '../bloc/seller_analytics_state.dart';
 import '../widgets/dealer_statistics_content.dart';
 import '../widgets/private_statistics_content.dart';
 import '../widgets/statistics_period_selector.dart';
+import '../widgets/statistics_surface.dart';
 
 class StatisticsPage extends StatelessWidget {
   const StatisticsPage({super.key});
@@ -146,12 +146,7 @@ class _StatisticsEmpty extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        kFloatingCapsuleNavClearance,
-      ),
+      padding: StatisticsLayout.pagePadding,
       children: [
         StatisticsPeriodSelector(
           selected: period,

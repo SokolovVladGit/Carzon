@@ -33,6 +33,7 @@ class PublicSellerIdentityCubit extends Cubit<PublicSellerIdentityState> {
   }
 
   Future<void> load() async {
+    if (isClosed) return;
     emit(
       state.copyWith(
         initialLoading: true,
@@ -41,6 +42,7 @@ class PublicSellerIdentityCubit extends Cubit<PublicSellerIdentityState> {
       ),
     );
     final result = await _getMySellerProfile();
+    if (isClosed) return;
     result.fold(
       (_) => emit(state.copyWith(initialLoading: false, loadFailed: true)),
       (profile) => emit(
@@ -55,6 +57,7 @@ class PublicSellerIdentityCubit extends Cubit<PublicSellerIdentityState> {
 
   /// Trims input; empty/cleared string persists as null `display_name` server-side.
   Future<void> save(String rawInput) async {
+    if (isClosed) return;
     final trimmed = rawInput.trim();
     final toPersist = trimmed.isEmpty ? null : trimmed;
 
@@ -66,6 +69,7 @@ class PublicSellerIdentityCubit extends Cubit<PublicSellerIdentityState> {
       ),
     );
     final result = await _updateMySellerDisplayName(toPersist);
+    if (isClosed) return;
     result.fold(
       (failure) => emit(
         state.copyWith(
@@ -90,6 +94,7 @@ class PublicSellerIdentityCubit extends Cubit<PublicSellerIdentityState> {
     required Uint8List bytes,
     required String contentType,
   }) async {
+    if (isClosed) return;
     final prevPath = _previousStoragePath(state.profile);
     emit(
       state.copyWith(
@@ -102,6 +107,7 @@ class PublicSellerIdentityCubit extends Cubit<PublicSellerIdentityState> {
       contentType: contentType,
       previousAvatarStoragePath: prevPath,
     );
+    if (isClosed) return;
     result.fold(
       (f) {
         final snack = f is SellerAvatarUnsupportedFormat
@@ -120,6 +126,7 @@ class PublicSellerIdentityCubit extends Cubit<PublicSellerIdentityState> {
   }
 
   Future<void> removeAvatar() async {
+    if (isClosed) return;
     if (!_hasAvatarVisual(state.profile)) return;
     final prevPath = _previousStoragePath(state.profile);
     emit(
@@ -131,6 +138,7 @@ class PublicSellerIdentityCubit extends Cubit<PublicSellerIdentityState> {
     final result = await _clearSellerAvatar(
       previousAvatarStoragePath: prevPath,
     );
+    if (isClosed) return;
     result.fold(
       (_) => emit(
         state.copyWith(

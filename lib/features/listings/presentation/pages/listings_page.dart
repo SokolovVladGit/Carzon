@@ -237,9 +237,7 @@ class _ListingsViewState extends State<_ListingsView> {
               Future<void> applyAndClose(ListingsFilterApplyResult r) async {
                 if (sheetFeedback?.kind ==
                     CatalogFilterSheetFeedbackKind.success) {
-                  await Future<void>.delayed(
-                    const Duration(milliseconds: 750),
-                  );
+                  await Future<void>.delayed(const Duration(milliseconds: 750));
                 }
                 if (sheetContext.mounted) {
                   Navigator.of(sheetContext).pop(r);
@@ -276,9 +274,8 @@ class _ListingsViewState extends State<_ListingsView> {
                         appliedState: current,
                         onInlineNoticeRequested: (notice) =>
                             setSheetState(() => inlineNotice = notice),
-                        onSheetFeedbackRequested: (feedback) => setSheetState(
-                          () => sheetFeedback = feedback,
-                        ),
+                        onSheetFeedbackRequested: (feedback) =>
+                            setSheetState(() => sheetFeedback = feedback),
                       ),
                       browseHeaderNotice: inlineNotice == null
                           ? null
@@ -289,9 +286,8 @@ class _ListingsViewState extends State<_ListingsView> {
                           ? null
                           : CatalogFilterSheetFeedbackOverlay(
                               feedback: sheetFeedback!,
-                              onDismissed: () => setSheetState(
-                                () => sheetFeedback = null,
-                              ),
+                              onDismissed: () =>
+                                  setSheetState(() => sheetFeedback = null),
                             ),
                       // Bell visual + tooltip are the only saved-state
                       // surface in the catalog filter sheet now: a tech
@@ -435,39 +431,28 @@ class _ListingsViewState extends State<_ListingsView> {
                           ),
                           // Shared 20 px gutter with the header + search
                           // row so header, search, and cards line up on
-                          // one editorial column. Top `10` lands
-                          // directly under the header layer's chip row
-                          // (which already carries 8 px bottom air),
-                          // yielding an ~18 px visual gap from chip
-                          // bottom → first card — squarely in the
-                          // 16–20 target. The bottom clearance is
-                          // driven by `kFloatingCapsuleNavClearance`
+                          // one editorial column. Top `6` lands under
+                          // the chip row (4 px bottom air + this 6),
+                          // keeping a compact gap to the first card.
+                          // Bottom clearance is `kFloatingCapsuleNavClearance`
                           // so the last card lands above the floating
-                          // pill (the scaffold uses `extendBody: true`,
-                          // so content renders behind the pill).
+                          // pill (`extendBody: true`).
                           padding: const EdgeInsets.fromLTRB(
                             20,
-                            10,
+                            6,
                             20,
                             kFloatingCapsuleNavClearance,
                           ),
                           itemCount:
                               state.items.length +
                               (state.hasReachedEnd ? 0 : 1),
-                          // Larger gap after the feature card (30) so the
-                          // first/second cards read as two beats rather
-                          // than a tight stack; regular rhythm (24)
-                          // everywhere else. Both values are sized so the
-                          // overlapping info panel of card N never feels
-                          // glued to the image of card N+1.
-                          separatorBuilder: (_, index) => SizedBox(
-                            // Larger gaps than Pass 2 because the
-                            // panel's shadow (blur 20 / offset y 8)
-                            // now bleeds ~12 px below the panel rect;
-                            // 34 after featured / 28 between regulars
-                            // preserves the 22–28 px visual air target.
-                            height: index == 0 ? 34 : 28,
-                          ),
+                          // Compact vertical rhythm: a slightly larger
+                          // beat after the featured card, then a tighter
+                          // regular gap. Values stay above ~12 so panel
+                          // shadows do not visually collide with the
+                          // next cover.
+                          separatorBuilder: (_, index) =>
+                              SizedBox(height: index == 0 ? 18 : 16),
                           itemBuilder: (context, index) {
                             if (index >= state.items.length) {
                               return _ListingsPaginationFooter(
@@ -741,7 +726,9 @@ class _FeedHeaderLayer extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     // Light mode: one-step-lifted header strip on the warm canvas.
     // Dark mode: a one-step-lifted surface so the shadow has something to read against.
-    final layerColor = isDark ? scheme.surfaceContainerLow : scheme.surfaceContainerLowest;
+    final layerColor = isDark
+        ? scheme.surfaceContainerLow
+        : scheme.surfaceContainerLowest;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: layerColor,
@@ -758,12 +745,10 @@ class _FeedHeaderLayer extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const ListingsCatalogHeader(),
-          // CARZON → search/filter: 4 (the wordmark already has 14
-          // of bottom padding inside ListingsCatalogHeader, keep this tight
-          // so the wordmark reads as "of the" controls, not adrift
-          // from them).
+          // CARZON → search/filter: 2 (wordmark already has 4 px
+          // bottom padding inside ListingsCatalogHeader).
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+            padding: const EdgeInsets.fromLTRB(20, 2, 20, 0),
             child:
                 BlocBuilder<
                   BrowseCatalogFilterAlertsCubit,
@@ -813,8 +798,8 @@ class _FeedHeaderLayer extends StatelessWidget {
                   },
                 ),
           ),
-          // search → brand row: 16
-          const SizedBox(height: 16),
+          // search → brand row: 8
+          const SizedBox(height: 8),
           BlocSelector<ListingsBloc, ListingsState, String?>(
             selector: (state) => state.make,
             builder: (context, currentMake) {
@@ -824,9 +809,8 @@ class _FeedHeaderLayer extends StatelessWidget {
               );
             },
           ),
-          // brand row → body chips: 4 (brand row already carries
-          // its own 8 px vertical padding from the ListView).
-          const SizedBox(height: 4),
+          // brand row → body chips: rows already carry 6 / 4 px
+          // vertical padding, so no extra spacer.
           BlocBuilder<ListingsBloc, ListingsState>(
             buildWhen: (p, q) => p.bodyTypeFilter != q.bodyTypeFilter,
             builder: (context, listState) {
@@ -867,7 +851,7 @@ class _FeedHeaderLayer extends StatelessWidget {
             },
           ),
           // Tight bottom air inside the layer — the chip row's
-          // own 8 px vertical padding is the real bottom gap; the
+          // own 4 px vertical padding is the real bottom gap; the
           // 2 px here just lifts the shadow edge clear of the
           // chip silhouette.
           const SizedBox(height: 2),

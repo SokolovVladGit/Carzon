@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/constants/app_constants.dart';
 import 'package:carzon/core/errors/failures.dart';
@@ -153,4 +155,26 @@ void main() {
       ),
     ],
   );
+
+  test('load does not emit after the cubit is closed', () async {
+    final pending = Completer<Result<SellerPublicProfile?>>();
+    when(() => getSellerPublicProfile(any())).thenAnswer((_) => pending.future);
+    when(
+      () => getListings(any()),
+    ).thenAnswer((_) async => const Success<List<Listing>>([]));
+
+    final cubit = SellerProfileCubit(
+      getSellerPublicProfile: getSellerPublicProfile,
+      getListings: getListings,
+      sellerId: 'seller-1',
+    );
+    final load = cubit.load();
+    await cubit.close();
+
+    pending.complete(Success(_p()));
+    await load;
+
+    expect(cubit.isClosed, isTrue);
+    expect(cubit.state.profile, isNull);
+  });
 }

@@ -19,6 +19,7 @@ const _keys = [
   'statisticsValueUnavailable',
   'statisticsActiveListings',
   'statisticsSoldListings',
+  'statisticsCurrentInventory',
   'statisticsYourListings',
   'statisticsEmptyTitle',
   'statisticsEmptyBody',

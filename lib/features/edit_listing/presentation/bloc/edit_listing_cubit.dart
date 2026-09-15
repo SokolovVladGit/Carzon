@@ -71,9 +71,12 @@ class EditListingCubit extends Cubit<EditListingState> {
   final ListingImageRepository _listingImageRepository;
 
   Future<void> load(String id, {String? ownerId}) async {
+    if (isClosed) return;
     emit(const EditListingState.loading());
 
-    switch (await _getOwnerListingForEdit(id)) {
+    final listingResult = await _getOwnerListingForEdit(id);
+    if (isClosed) return;
+    switch (listingResult) {
       case FailureResult():
         emit(EditListingState.loadFailure());
       case Success(:final value):
@@ -97,6 +100,7 @@ class EditListingCubit extends Cubit<EditListingState> {
             galleryLoadSucceeded = true;
             galleryImages = value;
         }
+        if (isClosed) return;
 
         final initialSlots = buildInitialEditListingGallerySlots(
           listing: listing,
@@ -120,6 +124,7 @@ class EditListingCubit extends Cubit<EditListingState> {
 
         final reportOut = await reportFuture;
         final sourceOut = await sourceFuture;
+        if (isClosed) return;
 
         OwnerListingVinReportStatus? reportStatus;
         var reportFail = false;
@@ -162,6 +167,7 @@ class EditListingCubit extends Cubit<EditListingState> {
     required EditListingInput input,
     required List<EditListingGallerySlot> galleryDraft,
   }) async {
+    if (isClosed) return;
     final mountedListing = state.listing;
     if (mountedListing == null) return;
     if (state.status == EditListingStatus.submitting) return;
@@ -223,6 +229,7 @@ class EditListingCubit extends Cubit<EditListingState> {
     List<UploadedListingImage>? newlyUploaded;
     if (localsToUpload.isNotEmpty) {
       final uploads = await _uploadSequential(localsToUpload);
+      if (isClosed) return;
       final uploadFailure = uploads.fold<Failure?>(
         (failure) => failure,
         (_) => null,
@@ -253,11 +260,13 @@ class EditListingCubit extends Cubit<EditListingState> {
     }
 
     final detailsResult = await _updateListingDetailsV2(input);
+    if (isClosed) return;
     switch (detailsResult) {
       case FailureResult(:final failure):
         if (newlyUploaded != null && newlyUploaded.isNotEmpty) {
           await _deleteStaging(newlyUploaded, mountedListing.sellerId);
         }
+        if (isClosed) return;
         emit(
           EditListingState.saveFailure(
             mountedListing,
@@ -308,6 +317,7 @@ class EditListingCubit extends Cubit<EditListingState> {
           imagePublicUrls: replaceUrlList,
           storagePaths: replacePathList,
         );
+        if (isClosed) return;
 
         final replaceFailure = replaceResult.fold<Failure?>(
           (failure) => failure,
@@ -318,6 +328,7 @@ class EditListingCubit extends Cubit<EditListingState> {
           if (newlyUploaded != null && newlyUploaded.isNotEmpty) {
             await _deleteStaging(newlyUploaded, mountedListing.sellerId);
           }
+          if (isClosed) return;
           emit(
             EditListingState.saveFailure(
               listingAfterDetails,
@@ -353,6 +364,7 @@ class EditListingCubit extends Cubit<EditListingState> {
           }
         }
 
+        if (isClosed) return;
         emit(
           EditListingState.success(
             finalListing,

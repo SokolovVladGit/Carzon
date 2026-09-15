@@ -15,11 +15,17 @@ import '../widgets/listing_details_contact_bar.dart';
 import '../widgets/listing_details_content_panel.dart';
 import '../widgets/listing_details_hero.dart';
 
-/// Fixed height of the hero image section. Taller than the old
-/// overlay-heavy hero so the photo feels like a proper showcase
-/// while still leaving the below-panel header visible above the
-/// fold on a standard 5.5" device.
-const double _heroHeight = 380;
+/// Landscape 4:3 hero height from the available width (`height = width * 3/4`).
+///
+/// Clamped so compact phones keep room for overlay controls and large
+/// phones do not return to a near-square crop.
+@visibleForTesting
+double listingDetailsHeroHeightForWidth(double width) {
+  if (!width.isFinite || width <= 0) {
+    return 292.5;
+  }
+  return (width * 3 / 4).clamp(270.0, 320.0);
+}
 
 class ListingDetailsPage extends StatelessWidget {
   const ListingDetailsPage({
@@ -175,21 +181,26 @@ class _ListingDetailsViewState extends State<_ListingDetailsView> {
                           p.listing?.coverImageUrl != c.listing?.coverImageUrl,
                       builder: (context, state) {
                         final carouselUrls = _effectiveHeroUrls(state);
-                        return SizedBox(
-                          height: _heroHeight,
-                          width: double.infinity,
-                          child: ListingHeroCarousel(
-                            listingId: widget.id,
-                            listing: state.listing,
-                            urls: carouselUrls,
-                            heroFlightSourceTopRadius:
-                                widget.heroFlightSourceTopRadius,
-                            flySourceKey: _compareFlySourceKey,
-                            compareFlyFallbackKey: _compareToggleFlyKey,
-                            shareLauncher: widget.shareLauncher,
-                            onPageChanged: (i) =>
-                                setState(() => _carouselPageIndex = i),
-                          ),
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            final width = constraints.maxWidth;
+                            return SizedBox(
+                              height: listingDetailsHeroHeightForWidth(width),
+                              width: double.infinity,
+                              child: ListingHeroCarousel(
+                                listingId: widget.id,
+                                listing: state.listing,
+                                urls: carouselUrls,
+                                heroFlightSourceTopRadius:
+                                    widget.heroFlightSourceTopRadius,
+                                flySourceKey: _compareFlySourceKey,
+                                compareFlyFallbackKey: _compareToggleFlyKey,
+                                shareLauncher: widget.shareLauncher,
+                                onPageChanged: (i) =>
+                                    setState(() => _carouselPageIndex = i),
+                              ),
+                            );
+                          },
                         );
                       },
                     ),

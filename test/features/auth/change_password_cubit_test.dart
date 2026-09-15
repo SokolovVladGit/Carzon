@@ -175,5 +175,58 @@ void main() {
       ).called(1);
       verify(() => repo.updatePassword('newpass1')).called(1);
     });
+
+    test('submit does not emit after close during reauthentication', () async {
+      final pending = Completer<Result<AuthUser>>();
+      when(
+        () => repo.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) => pending.future);
+
+      final local = ChangePasswordCubit(
+        signInWithPassword: SignInWithPassword(repo),
+        updatePassword: UpdatePassword(repo),
+      );
+      final submit = local.submit(
+        email: 'seller@example.com',
+        currentPassword: 'oldpass1',
+        newPassword: 'newpass1',
+        confirmPassword: 'newpass1',
+      );
+      await local.close();
+
+      pending.complete(const Success(user));
+      await submit;
+
+      expect(local.isClosed, isTrue);
+      expect(local.state, const ChangePasswordState.submitting());
+      verifyNever(() => repo.updatePassword(any()));
+    });
+
+    test('submit does not emit after close during password update', () async {
+      final pending = Completer<Result<void>>();
+      when(() => repo.updatePassword(any())).thenAnswer((_) => pending.future);
+
+      final local = ChangePasswordCubit(
+        signInWithPassword: SignInWithPassword(repo),
+        updatePassword: UpdatePassword(repo),
+      );
+      final submit = local.submit(
+        email: 'seller@example.com',
+        currentPassword: 'oldpass1',
+        newPassword: 'newpass1',
+        confirmPassword: 'newpass1',
+      );
+      await untilCalled(() => repo.updatePassword(any()));
+      await local.close();
+
+      pending.complete(const Success(null));
+      await submit;
+
+      expect(local.isClosed, isTrue);
+      expect(local.state, const ChangePasswordState.submitting());
+    });
   });
 }

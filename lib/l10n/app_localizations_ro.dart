@@ -113,6 +113,9 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingsSearchClearTooltip => 'Ștergeți căutarea';
 
   @override
+  String get listingsSearchSubmitTooltip => 'Căutați';
+
+  @override
   String get listingsDiscoveryFilterRemoveTooltip => 'Elimină filtrul';
 
   @override
@@ -4059,6 +4062,9 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get statisticsSoldListings => 'Vândute';
+
+  @override
+  String get statisticsCurrentInventory => 'Acum';
 
   @override
   String get statisticsYourListings => 'Anunțurile dvs.';

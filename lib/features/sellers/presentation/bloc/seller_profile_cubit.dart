@@ -22,6 +22,7 @@ class SellerProfileCubit extends Cubit<SellerProfileState> {
   final String _sellerId;
 
   Future<void> load() async {
+    if (isClosed) return;
     emit(
       const SellerProfileState(
         profileLoading: true,
@@ -45,6 +46,7 @@ class SellerProfileCubit extends Cubit<SellerProfileState> {
 
     final profileResult = await profileFuture;
     final listingsResult = await listingsFuture;
+    if (isClosed) return;
 
     var next = state.copyWith(
       profileLoading: false,
@@ -74,6 +76,7 @@ class SellerProfileCubit extends Cubit<SellerProfileState> {
   Future<void> retry() => load();
 
   Future<void> loadMoreListings() async {
+    if (isClosed) return;
     if (state.loadingMoreListings || !state.hasMoreListings) return;
     emit(state.copyWith(loadingMoreListings: true));
     final nextPage = state.listingsPage + 1;
@@ -85,6 +88,7 @@ class SellerProfileCubit extends Cubit<SellerProfileState> {
         pageSize: AppConstants.defaultPageSize,
       ),
     );
+    if (isClosed) return;
     result.fold(
       (f) =>
           emit(state.copyWith(loadingMoreListings: false, listingsFailure: f)),

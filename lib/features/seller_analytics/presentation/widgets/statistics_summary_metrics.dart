@@ -2,13 +2,32 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../domain/entities/seller_analytics_daily_point.dart';
+import '../../domain/entities/seller_analytics_period.dart';
 import '../../domain/entities/seller_analytics_summary.dart';
 import '../utils/statistics_formatters.dart';
+import 'statistics_chart_card.dart';
+import 'statistics_inventory_snapshot.dart';
+import 'statistics_period_selector.dart';
+import 'statistics_surface.dart';
 
 class StatisticsSummaryMetrics extends StatelessWidget {
-  const StatisticsSummaryMetrics({super.key, required this.summary});
+  const StatisticsSummaryMetrics({
+    super.key,
+    required this.summary,
+    required this.points,
+    required this.chartSemanticLabel,
+    required this.period,
+    required this.onPeriodChanged,
+    this.showInventoryTotal = false,
+  });
 
   final SellerAnalyticsSummary summary;
+  final List<SellerAnalyticsDailyPoint> points;
+  final String chartSemanticLabel;
+  final SellerAnalyticsPeriod period;
+  final ValueChanged<SellerAnalyticsPeriod> onPeriodChanged;
+  final bool showInventoryTotal;
 
   static const Key viewsKey = ValueKey<String>('statistics_metric_views');
   static const Key favoritesKey = ValueKey<String>(
@@ -24,132 +43,70 @@ class StatisticsSummaryMetrics extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: AppTheme.softCardShadow(scheme),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(26),
-          side: BorderSide(color: AppTheme.softCardBorderColor(scheme)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: AppTheme.softCardGroupedGradient(scheme),
+
+    return StatisticsGroupedSurface(
+      emphasized: true,
+      padding: StatisticsLayout.modulePadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          StatisticsPeriodSelector(
+            selected: period,
+            onChanged: onPeriodChanged,
+            embedded: true,
           ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    _MetricCell(
-                      key: viewsKey,
-                      label: l10n.statisticsMetricViews,
-                      value: '${summary.periodViews}',
-                    ),
-                    _MetricCell(
-                      key: favoritesKey,
-                      label: l10n.statisticsMetricFavorites,
-                      value: '${summary.currentFavorites}',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _MetricCell(
-                      key: inquiriesKey,
-                      label: l10n.statisticsMetricInquiries,
-                      value: '${summary.periodInquiries}',
-                    ),
-                    _MetricCell(
-                      key: conversionKey,
-                      label: l10n.statisticsMetricConversion,
-                      value: formatStatisticsConversion(
-                        summary.conversionPercent,
-                        l10n.statisticsValueUnavailable,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Divider(
-                  height: 1,
-                  color: scheme.outline.withValues(
-                    alpha: scheme.brightness == Brightness.dark ? 0.10 : 0.06,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Row(
-                    children: [
-                      _InventoryCell(
-                        label: l10n.statisticsActiveListings,
-                        value: '${summary.activeCount}',
-                      ),
-                      _InventoryCell(
-                        label: l10n.statisticsSoldListings,
-                        value: '${summary.soldCount}',
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          const SizedBox(height: 14),
+          _HeroViews(
+            key: viewsKey,
+            label: l10n.statisticsMetricViews,
+            value: '${summary.periodViews}',
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MetricCell extends StatelessWidget {
-  const _MetricCell({super.key, required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Expanded(
-      child: Semantics(
-        label: '$label $value',
-        child: Padding(
-          padding: const EdgeInsets.only(right: 8, bottom: 8),
-          child: Column(
+          const SizedBox(height: 8),
+          StatisticsChartCard(
+            points: points,
+            semanticLabel: chartSemanticLabel,
+          ),
+          const SizedBox(height: 14),
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
+              Expanded(
+                child: StatisticsSupportMetric(
+                  key: inquiriesKey,
+                  label: l10n.statisticsMetricInquiries,
+                  value: '${summary.periodInquiries}',
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.4,
+              const SizedBox(width: 20),
+              Expanded(
+                child: StatisticsSupportMetric(
+                  key: conversionKey,
+                  label: l10n.statisticsMetricConversion,
+                  value: formatStatisticsConversion(
+                    summary.conversionPercent,
+                    l10n.statisticsValueUnavailable,
+                  ),
                 ),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 16),
+          const StatisticsHairline(),
+          const SizedBox(height: 16),
+          StatisticsInventorySnapshot(
+            favorites: summary.currentFavorites,
+            activeCount: summary.activeCount,
+            soldCount: summary.soldCount,
+            showTotal: showInventoryTotal,
+          ),
+        ],
       ),
     );
   }
 }
 
-class _InventoryCell extends StatelessWidget {
-  const _InventoryCell({required this.label, required this.value});
+class _HeroViews extends StatelessWidget {
+  const _HeroViews({super.key, required this.label, required this.value});
 
   final String label;
   final String value;
@@ -158,27 +115,31 @@ class _InventoryCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return Expanded(
-      child: Semantics(
-        label: '$label $value',
-        child: Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: '$label  ',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-              TextSpan(
-                text: value,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+    return Semantics(
+      label: '$label $value',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.displayMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: -1.8,
+              height: 0.92,
+              color: AppTheme.editorialAccentColor(scheme),
+            ),
+          ),
+        ],
       ),
     );
   }

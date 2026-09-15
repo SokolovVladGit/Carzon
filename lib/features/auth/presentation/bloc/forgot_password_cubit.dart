@@ -20,6 +20,7 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
   final RequestPasswordReset _requestPasswordReset;
 
   Future<void> submit(String email) async {
+    if (isClosed) return;
     if (state.status == ForgotPasswordStatus.submitting) {
       return;
     }
@@ -33,6 +34,7 @@ class ForgotPasswordCubit extends Cubit<ForgotPasswordState> {
 
     emit(const ForgotPasswordState.submitting());
     final result = await _requestPasswordReset(email: normalized);
+    if (isClosed) return;
     result.fold(
       (_) => emit(
         const ForgotPasswordState.failure(

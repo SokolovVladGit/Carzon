@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
@@ -329,5 +331,20 @@ void main() {
     expect(r, const Success<ListingContact>(contact));
     verify(() => getPublicContact('l1')).called(1);
     await cubit.close();
+  });
+
+  test('load does not emit after the cubit is closed', () async {
+    final pending = Completer<Result<Listing>>();
+    when(() => getById('l1')).thenAnswer((_) => pending.future);
+
+    final cubit = buildCubit();
+    final load = cubit.load('l1');
+    await cubit.close();
+
+    pending.complete(Success(_listing()));
+    await load;
+
+    expect(cubit.isClosed, isTrue);
+    expect(cubit.state, const ListingDetailsState.loading());
   });
 }

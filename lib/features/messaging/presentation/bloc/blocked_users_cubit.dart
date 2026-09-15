@@ -12,8 +12,10 @@ class BlockedUsersCubit extends Cubit<BlockedUsersState> {
   final MessagingRepository _repository;
 
   Future<void> load() async {
+    if (isClosed) return;
     emit(state.copyWith(status: BlockedUsersStatus.loading));
     final result = await _repository.listBlockedUsers();
+    if (isClosed) return;
     switch (result) {
       case FailureResult():
         emit(state.copyWith(status: BlockedUsersStatus.failure));
@@ -23,8 +25,10 @@ class BlockedUsersCubit extends Cubit<BlockedUsersState> {
   }
 
   Future<bool> unblock(String blockedUserId) async {
+    if (isClosed) return false;
     emit(state.copyWith(unblockingUserId: blockedUserId));
     final result = await _repository.unblockUser(blockedUserId);
+    if (isClosed) return false;
     switch (result) {
       case FailureResult():
         emit(state.copyWith(clearUnblockingUserId: true));

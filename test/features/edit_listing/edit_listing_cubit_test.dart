@@ -1054,6 +1054,48 @@ void main() {
     });
   });
 
+  group('close-while-in-flight', () {
+    test('load does not emit after the cubit is closed', () async {
+      final pending = Completer<Result<Listing>>();
+      when(
+        () => editRepo.fetchOwnerListingForEdit('l1'),
+      ).thenAnswer((_) => pending.future);
+
+      final load = cubit.load('l1');
+      await cubit.close();
+
+      pending.complete(Success(_seed()));
+      await load;
+
+      expect(cubit.isClosed, isTrue);
+      expect(cubit.state.status, EditListingStatus.loading);
+    });
+
+    test('save does not emit after the cubit is closed', () async {
+      when(
+        () => editRepo.fetchOwnerListingForEdit('l1'),
+      ).thenAnswer((_) async => Success(_seed()));
+      final pending = Completer<Result<Listing>>();
+      when(
+        () => editRepo.updateDetailsV2(any()),
+      ).thenAnswer((_) => pending.future);
+
+      await cubit.load('l1');
+      final listing = cubit.state.listing!;
+      final save = cubit.save(
+        input: _input(listing),
+        galleryDraft: cubit.state.initialGallerySlots,
+      );
+      await cubit.close();
+
+      pending.complete(Success(listing));
+      await save;
+
+      expect(cubit.isClosed, isTrue);
+      expect(cubit.state.status, EditListingStatus.submitting);
+    });
+  });
+
   group('buildReplaceListingGalleryPayload', () {
     test('pairs locals with staged uploads in order', () {
       final out = EditListingCubit.buildReplaceListingGalleryPayload(

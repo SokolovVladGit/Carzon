@@ -13,12 +13,16 @@ class DeleteAccountCubit extends Cubit<DeleteAccountState> {
   final DeleteAccount _deleteAccount;
 
   Future<void> submit() async {
+    if (isClosed) return;
     if (state.status == DeleteAccountStatus.loading) {
       return;
     }
-    emit(state.copyWith(status: DeleteAccountStatus.loading, clearFailure: true));
+    emit(
+      state.copyWith(status: DeleteAccountStatus.loading, clearFailure: true),
+    );
 
     final result = await _deleteAccount();
+    if (isClosed) return;
     switch (result) {
       case Success():
         emit(state.copyWith(status: DeleteAccountStatus.success));

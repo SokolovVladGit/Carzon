@@ -28,7 +28,7 @@ const double _pageHPadding = 20;
 /// How far the below-hero content block is pulled up so its rounded
 /// top corners sit on the hero image. Purely cosmetic — the layout
 /// height of the below-hero block is unchanged.
-const double _heroContentOverlap = 20;
+const double _heroContentOverlap = 12;
 
 class SuccessBelowHero extends StatelessWidget {
   const SuccessBelowHero({

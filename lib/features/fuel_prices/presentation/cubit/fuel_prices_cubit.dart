@@ -62,15 +62,14 @@ class FuelPricesCubit extends Cubit<FuelPricesState> {
   }
 
   Future<void> load() async {
+    if (isClosed) return;
     emit(state.copyWith(phase: FuelPricesLoadPhase.loading));
     final result = await _getFuelPricesForApp();
+    if (isClosed) return;
     switch (result) {
       case Success(:final value):
         emit(
-          state.copyWith(
-            phase: FuelPricesLoadPhase.ready,
-            snapshots: value,
-          ),
+          state.copyWith(phase: FuelPricesLoadPhase.ready, snapshots: value),
         );
       case FailureResult():
         emit(state.copyWith(phase: FuelPricesLoadPhase.failure));

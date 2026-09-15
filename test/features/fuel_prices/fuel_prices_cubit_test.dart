@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
@@ -31,9 +33,9 @@ void main() {
   blocTest<FuelPricesCubit, FuelPricesState>(
     'load emits ready with snapshots on success',
     build: () {
-      when(() => getFuelPricesForApp()).thenAnswer(
-        (_) async => const Success([moldovaSnapshot]),
-      );
+      when(
+        () => getFuelPricesForApp(),
+      ).thenAnswer((_) async => const Success([moldovaSnapshot]));
       return FuelPricesCubit(getFuelPricesForApp: getFuelPricesForApp);
     },
     act: (cubit) => cubit.load(),
@@ -49,9 +51,9 @@ void main() {
   blocTest<FuelPricesCubit, FuelPricesState>(
     'load emits failure when use case fails',
     build: () {
-      when(() => getFuelPricesForApp()).thenAnswer(
-        (_) async => const FailureResult(UnknownFailure('x')),
-      );
+      when(
+        () => getFuelPricesForApp(),
+      ).thenAnswer((_) async => const FailureResult(UnknownFailure('x')));
       return FuelPricesCubit(getFuelPricesForApp: getFuelPricesForApp);
     },
     act: (cubit) => cubit.load(),
@@ -62,11 +64,27 @@ void main() {
   );
 
   test('selectTerritory updates selected territory', () {
-    when(() => getFuelPricesForApp()).thenAnswer(
-      (_) async => const Success([moldovaSnapshot]),
-    );
+    when(
+      () => getFuelPricesForApp(),
+    ).thenAnswer((_) async => const Success([moldovaSnapshot]));
     final cubit = FuelPricesCubit(getFuelPricesForApp: getFuelPricesForApp);
     cubit.selectTerritory(FuelPricesTerritory.pmr);
     expect(cubit.state.selectedTerritory, FuelPricesTerritory.pmr);
+  });
+
+  test('load does not emit after the cubit is closed', () async {
+    final pending = Completer<Result<List<FuelPriceSnapshot>>>();
+    when(() => getFuelPricesForApp()).thenAnswer((_) => pending.future);
+
+    final cubit = FuelPricesCubit(getFuelPricesForApp: getFuelPricesForApp);
+    final load = cubit.load();
+    await cubit.close();
+
+    pending.complete(const Success([moldovaSnapshot]));
+    await load;
+
+    expect(cubit.isClosed, isTrue);
+    expect(cubit.state.phase, FuelPricesLoadPhase.loading);
+    expect(cubit.state.snapshots, isEmpty);
   });
 }

@@ -478,5 +478,79 @@ void main() {
         expect(cubit.state.messages, [message, message2]);
       },
     );
+
+    test('load does not emit after the cubit is closed', () async {
+      final pending = Completer<Result<Conversation>>();
+      when(
+        () => repository.getConversation('c1'),
+      ).thenAnswer((_) => pending.future);
+
+      final cubit = ConversationThreadCubit(
+        repository: repository,
+        conversationId: 'c1',
+        currentUserId: 'b1',
+      );
+      final load = cubit.load();
+      await cubit.close();
+
+      pending.complete(Success(conversation));
+      await load;
+
+      expect(cubit.isClosed, isTrue);
+      expect(cubit.state.status, ConversationThreadStatus.loading);
+    });
+
+    test('send does not emit after the cubit is closed', () async {
+      when(
+        () => repository.getConversation('c1'),
+      ).thenAnswer((_) async => Success(conversation));
+      when(
+        () => repository.getMessages('c1'),
+      ).thenAnswer((_) async => Success<List<ChatMessage>>([message]));
+      final pending = Completer<Result<String>>();
+      when(
+        () => repository.sendMessage('c1', 'hi'),
+      ).thenAnswer((_) => pending.future);
+
+      final cubit = ConversationThreadCubit(
+        repository: repository,
+        conversationId: 'c1',
+        currentUserId: 'b1',
+      );
+      await cubit.load();
+      final send = cubit.send('hi');
+      await cubit.close();
+
+      pending.complete(const Success<String>('m2'));
+      await send;
+
+      expect(cubit.isClosed, isTrue);
+      expect(cubit.state.sending, isTrue);
+    });
+
+    test('blockPeer does not emit after the cubit is closed', () async {
+      when(
+        () => repository.getConversation('c1'),
+      ).thenAnswer((_) async => Success(conversation));
+      when(
+        () => repository.getMessages('c1'),
+      ).thenAnswer((_) async => Success<List<ChatMessage>>([message]));
+      final pending = Completer<Result<void>>();
+      when(() => repository.blockUser('c1')).thenAnswer((_) => pending.future);
+
+      final cubit = ConversationThreadCubit(
+        repository: repository,
+        conversationId: 'c1',
+        currentUserId: 'b1',
+      );
+      await cubit.load();
+      final blocked = cubit.blockPeer();
+      await cubit.close();
+
+      pending.complete(const Success<void>(null));
+      expect(await blocked, isFalse);
+      expect(cubit.isClosed, isTrue);
+      expect(cubit.state.peerBlockedByMe, isFalse);
+    });
   });
 }

@@ -96,28 +96,27 @@ void main() {
       expect(find.text(l10n.formatTypeSale), findsNothing);
     });
 
-    testWidgets(
-      'dedupes make repeated in model field on card title',
-      (tester) async {
-        await pumpLocalizedWidget(
-          tester,
-          Scaffold(
-            body: SingleChildScrollView(
-              child: ListingCard(
-                listing: _seed(
-                  make: 'Toyota',
-                  model: 'Toyota RAV4 Hybrid',
-                  title: 'Toyota RAV4 Hybrid',
-                ),
+    testWidgets('dedupes make repeated in model field on card title', (
+      tester,
+    ) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: SingleChildScrollView(
+            child: ListingCard(
+              listing: _seed(
+                make: 'Toyota',
+                model: 'Toyota RAV4 Hybrid',
+                title: 'Toyota RAV4 Hybrid',
               ),
             ),
           ),
-        );
+        ),
+      );
 
-        expect(find.text('Toyota RAV4 Hybrid'), findsOneWidget);
-        expect(find.text('Toyota Toyota RAV4 Hybrid'), findsNothing);
-      },
-    );
+      expect(find.text('Toyota RAV4 Hybrid'), findsOneWidget);
+      expect(find.text('Toyota Toyota RAV4 Hybrid'), findsNothing);
+    });
 
     testWidgets(
       'shows the exchange type badge when listing is ListingType.exchange',
@@ -172,27 +171,28 @@ void main() {
       expect(find.byKey(brandLogoDarkTintKey), findsOneWidget);
     });
 
-    testWidgets('dark mode shows porcelain backplate for Audi on listing card', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.dark(),
-          locale: const Locale('ru'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: ListingCard(listing: _seed(make: 'Audi')),
+    testWidgets(
+      'dark mode shows porcelain backplate for Audi on listing card',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark(),
+            locale: const Locale('ru'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: ListingCard(listing: _seed(make: 'Audi')),
+              ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
-      expect(find.byKey(brandLogoDarkTintKey), findsNothing);
-    });
+        expect(find.byKey(brandLogoFeedLightBackplateKey), findsOneWidget);
+        expect(find.byKey(brandLogoDarkTintKey), findsNothing);
+      },
+    );
 
     testWidgets('forwards onTap when the card is tapped', (tester) async {
       var tapped = 0;
@@ -262,6 +262,30 @@ void main() {
       },
     );
 
+    testWidgets('regular cover uses a moderately lower crop alignment', (
+      tester,
+    ) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: SingleChildScrollView(
+            child: ListingCard(
+              listing: _seed(coverImageUrl: 'https://example.com/listing.jpg'),
+            ),
+          ),
+        ),
+      );
+
+      final image = tester.widget<Image>(
+        find.descendant(
+          of: find.byType(ListingCoverImage),
+          matching: find.byType(Image),
+        ),
+      );
+      expect(image.fit, BoxFit.cover);
+      expect(image.alignment, const Alignment(0, 0.45));
+    });
+
     testWidgets('featured variant renders a 4:3 cover, keeps the region badge, '
         'and still drops the exchange/type badge', (tester) async {
       await pumpLocalizedWidget(
@@ -289,6 +313,29 @@ void main() {
       );
       expect(find.text('2016'), findsOneWidget);
       expect(find.text('Tiraspol'), findsOneWidget);
+    });
+
+    testWidgets('featured cover keeps center crop alignment', (tester) async {
+      await pumpLocalizedWidget(
+        tester,
+        Scaffold(
+          body: SingleChildScrollView(
+            child: ListingCard(
+              listing: _seed(coverImageUrl: 'https://example.com/listing.jpg'),
+              variant: ListingCardVariant.featured,
+            ),
+          ),
+        ),
+      );
+
+      final image = tester.widget<Image>(
+        find.descendant(
+          of: find.byType(ListingCoverImage),
+          matching: find.byType(Image),
+        ),
+      );
+      expect(image.fit, BoxFit.cover);
+      expect(image.alignment, Alignment.center);
     });
 
     testWidgets(

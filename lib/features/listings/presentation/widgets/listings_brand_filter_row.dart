@@ -21,10 +21,10 @@ class ListingsBrandFilterRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 74,
+      height: 62,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(20, 8, 24, 8),
+        padding: const EdgeInsets.fromLTRB(20, 6, 24, 6),
         itemCount: kListingBrandFeedQuickFilterCatalog.length + 1,
         separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
@@ -103,12 +103,12 @@ class _BrandTile extends StatelessWidget {
 
   static const String _allBrandsAsset = 'assets/categories/svg/all_brands.svg';
 
-  static const double _size = 54;
-  static const double _logoSize = 34;
-  static const double _allBrandsIconSize = 36;
+  static const double _size = 48;
+  static const double _logoSize = 30;
+  static const double _allBrandsIconSize = 32;
   static const double _brandTileSelectedPillWidth = 20;
   static const double _brandTileSelectedPillHeight = 3;
-  static const double _brandTileSelectedPillBottomInset = 5;
+  static const double _brandTileSelectedPillBottomInset = 4;
   static const double _radius = 16;
 
   @override
@@ -296,8 +296,8 @@ class _BrandMonogramMark extends StatelessWidget {
         border: Border.all(color: ring),
       ),
       child: SizedBox(
-        width: 34,
-        height: 34,
+        width: 30,
+        height: 30,
         child: Center(
           child: Text(
             monogram,

@@ -114,6 +114,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingsSearchClearTooltip => 'Очистить поиск';
 
   @override
+  String get listingsSearchSubmitTooltip => 'Найти';
+
+  @override
   String get listingsDiscoveryFilterRemoveTooltip => 'Убрать фильтр';
 
   @override
@@ -4051,6 +4054,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get statisticsSoldListings => 'Проданные';
+
+  @override
+  String get statisticsCurrentInventory => 'Сейчас';
 
   @override
   String get statisticsYourListings => 'Ваши объявления';

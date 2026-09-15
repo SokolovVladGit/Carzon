@@ -52,6 +52,7 @@
   "listingsEmpty": "Подходящих объявлений не найдено.",
   "listingsSearchHint": "Поиск объявлений",
   "listingsSearchClearTooltip": "Очистить поиск",
+  "listingsSearchSubmitTooltip": "Найти",
   "listingsDiscoveryFilterRemoveTooltip": "Убрать фильтр",
   "@listingsDiscoveryFilterRemoveTooltip": {},
   "listingsFiltersTooltip": "Фильтры",
@@ -2012,6 +2013,7 @@
   "statisticsValueUnavailable": "—",
   "statisticsActiveListings": "Активные",
   "statisticsSoldListings": "Проданные",
+  "statisticsCurrentInventory": "Сейчас",
   "statisticsYourListings": "Ваши объявления",
   "statisticsChartSemantics": "Просмотры за выбранный период: {count}",
   "@statisticsChartSemantics": {

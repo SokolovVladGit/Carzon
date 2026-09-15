@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/l10n/app_localizations_x.dart';
 import '../../domain/entities/seller_analytics_daily_point.dart';
+import 'statistics_surface.dart';
 import 'statistics_views_sparkline.dart';
 
+/// Unframed chart used inside the hero surface.
 class StatisticsChartCard extends StatelessWidget {
   const StatisticsChartCard({
     super.key,
     required this.points,
     required this.semanticLabel,
-    this.height = 112,
+    this.height = StatisticsLayout.chartPlotHeight,
   });
 
   final List<SellerAnalyticsDailyPoint> points;
@@ -18,33 +20,11 @@ class StatisticsChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: AppTheme.softCardShadow(scheme),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(26),
-          side: BorderSide(color: AppTheme.softCardBorderColor(scheme)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: AppTheme.softCardGroupedGradient(scheme),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-            child: StatisticsViewsSparkline(
-              points: points,
-              semanticLabel: semanticLabel,
-              height: height,
-            ),
-          ),
-        ),
-      ),
+    return StatisticsViewsSparkline(
+      points: points,
+      semanticLabel: semanticLabel,
+      localeName: context.l10n.localeName,
+      height: height,
     );
   }
 }

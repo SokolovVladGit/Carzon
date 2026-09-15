@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/seller_inventory_demand.dart';
 import '../../domain/entities/seller_listing_demand.dart';
 import '../../domain/entities/seller_listing_performance.dart';
 import '../bloc/seller_analytics_state.dart';
+import 'statistics_surface.dart';
 
 class StatisticsDemandCard extends StatelessWidget {
   const StatisticsDemandCard({
@@ -27,12 +27,16 @@ class StatisticsDemandCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return _DemandSectionCard(
-      cardKey: rootKey,
-      title: l10n.statisticsDemandTitle,
+    return StatisticsGroupedSurface(
+      key: rootKey,
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          StatisticsWhisperLabel(text: l10n.statisticsCurrentInventory),
+          const SizedBox(height: 6),
+          StatisticsSectionTitle(title: l10n.statisticsDemandTitle),
+          const SizedBox(height: 10),
           Text(
             l10n.statisticsDemandExplanation,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -74,11 +78,14 @@ class StatisticsTopDemandCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return _DemandSectionCard(
-      cardKey: rootKey,
-      title: l10n.statisticsDemandTop,
+    return StatisticsGroupedSurface(
+      key: rootKey,
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          StatisticsSectionTitle(title: l10n.statisticsDemandTop),
+          const SizedBox(height: 14),
           for (var i = 0; i < listings.length; i++) ...[
             if (i > 0) const SizedBox(height: 10),
             _TopDemandRow(
@@ -304,75 +311,27 @@ class _TopDemandRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   listing.displayTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                l10n.statisticsListingDemandVisible(count),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  l10n.statisticsListingDemandVisible(count),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _DemandSectionCard extends StatelessWidget {
-  const _DemandSectionCard({
-    required this.cardKey,
-    required this.title,
-    required this.child,
-  });
-
-  final Key cardKey;
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return DecoratedBox(
-      key: cardKey,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: AppTheme.softCardShadow(scheme),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(26),
-          side: BorderSide(color: AppTheme.softCardBorderColor(scheme)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: AppTheme.softCardGroupedGradient(scheme),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.08,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                child,
-              ],
-            ),
           ),
         ),
       ),
