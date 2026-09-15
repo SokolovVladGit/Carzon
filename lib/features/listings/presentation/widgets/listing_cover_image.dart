@@ -102,6 +102,7 @@ class ListingCoverImage extends StatelessWidget {
     required this.imageUrl,
     this.heroTag,
     this.heroFlightSourceTopRadius,
+    this.alignment = Alignment.center,
   });
 
   final String? imageUrl;
@@ -112,6 +113,11 @@ class ListingCoverImage extends StatelessWidget {
   /// details opens; passing [ListingCard] radii here fixes featured tiles.
   final double? heroFlightSourceTopRadius;
 
+  /// Cover crop bias. Defaults to [Alignment.center] so Listing Details
+  /// and featured feed cards stay unchanged. Regular 16:9 feed cards
+  /// pass a moderately lower alignment to keep wheels in frame.
+  final Alignment alignment;
+
   @override
   Widget build(BuildContext context) {
     final url = imageUrl?.trim();
@@ -121,6 +127,7 @@ class ListingCoverImage extends StatelessWidget {
         : Image.network(
             url,
             fit: BoxFit.cover,
+            alignment: alignment,
             gaplessPlayback: heroBound,
             errorBuilder: (_, _, _) => const _CoverPlaceholder(),
             frameBuilder: heroBound

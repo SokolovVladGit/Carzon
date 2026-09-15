@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/sellers/data/models/my_seller_profile_model.dart';
+import 'package:carzon/features/sellers/domain/entities/my_seller_profile.dart';
 import 'package:carzon/features/sellers/domain/usecases/clear_seller_avatar.dart';
 import 'package:carzon/features/sellers/domain/usecases/get_my_seller_profile.dart';
 import 'package:carzon/features/sellers/domain/usecases/update_my_seller_display_name.dart';
@@ -249,4 +251,38 @@ void main() {
           ),
     ],
   );
+
+  test('load does not emit after the cubit is closed', () async {
+    final pending = Completer<Result<MySellerProfile>>();
+    when(() => getMy()).thenAnswer((_) => pending.future);
+
+    final cubit = buildCubit();
+    final load = cubit.load();
+    await cubit.close();
+
+    pending.complete(Success(_row(dn: 'A')));
+    await load;
+
+    expect(cubit.isClosed, isTrue);
+    expect(cubit.state.initialLoading, isTrue);
+    expect(cubit.state.profile, isNull);
+  });
+
+  test('save does not emit after the cubit is closed', () async {
+    when(() => getMy()).thenAnswer((_) async => Success(_row(dn: 'A')));
+    final pending = Completer<Result<MySellerProfile>>();
+    when(() => update(any())).thenAnswer((_) => pending.future);
+
+    final cubit = buildCubit();
+    await cubit.load();
+    final save = cubit.save('B');
+    await cubit.close();
+
+    pending.complete(Success(_row(dn: 'B')));
+    await save;
+
+    expect(cubit.isClosed, isTrue);
+    expect(cubit.state.saving, isTrue);
+    expect(cubit.state.profile?.displayName, 'A');
+  });
 }

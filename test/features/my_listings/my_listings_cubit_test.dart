@@ -397,4 +397,56 @@ void main() {
       },
     );
   });
+
+  group('MyListingsCubit close-while-in-flight', () {
+    late _MockListingsRepository repo;
+    late MyListingsCubit cubit;
+
+    setUp(() {
+      repo = _MockListingsRepository();
+      when(() => repo.fetchBuyerVinReportSources(any())).thenAnswer(
+        (_) async => const Success(BuyerListingVinReportLookupResult()),
+      );
+      cubit = MyListingsCubit(
+        getListings: GetListings(repo),
+        setListingStatus: SetListingStatus(repo),
+        deleteListing: DeleteListing(repo),
+      );
+    });
+
+    test('load does not emit after the cubit is closed', () async {
+      final pending = Completer<Result<List<Listing>>>();
+      when(() => repo.getListings(any())).thenAnswer((_) => pending.future);
+
+      final load = cubit.load('s1');
+      await cubit.close();
+
+      pending.complete(Success([_listing('l1', ListingStatus.active)]));
+      await load;
+
+      expect(cubit.isClosed, isTrue);
+      expect(cubit.state.status, MyListingsStatus.loading);
+    });
+
+    test('updateStatus does not emit after the cubit is closed', () async {
+      when(() => repo.getListings(any())).thenAnswer(
+        (_) async => Success([_listing('l1', ListingStatus.active)]),
+      );
+      final pending = Completer<Result<Listing>>();
+      when(
+        () => repo.updateStatus('l1', ListingStatus.sold),
+      ).thenAnswer((_) => pending.future);
+
+      await cubit.load('s1');
+      final update = cubit.updateStatus('l1', ListingStatus.sold);
+      await cubit.close();
+
+      pending.complete(Success(_listing('l1', ListingStatus.sold)));
+      await update;
+
+      expect(cubit.isClosed, isTrue);
+      expect(cubit.state.pendingStatusIds, {'l1'});
+      expect(cubit.state.items.single.status, ListingStatus.active);
+    });
+  });
 }

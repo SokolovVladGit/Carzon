@@ -22,6 +22,7 @@ class ChangePasswordCubit extends Cubit<ChangePasswordState> {
     required String newPassword,
     required String confirmPassword,
   }) async {
+    if (isClosed) return;
     if (state.status == ChangePasswordStatus.submitting) {
       return;
     }
@@ -62,6 +63,7 @@ class ChangePasswordCubit extends Cubit<ChangePasswordState> {
       email: email,
       password: currentPassword,
     );
+    if (isClosed) return;
     final signInFailure = verified.fold<Object?>(
       (failure) => failure,
       (_) => null,
@@ -76,6 +78,7 @@ class ChangePasswordCubit extends Cubit<ChangePasswordState> {
     }
 
     final updated = await _updatePassword(newPassword: newPassword);
+    if (isClosed) return;
     updated.fold(
       (_) => emit(
         const ChangePasswordState.failure(

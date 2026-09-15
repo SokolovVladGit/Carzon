@@ -29,10 +29,12 @@ class MyListingsCubit extends Cubit<MyListingsState> {
   int _errorSeq = 0;
 
   Future<void> load(String sellerId) async {
+    if (isClosed) return;
     emit(const MyListingsState.loading());
     final result = await _getListings(
       ListingsQuery(sellerId: sellerId, page: 0, pageSize: _pageSize),
     );
+    if (isClosed) return;
     result.fold(
       (_) => emit(const MyListingsState.failure()),
       (items) => emit(MyListingsState.success(items)),
@@ -45,6 +47,7 @@ class MyListingsCubit extends Cubit<MyListingsState> {
   /// On failure a one-shot [ActionError] is emitted for the page to
   /// display via snackbar.
   Future<void> updateStatus(String listingId, ListingStatus newStatus) async {
+    if (isClosed) return;
     if (state.pendingStatusIds.contains(listingId)) return;
     final existing = state.items.any(
       (l) => l.id == listingId && l.status == newStatus,
@@ -56,6 +59,7 @@ class MyListingsCubit extends Cubit<MyListingsState> {
     );
 
     final result = await _setListingStatus(listingId, newStatus);
+    if (isClosed) return;
     final nextPending = {...state.pendingStatusIds}..remove(listingId);
 
     result.fold(
@@ -89,6 +93,7 @@ class MyListingsCubit extends Cubit<MyListingsState> {
   /// a no-op, and success removes the listing from [state.items] while
   /// failure surfaces a one-shot [ActionError] for the page snackbar.
   Future<void> deleteListing(String listingId) async {
+    if (isClosed) return;
     if (state.pendingDeleteIds.contains(listingId)) return;
     if (!state.items.any((l) => l.id == listingId)) return;
 
@@ -97,6 +102,7 @@ class MyListingsCubit extends Cubit<MyListingsState> {
     );
 
     final result = await _deleteListing(listingId);
+    if (isClosed) return;
     final nextPending = {...state.pendingDeleteIds}..remove(listingId);
 
     result.fold(

@@ -101,5 +101,22 @@ void main() {
       verify(() => repo.requestPasswordReset('seller@example.com')).called(1);
       await cubit.close();
     });
+
+    test('submit does not emit after the cubit is closed', () async {
+      final pending = Completer<Result<void>>();
+      when(
+        () => repo.requestPasswordReset(any()),
+      ).thenAnswer((_) => pending.future);
+
+      final cubit = ForgotPasswordCubit(requestPasswordReset: useCase);
+      final submit = cubit.submit('seller@example.com');
+      await cubit.close();
+
+      pending.complete(const Success(null));
+      await submit;
+
+      expect(cubit.isClosed, isTrue);
+      expect(cubit.state, const ForgotPasswordState.submitting());
+    });
   });
 }

@@ -110,11 +110,13 @@ class ListingCard extends StatefulWidget {
   ///
   /// The image's bottom corners are square (see the ClipRRect below),
   /// so the overlap no longer needs to be ≥ image radius to hide a
-  /// curved cutout. A compact 12 px overlap keeps the panel visually
-  /// attached to the image while preserving the lower part of the
-  /// cover — important for cars framed low in the photo (plates,
-  /// wheels, stance).
-  static const double _overlap = 12;
+  /// curved cutout. An 8 px overlap keeps the panel visually attached
+  /// without covering plates / wheels / stance in the cover.
+  static const double _overlap = 8;
+
+  /// Regular 16:9 covers bias the crop slightly toward the lower body
+  /// so wheels survive `BoxFit.cover` without a full bottom alignment.
+  static const Alignment _regularCoverAlignment = Alignment(0, 0.45);
 
   /// Horizontal inset of the info panel from the card edges.
   ///
@@ -184,14 +186,15 @@ class _ListingCardState extends State<ListingCard> {
             horizontalMargin: ListingCard._panelInset,
             children: [
               // Child 0: cover image with Hero tag preserved.
-              // A 30 px transparent→black vignette painted over the
-              // bottom of the photo separates it from the panel
-              // that overlaps into this region. Kept very subtle
-              // (α 0.10) so it reads as depth, not a dark overlay.
+              // A short bottom scrim separates the photo from the
+              // overlapping panel without darkening the lower vehicle.
               _CoverStack(
                 imageRadius: imageRadius,
                 coverImageUrl: listing.coverImageUrl,
                 heroTag: listingCoverHeroTag(listing.id),
+                alignment: isFeatured
+                    ? Alignment.center
+                    : ListingCard._regularCoverAlignment,
                 parallax: widget.coverParallax,
                 flySourceKey: widget.compareFlySourceKey,
               ),
@@ -234,6 +237,7 @@ class _CoverStack extends StatelessWidget {
     required this.imageRadius,
     required this.coverImageUrl,
     required this.heroTag,
+    required this.alignment,
     this.parallax,
     this.flySourceKey,
   });
@@ -241,6 +245,7 @@ class _CoverStack extends StatelessWidget {
   final double imageRadius;
   final String? coverImageUrl;
   final Object heroTag;
+  final Alignment alignment;
   final GlobalKey? flySourceKey;
 
   /// Optional feed-scroll offset (pixels). When provided drives a
@@ -271,17 +276,15 @@ class _CoverStack extends StatelessWidget {
           imageUrl: coverImageUrl,
           heroTag: heroTag,
           heroFlightSourceTopRadius: imageRadius,
+          alignment: alignment,
         ),
         const Positioned(
           left: 0,
           right: 0,
           bottom: 0,
-          // 64 px bottom scrim lands behind the info panel's top
-          // edge (the panel overlaps the photo by 12 px) and fades
-          // smoothly into the middle third of the image so even
-          // photos framed low in the bottom band of the cover read
-          // cleanly into the glass.
-          height: 64,
+          // Short seam scrim behind the 8 px panel overlap. Kept
+          // well below the lower third of the cover.
+          height: 30,
           child: IgnorePointer(
             child: DecoratedBox(decoration: BoxDecoration(gradient: _scrim)),
           ),

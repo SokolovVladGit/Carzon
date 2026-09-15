@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/theme/app_theme.dart';
+import 'statistics_surface.dart';
 
 class StatisticsInterestFunnelCard extends StatelessWidget {
   const StatisticsInterestFunnelCard({
@@ -33,11 +34,13 @@ class StatisticsInterestFunnelCard extends StatelessWidget {
       inquiries,
     ].reduce((a, b) => a > b ? a : b);
 
-    return _StatisticsSectionCard(
-      cardKey: rootKey,
-      title: l10n.statisticsInterestFunnel,
+    return KeyedSubtree(
+      key: rootKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          StatisticsSectionTitle(title: l10n.statisticsInterestFunnel),
+          const SizedBox(height: 14),
           _FunnelMetricRow(
             rowKey: impressionsKey,
             label: l10n.statisticsFunnelImpressions,
@@ -96,11 +99,13 @@ class StatisticsContactActionsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return _StatisticsSectionCard(
-      cardKey: rootKey,
-      title: l10n.statisticsContactActions,
+    return KeyedSubtree(
+      key: rootKey,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          StatisticsSectionTitle(title: l10n.statisticsContactActions),
+          const SizedBox(height: 14),
           _ContactMetricRow(
             rowKey: totalKey,
             label: l10n.statisticsContactActionsTotal,
@@ -137,61 +142,6 @@ class StatisticsContactActionsCard extends StatelessWidget {
   }
 }
 
-class _StatisticsSectionCard extends StatelessWidget {
-  const _StatisticsSectionCard({
-    required this.cardKey,
-    required this.title,
-    required this.child,
-  });
-
-  final Key cardKey;
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return DecoratedBox(
-      key: cardKey,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: AppTheme.softCardShadow(scheme),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(26),
-          side: BorderSide(color: AppTheme.softCardBorderColor(scheme)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: AppTheme.softCardGroupedGradient(scheme),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.08,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                child,
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _FunnelMetricRow extends StatelessWidget {
   const _FunnelMetricRow({
     required this.rowKey,
@@ -210,6 +160,7 @@ class _FunnelMetricRow extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final fraction = maxValue <= 0 ? 0.0 : (value / maxValue).clamp(0.0, 1.0);
+    final accent = AppTheme.editorialAccentColor(scheme);
     return KeyedSubtree(
       key: rowKey,
       child: Column(
@@ -220,6 +171,8 @@ class _FunnelMetricRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -228,16 +181,17 @@ class _FunnelMetricRow extends StatelessWidget {
               Text(
                 '$value',
                 style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
           ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(4),
             child: SizedBox(
-              height: 8,
+              height: 6,
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final width = constraints.maxWidth * fraction;
@@ -245,15 +199,17 @@ class _FunnelMetricRow extends StatelessWidget {
                     children: [
                       ColoredBox(
                         color: scheme.surfaceContainerHighest.withValues(
-                          alpha: 0.7,
+                          alpha: scheme.brightness == Brightness.dark
+                              ? 0.45
+                              : 0.7,
                         ),
                         child: const SizedBox.expand(),
                       ),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: ColoredBox(
-                          color: scheme.primary.withValues(alpha: 0.72),
-                          child: SizedBox(width: width, height: 8),
+                          color: accent.withValues(alpha: 0.62),
+                          child: SizedBox(width: width, height: 6),
                         ),
                       ),
                     ],
@@ -292,6 +248,8 @@ class _ContactMetricRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: emphasize
                   ? theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w700,
@@ -305,6 +263,7 @@ class _ContactMetricRow extends StatelessWidget {
             '$value',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: emphasize ? FontWeight.w800 : FontWeight.w700,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ],

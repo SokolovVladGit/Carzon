@@ -399,13 +399,14 @@ void main() {
   testWidgets('metrics, conversion, inventory and listing rows render', (
     tester,
   ) async {
+    _useTallSurface(tester);
     final cubit = _cubit(useCase, engagement, demand);
     await tester.pumpWidget(_wrapChrome(cubit));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.statisticsMetricViews), findsOneWidget);
-    expect(find.text(l10n.statisticsMetricFavorites), findsOneWidget);
-    expect(find.text(l10n.statisticsMetricInquiries), findsOneWidget);
+    expect(find.text(l10n.statisticsMetricViews), findsWidgets);
+    expect(find.text(l10n.statisticsMetricFavorites), findsWidgets);
+    expect(find.text(l10n.statisticsMetricInquiries), findsWidgets);
     expect(find.text(l10n.statisticsMetricConversion), findsOneWidget);
     expect(find.text('12'), findsWidgets);
     expect(find.text('8.3%'), findsOneWidget);
@@ -447,9 +448,9 @@ void main() {
     await tester.pumpWidget(_wrapChrome(cubit));
     await tester.pumpAndSettle();
 
-    expect(find.text(l10n.statisticsPeriod7), findsOneWidget);
-    expect(find.text(l10n.statisticsPeriod30), findsOneWidget);
-    expect(find.text(l10n.statisticsPeriod90), findsOneWidget);
+    expect(find.text(l10n.statisticsPeriod7), findsWidgets);
+    expect(find.text(l10n.statisticsPeriod30), findsWidgets);
+    expect(find.text(l10n.statisticsPeriod90), findsWidgets);
 
     await tester.tap(find.byKey(StatisticsPeriodSelector.days7Key));
     await tester.pumpAndSettle();

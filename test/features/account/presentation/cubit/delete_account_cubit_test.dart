@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/errors/failures.dart';
 import 'package:carzon/core/utils/result.dart';
@@ -41,9 +43,9 @@ void main() {
     'emits failure on server error',
     build: () => DeleteAccountCubit(deleteAccount: deleteAccount),
     act: (cubit) async {
-      when(() => deleteAccount()).thenAnswer(
-        (_) async => const FailureResult(ServerFailure('boom')),
-      );
+      when(
+        () => deleteAccount(),
+      ).thenAnswer((_) async => const FailureResult(ServerFailure('boom')));
       await cubit.submit();
     },
     expect: () => [
@@ -52,15 +54,13 @@ void main() {
         'status',
         DeleteAccountStatus.loading,
       ),
-      isA<DeleteAccountState>().having(
-        (s) => s.status,
-        'status',
-        DeleteAccountStatus.failure,
-      ).having(
-        (s) => s.failureKind,
-        'failureKind',
-        DeleteAccountFailureKind.generic,
-      ),
+      isA<DeleteAccountState>()
+          .having((s) => s.status, 'status', DeleteAccountStatus.failure)
+          .having(
+            (s) => s.failureKind,
+            'failureKind',
+            DeleteAccountFailureKind.generic,
+          ),
     ],
   );
 
@@ -68,9 +68,9 @@ void main() {
     'maps network failure kind',
     build: () => DeleteAccountCubit(deleteAccount: deleteAccount),
     act: (cubit) async {
-      when(() => deleteAccount()).thenAnswer(
-        (_) async => const FailureResult(NetworkFailure('offline')),
-      );
+      when(
+        () => deleteAccount(),
+      ).thenAnswer((_) async => const FailureResult(NetworkFailure('offline')));
       await cubit.submit();
     },
     expect: () => [
@@ -79,15 +79,13 @@ void main() {
         'status',
         DeleteAccountStatus.loading,
       ),
-      isA<DeleteAccountState>().having(
-        (s) => s.status,
-        'status',
-        DeleteAccountStatus.failure,
-      ).having(
-        (s) => s.failureKind,
-        'failureKind',
-        DeleteAccountFailureKind.network,
-      ),
+      isA<DeleteAccountState>()
+          .having((s) => s.status, 'status', DeleteAccountStatus.failure)
+          .having(
+            (s) => s.failureKind,
+            'failureKind',
+            DeleteAccountFailureKind.network,
+          ),
     ],
   );
 
@@ -120,4 +118,19 @@ void main() {
       verify(() => deleteAccount()).called(1);
     },
   );
+
+  test('submit does not emit after the cubit is closed', () async {
+    final pending = Completer<Result<void>>();
+    when(() => deleteAccount()).thenAnswer((_) => pending.future);
+
+    final cubit = DeleteAccountCubit(deleteAccount: deleteAccount);
+    final submit = cubit.submit();
+    await cubit.close();
+
+    pending.complete(const Success(null));
+    await submit;
+
+    expect(cubit.isClosed, isTrue);
+    expect(cubit.state.status, DeleteAccountStatus.loading);
+  });
 }

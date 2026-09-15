@@ -35,6 +35,7 @@
   "listingsEmpty": "Nu s-au găsit reclame adecvate.",
   "listingsSearchHint": "Căutați anunțuri",
   "listingsSearchClearTooltip": "Ștergeți căutarea",
+  "listingsSearchSubmitTooltip": "Căutați",
   "listingsDiscoveryFilterRemoveTooltip": "Elimină filtrul",
   "@listingsDiscoveryFilterRemoveTooltip": {},
   "listingsFiltersTooltip": "Filtre",
@@ -1880,6 +1881,7 @@
   "statisticsValueUnavailable": "—",
   "statisticsActiveListings": "Active",
   "statisticsSoldListings": "Vândute",
+  "statisticsCurrentInventory": "Acum",
   "statisticsYourListings": "Anunțurile dvs.",
   "statisticsChartSemantics": "Vizualizări în perioada selectată: {count}",
   "@statisticsChartSemantics": {

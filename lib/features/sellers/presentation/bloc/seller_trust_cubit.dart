@@ -10,8 +10,14 @@ class SellerTrustCubit extends Cubit<SellerTrustState> {
   final GetSellerPublicProfile _getSellerPublicProfile;
 
   Future<void> load(String sellerId) async {
+    if (isClosed) return;
+
     emit(const SellerTrustState.loading());
+
     final result = await _getSellerPublicProfile(sellerId);
+
+    if (isClosed) return;
+
     result.fold((_) => emit(const SellerTrustState.hidden()), (profile) {
       if (profile == null) {
         emit(const SellerTrustState.hidden());

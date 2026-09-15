@@ -48,6 +48,7 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
   /// Loads conversation and messages. When [showLoadingIndicator] is false,
   /// keeps the current UI (e.g. after send) instead of flipping to loading.
   Future<void> load({bool showLoadingIndicator = true}) async {
+    if (isClosed) return;
     if (showLoadingIndicator) {
       emit(
         state.copyWith(
@@ -74,6 +75,7 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
     _enterMainFetch();
     try {
       final convResult = await _repository.getConversation(_conversationId);
+      if (isClosed) return;
       switch (convResult) {
         case FailureResult(:final failure):
           emit(
@@ -85,6 +87,7 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
         case Success(:final value):
           final conv = value;
           final msgResult = await _repository.getMessages(_conversationId);
+          if (isClosed) return;
           switch (msgResult) {
             case FailureResult(:final failure):
               emit(
@@ -116,6 +119,7 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
   /// Pull-to-refresh: reload without full-screen loading when already showing
   /// messages; surfaces failures via [ConversationThreadState.refreshFailureKind].
   Future<void> refresh() async {
+    if (isClosed) return;
     if (state.status != ConversationThreadStatus.success) {
       await load();
       return;
@@ -131,6 +135,7 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
     _enterMainFetch();
     try {
       final convResult = await _repository.getConversation(_conversationId);
+      if (isClosed) return;
       switch (convResult) {
         case FailureResult(:final failure):
           emit(
@@ -141,6 +146,7 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
         case Success(:final value):
           final updatedConv = value;
           final msgResult = await _repository.getMessages(_conversationId);
+          if (isClosed) return;
           switch (msgResult) {
             case FailureResult(:final failure):
               emit(
@@ -167,6 +173,7 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
   /// Periodic background refresh: same reads as [refresh], no loading state,
   /// no [refreshFailureKind], no user-visible failure.
   Future<void> silentRefresh() async {
+    if (isClosed) return;
     if (state.status != ConversationThreadStatus.success) return;
     if (state.conversation == null) return;
     if (state.sending || _sendReloadInFlight) return;
@@ -176,12 +183,14 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
     _silentFetchBusy = true;
     try {
       final convResult = await _repository.getConversation(_conversationId);
+      if (isClosed) return;
       switch (convResult) {
         case FailureResult():
           return;
         case Success(:final value):
           final updatedConv = value;
           final msgResult = await _repository.getMessages(_conversationId);
+          if (isClosed) return;
           switch (msgResult) {
             case FailureResult():
               return;
@@ -237,11 +246,13 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
   }
 
   Future<void> send(String rawBody) async {
+    if (isClosed) return;
     final body = rawBody.trim();
     if (body.isEmpty || state.sending) return;
 
     emit(state.copyWith(sending: true, clearLastSendFailure: true));
     final result = await _repository.sendMessage(_conversationId, body);
+    if (isClosed) return;
     switch (result) {
       case FailureResult(:final failure):
         final kind = messagingFailureKindFrom(failure);
@@ -267,10 +278,12 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
   }
 
   Future<void> sendMessageWithAttachment(ChatAttachmentUpload upload) async {
+    if (isClosed) return;
     if (state.sending) return;
 
     emit(state.copyWith(sending: true, clearLastSendFailure: true));
     final result = await _repository.sendMessageWithAttachment(upload);
+    if (isClosed) return;
     switch (result) {
       case FailureResult(:final failure):
         final kind = messagingFailureKindFrom(failure);
@@ -306,9 +319,11 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
   }
 
   Future<bool> blockPeer() async {
+    if (isClosed) return false;
     if (state.blockActionInProgress || state.peerBlockedByMe) return false;
     emit(state.copyWith(blockActionInProgress: true));
     final result = await _repository.blockUser(_conversationId);
+    if (isClosed) return false;
     switch (result) {
       case FailureResult():
         emit(state.copyWith(blockActionInProgress: false));
@@ -329,6 +344,7 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
     required UserReportReason reason,
     String? note,
   }) async {
+    if (isClosed) return false;
     if (state.reportActionInProgress) return false;
     emit(
       state.copyWith(
@@ -341,6 +357,7 @@ class ConversationThreadCubit extends Cubit<ConversationThreadState> {
       reason: reason,
       note: note,
     );
+    if (isClosed) return false;
     switch (result) {
       case FailureResult(:final failure):
         emit(

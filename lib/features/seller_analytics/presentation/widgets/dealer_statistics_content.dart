@@ -5,9 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/floating_capsule_nav.dart';
 import '../../../listings/domain/entities/listing.dart';
-import '../../domain/entities/seller_analytics_summary.dart';
 import '../../domain/entities/seller_listing_demand.dart';
 import '../../domain/entities/seller_listing_engagement.dart';
 import '../../domain/entities/seller_listing_performance.dart';
@@ -15,12 +13,11 @@ import '../bloc/seller_analytics_cubit.dart';
 import '../bloc/seller_analytics_state.dart';
 import '../utils/statistics_demand.dart';
 import '../utils/statistics_inventory.dart';
-import 'statistics_chart_card.dart';
 import 'statistics_demand_cards.dart';
 import 'statistics_engagement_cards.dart';
 import 'statistics_listing_row.dart';
-import 'statistics_period_selector.dart';
 import 'statistics_summary_metrics.dart';
+import 'statistics_surface.dart';
 
 class DealerStatisticsContent extends StatefulWidget {
   const DealerStatisticsContent({super.key, required this.state});
@@ -56,49 +53,61 @@ class _DealerStatisticsContentState extends State<DealerStatisticsContent> {
 
     return ListView(
       key: DealerStatisticsContent.rootKey,
-      padding: const EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        kFloatingCapsuleNavClearance,
-      ),
+      padding: StatisticsLayout.pagePadding,
       children: [
         Text(
           l10n.statisticsProfessionalLabel,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: scheme.onSurfaceVariant,
             fontWeight: FontWeight.w600,
+            letterSpacing: 0.15,
           ),
         ),
-        const SizedBox(height: 12),
-        StatisticsPeriodSelector(
-          selected: widget.state.period,
-          onChanged: (next) =>
+        const SizedBox(height: 14),
+        StatisticsSummaryMetrics(
+          summary: summary,
+          points: widget.state.daily,
+          chartSemanticLabel: l10n.statisticsChartSemantics(
+            summary.periodViews,
+          ),
+          period: widget.state.period,
+          onPeriodChanged: (next) =>
               context.read<SellerAnalyticsCubit>().selectPeriod(next),
+          showInventoryTotal: true,
         ),
-        const SizedBox(height: 16),
-        StatisticsSummaryMetrics(summary: summary),
         if (widget.state.engagementSummary != null) ...[
-          const SizedBox(height: 16),
-          StatisticsInterestFunnelCard(
-            impressions: widget.state.engagementSummary!.periodImpressions,
-            views: summary.periodViews,
-            inquiries: summary.periodInquiries,
-          ),
-          const SizedBox(height: 16),
-          StatisticsContactActionsCard(
-            phoneActions: widget.state.engagementSummary!.periodPhoneActions,
-            whatsappActions:
-                widget.state.engagementSummary!.periodWhatsappActions,
-            telegramActions:
-                widget.state.engagementSummary!.periodTelegramActions,
-            shares: widget.state.engagementSummary!.periodShares,
-            contactActions:
-                widget.state.engagementSummary!.periodContactActions,
+          const SizedBox(height: StatisticsLayout.sectionGap),
+          StatisticsGroupedSurface(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                StatisticsInterestFunnelCard(
+                  impressions:
+                      widget.state.engagementSummary!.periodImpressions,
+                  views: summary.periodViews,
+                  inquiries: summary.periodInquiries,
+                ),
+                const SizedBox(height: 18),
+                const StatisticsHairline(),
+                const SizedBox(height: 18),
+                StatisticsContactActionsCard(
+                  phoneActions:
+                      widget.state.engagementSummary!.periodPhoneActions,
+                  whatsappActions:
+                      widget.state.engagementSummary!.periodWhatsappActions,
+                  telegramActions:
+                      widget.state.engagementSummary!.periodTelegramActions,
+                  shares: widget.state.engagementSummary!.periodShares,
+                  contactActions:
+                      widget.state.engagementSummary!.periodContactActions,
+                ),
+              ],
+            ),
           ),
         ],
         if (widget.state.demandStatus != SellerDemandLoadStatus.idle) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: StatisticsLayout.sectionGap),
           StatisticsDemandCard(
             status: widget.state.demandStatus,
             demand: widget.state.inventoryDemand,
@@ -130,34 +139,19 @@ class _DealerStatisticsContentState extends State<DealerStatisticsContent> {
             ),
           ],
         ],
-        const SizedBox(height: 16),
-        _DealerInventoryOverview(summary: summary),
-        const SizedBox(height: 16),
-        StatisticsChartCard(
-          points: widget.state.daily,
-          semanticLabel: l10n.statisticsChartSemantics(summary.periodViews),
-          height: 148,
-        ),
-        const SizedBox(height: 22),
-        Text(
-          l10n.statisticsTopListings,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.08,
-          ),
-        ),
-        const SizedBox(height: 10),
+        const SizedBox(height: StatisticsLayout.sectionGap),
+        StatisticsSectionTitle(title: l10n.statisticsTopListings),
+        const SizedBox(height: StatisticsLayout.listingsTitleGap),
         if (top.isEmpty)
-          _MutedCard(
+          StatisticsGroupedSurface(
             key: DealerStatisticsContent.topListingsKey,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-              child: Text(
-                l10n.statisticsTopListingsEmpty,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  height: 1.35,
-                ),
+            quiet: true,
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+            child: Text(
+              l10n.statisticsTopListingsEmpty,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                height: 1.35,
               ),
             ),
           )
@@ -175,15 +169,9 @@ class _DealerStatisticsContentState extends State<DealerStatisticsContent> {
                 ? _demandForListing
                 : null,
           ),
-        const SizedBox(height: 22),
-        Text(
-          l10n.statisticsInventoryPerformance,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.08,
-          ),
-        ),
-        const SizedBox(height: 10),
+        const SizedBox(height: StatisticsLayout.sectionGap),
+        StatisticsSectionTitle(title: l10n.statisticsInventoryPerformance),
+        const SizedBox(height: StatisticsLayout.listingsTitleGap),
         _InventoryControls(
           sort: _sort,
           filter: _filter,
@@ -210,74 +198,6 @@ class _DealerStatisticsContentState extends State<DealerStatisticsContent> {
   SellerListingDemand? _demandForListing(SellerListingPerformance listing) {
     if (listing.status != ListingStatus.active) return null;
     return widget.state.demandFor(listing.listingId);
-  }
-}
-
-class _DealerInventoryOverview extends StatelessWidget {
-  const _DealerInventoryOverview({required this.summary});
-
-  final SellerAnalyticsSummary summary;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final total = summary.activeCount + summary.soldCount;
-    return _MutedCard(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
-        child: Row(
-          children: [
-            _InventoryStat(
-              label: l10n.statisticsActiveListings,
-              value: '${summary.activeCount}',
-            ),
-            _InventoryStat(
-              label: l10n.statisticsSoldListings,
-              value: '${summary.soldCount}',
-            ),
-            _InventoryStat(
-              label: l10n.statisticsInventoryTotal,
-              value: '$total',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _InventoryStat extends StatelessWidget {
-  const _InventoryStat({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Expanded(
-      child: Semantics(
-        label: '$label $value',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
@@ -393,6 +313,7 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
     return Expanded(
       child: Semantics(
         button: true,
@@ -401,7 +322,9 @@ class _FilterChip extends StatelessWidget {
         child: Material(
           key: chipKey,
           color: selected
-              ? scheme.primary.withValues(alpha: 0.14)
+              ? AppTheme.editorialAccentColor(
+                  scheme,
+                ).withValues(alpha: isDark ? 0.22 : 0.12)
               : AppTheme.softCardSurface(scheme),
           borderRadius: BorderRadius.circular(14),
           child: InkWell(
@@ -412,8 +335,14 @@ class _FilterChip extends StatelessWidget {
               child: Center(
                 child: Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected
+                        ? scheme.onSurface
+                        : scheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -444,21 +373,12 @@ class _ListingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return _MutedCard(
-      child: Column(
-        children: [
-          for (var i = 0; i < listings.length; i++) ...[
-            if (i > 0)
-              Divider(
-                height: 1,
-                indent: 18,
-                endIndent: 18,
-                color: scheme.outline.withValues(
-                  alpha: scheme.brightness == Brightness.dark ? 0.10 : 0.06,
-                ),
-              ),
-            StatisticsListingRow(
+    return Column(
+      children: [
+        for (var i = 0; i < listings.length; i++) ...[
+          if (i > 0) const SizedBox(height: StatisticsLayout.listingGap),
+          StatisticsListingCard(
+            child: StatisticsListingRow(
               key: ValueKey<String>('$idPrefix${listings[i].listingId}'),
               listing: listings[i],
               now: now,
@@ -468,40 +388,9 @@ class _ListingsCard extends StatelessWidget {
                 AppRoutes.listingDetailsPath(listings[i].listingId),
               ),
             ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _MutedCard extends StatelessWidget {
-  const _MutedCard({super.key, required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: AppTheme.softCardShadow(scheme),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(26),
-          side: BorderSide(color: AppTheme.softCardBorderColor(scheme)),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: AppTheme.softCardGroupedGradient(scheme),
           ),
-          child: child,
-        ),
-      ),
+        ],
+      ],
     );
   }
 }

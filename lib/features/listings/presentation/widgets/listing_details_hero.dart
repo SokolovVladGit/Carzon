@@ -139,7 +139,7 @@ class _ListingHeroCarouselState extends State<ListingHeroCarousel> {
         ? Positioned(
             left: 0,
             right: 0,
-            bottom: 14,
+            bottom: 24,
             child: IgnorePointer(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,

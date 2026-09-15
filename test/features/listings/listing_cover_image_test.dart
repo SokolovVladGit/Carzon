@@ -74,5 +74,7 @@ void main() {
       ),
     );
     expect(image.gaplessPlayback, isFalse);
+    expect(image.alignment, Alignment.center);
+    expect(image.fit, BoxFit.cover);
   });
 }

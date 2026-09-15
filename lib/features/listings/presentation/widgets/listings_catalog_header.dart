@@ -20,7 +20,7 @@ class ListingsCatalogHeader extends StatelessWidget {
       height: 18,
     );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 14, 10),
+      padding: const EdgeInsets.fromLTRB(20, 6, 14, 4),
       child: Row(
         children: [
           const SizedBox(width: _mastheadSideSlot),

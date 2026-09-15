@@ -117,5 +117,23 @@ void main() {
       verify(() => repo.updatePassword('newpass1')).called(1);
       await cubit.close();
     });
+
+    test('submit does not emit after the cubit is closed', () async {
+      final pending = Completer<Result<void>>();
+      when(() => repo.updatePassword(any())).thenAnswer((_) => pending.future);
+
+      final cubit = ResetPasswordCubit(updatePassword: useCase);
+      final submit = cubit.submit(
+        newPassword: 'newpass1',
+        confirmPassword: 'newpass1',
+      );
+      await cubit.close();
+
+      pending.complete(const Success(null));
+      await submit;
+
+      expect(cubit.isClosed, isTrue);
+      expect(cubit.state, const ResetPasswordState.submitting());
+    });
   });
 }

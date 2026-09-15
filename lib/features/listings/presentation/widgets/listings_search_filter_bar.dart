@@ -27,6 +27,17 @@ class ListingsSearchFilterBar extends StatelessWidget {
   final bool active;
   final bool bellBadge;
 
+  /// Outer search pill — used to assert the typed-state end-cap is flush.
+  static const Key searchFieldKey = Key('listingsSearchField');
+
+  /// Leading magnifying-glass shown only while the query is empty.
+  static const Key leadingSearchIconKey = Key('listingsSearchLeadingIcon');
+
+  /// In-field Search action shown only while the query is non-empty.
+  static const Key submitActionKey = Key('listingsSearchSubmitAction');
+
+  static const Duration _chromeAnim = Duration(milliseconds: 180);
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -37,7 +48,7 @@ class ListingsSearchFilterBar extends StatelessWidget {
     final pillBorder = isDark
         ? scheme.outline.withValues(alpha: 0.32)
         : scheme.outlineVariant.withValues(alpha: 0.45);
-    const barHeight = 50.0;
+    const barHeight = 44.0;
     const searchRadius = 16.0;
     const filterRadius = 14.0;
     final searchShadow = BoxShadow(
@@ -76,62 +87,14 @@ class ListingsSearchFilterBar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(searchRadius),
                 boxShadow: [searchShadow],
               ),
-              child: TextField(
-                controller: searchCtrl,
-                textInputAction: TextInputAction.search,
-                style: theme.textTheme.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: l10n.listingsSearchHint,
-                  hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(
-                      alpha: isDark ? 0.72 : 0.65,
-                    ),
-                  ),
-                  prefixIcon: Icon(
-                    CarzonIcons.search,
-                    size: 20,
-                    color: scheme.onSurfaceVariant.withValues(
-                      alpha: isDark ? 0.78 : 0.7,
-                    ),
-                  ),
-                  prefixIconConstraints: const BoxConstraints(
-                    minWidth: 44,
-                    minHeight: 44,
-                  ),
-                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: searchCtrl,
-                    builder: (context, value, _) {
-                      if (value.text.isEmpty) return const SizedBox.shrink();
-                      return IconButton(
-                        icon: const Icon(CarzonIcons.close, size: 18),
-                        tooltip: l10n.listingsSearchClearTooltip,
-                        onPressed: onClearSearch,
-                      );
-                    },
-                  ),
-                  filled: true,
-                  fillColor: fill,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 13,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(searchRadius),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(searchRadius),
-                    borderSide: BorderSide(color: pillBorder),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(searchRadius),
-                    borderSide: BorderSide(
-                      color: scheme.primary.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-                onSubmitted: onSearchSubmitted,
+              child: _ListingsSearchField(
+                searchCtrl: searchCtrl,
+                fill: fill,
+                pillBorder: pillBorder,
+                searchRadius: searchRadius,
+                barHeight: barHeight,
+                onSearchSubmitted: onSearchSubmitted,
+                onClearSearch: onClearSearch,
               ),
             ),
           ),
@@ -196,6 +159,308 @@ class ListingsSearchFilterBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ListingsSearchField extends StatefulWidget {
+  const _ListingsSearchField({
+    required this.searchCtrl,
+    required this.fill,
+    required this.pillBorder,
+    required this.searchRadius,
+    required this.barHeight,
+    required this.onSearchSubmitted,
+    required this.onClearSearch,
+  });
+
+  final TextEditingController searchCtrl;
+  final Color fill;
+  final Color pillBorder;
+  final double searchRadius;
+  final double barHeight;
+  final ValueChanged<String> onSearchSubmitted;
+  final VoidCallback onClearSearch;
+
+  @override
+  State<_ListingsSearchField> createState() => _ListingsSearchFieldState();
+}
+
+class _ListingsSearchFieldState extends State<_ListingsSearchField> {
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode(debugLabel: 'listingsSearchField');
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _focusNode
+      ..removeListener(_onFocusChange)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    if (mounted) setState(() {});
+  }
+
+  void _submitCurrentQuery() {
+    FocusScope.of(context).unfocus();
+    widget.onSearchSubmitted(widget.searchCtrl.text);
+  }
+
+  Widget _chromeTransition(Widget child, Animation<double> animation) {
+    return FadeTransition(
+      opacity: animation,
+      child: ScaleTransition(
+        scale: Tween<double>(begin: 0.94, end: 1).animate(animation),
+        alignment: Alignment.centerRight,
+        child: child,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final l10n = context.l10n;
+    final isDark = theme.brightness == Brightness.dark;
+    final focused = _focusNode.hasFocus;
+
+    return Material(
+      key: ListingsSearchFilterBar.searchFieldKey,
+      color: widget.fill,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(widget.searchRadius),
+        side: BorderSide(
+          color: focused
+              ? scheme.primary.withValues(alpha: 0.5)
+              : widget.pillBorder,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: widget.searchCtrl,
+        builder: (context, value, _) {
+          final hasQuery = value.text.isNotEmpty;
+          return SizedBox(
+            height: widget.barHeight,
+            child: Row(
+              children: [
+                AnimatedSize(
+                  duration: ListingsSearchFilterBar._chromeAnim,
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedSwitcher(
+                    duration: ListingsSearchFilterBar._chromeAnim,
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: ScaleTransition(
+                          scale: Tween<double>(
+                            begin: 0.88,
+                            end: 1,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: hasQuery
+                        ? const SizedBox(
+                            key: ValueKey<String>('listingsSearchLeadingPad'),
+                            width: 14,
+                            height: 44,
+                          )
+                        : SizedBox(
+                            key: const ValueKey<String>(
+                              'listingsSearchLeadingSlot',
+                            ),
+                            width: 44,
+                            height: 44,
+                            child: Icon(
+                              CarzonIcons.search,
+                              key: ListingsSearchFilterBar.leadingSearchIconKey,
+                              size: 20,
+                              color: scheme.onSurfaceVariant.withValues(
+                                alpha: isDark ? 0.78 : 0.7,
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: widget.searchCtrl,
+                    focusNode: _focusNode,
+                    textInputAction: TextInputAction.search,
+                    style: theme.textTheme.bodyMedium,
+                    decoration: InputDecoration(
+                      hintText: l10n.listingsSearchHint,
+                      hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant.withValues(
+                          alpha: isDark ? 0.72 : 0.65,
+                        ),
+                      ),
+                      isDense: true,
+                      filled: false,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onSubmitted: (_) => _submitCurrentQuery(),
+                  ),
+                ),
+                AnimatedSize(
+                  duration: ListingsSearchFilterBar._chromeAnim,
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.centerRight,
+                  child: AnimatedSwitcher(
+                    duration: ListingsSearchFilterBar._chromeAnim,
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: _chromeTransition,
+                    child: hasQuery
+                        ? _SearchTypedSuffix(
+                            key: const ValueKey<String>(
+                              'listingsSearchTypedSuffix',
+                            ),
+                            onClear: widget.onClearSearch,
+                            onSubmit: _submitCurrentQuery,
+                            clearTooltip: l10n.listingsSearchClearTooltip,
+                            submitTooltip: l10n.listingsSearchSubmitTooltip,
+                            fill: widget.fill,
+                            scheme: scheme,
+                            isDark: isDark,
+                          )
+                        : const SizedBox(
+                            key: ValueKey<String>('listingsSearchEmptyPad'),
+                            width: 14,
+                            height: 44,
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SearchTypedSuffix extends StatelessWidget {
+  const _SearchTypedSuffix({
+    super.key,
+    required this.onClear,
+    required this.onSubmit,
+    required this.clearTooltip,
+    required this.submitTooltip,
+    required this.fill,
+    required this.scheme,
+    required this.isDark,
+  });
+
+  final VoidCallback onClear;
+  final VoidCallback onSubmit;
+  final String clearTooltip;
+  final String submitTooltip;
+  final Color fill;
+  final ColorScheme scheme;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(
+            CarzonIcons.close,
+            size: 14,
+            color: scheme.onSurfaceVariant.withValues(
+              alpha: isDark ? 0.62 : 0.5,
+            ),
+          ),
+          tooltip: clearTooltip,
+          visualDensity: VisualDensity.compact,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+          onPressed: onClear,
+        ),
+        _SearchEndCap(
+          onSubmit: onSubmit,
+          submitTooltip: submitTooltip,
+          fill: fill,
+          scheme: scheme,
+          isDark: isDark,
+        ),
+      ],
+    );
+  }
+}
+
+class _SearchEndCap extends StatelessWidget {
+  const _SearchEndCap({
+    required this.onSubmit,
+    required this.submitTooltip,
+    required this.fill,
+    required this.scheme,
+    required this.isDark,
+  });
+
+  final VoidCallback onSubmit;
+  final String submitTooltip;
+  final Color fill;
+  final ColorScheme scheme;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = AppTheme.editorialAccentColor(scheme);
+    final capFill = Color.alphaBlend(
+      accent.withValues(alpha: isDark ? 0.14 : 0.06),
+      fill,
+    );
+    return Tooltip(
+      message: submitTooltip,
+      child: Material(
+        color: capFill,
+        child: InkWell(
+          key: ListingsSearchFilterBar.submitActionKey,
+          onTap: onSubmit,
+          child: SizedBox(
+            width: 40,
+            height: 44,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(
+                    color: scheme.outline.withValues(
+                      alpha: isDark ? 0.26 : 0.12,
+                    ),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: Icon(
+                CarzonIcons.search,
+                size: 18,
+                color: isDark
+                    ? accent
+                    : scheme.onSurfaceVariant.withValues(alpha: 0.82),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
