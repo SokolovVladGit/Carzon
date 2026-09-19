@@ -34,11 +34,7 @@ void main() {
     final fuelTrigger = find.byKey(
       const ValueKey<String>('listings_filter_fuel_type_pick_trigger'),
     );
-    await tester.scrollUntilVisible(
-      fuelTrigger,
-      160,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(fuelTrigger);
     await tester.tap(fuelTrigger);
     await tester.pumpAndSettle();
     final phev = find.text(l10n.listingFuelTypePlugInHybrid);

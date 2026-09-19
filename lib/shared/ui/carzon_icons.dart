@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -18,11 +19,16 @@ class CarzonIcons {
   const CarzonIcons._();
 
   // ---- Navigation ----
+  /// SF-style filled house. Lucide `home` is a thin technical outline that
+  /// reads weaker than Search / Favorites / Menu in the capsule.
+  static const IconData navHome = CupertinoIcons.house_fill;
   static const IconData navListings = LucideIcons.search;
+  static const IconData navSearch = LucideIcons.search;
   static const IconData navFavoritesOutline = LucideIcons.heart;
   static const IconData navFavoritesFilled = LucideIcons.heart;
   static const IconData navCreateOutline = LucideIcons.plusCircle;
   static const IconData navCreateFilled = LucideIcons.plusCircle;
+  static const String navCreateAsset = 'assets/icons/icon_plus.png';
   static const IconData navMyListings = LucideIcons.listChecks;
   static const IconData navProfile = LucideIcons.user;
   static const IconData navMenu = LucideIcons.menu;

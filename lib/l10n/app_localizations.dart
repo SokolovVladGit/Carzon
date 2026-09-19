@@ -212,11 +212,41 @@ abstract class AppLocalizations {
   /// **'Регион'**
   String get regionFilterLabel;
 
+  /// No description provided for @navHome.
+  ///
+  /// In ru, this message translates to:
+  /// **'Главная'**
+  String get navHome;
+
   /// No description provided for @navListings.
   ///
   /// In ru, this message translates to:
   /// **'Поиск'**
   String get navListings;
+
+  /// No description provided for @navSearchFiltersActiveSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск, фильтры активны'**
+  String get navSearchFiltersActiveSemantics;
+
+  /// No description provided for @navSearchAlertsEnabledSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск, оповещения включены'**
+  String get navSearchAlertsEnabledSemantics;
+
+  /// No description provided for @navSearchFiltersAndAlertsSemantics.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск, фильтры активны, оповещения включены'**
+  String get navSearchFiltersAndAlertsSemantics;
+
+  /// No description provided for @filtersSectionSearch.
+  ///
+  /// In ru, this message translates to:
+  /// **'Поиск'**
+  String get filtersSectionSearch;
 
   /// No description provided for @navFavorites.
   ///
@@ -5135,6 +5165,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Ввести вручную'**
   String get createListingEnterManually;
+
+  /// No description provided for @createListingManualVehicleTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать автомобиль вручную'**
+  String get createListingManualVehicleTitle;
+
+  /// No description provided for @createListingManualVehicleSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Марка, модель и год'**
+  String get createListingManualVehicleSubtitle;
+
+  /// No description provided for @createListingOrSeparator.
+  ///
+  /// In ru, this message translates to:
+  /// **'или'**
+  String get createListingOrSeparator;
 
   /// No description provided for @createListingChangeManually.
   ///

@@ -45,11 +45,7 @@ void main() {
 
   Future<void> openModel(WidgetTester tester) async {
     final field = find.byKey(const ValueKey('listings_filter_model_field'));
-    await tester.scrollUntilVisible(
-      field,
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(field);
     await tester.tap(field);
     await tester.pumpAndSettle();
   }

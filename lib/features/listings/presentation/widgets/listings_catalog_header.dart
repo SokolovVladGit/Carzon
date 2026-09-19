@@ -10,6 +10,10 @@ import 'feed_home_account_avatar_button.dart';
 class ListingsCatalogHeader extends StatelessWidget {
   const ListingsCatalogHeader({super.key});
 
+  /// Vertical padding (6+4) plus the avatar-sized row.
+  static const double pinnedExtent =
+      10 + FeedHomeAccountAvatarButton.avatarDiameter;
+
   static const double _mastheadSideSlot =
       FeedHomeAccountAvatarButton.avatarDiameter + 8;
 

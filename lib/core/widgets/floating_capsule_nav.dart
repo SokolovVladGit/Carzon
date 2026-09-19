@@ -10,14 +10,24 @@ import 'package:flutter/material.dart';
 /// and for the long-press tooltip.
 class CapsuleNavDestination {
   const CapsuleNavDestination({
-    required this.icon,
-    required this.selectedIcon,
+    this.icon,
+    this.selectedIcon,
+    this.assetIcon,
     required this.label,
     this.isEmphasized = false,
-  });
+    this.iconOverlayBuilder,
+    this.semanticsLabelBuilder,
+  }) : assert(
+         assetIcon != null || (icon != null && selectedIcon != null),
+         'CapsuleNavDestination requires IconData or assetIcon',
+       );
 
-  final IconData icon;
-  final IconData selectedIcon;
+  /// Vector glyph. Required unless [assetIcon] is set.
+  final IconData? icon;
+  final IconData? selectedIcon;
+
+  /// Untinted raster glyph (e.g. Create plus). Takes precedence over [icon].
+  final String? assetIcon;
 
   /// Accessibility label. Not rendered as visible text — the capsule
   /// is icon-only — but surfaced via [Semantics] and a [Tooltip] so
@@ -29,6 +39,13 @@ class CapsuleNavDestination {
   /// "Sell" destination). Translated into a slightly larger icon size;
   /// no loud accent, no FAB — see Pass 1.5 guidelines.
   final bool isEmphasized;
+
+  /// Optional overlay stacked on the 44×44 icon target (badges).
+  /// Must be IgnorePointer if taps should still select the tab.
+  final WidgetBuilder? iconOverlayBuilder;
+
+  /// Optional dynamic VoiceOver label. Falls back to [label].
+  final String Function(BuildContext context)? semanticsLabelBuilder;
 }
 
 /// Vertical clearance (in logical pixels) that the floating capsule
@@ -47,6 +64,34 @@ class CapsuleNavDestination {
 /// this constant to their bottom scroll padding so the last row is
 /// not obscured by the floating nav.
 const double kFloatingCapsuleNavClearance = 96.0;
+
+/// Raster Create glyph inside the capsule. Untinted; always [kCapsuleNavCreateAssetSize].
+const Key kCapsuleNavCreateAssetKey = ValueKey<Object>(
+  'capsule_nav_create_asset',
+);
+
+/// Visual size of the Create plus. Same selected and unselected — Create
+/// is an action, not a browse tab, so it does not grow or earn a pill.
+const double kCapsuleNavCreateAssetSize = 34;
+
+/// 44×44 selected chrome for normal destinations (Home / Search / Favorites / Menu).
+const double kCapsuleNavSelectedChromeExtent = 44;
+
+/// Corner radius of the shared selected pill.
+const double kCapsuleNavSelectedChromeRadius = 14;
+
+/// Active icon tint for normal destinations. Same token Home already uses.
+Color capsuleNavActiveIconColor(ColorScheme scheme) => scheme.primary;
+
+/// Inactive icon tint for normal destinations.
+Color capsuleNavInactiveIconColor(ColorScheme scheme, {required bool isDark}) {
+  return scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.62 : 0.55);
+}
+
+/// Light-blue selected pill for normal destinations. Create never uses this.
+Color capsuleNavSelectedPillColor(ColorScheme scheme, {required bool isDark}) {
+  return scheme.primary.withValues(alpha: isDark ? 0.18 : 0.10);
+}
 
 /// Premium, label-less floating capsule bottom navigation (Pass 1.5).
 ///
@@ -207,32 +252,36 @@ class _CapsuleNavItemState extends State<_CapsuleNavItem> {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // Pass 1.9: the active tab now reads primarily through color —
-    // the icon shifts to `primary` and earns a whisper primary pill
-    // behind it. Inactive icons stay readable (not ghosted) but
-    // clearly secondary, at ~0.55 onSurfaceVariant opacity.
-    final activeIconColor = scheme.primary;
-    final inactiveIconColor = scheme.onSurfaceVariant.withValues(
-      alpha: isDark ? 0.62 : 0.55,
-    );
-    final iconColor = widget.selected ? activeIconColor : inactiveIconColor;
-
-    final pillColor = widget.selected
-        ? scheme.primary.withValues(alpha: isDark ? 0.18 : 0.10)
+    // Normal tabs share one selected system (Home is the reference):
+    // inactive = muted gray, no pill; active = primary + light-blue pill.
+    // Create (assetIcon) is the intentional exception: native blue plus,
+    // no selected chrome.
+    final isCreateAction = widget.destination.assetIcon != null;
+    final showSelectedChrome = widget.selected && !isCreateAction;
+    final iconColor = showSelectedChrome
+        ? capsuleNavActiveIconColor(scheme)
+        : capsuleNavInactiveIconColor(scheme, isDark: isDark);
+    final pillColor = showSelectedChrome
+        ? capsuleNavSelectedPillColor(scheme, isDark: isDark)
         : Colors.transparent;
 
-    // Pass 2.0 bumps the selected icon +1 px so the active tab
-    // reads stronger without turning the capsule into a FAB; the
-    // emphasized "Sell" destination still gains another +2 px on
-    // top of that.
-    final iconSize = widget.destination.isEmphasized
+    // Vector tabs: 22 / selected 23. Emphasized vector: 24 / 25.
+    // Create PNG stays 34 selected and unselected.
+    final iconSize = isCreateAction
+        ? kCapsuleNavCreateAssetSize
+        : widget.destination.isEmphasized
         ? (widget.selected ? 25.0 : 24.0)
         : (widget.selected ? 23.0 : 22.0);
+
+    final semanticsLabel =
+        widget.destination.semanticsLabelBuilder?.call(context) ??
+        widget.destination.label;
+    final overlay = widget.destination.iconOverlayBuilder?.call(context);
 
     return Semantics(
       button: true,
       selected: widget.selected,
-      label: widget.destination.label,
+      label: semanticsLabel,
       container: true,
       child: Tooltip(
         message: widget.destination.label,
@@ -251,28 +300,68 @@ class _CapsuleNavItemState extends State<_CapsuleNavItem> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOut,
-                // 44×44 rounded-square highlight (radius 14) —
-                // lands in the 42–46 target for the active tab's
-                // soft pill and pairs visually with the brand-row
-                // tiles used elsewhere on the feed.
-                width: 44,
-                height: 44,
+                // Shared 44×44 rounded-square highlight for normal tabs.
+                width: kCapsuleNavSelectedChromeExtent,
+                height: kCapsuleNavSelectedChromeExtent,
                 decoration: BoxDecoration(
                   color: pillColor,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(
+                    kCapsuleNavSelectedChromeRadius,
+                  ),
                 ),
-                child: Icon(
-                  widget.selected
-                      ? widget.destination.selectedIcon
-                      : widget.destination.icon,
-                  size: iconSize,
-                  color: iconColor,
+                child: Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    _CapsuleNavGlyph(
+                      destination: widget.destination,
+                      selected: widget.selected,
+                      size: iconSize,
+                      color: iconColor,
+                    ),
+                    if (overlay != null) Positioned.fill(child: overlay),
+                  ],
                 ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CapsuleNavGlyph extends StatelessWidget {
+  const _CapsuleNavGlyph({
+    required this.destination,
+    required this.selected,
+    required this.size,
+    required this.color,
+  });
+
+  final CapsuleNavDestination destination;
+  final bool selected;
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final asset = destination.assetIcon;
+    if (asset != null) {
+      return Image.asset(
+        asset,
+        key: kCapsuleNavCreateAssetKey,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        gaplessPlayback: true,
+      );
+    }
+    return Icon(
+      selected ? destination.selectedIcon! : destination.icon!,
+      size: size,
+      color: color,
     );
   }
 }

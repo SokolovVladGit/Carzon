@@ -24,6 +24,7 @@ bool compareTrayUsesBottomNavClearance(String location) {
   final path = Uri.parse(location).path;
   const withNav = <String>{
     AppRoutes.listings,
+    AppRoutes.search,
     AppRoutes.favorites,
     AppRoutes.createListing,
     AppRoutes.menu,

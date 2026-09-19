@@ -69,7 +69,23 @@ class AppLocalizationsRu extends AppLocalizations {
   String get regionFilterLabel => 'Регион';
 
   @override
+  String get navHome => 'Главная';
+
+  @override
   String get navListings => 'Поиск';
+
+  @override
+  String get navSearchFiltersActiveSemantics => 'Поиск, фильтры активны';
+
+  @override
+  String get navSearchAlertsEnabledSemantics => 'Поиск, оповещения включены';
+
+  @override
+  String get navSearchFiltersAndAlertsSemantics =>
+      'Поиск, фильтры активны, оповещения включены';
+
+  @override
+  String get filtersSectionSearch => 'Поиск';
 
   @override
   String get navFavorites => 'Избранное';
@@ -2846,6 +2862,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get createListingEnterManually => 'Ввести вручную';
+
+  @override
+  String get createListingManualVehicleTitle => 'Выбрать автомобиль вручную';
+
+  @override
+  String get createListingManualVehicleSubtitle => 'Марка, модель и год';
+
+  @override
+  String get createListingOrSeparator => 'или';
 
   @override
   String get createListingChangeManually => 'Изменить вручную';

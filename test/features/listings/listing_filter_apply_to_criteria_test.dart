@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('maps apply result to criteria and preserves search', () {
     const result = ListingsFilterApplyResult.apply(
+      search: '  xdrive  ',
       make: 'BMW',
       model: null,
       minYear: null,
@@ -27,10 +28,7 @@ void main() {
       drivetrain: ListingDrivetrain.rwd,
       priceCurrencyFilter: ListingPriceCurrencyFilter.usd,
     );
-    final c = listingDiscoveryCriteriaFromFilterApply(
-      result,
-      preservedSearch: '  xdrive  ',
-    );
+    final c = listingDiscoveryCriteriaFromFilterApply(result);
     expect(c.search, 'xdrive');
     expect(c.make, 'BMW');
     expect(c.city, 'Кишинёв');
@@ -43,19 +41,43 @@ void main() {
     expect(c.priceCurrencyFilter, ListingPriceCurrencyFilter.usd);
   });
 
-  test(
-    'clear result maps baseline; preservedSearch applies only to search',
-    () {
-      const result = ListingsFilterApplyResult.clear();
-      final c = listingDiscoveryCriteriaFromFilterApply(
-        result,
-        preservedSearch: '  diesel  ',
-      );
-      expect(c.search, 'diesel');
-      expect(c.make, isNull);
-      expect(c.minPrice, isNull);
-    },
-  );
+  test('clear result maps baseline and drops search', () {
+    const result = ListingsFilterApplyResult.clear();
+    final c = listingDiscoveryCriteriaFromFilterApply(
+      result,
+      preservedSearch: '  diesel  ',
+    );
+    expect(c.search, isNull);
+    expect(c.make, isNull);
+    expect(c.minPrice, isNull);
+  });
+
+  test('apply result search wins over preservedSearch fallback', () {
+    const result = ListingsFilterApplyResult.apply(
+      search: 'golf',
+      make: null,
+      model: null,
+      minYear: null,
+      maxYear: null,
+      minPrice: null,
+      maxPrice: null,
+      maxMileage: null,
+      city: null,
+      typeFilter: ListingTypeFilter.any,
+      sort: ListingSortOption.newestFirst,
+      region: MarketRegionFilter.both,
+      bodyType: null,
+      fuelType: null,
+      transmissionType: null,
+      drivetrain: null,
+      priceCurrencyFilter: ListingPriceCurrencyFilter.any,
+    );
+    final c = listingDiscoveryCriteriaFromFilterApply(
+      result,
+      preservedSearch: 'stale',
+    );
+    expect(c.search, 'golf');
+  });
 
   test('plug_in_hybrid fuel maps and variant stays out of criteria', () {
     const result = ListingsFilterApplyResult.apply(

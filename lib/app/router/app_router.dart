@@ -19,6 +19,7 @@ import '../../features/legal/presentation/models/legal_document_content.dart';
 import '../../features/listings/presentation/pages/listing_details_page.dart';
 import '../../features/listings/domain/entities/listing_discovery_criteria.dart';
 import '../../features/listings/presentation/pages/listings_page.dart';
+import '../../features/listings/presentation/pages/listings_search_page.dart';
 import '../../features/menu/presentation/pages/menu_page.dart';
 import '../../features/messaging/presentation/pages/blocked_users_page.dart';
 import '../../features/messaging/presentation/pages/conversation_thread_page.dart';
@@ -42,6 +43,7 @@ class AppRoutes {
   static const resetPassword = '/reset-password';
   static const changePassword = '/change-password';
   static const listings = '/';
+  static const search = '/search';
   static const listingDetails = '/listings/:id';
   static const editListing = '/listings/:id/edit';
   static const createListing = '/create-listing';
@@ -103,12 +105,11 @@ class ListingDetailsExtra {
 }
 
 /// Pass with [AppRoutes.listings] `extra` when opening feed with predefined
-/// discovery (e.g. filter-alert preview).
+/// discovery (e.g. filter-alert preview, Search apply).
 ///
-/// [openFilterSheetOnEntry] auto-opens the catalog filter sheet after the
-/// feed renders. Used by the alert management screen so "Edit in catalog"
-/// drops the user directly into the catalog filter UX with the saved
-/// criteria seeded.
+/// [openFilterSheetOnEntry] hydrates Home then immediately opens `/search`
+/// seeded with [snapshot]. Used by the alert management screen so
+/// "Edit in catalog" lands on the Search criteria page.
 class ListingsFeedLaunch {
   const ListingsFeedLaunch({
     required this.snapshot,
@@ -146,6 +147,14 @@ class AppRouter {
             final extra = state.extra;
             final launch = extra is ListingsFeedLaunch ? extra : null;
             return ListingsPage(feedLaunch: launch);
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.search,
+          builder: (_, state) {
+            final extra = state.extra;
+            final seed = extra is ListingDiscoveryCriteria ? extra : null;
+            return ListingsSearchPage(initialCriteria: seed);
           },
         ),
         GoRoute(

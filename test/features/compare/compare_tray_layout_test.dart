@@ -46,6 +46,7 @@ void main() {
   group('compareTrayUsesBottomNavClearance', () {
     test('true for top-level routes with floating nav', () {
       expect(compareTrayUsesBottomNavClearance(AppRoutes.favorites), isTrue);
+      expect(compareTrayUsesBottomNavClearance(AppRoutes.search), isTrue);
       expect(compareTrayUsesBottomNavClearance(AppRoutes.menu), isTrue);
       expect(compareTrayUsesBottomNavClearance(AppRoutes.statistics), isTrue);
     });

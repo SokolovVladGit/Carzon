@@ -485,7 +485,9 @@ void main() {
         await tester.scrollUntilVisible(
           find.text(l10n.commonRetry),
           300,
-          scrollable: find.byType(Scrollable).last,
+          scrollable: find.byWidgetPredicate(
+            (widget) => widget is Scrollable && widget.axis == Axis.vertical,
+          ),
         );
         await tester.pump();
         expect(find.text(l10n.listingsLoadMoreFailed), findsOneWidget);
@@ -543,7 +545,9 @@ void main() {
       await tester.scrollUntilVisible(
         find.text(l10n.listingsLoadingMore),
         300,
-        scrollable: find.byType(Scrollable).last,
+        scrollable: find.byWidgetPredicate(
+          (widget) => widget is Scrollable && widget.axis == Axis.vertical,
+        ),
       );
       await tester.pump();
 
