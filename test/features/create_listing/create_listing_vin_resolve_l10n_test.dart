@@ -11,6 +11,9 @@ const _keys = [
   'createListingVehicleFound',
   'createListingConfirmVehicle',
   'createListingEnterManually',
+  'createListingManualVehicleTitle',
+  'createListingManualVehicleSubtitle',
+  'createListingOrSeparator',
   'createListingChangeManually',
   'createListingVehicleIdentifiedFromVin',
   'createListingVinChecksumHint',
@@ -43,6 +46,17 @@ void main() {
 
     expect(ru.createListingEnterManually, isNot('Enter manually'));
     expect(ro.createListingEnterManually, isNot('Enter manually'));
+    expect(ru.createListingManualVehicleTitle, 'Выбрать автомобиль вручную');
+    expect(ru.createListingManualVehicleSubtitle, 'Марка, модель и год');
+    expect(ru.createListingOrSeparator, 'или');
+    expect(ro.createListingManualVehicleTitle, 'Alegeți automobilul manual');
+    expect(ro.createListingManualVehicleSubtitle, 'Marcă, model și an');
+    expect(ro.createListingOrSeparator, 'sau');
+    expect(ru.createListingManualVehicleTitle, isNot(contains('VIN')));
+    expect(
+      ro.createListingManualVehicleTitle.toLowerCase(),
+      isNot(contains('vin')),
+    );
     expect(ru.createListingConfirmVehicle, isNot('Confirm'));
     expect(
       ro.createListingAdditionalDetails,

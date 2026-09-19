@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
+import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/entities/vehicle_resolve_result.dart';
 import '../bloc/create_listing_state.dart';
 import '../models/vin_resolve_display.dart';
@@ -37,8 +38,9 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (resolve.status) {
-      CreateListingVinResolveStatus.idle => _ManualLink(
+      CreateListingVinResolveStatus.idle => _IdleManualPath(
         l10n: l10n,
+        theme: theme,
         enabled: enabled,
         onPressed: onEnterManual,
       ),
@@ -69,8 +71,9 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
         highlight: _partialHighlight(resolve.suggestion?.vehicle),
         highlightKey: const ValueKey('create_listing_vin_partial_make'),
         body: l10n.createListingVinPartial,
-        child: _ManualLink(
+        child: _ManualVehicleAction(
           l10n: l10n,
+          theme: theme,
           enabled: enabled,
           onPressed: onEnterManual,
         ),
@@ -80,8 +83,9 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
         theme: theme,
         title: l10n.createListingVinNoData,
         body: l10n.createListingVinMayMiss,
-        child: _ManualLink(
+        child: _ManualVehicleAction(
           l10n: l10n,
+          theme: theme,
           enabled: enabled,
           onPressed: onEnterManual,
         ),
@@ -91,9 +95,8 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
         theme: theme,
         title: l10n.createListingVinResolverFailed,
         body: l10n.createListingVinMayMiss,
-        child: Wrap(
-          spacing: 4,
-          runSpacing: 0,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CreateListingSecondaryAction(
               key: const ValueKey('create_listing_vin_retry'),
@@ -101,7 +104,12 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
               enabled: enabled,
               onPressed: onRetry,
             ),
-            _ManualLink(l10n: l10n, enabled: enabled, onPressed: onEnterManual),
+            _ManualVehicleAction(
+              l10n: l10n,
+              theme: theme,
+              enabled: enabled,
+              onPressed: onEnterManual,
+            ),
           ],
         ),
       ),
@@ -110,8 +118,9 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
         theme: theme,
         title: null,
         body: l10n.createListingVinChecksumHint,
-        child: _ManualLink(
+        child: _ManualVehicleAction(
           l10n: l10n,
+          theme: theme,
           enabled: enabled,
           onPressed: onEnterManual,
         ),
@@ -181,26 +190,152 @@ class _StatusText extends StatelessWidget {
   }
 }
 
-class _ManualLink extends StatelessWidget {
-  const _ManualLink({
+class _IdleManualPath extends StatelessWidget {
+  const _IdleManualPath({
     required this.l10n,
+    required this.theme,
     required this.enabled,
     required this.onPressed,
   });
 
   final AppLocalizations l10n;
+  final ThemeData theme;
   final bool enabled;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: CreateListingSecondaryAction(
-        key: const ValueKey('create_listing_enter_manually'),
-        label: l10n.createListingEnterManually,
+    final muted = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.72),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.2,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 12, bottom: 2),
+          child: Text(
+            l10n.createListingOrSeparator,
+            textAlign: TextAlign.center,
+            style: muted,
+          ),
+        ),
+        _ManualVehicleAction(
+          l10n: l10n,
+          theme: theme,
+          enabled: enabled,
+          onPressed: onPressed,
+        ),
+      ],
+    );
+  }
+}
+
+class _ManualVehicleAction extends StatelessWidget {
+  const _ManualVehicleAction({
+    required this.l10n,
+    required this.theme,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final AppLocalizations l10n;
+  final ThemeData theme;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+    final title = l10n.createListingManualVehicleTitle;
+    final subtitle = l10n.createListingManualVehicleSubtitle;
+    final iconColor = createListingContactIconColor(theme);
+    final fill = Color.alphaBlend(
+      cs.primary.withValues(alpha: light ? 0.055 : 0.12),
+      cs.surface,
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Semantics(
+        button: true,
         enabled: enabled,
-        onPressed: onPressed,
+        label: '$title. $subtitle',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: const ValueKey('create_listing_enter_manually'),
+            onTap: enabled ? onPressed : null,
+            borderRadius: BorderRadius.circular(kCreateListingFieldRadius),
+            child: Ink(
+              decoration: BoxDecoration(
+                color: fill,
+                borderRadius: BorderRadius.circular(kCreateListingFieldRadius),
+                border: Border.all(
+                  color: createListingFieldBorder(theme, focused: false),
+                  width: 0.8,
+                ),
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 54),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
+                  child: Row(
+                    children: [
+                      Icon(
+                        CarzonIcons.coverCarPlaceholder,
+                        size: 20,
+                        color: iconColor,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ExcludeSemantics(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                title,
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: -0.15,
+                                  height: 1.2,
+                                  color: cs.onSurface.withValues(
+                                    alpha: light ? 0.92 : 0.96,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                subtitle,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: cs.onSurfaceVariant.withValues(
+                                    alpha: light ? 0.72 : 0.78,
+                                  ),
+                                  height: 1.25,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        CarzonIcons.chevronRight,
+                        size: 18,
+                        color: createListingPickerChevronColor(
+                          theme,
+                          enabled: enabled,
+                          empty: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

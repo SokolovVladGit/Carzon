@@ -38,11 +38,7 @@ Future<void> _scrollFilterControlIntoView(
   WidgetTester tester,
   Finder control,
 ) async {
-  await tester.scrollUntilVisible(
-    control,
-    120,
-    scrollable: find.byType(Scrollable).first,
-  );
+  await tester.ensureVisible(control);
   await tester.pumpAndSettle();
 }
 
@@ -201,11 +197,7 @@ void main() {
     final currencyControl = find.byKey(
       const ValueKey<String>('listings_filter_currency_segmented'),
     );
-    await tester.scrollUntilVisible(
-      currencyControl,
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(currencyControl);
     await tester.tap(find.text(l10n.filterPriceCurrencyUsd));
     await tester.pumpAndSettle();
 
@@ -455,11 +447,8 @@ void main() {
     final trigger = find.byKey(
       const ValueKey<String>('listings_filter_make_pick_trigger'),
     );
-    await tester.scrollUntilVisible(
-      trigger,
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(trigger);
+    await tester.pumpAndSettle();
     await tester.tap(trigger);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).last, customMake);
@@ -537,11 +526,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text(l10n.filterShowCars),
-      140,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(find.text(l10n.filterShowCars));
 
     await tester.tap(find.text(l10n.filterShowCars));
     await tester.pumpAndSettle();
@@ -806,11 +791,7 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.scrollUntilVisible(
-      fuelTrigger,
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(fuelTrigger);
     await tester.tap(fuelTrigger);
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.listingFuelTypeDiesel).last);
@@ -824,11 +805,7 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.scrollUntilVisible(
-      transmissionTrigger,
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(transmissionTrigger);
     await tester.tap(transmissionTrigger);
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.listingTransmissionManual).last);
@@ -842,11 +819,7 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.scrollUntilVisible(
-      drivetrainTrigger,
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(drivetrainTrigger);
     await tester.tap(drivetrainTrigger);
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.listingDrivetrainAwd).last);
@@ -860,11 +833,7 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.scrollUntilVisible(
-      bodyTrigger,
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(bodyTrigger);
     await tester.tap(bodyTrigger);
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.listingBodyTypeNotSpecified).last);
@@ -914,11 +883,7 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.scrollUntilVisible(
-      sortTrigger,
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(sortTrigger);
     await tester.tap(sortTrigger);
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.filterSortPriceHighLow).last);
@@ -959,19 +924,11 @@ void main() {
 
     expect(find.byType(FilterChip), findsNothing);
 
-    await tester.scrollUntilVisible(
-      find.text(l10n.regionMoldova),
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(find.text(l10n.regionMoldova));
     await tester.tap(find.text(l10n.regionMoldova));
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text(l10n.typeSale),
-      120,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(find.text(l10n.typeSale));
     await tester.tap(find.text(l10n.typeSale));
     await tester.pumpAndSettle();
 
@@ -1015,11 +972,7 @@ void main() {
           const ValueKey<String>('listings_filter_region_segmented'),
         );
 
-        await tester.scrollUntilVisible(
-          regionControl,
-          120,
-          scrollable: find.byType(Scrollable).first,
-        );
+        await tester.ensureVisible(regionControl);
         await tester.pumpAndSettle();
 
         for (final label in [

@@ -68,7 +68,23 @@ class AppLocalizationsRo extends AppLocalizations {
   String get regionFilterLabel => 'Regiune';
 
   @override
+  String get navHome => 'Acasă';
+
+  @override
   String get navListings => 'Căutare';
+
+  @override
+  String get navSearchFiltersActiveSemantics => 'Căutare, filtre active';
+
+  @override
+  String get navSearchAlertsEnabledSemantics => 'Căutare, alerte activate';
+
+  @override
+  String get navSearchFiltersAndAlertsSemantics =>
+      'Căutare, filtre active, alerte activate';
+
+  @override
+  String get filtersSectionSearch => 'Căutare';
 
   @override
   String get navFavorites => 'Preferate';
@@ -2852,6 +2868,15 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get createListingEnterManually => 'Introduceți manual';
+
+  @override
+  String get createListingManualVehicleTitle => 'Alegeți automobilul manual';
+
+  @override
+  String get createListingManualVehicleSubtitle => 'Marcă, model și an';
+
+  @override
+  String get createListingOrSeparator => 'sau';
 
   @override
   String get createListingChangeManually => 'Modificați manual';

@@ -1,3 +1,4 @@
+import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/domain/entities/listing_currency.dart';
 import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
 import 'package:carzon/features/listings/presentation/utils/discovery_feed_chip_labels.dart';
@@ -8,25 +9,35 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
 
+const _chipRowKey = ValueKey<String>('listingsActiveDiscoveryChipRow');
+
 void main() {
   Widget wrap({
     required ListingsState state,
     required ValueChanged<ListingsDiscoveryChipKind> onFilterRemoved,
     ThemeData? theme,
+    double? width,
   }) {
+    final strip = ListingsActiveDiscoverySummaryStrip(
+      state: state,
+      onFilterRemoved: onFilterRemoved,
+    );
     return MaterialApp(
       theme: theme ?? ThemeData.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('ru'),
       home: Scaffold(
-        body: ListingsActiveDiscoverySummaryStrip(
-          state: state,
-          onFilterRemoved: onFilterRemoved,
-        ),
+        body: width == null ? strip : SizedBox(width: width, child: strip),
       ),
     );
   }
+
+  Rect chipRowRect(WidgetTester tester) =>
+      tester.getRect(find.byKey(_chipRowKey));
+
+  Rect stripRect(WidgetTester tester) =>
+      tester.getRect(find.byType(ListingsActiveDiscoverySummaryStrip));
 
   testWidgets('active chips render a close affordance per chip', (
     tester,
@@ -203,5 +214,104 @@ void main() {
       find.byKey(const ValueKey<String>('discovery-chip-remove-make')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('one chip is centered in the available strip width', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      wrap(
+        state: const ListingsState(make: 'Skoda'),
+        onFilterRemoved: (_) {},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final row = chipRowRect(tester);
+    final strip = stripRect(tester);
+    expect(row.width, lessThan(strip.width));
+    expect(row.center.dx, closeTo(strip.center.dx, 1.5));
+  });
+
+  testWidgets('two chips are centered when they fit', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        state: const ListingsState(make: 'Skoda', search: 'Octavia'),
+        onFilterRemoved: (_) {},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final row = chipRowRect(tester);
+    final strip = stripRect(tester);
+    expect(row.width, lessThan(strip.width));
+    expect(row.center.dx, closeTo(strip.center.dx, 1.5));
+  });
+
+  testWidgets(
+    'overflowing chips stay leading-aligned and horizontally scrollable',
+    (tester) async {
+      const overflowing = ListingsState(
+        search: 'длинный поисковый запрос',
+        make: 'Mercedes-Benz',
+        model: 'G-Class',
+        minYear: 2018,
+        maxYear: 2024,
+        minPrice: 15000,
+        maxPrice: 45000,
+        city: 'Тирасполь',
+        bodyTypeFilter: ListingBodyType.suv,
+      );
+      await tester.pumpWidget(
+        wrap(state: overflowing, onFilterRemoved: (_) {}, width: 320),
+      );
+      await tester.pumpAndSettle();
+
+      final row = chipRowRect(tester);
+      final strip = stripRect(tester);
+      expect(row.width, greaterThan(strip.width));
+      expect(row.left, closeTo(strip.left + 16, 2));
+
+      final before = row.left;
+      await tester.drag(
+        find.descendant(
+          of: find.byType(ListingsActiveDiscoverySummaryStrip),
+          matching: find.byType(Scrollable),
+        ),
+        const Offset(-120, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(chipRowRect(tester).left, lessThan(before - 8));
+    },
+  );
+
+  testWidgets('removing chips can switch overflow to a centered row', (
+    tester,
+  ) async {
+    const overflowing = ListingsState(
+      search: 'длинный поисковый запрос',
+      make: 'Mercedes-Benz',
+      model: 'G-Class',
+      minYear: 2018,
+      maxYear: 2024,
+      city: 'Тирасполь',
+    );
+    const oneChip = ListingsState(make: 'Skoda');
+
+    await tester.pumpWidget(
+      wrap(state: overflowing, onFilterRemoved: (_) {}, width: 320),
+    );
+    await tester.pumpAndSettle();
+    expect(chipRowRect(tester).width, greaterThan(stripRect(tester).width));
+
+    await tester.pumpWidget(
+      wrap(state: oneChip, onFilterRemoved: (_) {}, width: 320),
+    );
+    await tester.pumpAndSettle();
+
+    final row = chipRowRect(tester);
+    final strip = stripRect(tester);
+    expect(row.width, lessThan(strip.width));
+    expect(row.center.dx, closeTo(strip.center.dx, 1.5));
   });
 }

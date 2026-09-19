@@ -23,6 +23,7 @@ class ListingsFeedEmptyState extends StatelessWidget {
     super.key,
     required this.hasFilters,
     this.includeBodyFilterEmptyHint = false,
+    this.embedInParentScroll = false,
     required this.onResetFilters,
     required this.onRefresh,
   });
@@ -32,12 +33,35 @@ class ListingsFeedEmptyState extends StatelessWidget {
   /// When [hasFilters] is true and a body-type chip is active, explains that
   /// listings without `body_type` are excluded from those filters.
   final bool includeBodyFilterEmptyHint;
+
+  /// When true, skip the inner [RefreshIndicator]/[SingleChildScrollView]
+  /// so Home can host this surface inside a parent [CustomScrollView].
+  final bool embedInParentScroll;
   final VoidCallback onResetFilters;
   final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final content = EmptyStateView(
+      icon: CarzonIcons.searchEmpty,
+      title: l10n.listingsEmptyTitle,
+      body: hasFilters
+          ? (includeBodyFilterEmptyHint
+                ? '${l10n.listingsEmptyFilteredBody}\n\n'
+                      '${l10n.listingsEmptyBodyTypeFilterNote}'
+                : l10n.listingsEmptyFilteredBody)
+          : l10n.listingsEmptyBody,
+      secondaryAction: hasFilters
+          ? EmptyStateAction(
+              label: l10n.listingsEmptyResetFilters,
+              onPressed: onResetFilters,
+            )
+          : null,
+    );
+    if (embedInParentScroll) {
+      return content;
+    }
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: LayoutBuilder(
@@ -46,22 +70,7 @@ class ListingsFeedEmptyState extends StatelessWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: EmptyStateView(
-                icon: CarzonIcons.searchEmpty,
-                title: l10n.listingsEmptyTitle,
-                body: hasFilters
-                    ? (includeBodyFilterEmptyHint
-                          ? '${l10n.listingsEmptyFilteredBody}\n\n'
-                                '${l10n.listingsEmptyBodyTypeFilterNote}'
-                          : l10n.listingsEmptyFilteredBody)
-                    : l10n.listingsEmptyBody,
-                secondaryAction: hasFilters
-                    ? EmptyStateAction(
-                        label: l10n.listingsEmptyResetFilters,
-                        onPressed: onResetFilters,
-                      )
-                    : null,
-              ),
+              child: content,
             ),
           );
         },

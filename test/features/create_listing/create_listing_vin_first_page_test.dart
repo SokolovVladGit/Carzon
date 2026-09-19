@@ -456,7 +456,10 @@ void main() {
     expect(vin.dy, lessThan(manual.dy));
     expect(manual.dy, lessThan(photos.dy));
     expect(find.text(ru.createListingVinAutofillHint), findsOneWidget);
-    expect(find.text(ru.createListingEnterManually), findsOneWidget);
+    expect(find.text(ru.createListingEnterManually), findsNothing);
+    expect(find.text(ru.createListingOrSeparator), findsOneWidget);
+    expect(find.text(ru.createListingManualVehicleTitle), findsOneWidget);
+    expect(find.text(ru.createListingManualVehicleSubtitle), findsOneWidget);
     expect(
       find.byKey(const ValueKey('create_listing_brand_field')),
       findsNothing,
@@ -759,7 +762,10 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(find.text(ro.createListingEnterManually), findsOneWidget);
+    expect(find.text(ro.createListingEnterManually), findsNothing);
+    expect(find.text(ro.createListingOrSeparator), findsOneWidget);
+    expect(find.text(ro.createListingManualVehicleTitle), findsOneWidget);
+    expect(find.text(ro.createListingManualVehicleSubtitle), findsOneWidget);
   });
 
   testWidgets('confirmed VIN identity does not show required errors', (
@@ -815,8 +821,17 @@ void main() {
   testWidgets('manual fallback remains visible', (tester) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
+    final action = find.byKey(const ValueKey('create_listing_enter_manually'));
+    expect(action, findsOneWidget);
+    expect(find.text(ru.createListingEnterManually), findsNothing);
+    expect(find.text(ru.createListingManualVehicleTitle), findsOneWidget);
+    expect(find.text(ru.createListingManualVehicleSubtitle), findsOneWidget);
     expect(
-      find.byKey(const ValueKey('create_listing_enter_manually')),
+      find.byKey(const ValueKey('create_listing_vin_field')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_scan_vin')),
       findsOneWidget,
     );
     expect(
@@ -826,6 +841,17 @@ void main() {
     expect(
       find.byKey(const ValueKey('create_listing_year_field')),
       findsNothing,
+    );
+    final actionSize = tester.getSize(action);
+    expect(actionSize.height, greaterThanOrEqualTo(44));
+    expect(actionSize.width, greaterThanOrEqualTo(44));
+    expect(
+      tester.getSemantics(action).label,
+      contains(ru.createListingManualVehicleTitle),
+    );
+    expect(
+      tester.getSemantics(action).label,
+      contains(ru.createListingManualVehicleSubtitle),
     );
     await openCreateListingManualIdentity(tester);
     expect(
@@ -834,6 +860,14 @@ void main() {
     );
     expect(
       find.byKey(const ValueKey('create_listing_year_field')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_vin_field')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_scan_vin')),
       findsOneWidget,
     );
   });
@@ -867,7 +901,8 @@ void main() {
       find.byKey(const ValueKey('create_listing_brand_field')),
       findsNothing,
     );
-    expect(find.text(ru.createListingEnterManually), findsOneWidget);
+    expect(find.text(ru.createListingEnterManually), findsNothing);
+    expect(find.text(ru.createListingManualVehicleTitle), findsOneWidget);
   });
 
   testWidgets('typed checksum-invalid VIN shows correction and can recover', (
@@ -988,7 +1023,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text(ru.createListingVinNoData), findsOneWidget);
-    expect(find.text(ru.createListingEnterManually), findsOneWidget);
+    expect(find.text(ru.createListingEnterManually), findsNothing);
+    expect(find.text(ru.createListingManualVehicleTitle), findsOneWidget);
     expect(
       find.byKey(const ValueKey('create_listing_brand_field')),
       findsOneWidget,
@@ -1049,13 +1085,19 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
     expect(find.text(ru.createListingVinAutofillHint), findsOneWidget);
-    expect(find.text(ru.createListingEnterManually), findsOneWidget);
+    expect(find.text(ru.createListingEnterManually), findsNothing);
+    expect(find.text(ru.createListingManualVehicleTitle), findsOneWidget);
+    expect(find.text(ru.createListingManualVehicleSubtitle), findsOneWidget);
+    expect(find.text(ru.createListingOrSeparator), findsOneWidget);
     expect(find.text(ru.createListingEditCharacteristics), findsOneWidget);
 
     await tester.pumpWidget(wrap(locale: const Locale('ro')));
     await tester.pumpAndSettle();
     expect(find.text(ro.createListingVinAutofillHint), findsOneWidget);
-    expect(find.text(ro.createListingEnterManually), findsOneWidget);
+    expect(find.text(ro.createListingEnterManually), findsNothing);
+    expect(find.text(ro.createListingManualVehicleTitle), findsOneWidget);
+    expect(find.text(ro.createListingManualVehicleSubtitle), findsOneWidget);
+    expect(find.text(ro.createListingOrSeparator), findsOneWidget);
     expect(find.text(ro.createListingEditCharacteristics), findsOneWidget);
   });
 

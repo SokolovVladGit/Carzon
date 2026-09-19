@@ -32,4 +32,28 @@ void main() {
 
     expect(await repo.load(), isNull);
   });
+
+  test('load returns applied snapshot before disk write completes', () async {
+    const next = ListingDiscoveryCriteria(make: 'Toyota');
+    final pending = repo.persistIfNeeded(next);
+
+    expect(await repo.load(), next);
+    await pending;
+    expect(await repo.load(), next);
+  });
+
+  test('rapid persist A then B leaves load and disk as B', () async {
+    const a = ListingDiscoveryCriteria(make: 'Audi');
+    const b = ListingDiscoveryCriteria(make: 'Toyota');
+    final first = repo.persistIfNeeded(a);
+    final second = repo.persistIfNeeded(b);
+
+    expect(await repo.load(), b);
+    await first;
+    await second;
+    expect(await repo.load(), b);
+
+    final cold = SharedPreferencesLastAppliedListingDiscoveryRepository();
+    expect(await cold.load(), b);
+  });
 }

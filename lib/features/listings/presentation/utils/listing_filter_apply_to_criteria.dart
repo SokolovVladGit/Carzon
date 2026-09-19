@@ -3,28 +3,29 @@ import '../../domain/listing_discovery_state_sync.dart';
 import '../bloc/listings_state.dart';
 import '../widgets/filters/listings_filter_apply_result.dart';
 
-/// Maps an applied filter sheet result into [ListingDiscoveryCriteria].
+/// Maps an applied filter result into [ListingDiscoveryCriteria].
 ///
-/// Search is not edited in [ListingsFilterForm]. When rebuilding alert criteria,
-/// preserve the backend snapshot's inline search via [preservedSearch].
+/// [ListingsFilterApplyResult.search] is the draft search. [preservedSearch]
+/// is a fallback for callers that still merge an external snippet (sheet bell
+/// first frame) when the result search is blank.
 ListingDiscoveryCriteria listingDiscoveryCriteriaFromFilterApply(
   ListingsFilterApplyResult result, {
   String? preservedSearch,
 }) {
+  String? resolvedSearch() {
+    final fromResult = result.search?.trim();
+    if (fromResult != null && fromResult.isNotEmpty) return fromResult;
+    final fallback = preservedSearch?.trim();
+    if (fallback != null && fallback.isNotEmpty) return fallback;
+    return null;
+  }
+
   if (result.cleared) {
-    return listingDiscoveryCriteriaFromListingsState(
-      ListingsState(
-        search: preservedSearch == null || preservedSearch.trim().isEmpty
-            ? null
-            : preservedSearch.trim(),
-      ),
-    );
+    return listingDiscoveryCriteriaFromListingsState(const ListingsState());
   }
   return listingDiscoveryCriteriaFromListingsState(
     ListingsState(
-      search: preservedSearch == null || preservedSearch.trim().isEmpty
-          ? null
-          : preservedSearch.trim(),
+      search: resolvedSearch(),
       make: result.make,
       model: result.model,
       minYear: result.minYear,

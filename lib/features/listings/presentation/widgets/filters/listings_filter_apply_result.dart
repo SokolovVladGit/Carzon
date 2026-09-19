@@ -9,6 +9,7 @@ import '../../bloc/listings_state.dart';
 /// in [listingDiscoveryCriteriaFromFilterApply].
 class ListingsFilterApplyResult {
   const ListingsFilterApplyResult.apply({
+    this.search,
     required this.make,
     required this.model,
     required this.minYear,
@@ -29,6 +30,7 @@ class ListingsFilterApplyResult {
 
   const ListingsFilterApplyResult.clear()
     : cleared = true,
+      search = null,
       make = null,
       model = null,
       minYear = null,
@@ -47,6 +49,7 @@ class ListingsFilterApplyResult {
       priceCurrencyFilter = ListingPriceCurrencyFilter.any;
 
   final bool cleared;
+  final String? search;
   final String? make;
   final String? model;
   final int? minYear;

@@ -70,6 +70,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
   /// Visual-only placeholder for nullable min/max picks (localization not used).
   static const String _boundEmptyPlaceholder = '\u2014';
 
+  late final TextEditingController _search;
   late final TextEditingController _model;
   late final TextEditingController _customBrand;
 
@@ -105,6 +106,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
   void initState() {
     super.initState();
     final w = widget.seed;
+    _search = TextEditingController(text: w.search ?? '');
     _model = TextEditingController(text: w.model ?? '');
     _customBrand = TextEditingController();
     _hydrateCatalogMake(make: w.make);
@@ -140,6 +142,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     _transmissionType = w.transmissionType;
     _drivetrain = w.drivetrain;
     _priceCurrency = w.priceCurrencyFilter;
+    _search.addListener(_onDraftChanged);
     _model.addListener(_onDraftChanged);
     _customBrand.addListener(_onDraftChanged);
     _minPrice.addListener(_onDraftChanged);
@@ -209,6 +212,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
 
   /// Draft criteria reflecting current field values (for live summary / previews).
   ListingsFilterFormSeed get draftSeed => ListingsFilterFormSeed(
+    search: _search.text.trim().isEmpty ? null : _search.text.trim(),
     make: _effectiveMakeFilter(),
     model: _effectiveModelFilter(),
     minYear: _minYearValue,
@@ -229,6 +233,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
 
   /// Resets all controls to the vanilla discovery baseline (draft only).
   void resetDraftToVanilla() {
+    _search.clear();
     _catalogMake = null;
     _customBrand.clear();
     _clearModelDraft();
@@ -257,12 +262,14 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
 
   @override
   void dispose() {
+    _search.removeListener(_onDraftChanged);
     _model.removeListener(_onDraftChanged);
     _customBrand.removeListener(_onDraftChanged);
     _minPrice.removeListener(_onDraftChanged);
     _maxPrice.removeListener(_onDraftChanged);
     _maxMileage.removeListener(_onDraftChanged);
     _city.removeListener(_onDraftChanged);
+    _search.dispose();
     _model.dispose();
     _customBrand.dispose();
     _minPriceFocus.removeListener(_syncPriceFocusDecoration);
@@ -968,6 +975,7 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
     }
 
     return ListingsFilterApplyResult.apply(
+      search: _search.text.trim().isEmpty ? null : _search.text.trim(),
       make: makeDraft,
       model: model.isEmpty ? null : model,
       minYear: minYear,
@@ -1087,6 +1095,21 @@ class ListingsFilterFormState extends State<ListingsFilterForm> {
           )
         else
           const SizedBox(height: 10),
+        ListingsFilterSection(
+          sectionIndex: '00',
+          title: l10n.filtersSectionSearch,
+          child: TextField(
+            key: const ValueKey<String>('listings_filter_search_field'),
+            controller: _search,
+            textInputAction: TextInputAction.search,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: _fieldDeco(
+              theme,
+              label: l10n.listingsSearchHint,
+              hint: l10n.listingsSearchHint,
+            ),
+          ),
+        ),
         ListingsFilterSection(
           sectionIndex: '01',
           title: l10n.filtersSectionMakeModel,

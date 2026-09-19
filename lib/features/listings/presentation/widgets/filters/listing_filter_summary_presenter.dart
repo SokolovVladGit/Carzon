@@ -40,10 +40,12 @@ class ListingsFilterSummaryView {
 
 /// Whether [draft] is the “empty configurator” baseline (no meaningful constraints).
 bool isListingsFilterDraftVanilla(ListingsFilterFormSeed draft) {
+  final search = draft.search?.trim();
   final make = draft.make?.trim();
   final model = draft.model?.trim();
   final city = draft.city?.trim();
-  return (make == null || make.isEmpty) &&
+  return (search == null || search.isEmpty) &&
+      (make == null || make.isEmpty) &&
       (model == null || model.isEmpty) &&
       draft.minYear == null &&
       draft.maxYear == null &&
@@ -119,6 +121,11 @@ ListingsFilterSummaryView buildListingsFilterSummaryView(
   }
 
   final parts = <String>[];
+
+  final search = draft.search?.trim();
+  if (search != null && search.isNotEmpty) {
+    parts.add(search);
+  }
 
   final mm = _makeModelPart(draft.make, draft.model);
   if (mm != null) parts.add(mm);

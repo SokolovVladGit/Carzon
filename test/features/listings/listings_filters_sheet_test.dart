@@ -17,6 +17,7 @@ import 'package:carzon/features/listings/presentation/cubit/browse_catalog_filte
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_browse_filter_alert_sheet_bell.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_alert_ui_constants.dart';
 import 'package:carzon/features/listings/presentation/pages/listings_page.dart';
+import 'package:carzon/features/listings/presentation/pages/listings_search_page.dart';
 import 'package:carzon/features/messaging/domain/repositories/messaging_repository.dart';
 import 'package:carzon/features/messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import 'package:carzon/features/sellers/data/models/my_seller_profile_model.dart';
@@ -64,6 +65,10 @@ Widget _host({
     initialLocation: '/',
     routes: [
       GoRoute(path: '/', builder: (_, _) => const ListingsPage()),
+      GoRoute(
+        path: AppRoutes.search,
+        builder: (_, _) => const ListingsSearchPage(),
+      ),
       GoRoute(
         path: AppRoutes.profile,
         builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
@@ -183,7 +188,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    await tester.tap(find.byTooltip(l10n.listingsFiltersTooltip));
+    await tester.tap(find.bySemanticsLabel(l10n.navListings));
     await tester.pumpAndSettle();
 
     expect(find.text(l10n.filterModel), findsWidgets);
@@ -213,7 +218,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip(ruStrings().listingsFiltersTooltip));
+    await tester.tap(find.bySemanticsLabel(ruStrings().navListings));
     await tester.pumpAndSettle();
 
     expect(
@@ -254,7 +259,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final ru = ruStrings();
-      await tester.tap(find.byTooltip(ru.listingsFiltersTooltip));
+      await tester.tap(find.bySemanticsLabel(ru.navListings));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(CatalogBrowseFilterAlertSheetBell.bellKey));

@@ -10,6 +10,7 @@ import '../../bloc/listings_state.dart';
 @immutable
 class ListingsFilterFormSeed {
   const ListingsFilterFormSeed({
+    this.search,
     required this.make,
     required this.model,
     required this.minYear,
@@ -30,6 +31,7 @@ class ListingsFilterFormSeed {
 
   factory ListingsFilterFormSeed.fromListingsState(ListingsState state) {
     return ListingsFilterFormSeed(
+      search: state.search,
       make: state.make,
       model: state.model,
       minYear: state.minYear,
@@ -49,6 +51,7 @@ class ListingsFilterFormSeed {
     );
   }
 
+  final String? search;
   final String? make;
   final String? model;
   final int? minYear;

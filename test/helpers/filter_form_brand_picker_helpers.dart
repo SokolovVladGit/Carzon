@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Vertical form ListView, not a TextField inner editable Scrollable.
+Finder listingFilterFormVerticalScrollable() {
+  return find.byWidgetPredicate(
+    (widget) =>
+        widget is Scrollable && widget.axisDirection == AxisDirection.down,
+  );
+}
+
 Future<void> pickListingFilterBrand(
   WidgetTester tester,
   String catalogEnglish,
@@ -8,20 +16,12 @@ Future<void> pickListingFilterBrand(
   final trigger = find.byKey(
     const ValueKey<String>('listings_filter_make_pick_trigger'),
   );
-  await tester.scrollUntilVisible(
-    trigger,
-    120,
-    scrollable: find.byType(Scrollable).first,
-  );
+  await tester.ensureVisible(trigger);
+  await tester.pumpAndSettle();
   await tester.tap(trigger);
   await tester.pumpAndSettle();
-  final brandTile = find.text(catalogEnglish);
-  await tester.scrollUntilVisible(
-    brandTile,
-    120,
-    scrollable: find.byType(Scrollable).last,
-  );
+  await tester.enterText(find.byType(TextField).last, catalogEnglish);
   await tester.pumpAndSettle();
-  await tester.tap(brandTile);
+  await tester.tap(find.text(catalogEnglish).last);
   await tester.pumpAndSettle();
 }

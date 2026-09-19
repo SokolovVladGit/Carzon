@@ -328,7 +328,13 @@ void main() {
         findsNothing,
       );
       expect(find.text(l10n.createListingChooseBrand), findsNothing);
-      expect(find.text(l10n.createListingEnterManually), findsOneWidget);
+      expect(find.text(l10n.createListingEnterManually), findsNothing);
+      expect(find.text(l10n.createListingManualVehicleTitle), findsOneWidget);
+      expect(
+        find.text(l10n.createListingManualVehicleSubtitle),
+        findsOneWidget,
+      );
+      expect(find.text(l10n.createListingOrSeparator), findsOneWidget);
       expect(find.text(l10n.createListingVinAutofillHint), findsOneWidget);
       expect(find.text(l10n.createListingEditCharacteristics), findsOneWidget);
       expect(find.text(l10n.listingBodyTypeNotSpecified), findsNothing);

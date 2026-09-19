@@ -70,6 +70,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
       page: 0,
       replace: true,
       replacementGeneration: generation,
+      persistAppliedCriteria: true,
       skipRecentSearchRecord: true,
     );
   }
@@ -170,6 +171,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
       page: 0,
       replace: true,
       replacementGeneration: generation,
+      persistAppliedCriteria: true,
     );
   }
 
@@ -195,6 +197,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
       page: 0,
       replace: true,
       replacementGeneration: generation,
+      persistAppliedCriteria: true,
     );
   }
 
@@ -222,6 +225,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
       page: 0,
       replace: true,
       replacementGeneration: generation,
+      persistAppliedCriteria: true,
     );
   }
 
@@ -281,6 +285,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
       page: 0,
       replace: true,
       replacementGeneration: generation,
+      persistAppliedCriteria: true,
     );
   }
 
@@ -320,6 +325,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
       page: 0,
       replace: true,
       replacementGeneration: generation,
+      persistAppliedCriteria: true,
     );
   }
 
@@ -344,6 +350,7 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
       page: 0,
       replace: true,
       replacementGeneration: generation,
+      persistAppliedCriteria: true,
     );
   }
 
@@ -354,9 +361,16 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
     required bool replace,
     required int replacementGeneration,
     int? paginationOperation,
+    bool persistAppliedCriteria = false,
     bool skipRecentSearchRecord = false,
   }) async {
     final criteria = listingDiscoveryCriteriaFromListingsState(source);
+    if (persistAppliedCriteria &&
+        replace &&
+        page == 0 &&
+        paginationOperation == null) {
+      await _lastAppliedDiscovery.persistIfNeeded(criteria);
+    }
     final query = criteria.toListingsQuery(
       page: page,
       pageSize: AppConstants.defaultPageSize,
@@ -404,12 +418,14 @@ class ListingsBloc extends Bloc<ListingsEvent, ListingsState> {
           clearLoadFailure: true,
         );
         emit(nextState);
-        final snapshot = listingDiscoveryCriteriaFromListingsState(nextState);
-        unawaited(_lastAppliedDiscovery.persistIfNeeded(snapshot));
         if (page == 0) {
           if (!skipRecentSearchRecord &&
               browseStateEligibleForFilterAlertSnapshot(nextState)) {
-            unawaited(_recordRecentSearch(snapshot));
+            unawaited(
+              _recordRecentSearch(
+                listingDiscoveryCriteriaFromListingsState(nextState),
+              ),
+            );
           }
         }
     }

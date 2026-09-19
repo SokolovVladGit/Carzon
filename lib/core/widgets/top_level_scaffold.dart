@@ -2,23 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/router/app_router.dart';
+import '../../features/listings/presentation/widgets/search_nav_indicators.dart';
 import '../../shared/ui/carzon_icons.dart';
 import '../l10n/app_localizations_x.dart';
 import 'floating_capsule_nav.dart';
 
 /// Destinations rendered in the app's floating capsule bottom nav.
 ///
-/// The MVP ships a deliberately compact 4-tab nav:
+/// Ordered left-to-right:
 ///
-///   1. [listings] — the search/feed surface (left),
-///   2. [favorites] — the user's saved cars,
-///   3. [createListing] — the central "Sell" action,
-///   4. [menu] — account & account-adjacent surfaces (My Listings,
-///      Profile, Legal, Sign in/out), grouped behind a single Menu
-///      destination so the bar stays breathable.
-///
-/// The enum is ordered left-to-right as it appears in the nav.
-enum TopLevelDestination { listings, favorites, createListing, menu }
+///   0. [listings] — Home feed
+///   1. [search] — discovery criteria (no results)
+///   2. [createListing] — central "Sell" action
+///   3. [favorites]
+///   4. [menu]
+enum TopLevelDestination { listings, search, createListing, favorites, menu }
 
 /// Maps a destination to the canonical route path it represents in the
 /// router. Kept alongside the enum so the mapping cannot drift from
@@ -28,10 +26,12 @@ extension TopLevelDestinationRoute on TopLevelDestination {
     switch (this) {
       case TopLevelDestination.listings:
         return AppRoutes.listings;
-      case TopLevelDestination.favorites:
-        return AppRoutes.favorites;
+      case TopLevelDestination.search:
+        return AppRoutes.search;
       case TopLevelDestination.createListing:
         return AppRoutes.createListing;
+      case TopLevelDestination.favorites:
+        return AppRoutes.favorites;
       case TopLevelDestination.menu:
         return AppRoutes.menu;
     }
@@ -99,55 +99,53 @@ class TopLevelScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      // Let the body render full-height behind the floating nav so
-      // the scaffold does not paint a flat rectangle of background
-      // around the pill (which made the nav read as a default
-      // Material bottom bar with a capsule stuck inside it). Pages
-      // add `kFloatingCapsuleNavClearance` to their scrollable
-      // bottom padding so the last row clears the pill.
-      extendBody: true,
-      appBar: appBar,
-      body: body,
-      floatingActionButton: floatingActionButton,
-      bottomNavigationBar: FloatingCapsuleNav(
-        selectedIndex: destination.index,
-        onDestinationSelected: (i) => _onDestinationSelected(context, i),
-        // All four destinations use the Lucide outline family so the
-        // bar reads as a single set — same stroke weight, consistent
-        // geometry, no mix of outlined and rounded Material glyphs.
-        destinations: [
-          CapsuleNavDestination(
-            // Listings tab doubles as the search/discovery surface,
-            // so a magnifying-glass icon reads truer than a car icon.
-            icon: CarzonIcons.navListings,
-            selectedIcon: CarzonIcons.navListings,
-            label: l10n.navListings,
-          ),
-          CapsuleNavDestination(
-            icon: CarzonIcons.navFavoritesOutline,
-            selectedIcon: CarzonIcons.navFavoritesFilled,
-            label: l10n.navFavorites,
-          ),
-          CapsuleNavDestination(
-            // Stronger silhouette than a plain plus so the central
-            // "Sell" destination holds its own next to the search and
-            // heart icons on either side.
-            icon: CarzonIcons.navCreateOutline,
-            selectedIcon: CarzonIcons.navCreateFilled,
-            label: l10n.navSell,
-            // Center/create action — the nav gives it a slightly
-            // larger icon so it reads as the primary action without
-            // becoming a bright FAB.
-            isEmphasized: true,
-          ),
-          CapsuleNavDestination(
-            icon: CarzonIcons.navMenu,
-            selectedIcon: CarzonIcons.navMenu,
-            label: l10n.navMenu,
-          ),
-        ],
+    return SearchNavIndicatorScope(
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        // Let the body render full-height behind the floating nav so
+        // the scaffold does not paint a flat rectangle of background
+        // around the pill (which made the nav read as a default
+        // Material bottom bar with a capsule stuck inside it). Pages
+        // add `kFloatingCapsuleNavClearance` to their scrollable
+        // bottom padding so the last row clears the pill.
+        extendBody: true,
+        appBar: appBar,
+        body: body,
+        floatingActionButton: floatingActionButton,
+        bottomNavigationBar: FloatingCapsuleNav(
+          selectedIndex: destination.index,
+          onDestinationSelected: (i) => _onDestinationSelected(context, i),
+          destinations: [
+            CapsuleNavDestination(
+              icon: CarzonIcons.navHome,
+              selectedIcon: CarzonIcons.navHome,
+              label: l10n.navHome,
+            ),
+            CapsuleNavDestination(
+              icon: CarzonIcons.navSearch,
+              selectedIcon: CarzonIcons.navSearch,
+              label: l10n.navListings,
+              iconOverlayBuilder: (_) => const SearchNavIconOverlay(),
+              semanticsLabelBuilder: (ctx) =>
+                  SearchNavIndicatorScope.of(ctx).semanticsLabel(ctx),
+            ),
+            CapsuleNavDestination(
+              assetIcon: CarzonIcons.navCreateAsset,
+              label: l10n.navSell,
+              isEmphasized: true,
+            ),
+            CapsuleNavDestination(
+              icon: CarzonIcons.navFavoritesOutline,
+              selectedIcon: CarzonIcons.navFavoritesFilled,
+              label: l10n.navFavorites,
+            ),
+            CapsuleNavDestination(
+              icon: CarzonIcons.navMenu,
+              selectedIcon: CarzonIcons.navMenu,
+              label: l10n.navMenu,
+            ),
+          ],
+        ),
       ),
     );
   }

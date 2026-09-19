@@ -15,34 +15,50 @@ class ListingsActiveDiscoverySummaryStrip extends StatelessWidget {
   final ListingsState state;
   final ValueChanged<ListingsDiscoveryChipKind> onFilterRemoved;
 
+  /// Strip padding (6+4) plus chip padding (7+7) plus the 22px close well.
+  static const double pinnedExtent = 46;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final chips = listingsDiscoveryChips(state, l10n);
     if (chips.isEmpty) return const SizedBox.shrink();
+    const scrollInset = 4.0;
+    final chipRow = Row(
+      key: const ValueKey<String>('listingsActiveDiscoveryChipRow'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < chips.length; i++)
+          Padding(
+            padding: EdgeInsets.only(right: i == chips.length - 1 ? 0 : 8),
+            child: _ActiveDiscoveryChip(
+              data: chips[i],
+              onRemove: () => onFilterRemoved(chips[i].kind),
+            ),
+          ),
+      ],
+    );
     return Semantics(
       container: true,
       label: l10n.filtersTitle,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: [
-              for (var i = 0; i < chips.length; i++)
-                Padding(
-                  padding: EdgeInsets.only(
-                    right: i == chips.length - 1 ? 0 : 8,
-                  ),
-                  child: _ActiveDiscoveryChip(
-                    data: chips[i],
-                    onRemove: () => onFilterRemoved(chips[i].kind),
-                  ),
-                ),
-            ],
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final minLaneWidth = (constraints.maxWidth - scrollInset * 2).clamp(
+              0.0,
+              double.infinity,
+            );
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: scrollInset),
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minWidth: minLaneWidth),
+                child: Align(alignment: Alignment.center, child: chipRow),
+              ),
+            );
+          },
         ),
       ),
     );

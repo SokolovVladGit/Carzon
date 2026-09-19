@@ -20,6 +20,9 @@ import 'package:carzon/features/listings/presentation/bloc/listings_state.dart';
 import 'package:carzon/features/listings/presentation/cubit/browse_catalog_filter_alerts_cubit.dart';
 import 'package:carzon/features/listings/presentation/widgets/filters/catalog_filter_alert_ui_constants.dart';
 import 'package:carzon/features/listings/presentation/pages/listings_page.dart';
+import 'package:carzon/features/listings/presentation/widgets/listings_brand_filter_row.dart';
+import 'package:carzon/features/listings/presentation/widgets/listings_search_filter_bar.dart';
+import 'package:carzon/features/listings/presentation/widgets/search_nav_indicators.dart';
 import 'package:carzon/features/notifications/domain/entities/notification_preferences.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -214,7 +217,7 @@ void main() {
       expect(find.text(l10n.catalogSubtitle), findsNothing);
     });
 
-    testWidgets('keeps the localized search hint', (tester) async {
+    testWidgets('does not render the home search/filter row', (tester) async {
       await tester.pumpWidget(
         _host(
           bloc: bloc,
@@ -226,7 +229,8 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.text(l10n.listingsSearchHint), findsOneWidget);
+      expect(find.byType(ListingsSearchFilterBar), findsNothing);
+      expect(find.text(l10n.listingsSearchHint), findsNothing);
     });
 
     testWidgets(
@@ -256,8 +260,7 @@ void main() {
       },
     );
 
-    testWidgets('filter control is icon-only on the home surface — tooltip + '
-        'semantics still expose it, but no visible "Фильтры" label', (
+    testWidgets('keeps brand and body rails on the home surface', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -269,79 +272,60 @@ void main() {
           messagingRepo: messagingRepo,
         ),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      // Pass 1.4 drops the text label to stop the filter button
-      // competing with the editorial headline. The localized label
-      // must only live in a Tooltip (hover/long-press) and in a
-      // Semantics node so a11y/tests can still reach it.
-      expect(find.text(l10n.filtersTitle), findsNothing);
-      expect(find.byTooltip(l10n.listingsFiltersTooltip), findsOneWidget);
-      expect(find.bySemanticsLabel(l10n.listingsFiltersTooltip), findsWidgets);
+      expect(find.byType(ListingsBrandFilterRow), findsOneWidget);
+      expect(find.bySemanticsLabel(l10n.listingsBodyChipAll), findsOneWidget);
     });
 
-    testWidgets(
-      'filter button inactive shows no numeric badge nor check atop filter icon',
-      (tester) async {
-        await tester.pumpWidget(
-          _host(
-            bloc: bloc,
-            auth: auth,
-            favorites: favs,
-            sellersRepo: sellersRepo,
-            messagingRepo: messagingRepo,
-          ),
-        );
-        await tester.pumpAndSettle();
-        final filterScope = find.byTooltip(l10n.listingsFiltersTooltip);
-        expect(
-          find.descendant(of: filterScope, matching: find.byIcon(Icons.check)),
-          findsNothing,
-        );
-        expect(
-          find.descendant(of: filterScope, matching: find.text('1')),
-          findsNothing,
-        );
-      },
-    );
+    testWidgets('Search nav has no active check when discovery is vanilla', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _host(
+          bloc: bloc,
+          auth: auth,
+          favorites: favs,
+          sellersRepo: sellersRepo,
+          messagingRepo: messagingRepo,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(SearchNavIconOverlay.activeCheckKey), findsNothing);
+      expect(
+        find.byKey(CatalogFilterAlertAccent.discoveryFilterFABAlertBellKey),
+        findsNothing,
+      );
+    });
 
-    testWidgets(
-      'filter button active shows check badge and chips; filter scope has no digits',
-      (tester) async {
-        const withMake = ListingsState(
-          status: ListingsStatus.success,
-          items: [],
-          hasReachedEnd: true,
-          make: 'Dacia',
-        );
-        when(() => bloc.state).thenReturn(withMake);
-        whenListen(
-          bloc,
-          const Stream<ListingsState>.empty(),
-          initialState: withMake,
-        );
-        await tester.pumpWidget(
-          _host(
-            bloc: bloc,
-            auth: auth,
-            favorites: favs,
-            sellersRepo: sellersRepo,
-            messagingRepo: messagingRepo,
-          ),
-        );
-        await tester.pumpAndSettle();
-        final filterScope = find.byTooltip(l10n.listingsFiltersTooltip);
-        expect(
-          find.descendant(of: filterScope, matching: find.byIcon(Icons.check)),
-          findsOneWidget,
-        );
-        expect(
-          find.descendant(of: filterScope, matching: find.text('1')),
-          findsNothing,
-        );
-        expect(find.textContaining('Dacia'), findsWidgets);
-      },
-    );
+    testWidgets('Search nav shows active check when a make filter is applied', (
+      tester,
+    ) async {
+      const withMake = ListingsState(
+        status: ListingsStatus.success,
+        items: [],
+        hasReachedEnd: true,
+        make: 'Dacia',
+      );
+      when(() => bloc.state).thenReturn(withMake);
+      whenListen(
+        bloc,
+        const Stream<ListingsState>.empty(),
+        initialState: withMake,
+      );
+      await tester.pumpWidget(
+        _host(
+          bloc: bloc,
+          auth: auth,
+          favorites: favs,
+          sellersRepo: sellersRepo,
+          messagingRepo: messagingRepo,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(SearchNavIconOverlay.activeCheckKey), findsOneWidget);
+      expect(find.textContaining('Dacia'), findsWidgets);
+    });
 
     testWidgets(
       'body type chips are icon-only with semantics labels; tapping SUV '

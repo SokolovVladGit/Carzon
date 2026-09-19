@@ -2,6 +2,19 @@ import 'package:carzon/core/widgets/floating_capsule_nav.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+Widget _searchOverlay(BuildContext context) {
+  return const IgnorePointer(
+    child: Align(
+      alignment: Alignment.topRight,
+      child: SizedBox(
+        key: ValueKey<String>('search-overlay-probe'),
+        width: 8,
+        height: 8,
+      ),
+    ),
+  );
+}
+
 /// Builds a minimal host that renders [FloatingCapsuleNav] as a
 /// bottom nav so the widget is exercised in the same layout shape
 /// it ships in (i.e. as a `Scaffold.bottomNavigationBar`).
@@ -115,9 +128,19 @@ void main() {
                 onDestinationSelected: (_) {},
                 destinations: const [
                   CapsuleNavDestination(
-                    icon: Icons.directions_car_outlined,
-                    selectedIcon: Icons.directions_car,
-                    label: 'Объявления',
+                    icon: Icons.home_outlined,
+                    selectedIcon: Icons.home,
+                    label: 'Главная',
+                  ),
+                  CapsuleNavDestination(
+                    icon: Icons.search,
+                    selectedIcon: Icons.search,
+                    label: 'Поиск',
+                  ),
+                  CapsuleNavDestination(
+                    assetIcon: 'assets/icons/icon_plus.png',
+                    label: 'Подать',
+                    isEmphasized: true,
                   ),
                   CapsuleNavDestination(
                     icon: Icons.favorite_border,
@@ -125,20 +148,9 @@ void main() {
                     label: 'Избранное',
                   ),
                   CapsuleNavDestination(
-                    icon: Icons.add_circle_outline,
-                    selectedIcon: Icons.add_circle,
-                    label: 'Подать',
-                    isEmphasized: true,
-                  ),
-                  CapsuleNavDestination(
-                    icon: Icons.inventory_2_outlined,
-                    selectedIcon: Icons.inventory_2,
-                    label: 'Мои',
-                  ),
-                  CapsuleNavDestination(
-                    icon: Icons.person_outline,
-                    selectedIcon: Icons.person,
-                    label: 'Профиль',
+                    icon: Icons.menu,
+                    selectedIcon: Icons.menu,
+                    label: 'Меню',
                   ),
                 ],
               ),
@@ -148,17 +160,208 @@ void main() {
 
         expect(tester.takeException(), isNull);
 
+        final targets = tester.renderObjectList<RenderBox>(
+          find.byType(AnimatedContainer),
+        );
+        expect(targets.length, 5);
+        for (final target in targets) {
+          expect(target.size, const Size(44, 44));
+        }
+
         for (final label in const [
-          'Объявления',
-          'Избранное',
+          'Главная',
+          'Поиск',
           'Подать',
-          'Мои',
-          'Профиль',
+          'Избранное',
+          'Меню',
         ]) {
           expect(find.bySemanticsLabel(label), findsWidgets);
         }
+
+        final create = tester.widget<Image>(
+          find.byKey(kCapsuleNavCreateAssetKey),
+        );
+        expect(create.width, kCapsuleNavCreateAssetSize);
+        expect(create.height, kCapsuleNavCreateAssetSize);
+        expect(create.fit, BoxFit.contain);
+        expect(create.color, isNull);
       },
     );
+
+    testWidgets(
+      'normal destinations share Home selected chrome; Create has none',
+      (tester) async {
+        final destinations = [
+          CapsuleNavDestination(
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home,
+            label: 'Home',
+          ),
+          CapsuleNavDestination(
+            icon: Icons.search,
+            selectedIcon: Icons.search,
+            label: 'Search',
+            iconOverlayBuilder: _searchOverlay,
+          ),
+          CapsuleNavDestination(
+            assetIcon: 'assets/icons/icon_plus.png',
+            label: 'Sell',
+            isEmphasized: true,
+          ),
+          CapsuleNavDestination(
+            icon: Icons.favorite_border,
+            selectedIcon: Icons.favorite,
+            label: 'Favs',
+          ),
+          CapsuleNavDestination(
+            icon: Icons.menu,
+            selectedIcon: Icons.menu,
+            label: 'Menu',
+          ),
+        ];
+
+        Future<void> pumpSelected(int index) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: const SizedBox.expand(),
+                bottomNavigationBar: FloatingCapsuleNav(
+                  selectedIndex: index,
+                  onDestinationSelected: (_) {},
+                  destinations: destinations,
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
+
+        ColorScheme schemeOf() {
+          return Theme.of(
+            tester.element(find.byType(FloatingCapsuleNav)),
+          ).colorScheme;
+        }
+
+        BoxDecoration chromeOf(String label) {
+          return tester
+                  .widget<AnimatedContainer>(
+                    find.descendant(
+                      of: find.bySemanticsLabel(label),
+                      matching: find.byType(AnimatedContainer),
+                    ),
+                  )
+                  .decoration!
+              as BoxDecoration;
+        }
+
+        await pumpSelected(0);
+        final scheme = schemeOf();
+        final activePill = capsuleNavSelectedPillColor(scheme, isDark: false);
+        final activeIcon = capsuleNavActiveIconColor(scheme);
+        final inactiveIcon = capsuleNavInactiveIconColor(scheme, isDark: false);
+
+        expect(chromeOf('Home').color, activePill);
+        expect(chromeOf('Home').borderRadius, BorderRadius.circular(14));
+        expect(tester.widget<Icon>(find.byIcon(Icons.home)).color, activeIcon);
+        expect(chromeOf('Search').color, Colors.transparent);
+        expect(chromeOf('Favs').color, Colors.transparent);
+        expect(chromeOf('Menu').color, Colors.transparent);
+        expect(chromeOf('Sell').color, Colors.transparent);
+        expect(
+          tester.widget<Icon>(find.byIcon(Icons.search)).color,
+          inactiveIcon,
+        );
+
+        for (final (index, label, selectedIcon) in const [
+          (1, 'Search', Icons.search),
+          (3, 'Favs', Icons.favorite),
+          (4, 'Menu', Icons.menu),
+        ]) {
+          await pumpSelected(index);
+          expect(
+            chromeOf(label).color,
+            activePill,
+            reason: '$label must use the same selected pill as Home',
+          );
+          expect(
+            chromeOf(label).borderRadius,
+            BorderRadius.circular(kCapsuleNavSelectedChromeRadius),
+          );
+          expect(
+            tester.widget<Icon>(find.byIcon(selectedIcon)).color,
+            activeIcon,
+            reason: '$label must use the same selected icon tint as Home',
+          );
+          expect(chromeOf('Sell').color, Colors.transparent);
+          expect(
+            find.byKey(const ValueKey('search-overlay-probe')),
+            findsOneWidget,
+          );
+        }
+      },
+    );
+
+    testWidgets('Create asset stays 34px, untinted, without a selected pill', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: const SizedBox.expand(),
+            bottomNavigationBar: FloatingCapsuleNav(
+              selectedIndex: 2,
+              onDestinationSelected: (_) {},
+              destinations: const [
+                CapsuleNavDestination(
+                  icon: Icons.home_outlined,
+                  selectedIcon: Icons.home,
+                  label: 'Home',
+                ),
+                CapsuleNavDestination(
+                  icon: Icons.search,
+                  selectedIcon: Icons.search,
+                  label: 'Search',
+                ),
+                CapsuleNavDestination(
+                  assetIcon: 'assets/icons/icon_plus.png',
+                  label: 'Sell',
+                  isEmphasized: true,
+                ),
+                CapsuleNavDestination(
+                  icon: Icons.favorite_border,
+                  selectedIcon: Icons.favorite,
+                  label: 'Favs',
+                ),
+                CapsuleNavDestination(
+                  icon: Icons.menu,
+                  selectedIcon: Icons.menu,
+                  label: 'Menu',
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final create = tester.widget<Image>(
+        find.byKey(kCapsuleNavCreateAssetKey),
+      );
+      expect(create.width, kCapsuleNavCreateAssetSize);
+      expect(create.height, kCapsuleNavCreateAssetSize);
+      expect(create.color, isNull);
+      expect(create.colorBlendMode, isNull);
+      final sellChrome =
+          tester
+                  .widget<AnimatedContainer>(
+                    find.descendant(
+                      of: find.bySemanticsLabel('Sell'),
+                      matching: find.byType(AnimatedContainer),
+                    ),
+                  )
+                  .decoration!
+              as BoxDecoration;
+      expect(sellChrome.color, Colors.transparent);
+    });
 
     testWidgets('renders the emphasized destination with a bigger icon than a '
         'non-emphasized one', (tester) async {

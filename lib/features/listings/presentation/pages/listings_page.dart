@@ -20,9 +20,6 @@ import '../bloc/listings_state.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../cubit/browse_catalog_filter_alerts_cubit.dart';
-import '../widgets/filters/catalog_browse_filter_alert_sheet_bell.dart';
-import '../widgets/filters/catalog_browse_filter_alert_sheet_notice.dart';
-import '../widgets/filters/catalog_filter_sheet_feedback.dart';
 import '../../../messaging/presentation/bloc/messaging_unread_summary_cubit.dart';
 import '../../../sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import '../widgets/category_chip.dart';
@@ -32,37 +29,13 @@ import '../widgets/listings_active_discovery_summary_strip.dart';
 import '../widgets/listings_brand_filter_row.dart';
 import '../widgets/listings_catalog_header.dart';
 import '../widgets/listings_feed_empty_state.dart';
-import '../widgets/listings_search_filter_bar.dart';
 import '../utils/feed_home_body_chips.dart';
-import '../widgets/filters/listings_filter_apply_result.dart';
-import '../widgets/filters/listings_filter_form.dart';
-import '../widgets/filters/listings_filter_host.dart';
-import '../../domain/browse_state_for_alert_criteria.dart';
-import '../utils/discovery_feed_chip_labels.dart';
 
 Future<void> _awaitListingsFeedRefresh(ListingsBloc bloc) async {
   bloc.add(const ListingsRefreshed());
   await bloc.stream.firstWhere(
     (state) => state.status != ListingsStatus.loading,
   );
-}
-
-bool _listingsFilterChromeChanged(ListingsState p, ListingsState q) {
-  return p.search != q.search ||
-      p.make != q.make ||
-      p.model != q.model ||
-      p.minYear != q.minYear ||
-      p.maxYear != q.maxYear ||
-      p.minPrice != q.minPrice ||
-      p.maxPrice != q.maxPrice ||
-      p.maxMileage != q.maxMileage ||
-      p.city != q.city ||
-      p.typeFilter != q.typeFilter ||
-      p.regionFilter != q.regionFilter ||
-      p.bodyTypeFilter != q.bodyTypeFilter ||
-      p.sortOption != q.sortOption ||
-      p.priceCurrencyFilter != q.priceCurrencyFilter ||
-      p.hasActiveDiscoveryConstraints != q.hasActiveDiscoveryConstraints;
 }
 
 class ListingsPage extends StatelessWidget {
@@ -89,9 +62,7 @@ class ListingsPage extends StatelessWidget {
         ],
         child: _ListingsDiscoveryBootstrap(
           feedLaunch: feedLaunch,
-          child: _ListingsView(
-            openFilterSheetOnEntry: feedLaunch?.openFilterSheetOnEntry ?? false,
-          ),
+          child: const _ListingsView(),
         ),
       ),
     );
@@ -128,8 +99,13 @@ class _ListingsDiscoveryBootstrapState
     if (!mounted || _seeded) return;
     _seeded = true;
     final bloc = context.read<ListingsBloc>();
-    if (widget.feedLaunch != null) {
-      bloc.add(ListingsHydratedFromDiscovery(widget.feedLaunch!.snapshot));
+    final launch = widget.feedLaunch;
+    if (launch != null) {
+      bloc.add(ListingsHydratedFromDiscovery(launch.snapshot));
+      if (launch.openFilterSheetOnEntry) {
+        if (!mounted) return;
+        context.go(AppRoutes.search, extra: launch.snapshot);
+      }
       return;
     }
     final local = await sl<LastAppliedListingDiscoveryRepository>().load();
@@ -146,23 +122,14 @@ class _ListingsDiscoveryBootstrapState
 }
 
 class _ListingsView extends StatefulWidget {
-  const _ListingsView({this.openFilterSheetOnEntry = false});
-
-  /// When `true`, the catalog filter sheet auto-opens after the first
-  /// frame. Used by `/filter-alert` "Edit in catalog" so the management
-  /// page sends the user straight into the filter UX where alerts are
-  /// edited.
-  final bool openFilterSheetOnEntry;
+  const _ListingsView();
 
   @override
   State<_ListingsView> createState() => _ListingsViewState();
 }
 
 class _ListingsViewState extends State<_ListingsView> {
-  final GlobalKey<ListingsFilterFormState> _catalogFilterSheetFormKey =
-      GlobalKey<ListingsFilterFormState>();
   final _scrollCtrl = ScrollController();
-  final _searchCtrl = TextEditingController();
 
   /// Current feed scroll offset (pixels), mirrored from [_scrollCtrl]
   /// on every scroll tick. Piped into the featured tile's [ListingCard]
@@ -180,9 +147,6 @@ class _ListingsViewState extends State<_ListingsView> {
       final auth = context.read<AuthCubit>().state;
       unawaited(context.read<SelfSellerVisualCubit>().prime(auth));
       unawaited(context.read<MessagingUnreadSummaryCubit>().sync(auth));
-      if (widget.openFilterSheetOnEntry) {
-        unawaited(_openFiltersSheet(context));
-      }
     });
   }
 
@@ -191,7 +155,6 @@ class _ListingsViewState extends State<_ListingsView> {
     _scrollCtrl
       ..removeListener(_onScroll)
       ..dispose();
-    _searchCtrl.dispose();
     _feedScrollOffset.dispose();
     super.dispose();
   }
@@ -199,144 +162,15 @@ class _ListingsViewState extends State<_ListingsView> {
   void _onScroll() {
     if (!_scrollCtrl.hasClients) return;
     _feedScrollOffset.value = _scrollCtrl.position.pixels;
+    final status = context.read<ListingsBloc>().state.status;
+    if (status != ListingsStatus.success &&
+        status != ListingsStatus.loadingMore &&
+        status != ListingsStatus.paginationFailure) {
+      return;
+    }
     final threshold = _scrollCtrl.position.maxScrollExtent - 200;
     if (_scrollCtrl.position.pixels >= threshold) {
       context.read<ListingsBloc>().add(const ListingsNextPageRequested());
-    }
-  }
-
-  Future<void> _openFiltersSheet(BuildContext context) async {
-    final bloc = context.read<ListingsBloc>();
-    final current = bloc.state;
-    final result = await showModalBottomSheet<ListingsFilterApplyResult?>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: false,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        final browseAlerts = context.read<BrowseCatalogFilterAlertsCubit>();
-        final h = MediaQuery.sizeOf(sheetContext).height;
-        // Sheet-scoped inline notice (e.g. "Refine the filter to save
-        // an alert"). Owned by the sheet builder so it lives and dies
-        // with the modal — guaranteeing the message never reappears
-        // on the listings page after the user closes the sheet, which
-        // was the root-snackbar bleed bug we're fixing here.
-        CatalogBellInlineNotice? inlineNotice;
-        CatalogFilterSheetFeedback? sheetFeedback;
-        return BlocProvider<BrowseCatalogFilterAlertsCubit>.value(
-          value: browseAlerts,
-          child: StatefulBuilder(
-            builder: (sheetContext, setSheetState) {
-              void clearSheetNotices() {
-                setSheetState(() {
-                  inlineNotice = null;
-                  sheetFeedback = null;
-                });
-              }
-
-              Future<void> applyAndClose(ListingsFilterApplyResult r) async {
-                if (sheetFeedback?.kind ==
-                    CatalogFilterSheetFeedbackKind.success) {
-                  await Future<void>.delayed(const Duration(milliseconds: 750));
-                }
-                if (sheetContext.mounted) {
-                  Navigator.of(sheetContext).pop(r);
-                }
-              }
-
-              return SizedBox(
-                height: h,
-                child: Builder(
-                  builder: (sheetContext) {
-                    String resolvedSearchSnippet() {
-                      final typed = _searchCtrl.text.trim();
-                      if (typed.isNotEmpty) return typed;
-                      return bloc.state.search?.trim() ?? '';
-                    }
-
-                    // The "Show cars" CTA intentionally stays unaffected
-                    // by `alerts.bellBusy`: the bell already disables
-                    // itself while a save/clear is in flight, and tying
-                    // the apply CTA to the same flag made the button
-                    // briefly flash to its disabled style every time the
-                    // user toggled the bell. Apply remains visually stable.
-                    return ListingsFilterHost(
-                      filterFormExternalKey: _catalogFilterSheetFormKey,
-                      onBrowseDraftMutated: clearSheetNotices,
-                      browseHeaderTrailing: CatalogBrowseFilterAlertSheetBell(
-                        sheetFormKey: _catalogFilterSheetFormKey,
-                        sheetContext: sheetContext,
-                        searchSnippet: resolvedSearchSnippet,
-                        // Canonical seed: the same catalog applied state
-                        // that drove the main FAB indicator. Used by the
-                        // bell as initial draft criteria so the bell and
-                        // FAB never disagree on the first sheet frame.
-                        appliedState: current,
-                        onInlineNoticeRequested: (notice) =>
-                            setSheetState(() => inlineNotice = notice),
-                        onSheetFeedbackRequested: (feedback) =>
-                            setSheetState(() => sheetFeedback = feedback),
-                      ),
-                      browseHeaderNotice: inlineNotice == null
-                          ? null
-                          : CatalogBrowseFilterAlertSheetNotice(
-                              notice: inlineNotice!,
-                            ),
-                      browseSheetFeedbackOverlay: sheetFeedback == null
-                          ? null
-                          : CatalogFilterSheetFeedbackOverlay(
-                              feedback: sheetFeedback!,
-                              onDismissed: () =>
-                                  setSheetState(() => sheetFeedback = null),
-                            ),
-                      // Bell visual + tooltip are the only saved-state
-                      // surface in the catalog filter sheet now: a tech
-                      // "push disabled" inline banner was removed because
-                      // the saved/off colour + tap-to-remove tooltip carry
-                      // the same information without product-unfriendly
-                      // build-flag copy.
-                      seed: ListingsFilterFormSeed.fromListingsState(current),
-                      onDismiss: () => Navigator.of(sheetContext).pop(),
-                      onApply: (r) => unawaited(applyAndClose(r)),
-                      onBrowseFeedReset: () {
-                        _searchCtrl.clear();
-                        bloc.add(const ListingsFiltersCleared());
-                        clearSheetNotices();
-                      },
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-    if (result == null) return;
-    if (result.cleared) {
-      _searchCtrl.clear();
-      bloc.add(const ListingsFiltersCleared());
-    } else {
-      bloc.add(
-        ListingsFiltersApplied(
-          make: result.make,
-          model: result.model,
-          minYear: result.minYear,
-          maxYear: result.maxYear,
-          minPrice: result.minPrice,
-          maxPrice: result.maxPrice,
-          maxMileage: result.maxMileage,
-          city: result.city,
-          typeFilter: result.typeFilter,
-          sort: result.sort,
-          regionFilter: result.region ?? MarketRegionFilter.both,
-          bodyType: result.bodyType,
-          fuelType: result.fuelType,
-          transmissionType: result.transmissionType,
-          drivetrain: result.drivetrain,
-          priceCurrencyFilter: result.priceCurrencyFilter,
-        ),
-      );
     }
   }
 
@@ -362,161 +196,53 @@ class _ListingsViewState extends State<_ListingsView> {
         elevation: 0,
         toolbarHeight: 0,
       ),
-      body: BlocListener<ListingsBloc, ListingsState>(
-        listenWhen: (prev, curr) => prev.search != curr.search,
-        listener: (context, state) {
-          final next = state.search ?? '';
-          if (_searchCtrl.text != next) _searchCtrl.text = next;
-        },
-        child: Column(
-          children: [
-            _FeedHeaderLayer(
-              searchCtrl: _searchCtrl,
-              onOpenFilters: () => _openFiltersSheet(context),
-              onBrandSelected: _onBrandSelected,
+      body: BlocBuilder<ListingsBloc, ListingsState>(
+        builder: (context, state) {
+          final scroll = CustomScrollView(
+            controller: _scrollCtrl,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
             ),
-            Expanded(
-              child: BlocBuilder<ListingsBloc, ListingsState>(
-                builder: (context, state) {
-                  switch (state.status) {
-                    case ListingsStatus.initial:
-                    case ListingsStatus.loading:
-                      return const LoadingView();
-                    case ListingsStatus.failure:
-                      final l10n = context.l10n;
-                      final msg = state.loadFailure != null
-                          ? localizedUserFailureMessage(
-                              l10n,
-                              state.loadFailure!,
-                              surface: LocalizedFailureSurface.listingsFeed,
-                            )
-                          : l10n.listingsLoadFailed;
-                      return ErrorView(
-                        message: msg,
-                        onRetry: () => context.read<ListingsBloc>().add(
-                          const ListingsRefreshed(),
-                        ),
-                      );
-                    case ListingsStatus.success:
-                    case ListingsStatus.loadingMore:
-                    case ListingsStatus.paginationFailure:
-                      if (state.items.isEmpty) {
-                        return ListingsFeedEmptyState(
-                          hasFilters: state.hasActiveDiscoveryConstraints,
-                          includeBodyFilterEmptyHint:
-                              state.bodyTypeFilter != null,
-                          onResetFilters: () {
-                            _searchCtrl.clear();
-                            context.read<ListingsBloc>().add(
-                              const ListingsFiltersCleared(),
-                            );
-                          },
-                          onRefresh: () => _awaitListingsFeedRefresh(
-                            context.read<ListingsBloc>(),
-                          ),
-                        );
-                      }
-                      return RefreshIndicator(
-                        onRefresh: () => _awaitListingsFeedRefresh(
-                          context.read<ListingsBloc>(),
-                        ),
-                        child: ListView.separated(
-                          controller: _scrollCtrl,
-                          // iOS-style bounce on both platforms so the
-                          // feed reads as one cohesive, buttery scroll
-                          // surface — overscroll at the top also plays
-                          // well with the RefreshIndicator above.
-                          physics: const BouncingScrollPhysics(
-                            parent: AlwaysScrollableScrollPhysics(),
-                          ),
-                          // Shared 20 px gutter with the header + search
-                          // row so header, search, and cards line up on
-                          // one editorial column. Top `6` lands under
-                          // the chip row (4 px bottom air + this 6),
-                          // keeping a compact gap to the first card.
-                          // Bottom clearance is `kFloatingCapsuleNavClearance`
-                          // so the last card lands above the floating
-                          // pill (`extendBody: true`).
-                          padding: const EdgeInsets.fromLTRB(
-                            20,
-                            6,
-                            20,
-                            kFloatingCapsuleNavClearance,
-                          ),
-                          itemCount:
-                              state.items.length +
-                              (state.hasReachedEnd ? 0 : 1),
-                          // Compact vertical rhythm: a slightly larger
-                          // beat after the featured card, then a tighter
-                          // regular gap. Values stay above ~12 so panel
-                          // shadows do not visually collide with the
-                          // next cover.
-                          separatorBuilder: (_, index) =>
-                              SizedBox(height: index == 0 ? 18 : 16),
-                          itemBuilder: (context, index) {
-                            if (index >= state.items.length) {
-                              return _ListingsPaginationFooter(
-                                state: state,
-                                onRetry: () => context.read<ListingsBloc>().add(
-                                  const ListingsNextPageRequested(
-                                    isExplicitRetry: true,
-                                  ),
-                                ),
-                              );
-                            }
-                            final item = state.items[index];
-                            final isFeatured = index == 0;
-                            return _AppearAnimation(
-                              // Keyed by listing id so scroll-recycling
-                              // in the `ListView` does NOT re-trigger
-                              // the entrance animation for the same
-                              // listing; each card animates in once
-                              // per logical identity.
-                              key: ValueKey<String>('appear-${item.id}'),
-                              // Subtle staggered cascade: 0/30/60/90/120
-                              // ms based on feed index, capped at 120
-                              // so the 6th+ cards don't feel laggy.
-                              // Using `index * 30` keeps the stagger
-                              // invisible under casual scroll while
-                              // reading as deliberate on first paint.
-                              delay: Duration(
-                                milliseconds: (index * 30).clamp(0, 120),
-                              ),
-                              child: ListingTile(
-                                listing: item,
-                                variant: isFeatured
-                                    ? ListingCardVariant.featured
-                                    : ListingCardVariant.regular,
-                                // Only the featured hero wires the
-                                // scroll-offset listenable → parallax
-                                // cover. Regulars stay inert to keep
-                                // the scroll-tick rebuild surface tiny.
-                                coverParallax: isFeatured
-                                    ? _feedScrollOffset
-                                    : null,
-                                onTap: () => context.push(
-                                  AppRoutes.listingDetailsPath(item.id),
-                                  extra: ListingDetailsExtra(
-                                    coverImageUrl: item.coverImageUrl,
-                                    coverHeroFlightTopRadius:
-                                        ListingCard.coverHeroFlightTopRadius(
-                                          isFeatured
-                                              ? ListingCardVariant.featured
-                                              : ListingCardVariant.regular,
-                                        ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                  }
-                },
+            slivers: [
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _FixedPinnedHeaderDelegate(
+                  height: ListingsCatalogHeader.pinnedExtent,
+                  child: const _PinnedMasthead(),
+                ),
               ),
-            ),
-          ],
-        ),
+              SliverToBoxAdapter(
+                child: _ScrollAwayDiscoveryRails(
+                  onBrandSelected: _onBrandSelected,
+                  showBottomShadow: !state.hasActiveDiscoveryConstraints,
+                ),
+              ),
+              if (state.hasActiveDiscoveryConstraints)
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _FixedPinnedHeaderDelegate(
+                    height: ListingsActiveDiscoverySummaryStrip.pinnedExtent,
+                    child: _PinnedDiscoverySummary(state: state),
+                  ),
+                ),
+              ..._feedSlivers(context, state),
+            ],
+          );
+          switch (state.status) {
+            case ListingsStatus.success:
+            case ListingsStatus.loadingMore:
+            case ListingsStatus.paginationFailure:
+              return RefreshIndicator(
+                onRefresh: () =>
+                    _awaitListingsFeedRefresh(context.read<ListingsBloc>()),
+                child: scroll,
+              );
+            case ListingsStatus.initial:
+            case ListingsStatus.loading:
+            case ListingsStatus.failure:
+              return scroll;
+          }
+        },
       ),
     );
   }
@@ -559,18 +285,124 @@ class _ListingsViewState extends State<_ListingsView> {
       ),
     );
   }
+
+  double _feedPlaceholderHeight(BuildContext context) {
+    final view = MediaQuery.sizeOf(context).height;
+    return (view * 0.52).clamp(280.0, 720.0);
+  }
+
+  List<Widget> _feedSlivers(BuildContext context, ListingsState state) {
+    switch (state.status) {
+      case ListingsStatus.initial:
+      case ListingsStatus.loading:
+        return [
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: _feedPlaceholderHeight(context),
+              child: const LoadingView(),
+            ),
+          ),
+        ];
+      case ListingsStatus.failure:
+        final l10n = context.l10n;
+        final msg = state.loadFailure != null
+            ? localizedUserFailureMessage(
+                l10n,
+                state.loadFailure!,
+                surface: LocalizedFailureSurface.listingsFeed,
+              )
+            : l10n.listingsLoadFailed;
+        return [
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: _feedPlaceholderHeight(context),
+              child: ErrorView(
+                message: msg,
+                onRetry: () =>
+                    context.read<ListingsBloc>().add(const ListingsRefreshed()),
+              ),
+            ),
+          ),
+        ];
+      case ListingsStatus.success:
+      case ListingsStatus.loadingMore:
+      case ListingsStatus.paginationFailure:
+        if (state.items.isEmpty) {
+          return [
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: _feedPlaceholderHeight(context),
+                child: ListingsFeedEmptyState(
+                  hasFilters: state.hasActiveDiscoveryConstraints,
+                  includeBodyFilterEmptyHint: state.bodyTypeFilter != null,
+                  embedInParentScroll: true,
+                  onResetFilters: () {
+                    context.read<ListingsBloc>().add(
+                      const ListingsFiltersCleared(),
+                    );
+                  },
+                  onRefresh: () =>
+                      _awaitListingsFeedRefresh(context.read<ListingsBloc>()),
+                ),
+              ),
+            ),
+          ];
+        }
+        return [
+          SliverPadding(
+            key: const ValueKey<String>('listingsFeedSliverPadding'),
+            padding: const EdgeInsets.fromLTRB(
+              20,
+              6,
+              20,
+              kFloatingCapsuleNavClearance,
+            ),
+            sliver: SliverList.separated(
+              itemCount: state.items.length + (state.hasReachedEnd ? 0 : 1),
+              separatorBuilder: (_, index) =>
+                  SizedBox(height: index == 0 ? 18 : 16),
+              itemBuilder: (context, index) {
+                if (index >= state.items.length) {
+                  return _ListingsPaginationFooter(
+                    state: state,
+                    onRetry: () => context.read<ListingsBloc>().add(
+                      const ListingsNextPageRequested(isExplicitRetry: true),
+                    ),
+                  );
+                }
+                final item = state.items[index];
+                final isFeatured = index == 0;
+                return _AppearAnimation(
+                  key: ValueKey<String>('appear-${item.id}'),
+                  delay: Duration(milliseconds: (index * 30).clamp(0, 120)),
+                  child: ListingTile(
+                    listing: item,
+                    variant: isFeatured
+                        ? ListingCardVariant.featured
+                        : ListingCardVariant.regular,
+                    coverParallax: isFeatured ? _feedScrollOffset : null,
+                    onTap: () => context.push(
+                      AppRoutes.listingDetailsPath(item.id),
+                      extra: ListingDetailsExtra(
+                        coverImageUrl: item.coverImageUrl,
+                        coverHeroFlightTopRadius:
+                            ListingCard.coverHeroFlightTopRadius(
+                              isFeatured
+                                  ? ListingCardVariant.featured
+                                  : ListingCardVariant.regular,
+                            ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ];
+    }
+  }
 }
 
-/// Premium white surface layer that hosts every control at the top
-/// of the feed: the CARZON wordmark, the search+filter row, the
-/// horizontal brand-logo row, and the body-type chips.
-///
-/// The goal (Pass 1.9) is to give the top of the feed a single
-/// intentional "layer" that sits above the list, so the eye reads
-/// "header surface → list" instead of "stack of independent rows".
-/// The layer is NOT a card — it is edge-to-edge and sits flush with
-/// the page surface — but it earns a soft bottom shadow so it lifts
-/// off the list below.
 /// One-shot cinematic appear animation used for each tile as it first
 /// builds into the home feed.
 ///
@@ -708,109 +540,98 @@ class _ListingsPaginationFooter extends StatelessWidget {
   }
 }
 
-class _FeedHeaderLayer extends StatelessWidget {
-  const _FeedHeaderLayer({
-    required this.searchCtrl,
-    required this.onOpenFilters,
+class _FixedPinnedHeaderDelegate extends SliverPersistentHeaderDelegate {
+  _FixedPinnedHeaderDelegate({required this.height, required this.child});
+
+  final double height;
+  final Widget child;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox(height: height, child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _FixedPinnedHeaderDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
+  }
+}
+
+Color _feedHeaderLayerColor(ThemeData theme) {
+  final scheme = theme.colorScheme;
+  return theme.brightness == Brightness.dark
+      ? scheme.surfaceContainerLow
+      : scheme.surfaceContainerLowest;
+}
+
+List<BoxShadow> _feedHeaderLayerShadow(ThemeData theme) {
+  final scheme = theme.colorScheme;
+  final isDark = theme.brightness == Brightness.dark;
+  return [
+    BoxShadow(
+      color: scheme.shadow.withValues(alpha: isDark ? 0.28 : 0.05),
+      blurRadius: 22,
+      spreadRadius: 0,
+      offset: const Offset(0, 8),
+    ),
+  ];
+}
+
+class _PinnedMasthead extends StatelessWidget {
+  const _PinnedMasthead();
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      key: const ValueKey<String>('listingsCatalogMasthead'),
+      color: _feedHeaderLayerColor(Theme.of(context)),
+      child: const ListingsCatalogHeader(),
+    );
+  }
+}
+
+class _ScrollAwayDiscoveryRails extends StatelessWidget {
+  const _ScrollAwayDiscoveryRails({
     required this.onBrandSelected,
+    required this.showBottomShadow,
   });
 
-  final TextEditingController searchCtrl;
-  final VoidCallback onOpenFilters;
   final ValueChanged<String?> onBrandSelected;
+  final bool showBottomShadow;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    // Light mode: one-step-lifted header strip on the warm canvas.
-    // Dark mode: a one-step-lifted surface so the shadow has something to read against.
-    final layerColor = isDark
-        ? scheme.surfaceContainerLow
-        : scheme.surfaceContainerLowest;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: layerColor,
-        boxShadow: [
-          BoxShadow(
-            color: scheme.shadow.withValues(alpha: isDark ? 0.28 : 0.05),
-            blurRadius: 22,
-            spreadRadius: 0,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: _feedHeaderLayerColor(theme),
+        boxShadow: showBottomShadow ? _feedHeaderLayerShadow(theme) : null,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const ListingsCatalogHeader(),
-          // CARZON → search/filter: 2 (wordmark already has 4 px
-          // bottom padding inside ListingsCatalogHeader).
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 2, 20, 0),
-            child:
-                BlocBuilder<
-                  BrowseCatalogFilterAlertsCubit,
-                  BrowseCatalogFilterAlertsState
-                >(
-                  builder: (context, _) {
-                    return BlocBuilder<ListingsBloc, ListingsState>(
-                      buildWhen: (prev, curr) {
-                        final pActive =
-                            listingsDiscoveryActiveFilterGroupCount(prev) > 0;
-                        final qActive =
-                            listingsDiscoveryActiveFilterGroupCount(curr) > 0;
-                        final pCrit =
-                            listingDiscoveryCriteriaFromBrowseStateForAlert(
-                              prev,
-                            );
-                        final qCrit =
-                            listingDiscoveryCriteriaFromBrowseStateForAlert(
-                              curr,
-                            );
-                        return pActive != qActive || pCrit != qCrit;
-                      },
-                      builder: (context, state) {
-                        final alertsCubit = context
-                            .read<BrowseCatalogFilterAlertsCubit>();
-                        final active =
-                            listingsDiscoveryActiveFilterGroupCount(state) > 0;
-                        final bellBadge = alertsCubit
-                            .catalogBellBadgeVisibleForApplied(state);
-                        return ListingsSearchFilterBar(
-                          searchCtrl: searchCtrl,
-                          onOpenFilters: onOpenFilters,
-                          onSearchSubmitted: (value) => context
-                              .read<ListingsBloc>()
-                              .add(ListingsSearchChanged(value)),
-                          onClearSearch: () {
-                            searchCtrl.clear();
-                            context.read<ListingsBloc>().add(
-                              const ListingsSearchChanged(null),
-                            );
-                          },
-                          active: active,
-                          bellBadge: bellBadge,
-                        );
-                      },
-                    );
-                  },
-                ),
-          ),
-          // search → brand row: 8
-          const SizedBox(height: 8),
           BlocSelector<ListingsBloc, ListingsState, String?>(
             selector: (state) => state.make,
             builder: (context, currentMake) {
-              return ListingsBrandFilterRow(
-                currentMake: currentMake,
-                onBrandSelected: onBrandSelected,
+              return KeyedSubtree(
+                key: const ValueKey<String>('listingsHomeBrandRail'),
+                child: ListingsBrandFilterRow(
+                  currentMake: currentMake,
+                  onBrandSelected: onBrandSelected,
+                ),
               );
             },
           ),
-          // brand row → body chips: rows already carry 6 / 4 px
-          // vertical padding, so no extra spacer.
           BlocBuilder<ListingsBloc, ListingsState>(
             buildWhen: (p, q) => p.bodyTypeFilter != q.bodyTypeFilter,
             builder: (context, listState) {
@@ -818,44 +639,53 @@ class _FeedHeaderLayer extends StatelessWidget {
               final chipId = listState.bodyTypeFilter == null
                   ? 'all'
                   : listState.bodyTypeFilter!.name;
-              return CategoryChipsRow(
-                categories: feedHomeBodyChipDescriptors(l10n),
-                selectedId: chipId,
-                onSelected: (id) {
-                  context.read<ListingsBloc>().add(
-                    ListingsBodyTypeFilterChanged(
-                      listingBodyTypeFromFeedChipId(id),
-                    ),
-                  );
-                },
+              return KeyedSubtree(
+                key: const ValueKey<String>('listingsHomeBodyRail'),
+                child: CategoryChipsRow(
+                  categories: feedHomeBodyChipDescriptors(l10n),
+                  selectedId: chipId,
+                  onSelected: (id) {
+                    context.read<ListingsBloc>().add(
+                      ListingsBodyTypeFilterChanged(
+                        listingBodyTypeFromFeedChipId(id),
+                      ),
+                    );
+                  },
+                ),
               );
             },
           ),
-          BlocBuilder<ListingsBloc, ListingsState>(
-            buildWhen: _listingsFilterChromeChanged,
-            builder: (context, listState) {
-              if (!listState.hasActiveDiscoveryConstraints) {
-                return const SizedBox.shrink();
-              }
-              return ListingsActiveDiscoverySummaryStrip(
-                state: listState,
-                onFilterRemoved: (kind) {
-                  if (kind == ListingsDiscoveryChipKind.search) {
-                    searchCtrl.clear();
-                  }
-                  context.read<ListingsBloc>().add(
-                    ListingsDiscoveryFilterRemoved(kind),
-                  );
-                },
-              );
-            },
-          ),
-          // Tight bottom air inside the layer — the chip row's
-          // own 4 px vertical padding is the real bottom gap; the
-          // 2 px here just lifts the shadow edge clear of the
-          // chip silhouette.
           const SizedBox(height: 2),
         ],
+      ),
+    );
+  }
+}
+
+class _PinnedDiscoverySummary extends StatelessWidget {
+  const _PinnedDiscoverySummary({required this.state});
+
+  final ListingsState state;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!state.hasActiveDiscoveryConstraints) {
+      return const SizedBox.shrink();
+    }
+    final theme = Theme.of(context);
+    return DecoratedBox(
+      key: const ValueKey<String>('listingsActiveDiscoverySummaryStrip'),
+      decoration: BoxDecoration(
+        color: _feedHeaderLayerColor(theme),
+        boxShadow: _feedHeaderLayerShadow(theme),
+      ),
+      child: ListingsActiveDiscoverySummaryStrip(
+        state: state,
+        onFilterRemoved: (kind) {
+          context.read<ListingsBloc>().add(
+            ListingsDiscoveryFilterRemoved(kind),
+          );
+        },
       ),
     );
   }

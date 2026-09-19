@@ -24,12 +24,7 @@ import '../../../sellers/presentation/widgets/account_private_avatar.dart';
 
 enum _MenuFooterVariant { neutral, accent }
 
-/// Menu tab rendered by the fourth capsule-nav destination.
-///
-/// This is the user's hub for account-adjacent surfaces. It replaces
-/// the old separate "My Listings" and "Profile" tabs with a single
-/// collected surface, matching modern marketplace navigation rhythm
-/// (4 tabs instead of 5).
+/// Menu tab rendered by the fifth capsule-nav destination.
 ///
 /// Responsibilities:
 ///   * surface a compact identity header when the user is signed in
