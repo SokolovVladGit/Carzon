@@ -289,6 +289,29 @@ void main() {
       expect(parseListingPreviewMileage(''), isNull);
       expect(parseListingPreviewMileage('0'), 0);
     });
+
+    test('out-of-range and exponent values stay unpublished in preview', () {
+      expect(parseListingPreviewPrice('7.8e30'), isNull);
+      expect(parseListingPreviewPrice('1E10'), isNull);
+      expect(parseListingPreviewPrice('10000000000'), isNull);
+      expect(parseListingPreviewMileage('2147483648'), isNull);
+      expect(parseListingPreviewMileage('120006576546546546'), isNull);
+
+      final data = listingPreviewDataFromCreateForm(
+        l10n: ru,
+        make: 'VW',
+        model: 'Golf',
+        year: 2019,
+        priceText: '7.8e30',
+        currency: ListingCurrency.usd,
+        mileageText: '120006576546546546',
+        marketRegion: MarketRegion.transnistria,
+        city: 'Тирасполь',
+        listingType: ListingType.sale,
+      );
+      expect(data.priceAmount, isNull);
+      expect(data.mileageKm, isNull);
+    });
   });
 
   group('ListingPreviewCard', () {
@@ -402,6 +425,41 @@ void main() {
         ListingPreviewCard.compactCoverHeight,
       );
     });
+
+    testWidgets(
+      'out-of-range price/mileage do not render as formatted listing values',
+      (tester) async {
+        await tester.pumpWidget(
+          host(
+            listingPreviewDataFromCreateForm(
+              l10n: ru,
+              make: 'VW',
+              model: 'Golf',
+              year: 2019,
+              priceText: '7.8e30',
+              currency: ListingCurrency.usd,
+              mileageText: '120006576546546546',
+              marketRegion: MarketRegion.transnistria,
+              city: 'Тирасполь',
+              listingType: ListingType.sale,
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(
+          tester.widget<Text>(find.byKey(ListingPreviewCard.priceKey)).data,
+          ru.createListingPreviewEnterPrice,
+        );
+        expect(find.textContaining('e+'), findsNothing);
+        expect(find.textContaining('e+30'), findsNothing);
+        expect(find.textContaining('120006576546546546'), findsNothing);
+        expect(
+          find.textContaining(formatKm(ru, 120006576546546546)),
+          findsNothing,
+        );
+      },
+    );
 
     testWidgets('partial meta lines omit missing values and separators', (
       tester,

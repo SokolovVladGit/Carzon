@@ -5,6 +5,7 @@ import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import '../../../listings/domain/listing_submit_title.dart';
 import '../../../listings/domain/validation/listing_vin.dart';
+import '../../domain/validation/listing_publish_numeric.dart';
 
 /// Legacy stand-in. Preview UI must not render this as primary content.
 const String kListingPreviewMissingValue = '—';
@@ -73,21 +74,9 @@ double? listingPreviewDisplacementLiters(double? raw) {
   return raw;
 }
 
-num? parseListingPreviewPrice(String raw) {
-  final trimmed = raw.trim();
-  if (trimmed.isEmpty) return null;
-  final n = num.tryParse(trimmed);
-  if (n == null || n <= 0) return null;
-  return n;
-}
+num? parseListingPreviewPrice(String raw) => parseListingPublishPrice(raw);
 
-int? parseListingPreviewMileage(String raw) {
-  final trimmed = raw.trim();
-  if (trimmed.isEmpty) return null;
-  final n = int.tryParse(trimmed);
-  if (n == null || n < 0) return null;
-  return n;
-}
+int? parseListingPreviewMileage(String raw) => parseListingPublishMileage(raw);
 
 /// Builds preview state with the same title helper used on Publish.
 ListingPreviewData listingPreviewDataFromCreateForm({
