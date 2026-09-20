@@ -10,6 +10,7 @@ import 'package:carzon/features/create_listing/domain/entities/cover_image_uploa
 import 'package:carzon/features/create_listing/domain/entities/new_listing_input.dart';
 import 'package:carzon/features/create_listing/domain/entities/seller_listing_defaults.dart';
 import 'package:carzon/features/create_listing/domain/entities/vehicle_resolve_result.dart';
+import 'package:carzon/features/create_listing/domain/validation/listing_publish_numeric.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_cubit.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_state.dart';
 import 'package:carzon/features/create_listing/presentation/models/listing_preview_data.dart';
@@ -602,6 +603,109 @@ void main() {
         matching: find.text(ru.validationNonNegative),
       ),
       findsNothing,
+    );
+  });
+
+  testWidgets('int4-max mileage stays quiet', (tester) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
+    await tester.enterText(mileage, '2147483647');
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: mileage,
+        matching: find.text(ru.validationNonNegative),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: mileage,
+        matching: find.text(
+          '${ru.validationNonNegative} ≤ $kListingMileageKmMax',
+        ),
+      ),
+      findsNothing,
+    );
+  });
+
+  testWidgets('overflow mileage blocks publish before submit', (tester) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    final price = find.byKey(const ValueKey('create_listing_price_field'));
+    final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
+    await tester.enterText(price, '7800');
+    await tester.enterText(mileage, '120006576546546546');
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: mileage,
+        matching: find.text(
+          '${ru.validationNonNegative} ≤ $kListingMileageKmMax',
+        ),
+      ),
+      findsOneWidget,
+    );
+    final publish = find.text(ru.publishListing).last;
+    await tester.ensureVisible(publish);
+    await tester.tap(publish);
+    await tester.pumpAndSettle();
+    verifyNever(
+      () => createCubit.submit(
+        listingInput: any(named: 'listingInput'),
+        orderedPhotos: any(named: 'orderedPhotos'),
+      ),
+    );
+  });
+
+  testWidgets('numeric(12,2) overflow price blocks publish before submit', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    final price = find.byKey(const ValueKey('create_listing_price_field'));
+    final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
+    await tester.enterText(price, '10000000000');
+    await tester.enterText(mileage, '120000');
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: price, matching: find.text(ru.validationPositive)),
+      findsOneWidget,
+    );
+    final publish = find.text(ru.publishListing).last;
+    await tester.ensureVisible(publish);
+    await tester.tap(publish);
+    await tester.pumpAndSettle();
+    verifyNever(
+      () => createCubit.submit(
+        listingInput: any(named: 'listingInput'),
+        orderedPhotos: any(named: 'orderedPhotos'),
+      ),
+    );
+  });
+
+  testWidgets('exponent price blocks publish before submit', (tester) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    final price = find.byKey(const ValueKey('create_listing_price_field'));
+    final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
+    await tester.enterText(price, '7.8e30');
+    await tester.enterText(mileage, '120000');
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: price, matching: find.text(ru.validationPositive)),
+      findsOneWidget,
+    );
+    final publish = find.text(ru.publishListing).last;
+    await tester.ensureVisible(publish);
+    await tester.tap(publish);
+    await tester.pumpAndSettle();
+    verifyNever(
+      () => createCubit.submit(
+        listingInput: any(named: 'listingInput'),
+        orderedPhotos: any(named: 'orderedPhotos'),
+      ),
     );
   });
 

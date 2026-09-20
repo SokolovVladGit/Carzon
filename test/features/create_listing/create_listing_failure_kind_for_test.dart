@@ -3,6 +3,8 @@ import 'package:carzon/features/create_listing/presentation/bloc/create_listing_
 import 'package:carzon/features/create_listing/presentation/utils/create_listing_failure_kind_for.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../helpers/l10n_test_helpers.dart';
+
 void main() {
   test('maps AuthFailure to sessionExpired', () {
     expect(
@@ -129,6 +131,34 @@ void main() {
     expect(
       createListingFailureKindFor(const UnknownFailure('boom')),
       CreateListingFailureKind.genericCreate,
+    );
+  });
+
+  test('integer overflow ServerFailure is genericCreate, not upload', () {
+    expect(
+      createListingFailureKindFor(
+        const ServerFailure(
+          'value "120006576546546546" is out of range for type integer',
+          postgrestCode: '22003',
+        ),
+      ),
+      CreateListingFailureKind.genericCreate,
+    );
+  });
+
+  test('photo-upload and generic create copy are distinct', () {
+    final ru = ruStrings();
+    expect(
+      ru.createListingPhotosUploadFailed,
+      isNot(ru.listingCreateFailedRetry),
+    );
+    expect(
+      ru.createListingPhotosUploadFailed,
+      'Не удалось загрузить фото. Попробуйте ещё раз.',
+    );
+    expect(
+      ru.listingCreateFailedRetry,
+      'Не удалось создать объявление. Попробуйте ещё раз.',
     );
   });
 }

@@ -19,6 +19,7 @@ import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../create_listing/domain/constants/listing_gallery_limits.dart';
 import '../../../create_listing/domain/entities/cover_image_upload.dart';
+import '../../../create_listing/domain/validation/listing_publish_numeric.dart';
 import '../../../create_listing/presentation/widgets/create_listing_compose_layout.dart';
 import '../../../listings/domain/catalog/listing_brands.dart';
 import '../../../listings/domain/catalog/listing_city_catalog.dart';
@@ -645,8 +646,7 @@ class _EditListingFormState extends State<_EditListingForm> {
 
   String? _validatePrice(AppLocalizations l10n, String? v) {
     if (v == null || v.trim().isEmpty) return l10n.validationRequired;
-    final n = num.tryParse(v.trim());
-    if (n == null || n <= 0) return l10n.validationPositive;
+    if (parseListingPublishPrice(v) == null) return l10n.validationPositive;
     return null;
   }
 
@@ -654,6 +654,9 @@ class _EditListingFormState extends State<_EditListingForm> {
     if (v == null || v.trim().isEmpty) return l10n.validationRequired;
     final n = int.tryParse(v.trim());
     if (n == null || n < 0) return l10n.validationNonNegative;
+    if (n > kListingMileageKmMax) {
+      return '${l10n.validationNonNegative} ≤ $kListingMileageKmMax';
+    }
     return null;
   }
 
@@ -713,6 +716,10 @@ class _EditListingFormState extends State<_EditListingForm> {
 
     final year = _yearFieldKey.currentState!.value!;
     final l10n = context.l10n;
+    final priceEur = parseListingPublishPrice(_price.text);
+    final mileageKm = parseListingPublishMileage(_mileage.text);
+    if (priceEur == null || mileageKm == null) return;
+
     final vinDecision = resolveEditListingVinRpcSubmission(
       rawVinFieldText: _vin.text,
       ownerVinNormalizedForEdit: widget.ownerVinNormalizedForEdit,
@@ -732,8 +739,8 @@ class _EditListingFormState extends State<_EditListingForm> {
       model: _effectiveModelForSubmit(),
       variant: _variantForSubmit(),
       year: year,
-      priceEur: num.parse(_price.text.trim()),
-      mileageKm: int.parse(_mileage.text.trim()),
+      priceEur: priceEur,
+      mileageKm: mileageKm,
       type: _type,
       city: _effectiveCityForSubmit(),
       marketRegion: _marketRegion,

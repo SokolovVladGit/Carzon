@@ -35,6 +35,7 @@ import '../../domain/constants/listing_gallery_limits.dart';
 import '../../domain/entities/cover_image_upload.dart';
 import '../../domain/entities/new_listing_input.dart';
 import '../../domain/entities/seller_listing_defaults.dart';
+import '../../domain/validation/listing_publish_numeric.dart';
 import '../bloc/create_listing_cubit.dart';
 import '../bloc/create_listing_state.dart';
 import '../bloc/manual_smart_fill_cubit.dart';
@@ -1148,6 +1149,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     if (!formValid) return;
 
     final l10n = context.l10n;
+    final priceEur = parseListingPublishPrice(_price.text);
+    final mileageKm = parseListingPublishMileage(_mileage.text);
+    if (priceEur == null || mileageKm == null) return;
+
     final input = NewListingInput(
       sellerId: widget.sellerId,
       title: resolvedListingTitleForSubmit(
@@ -1162,9 +1167,9 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       model: _effectiveModelForSubmit(),
       variant: _variantForSubmit(),
       year: _yearFieldKey.currentState!.value!,
-      priceEur: num.parse(_price.text.trim()),
+      priceEur: priceEur,
       priceCurrency: _priceCurrency,
-      mileageKm: int.parse(_mileage.text.trim()),
+      mileageKm: mileageKm,
       type: _type,
       city: _effectiveCityForSubmit(),
       marketRegion: _marketRegion,
@@ -1207,8 +1212,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
 
   String? _validatePrice(AppLocalizations l10n, String? v) {
     if (v == null || v.trim().isEmpty) return l10n.validationRequired;
-    final n = num.tryParse(v.trim());
-    if (n == null || n <= 0) return l10n.validationPositive;
+    if (parseListingPublishPrice(v) == null) return l10n.validationPositive;
     return null;
   }
 
@@ -1216,6 +1220,9 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     if (v == null || v.trim().isEmpty) return l10n.validationRequired;
     final n = int.tryParse(v.trim());
     if (n == null || n < 0) return l10n.validationNonNegative;
+    if (n > kListingMileageKmMax) {
+      return '${l10n.validationNonNegative} ≤ $kListingMileageKmMax';
+    }
     return null;
   }
 

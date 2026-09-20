@@ -1,8 +1,10 @@
 import 'package:bloc_test/bloc_test.dart';
+
 import 'package:carzon/app/di/injection.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
+import 'package:carzon/features/create_listing/domain/validation/listing_publish_numeric.dart';
 import 'package:carzon/features/edit_listing/domain/entities/edit_listing_input.dart';
 import 'package:carzon/features/edit_listing/domain/entities/owner_listing_vin_report_status.dart';
 import 'package:carzon/features/edit_listing/domain/entities/owner_listing_vin_source_result.dart';
@@ -22,6 +24,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
@@ -30,6 +33,76 @@ class _MockEditCubit extends MockCubit<EditListingState>
     implements EditListingCubit {}
 
 class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
+
+const _kTinyPng = <int>[
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0A,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
+];
 
 Listing _listing({
   String? coverUrl,
@@ -577,6 +650,9 @@ void main() {
             as EditListingInput;
     expect(saved.city, 'Chișinău');
     expect(saved.marketRegion, MarketRegion.moldova);
+    expect(saved.priceEur, 8900);
+    expect(saved.mileageKm, 120000);
+    expect(saved.priceCurrency, ListingCurrency.usd);
   });
 
   testWidgets('manual historical city submits trimmed custom value', (
@@ -635,6 +711,239 @@ void main() {
     await tester.pump();
 
     expect(find.text(ru.editListingGalleryReadOnlyHint), findsOneWidget);
+  });
+
+  Finder priceField() =>
+      find.widgetWithText(TextFormField, ru.createListingPriceAmount);
+
+  Finder mileageField() =>
+      find.widgetWithText(TextFormField, ru.fieldMileageKm);
+
+  Future<void> pumpReadyForSave(
+    WidgetTester tester, {
+    EditListingImagePicker? imagePicker,
+  }) async {
+    stub(
+      EditListingState.ready(
+        _listing(),
+        listingGalleryImages: const [],
+        galleryLoadSucceeded: true,
+        initialGallerySlots: <EditListingGallerySlot>[],
+      ),
+    );
+    when(
+      () => cubit.save(
+        input: any(named: 'input'),
+        galleryDraft: any(named: 'galleryDraft'),
+      ),
+    ).thenAnswer((_) async {});
+    await tester.pumpWidget(app(imagePicker: imagePicker));
+    await tester.pump();
+  }
+
+  Future<void> tapSave(WidgetTester tester) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
+    final button = find.byKey(const ValueKey('edit_listing_save_button'));
+    await tester.scrollUntilVisible(
+      button,
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('DB-max price and mileage save with parsed values', (
+    tester,
+  ) async {
+    await pumpReadyForSave(tester);
+    await tester.ensureVisible(priceField());
+    await tester.enterText(priceField(), '9999999999.99');
+    await tester.enterText(mileageField(), '2147483647');
+    await tapSave(tester);
+
+    final saved =
+        verify(
+              () => cubit.save(
+                input: captureAny(named: 'input'),
+                galleryDraft: any(named: 'galleryDraft'),
+              ),
+            ).captured.single
+            as EditListingInput;
+    expect(saved.priceEur, 9999999999.99);
+    expect(saved.mileageKm, 2147483647);
+    expect(saved.priceCurrency, ListingCurrency.usd);
+  });
+
+  testWidgets('integer price 7800 is accepted on save', (tester) async {
+    await pumpReadyForSave(tester);
+    await tester.ensureVisible(priceField());
+    await tester.enterText(priceField(), '7800');
+    await tester.enterText(mileageField(), '120000');
+    await tapSave(tester);
+
+    final saved =
+        verify(
+              () => cubit.save(
+                input: captureAny(named: 'input'),
+                galleryDraft: any(named: 'galleryDraft'),
+              ),
+            ).captured.single
+            as EditListingInput;
+    expect(saved.priceEur, 7800);
+    expect(saved.mileageKm, 120000);
+  });
+
+  testWidgets('normal decimal price is accepted on save', (tester) async {
+    await pumpReadyForSave(tester);
+    await tester.ensureVisible(priceField());
+    await tester.enterText(priceField(), '7800.50');
+    await tester.enterText(mileageField(), '120000');
+    await tapSave(tester);
+
+    final saved =
+        verify(
+              () => cubit.save(
+                input: captureAny(named: 'input'),
+                galleryDraft: any(named: 'galleryDraft'),
+              ),
+            ).captured.single
+            as EditListingInput;
+    expect(saved.priceEur, 7800.50);
+    expect(saved.mileageKm, 120000);
+  });
+
+  testWidgets('overflow mileage blocks save', (tester) async {
+    await pumpReadyForSave(tester);
+    await tester.ensureVisible(mileageField());
+    await tester.enterText(mileageField(), '2147483648');
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: mileageField(),
+        matching: find.text(
+          '${ru.validationNonNegative} ≤ $kListingMileageKmMax',
+        ),
+      ),
+      findsOneWidget,
+    );
+    await tapSave(tester);
+    verifyNever(
+      () => cubit.save(
+        input: any(named: 'input'),
+        galleryDraft: any(named: 'galleryDraft'),
+      ),
+    );
+  });
+
+  testWidgets('hosted-incident mileage blocks save', (tester) async {
+    await pumpReadyForSave(tester);
+    await tester.ensureVisible(mileageField());
+    await tester.enterText(mileageField(), '120006576546546546');
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: mileageField(),
+        matching: find.text(
+          '${ru.validationNonNegative} ≤ $kListingMileageKmMax',
+        ),
+      ),
+      findsOneWidget,
+    );
+    await tapSave(tester);
+    verifyNever(
+      () => cubit.save(
+        input: any(named: 'input'),
+        galleryDraft: any(named: 'galleryDraft'),
+      ),
+    );
+  });
+
+  testWidgets('numeric(12,2) overflow price blocks save', (tester) async {
+    await pumpReadyForSave(tester);
+    await tester.ensureVisible(priceField());
+    await tester.enterText(priceField(), '10000000000');
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: priceField(),
+        matching: find.text(ru.validationPositive),
+      ),
+      findsOneWidget,
+    );
+    await tapSave(tester);
+    verifyNever(
+      () => cubit.save(
+        input: any(named: 'input'),
+        galleryDraft: any(named: 'galleryDraft'),
+      ),
+    );
+  });
+
+  testWidgets('exponent prices block save', (tester) async {
+    await pumpReadyForSave(tester);
+    await tester.ensureVisible(priceField());
+    await tester.enterText(priceField(), '7.8e30');
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: priceField(),
+        matching: find.text(ru.validationPositive),
+      ),
+      findsOneWidget,
+    );
+    await tapSave(tester);
+    verifyNever(
+      () => cubit.save(
+        input: any(named: 'input'),
+        galleryDraft: any(named: 'galleryDraft'),
+      ),
+    );
+
+    await tester.enterText(priceField(), '1E10');
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: priceField(),
+        matching: find.text(ru.validationPositive),
+      ),
+      findsOneWidget,
+    );
+    await tapSave(tester);
+    verifyNever(
+      () => cubit.save(
+        input: any(named: 'input'),
+        galleryDraft: any(named: 'galleryDraft'),
+      ),
+    );
+  });
+
+  testWidgets('invalid mileage with a new local photo never starts save', (
+    tester,
+  ) async {
+    await pumpReadyForSave(
+      tester,
+      imagePicker:
+          ({required source, required maxWidth, required imageQuality}) async =>
+              XFile.fromData(
+                Uint8List.fromList(_kTinyPng),
+                name: 'car.png',
+                mimeType: 'image/png',
+              ),
+    );
+    await tester.tap(find.byKey(EditListingGallerySection.widgetTestKey));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(mileageField());
+    await tester.enterText(mileageField(), '120006576546546546');
+    await tapSave(tester);
+    verifyNever(
+      () => cubit.save(
+        input: any(named: 'input'),
+        galleryDraft: any(named: 'galleryDraft'),
+      ),
+    );
   });
 
   testWidgets('picker cancellation is neutral on edit gallery', (tester) async {

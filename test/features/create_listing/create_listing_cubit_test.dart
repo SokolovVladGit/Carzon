@@ -504,6 +504,43 @@ void main() {
     });
 
     blocTest<CreateListingCubit, CreateListingState>(
+      'integer-range createV2 rejection after successful uploads '
+      'rolls back images and is not an upload failure',
+      setUp: () {
+        when(() => imageRepo.uploadSequential(any())).thenAnswer(
+          (_) async => const Success([
+            UploadedListingImage(publicUrl: 'https://cdn/a.jpg'),
+          ]),
+        );
+        when(() => createRepo.createV2(any())).thenAnswer(
+          (_) async => const FailureResult(
+            ServerFailure(
+              'value "120006576546546546" is out of range for type integer',
+              postgrestCode: '22003',
+            ),
+          ),
+        );
+      },
+      build: () => cubit,
+      act: (c) => c.submit(listingInput: _input(), orderedPhotos: [_upload()]),
+      expect: () => const [
+        CreateListingState.submitting(),
+        CreateListingState.failure(CreateListingFailureKind.genericCreate),
+      ],
+      verify: (_) {
+        verify(() => imageRepo.uploadSequential(any())).called(1);
+        verify(() => createRepo.createV2(any())).called(1);
+        verify(
+          () => imageRepo.deleteUploadedBatchBestEffort(
+            images: any(named: 'images'),
+            sellerId: 's1',
+          ),
+        ).called(1);
+        expect(cubit.state.failureKind, isNot(CreateListingFailureKind.upload));
+      },
+    );
+
+    blocTest<CreateListingCubit, CreateListingState>(
       'no-cover createV2 failure never touches batch delete.',
       setUp: () {
         when(
