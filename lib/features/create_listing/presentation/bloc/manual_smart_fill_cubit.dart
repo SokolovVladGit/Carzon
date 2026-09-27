@@ -50,6 +50,16 @@ class ManualSmartFillCubit extends Cubit<ManualSmartFillState> {
     unawaited(_run(query: query));
   }
 
+  /// One-shot catalog consensus for a confirmed VIN identity.
+  /// Does not emit, so the manual Smart Fill panel stays unchanged.
+  Future<Result<ManualSmartFillResult>> peekIdentityConsensus({
+    required String make,
+    required String model,
+    required int year,
+  }) {
+    return _resolveByIdentity(make: make, model: model, year: year);
+  }
+
   Future<void> selectOption(ManualSmartFillRefinementOption option) {
     return _select(
       ManualSmartFillRefinementAnswer(kind: option.kind, optionId: option.id),

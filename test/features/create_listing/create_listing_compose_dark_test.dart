@@ -1,5 +1,6 @@
 import 'package:carzon/core/theme/app_theme.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_compose_layout.dart';
+import 'package:carzon/features/create_listing/presentation/widgets/create_listing_vin_card.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_media_section.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -41,11 +42,49 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(l10n.createListingMediaTitle), findsOneWidget);
-      expect(find.text(l10n.createListingHeroEmptyTitle), findsOneWidget);
+      expect(find.text(l10n.createListingAddPhoto), findsOneWidget);
       expect(
         find.byKey(CreateListingMediaSection.phase3TestKey),
         findsOneWidget,
       );
+    });
+
+    testWidgets('vin hero uses car background in dark theme', (tester) async {
+      final vin = TextEditingController();
+      addTearDown(vin.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: CreateListingVinCard(
+              l10n: l10n,
+              theme: AppTheme.dark(),
+              controller: vin,
+              enabled: true,
+              scanning: false,
+              onScan: () {},
+              onChanged: (_) {},
+              validator: (_) => null,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(CreateListingVinCard.heroKey), findsOneWidget);
+      final image = tester.widget<Image>(
+        find.byKey(CreateListingVinCard.imageKey),
+      );
+      expect(image.fit, BoxFit.cover);
+      expect(
+        (image.image as AssetImage).assetName,
+        'assets/bg/car_bg_listing.png',
+      );
+      expect(find.text(l10n.createListingHeroTitle), findsNothing);
+      expect(tester.takeException(), isNull);
     });
   });
 

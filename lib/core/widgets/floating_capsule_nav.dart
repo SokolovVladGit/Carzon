@@ -1,4 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
+import '../theme/app_theme.dart';
 
 /// Destination descriptor consumed by [FloatingCapsuleNav].
 ///
@@ -80,17 +83,39 @@ const double kCapsuleNavSelectedChromeExtent = 44;
 /// Corner radius of the shared selected pill.
 const double kCapsuleNavSelectedChromeRadius = 14;
 
-/// Active icon tint for normal destinations. Same token Home already uses.
-Color capsuleNavActiveIconColor(ColorScheme scheme) => scheme.primary;
+/// Active icon tint for a normal selected tab.
+///
+/// Light mode uses the shared graphite token ([AppTheme.darkOutline], the
+/// same charcoal as selected compose controls). Dark mode uses the theme's
+/// near-white on-surface so the glyph stays readable on the dark capsule.
+/// The filled Home glyph is optically heavier than stroke icons, so it is
+/// eased slightly in [capsuleNavSelectedIconColor].
+Color capsuleNavActiveIconColor(ColorScheme scheme, {bool isDark = false}) {
+  return isDark ? AppTheme.darkOnSurface : AppTheme.darkOutline;
+}
+
+/// Selected glyph color. Home's filled mark is pulled back so it matches
+/// the visual weight of Search and the other stroke tabs.
+Color capsuleNavSelectedIconColor(
+  ColorScheme scheme, {
+  required bool isDark,
+  IconData? icon,
+}) {
+  final base = capsuleNavActiveIconColor(scheme, isDark: isDark);
+  if (icon == CupertinoIcons.house_fill) {
+    return base.withValues(alpha: 0.86);
+  }
+  return base;
+}
 
 /// Inactive icon tint for normal destinations.
 Color capsuleNavInactiveIconColor(ColorScheme scheme, {required bool isDark}) {
   return scheme.onSurfaceVariant.withValues(alpha: isDark ? 0.62 : 0.55);
 }
 
-/// Light-blue selected pill for normal destinations. Create never uses this.
+/// Neutral frosted selected tile. No primary tint. Create never uses this.
 Color capsuleNavSelectedPillColor(ColorScheme scheme, {required bool isDark}) {
-  return scheme.primary.withValues(alpha: isDark ? 0.18 : 0.10);
+  return scheme.onSurface.withValues(alpha: isDark ? 0.12 : 0.08);
 }
 
 /// Premium, label-less floating capsule bottom navigation (Pass 1.5).
@@ -99,8 +124,10 @@ Color capsuleNavSelectedPillColor(ColorScheme scheme, {required bool isDark}) {
 ///   * icon-only, so the bar stays quiet under image-rich content;
 ///   * a short, diffused shadow so the capsule reads as "floating"
 ///     without looking like Material elevation;
-///   * the selected destination earns a soft rounded background
-///     highlight in a low-alpha primary tint — no full-color "blast";
+///   * the selected destination earns a soft neutral rounded tile —
+///     graphite icon, no blue — so it reads as the current place;
+///   * the central Create asset stays the blue primary action and
+///     never takes that tile;
 ///   * an optional [CapsuleNavDestination.isEmphasized] bumps the
 ///     center/create icon a couple of points so it reads as the
 ///     primary action without turning into a FAB.
@@ -224,10 +251,9 @@ class FloatingCapsuleNav extends StatelessWidget {
   }
 }
 
-/// Single tappable destination. Icon-only, with a soft rounded
-/// primary-tinted highlight behind the icon when selected. An optional
-/// tap scale gives the press a hint of weight without adding motion
-/// noise to the bar.
+/// Single tappable destination. Icon-only. A selected normal tab gets a
+/// neutral rounded tile and a graphite glyph. Create keeps its blue asset
+/// and no tile.
 class _CapsuleNavItem extends StatefulWidget {
   const _CapsuleNavItem({
     required this.destination,
@@ -252,14 +278,17 @@ class _CapsuleNavItemState extends State<_CapsuleNavItem> {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // Normal tabs share one selected system (Home is the reference):
-    // inactive = muted gray, no pill; active = primary + light-blue pill.
-    // Create (assetIcon) is the intentional exception: native blue plus,
-    // no selected chrome.
+    // Normal tabs: inactive = muted gray, no tile; selected = graphite
+    // icon on a neutral frosted tile. Create (assetIcon) stays the blue
+    // action: untinted asset, no selected tile even when it is current.
     final isCreateAction = widget.destination.assetIcon != null;
     final showSelectedChrome = widget.selected && !isCreateAction;
     final iconColor = showSelectedChrome
-        ? capsuleNavActiveIconColor(scheme)
+        ? capsuleNavSelectedIconColor(
+            scheme,
+            isDark: isDark,
+            icon: widget.destination.selectedIcon,
+          )
         : capsuleNavInactiveIconColor(scheme, isDark: isDark);
     final pillColor = showSelectedChrome
         ? capsuleNavSelectedPillColor(scheme, isDark: isDark)

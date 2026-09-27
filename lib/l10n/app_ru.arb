@@ -349,7 +349,6 @@
 
   "createListingSectionSpecsSubtitle": "По желанию — помогают в поиске и фильтрах.",
   "createListingSectionDescription": "Описание",
-  "createListingSectionDescriptionSubtitle": "Состояние, комплектация, сервис — своими словами.",
   "createListingDescriptionLabel": "Текст объявления",
   "createListingDescriptionHint": "Расскажите о машине своими словами…",
 
@@ -508,21 +507,33 @@
   "publicContactNotice": "Ваш телефон и выбранные способы связи будут видны в активных объявлениях. Указывайте только те контакты, которыми готовы поделиться публично.",
 
   "createListingTitle": "Подать объявление",
+  "createListingHeroTitle": "Добавить объявление",
+  "createListingHeroSubtitle": "Разместите авто и найдите покупателя быстрее.",
+  "createListingVinCardTitle": "VIN",
+  "createListingVinCardHelper": "Сканируйте или введите VIN",
+  "createListingVehicleDetailsHelper": "Цена, пробег и условия сделки.",
+  "createListingPhotoCount": "{count}/9",
+  "@createListingPhotoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "createListingPhotoSlotFront": "Перед",
+  "createListingPhotoSlotBack": "Зад",
+  "createListingPhotoSlotInterior": "Салон",
+  "createListingPhotoSlotMore": "Ещё",
   "createListingComposeEyebrow": "Новое объявление · Carzon",
   "createListingComposeHeadline": "Создайте объявление",
   "createListingComposeSubtitle": "Подготовьте карточку автомобиля: фото, характеристики и аккуратные контакты — чтобы покупатель сразу увидел главное.",
   "createListingSectionPhotosLead": "Фотографии",
-  "createListingSectionPhotosLeadSubtitle": "Реальные фото этого автомобиля.",
   "createListingSectionVehicle": "Автомобиль",
   "createListingSectionVehicleSubtitle": "VIN поможет заполнить марку, модель и год.",
-  "createListingSectionDeal": "Сделка",
-  "createListingSectionDealSubtitle": "Тип, цена и пробег.",
   "createListingSectionLocation": "Местоположение",
-  "createListingSectionLocationSubtitle": "Регион и город, где находится автомобиль.",
   "createListingSectionPrice": "Цена и пробег",
   "createListingSectionPriceSubtitle": "Валюта и фактические цифры.",
   "createListingSectionPublish": "Контакты и публикация",
-  "createListingSectionPublishSubtitle": "Контакты будут видны в активном объявлении.",
   "createListingPreviewHeading": "Предпросмотр объявления",
   "createListingPreviewVehiclePlaceholder": "Автомобиль",
   "createListingPreviewCoverLabel": "Фото обложки",
@@ -1311,7 +1322,7 @@
   "createListingVehicleFound": "Найден автомобиль",
   "createListingConfirmVehicle": "Подтвердить",
   "createListingEnterManually": "Ввести вручную",
-  "createListingManualVehicleTitle": "Выбрать автомобиль вручную",
+  "createListingManualVehicleTitle": "Заполнить вручную",
   "createListingManualVehicleSubtitle": "Марка, модель и год",
   "createListingOrSeparator": "или",
   "createListingChangeManually": "Изменить вручную",
@@ -1337,6 +1348,9 @@
   "createListingAdditionalDetails": "Дополнительные сведения",
   "createListingAdditionalDetailsSubtitle": "Кузов, двигатель, коробка, описание",
   "createListingEditCharacteristics": "Изменить характеристики",
+  "createListingCharacteristicsAutoHelper": "Заполнятся автоматически после VIN или подбора автомобиля.",
+  "createListingCharacteristicsManualHint": "При необходимости можно указать вручную.",
+  "createListingCharacteristicsEnterManually": "Указать вручную",
   "createListingCharacteristicsEmpty": "Пока не указаны",
   "createListingDrivetrainNotSpecified": "Не указан",
   "createListingEngineLitersPlaceholder": "Объём двигателя, л",
@@ -2151,5 +2165,16 @@
   "vinScannerTorchOn": "Включить фонарик",
   "vinScannerTorchOff": "Выключить фонарик",
   "vinScannerRetry": "Повторить",
-  "vinScannerInvalid": "Не удалось распознать корректный VIN. Попробуйте снова или введите его вручную."
+  "vinScannerInvalid": "Не удалось распознать корректный VIN. Попробуйте снова или введите его вручную.",
+  "createListingHeaderSubtitle": "VIN, фото и данные автомобиля.",
+  "createListingVinHeroEyebrow": "Быстрое добавление",
+  "createListingVinHeroTitle": "Введите VIN",
+  "createListingScanVinShort": "Скан VIN",
+  "createListingCharacteristicsFilledAutomatically": "Заполнено автоматически",
+  "createListingDealTypeLabel": "Тип объявления",
+  "createListingDealBothShort": "Оба",
+  "createListingMmyValuePlaceholder": "Выбрать",
+  "createListingPhoneCaption": "Телефон",
+  "createListingVehicleDataTitle": "Данные автомобиля",
+  "createListingCharacteristicsEditorTitle": "Характеристики автомобиля"
 }

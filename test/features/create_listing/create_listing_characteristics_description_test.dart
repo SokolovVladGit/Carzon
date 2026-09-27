@@ -5,7 +5,10 @@ import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_cubit.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_state.dart';
+import 'package:carzon/core/theme/app_theme.dart';
 import 'package:carzon/features/create_listing/presentation/models/create_listing_characteristics_summary.dart';
+import 'package:carzon/features/create_listing/presentation/widgets/create_listing_characteristics_facts.dart';
+import 'package:carzon/shared/ui/carzon_icons.dart';
 import 'package:carzon/features/create_listing/presentation/models/listing_preview_data.dart';
 import 'package:carzon/features/create_listing/presentation/pages/create_listing_page.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/listing_preview_card.dart';
@@ -13,6 +16,7 @@ import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/utils/listing_formatters.dart';
 import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -156,12 +160,15 @@ void main() {
         await tester.pumpWidget(wrap());
         await tester.pumpAndSettle();
 
-        // Editor collapsed, yet description is a first-class visible field.
         expect(bodyTypeField(), findsNothing);
-        expect(
-          find.byKey(const ValueKey('create_listing_description_field')),
-          findsOneWidget,
+        final description = tester.widget<EditableText>(
+          find.descendant(
+            of: find.byKey(const ValueKey('create_listing_description_field')),
+            matching: find.byType(EditableText),
+          ),
         );
+        expect(description.minLines, 3);
+        expect(find.textContaining('/ 8000'), findsOneWidget);
 
         final descriptionSection = find.byKey(
           const ValueKey('create_listing_description_section'),
@@ -182,9 +189,14 @@ void main() {
         await tester.pumpWidget(wrap());
         await tester.pumpAndSettle();
 
+        expect(summary(), findsNothing);
         expect(
-          tester.widget<Text>(summary()).data,
-          ru.createListingCharacteristicsEmpty,
+          find.text(ru.createListingCharacteristicsAutoHelper),
+          findsOneWidget,
+        );
+        expect(
+          find.text(ru.createListingCharacteristicsEnterManually),
+          findsOneWidget,
         );
 
         await expandCreateListingAdditionalDetails(tester);
@@ -196,8 +208,11 @@ void main() {
         await tester.pump();
 
         expect(
-          tester.widget<Text>(summary()).data,
-          formatEnginePowerHpDisplay(ru, 150),
+          find.descendant(
+            of: summary(),
+            matching: find.text(formatEnginePowerHpDisplay(ru, 150)),
+          ),
+          findsOneWidget,
         );
       },
     );
@@ -224,13 +239,13 @@ void main() {
     }
 
     testWidgets(
-      'drivetrain shows not-specified and is selectable without expanding',
+      'drivetrain shows not-specified and is selectable after expanding',
       (tester) async {
         await tester.pumpWidget(wrap());
         await tester.pumpAndSettle();
 
-        // Editor still collapsed while drivetrain is directly available.
-        expect(bodyTypeField(), findsNothing);
+        await expandCreateListingAdditionalDetails(tester);
+        expect(bodyTypeField(), findsOneWidget);
         expect(
           find.descendant(
             of: drivetrainField(),
@@ -248,8 +263,7 @@ void main() {
           ),
           findsOneWidget,
         );
-        // Detailed editor was never expanded.
-        expect(bodyTypeField(), findsNothing);
+        expect(bodyTypeField(), findsOneWidget);
       },
     );
 
@@ -259,6 +273,7 @@ void main() {
       await tester.pumpWidget(wrap());
       await tester.pumpAndSettle();
 
+      await expandCreateListingAdditionalDetails(tester);
       await selectFourWheelDrivetrain(tester);
 
       await tester.scrollUntilVisible(
@@ -271,5 +286,298 @@ void main() {
         contains(ru.listingDrivetrainFourWheel),
       );
     });
+  });
+
+  testWidgets('technical fact grid stays a 2x2 without overflow', (
+    tester,
+  ) async {
+    Future<void> pumpFacts({
+      required ThemeData theme,
+      required double width,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: width,
+                child: CreateListingCharacteristicsFacts(
+                  facts: [
+                    CreateListingCharacteristicFact(
+                      icon: Icons.directions_car_outlined,
+                      label: ru.listingFieldBodyType,
+                      value: ru.listingBodyTypeSedan,
+                    ),
+                    CreateListingCharacteristicFact(
+                      icon: CarzonIcons.gauge,
+                      label: ru.compareRowEngine,
+                      value: '3.5 л · ${ru.listingFuelTypePetrol}',
+                    ),
+                    CreateListingCharacteristicFact(
+                      icon: CarzonIcons.swap,
+                      label: ru.compareRowDrivetrain,
+                      value: ru.listingDrivetrainAwd,
+                    ),
+                    CreateListingCharacteristicFact(
+                      icon: CarzonIcons.settings,
+                      label: ru.compareRowTransmission,
+                      value: ru.listingTransmissionAutomatic,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    for (final width in [358.0, 343.0, 288.0]) {
+      await pumpFacts(theme: AppTheme.light(), width: width);
+      expect(tester.takeException(), isNull);
+      final body = tester.getRect(find.text(ru.listingFieldBodyType));
+      final gearbox = tester.getRect(find.text(ru.compareRowTransmission));
+      if (width >= 280) {
+        expect(gearbox.left, greaterThan(body.left));
+        expect(gearbox.top, greaterThan(body.top));
+      }
+    }
+    await pumpFacts(theme: AppTheme.dark(), width: 358);
+    expect(tester.takeException(), isNull);
+    expect(find.text(ru.listingTransmissionAutomatic), findsOneWidget);
+  });
+
+  test('fourth cell prefers transmission, then power, then fuel', () {
+    List<String> labels({
+      ListingTransmissionType? transmission,
+      int? power,
+      ListingFuelType? fuel = ListingFuelType.petrol,
+      double? liters = 2,
+    }) {
+      return buildCreateListingTechnicalFacts(
+        ru,
+        bodyType: ListingBodyType.pickup,
+        displacementLiters: liters,
+        fuelType: fuel,
+        drivetrain: ListingDrivetrain.awd,
+        transmissionType: transmission,
+        powerHp: power,
+      ).map((fact) => fact.label).toList();
+    }
+
+    expect(
+      labels(transmission: ListingTransmissionType.automatic, power: 200),
+      [
+        ru.listingFieldBodyType,
+        ru.compareRowEngine,
+        ru.compareRowDrivetrain,
+        ru.compareRowTransmission,
+      ],
+    );
+    expect(labels(power: 200), [
+      ru.listingFieldBodyType,
+      ru.compareRowEngine,
+      ru.compareRowDrivetrain,
+      ru.compareRowPower,
+    ]);
+    expect(labels(), [
+      ru.listingFieldBodyType,
+      ru.compareRowEngine,
+      ru.compareRowDrivetrain,
+      ru.listingFuelType,
+    ]);
+  });
+
+  test('fuel stays on the engine line only when it is not its own cell', () {
+    final withTransmission = buildCreateListingTechnicalFacts(
+      ru,
+      bodyType: ListingBodyType.pickup,
+      displacementLiters: 2,
+      fuelType: ListingFuelType.petrol,
+      drivetrain: ListingDrivetrain.awd,
+      transmissionType: ListingTransmissionType.automatic,
+    );
+    expect(withTransmission, hasLength(4));
+    expect(
+      withTransmission
+          .firstWhere((fact) => fact.label == ru.compareRowEngine)
+          .value,
+      '${formatEngineDisplacementForDisplay(ru, 2)} · ${ru.listingFuelTypePetrol}',
+    );
+    expect(
+      withTransmission.map((fact) => fact.label),
+      isNot(contains(ru.listingFuelType)),
+    );
+
+    final fuelFourth = buildCreateListingTechnicalFacts(
+      ru,
+      bodyType: ListingBodyType.pickup,
+      displacementLiters: 2,
+      fuelType: ListingFuelType.petrol,
+      drivetrain: ListingDrivetrain.awd,
+    );
+    expect(fuelFourth, hasLength(4));
+    expect(
+      fuelFourth.firstWhere((fact) => fact.label == ru.compareRowEngine).value,
+      formatEngineDisplacementForDisplay(ru, 2),
+    );
+    expect(
+      fuelFourth.firstWhere((fact) => fact.label == ru.listingFuelType).value,
+      ru.listingFuelTypePetrol,
+    );
+    expect(
+      fuelFourth.map((fact) => fact.value).join(' '),
+      isNot(contains('—')),
+    );
+    expect(fuelFourth.map((fact) => fact.value), isNot(contains('Неизвестно')));
+
+    final fuelOnly = buildCreateListingTechnicalFacts(
+      ru,
+      fuelType: ListingFuelType.petrol,
+    );
+    expect(fuelOnly, hasLength(1));
+    expect(fuelOnly.single.label, ru.listingFuelType);
+    expect(fuelOnly.single.value, ru.listingFuelTypePetrol);
+  });
+
+  test('missing drivetrain still fills four cells from later real facts', () {
+    final facts = buildCreateListingTechnicalFacts(
+      ru,
+      bodyType: ListingBodyType.sedan,
+      displacementLiters: 1.8,
+      fuelType: ListingFuelType.petrol,
+      year: 2018,
+    );
+    expect(facts, hasLength(4));
+    expect(facts.map((fact) => fact.label), [
+      ru.listingFieldBodyType,
+      ru.compareRowEngine,
+      ru.listingFuelType,
+      ru.compareRowYear,
+    ]);
+    expect(
+      facts.firstWhere((fact) => fact.label == ru.compareRowEngine).value,
+      formatEngineDisplacementForDisplay(ru, 1.8),
+    );
+    expect(
+      facts.firstWhere((fact) => fact.label == ru.listingFuelType).value,
+      ru.listingFuelTypePetrol,
+    );
+    expect(
+      facts.firstWhere((fact) => fact.label == ru.compareRowYear).value,
+      '2018',
+    );
+    expect(facts.map((fact) => fact.value), isNot(contains('Неизвестно')));
+  });
+
+  test('missing transmission falls back to year without inventing a value', () {
+    final facts = buildCreateListingTechnicalFacts(
+      ru,
+      bodyType: ListingBodyType.sedan,
+      displacementLiters: 1.8,
+      drivetrain: ListingDrivetrain.fwd,
+      year: 2020,
+    );
+    expect(facts, hasLength(4));
+    expect(facts.map((fact) => fact.label), [
+      ru.listingFieldBodyType,
+      ru.compareRowEngine,
+      ru.compareRowDrivetrain,
+      ru.compareRowYear,
+    ]);
+    expect(
+      facts.map((fact) => fact.label),
+      isNot(contains(ru.compareRowTransmission)),
+    );
+
+    final withoutYear = buildCreateListingTechnicalFacts(
+      ru,
+      bodyType: ListingBodyType.sedan,
+      displacementLiters: 1.8,
+      drivetrain: ListingDrivetrain.fwd,
+    );
+    expect(
+      withoutYear.map((fact) => fact.label),
+      isNot(contains(ru.compareRowYear)),
+    );
+    expect(withoutYear, hasLength(3));
+  });
+
+  test('registration is the last real fallback and blank text is omitted', () {
+    final facts = buildCreateListingTechnicalFacts(
+      ru,
+      year: 2016,
+      registration: '  Тирасполь  ',
+    );
+    expect(facts.map((fact) => fact.label), [
+      ru.compareRowYear,
+      ru.compareRowRegistration,
+    ]);
+    expect(facts.last.value, 'Тирасполь');
+
+    final blank = buildCreateListingTechnicalFacts(ru, registration: '   ');
+    expect(blank, isEmpty);
+  });
+
+  testWidgets('2x2 grid fits AWD at 320, 375 and 390 without a divider', (
+    tester,
+  ) async {
+    Future<void> pumpAt(double width, ThemeData theme) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: width,
+                child: CreateListingCharacteristicsFacts(
+                  facts: buildCreateListingTechnicalFacts(
+                    ru,
+                    bodyType: ListingBodyType.pickup,
+                    displacementLiters: 2,
+                    fuelType: ListingFuelType.petrol,
+                    drivetrain: ListingDrivetrain.awd,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    void expectFits(String value) {
+      final paragraph = tester.renderObject<RenderParagraph>(find.text(value));
+      expect(paragraph.didExceedMaxLines, isFalse);
+    }
+
+    for (final width in [264.0, 319.0, 334.0]) {
+      await pumpAt(width, AppTheme.light());
+      expect(tester.takeException(), isNull);
+      final body = tester.getRect(find.text(ru.listingFieldBodyType));
+      final engine = tester.getRect(find.text(ru.compareRowEngine));
+      final drive = tester.getRect(find.text(ru.compareRowDrivetrain));
+      final fuel = tester.getRect(find.text(ru.listingFuelType));
+      expect(engine.left, greaterThan(body.left));
+      expect((body.top - engine.top).abs(), lessThan(2));
+      expect(drive.top, greaterThan(body.bottom));
+      expect(fuel.left, greaterThan(drive.left));
+      expect((drive.top - fuel.top).abs(), lessThan(2));
+      expectFits(ru.listingDrivetrainAwd);
+      final cells = tester
+          .renderObjectList<RenderBox>(find.byType(DecoratedBox))
+          .map((cell) => cell.size)
+          .where((size) => size.width > 40)
+          .toList();
+      expect(cells, hasLength(4));
+      expect(cells.map((size) => size.height).toSet(), hasLength(1));
+      expect(cells.map((size) => size.width).toSet(), hasLength(1));
+    }
+    await pumpAt(334, AppTheme.dark());
+    expect(tester.takeException(), isNull);
+    expect(find.text(ru.listingFuelTypePetrol), findsOneWidget);
   });
 }

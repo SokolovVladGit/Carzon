@@ -3,13 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/ui/carzon_icons.dart';
+import 'create_listing_compose_layout.dart';
 import '../../domain/constants/listing_gallery_limits.dart';
 import '../models/create_listing_photo_draft.dart';
-import 'create_listing_compose_layout.dart';
 
-/// Hero + optional thumbnails for the create-listing staging gallery (≤ [kMaxListingPhotos]).
+/// Cover-first gallery. Index 0 is the large tile. Max [kMaxListingPhotos].
 class CreateListingMediaSection extends StatelessWidget {
   const CreateListingMediaSection({
     super.key,
@@ -27,348 +26,373 @@ class CreateListingMediaSection extends StatelessWidget {
   final void Function(int index) onRemovePhotoAt;
 
   static const phase3TestKey = ValueKey('create_listing_media_section');
-
-  static const double _frameRadius = kCreateListingCardRadius;
+  static const coverKey = ValueKey('create_listing_photo_cover');
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final light = theme.brightness == Brightness.light;
     final l10n = context.l10n;
     final canMutate = !disabled && !pickingImage;
-    final quiet = cs.onSurfaceVariant.withValues(alpha: light ? 0.62 : 0.82);
+    final canAdd = canMutate && photos.length < kMaxListingPhotos;
 
-    final heroBytes = photos.isNotEmpty ? photos.first.bytes : null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return LayoutBuilder(
       key: phase3TestKey,
-      children: [
-        DecoratedBox(
-          decoration: createListingSoftSurfaceDecoration(
-            theme,
-            lift: CreateListingSurfaceLift.photo,
-            visualState: heroBytes == null
-                ? CreateListingFieldVisualState.empty
-                : CreateListingFieldVisualState.filled,
-            hasValue: heroBytes != null,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(_frameRadius),
-            child: AspectRatio(
-              aspectRatio: heroBytes == null ? 2.95 : 16 / 9,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: (heroBytes == null && canMutate) ? onAddPhoto : null,
-                  splashColor: cs.onSurface.withValues(alpha: 0.04),
-                  highlightColor: cs.onSurface.withValues(alpha: 0.02),
-                  child: heroBytes != null
-                      ? Image.memory(heroBytes, fit: BoxFit.cover)
-                      : pickingImage
-                      ? Center(
-                          child: SizedBox.square(
-                            dimension: 26,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: quiet,
-                            ),
-                          ),
-                        )
-                      : Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    CarzonIcons.addPhoto,
-                                    size: 26,
-                                    color: cs.onSurface.withValues(alpha: 0.58),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    l10n.createListingHeroEmptyTitle,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: -0.15,
-                                      height: 1.2,
-                                      color: cs.onSurface.withValues(
-                                        alpha: 0.88,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    l10n.createListingHeroEmptyDetail,
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: theme.textTheme.bodySmall?.copyWith(
-                                      color: quiet,
-                                      height: 1.25,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+      builder: (context, constraints) {
+        final gap = 6.0;
+        final width = constraints.maxWidth;
+        final mainW = (width - gap) * 0.58;
+        final sideW = width - gap - mainW;
+        final mainH = mainW * 0.78;
+
+        Widget cell(int index, {required bool cover, required bool large}) {
+          final tile = index < photos.length
+              ? _PhotoTile(
+                  key: cover
+                      ? coverKey
+                      : ValueKey('create_listing_photo_$index'),
+                  index: index,
+                  bytes: photos[index].bytes,
+                  isCover: cover,
+                  coverBadge: l10n.createListingCoverBadge,
+                  tooltipRemove: l10n.createListingRemovePhoto,
+                  enabled: canMutate,
+                  onRemove: () => onRemovePhotoAt(index),
+                  theme: theme,
+                )
+              : _EmptySlot(
+                  primary: index == photos.length && canAdd,
+                  showPlaceholderKey: index != photos.length,
+                  label: l10n.createListingAddPhoto,
+                  busy: pickingImage && index == photos.length,
+                  enabled: canAdd,
+                  large: large,
+                  onTap: onAddPhoto,
+                  theme: theme,
+                );
+          return SizedBox.expand(child: tile);
+        }
+
+        final showStrip = photos.length >= 5;
+
+        Widget sideCell(int index) {
+          return Expanded(child: cell(index, cover: false, large: false));
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: mainH,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    width: mainW,
+                    child: cell(0, cover: true, large: true),
+                  ),
+                  SizedBox(width: gap),
+                  SizedBox(
+                    width: sideW,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              sideCell(1),
+                              SizedBox(width: gap),
+                              sideCell(2),
+                            ],
                           ),
                         ),
-                ),
+                        SizedBox(height: gap),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              sideCell(3),
+                              SizedBox(width: gap),
+                              sideCell(4),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ),
-        if (photos.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          _ThumbnailStrip(
-            photos: photos,
-            disabled: disabled,
-            pickingImage: pickingImage,
-            l10n: l10n,
-            onRemovePhotoAt: onRemovePhotoAt,
-            onAddPhoto: onAddPhoto,
-          ),
-        ],
-      ],
+            if (showStrip) ...[
+              const SizedBox(height: 8),
+              _SecondaryPhotoRow(
+                height: 76,
+                gap: gap,
+                constrainedTile: 76,
+                children: [
+                  for (var i = 5; i < photos.length; i++)
+                    _PhotoTile(
+                      key: ValueKey('create_listing_photo_$i'),
+                      index: i,
+                      bytes: photos[i].bytes,
+                      isCover: false,
+                      coverBadge: l10n.createListingCoverBadge,
+                      tooltipRemove: l10n.createListingRemovePhoto,
+                      enabled: canMutate,
+                      onRemove: () => onRemovePhotoAt(i),
+                      theme: theme,
+                    ),
+                  if (photos.length < kMaxListingPhotos)
+                    _EmptySlot(
+                      primary: true,
+                      showPlaceholderKey: false,
+                      large: false,
+                      label: l10n.createListingAddPhoto,
+                      busy: pickingImage,
+                      enabled: canAdd,
+                      onTap: onAddPhoto,
+                      theme: theme,
+                    ),
+                ],
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 }
 
-class _ThumbnailStrip extends StatelessWidget {
-  const _ThumbnailStrip({
-    required this.photos,
-    required this.disabled,
-    required this.pickingImage,
-    required this.l10n,
-    required this.onRemovePhotoAt,
-    required this.onAddPhoto,
+/// Bottom gallery row. Three or four cells share the full width.
+/// One or two cells stay a fixed tile so a single photo does not stretch.
+class _SecondaryPhotoRow extends StatelessWidget {
+  const _SecondaryPhotoRow({
+    required this.height,
+    required this.gap,
+    required this.constrainedTile,
+    required this.children,
   });
 
-  final List<CreateListingPhotoDraft> photos;
-  final bool disabled;
-  final bool pickingImage;
-  final AppLocalizations l10n;
-  final void Function(int index) onRemovePhotoAt;
-  final VoidCallback onAddPhoto;
+  final double height;
+  final double gap;
+  final double constrainedTile;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final canMutate = !disabled && !pickingImage;
-    final canAddMore = photos.length < kMaxListingPhotos;
-    final addLabel = l10n.createListingAddMorePhotos;
-
+    final expand = children.length >= 3;
     return SizedBox(
-      height: 94,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
+      height: height,
+      child: Row(
         children: [
-          for (var i = 0; i < photos.length; i++) ...[
-            if (i > 0) const SizedBox(width: 10),
-            _PhotoThumb(
-              index: i,
-              bytes: photos[i].bytes,
-              isCover: i == 0,
-              tooltipRemove: l10n.createListingRemovePhoto,
-              coverBadge: l10n.createListingCoverBadge,
-              onRemove: () => onRemovePhotoAt(i),
-              enabledControls: canMutate,
-              theme: theme,
-            ),
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) SizedBox(width: gap),
+            if (expand)
+              Expanded(child: children[i])
+            else
+              SizedBox(
+                width: constrainedTile,
+                height: height,
+                child: children[i],
+              ),
           ],
-          const SizedBox(width: 10),
-          SizedBox(
-            width: 124,
-            child: _AddTile(
-              enabled: canMutate && canAddMore,
-              label: addLabel,
-              busy: pickingImage,
-              theme: theme,
-              onTap: onAddPhoto,
-            ),
-          ),
         ],
       ),
     );
   }
 }
 
-class _PhotoThumb extends StatelessWidget {
-  const _PhotoThumb({
+class _PhotoTile extends StatelessWidget {
+  const _PhotoTile({
+    super.key,
     required this.index,
     required this.bytes,
     required this.isCover,
-    required this.tooltipRemove,
     required this.coverBadge,
+    required this.tooltipRemove,
+    required this.enabled,
     required this.onRemove,
-    required this.enabledControls,
     required this.theme,
   });
 
   final int index;
   final Uint8List bytes;
   final bool isCover;
-  final String tooltipRemove;
   final String coverBadge;
+  final String tooltipRemove;
+  final bool enabled;
   final VoidCallback onRemove;
-  final bool enabledControls;
   final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
     final cs = theme.colorScheme;
-    return Tooltip(
-      message: tooltipRemove,
-      child: SizedBox(
-        width: 124,
-        child: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Image.memory(bytes, fit: BoxFit.cover, gaplessPlayback: true),
-                if (isCover)
-                  Positioned(
-                    left: 6,
-                    top: 6,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: cs.onSurface.withValues(alpha: 0.76),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 3,
-                        ),
-                        child: Text(
-                          coverBadge,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 10.5,
-                            letterSpacing: 0.2,
-                            color: cs.surface.withValues(alpha: 0.96),
-                          ),
-                        ),
-                      ),
-                    ),
+    final hit = isCover ? 44.0 : 36.0;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(isCover ? 16 : 12),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.memory(bytes, fit: BoxFit.cover, gaplessPlayback: true),
+          if (isCover)
+            Positioned(
+              left: 8,
+              bottom: 8,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: kCreateListingActiveFill.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
-                Positioned(
-                  top: 4,
-                  right: 4,
-                  child: Material(
-                    type: MaterialType.transparency,
-                    child: IconButton(
-                      tooltip: tooltipRemove,
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
-                      ),
-                      padding: EdgeInsets.zero,
-                      style: IconButton.styleFrom(
-                        backgroundColor: cs.surface.withValues(alpha: 0.92),
-                      ),
-                      onPressed: enabledControls ? onRemove : null,
-                      icon: Icon(
-                        CarzonIcons.close,
-                        size: 17,
-                        color: cs.onSurface.withValues(alpha: 0.72),
-                      ),
+                  child: Text(
+                    coverBadge,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: kCreateListingActiveForeground,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
                     ),
                   ),
                 ),
-              ],
+              ),
+            ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: Material(
+              type: MaterialType.transparency,
+              child: IconButton(
+                key: ValueKey('create_listing_remove_photo_$index'),
+                tooltip: tooltipRemove,
+                constraints: BoxConstraints(minWidth: hit, minHeight: hit),
+                padding: EdgeInsets.zero,
+                style: IconButton.styleFrom(
+                  backgroundColor: cs.surface.withValues(alpha: 0.92),
+                  shape: const CircleBorder(),
+                ),
+                onPressed: enabled ? onRemove : null,
+                icon: Icon(
+                  CarzonIcons.close,
+                  size: 16,
+                  color: cs.onSurface.withValues(alpha: 0.78),
+                ),
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-class _AddTile extends StatelessWidget {
-  const _AddTile({
-    required this.enabled,
+class _EmptySlot extends StatelessWidget {
+  const _EmptySlot({
+    required this.primary,
+    required this.showPlaceholderKey,
     required this.label,
     required this.busy,
-    required this.theme,
+    required this.enabled,
+    required this.large,
     required this.onTap,
+    required this.theme,
   });
 
-  final bool enabled;
+  final bool large;
+  final bool primary;
+  final bool showPlaceholderKey;
   final String label;
   final bool busy;
-  final ThemeData theme;
+  final bool enabled;
   final VoidCallback onTap;
+  final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
     final cs = theme.colorScheme;
     final light = theme.brightness == Brightness.light;
-    final quiet = cs.onSurfaceVariant.withValues(alpha: light ? 0.62 : 0.82);
+    final iconColor = cs.onSurface.withValues(
+      alpha: large ? (light ? 0.58 : 0.72) : (light ? 0.40 : 0.52),
+    );
+    final sheen = large ? (light ? 0.42 : 0.10) : (light ? 0.20 : 0.05);
 
-    return Tooltip(
-      message: label,
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: enabled && !busy ? onTap : null,
-            borderRadius: BorderRadius.circular(14),
-            splashColor: cs.onSurface.withValues(alpha: 0.04),
-            highlightColor: cs.onSurface.withValues(alpha: 0.02),
-            child: Ink(
-              decoration: createListingInsetDecoration(
-                theme,
-              ).copyWith(borderRadius: BorderRadius.circular(14)),
-              child: busy
-                  ? Center(
-                      child: SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: quiet,
-                        ),
-                      ),
-                    )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_photo_alternate_outlined,
-                          size: 24,
-                          color: quiet,
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
-                            color: quiet,
+    final radius = large ? 16.0 : 12.0;
+    final shape = BorderRadius.circular(radius);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: primary
+            ? const ValueKey('create_listing_add_photo')
+            : (showPlaceholderKey
+                  ? const ValueKey('create_listing_photo_placeholder')
+                  : null),
+        onTap: enabled && !busy ? onTap : null,
+        borderRadius: shape,
+        child: Ink(
+          decoration: createListingCeramicPlaceholderDecoration(
+            theme,
+            prominent: large,
+            radius: radius,
+          ),
+          child: busy
+              ? Center(
+                  child: SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: cs.primary,
+                    ),
+                  ),
+                )
+              : Stack(
+                  children: [
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: shape,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: const Alignment(0.2, 0.85),
+                            colors: [
+                              Colors.white.withValues(alpha: sheen),
+                              Colors.white.withValues(alpha: 0),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-            ),
-          ),
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            CarzonIcons.addPhoto,
+                            size: large ? 28 : 18,
+                            color: iconColor,
+                          ),
+                          if (primary && large) ...[
+                            const SizedBox(height: 6),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                              child: Text(
+                                label,
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: iconColor,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.15,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

@@ -1,4 +1,6 @@
+import 'package:carzon/core/theme/app_theme.dart';
 import 'package:carzon/core/widgets/floating_capsule_nav.dart';
+import 'package:carzon/shared/ui/carzon_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -263,6 +265,9 @@ void main() {
         expect(chromeOf('Home').color, activePill);
         expect(chromeOf('Home').borderRadius, BorderRadius.circular(14));
         expect(tester.widget<Icon>(find.byIcon(Icons.home)).color, activeIcon);
+        expect(activeIcon, AppTheme.darkOutline);
+        expect(activeIcon, isNot(scheme.primary));
+        expect(activePill, isNot(scheme.primary.withValues(alpha: 0.10)));
         expect(chromeOf('Search').color, Colors.transparent);
         expect(chromeOf('Favs').color, Colors.transparent);
         expect(chromeOf('Menu').color, Colors.transparent);
@@ -361,6 +366,108 @@ void main() {
                   .decoration!
               as BoxDecoration;
       expect(sellChrome.color, Colors.transparent);
+    });
+
+    testWidgets('dark selected tab stays neutral and readable', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.dark(),
+          home: Scaffold(
+            body: const SizedBox.expand(),
+            bottomNavigationBar: FloatingCapsuleNav(
+              selectedIndex: 1,
+              onDestinationSelected: (_) {},
+              destinations: const [
+                CapsuleNavDestination(
+                  icon: Icons.home_outlined,
+                  selectedIcon: Icons.home,
+                  label: 'Home',
+                ),
+                CapsuleNavDestination(
+                  icon: Icons.search,
+                  selectedIcon: Icons.search,
+                  label: 'Search',
+                ),
+                CapsuleNavDestination(
+                  assetIcon: 'assets/icons/icon_plus.png',
+                  label: 'Sell',
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      final scheme = Theme.of(
+        tester.element(find.byType(FloatingCapsuleNav)),
+      ).colorScheme;
+      final search = tester.widget<Icon>(find.byIcon(Icons.search));
+      final home = tester.widget<Icon>(find.byIcon(Icons.home_outlined));
+      final chrome =
+          tester
+                  .widget<AnimatedContainer>(
+                    find.descendant(
+                      of: find.bySemanticsLabel('Search'),
+                      matching: find.byType(AnimatedContainer),
+                    ),
+                  )
+                  .decoration!
+              as BoxDecoration;
+
+      expect(search.color, AppTheme.darkOnSurface);
+      expect(search.color, isNot(scheme.primary));
+      expect(home.color, capsuleNavInactiveIconColor(scheme, isDark: true));
+      expect(chrome.color, scheme.onSurface.withValues(alpha: 0.12));
+      expect(
+        tester.widget<Image>(find.byKey(kCapsuleNavCreateAssetKey)).color,
+        isNull,
+      );
+    });
+
+    testWidgets('filled Home selected mark is quieter than Search', (
+      tester,
+    ) async {
+      Future<void> pump(int index) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: const SizedBox.expand(),
+              bottomNavigationBar: FloatingCapsuleNav(
+                selectedIndex: index,
+                onDestinationSelected: (_) {},
+                destinations: const [
+                  CapsuleNavDestination(
+                    icon: CarzonIcons.navHome,
+                    selectedIcon: CarzonIcons.navHome,
+                    label: 'Home',
+                  ),
+                  CapsuleNavDestination(
+                    icon: CarzonIcons.navSearch,
+                    selectedIcon: CarzonIcons.navSearch,
+                    label: 'Search',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
+      await pump(0);
+      expect(
+        tester.widget<Icon>(find.byIcon(CarzonIcons.navHome)).color!.a,
+        closeTo(0.86, 0.001),
+      );
+
+      await pump(1);
+      expect(
+        tester.widget<Icon>(find.byIcon(CarzonIcons.navSearch)).color!.a,
+        closeTo(1, 0.001),
+      );
+      expect(
+        tester.widget<Icon>(find.byIcon(CarzonIcons.navSearch)).color,
+        AppTheme.darkOutline,
+      );
     });
 
     testWidgets('renders the emphasized destination with a bigger icon than a '

@@ -274,53 +274,58 @@ class _SmartFillModule extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 10),
             child: DecoratedBox(
-              decoration: createListingIdentityCardDecoration(theme),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (state.showClarification)
-                    _RefinementBody(
-                      l10n: l10n,
-                      theme: theme,
-                      next: state.result?.nextRefinement,
-                      clarification: state.result?.clarification,
-                      enabled: enabled,
-                      onSelectOption: onSelectOption,
-                      onDontKnow: onDontKnow,
-                    ),
-                  if (showRestart) ...[
+              decoration: createListingSectionSurfaceDecoration(theme),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(
+                  kCreateListingComposeRadius,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                     if (state.showClarification)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: kCreateListingModulePad,
-                        ),
-                        child: ColoredBox(
-                          color: createListingHairlineColor(theme),
-                          child: const SizedBox(height: 1),
-                        ),
+                      _RefinementBody(
+                        l10n: l10n,
+                        theme: theme,
+                        next: state.result?.nextRefinement,
+                        clarification: state.result?.clarification,
+                        enabled: enabled,
+                        onSelectOption: onSelectOption,
+                        onDontKnow: onDontKnow,
                       ),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          12,
-                          state.showClarification ? 2 : 6,
-                          12,
-                          6,
-                        ),
-                        child: CreateListingSecondaryAction(
-                          key: const ValueKey(
-                            'create_listing_smart_fill_restart',
+                    if (showRestart) ...[
+                      if (state.showClarification)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: kCreateListingModulePad,
                           ),
-                          label: l10n.createListingSmartFillRestart,
-                          enabled: enabled,
-                          footer: true,
-                          onPressed: onRestart!,
+                          child: ColoredBox(
+                            color: createListingHairlineColor(theme),
+                            child: const SizedBox(height: 1),
+                          ),
+                        ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            12,
+                            state.showClarification ? 2 : 6,
+                            12,
+                            6,
+                          ),
+                          child: CreateListingSecondaryAction(
+                            key: const ValueKey(
+                              'create_listing_smart_fill_restart',
+                            ),
+                            label: l10n.createListingSmartFillRestart,
+                            enabled: enabled,
+                            footer: true,
+                            onPressed: onRestart!,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -385,25 +390,30 @@ class _RefinementBody extends StatelessWidget {
 
     return Padding(
       key: const ValueKey('create_listing_smart_fill_clarification'),
-      padding: const EdgeInsets.fromLTRB(
-        kCreateListingModulePad,
-        14,
-        kCreateListingModulePad,
-        8,
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            l10n.createListingSmartFillSeveralVersions,
-            style: createListingSupportStyle(
-              theme,
-            )?.copyWith(fontSize: 12.5, letterSpacing: 0.02),
-          ),
-          const SizedBox(height: 4),
-          Text(
             manualSmartFillClarificationPrompt(l10n, kind.wireValue),
-            style: createListingQuestionStyle(theme),
+            style: createListingQuestionStyle(theme)?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              letterSpacing: -0.22,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            l10n.createListingSmartFillSeveralVersions,
+            style: createListingSupportStyle(theme)?.copyWith(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.02,
+              color: theme.colorScheme.onSurface.withValues(
+                alpha: theme.brightness == Brightness.light ? 0.48 : 0.58,
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           if (kind == ManualSmartFillRefinementKind.engine)
@@ -428,42 +438,16 @@ class _RefinementBody extends StatelessWidget {
               runSpacing: 8,
               children: [
                 for (final item in labeled)
-                  ActionChip(
-                    key: ValueKey(
+                  _RefinementChoice(
+                    choiceKey: ValueKey(
                       'create_listing_smart_fill_option_${item.option.canonicalValue ?? item.option.id}',
                     ),
-                    visualDensity: VisualDensity.compact,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    side: BorderSide(
-                      color: createListingFieldBorder(theme, focused: false),
-                      width: 0.7,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        kCreateListingSegmentRadius,
-                      ),
-                    ),
-                    backgroundColor: createListingFieldFill(
-                      theme,
-                      hasValue: false,
-                    ),
-                    label: Text(
-                      item.label,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -0.08,
-                        color: createListingValueColor(theme, enabled: enabled),
-                      ),
-                    ),
-                    onPressed: enabled
-                        ? () => onSelectOption(item.option)
-                        : null,
+                    label: item.label,
+                    enabled: enabled,
+                    onPressed: () => onSelectOption(item.option),
                   ),
               ],
             ),
-          const SizedBox(height: 4),
           Align(
             alignment: Alignment.centerLeft,
             child: CreateListingSecondaryAction(
@@ -475,6 +459,62 @@ class _RefinementBody extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RefinementChoice extends StatelessWidget {
+  const _RefinementChoice({
+    required this.choiceKey,
+    required this.label,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  final Key choiceKey;
+  final String label;
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final radius = BorderRadius.circular(kCreateListingFieldRadius);
+    return Material(
+      key: choiceKey,
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onPressed : null,
+        borderRadius: radius,
+        splashColor: theme.colorScheme.onSurface.withValues(alpha: 0.06),
+        highlightColor: theme.colorScheme.onSurface.withValues(alpha: 0.04),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: createListingFieldFill(theme, hasValue: false),
+            borderRadius: radius,
+            border: Border.all(
+              color: createListingFieldBorder(theme, focused: false),
+              width: 0.7,
+            ),
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 36),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13.5,
+                  letterSpacing: -0.1,
+                  height: 1.15,
+                  color: createListingValueColor(theme, enabled: enabled),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -499,7 +539,7 @@ class _EngineOptionTile extends StatelessWidget {
     final radius = BorderRadius.circular(kCreateListingFieldRadius);
     return Material(
       key: ValueKey('create_listing_smart_fill_option_$optionId'),
-      color: createListingFieldFill(theme, hasValue: false),
+      color: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: radius,
         side: BorderSide(
@@ -513,17 +553,26 @@ class _EngineOptionTile extends StatelessWidget {
         borderRadius: radius,
         splashColor: theme.colorScheme.onSurface.withValues(alpha: 0.06),
         highlightColor: theme.colorScheme.onSurface.withValues(alpha: 0.04),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                letterSpacing: -0.1,
-                height: 1.25,
-                color: createListingValueColor(theme, enabled: enabled),
+        child: Ink(
+          decoration: BoxDecoration(
+            color: createListingFieldFill(theme, hasValue: false),
+            borderRadius: radius,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.1,
+                    height: 1.2,
+                    color: createListingValueColor(theme, enabled: enabled),
+                  ),
+                ),
               ),
             ),
           ),

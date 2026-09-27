@@ -673,6 +673,27 @@ void main() {
     expect(cubit.state.status, ManualSmartFillStatus.noData);
   });
 
+  test('peekIdentityConsensus does not emit smart fill state', () async {
+    repo.next = Success(_ok(transmission: 'automatic'));
+    final before = cubit.state;
+    final result = await cubit.peekIdentityConsensus(
+      make: 'Ford',
+      model: 'Maverick',
+      year: 2024,
+    );
+    expect(result, isA<Success<ManualSmartFillResult>>());
+    expect(
+      (result as Success<ManualSmartFillResult>)
+          .value
+          .consensus
+          .transmissionType,
+      'automatic',
+    );
+    expect(cubit.state, before);
+    expect(repo.calls, hasLength(1));
+    expect(repo.calls.single.answers, isEmpty);
+  });
+
   test('closed cubit cannot apply late response', () async {
     final pending = Completer<Result<ManualSmartFillResult>>();
     repo.pending['Skoda|Octavia|2018||'] = pending;

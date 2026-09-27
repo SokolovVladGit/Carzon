@@ -88,6 +88,7 @@ flutter:
     - assets/icons/icon_plus.png
     - assets/animation/
     - assets/bg/bg_chat.jpg
+    - assets/bg/car_bg_listing.png
     - web/legal/legal_content.json
 
 flutter_launcher_icons:

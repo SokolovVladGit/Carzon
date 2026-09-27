@@ -167,7 +167,9 @@ void main() {
 
   Future<void> completeSkodaOctavia(WidgetTester tester) async {
     await openCreateListingManualIdentity(tester);
-    await tester.tap(find.byKey(const ValueKey('create_listing_brand_field')));
+    final brand = find.byKey(const ValueKey('create_listing_brand_field'));
+    await tester.ensureVisible(brand);
+    await tester.tap(brand);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ListTile, 'Skoda'));
     await tester.pumpAndSettle();
@@ -248,6 +250,7 @@ void main() {
       find.widgetWithText(TextFormField, ru.createListingPricePlaceholder),
       '9000',
     );
+    await revealCreateListingMileageField(tester);
     await tester.enterText(
       find.widgetWithText(TextFormField, ru.createListingMileagePlaceholder),
       '100000',
@@ -419,13 +422,22 @@ void main() {
         findsOneWidget,
       );
       expect(
+        find.byKey(const ValueKey('create_listing_characteristics_summary')),
+        findsOneWidget,
+      );
+      expect(
         find.byKey(const ValueKey('create_listing_body_type_field')),
         findsNothing,
       );
 
       expect(
-        tester.widget<Text>(find.byKey(ListingPreviewCard.specsKey)).data,
-        contains(formatListingBodyType(ru, ListingBodyType.suv)),
+        find.descendant(
+          of: find.byKey(
+            const ValueKey('create_listing_characteristics_summary'),
+          ),
+          matching: find.text(formatListingBodyType(ru, ListingBodyType.suv)),
+        ),
+        findsOneWidget,
       );
 
       await expandCreateListingAdditionalDetails(tester);
@@ -929,7 +941,9 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('create_listing_brand_field')));
+    final brandField = find.byKey(const ValueKey('create_listing_brand_field'));
+    await tester.ensureVisible(brandField);
+    await tester.tap(brandField);
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ListTile, 'Skoda'));
     await tester.pumpAndSettle();
@@ -973,7 +987,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester.widget<Text>(find.byKey(ListingPreviewCard.specsKey)).data,
-      contains(formatListingBodyType(ru, ListingBodyType.suv)),
+      isNot(contains(formatListingBodyType(ru, ListingBodyType.suv))),
     );
     expect(
       tester.widget<Text>(find.byKey(ListingPreviewCard.specsKey)).data,

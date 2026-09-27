@@ -1,55 +1,303 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+
+import '../../../../shared/ui/carzon_icons.dart';
 
 /// Horizontal page inset for the create-listing canvas.
-const double kCreateListingPageHorizontalPadding = 20;
+const double kCreateListingPageHorizontalPadding = 16;
 
 /// Gap before a new major heading.
-const double kCreateListingInterSectionGap = 24;
+const double kCreateListingInterSectionGap = 12;
 
 /// Heading → first control.
-const double kCreateListingHeadingToContentGap = 10;
+const double kCreateListingHeadingToContentGap = 8;
 
 /// Inner padding of grouped modules (Smart Fill, Characteristics).
-const double kCreateListingModulePad = 16;
+const double kCreateListingModulePad = 14;
 
 /// Preview → Publish breathing room.
-const double kCreateListingFinishingGap = 20;
+const double kCreateListingFinishingGap = 14;
 
 /// Field-to-field rhythm.
-const double kCreateListingFieldGap = 10;
+const double kCreateListingFieldGap = 8;
 
 /// Side gap inside a two-field row.
-const double kCreateListingFieldRowGap = 10;
+const double kCreateListingFieldRowGap = 8;
 
 /// Stack price/mileage when the row is narrower than this.
 const double kCreateListingTwoFieldMinWidth = 300;
 
 /// Rounded-rectangle radius for ordinary form fields.
-const double kCreateListingFieldRadius = 15;
+const double kCreateListingFieldRadius = 14;
 
 /// Larger radius for meaningful content cards (photos, resolved vehicle).
-const double kCreateListingCardRadius = 20;
+const double kCreateListingCardRadius = 16;
 
 /// Flatter radius for segmented tracks and thumbs.
 const double kCreateListingSegmentRadius = 12;
+
+/// Scan VIN graphite. Shared selected fill for Create Listing selectors.
+const Color kCreateListingActiveFill = Color(0xFF3A424C);
+
+/// Foreground on [kCreateListingActiveFill]. Same in light and dark.
+const Color kCreateListingActiveForeground = Color(0xFFFFFFFF);
 
 /// Publish CTA — aligned to the refined system, not a capsule.
 const double kCreateListingPublishRadius = 16;
 
 /// Default single-line control height at text scale 1.0.
-const double kCreateListingFieldMinHeight = 54;
+const double kCreateListingFieldMinHeight = 50;
 
 /// Inner horizontal padding of fields and pickers.
-const double kCreateListingFieldHPad = 18;
+const double kCreateListingFieldHPad = 14;
+
+/// Compose card corner radius (reference-aligned).
+const double kCreateListingComposeRadius = 16;
 
 /// Shared size for Create-only contact leading icons.
 const double kCreateListingContactIconSize = 18;
+
+/// Vehicle-data fact glyphs. Same optical box.
+const double kCreateListingFactIconSize = 20;
+
+/// Phone, price, and other interactive row glyphs.
+const double kCreateListingRowIconSize = 22;
+
+/// Edit pencil. Same glyph for manual entry and characteristics.
+const double kCreateListingEditIconSize = 18;
+
+/// Right and down chevrons on Create Listing rows and pickers.
+const double kCreateListingChevronSize = 18;
+
+const IconData kCreateListingIconBody = CarzonIcons.coverCarPlaceholder;
+const IconData kCreateListingIconEngine = LucideIcons.gauge;
+const IconData kCreateListingIconDrivetrain = LucideIcons.gitFork;
+const IconData kCreateListingIconTransmission = CarzonIcons.settings;
+const IconData kCreateListingIconPower = LucideIcons.zap;
+const IconData kCreateListingIconFuel = CarzonIcons.fuel;
+const IconData kCreateListingIconYear = CarzonIcons.calendar;
+const IconData kCreateListingIconRegistration = LucideIcons.clipboardList;
+const IconData kCreateListingIconMileage = CarzonIcons.gauge;
+const IconData kCreateListingIconLocation = LucideIcons.navigation;
+
+/// Shared soft surface for vehicle-data fact cells and the location row.
+const double kCreateListingFactRadius = 12;
+
+/// Raised frosted chip around a fact/location/phone glyph.
+const double kCreateListingFactIconChipExtent = 28;
+
+/// Frosted Light summary tile. Fill carries the surface; no border, so it
+/// stays quieter than the section card around it.
+BoxDecoration createListingFactSurfaceDecoration(ThemeData theme) {
+  final cs = theme.colorScheme;
+  final light = theme.brightness == Brightness.light;
+  final radius = BorderRadius.circular(kCreateListingFactRadius);
+  if (light) {
+    return BoxDecoration(
+      color: const Color(0xFFF6F5F3),
+      gradient: const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFFDFEFE), Color(0xFFF2F4F6), Color(0xFFF7F6F4)],
+        stops: [0.0, 0.55, 1.0],
+      ),
+      borderRadius: radius,
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF2C3338).withValues(alpha: 0.045),
+          blurRadius: 8,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    );
+  }
+  final base = Color.alphaBlend(
+    cs.onSurface.withValues(alpha: 0.07),
+    cs.surface,
+  );
+  return BoxDecoration(
+    color: base,
+    gradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color.alphaBlend(cs.onSurface.withValues(alpha: 0.12), cs.surface),
+        Color.alphaBlend(cs.onSurface.withValues(alpha: 0.05), cs.surface),
+      ],
+    ),
+    borderRadius: radius,
+  );
+}
+
+/// Small raised frosted well for a leading glyph. Same family as the tiles.
+BoxDecoration createListingFactIconChipDecoration(ThemeData theme) {
+  final cs = theme.colorScheme;
+  final light = theme.brightness == Brightness.light;
+  return BoxDecoration(
+    borderRadius: BorderRadius.circular(8),
+    gradient: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: light
+          ? const [Color(0xFFFFFFFF), Color(0xFFE8EEF3)]
+          : [
+              Color.alphaBlend(
+                cs.onSurface.withValues(alpha: 0.18),
+                cs.surface,
+              ),
+              Color.alphaBlend(
+                cs.onSurface.withValues(alpha: 0.07),
+                cs.surface,
+              ),
+            ],
+    ),
+    border: Border.all(
+      color: light
+          ? const Color(0xFFFFFFFF)
+          : cs.onSurface.withValues(alpha: 0.14),
+      width: 0.8,
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: (light ? const Color(0xFF2C3338) : Colors.black).withValues(
+          alpha: light ? 0.10 : 0.32,
+        ),
+        blurRadius: 3,
+        offset: const Offset(0, 1),
+      ),
+    ],
+  );
+}
+
+/// Glossy ceramic empty-photo glaze. [prominent] is the main slot.
+BoxDecoration createListingCeramicPlaceholderDecoration(
+  ThemeData theme, {
+  required bool prominent,
+  required double radius,
+}) {
+  final cs = theme.colorScheme;
+  final light = theme.brightness == Brightness.light;
+  final shape = BorderRadius.circular(radius);
+  if (light) {
+    return BoxDecoration(
+      borderRadius: shape,
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: prominent
+            ? const [Color(0xFFFFFCFA), Color(0xFFF7F2EB), Color(0xFFF3EBE0)]
+            : const [Color(0xFFFDFCFA), Color(0xFFF6F2EC), Color(0xFFF3EEE6)],
+        stops: const [0.0, 0.42, 1.0],
+      ),
+      border: Border.all(
+        color: prominent ? const Color(0xFFE4D8C8) : const Color(0xFFEADFD4),
+      ),
+    );
+  }
+  return BoxDecoration(
+    borderRadius: shape,
+    gradient: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: prominent
+          ? [
+              Color.alphaBlend(
+                cs.onSurface.withValues(alpha: 0.14),
+                cs.surfaceContainerHigh,
+              ),
+              Color.alphaBlend(
+                cs.onSurface.withValues(alpha: 0.06),
+                cs.surface,
+              ),
+            ]
+          : [
+              Color.alphaBlend(
+                cs.onSurface.withValues(alpha: 0.08),
+                cs.surfaceContainerHigh,
+              ),
+              Color.alphaBlend(
+                cs.onSurface.withValues(alpha: 0.03),
+                cs.surface,
+              ),
+            ],
+    ),
+    border: Border.all(
+      color: cs.onSurface.withValues(alpha: prominent ? 0.16 : 0.09),
+    ),
+  );
+}
+
+const IconData kCreateListingIconPhone = CarzonIcons.phone;
+const IconData kCreateListingIconPrice = LucideIcons.tag;
+const IconData kCreateListingIconListingType = CarzonIcons.compare;
+const IconData kCreateListingIconEdit = LucideIcons.pencil;
+const IconData kCreateListingIconChevronRight = CarzonIcons.chevronRight;
+const IconData kCreateListingIconChevronDown = LucideIcons.chevronDown;
+const IconData kCreateListingIconChevronUp = LucideIcons.chevronUp;
+
+/// Muted passive glyph. Visible in dark mode, not bright white.
+Color createListingPassiveIconColor(ThemeData theme) {
+  final light = theme.brightness == Brightness.light;
+  return theme.colorScheme.onSurface.withValues(alpha: light ? 0.55 : 0.68);
+}
+
+/// Leading glyph on a frosted fact, location, or phone summary.
+class CreateListingFactIconChip extends StatelessWidget {
+  const CreateListingFactIconChip({super.key, required this.icon});
+
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: kCreateListingFactIconChipExtent,
+      height: kCreateListingFactIconChipExtent,
+      child: DecoratedBox(
+        decoration: createListingFactIconChipDecoration(theme),
+        child: Icon(
+          icon,
+          size: 16,
+          color: createListingPassiveIconColor(theme),
+        ),
+      ),
+    );
+  }
+}
+
+Color createListingChevronColor(ThemeData theme) {
+  final light = theme.brightness == Brightness.light;
+  return theme.colorScheme.onSurface.withValues(alpha: light ? 0.40 : 0.50);
+}
+
+Color createListingEditIconColor(ThemeData theme, {required bool enabled}) {
+  final light = theme.brightness == Brightness.light;
+  if (!enabled) {
+    return theme.colorScheme.onSurface.withValues(alpha: 0.32);
+  }
+  return theme.colorScheme.onSurface.withValues(alpha: light ? 0.82 : 0.90);
+}
+
+/// Section card above the canvas. Border carries the separation, not shadow.
+BoxDecoration createListingSectionSurfaceDecoration(ThemeData theme) {
+  final cs = theme.colorScheme;
+  final light = theme.brightness == Brightness.light;
+  return BoxDecoration(
+    color: light
+        ? const Color(0xFFFFFDFB)
+        : Color.alphaBlend(cs.onSurface.withValues(alpha: 0.055), cs.surface),
+    borderRadius: BorderRadius.circular(kCreateListingComposeRadius),
+    border: Border.all(
+      color: cs.onSurface.withValues(alpha: light ? 0.07 : 0.14),
+    ),
+  );
+}
 
 Color createListingCanvasColor(ThemeData theme) {
   final cs = theme.colorScheme;
   final light = theme.brightness == Brightness.light;
   if (light) {
-    return Color.alphaBlend(cs.onSurface.withValues(alpha: 0.012), cs.surface);
+    return Color.alphaBlend(cs.primary.withValues(alpha: 0.035), Colors.white);
   }
   return Color.alphaBlend(cs.onSurface.withValues(alpha: 0.045), cs.surface);
 }
@@ -423,6 +671,37 @@ BoxDecoration createListingIdentityCardDecoration(ThemeData theme) {
   );
 }
 
+/// Muted label on an unselected Create Listing segment or currency chip.
+Color createListingInactiveSegmentLabel(ThemeData theme) {
+  return theme.colorScheme.onSurface.withValues(
+    alpha: theme.brightness == Brightness.light ? 0.58 : 0.64,
+  );
+}
+
+/// Graphite selected thumb. Unselected stays transparent on the track.
+BoxDecoration createListingActiveThumbDecoration(
+  ThemeData theme, {
+  required bool selected,
+}) {
+  final radius = BorderRadius.circular(kCreateListingSegmentRadius);
+  if (!selected) {
+    return BoxDecoration(
+      color: Colors.transparent,
+      borderRadius: radius,
+      border: Border.all(color: Colors.transparent, width: 1),
+    );
+  }
+  final light = theme.brightness == Brightness.light;
+  return BoxDecoration(
+    color: kCreateListingActiveFill,
+    borderRadius: radius,
+    border: Border.all(
+      color: Colors.white.withValues(alpha: light ? 0.28 : 0.20),
+      width: 1,
+    ),
+  );
+}
+
 BoxDecoration createListingSegmentThumbDecoration(
   ThemeData theme, {
   required bool selected,
@@ -599,6 +878,9 @@ InputDecoration createListingFieldDecoration(
   String? helperText,
   bool hasValue = false,
   Widget? prefixIcon,
+
+  /// Slightly deeper field fill for a large input sitting directly on the canvas.
+  bool separated = false,
 }) {
   final cs = theme.colorScheme;
   final light = theme.brightness == Brightness.light;
@@ -701,38 +983,43 @@ InputDecoration createListingFieldDecoration(
         : const BoxConstraints(minWidth: 42, minHeight: 18),
     filled: true,
     fillColor: WidgetStateColor.resolveWith((states) {
+      final Color fill;
       if (states.contains(WidgetState.disabled)) {
-        return createListingFieldFill(
+        fill = createListingFieldFill(
           theme,
           state: CreateListingFieldVisualState.disabled,
           hasValue: hasValue,
         );
-      }
-      if (states.contains(WidgetState.error)) {
-        return createListingFieldFill(
+      } else if (states.contains(WidgetState.error)) {
+        fill = createListingFieldFill(
           theme,
           state: CreateListingFieldVisualState.error,
           hasValue: hasValue,
         );
-      }
-      if (states.contains(WidgetState.focused)) {
-        return createListingFieldFill(
+      } else if (states.contains(WidgetState.focused)) {
+        fill = createListingFieldFill(
           theme,
           state: CreateListingFieldVisualState.focused,
           hasValue: hasValue,
         );
+      } else {
+        fill = createListingFieldFill(
+          theme,
+          state: occupancy,
+          hasValue: hasValue,
+        );
       }
-      return createListingFieldFill(
-        theme,
-        state: occupancy,
-        hasValue: hasValue,
+      if (!separated) return fill;
+      return Color.alphaBlend(
+        cs.onSurface.withValues(alpha: light ? 0.04 : 0.055),
+        fill,
       );
     }),
     contentPadding: EdgeInsets.fromLTRB(
       prefixIcon == null ? kCreateListingFieldHPad : 0,
-      16,
+      13,
       kCreateListingFieldHPad,
-      16,
+      13,
     ),
   );
 }
@@ -768,18 +1055,25 @@ class CreateListingFormSection extends StatelessWidget {
     super.key,
     required this.title,
     required this.child,
+    this.subtitle,
   });
 
   final String title;
+  final String? subtitle;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final subtitleText = subtitle?.trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(title, style: createListingSectionTitleStyle(theme)),
+        if (subtitleText != null && subtitleText.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(subtitleText, style: createListingSupportStyle(theme)),
+        ],
         const SizedBox(height: kCreateListingHeadingToContentGap),
         child,
       ],
@@ -824,6 +1118,78 @@ class CreateListingFieldLabel extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+BoxDecoration createListingComposeCardDecoration(ThemeData theme) {
+  return createListingSectionSurfaceDecoration(theme);
+}
+
+/// Compact pencil + label. Hit target ≥ 44 without a large admin row.
+class CreateListingManualEntryLink extends StatelessWidget {
+  const CreateListingManualEntryLink({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.enabled = true,
+  });
+
+  final String label;
+  final VoidCallback onPressed;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: enabled ? onPressed : null,
+          borderRadius: BorderRadius.circular(10),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    kCreateListingIconEdit,
+                    size: kCreateListingEditIconSize,
+                    color: createListingEditIconColor(theme, enabled: enabled),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: enabled
+                            ? cs.onSurface.withValues(
+                                alpha: theme.brightness == Brightness.light
+                                    ? 0.88
+                                    : 0.94,
+                              )
+                            : cs.onSurface.withValues(alpha: 0.32),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

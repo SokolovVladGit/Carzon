@@ -23,6 +23,8 @@ class CreateListingSegmentedControl<T> extends StatelessWidget {
     required this.onChanged,
     required this.enabled,
     this.forceWrap = false,
+    this.dense = false,
+    this.graphiteActive = false,
   });
 
   static const rowLayoutKey = ValueKey('create_listing_segment_row');
@@ -34,6 +36,13 @@ class CreateListingSegmentedControl<T> extends StatelessWidget {
   final bool enabled;
   final bool forceWrap;
 
+  /// Smaller type so three short labels fit one row.
+  final bool dense;
+
+  /// Graphite selected fill shared with Scan VIN and the currency chips.
+  /// Off for selectors that still use the neutral thumb.
+  final bool graphiteActive;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -41,6 +50,22 @@ class CreateListingSegmentedControl<T> extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final labelSize = dense ? 12.5 : 14.0;
+        if (options.length == 3 &&
+            (scale > 1.15 || constraints.maxWidth < 280)) {
+          return _Shell(
+            key: compactLayoutKey,
+            theme: theme,
+            enabled: enabled,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final option in options)
+                  Row(children: [_thumb(context, theme, option, dense: dense)]),
+              ],
+            ),
+          );
+        }
         final compactThree =
             options.length == 3 &&
             (forceWrap ||
@@ -51,12 +76,14 @@ class CreateListingSegmentedControl<T> extends StatelessWidget {
                   style:
                       theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w500,
-                        letterSpacing: -0.1,
-                        height: 1.15,
-                        fontSize: 14,
+                        letterSpacing: -0.2,
+                        height: 1.1,
+                        fontSize: labelSize,
                       ) ??
-                      const TextStyle(fontSize: 14),
+                      TextStyle(fontSize: labelSize),
                   scaler: MediaQuery.textScalerOf(context),
+                  thumbChrome: dense ? 12 : 22,
+                  slack: dense ? 4 : 10,
                 ));
 
         if (compactThree) {
@@ -71,15 +98,17 @@ class CreateListingSegmentedControl<T> extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _thumb(context, theme, options[0]),
-                      _thumb(context, theme, options[1]),
+                      _thumb(context, theme, options[0], dense: dense),
+                      _thumb(context, theme, options[1], dense: dense),
                     ],
                   ),
                 ),
                 IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [_thumb(context, theme, options[2])],
+                    children: [
+                      _thumb(context, theme, options[2], dense: dense),
+                    ],
                   ),
                 ),
               ],
@@ -95,7 +124,8 @@ class CreateListingSegmentedControl<T> extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final option in options) _thumb(context, theme, option),
+                for (final option in options)
+                  _thumb(context, theme, option, dense: dense),
               ],
             ),
           ),
@@ -107,10 +137,16 @@ class CreateListingSegmentedControl<T> extends StatelessWidget {
   Widget _thumb(
     BuildContext context,
     ThemeData theme,
-    CreateListingSegmentOption<T> option,
-  ) {
+    CreateListingSegmentOption<T> option, {
+    required bool dense,
+  }) {
     final cs = theme.colorScheme;
     final selected = option.value == value;
+    final labelColor = graphiteActive
+        ? (selected
+              ? kCreateListingActiveForeground
+              : createListingInactiveSegmentLabel(theme))
+        : cs.onSurface.withValues(alpha: selected ? 0.92 : 0.60);
     return Expanded(
       child: Material(
         color: Colors.transparent,
@@ -122,12 +158,17 @@ class CreateListingSegmentedControl<T> extends StatelessWidget {
             duration: const Duration(milliseconds: 160),
             curve: Curves.easeOutCubic,
             margin: const EdgeInsets.all(2),
-            constraints: const BoxConstraints(minHeight: 44),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            decoration: createListingSegmentThumbDecoration(
-              theme,
-              selected: selected,
+            constraints: BoxConstraints(minHeight: dense ? 40 : 44),
+            padding: EdgeInsets.symmetric(
+              horizontal: dense ? 4 : 8,
+              vertical: dense ? 6 : 8,
             ),
+            decoration: graphiteActive
+                ? createListingActiveThumbDecoration(theme, selected: selected)
+                : createListingSegmentThumbDecoration(
+                    theme,
+                    selected: selected,
+                  ),
             alignment: Alignment.center,
             child: Text(
               option.label,
@@ -137,10 +178,10 @@ class CreateListingSegmentedControl<T> extends StatelessWidget {
               textAlign: TextAlign.center,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                letterSpacing: -0.1,
-                height: 1.15,
-                fontSize: 14,
-                color: cs.onSurface.withValues(alpha: selected ? 0.92 : 0.60),
+                letterSpacing: -0.2,
+                height: 1.1,
+                fontSize: dense ? 12.5 : 14,
+                color: labelColor,
               ),
             ),
           ),
@@ -156,13 +197,13 @@ bool _labelsFitInEqualSlots({
   required double maxWidth,
   required TextStyle style,
   required TextScaler scaler,
+  double thumbChrome = 22,
+  double slack = 10,
 }) {
   if (!maxWidth.isFinite || maxWidth <= 0 || labels.isEmpty) {
     return false;
   }
-  const thumbChrome = 22.0;
   const trackPad = 4.0;
-  const slack = 10.0;
   final cellWidth = (maxWidth - trackPad) / labels.length;
   for (final label in labels) {
     final painter = TextPainter(

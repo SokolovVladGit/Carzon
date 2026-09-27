@@ -134,6 +134,7 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await tester.enterText(price, '9000');
+    await revealCreateListingMileageField(tester);
     await tester.enterText(
       find.widgetWithText(TextFormField, l10n.createListingMileagePlaceholder),
       '100000',

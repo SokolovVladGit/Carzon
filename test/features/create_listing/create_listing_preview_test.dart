@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/core/theme/app_theme.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
@@ -376,8 +377,15 @@ void main() {
         tester
             .getSize(find.byKey(ListingPreviewCard.coverPlaceholderKey))
             .height,
-        ListingPreviewCard.compactCoverHeight,
+        ListingPreviewCard.sideCoverExtent,
       );
+      final cover = tester.getRect(
+        find.byKey(ListingPreviewCard.coverPlaceholderKey),
+      );
+      final price = tester.getRect(find.byKey(ListingPreviewCard.priceKey));
+      expect(cover.left, lessThan(price.left));
+      expect(price.top, greaterThan(cover.top - 1));
+      expect(price.bottom, lessThan(cover.bottom + 1));
     });
 
     testWidgets('empty preview uses semantic placeholders and stays compact', (
@@ -422,7 +430,7 @@ void main() {
         tester
             .getSize(find.byKey(ListingPreviewCard.coverPlaceholderKey))
             .height,
-        ListingPreviewCard.compactCoverHeight,
+        ListingPreviewCard.sideCoverExtent,
       );
     });
 
@@ -628,11 +636,15 @@ void main() {
         listingPreviewJoin([
           ru.listingFuelTypePetrol,
           ru.listingTransmissionAutomatic,
-          ru.listingDrivetrainFourWheel,
-          formatEngineDisplacementForDisplay(ru, 6.2),
-          formatEnginePowerHpDisplay(ru, 702),
-          ru.listingBodyTypePickup,
         ]),
+      );
+      expect(
+        tester.widget<Text>(find.byKey(ListingPreviewCard.detailKey)).data,
+        formatEngineDisplacementForDisplay(ru, 6.2),
+      );
+      expect(
+        tester.widget<Text>(find.byKey(ListingPreviewCard.specsKey)).data,
+        isNot(contains('…')),
       );
       expect(find.text('Gasoline'), findsNothing);
       expect(find.text('Automatic'), findsNothing);
@@ -809,6 +821,120 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('populated horizontal preview does not overflow', (
+      tester,
+    ) async {
+      final png = Uint8List.fromList(_pngA);
+      ListingPreviewData dataFor(AppLocalizations l10n) {
+        return listingPreviewDataFromCreateForm(
+          l10n: l10n,
+          coverBytes: png,
+          make: 'Toyota',
+          model: 'Corolla',
+          variant: 'LE',
+          year: 2022,
+          priceText: '16666',
+          currency: ListingCurrency.usd,
+          mileageText: '',
+          marketRegion: MarketRegion.transnistria,
+          city: 'Бендеры',
+          listingType: ListingType.sale,
+          fuelType: ListingFuelType.petrol,
+          transmissionType: ListingTransmissionType.manual,
+          engineDisplacementLiters: 1.8,
+          enginePowerHp: 140,
+        );
+      }
+
+      Future<void> pumpAt({
+        required Size size,
+        required double textScale,
+        Locale locale = const Locale('ru'),
+      }) async {
+        final l10n = locale.languageCode == 'ro' ? ro : ru;
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        await tester.pumpWidget(
+          MediaQuery(
+            data: MediaQueryData(
+              size: size,
+              textScaler: TextScaler.linear(textScale),
+            ),
+            child: MaterialApp(
+              theme: AppTheme.light(),
+              locale: locale,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: size.width,
+                    child: ListingPreviewCard(data: dataFor(l10n), l10n: l10n),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(tester.takeException(), isNull);
+        expect(find.byKey(ListingPreviewCard.priceKey), findsOneWidget);
+        expect(find.byKey(ListingPreviewCard.identityKey), findsOneWidget);
+        expect(find.byKey(ListingPreviewCard.variantKey), findsOneWidget);
+        expect(find.byKey(ListingPreviewCard.metaKey), findsOneWidget);
+      }
+
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await pumpAt(size: const Size(390, 844), textScale: 1);
+      expect(find.byKey(ListingPreviewCard.specsKey), findsOneWidget);
+      expect(find.byKey(ListingPreviewCard.detailKey), findsOneWidget);
+      expect(find.text('Toyota Corolla'), findsOneWidget);
+      final card = tester.getSize(find.byKey(ListingPreviewCard.cardKey));
+      expect(card.height, lessThan(ListingPreviewCard.sideCoverExtent + 24));
+
+      await pumpAt(size: const Size(375, 812), textScale: 1);
+      expect(find.byKey(ListingPreviewCard.detailKey), findsOneWidget);
+
+      await pumpAt(size: const Size(320, 568), textScale: 1);
+      await pumpAt(size: const Size(390, 844), textScale: 1.3);
+      await pumpAt(size: const Size(375, 812), textScale: 1.3);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: ListingPreviewCard(
+              data: listingPreviewDataFromCreateForm(
+                l10n: ru,
+                make: '',
+                model: '',
+                priceText: '',
+                currency: ListingCurrency.eur,
+                mileageText: '',
+                marketRegion: MarketRegion.transnistria,
+                city: '',
+                listingType: ListingType.sale,
+              ),
+              l10n: ru,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(ListingPreviewCard.priceKey), findsOneWidget);
+      expect(
+        tester.getSize(find.byKey(ListingPreviewCard.cardKey)).height,
+        lessThan(ListingPreviewCard.sideCoverExtent + 24),
+      );
+    });
+
     testWidgets('320 RU/RO and large text do not overflow', (tester) async {
       Future<void> pumpAt({
         required Size size,
@@ -963,6 +1089,7 @@ void main() {
         find.byKey(const ValueKey('create_listing_price_field')),
         '8900',
       );
+      await revealCreateListingMileageField(tester);
       await tester.enterText(
         find.byKey(const ValueKey('create_listing_mileage_field')),
         '0',
@@ -977,7 +1104,13 @@ void main() {
         tester.widget<Text>(find.byKey(ListingPreviewCard.metaKey)).data,
         '${formatKm(ru, 0)} · ${ru.regionTransnistria}',
       );
-      expect(find.textContaining('—'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(ListingPreviewCard.cardKey),
+          matching: find.textContaining('—'),
+        ),
+        findsNothing,
+      );
 
       await tester.scrollUntilVisible(
         find.byKey(const ValueKey('create_listing_type_section')),
@@ -1051,12 +1184,10 @@ void main() {
         tester.testTextInput.hide();
         await tester.drag(find.byType(Scrollable).first, const Offset(0, 600));
         await tester.pumpAndSettle();
-        final media = find.byKey(
-          const ValueKey('create_listing_media_section'),
-        );
-        await tester.ensureVisible(media);
+        final addPhoto = find.byKey(const ValueKey('create_listing_add_photo'));
+        await tester.ensureVisible(addPhoto);
         await tester.pumpAndSettle();
-        await tester.tap(media);
+        await tester.tap(addPhoto);
         await tester.pumpAndSettle();
 
         expect(find.byKey(ListingPreviewCard.coverKey), findsOneWidget);
@@ -1065,8 +1196,8 @@ void main() {
                 as MemoryImage;
         expect(firstCover.bytes, Uint8List.fromList(_pngA));
 
-        await tester.ensureVisible(find.text(ru.createListingAddMorePhotos));
-        await tester.tap(find.text(ru.createListingAddMorePhotos));
+        await tester.ensureVisible(addPhoto);
+        await tester.tap(addPhoto);
         await tester.pumpAndSettle();
         final removeFirst = find.byIcon(CarzonIcons.close).first;
         await tester.ensureVisible(removeFirst);

@@ -4,7 +4,6 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/ui/whatsapp_contact_icon.dart';
 import '../../../listings/domain/entities/listing_currency.dart';
 import 'create_listing_compose_layout.dart';
-import 'create_listing_segmented_control.dart';
 
 class PremiumListingCurrencyBar extends StatelessWidget {
   const PremiumListingCurrencyBar({
@@ -26,14 +25,56 @@ class PremiumListingCurrencyBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CreateListingSegmentedControl<ListingCurrency>(
-      value: selected,
-      enabled: enabled,
-      onChanged: onChanged,
-      options: [
-        CreateListingSegmentOption(value: ListingCurrency.eur, label: eurLabel),
-        CreateListingSegmentOption(value: ListingCurrency.usd, label: usdLabel),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: DecoratedBox(
+        decoration: createListingTrackDecoration(theme),
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: SizedBox(
+            height: 26,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _chip(ListingCurrency.eur, eurLabel),
+                _chip(ListingCurrency.usd, usdLabel),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(ListingCurrency value, String label) {
+    final selected = this.selected == value;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled && !selected ? () => onChanged(value) : null,
+        borderRadius: BorderRadius.circular(kCreateListingSegmentRadius),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutCubic,
+          constraints: const BoxConstraints(minWidth: 34, minHeight: 26),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          decoration: createListingActiveThumbDecoration(
+            theme,
+            selected: selected,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              fontSize: 12.5,
+              color: selected
+                  ? kCreateListingActiveForeground
+                  : createListingInactiveSegmentLabel(theme),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -147,12 +188,11 @@ class PremiumPublishActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = theme.colorScheme;
     final canTap = !submitting;
-    final light = theme.brightness == Brightness.light;
-    final baseFill = light ? cs.onSurface : cs.primary;
+    final baseFill = kCreateListingActiveFill;
     final fill = submitting
         ? Color.alphaBlend(cs.surface.withValues(alpha: 0.22), baseFill)
         : baseFill;
-    final onFill = light ? cs.surface : cs.onPrimary;
+    final onFill = kCreateListingActiveForeground;
 
     return DecoratedBox(
       decoration: createListingRaisedDecoration(
@@ -185,13 +225,29 @@ class PremiumPublishActionButton extends StatelessWidget {
                           color: onFill.withValues(alpha: 0.82),
                         ),
                       )
-                    : Text(
-                        l10n.publishListing,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.16,
-                          color: onFill,
-                        ),
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              l10n.publishListing,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.16,
+                                color: onFill,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 20,
+                            color: onFill,
+                          ),
+                        ],
                       ),
               ),
             ),

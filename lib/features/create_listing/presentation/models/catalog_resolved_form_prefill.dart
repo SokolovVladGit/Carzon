@@ -44,6 +44,20 @@ ListingTransmissionType? catalogResolvedTransmissionType(String? raw) {
   return listingTransmissionTypeFromDb(raw);
 }
 
+/// Transmission from a silent v2 consensus call.
+///
+/// Clarification, noData, and invalid refinement produce nothing, even when
+/// `consensusSpecs.transmissionType` is present.
+ListingTransmissionType? catalogConsensusTransmissionOnly(
+  ManualSmartFillResult result,
+) {
+  if (result.resolution != ManualSmartFillResolution.ok) return null;
+  if (result.clarification != null || result.nextRefinement != null) {
+    return null;
+  }
+  return catalogResolvedTransmissionType(result.consensus.transmissionType);
+}
+
 ListingBodyType? catalogResolvedBodyType(String? raw) {
   final hay = _norm(raw);
   if (hay == null) return null;
