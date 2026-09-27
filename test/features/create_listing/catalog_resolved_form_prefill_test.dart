@@ -1,3 +1,4 @@
+import 'package:carzon/features/create_listing/domain/entities/manual_smart_fill_refinement.dart';
 import 'package:carzon/features/create_listing/domain/entities/manual_smart_fill_result.dart';
 import 'package:carzon/features/create_listing/presentation/models/catalog_resolved_form_prefill.dart';
 import 'package:carzon/features/create_listing/presentation/models/vin_resolved_form_prefill.dart';
@@ -94,6 +95,93 @@ void main() {
     expect(catalogResolvedDisplacementLiters(40), isNull);
     expect(catalogResolvedPowerHp(0), isNull);
     expect(catalogResolvedPowerHp(4000), isNull);
+  });
+
+  ManualSmartFillResult consensusResult({
+    ManualSmartFillResolution resolution = ManualSmartFillResolution.ok,
+    String? transmissionType,
+    ManualSmartFillClarification? clarification,
+    ManualSmartFillNextRefinement? nextRefinement,
+    String? bodyType,
+    String? fuelType,
+    double? liters,
+    int? power,
+    String? drivetrain,
+  }) {
+    return ManualSmartFillResult(
+      resolution: resolution,
+      identity: const ManualSmartFillIdentity(
+        makeKey: 'ford',
+        modelKey: 'maverick',
+        year: 2024,
+      ),
+      consensus: ManualSmartFillConsensusSpecs(
+        bodyType: bodyType,
+        fuelType: fuelType,
+        engineDisplacementLiters: liters,
+        enginePowerHp: power,
+        transmissionType: transmissionType,
+        drivetrain: drivetrain,
+      ),
+      clarification: clarification,
+      nextRefinement: nextRefinement,
+    );
+  }
+
+  test('silent consensus keeps only an unambiguous transmission', () {
+    expect(
+      catalogConsensusTransmissionOnly(
+        consensusResult(transmissionType: 'automatic'),
+      ),
+      ListingTransmissionType.automatic,
+    );
+    expect(
+      catalogConsensusTransmissionOnly(
+        consensusResult(transmissionType: 'manual'),
+      ),
+      ListingTransmissionType.manual,
+    );
+    expect(catalogConsensusTransmissionOnly(consensusResult()), isNull);
+    expect(
+      catalogConsensusTransmissionOnly(
+        consensusResult(
+          resolution: ManualSmartFillResolution.noData,
+          transmissionType: 'automatic',
+        ),
+      ),
+      isNull,
+    );
+    expect(
+      catalogConsensusTransmissionOnly(
+        consensusResult(
+          transmissionType: 'automatic',
+          clarification: const ManualSmartFillClarification(
+            attribute: 'body',
+            options: [ManualSmartFillClarificationOption(value: 'suv')],
+          ),
+        ),
+      ),
+      isNull,
+    );
+    expect(
+      catalogConsensusTransmissionOnly(
+        consensusResult(
+          transmissionType: 'automatic',
+          nextRefinement: const ManualSmartFillNextRefinement(
+            kind: ManualSmartFillRefinementKind.transmission,
+            options: [
+              ManualSmartFillRefinementOption(
+                id: 'auto',
+                kind: ManualSmartFillRefinementKind.transmission,
+                candidateCount: 2,
+                transmissionType: 'automatic',
+              ),
+            ],
+          ),
+        ),
+      ),
+      isNull,
+    );
   });
 
   test('ownership helpers encode seller > VIN > catalog', () {

@@ -661,10 +661,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createListingSectionDescription => 'Описание';
 
   @override
-  String get createListingSectionDescriptionSubtitle =>
-      'Состояние, комплектация, сервис — своими словами.';
-
-  @override
   String get createListingDescriptionLabel => 'Текст объявления';
 
   @override
@@ -1105,6 +1101,40 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createListingTitle => 'Подать объявление';
 
   @override
+  String get createListingHeroTitle => 'Добавить объявление';
+
+  @override
+  String get createListingHeroSubtitle =>
+      'Разместите авто и найдите покупателя быстрее.';
+
+  @override
+  String get createListingVinCardTitle => 'VIN';
+
+  @override
+  String get createListingVinCardHelper => 'Сканируйте или введите VIN';
+
+  @override
+  String get createListingVehicleDetailsHelper =>
+      'Цена, пробег и условия сделки.';
+
+  @override
+  String createListingPhotoCount(int count) {
+    return '$count/9';
+  }
+
+  @override
+  String get createListingPhotoSlotFront => 'Перед';
+
+  @override
+  String get createListingPhotoSlotBack => 'Зад';
+
+  @override
+  String get createListingPhotoSlotInterior => 'Салон';
+
+  @override
+  String get createListingPhotoSlotMore => 'Ещё';
+
+  @override
   String get createListingComposeEyebrow => 'Новое объявление · Carzon';
 
   @override
@@ -1118,10 +1148,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createListingSectionPhotosLead => 'Фотографии';
 
   @override
-  String get createListingSectionPhotosLeadSubtitle =>
-      'Реальные фото этого автомобиля.';
-
-  @override
   String get createListingSectionVehicle => 'Автомобиль';
 
   @override
@@ -1129,17 +1155,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'VIN поможет заполнить марку, модель и год.';
 
   @override
-  String get createListingSectionDeal => 'Сделка';
-
-  @override
-  String get createListingSectionDealSubtitle => 'Тип, цена и пробег.';
-
-  @override
   String get createListingSectionLocation => 'Местоположение';
-
-  @override
-  String get createListingSectionLocationSubtitle =>
-      'Регион и город, где находится автомобиль.';
 
   @override
   String get createListingSectionPrice => 'Цена и пробег';
@@ -1149,10 +1165,6 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get createListingSectionPublish => 'Контакты и публикация';
-
-  @override
-  String get createListingSectionPublishSubtitle =>
-      'Контакты будут видны в активном объявлении.';
 
   @override
   String get createListingPreviewHeading => 'Предпросмотр объявления';
@@ -2864,7 +2876,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createListingEnterManually => 'Ввести вручную';
 
   @override
-  String get createListingManualVehicleTitle => 'Выбрать автомобиль вручную';
+  String get createListingManualVehicleTitle => 'Заполнить вручную';
 
   @override
   String get createListingManualVehicleSubtitle => 'Марка, модель и год';
@@ -2950,6 +2962,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get createListingEditCharacteristics => 'Изменить характеристики';
+
+  @override
+  String get createListingCharacteristicsAutoHelper =>
+      'Заполнятся автоматически после VIN или подбора автомобиля.';
+
+  @override
+  String get createListingCharacteristicsManualHint =>
+      'При необходимости можно указать вручную.';
+
+  @override
+  String get createListingCharacteristicsEnterManually => 'Указать вручную';
 
   @override
   String get createListingCharacteristicsEmpty => 'Пока не указаны';
@@ -4365,4 +4388,39 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get vinScannerInvalid =>
       'Не удалось распознать корректный VIN. Попробуйте снова или введите его вручную.';
+
+  @override
+  String get createListingHeaderSubtitle => 'VIN, фото и данные автомобиля.';
+
+  @override
+  String get createListingVinHeroEyebrow => 'Быстрое добавление';
+
+  @override
+  String get createListingVinHeroTitle => 'Введите VIN';
+
+  @override
+  String get createListingScanVinShort => 'Скан VIN';
+
+  @override
+  String get createListingCharacteristicsFilledAutomatically =>
+      'Заполнено автоматически';
+
+  @override
+  String get createListingDealTypeLabel => 'Тип объявления';
+
+  @override
+  String get createListingDealBothShort => 'Оба';
+
+  @override
+  String get createListingMmyValuePlaceholder => 'Выбрать';
+
+  @override
+  String get createListingPhoneCaption => 'Телефон';
+
+  @override
+  String get createListingVehicleDataTitle => 'Данные автомобиля';
+
+  @override
+  String get createListingCharacteristicsEditorTitle =>
+      'Характеристики автомобиля';
 }

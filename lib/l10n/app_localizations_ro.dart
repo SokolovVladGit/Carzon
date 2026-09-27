@@ -660,10 +660,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get createListingSectionDescription => 'Descriere';
 
   @override
-  String get createListingSectionDescriptionSubtitle =>
-      'Stare, echipament, service - în propriile cuvinte.';
-
-  @override
   String get createListingDescriptionLabel => 'Text publicitar';
 
   @override
@@ -1101,6 +1097,40 @@ class AppLocalizationsRo extends AppLocalizations {
   String get createListingTitle => 'Postați un anunț';
 
   @override
+  String get createListingHeroTitle => 'Adaugă un anunț';
+
+  @override
+  String get createListingHeroSubtitle =>
+      'Publică automobilul și găsește cumpărătorul mai rapid.';
+
+  @override
+  String get createListingVinCardTitle => 'VIN';
+
+  @override
+  String get createListingVinCardHelper => 'Scanați sau introduceți VIN-ul';
+
+  @override
+  String get createListingVehicleDetailsHelper =>
+      'Preț, kilometraj și tipul ofertei.';
+
+  @override
+  String createListingPhotoCount(int count) {
+    return '$count/9';
+  }
+
+  @override
+  String get createListingPhotoSlotFront => 'Față';
+
+  @override
+  String get createListingPhotoSlotBack => 'Spate';
+
+  @override
+  String get createListingPhotoSlotInterior => 'Interior';
+
+  @override
+  String get createListingPhotoSlotMore => 'Mai multe';
+
+  @override
   String get createListingComposeEyebrow => 'Anunț nou Carzon';
 
   @override
@@ -1114,10 +1144,6 @@ class AppLocalizationsRo extends AppLocalizations {
   String get createListingSectionPhotosLead => 'Fotografii';
 
   @override
-  String get createListingSectionPhotosLeadSubtitle =>
-      'Fotografii reale ale acestui automobil.';
-
-  @override
   String get createListingSectionVehicle => 'Automobilul';
 
   @override
@@ -1125,18 +1151,7 @@ class AppLocalizationsRo extends AppLocalizations {
       'VIN-ul ajută la completarea mărcii, modelului și anului.';
 
   @override
-  String get createListingSectionDeal => 'Ofertă';
-
-  @override
-  String get createListingSectionDealSubtitle =>
-      'Tipul, prețul și kilometrajul.';
-
-  @override
   String get createListingSectionLocation => 'Locație';
-
-  @override
-  String get createListingSectionLocationSubtitle =>
-      'Regiunea și orașul în care se află automobilul.';
 
   @override
   String get createListingSectionPrice => 'Preț și kilometraj';
@@ -1146,10 +1161,6 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get createListingSectionPublish => 'Contacte și publicare';
-
-  @override
-  String get createListingSectionPublishSubtitle =>
-      'Persoanele de contact vor fi vizibile în anunțul activ.';
 
   @override
   String get createListingPreviewHeading => 'Previzualizarea anunțului';
@@ -2870,7 +2881,7 @@ class AppLocalizationsRo extends AppLocalizations {
   String get createListingEnterManually => 'Introduceți manual';
 
   @override
-  String get createListingManualVehicleTitle => 'Alegeți automobilul manual';
+  String get createListingManualVehicleTitle => 'Completați manual';
 
   @override
   String get createListingManualVehicleSubtitle => 'Marcă, model și an';
@@ -2956,6 +2967,17 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get createListingEditCharacteristics => 'Editează caracteristicile';
+
+  @override
+  String get createListingCharacteristicsAutoHelper =>
+      'Se completează automat după VIN sau alegerea automobilului.';
+
+  @override
+  String get createListingCharacteristicsManualHint =>
+      'La nevoie le puteți indica manual.';
+
+  @override
+  String get createListingCharacteristicsEnterManually => 'Indicați manual';
 
   @override
   String get createListingCharacteristicsEmpty => 'Încă nu sunt indicate';
@@ -4369,4 +4391,40 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get vinScannerInvalid =>
       'Nu a fost recunoscut un VIN valid. Încearcă din nou sau introdu-l manual.';
+
+  @override
+  String get createListingHeaderSubtitle =>
+      'VIN, fotografii și datele automobilului.';
+
+  @override
+  String get createListingVinHeroEyebrow => 'Adăugare rapidă';
+
+  @override
+  String get createListingVinHeroTitle => 'Introduceți VIN';
+
+  @override
+  String get createListingScanVinShort => 'Scan VIN';
+
+  @override
+  String get createListingCharacteristicsFilledAutomatically =>
+      'Completat automat';
+
+  @override
+  String get createListingDealTypeLabel => 'Tipul anunțului';
+
+  @override
+  String get createListingDealBothShort => 'Ambele';
+
+  @override
+  String get createListingMmyValuePlaceholder => 'Alege';
+
+  @override
+  String get createListingPhoneCaption => 'Telefon';
+
+  @override
+  String get createListingVehicleDataTitle => 'Datele automobilului';
+
+  @override
+  String get createListingCharacteristicsEditorTitle =>
+      'Caracteristicile automobilului';
 }

@@ -8,8 +8,6 @@ import 'listing_preview_data.dart';
 ///
 /// Presentation only. Reuses the existing localized taxonomy/value formatters
 /// and never invents values — unknown fields are omitted rather than defaulted.
-/// Drivetrain is intentionally excluded here because it is surfaced as its own
-/// always-visible row and Smart Fill cannot determine it.
 String createListingCharacteristicsSummary(
   AppLocalizations l10n, {
   ListingBodyType? bodyType,
@@ -17,6 +15,7 @@ String createListingCharacteristicsSummary(
   double? engineDisplacementLiters,
   int? enginePowerHp,
   ListingTransmissionType? transmissionType,
+  ListingDrivetrain? drivetrain,
 }) {
   return listingPreviewJoin([
     if (bodyType != null) formatListingBodyType(l10n, bodyType),
@@ -26,5 +25,6 @@ String createListingCharacteristicsSummary(
     if (enginePowerHp != null) formatEnginePowerHpDisplay(l10n, enginePowerHp),
     if (transmissionType != null)
       formatListingTransmissionType(l10n, transmissionType),
+    if (drivetrain != null) formatListingDrivetrain(l10n, drivetrain),
   ]);
 }

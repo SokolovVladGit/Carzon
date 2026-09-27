@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/core/errors/failures.dart';
+import 'package:carzon/core/theme/app_theme.dart';
 import 'package:carzon/app/di/injection.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
@@ -15,6 +16,9 @@ import 'package:carzon/features/create_listing/presentation/bloc/create_listing_
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_state.dart';
 import 'package:carzon/features/create_listing/presentation/models/listing_preview_data.dart';
 import 'package:carzon/features/create_listing/presentation/pages/create_listing_page.dart';
+import 'package:carzon/core/widgets/app_back_button.dart';
+import 'package:carzon/shared/ui/carzon_logo.dart';
+import 'package:carzon/features/create_listing/presentation/widgets/create_listing_vin_card.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_picker_field.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/listing_preview_card.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
@@ -96,6 +100,7 @@ void main() {
   Widget wrap({
     Locale locale = const Locale('ru'),
     CreateListingState? resolveState,
+    ThemeData? theme,
   }) {
     if (resolveState != null) {
       when(() => createCubit.state).thenReturn(resolveState);
@@ -106,6 +111,7 @@ void main() {
       );
     }
     return MaterialApp(
+      theme: theme,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -311,6 +317,7 @@ void main() {
         find.widgetWithText(TextFormField, ru.createListingPricePlaceholder),
         '9000',
       );
+      await revealCreateListingMileageField(tester);
       await tester.enterText(
         find.widgetWithText(TextFormField, ru.createListingMileagePlaceholder),
         '100000',
@@ -325,10 +332,7 @@ void main() {
         find.widgetWithText(TextFormField, ru.fieldPhone),
         '+37369000001',
       );
-      final additional = find.text(ru.createListingEditCharacteristics);
-      await tester.ensureVisible(additional);
-      await tester.tap(additional);
-      await tester.pumpAndSettle();
+      await expandCreateListingAdditionalDetails(tester);
       final liters = find.widgetWithText(
         TextFormField,
         ru.createListingEngineLitersPlaceholder,
@@ -411,14 +415,14 @@ void main() {
       findsOneWidget,
     );
     expect(find.text(ru.createListingChangeManually), findsOneWidget);
-    expect(find.text(ru.createListingEditCharacteristics), findsOneWidget);
+    expect(find.text(ru.createListingVehicleDataTitle), findsOneWidget);
     expect(find.text(ru.publishListing), findsWidgets);
     expect(find.text(ru.fieldPhone), findsOneWidget);
     expect(find.text(ru.createListingWhatsAppTitle), findsOneWidget);
 
     for (final key in const [
-      'create_listing_vehicle_section',
       'create_listing_photos_section',
+      'create_listing_vehicle_section',
       'create_listing_type_section',
       'create_listing_location_section',
       'create_listing_contact_section',
@@ -445,6 +449,10 @@ void main() {
   testWidgets('VIN appears before manual specs', (tester) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
+    expect(find.text(ru.createListingComposeHeadline), findsNothing);
+    expect(find.text(ru.createListingHeaderSubtitle), findsNothing);
+    expect(find.byType(CarzonLogo), findsNothing);
+    final back = tester.getTopLeft(find.byType(AppBackButton));
     final vin = tester.getTopLeft(
       find.byKey(const ValueKey('create_listing_vin_field')),
     );
@@ -454,13 +462,21 @@ void main() {
     final photos = tester.getTopLeft(
       find.byKey(const ValueKey('create_listing_photos_section')),
     );
-    expect(vin.dy, lessThan(manual.dy));
-    expect(manual.dy, lessThan(photos.dy));
-    expect(find.text(ru.createListingVinAutofillHint), findsOneWidget);
+    expect(back.dy, lessThan(vin.dy));
+    expect(vin.dy, lessThan(photos.dy));
+    expect(photos.dy, lessThan(manual.dy));
+    expect(
+      find.descendant(
+        of: find.byKey(CreateListingVinCard.heroKey),
+        matching: find.text(ru.createListingManualVehicleTitle),
+      ),
+      findsNothing,
+    );
+    expect(find.text(ru.createListingVinCardHelper), findsOneWidget);
     expect(find.text(ru.createListingEnterManually), findsNothing);
-    expect(find.text(ru.createListingOrSeparator), findsOneWidget);
+    expect(find.text(ru.createListingOrSeparator), findsNothing);
     expect(find.text(ru.createListingManualVehicleTitle), findsOneWidget);
-    expect(find.text(ru.createListingManualVehicleSubtitle), findsOneWidget);
+    expect(find.text(ru.createListingManualVehicleSubtitle), findsNothing);
     expect(
       find.byKey(const ValueKey('create_listing_brand_field')),
       findsNothing,
@@ -515,6 +531,7 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
     final price = find.byKey(const ValueKey('create_listing_price_field'));
+    await revealCreateListingMileageField(tester);
     final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
     expect(
       find.descendant(of: price, matching: find.text(ru.validationRequired)),
@@ -541,6 +558,7 @@ void main() {
   testWidgets('cleared touched mileage shows required', (tester) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
+    await revealCreateListingMileageField(tester);
     final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
     await tester.enterText(mileage, '1');
     await tester.enterText(mileage, '');
@@ -559,6 +577,7 @@ void main() {
     await tester.tap(publish);
     await tester.pumpAndSettle();
     final price = find.byKey(const ValueKey('create_listing_price_field'));
+    await revealCreateListingMileageField(tester);
     final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
     await tester.ensureVisible(price);
     expect(
@@ -581,6 +600,7 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
     final price = find.byKey(const ValueKey('create_listing_price_field'));
+    await revealCreateListingMileageField(tester);
     final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
     await tester.enterText(price, '9000');
     await tester.enterText(mileage, '100000');
@@ -609,6 +629,7 @@ void main() {
   testWidgets('int4-max mileage stays quiet', (tester) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
+    await revealCreateListingMileageField(tester);
     final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
     await tester.enterText(mileage, '2147483647');
     await tester.pumpAndSettle();
@@ -634,6 +655,7 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
     final price = find.byKey(const ValueKey('create_listing_price_field'));
+    await revealCreateListingMileageField(tester);
     final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
     await tester.enterText(price, '7800');
     await tester.enterText(mileage, '120006576546546546');
@@ -665,6 +687,7 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
     final price = find.byKey(const ValueKey('create_listing_price_field'));
+    await revealCreateListingMileageField(tester);
     final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
     await tester.enterText(price, '10000000000');
     await tester.enterText(mileage, '120000');
@@ -689,6 +712,7 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
     final price = find.byKey(const ValueKey('create_listing_price_field'));
+    await revealCreateListingMileageField(tester);
     final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
     await tester.enterText(price, '7.8e30');
     await tester.enterText(mileage, '120000');
@@ -852,24 +876,14 @@ void main() {
   ) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
-    expect(
-      find.text(
-        'Введите или отсканируйте VIN. Carzon автоматически определит марку, модель и год.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text(ru.createListingVinCardHelper), findsOneWidget);
     await tester.pumpWidget(wrap(locale: const Locale('ro')));
     await tester.pumpAndSettle();
-    expect(
-      find.text(
-        'Introduceți sau scanați VIN-ul. Carzon va identifica automat marca, modelul și anul.',
-      ),
-      findsOneWidget,
-    );
+    expect(find.text(ro.createListingVinCardHelper), findsOneWidget);
     expect(find.text(ro.createListingEnterManually), findsNothing);
-    expect(find.text(ro.createListingOrSeparator), findsOneWidget);
+    expect(find.text(ro.createListingOrSeparator), findsNothing);
     expect(find.text(ro.createListingManualVehicleTitle), findsOneWidget);
-    expect(find.text(ro.createListingManualVehicleSubtitle), findsOneWidget);
+    expect(find.text(ro.createListingManualVehicleSubtitle), findsNothing);
   });
 
   testWidgets('confirmed VIN identity does not show required errors', (
@@ -929,7 +943,7 @@ void main() {
     expect(action, findsOneWidget);
     expect(find.text(ru.createListingEnterManually), findsNothing);
     expect(find.text(ru.createListingManualVehicleTitle), findsOneWidget);
-    expect(find.text(ru.createListingManualVehicleSubtitle), findsOneWidget);
+    expect(find.text(ru.createListingManualVehicleSubtitle), findsNothing);
     expect(
       find.byKey(const ValueKey('create_listing_vin_field')),
       findsOneWidget,
@@ -952,10 +966,6 @@ void main() {
     expect(
       tester.getSemantics(action).label,
       contains(ru.createListingManualVehicleTitle),
-    );
-    expect(
-      tester.getSemantics(action).label,
-      contains(ru.createListingManualVehicleSubtitle),
     );
     await openCreateListingManualIdentity(tester);
     expect(
@@ -1005,8 +1015,8 @@ void main() {
       find.byKey(const ValueKey('create_listing_brand_field')),
       findsNothing,
     );
-    expect(find.text(ru.createListingEnterManually), findsNothing);
-    expect(find.text(ru.createListingManualVehicleTitle), findsOneWidget);
+    expect(find.text(ru.createListingEnterManually), findsOneWidget);
+    expect(find.text(ru.createListingManualVehicleTitle), findsNothing);
   });
 
   testWidgets('typed checksum-invalid VIN shows correction and can recover', (
@@ -1127,8 +1137,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text(ru.createListingVinNoData), findsOneWidget);
-    expect(find.text(ru.createListingEnterManually), findsNothing);
-    expect(find.text(ru.createListingManualVehicleTitle), findsOneWidget);
+    expect(find.text(ru.createListingEnterManually), findsOneWidget);
+    expect(find.text(ru.createListingManualVehicleTitle), findsNothing);
     expect(
       find.byKey(const ValueKey('create_listing_brand_field')),
       findsOneWidget,
@@ -1154,21 +1164,31 @@ void main() {
       find.byKey(const ValueKey('create_listing_vin_retry')),
       findsOneWidget,
     );
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('create_listing_vin_retry')),
+    );
     await tester.tap(find.byKey(const ValueKey('create_listing_vin_retry')));
     verify(createCubit.retryResolve).called(1);
   });
 
-  testWidgets('edit characteristics editor stays collapsed', (tester) async {
+  testWidgets('characteristics stay collapsed until expanded', (tester) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('create_listing_additional_details')),
       findsOneWidget,
     );
-    expect(find.text(ru.createListingEditCharacteristics), findsOneWidget);
     expect(
       find.byKey(const ValueKey('create_listing_body_type_field')),
       findsNothing,
+    );
+    expect(
+      find.text(ru.createListingCharacteristicsAutoHelper),
+      findsOneWidget,
+    );
+    expect(
+      find.text(ru.createListingCharacteristicsEnterManually),
+      findsOneWidget,
     );
     await expandCreateListingAdditionalDetails(tester);
     expect(
@@ -1188,21 +1208,88 @@ void main() {
   testWidgets('RU and RO expose VIN-first copy', (tester) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
-    expect(find.text(ru.createListingVinAutofillHint), findsOneWidget);
+    expect(find.text(ru.createListingVinCardHelper), findsOneWidget);
     expect(find.text(ru.createListingEnterManually), findsNothing);
     expect(find.text(ru.createListingManualVehicleTitle), findsOneWidget);
-    expect(find.text(ru.createListingManualVehicleSubtitle), findsOneWidget);
-    expect(find.text(ru.createListingOrSeparator), findsOneWidget);
-    expect(find.text(ru.createListingEditCharacteristics), findsOneWidget);
+    expect(find.text(ru.createListingManualVehicleSubtitle), findsNothing);
+    expect(find.text(ru.createListingOrSeparator), findsNothing);
+    expect(find.text(ru.createListingVehicleDataTitle), findsOneWidget);
+    expect(find.text(ru.createListingHeroTitle), findsNothing);
+    expect(find.text(ru.createListingComposeHeadline), findsNothing);
+    expect(find.text(ru.createListingHeaderSubtitle), findsNothing);
+    expect(find.byType(CarzonLogo), findsNothing);
+    expect(find.byType(AppBackButton), findsOneWidget);
+    expect(find.byKey(CreateListingVinCard.heroKey), findsOneWidget);
+    expect(find.byKey(CreateListingVinCard.imageKey), findsOneWidget);
+    expect(
+      (tester.widget<Image>(find.byKey(CreateListingVinCard.imageKey)).image
+              as AssetImage)
+          .assetName,
+      CreateListingVinCard.backgroundAsset,
+    );
+    expect(find.text(ru.createListingVinHeroTitle), findsOneWidget);
 
     await tester.pumpWidget(wrap(locale: const Locale('ro')));
     await tester.pumpAndSettle();
-    expect(find.text(ro.createListingVinAutofillHint), findsOneWidget);
+    expect(find.text(ro.createListingVinCardHelper), findsOneWidget);
     expect(find.text(ro.createListingEnterManually), findsNothing);
     expect(find.text(ro.createListingManualVehicleTitle), findsOneWidget);
-    expect(find.text(ro.createListingManualVehicleSubtitle), findsOneWidget);
-    expect(find.text(ro.createListingOrSeparator), findsOneWidget);
-    expect(find.text(ro.createListingEditCharacteristics), findsOneWidget);
+    expect(find.text(ro.createListingManualVehicleSubtitle), findsNothing);
+    expect(find.text(ro.createListingOrSeparator), findsNothing);
+    expect(find.text(ro.createListingVehicleDataTitle), findsOneWidget);
+    expect(find.text(ro.createListingHeroTitle), findsNothing);
+    expect(find.text(ro.createListingComposeHeadline), findsNothing);
+    expect(find.byType(CarzonLogo), findsNothing);
+    expect(find.byType(AppBackButton), findsOneWidget);
+  });
+
+  testWidgets('tall hero clears the notch and stays one section', (
+    tester,
+  ) async {
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPadding);
+    addTearDown(tester.view.resetViewPadding);
+
+    Future<void> pumpAt(Size size, {ThemeData? theme, double top = 59}) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = FakeViewPadding(top: top, bottom: 34);
+      tester.view.viewPadding = FakeViewPadding(top: top, bottom: 34);
+      await tester.pumpWidget(wrap(theme: theme));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text(ru.createListingComposeHeadline), findsNothing);
+      expect(find.text(ru.createListingHeaderSubtitle), findsNothing);
+      expect(find.byType(CarzonLogo), findsNothing);
+      expect(find.byKey(CreateListingVinCard.heroKey), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('create_listing_vin_field')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('create_listing_scan_vin')),
+        findsOneWidget,
+      );
+      final hero = tester.getRect(find.byKey(CreateListingVinCard.heroKey));
+      final back = tester.getRect(find.byKey(CreateListingVinCard.backKey));
+      final title = tester.getRect(find.text(ru.createListingVinHeroTitle));
+      final field = tester.getRect(
+        find.byKey(const ValueKey('create_listing_vin_field')),
+      );
+      expect(hero.top, 0);
+      expect(hero.height, greaterThan(top + 200));
+      expect(back.top, greaterThanOrEqualTo(top));
+      expect(title.top, greaterThan(back.bottom));
+      expect(title.top - back.bottom, lessThan(64));
+      expect(field.top, greaterThan(title.bottom));
+      expect(field.bottom, lessThan(hero.bottom));
+    }
+
+    await pumpAt(const Size(390, 844));
+    await pumpAt(const Size(375, 812));
+    await pumpAt(const Size(320, 700), top: 20);
+    await pumpAt(const Size(390, 844), theme: AppTheme.dark());
   });
 
   testWidgets('confirm applies identity without overwriting variant', (
@@ -1267,7 +1354,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text(ru.createListingChangeManually));
+      final changeManually = find.text(ru.createListingChangeManually);
+      await tester.ensureVisible(changeManually);
+      await tester.tap(changeManually);
       await tester.pumpAndSettle();
 
       final brand = find.byKey(const ValueKey('create_listing_brand_field'));
@@ -1303,6 +1392,7 @@ void main() {
         find.widgetWithText(TextFormField, ru.createListingPricePlaceholder),
         '9000',
       );
+      await revealCreateListingMileageField(tester);
       await tester.enterText(
         find.widgetWithText(TextFormField, ru.createListingMileagePlaceholder),
         '100000',
@@ -1569,12 +1659,12 @@ void main() {
       await tester.pumpAndSettle();
 
       const sectionKeys = [
-        'create_listing_vehicle_section',
         'create_listing_photos_section',
-        'create_listing_type_section',
-        'create_listing_location_section',
-        'create_listing_contact_section',
+        'create_listing_vehicle_section',
         'create_listing_characteristics_section',
+        'create_listing_contact_section',
+        'create_listing_location_section',
+        'create_listing_type_section',
         'create_listing_description_section',
         'create_listing_publish_section',
       ];
@@ -1677,7 +1767,7 @@ void main() {
     );
   });
 
-  testWidgets('confirmed VIN keeps detected specs', (tester) async {
+  testWidgets('confirmed VIN summary is identity only', (tester) async {
     await tester.pumpWidget(
       wrap(
         resolveState: resolveOf(
@@ -1695,18 +1785,49 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    final summary = confirmedSummary();
+    expect(
+      find.descendant(of: summary, matching: find.text('Ram 1500 · 2021')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: summary, matching: find.text('TRX')),
+      findsOneWidget,
+    );
     expect(
       find.descendant(
-        of: confirmedSummary(),
-        matching: find.text('Бензин · Автомат'),
+        of: summary,
+        matching: find.byKey(const ValueKey('create_listing_vin_spec_line1')),
       ),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
-      find.descendant(of: confirmedSummary(), matching: find.text('Пикап')),
-      findsOneWidget,
+      find.descendant(
+        of: summary,
+        matching: find.byKey(const ValueKey('create_listing_vin_spec_line2')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: summary,
+        matching: find.byKey(const ValueKey('create_listing_vin_spec_body')),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: summary, matching: find.text('Бензин · Автомат')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: summary, matching: find.text('Пикап')),
+      findsNothing,
     );
     expect(find.text(ru.createListingVehicleIdentifiedFromVin), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('create_listing_change_confirmed_vehicle')),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('create_listing_confirm_vehicle')),
       findsNothing,
@@ -1950,6 +2071,7 @@ void main() {
       find.widgetWithText(TextFormField, ru.createListingPricePlaceholder),
       '9000',
     );
+    await revealCreateListingMileageField(tester);
     await tester.enterText(
       find.widgetWithText(TextFormField, ru.createListingMileagePlaceholder),
       '100000',
@@ -2104,6 +2226,10 @@ void main() {
   ) async {
     await adoptRam(tester);
     expect(bodyTypeField(), findsNothing);
+    expect(
+      find.byKey(const ValueKey('create_listing_characteristics_summary')),
+      findsOneWidget,
+    );
     await expectPrefillVisible(
       tester,
       body: ru.listingBodyTypePickup,
@@ -2112,6 +2238,54 @@ void main() {
       drivetrain: ru.listingDrivetrainFourWheel,
       displacement: '6.2',
     );
+  });
+
+  testWidgets('VIN summary shows transmission beside drivetrain', (
+    tester,
+  ) async {
+    await adoptRam(tester);
+    final summary = find.byKey(
+      const ValueKey('create_listing_characteristics_summary'),
+    );
+    final engine =
+        '${formatEngineDisplacementForDisplay(ru, 6.2)} · ${formatListingFuelType(ru, ListingFuelType.petrol)}';
+    for (final text in [
+      formatListingBodyType(ru, ListingBodyType.pickup),
+      engine,
+      ru.listingDrivetrainFourWheel,
+      ru.listingTransmissionAutomatic,
+    ]) {
+      expect(
+        find.descendant(of: summary, matching: find.text(text)),
+        findsOneWidget,
+      );
+    }
+    final body = tester.getRect(
+      find.descendant(
+        of: summary,
+        matching: find.text(ru.listingFieldBodyType),
+      ),
+    );
+    final engineLabel = tester.getRect(
+      find.descendant(of: summary, matching: find.text(ru.compareRowEngine)),
+    );
+    final drive = tester.getRect(
+      find.descendant(
+        of: summary,
+        matching: find.text(ru.compareRowDrivetrain),
+      ),
+    );
+    final gearbox = tester.getRect(
+      find.descendant(
+        of: summary,
+        matching: find.text(ru.compareRowTransmission),
+      ),
+    );
+    expect(engineLabel.left, greaterThan(body.left));
+    expect(drive.top, greaterThan(body.bottom - 1));
+    expect(gearbox.left, greaterThan(drive.left));
+    expect((drive.top - gearbox.top).abs(), lessThan(2));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('seller edit after VIN prefill becomes seller-owned', (
@@ -2249,6 +2423,8 @@ void main() {
     );
     controller.add(confirmed);
     await tester.pumpAndSettle();
+    expect(find.text(ru.listingTransmissionAutomatic), findsNothing);
+    expect(find.text(ru.listingTransmissionManual), findsNothing);
     await expandCreateListingAdditionalDetails(tester);
     expect(
       find.descendant(
@@ -2299,10 +2475,11 @@ void main() {
       listingPreviewJoin([
         ru.listingFuelTypePetrol,
         ru.listingTransmissionAutomatic,
-        ru.listingDrivetrainFourWheel,
-        formatEngineDisplacementForDisplay(ru, 6.2),
-        ru.listingBodyTypePickup,
       ]),
+    );
+    expect(
+      tester.widget<Text>(find.byKey(ListingPreviewCard.detailKey)).data,
+      formatEngineDisplacementForDisplay(ru, 6.2),
     );
     expect(find.text('Gasoline'), findsNothing);
     expect(find.text('Pickup'), findsNothing);

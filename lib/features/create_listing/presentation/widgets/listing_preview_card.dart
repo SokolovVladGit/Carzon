@@ -1,7 +1,7 @@
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/brands/brand_icon_resolver.dart';
@@ -10,7 +10,6 @@ import '../../../../shared/ui/carzon_icons.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/presentation/utils/listing_details_header_titles.dart';
 import '../../../listings/presentation/utils/listing_formatters.dart';
-import '../../../listings/presentation/widgets/listing_card.dart';
 import '../models/listing_preview_data.dart';
 import 'create_listing_compose_layout.dart';
 
@@ -34,13 +33,18 @@ class ListingPreviewCard extends StatelessWidget {
   );
   static const Key metaKey = ValueKey('create_listing_listing_preview_meta');
   static const Key specsKey = ValueKey('create_listing_listing_preview_specs');
+  static const Key detailKey = ValueKey(
+    'create_listing_listing_preview_detail',
+  );
   static const Key typeBadgeKey = ValueKey(
     'create_listing_listing_preview_type_badge',
   );
 
-  static const double _cardRadius = 20;
+  static const double _cardRadius = 16;
   @visibleForTesting
   static const double compactCoverHeight = 68;
+  @visibleForTesting
+  static const double sideCoverExtent = 136;
   static const double _brandGlyphSize = 18;
 
   final ListingPreviewData data;
@@ -70,18 +74,34 @@ class ListingPreviewCard extends StatelessWidget {
       else if (showRegionInMeta)
         formatMarketRegion(l10n, data.marketRegion),
     ]);
-    final specLine = listingPreviewJoin([
+    final fuelTransmission = listingPreviewJoin([
       if (data.fuelType != null) formatListingFuelType(l10n, data.fuelType!),
       if (data.transmissionType != null)
         formatListingTransmissionType(l10n, data.transmissionType!),
-      if (data.drivetrain != null)
-        formatListingDrivetrain(l10n, data.drivetrain!),
-      if (data.engineDisplacementLiters != null)
-        formatEngineDisplacementForDisplay(l10n, data.engineDisplacementLiters),
-      if (data.enginePowerHp != null)
-        formatEnginePowerHpDisplay(l10n, data.enginePowerHp),
-      if (data.bodyType != null) formatListingBodyType(l10n, data.bodyType!),
     ]);
+    final measure = data.engineDisplacementLiters != null
+        ? formatEngineDisplacementForDisplay(
+            l10n,
+            data.engineDisplacementLiters,
+          )
+        : data.enginePowerHp != null
+        ? formatEnginePowerHpDisplay(l10n, data.enginePowerHp)
+        : null;
+    final String specLine;
+    final String? detailLine;
+    if (fuelTransmission.isNotEmpty) {
+      specLine = fuelTransmission;
+      detailLine = measure;
+    } else if (data.drivetrain != null) {
+      specLine = formatListingDrivetrain(l10n, data.drivetrain!);
+      detailLine = null;
+    } else if (data.bodyType != null) {
+      specLine = formatListingBodyType(l10n, data.bodyType!);
+      detailLine = null;
+    } else {
+      specLine = measure ?? '';
+      detailLine = null;
+    }
     final variant = data.variant;
 
     final semantics = [
@@ -91,6 +111,7 @@ class ListingPreviewCard extends StatelessWidget {
       priceLabel,
       if (metaLine.isNotEmpty) metaLine,
       if (specLine.isNotEmpty) specLine,
+      if (detailLine != null && detailLine.isNotEmpty) detailLine,
       data.hasCover
           ? l10n.createListingPreviewCoverLabel
           : l10n.createListingPreviewAddPhotoHint,
@@ -102,11 +123,11 @@ class ListingPreviewCard extends StatelessWidget {
       children: [
         Text(
           l10n.createListingPreviewHeading,
-          style: createListingSectionTitleStyle(theme),
+          style: createListingSectionTitleStyle(theme)?.copyWith(fontSize: 15),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: kCreateListingHeadingToContentGap),
+        const SizedBox(height: 8),
         Semantics(
           container: true,
           label: semantics,
@@ -121,6 +142,7 @@ class ListingPreviewCard extends StatelessWidget {
               priceIncomplete: priceIncomplete,
               metaLine: metaLine,
               specLine: specLine,
+              detailLine: detailLine,
             ),
           ),
         ),
@@ -140,6 +162,7 @@ class _PreviewVisualCard extends StatelessWidget {
     required this.priceIncomplete,
     required this.metaLine,
     required this.specLine,
+    required this.detailLine,
   });
 
   final ThemeData theme;
@@ -151,6 +174,7 @@ class _PreviewVisualCard extends StatelessWidget {
   final bool priceIncomplete;
   final String metaLine;
   final String specLine;
+  final String? detailLine;
 
   @override
   Widget build(BuildContext context) {
@@ -159,61 +183,73 @@ class _PreviewVisualCard extends StatelessWidget {
     final radius = ListingPreviewCard._cardRadius;
     final panelBg = isDark
         ? Color.alphaBlend(
-            scheme.onSurface.withValues(alpha: 0.04),
-            scheme.surfaceContainerHigh,
+            scheme.onSurface.withValues(alpha: 0.07),
+            scheme.surface,
           )
-        : Colors.white.withValues(alpha: 0.94);
-    final borderColor = isDark
-        ? scheme.outline.withValues(alpha: 0.32)
-        : Colors.white.withValues(alpha: 0.55);
+        : Colors.white;
+    final borderColor = scheme.onSurface.withValues(
+      alpha: isDark ? 0.18 : 0.12,
+    );
 
     return DecoratedBox(
       key: ListingPreviewCard.cardKey,
       decoration: BoxDecoration(
+        color: panelBg,
         borderRadius: BorderRadius.circular(radius),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? scheme.shadow.withValues(alpha: 0.16)
-                : Colors.black.withValues(alpha: 0.04),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: borderColor),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius),
-        child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: panelBg,
-              borderRadius: BorderRadius.circular(radius),
-              border: Border.all(color: borderColor, width: 0.5),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _PreviewCover(
-                  bytes: data.coverBytes,
-                  compact: !data.hasCover,
-                  hint: l10n.createListingPreviewAddPhotoHint,
-                ),
-                _PreviewInfoPanel(
-                  theme: theme,
-                  l10n: l10n,
-                  data: data,
-                  identityLabel: identityLabel,
-                  variant: variant,
-                  priceLabel: priceLabel,
-                  priceIncomplete: priceIncomplete,
-                  metaLine: metaLine,
-                  specLine: specLine,
-                ),
-              ],
-            ),
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final scale = MediaQuery.textScalerOf(context).scale(1);
+            final stacked = constraints.maxWidth < 340 || scale > 1.15;
+            final cover = _PreviewCover(
+              bytes: data.coverBytes,
+              compact: !data.hasCover,
+              hint: l10n.createListingPreviewAddPhotoHint,
+            );
+            final info = _PreviewInfoPanel(
+              theme: theme,
+              l10n: l10n,
+              data: data,
+              identityLabel: identityLabel,
+              variant: variant,
+              priceLabel: priceLabel,
+              priceIncomplete: priceIncomplete,
+              metaLine: metaLine,
+              specLine: specLine,
+              detailLine: detailLine,
+            );
+            if (stacked) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    height: ListingPreviewCard.sideCoverExtent,
+                    child: cover,
+                  ),
+                  info,
+                ],
+              );
+            }
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 42,
+                    child: _CoverSlot(
+                      extent: ListingPreviewCard.sideCoverExtent,
+                      child: cover,
+                    ),
+                  ),
+                  Expanded(flex: 58, child: _LooseWidth(child: info)),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -232,10 +268,7 @@ class _PreviewCover extends StatelessWidget {
     if (compact) {
       return _PreviewCompactEmptyCover(hint: hint);
     }
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: _PreviewPhoto(bytes: bytes!),
-    );
+    return _PreviewPhoto(bytes: bytes!);
   }
 }
 
@@ -256,12 +289,12 @@ class _PreviewPhoto extends StatelessWidget {
         final scheme = Theme.of(context).colorScheme;
         return ColoredBox(
           key: ListingPreviewCard.coverPlaceholderKey,
-          color: scheme.surfaceContainerHigh,
+          color: scheme.onSurface.withValues(alpha: 0.06),
           child: Center(
             child: Icon(
-              Icons.directions_car_filled_outlined,
+              CarzonIcons.coverCarPlaceholder,
               size: 28,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+              color: scheme.onSurface.withValues(alpha: 0.55),
             ),
           ),
         );
@@ -279,35 +312,34 @@ class _PreviewCompactEmptyCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final muted = scheme.onSurfaceVariant.withValues(alpha: 0.72);
+    final muted = scheme.onSurface.withValues(alpha: 0.55);
     return ColoredBox(
       key: ListingPreviewCard.coverPlaceholderKey,
-      color: scheme.surfaceContainerHigh.withValues(alpha: 0.72),
-      child: SizedBox(
-        height: ListingPreviewCard.compactCoverHeight,
-        width: double.infinity,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Row(
-            children: [
-              Icon(Icons.add_a_photo_outlined, size: 22, color: muted),
-              if (hint.isNotEmpty) ...[
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    hint,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: createListingSupportStyle(theme)?.copyWith(
-                      color: muted,
-                      fontWeight: FontWeight.w500,
-                      height: 1.25,
-                    ),
-                  ),
+      color: scheme.onSurface.withValues(
+        alpha: theme.brightness == Brightness.light ? 0.045 : 0.08,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(CarzonIcons.addPhoto, size: 22, color: muted),
+            if (hint.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                hint,
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: createListingSupportStyle(theme)?.copyWith(
+                  color: muted,
+                  fontWeight: FontWeight.w500,
+                  height: 1.2,
+                  fontSize: 11,
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -325,6 +357,7 @@ class _PreviewInfoPanel extends StatelessWidget {
     required this.priceIncomplete,
     required this.metaLine,
     required this.specLine,
+    required this.detailLine,
   });
 
   final ThemeData theme;
@@ -336,24 +369,31 @@ class _PreviewInfoPanel extends StatelessWidget {
   final bool priceIncomplete;
   final String metaLine;
   final String specLine;
+  final String? detailLine;
 
   @override
   Widget build(BuildContext context) {
     final scheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
-    final priceStyle = theme.textTheme.titleLarge?.copyWith(
-      fontSize: 20,
-      fontWeight: FontWeight.w800,
-      color: priceIncomplete
-          ? scheme.onSurface.withValues(alpha: isDark ? 0.46 : 0.40)
-          : scheme.onSurface,
-      letterSpacing: priceIncomplete ? -0.15 : -0.4,
-      height: 1.1,
-    );
-    final titleStyle = theme.textTheme.titleMedium?.copyWith(
-      fontWeight: FontWeight.w600,
-      color: scheme.onSurface.withValues(alpha: isDark ? 0.94 : 0.90),
-      height: 1.2,
+    final priceStyle =
+        (priceIncomplete
+                ? theme.textTheme.bodyMedium
+                : theme.textTheme.titleMedium)
+            ?.copyWith(
+              fontSize: priceIncomplete ? 13 : 17,
+              fontWeight: priceIncomplete ? FontWeight.w500 : FontWeight.w700,
+              color: priceIncomplete
+                  ? scheme.onSurface.withValues(alpha: isDark ? 0.70 : 0.62)
+                  : scheme.onSurface,
+              letterSpacing: priceIncomplete ? -0.1 : -0.35,
+              height: 1.1,
+            );
+    final titleStyle = theme.textTheme.titleSmall?.copyWith(
+      fontWeight: FontWeight.w700,
+      fontSize: 15,
+      letterSpacing: -0.25,
+      color: scheme.onSurface.withValues(alpha: isDark ? 0.96 : 0.94),
+      height: 1.15,
     );
     final variantStyle = theme.textTheme.bodySmall?.copyWith(
       color: scheme.onSurfaceVariant.withValues(alpha: 0.88),
@@ -361,8 +401,15 @@ class _PreviewInfoPanel extends StatelessWidget {
       height: 1.2,
     );
     final metaStyle = theme.textTheme.bodySmall?.copyWith(
-      color: scheme.onSurfaceVariant,
+      color: scheme.onSurface.withValues(alpha: isDark ? 0.58 : 0.50),
       height: 1.25,
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+    );
+    final specStyle = metaStyle?.copyWith(
+      color: scheme.onSurface.withValues(alpha: isDark ? 0.66 : 0.58),
+      fontWeight: FontWeight.w500,
+      letterSpacing: 0.12,
     );
 
     final brandPath = getBrandIconPath(data.make);
@@ -370,22 +417,26 @@ class _PreviewInfoPanel extends StatelessWidget {
     final priceFirst = !priceIncomplete;
     final badges = <Widget>[
       if (data.hasCover)
-        ListingBadge(
+        _PreviewChip(
           label: formatMarketRegion(l10n, data.marketRegion),
           icon: CarzonIcons.map,
-          tone: ListingBadgeTone.neutral,
+          foreground: scheme.onSurface.withValues(alpha: 0.72),
+          background: scheme.onSurface.withValues(alpha: isDark ? 0.10 : 0.06),
         ),
       if (data.listingType != ListingType.sale)
-        ListingBadge(
+        _PreviewChip(
           key: ListingPreviewCard.typeBadgeKey,
           label: formatType(l10n, data.listingType),
           icon: CarzonIcons.swap,
-          tone: ListingBadgeTone.accent,
+          foreground: scheme.onSecondaryContainer,
+          background: scheme.secondaryContainer.withValues(
+            alpha: isDark ? 0.45 : 0.55,
+          ),
         ),
     ];
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -397,7 +448,7 @@ class _PreviewInfoPanel extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 2),
           ],
           _IdentityRow(
             identityLabel: identityLabel,
@@ -405,7 +456,7 @@ class _PreviewInfoPanel extends StatelessWidget {
             brandPath: showBrand ? brandPath : null,
           ),
           if (variant != null) ...[
-            const SizedBox(height: 3),
+            const SizedBox(height: 2),
             Text(
               variant!,
               key: ListingPreviewCard.variantKey,
@@ -415,27 +466,37 @@ class _PreviewInfoPanel extends StatelessWidget {
             ),
           ],
           if (metaLine.isNotEmpty) ...[
-            const SizedBox(height: 5),
+            const SizedBox(height: 2),
             Text(
               metaLine,
               key: ListingPreviewCard.metaKey,
               style: metaStyle,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ],
           if (specLine.isNotEmpty) ...[
-            const SizedBox(height: 5),
+            const SizedBox(height: 2),
             Text(
               specLine,
               key: ListingPreviewCard.specsKey,
+              style: specStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          if (detailLine != null && detailLine!.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              detailLine!,
+              key: ListingPreviewCard.detailKey,
               style: metaStyle,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ],
           if (!priceFirst) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               priceLabel,
               key: ListingPreviewCard.priceKey,
@@ -445,9 +506,120 @@ class _PreviewInfoPanel extends StatelessWidget {
             ),
           ],
           if (badges.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(spacing: 6, runSpacing: 4, children: badges),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                for (var i = 0; i < badges.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 6),
+                  Flexible(child: badges[i]),
+                ],
+              ],
+            ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Reports [extent] as its intrinsic height so a short info column keeps the
+/// marketplace card compact, while a taller column can grow past [extent]
+/// instead of overflowing.
+class _CoverSlot extends SingleChildRenderObjectWidget {
+  const _CoverSlot({required this.extent, required Widget child})
+    : super(child: child);
+
+  final double extent;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) {
+    return _RenderCoverSlot(extent);
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderCoverSlot renderObject) {
+    renderObject.extent = extent;
+  }
+}
+
+class _RenderCoverSlot extends RenderProxyBox {
+  _RenderCoverSlot(this._extent);
+
+  double _extent;
+
+  double get extent => _extent;
+
+  set extent(double value) {
+    if (_extent == value) return;
+    _extent = value;
+    markNeedsLayout();
+  }
+
+  @override
+  double computeMinIntrinsicHeight(double width) => _extent;
+
+  @override
+  double computeMaxIntrinsicHeight(double width) => _extent;
+}
+
+/// Drops the child's minimum intrinsic width so a long one-line label
+/// ellipsizes inside the preview row instead of stretching it.
+class _LooseWidth extends SingleChildRenderObjectWidget {
+  const _LooseWidth({required Widget child}) : super(child: child);
+
+  @override
+  RenderObject createRenderObject(BuildContext context) => _RenderLooseWidth();
+}
+
+class _RenderLooseWidth extends RenderProxyBox {
+  @override
+  double computeMinIntrinsicWidth(double height) => 0;
+
+  @override
+  double computeMaxIntrinsicWidth(double height) => 0;
+}
+
+class _PreviewChip extends StatelessWidget {
+  const _PreviewChip({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.foreground,
+    required this.background,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color foreground;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: foreground),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: foreground,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+                height: 1.1,
+              ),
+            ),
+          ),
         ],
       ),
     );

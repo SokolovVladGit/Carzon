@@ -1284,12 +1284,6 @@ abstract class AppLocalizations {
   /// **'Описание'**
   String get createListingSectionDescription;
 
-  /// No description provided for @createListingSectionDescriptionSubtitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Состояние, комплектация, сервис — своими словами.'**
-  String get createListingSectionDescriptionSubtitle;
-
   /// No description provided for @createListingDescriptionLabel.
   ///
   /// In ru, this message translates to:
@@ -2058,6 +2052,66 @@ abstract class AppLocalizations {
   /// **'Подать объявление'**
   String get createListingTitle;
 
+  /// No description provided for @createListingHeroTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Добавить объявление'**
+  String get createListingHeroTitle;
+
+  /// No description provided for @createListingHeroSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Разместите авто и найдите покупателя быстрее.'**
+  String get createListingHeroSubtitle;
+
+  /// No description provided for @createListingVinCardTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN'**
+  String get createListingVinCardTitle;
+
+  /// No description provided for @createListingVinCardHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сканируйте или введите VIN'**
+  String get createListingVinCardHelper;
+
+  /// No description provided for @createListingVehicleDetailsHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена, пробег и условия сделки.'**
+  String get createListingVehicleDetailsHelper;
+
+  /// No description provided for @createListingPhotoCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count}/9'**
+  String createListingPhotoCount(int count);
+
+  /// No description provided for @createListingPhotoSlotFront.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перед'**
+  String get createListingPhotoSlotFront;
+
+  /// No description provided for @createListingPhotoSlotBack.
+  ///
+  /// In ru, this message translates to:
+  /// **'Зад'**
+  String get createListingPhotoSlotBack;
+
+  /// No description provided for @createListingPhotoSlotInterior.
+  ///
+  /// In ru, this message translates to:
+  /// **'Салон'**
+  String get createListingPhotoSlotInterior;
+
+  /// No description provided for @createListingPhotoSlotMore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё'**
+  String get createListingPhotoSlotMore;
+
   /// No description provided for @createListingComposeEyebrow.
   ///
   /// In ru, this message translates to:
@@ -2082,12 +2136,6 @@ abstract class AppLocalizations {
   /// **'Фотографии'**
   String get createListingSectionPhotosLead;
 
-  /// No description provided for @createListingSectionPhotosLeadSubtitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Реальные фото этого автомобиля.'**
-  String get createListingSectionPhotosLeadSubtitle;
-
   /// No description provided for @createListingSectionVehicle.
   ///
   /// In ru, this message translates to:
@@ -2100,29 +2148,11 @@ abstract class AppLocalizations {
   /// **'VIN поможет заполнить марку, модель и год.'**
   String get createListingSectionVehicleSubtitle;
 
-  /// No description provided for @createListingSectionDeal.
-  ///
-  /// In ru, this message translates to:
-  /// **'Сделка'**
-  String get createListingSectionDeal;
-
-  /// No description provided for @createListingSectionDealSubtitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Тип, цена и пробег.'**
-  String get createListingSectionDealSubtitle;
-
   /// No description provided for @createListingSectionLocation.
   ///
   /// In ru, this message translates to:
   /// **'Местоположение'**
   String get createListingSectionLocation;
-
-  /// No description provided for @createListingSectionLocationSubtitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Регион и город, где находится автомобиль.'**
-  String get createListingSectionLocationSubtitle;
 
   /// No description provided for @createListingSectionPrice.
   ///
@@ -2141,12 +2171,6 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Контакты и публикация'**
   String get createListingSectionPublish;
-
-  /// No description provided for @createListingSectionPublishSubtitle.
-  ///
-  /// In ru, this message translates to:
-  /// **'Контакты будут видны в активном объявлении.'**
-  String get createListingSectionPublishSubtitle;
 
   /// No description provided for @createListingPreviewHeading.
   ///
@@ -5169,7 +5193,7 @@ abstract class AppLocalizations {
   /// No description provided for @createListingManualVehicleTitle.
   ///
   /// In ru, this message translates to:
-  /// **'Выбрать автомобиль вручную'**
+  /// **'Заполнить вручную'**
   String get createListingManualVehicleTitle;
 
   /// No description provided for @createListingManualVehicleSubtitle.
@@ -5321,6 +5345,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Изменить характеристики'**
   String get createListingEditCharacteristics;
+
+  /// No description provided for @createListingCharacteristicsAutoHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заполнятся автоматически после VIN или подбора автомобиля.'**
+  String get createListingCharacteristicsAutoHelper;
+
+  /// No description provided for @createListingCharacteristicsManualHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'При необходимости можно указать вручную.'**
+  String get createListingCharacteristicsManualHint;
+
+  /// No description provided for @createListingCharacteristicsEnterManually.
+  ///
+  /// In ru, this message translates to:
+  /// **'Указать вручную'**
+  String get createListingCharacteristicsEnterManually;
 
   /// No description provided for @createListingCharacteristicsEmpty.
   ///
@@ -7757,6 +7799,72 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не удалось распознать корректный VIN. Попробуйте снова или введите его вручную.'**
   String get vinScannerInvalid;
+
+  /// No description provided for @createListingHeaderSubtitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN, фото и данные автомобиля.'**
+  String get createListingHeaderSubtitle;
+
+  /// No description provided for @createListingVinHeroEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'Быстрое добавление'**
+  String get createListingVinHeroEyebrow;
+
+  /// No description provided for @createListingVinHeroTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введите VIN'**
+  String get createListingVinHeroTitle;
+
+  /// No description provided for @createListingScanVinShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скан VIN'**
+  String get createListingScanVinShort;
+
+  /// No description provided for @createListingCharacteristicsFilledAutomatically.
+  ///
+  /// In ru, this message translates to:
+  /// **'Заполнено автоматически'**
+  String get createListingCharacteristicsFilledAutomatically;
+
+  /// No description provided for @createListingDealTypeLabel.
+  ///
+  /// In ru, this message translates to:
+  /// **'Тип объявления'**
+  String get createListingDealTypeLabel;
+
+  /// No description provided for @createListingDealBothShort.
+  ///
+  /// In ru, this message translates to:
+  /// **'Оба'**
+  String get createListingDealBothShort;
+
+  /// No description provided for @createListingMmyValuePlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выбрать'**
+  String get createListingMmyValuePlaceholder;
+
+  /// No description provided for @createListingPhoneCaption.
+  ///
+  /// In ru, this message translates to:
+  /// **'Телефон'**
+  String get createListingPhoneCaption;
+
+  /// No description provided for @createListingVehicleDataTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные автомобиля'**
+  String get createListingVehicleDataTitle;
+
+  /// No description provided for @createListingCharacteristicsEditorTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Характеристики автомобиля'**
+  String get createListingCharacteristicsEditorTitle;
 }
 
 class _AppLocalizationsDelegate

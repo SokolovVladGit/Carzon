@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../app/di/injection.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -300,6 +301,9 @@ class ListingModelSelectorField extends StatelessWidget {
     this.formFieldKey,
     this.requiredWhenEnabled = true,
     this.borderRadius = 16,
+    this.dense = false,
+    this.caption,
+    this.denseSurface,
   });
 
   final AppLocalizations l10n;
@@ -313,6 +317,17 @@ class ListingModelSelectorField extends StatelessWidget {
   final bool requiredWhenEnabled;
   final double borderRadius;
 
+  /// One-line caption + value. Create Listing MMY only.
+  final bool dense;
+  final String? caption;
+
+  /// Surface for [dense]. Matches the Brand / Year picker when provided.
+  final BoxDecoration Function({
+    required bool hasValue,
+    required bool hasError,
+  })?
+  denseSurface;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -322,34 +337,192 @@ class ListingModelSelectorField extends StatelessWidget {
         if (!requiredWhenEnabled || !enabled || manualMode) return null;
         return canonicalModel == null ? l10n.validationRequired : null;
       },
-      builder: (field) => InkWell(
-        borderRadius: BorderRadius.circular(borderRadius),
-        onTap: enabled ? onTap : null,
-        child: InputDecorator(
-          decoration: decoration.copyWith(errorText: field.errorText),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  manualMode
-                      ? l10n.listingModelNotListed
-                      : canonicalModel ??
-                            (placeholder ?? l10n.listingModelSelectPlaceholder),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: !enabled || (canonicalModel == null && !manualMode)
-                        ? theme.colorScheme.onSurfaceVariant
-                        : null,
+      builder: (field) {
+        final valueText = manualMode
+            ? l10n.listingModelNotListed
+            : canonicalModel ??
+                  (placeholder ?? l10n.listingModelSelectPlaceholder);
+        final muted = !enabled || (canonicalModel == null && !manualMode);
+        final hasError = field.errorText != null && field.errorText!.isNotEmpty;
+        if (dense) {
+          return _DenseModelControl(
+            enabled: enabled,
+            caption: caption,
+            valueText: valueText,
+            muted: muted,
+            hasValue: canonicalModel != null || manualMode,
+            errorText: hasError ? field.errorText : null,
+            onTap: enabled ? onTap : null,
+            surface: denseSurface,
+            fallback: decoration,
+            borderRadius: borderRadius,
+          );
+        }
+        return InkWell(
+          borderRadius: BorderRadius.circular(borderRadius),
+          onTap: enabled ? onTap : null,
+          child: InputDecorator(
+            decoration: decoration.copyWith(errorText: field.errorText),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    valueText,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: muted ? theme.colorScheme.onSurfaceVariant : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.expand_more_rounded, size: 24),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Fixed 56px cell. Same box as the Create Listing Brand / Year pickers.
+class _DenseModelControl extends StatelessWidget {
+  const _DenseModelControl({
+    required this.enabled,
+    required this.caption,
+    required this.valueText,
+    required this.muted,
+    required this.hasValue,
+    required this.errorText,
+    required this.onTap,
+    required this.surface,
+    required this.fallback,
+    required this.borderRadius,
+  });
+
+  final bool enabled;
+  final String? caption;
+  final String valueText;
+  final bool muted;
+  final bool hasValue;
+  final String? errorText;
+  final VoidCallback? onTap;
+  final BoxDecoration Function({
+    required bool hasValue,
+    required bool hasError,
+  })?
+  surface;
+  final InputDecoration fallback;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final light = theme.brightness == Brightness.light;
+    final hasError = errorText != null && errorText!.isNotEmpty;
+    final decoration =
+        surface?.call(hasValue: hasValue, hasError: hasError) ??
+        BoxDecoration(
+          color: fallback.fillColor,
+          borderRadius: BorderRadius.circular(borderRadius),
+          border: Border.all(
+            color:
+                (hasError ? fallback.errorBorder : fallback.enabledBorder)
+                    ?.borderSide
+                    .color ??
+                cs.outline,
+            width: 0.7,
+          ),
+        );
+    final captionStyle = theme.textTheme.labelSmall?.copyWith(
+      color: cs.onSurface.withValues(alpha: 0.55),
+      fontWeight: FontWeight.w600,
+      fontSize: 11,
+      height: 1.1,
+    );
+    final valueColor = muted
+        ? cs.onSurface.withValues(alpha: light ? 0.64 : 0.74)
+        : cs.onSurface.withValues(alpha: light ? 0.92 : 0.96);
+    final chevron = !enabled
+        ? cs.onSurface.withValues(alpha: 0.24)
+        : muted
+        ? cs.onSurface.withValues(alpha: 0.38)
+        : cs.onSurface.withValues(alpha: 0.56);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Opacity(
+          opacity: enabled ? 1 : 0.48,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(borderRadius),
+              onTap: onTap,
+              child: Ink(
+                height: 56,
+                decoration: decoration,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (caption != null)
+                        Text(
+                          caption!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: captionStyle,
+                        ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              valueText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                letterSpacing: -0.2,
+                                height: 1.15,
+                                color: valueColor,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            LucideIcons.chevronDown,
+                            size: 18,
+                            color: chevron,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              const Icon(Icons.expand_more_rounded),
-            ],
+            ),
           ),
         ),
-      ),
+        if (hasError) ...[
+          const SizedBox(height: 4),
+          Text(
+            errorText!,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: cs.error,
+              fontWeight: FontWeight.w500,
+              height: 1.2,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

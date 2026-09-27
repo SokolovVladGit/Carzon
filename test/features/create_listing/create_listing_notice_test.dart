@@ -77,7 +77,13 @@ void main() {
     expect(find.text(l10n.createListingWhatsAppTitle), findsOneWidget);
     expect(find.text(l10n.createListingWhatsAppSubtitle), findsOneWidget);
     expect(find.text(l10n.createListingTelegramPlaceholder), findsOneWidget);
-    expect(find.byIcon(CarzonIcons.phone), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('create_listing_phone_field')),
+        matching: find.byIcon(CarzonIcons.phone),
+      ),
+      findsOneWidget,
+    );
     expect(find.byIcon(CarzonIcons.send), findsOneWidget);
     expect(find.byType(WhatsappContactIcon), findsOneWidget);
     expect(find.byType(PremiumWhatsAppToggleRow), findsOneWidget);

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
-import '../../../../shared/ui/carzon_icons.dart';
 import '../../domain/entities/vehicle_resolve_result.dart';
 import '../bloc/create_listing_state.dart';
 import '../models/vin_resolve_display.dart';
@@ -38,12 +37,7 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (resolve.status) {
-      CreateListingVinResolveStatus.idle => _IdleManualPath(
-        l10n: l10n,
-        theme: theme,
-        enabled: enabled,
-        onPressed: onEnterManual,
-      ),
+      CreateListingVinResolveStatus.idle => const SizedBox.shrink(),
       CreateListingVinResolveStatus.manual => const SizedBox.shrink(),
       CreateListingVinResolveStatus.resolving => _StatusText(
         key: const ValueKey('create_listing_vin_resolving'),
@@ -73,7 +67,6 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
         body: l10n.createListingVinPartial,
         child: _ManualVehicleAction(
           l10n: l10n,
-          theme: theme,
           enabled: enabled,
           onPressed: onEnterManual,
         ),
@@ -85,7 +78,6 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
         body: l10n.createListingVinMayMiss,
         child: _ManualVehicleAction(
           l10n: l10n,
-          theme: theme,
           enabled: enabled,
           onPressed: onEnterManual,
         ),
@@ -106,7 +98,6 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
             ),
             _ManualVehicleAction(
               l10n: l10n,
-              theme: theme,
               enabled: enabled,
               onPressed: onEnterManual,
             ),
@@ -120,7 +111,6 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
         body: l10n.createListingVinChecksumHint,
         child: _ManualVehicleAction(
           l10n: l10n,
-          theme: theme,
           enabled: enabled,
           onPressed: onEnterManual,
         ),
@@ -190,152 +180,26 @@ class _StatusText extends StatelessWidget {
   }
 }
 
-class _IdleManualPath extends StatelessWidget {
-  const _IdleManualPath({
-    required this.l10n,
-    required this.theme,
-    required this.enabled,
-    required this.onPressed,
-  });
-
-  final AppLocalizations l10n;
-  final ThemeData theme;
-  final bool enabled;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final muted = theme.textTheme.labelSmall?.copyWith(
-      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.72),
-      fontWeight: FontWeight.w500,
-      letterSpacing: 0.2,
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 12, bottom: 2),
-          child: Text(
-            l10n.createListingOrSeparator,
-            textAlign: TextAlign.center,
-            style: muted,
-          ),
-        ),
-        _ManualVehicleAction(
-          l10n: l10n,
-          theme: theme,
-          enabled: enabled,
-          onPressed: onPressed,
-        ),
-      ],
-    );
-  }
-}
-
 class _ManualVehicleAction extends StatelessWidget {
   const _ManualVehicleAction({
     required this.l10n,
-    required this.theme,
     required this.enabled,
     required this.onPressed,
   });
 
   final AppLocalizations l10n;
-  final ThemeData theme;
   final bool enabled;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    final cs = theme.colorScheme;
-    final light = theme.brightness == Brightness.light;
-    final title = l10n.createListingManualVehicleTitle;
-    final subtitle = l10n.createListingManualVehicleSubtitle;
-    final iconColor = createListingContactIconColor(theme);
-    final fill = Color.alphaBlend(
-      cs.primary.withValues(alpha: light ? 0.055 : 0.12),
-      cs.surface,
-    );
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Semantics(
-        button: true,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: CreateListingManualEntryLink(
+        key: const ValueKey('create_listing_enter_manually'),
+        label: l10n.createListingEnterManually,
         enabled: enabled,
-        label: '$title. $subtitle',
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            key: const ValueKey('create_listing_enter_manually'),
-            onTap: enabled ? onPressed : null,
-            borderRadius: BorderRadius.circular(kCreateListingFieldRadius),
-            child: Ink(
-              decoration: BoxDecoration(
-                color: fill,
-                borderRadius: BorderRadius.circular(kCreateListingFieldRadius),
-                border: Border.all(
-                  color: createListingFieldBorder(theme, focused: false),
-                  width: 0.8,
-                ),
-              ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 54),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
-                  child: Row(
-                    children: [
-                      Icon(
-                        CarzonIcons.coverCarPlaceholder,
-                        size: 20,
-                        color: iconColor,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ExcludeSemantics(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                title,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: -0.15,
-                                  height: 1.2,
-                                  color: cs.onSurface.withValues(
-                                    alpha: light ? 0.92 : 0.96,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                subtitle,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: cs.onSurfaceVariant.withValues(
-                                    alpha: light ? 0.72 : 0.78,
-                                  ),
-                                  height: 1.25,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        CarzonIcons.chevronRight,
-                        size: 18,
-                        color: createListingPickerChevronColor(
-                          theme,
-                          enabled: enabled,
-                          empty: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
+        onPressed: onPressed,
       ),
     );
   }
@@ -472,14 +336,20 @@ class _ResolvedCard extends StatelessWidget {
       theme: theme,
       secondaryStyle: secondaryStyle,
     );
+    final cautionStyle = theme.textTheme.bodySmall?.copyWith(
+      color: cs.onSurfaceVariant,
+      height: 1.35,
+    );
 
     return Padding(
-      padding: const EdgeInsets.only(top: 10),
+      padding: EdgeInsets.only(top: confirmed ? 4 : 10),
       child: DecoratedBox(
         key: const ValueKey('create_listing_vehicle_found_card'),
-        decoration: createListingIdentityCardDecoration(theme),
+        decoration: createListingComposeCardDecoration(theme),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+          padding: confirmed
+              ? const EdgeInsets.fromLTRB(14, 8, 14, 0)
+              : const EdgeInsets.fromLTRB(14, 12, 14, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -523,9 +393,6 @@ class _ResolvedCard extends StatelessWidget {
                       label: [
                         primary,
                         ?variant,
-                        if (spec.line1.isNotEmpty) spec.line1,
-                        if (spec.line2.isNotEmpty) spec.line2,
-                        ?spec.body,
                         ?spec.caution,
                         l10n.createListingVehicleIdentifiedFromVin,
                       ].join('. '),
@@ -538,7 +405,16 @@ class _ResolvedCard extends StatelessWidget {
                               const SizedBox(height: 3),
                               Text(variant, style: secondaryStyle),
                             ],
-                            specLines,
+                            if (spec.caution != null) ...[
+                              const SizedBox(height: 8),
+                              Text(
+                                spec.caution!,
+                                key: const ValueKey(
+                                  'create_listing_vin_spec_caution',
+                                ),
+                                style: cautionStyle,
+                              ),
+                            ],
                             const SizedBox(height: 4),
                             Text(
                               l10n.createListingVehicleIdentifiedFromVin,
@@ -548,7 +424,7 @@ class _ResolvedCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 2),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: CreateListingSecondaryAction(

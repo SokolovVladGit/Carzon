@@ -128,7 +128,11 @@ void main() {
   }
 
   Future<void> tapScan(WidgetTester tester) async {
-    await tester.ensureVisible(scan);
+    await tester.scrollUntilVisible(
+      scan,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(scan);
     await tester.pumpAndSettle();
   }
@@ -138,7 +142,14 @@ void main() {
     (tester) async {
       nativeResult = ' wvw-zzz1jz xw000001 ';
       await open(tester);
-      expect(tester.widget<IconButton>(scan).tooltip, 'Сканировать VIN');
+      expect(
+        tester
+            .widget<Tooltip>(
+              find.ancestor(of: scan, matching: find.byType(Tooltip)),
+            )
+            .message,
+        'Сканировать VIN',
+      );
       await tapScan(tester);
       expect(calls.single.method, 'scanVin');
       expect(tester.widget<TextFormField>(field).controller!.text, vinB);
@@ -244,7 +255,7 @@ void main() {
     handler = (_) => result.future;
     await open(tester);
     await tapScan(tester);
-    expect(tester.widget<IconButton>(scan).onPressed, isNull);
+    expect(tester.widget<InkWell>(scan).onTap, isNull);
     userId = 'b';
     authEvents.add(
       const AuthState.authenticated(AuthUser(id: 'b', email: 'b@example.com')),

@@ -7,13 +7,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('Create Listing radii stay rounded-rect, not capsule', () {
-    expect(kCreateListingFieldRadius, 15);
-    expect(kCreateListingCardRadius, 20);
+    expect(kCreateListingFieldRadius, 14);
+    expect(kCreateListingCardRadius, 16);
     expect(kCreateListingSegmentRadius, 12);
     expect(kCreateListingPublishRadius, 16);
     expect(kCreateListingFieldRadius, lessThan(20));
-    expect(kCreateListingInterSectionGap, 24);
-    expect(kCreateListingHeadingToContentGap, 10);
+    expect(kCreateListingInterSectionGap, 12);
+    expect(kCreateListingHeadingToContentGap, 8);
   });
 
   test('resolved identity subtitle joins year and variant', () {

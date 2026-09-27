@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
+import 'package:carzon/core/theme/app_theme.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
@@ -12,8 +13,10 @@ import 'package:carzon/features/create_listing/presentation/bloc/create_listing_
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_state.dart';
 import 'package:carzon/features/create_listing/presentation/pages/create_listing_page.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_compact_summary.dart';
+import 'package:carzon/features/create_listing/presentation/widgets/create_listing_compose_layout.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_contact_notice.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/listing_preview_card.dart';
+import 'package:carzon/features/create_listing/presentation/widgets/premium_listing_controls.dart';
 import 'package:carzon/features/listings/domain/entities/listing.dart';
 import 'package:carzon/features/listings/presentation/utils/listing_formatters.dart';
 import 'package:carzon/l10n/app_localizations.dart';
@@ -65,8 +68,13 @@ void main() {
     await sl.reset();
   });
 
-  Widget wrap({Locale locale = const Locale('ru'), AuthCubit? auth}) {
+  Widget wrap({
+    Locale locale = const Locale('ru'),
+    AuthCubit? auth,
+    ThemeData? theme,
+  }) {
     return MaterialApp(
+      theme: theme,
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -112,6 +120,7 @@ void main() {
     WidgetTester tester, {
     CreateListingState? next,
     Locale locale = const Locale('ru'),
+    ThemeData? theme,
   }) async {
     final controller = StreamController<CreateListingState>();
     addTearDown(controller.close);
@@ -120,7 +129,7 @@ void main() {
       controller.stream,
       initialState: const CreateListingState.idle(),
     );
-    await tester.pumpWidget(wrap(locale: locale));
+    await tester.pumpWidget(wrap(locale: locale, theme: theme));
     await tester.pumpAndSettle();
     final state = next ?? defaultsState();
     when(() => createCubit.state).thenReturn(state);
@@ -143,6 +152,13 @@ void main() {
 
   Finder locationSummary() =>
       find.byKey(const ValueKey('create_listing_location_summary'));
+
+  Icon locationChevron(WidgetTester tester) {
+    return tester.widget<Icon>(
+      find.descendant(of: locationSummary(), matching: find.byType(Icon)).last,
+    );
+  }
+
   Finder contactSummary() =>
       find.byKey(const ValueKey('create_listing_contact_summary'));
 
@@ -212,14 +228,42 @@ void main() {
       ),
       findsOneWidget,
     );
+    final phoneSummary = tester.getRect(contactSummary());
+    final mileage = tester.getRect(
+      find.byKey(const ValueKey('create_listing_mileage_field')),
+    );
+    final price = tester.getRect(
+      find.byKey(const ValueKey('create_listing_price_field')),
+    );
+    expect(price.bottom, lessThan(mileage.top));
+    expect(mileage.bottom, lessThan(phoneSummary.top));
+    expect((phoneSummary.left - price.left).abs(), lessThan(8));
+    expect((phoneSummary.width - price.width).abs(), lessThan(12));
     expect(
       find.descendant(
-        of: contactSummary(),
-        matching: find.text(
-          '${ru.contactTelegram} · ${ru.createListingWhatsAppTitle}',
+        of: find.byKey(
+          const ValueKey('create_listing_characteristics_section'),
         ),
+        matching: locationSummary(),
       ),
       findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey('create_listing_characteristics_summary'),
+        ),
+        matching: locationSummary(),
+      ),
+      findsNothing,
+    );
+    expect(
+      tester
+          .getSize(
+            find.byKey(const ValueKey('create_listing_location_section')),
+          )
+          .height,
+      0,
     );
     expect(locationEditors(tester).offstage, isTrue);
     expect(contactEditors(tester).offstage, isTrue);
@@ -228,6 +272,42 @@ void main() {
       find.byKey(const ValueKey('create_listing_change_location')),
       findsOneWidget,
     );
+    expect(locationChevron(tester).icon, kCreateListingIconChevronDown);
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey('create_listing_characteristics_section'),
+        ),
+        matching: find.byType(Divider),
+      ),
+      findsNothing,
+    );
+    final section = tester.getSize(
+      find.byKey(const ValueKey('create_listing_characteristics_section')),
+    );
+    final surface = tester.getSize(
+      find.byKey(const ValueKey('create_listing_location_surface')),
+    );
+    expect((section.width - 20 - surface.width).abs(), lessThan(2));
+    final surfaceDecoration =
+        tester
+                .widget<DecoratedBox>(
+                  find.byKey(const ValueKey('create_listing_location_surface')),
+                )
+                .decoration
+            as BoxDecoration;
+    expect(surfaceDecoration.border, isNull);
+    expect(surfaceDecoration.color, isNotNull);
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey('create_listing_characteristics_section'),
+        ),
+        matching: find.text(ru.createListingEditCharacteristics),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text(ru.createListingChange), findsNothing);
     expect(
       find.byKey(const ValueKey('create_listing_change_contact')),
       findsOneWidget,
@@ -392,9 +472,42 @@ void main() {
     tester,
   ) async {
     await hydrate(tester);
+    expect(locationChevron(tester).icon, kCreateListingIconChevronDown);
     await tapChange(tester, const ValueKey('create_listing_change_location'));
-    expect(locationSummary(), findsNothing);
+    expect(locationSummary(), findsOneWidget);
+    expect(
+      find.descendant(of: locationSummary(), matching: find.text('Тирасполь')),
+      findsOneWidget,
+    );
+    expect(locationChevron(tester).icon, kCreateListingIconChevronUp);
     expect(locationEditors(tester).offstage, isFalse);
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey('create_listing_characteristics_section'),
+        ),
+        matching: find.byKey(const ValueKey('create_listing_location_editors')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester.getRect(locationSummary()).bottom,
+      lessThanOrEqualTo(
+        tester
+            .getRect(
+              find.byKey(const ValueKey('create_listing_location_editors')),
+            )
+            .top,
+      ),
+    );
+    expect(
+      tester
+          .widget<Offstage>(
+            find.byKey(const ValueKey('create_listing_additional_details')),
+          )
+          .offstage,
+      isTrue,
+    );
     expect(
       find.descendant(
         of: find.byKey(const ValueKey('create_listing_city_field')),
@@ -412,6 +525,8 @@ void main() {
       find.descendant(of: locationSummary(), matching: find.text('Бендеры')),
       findsOneWidget,
     );
+    expect(locationChevron(tester).icon, kCreateListingIconChevronDown);
+    expect(locationEditors(tester).offstage, isTrue);
     expect(
       tester.widget<Text>(find.byKey(ListingPreviewCard.metaKey)).data,
       contains('Бендеры'),
@@ -420,6 +535,147 @@ void main() {
       tester.widget<Text>(find.byKey(ListingPreviewCard.metaKey)).data,
       isNot(contains('Тирасполь')),
     );
+  });
+
+  testWidgets('location row fits phone widths and dark mode', (tester) async {
+    Future<void> pumpRow(
+      double width, {
+      required bool expanded,
+      ThemeData? theme,
+      VoidCallback? onPressed,
+    }) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme ?? AppTheme.light(),
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topCenter,
+              child: SizedBox(
+                width: width,
+                child: CreateListingCompactSummary(
+                  key: const ValueKey('create_listing_location_summary'),
+                  tapKey: const ValueKey('create_listing_change_location'),
+                  icon: kCreateListingIconLocation,
+                  label: ru.createListingSectionLocation,
+                  primary: 'Бендеры',
+                  secondary: ru.regionTransnistria,
+                  expanded: expanded,
+                  onPressed: onPressed,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+    }
+
+    for (final width in const [390.0, 375.0, 320.0]) {
+      var taps = 0;
+      await pumpRow(width, expanded: false, onPressed: () => taps++);
+      expect(tester.takeException(), isNull);
+      expect(find.text(ru.createListingSectionLocation), findsOneWidget);
+      expect(find.text('Бендеры'), findsOneWidget);
+      expect(find.text(ru.regionTransnistria), findsOneWidget);
+      expect(locationChevron(tester).icon, kCreateListingIconChevronDown);
+      final rowDecoration =
+          tester
+                  .widget<DecoratedBox>(
+                    find.byKey(
+                      const ValueKey('create_listing_location_surface'),
+                    ),
+                  )
+                  .decoration
+              as BoxDecoration;
+      expect(rowDecoration.border, isNull);
+      expect(rowDecoration.color, isNotNull);
+      expect(find.byType(Divider), findsNothing);
+      await tester.tap(
+        find.byKey(const ValueKey('create_listing_change_location')),
+      );
+      await tester.pump();
+      expect(taps, 1);
+      expect(find.text('Бендеры'), findsOneWidget);
+
+      await pumpRow(width, expanded: true, onPressed: () {});
+      expect(tester.takeException(), isNull);
+      expect(find.text(ru.createListingSectionLocation), findsOneWidget);
+      expect(find.text('Бендеры'), findsOneWidget);
+      expect(locationChevron(tester).icon, kCreateListingIconChevronUp);
+    }
+
+    await pumpRow(
+      390,
+      expanded: false,
+      theme: AppTheme.dark(),
+      onPressed: () {},
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('Бендеры'), findsOneWidget);
+    expect(locationChevron(tester).icon, kCreateListingIconChevronDown);
+    await pumpRow(
+      390,
+      expanded: true,
+      theme: AppTheme.dark(),
+      onPressed: () {},
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text(ru.regionTransnistria), findsOneWidget);
+    expect(locationChevron(tester).icon, kCreateListingIconChevronUp);
+  });
+
+  testWidgets('characteristics edit does not open location', (tester) async {
+    await hydrate(tester);
+    await tapChange(
+      tester,
+      const ValueKey('create_listing_edit_characteristics'),
+    );
+    expect(locationSummary(), findsOneWidget);
+    expect(locationEditors(tester).offstage, isTrue);
+    expect(
+      tester
+          .widget<Offstage>(
+            find.byKey(const ValueKey('create_listing_additional_details')),
+          )
+          .offstage,
+      isFalse,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_characteristics_editor_title')),
+      findsOneWidget,
+    );
+    expect(
+      find.text(ru.createListingCharacteristicsEditorTitle),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('collapsed phone surface opens the contact editor', (
+    tester,
+  ) async {
+    await hydrate(tester);
+    expect(
+      find.descendant(
+        of: contactSummary(),
+        matching: find.text('+373 690 00001'),
+      ),
+      findsOneWidget,
+    );
+    await tapChange(tester, const ValueKey('create_listing_contact_summary'));
+    expect(contactSummary(), findsNothing);
+    expect(contactEditors(tester).offstage, isFalse);
+    expect(
+      find.byKey(const ValueKey('create_listing_phone_field')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_telegram_field')),
+      findsOneWidget,
+    );
+    expect(find.byType(PremiumWhatsAppToggleRow), findsOneWidget);
   });
 
   testWidgets('Change contact reveals fields, notice, and keeps values', (
@@ -629,7 +885,8 @@ void main() {
       next: defaultsState(region: MarketRegion.moldova, city: 'Chișinău'),
     );
     expect(locationSummary(), findsOneWidget);
-    expect(find.text(ro.createListingChange), findsWidgets);
+    expect(find.text(ro.createListingEditCharacteristics), findsOneWidget);
+    expect(find.text(ro.createListingSectionLocation), findsOneWidget);
     expect(
       find.descendant(
         of: locationSummary(),

@@ -25,6 +25,8 @@ class ListingTypeDealSelector extends StatelessWidget {
     return CreateListingSegmentedControl<ListingType>(
       value: value,
       enabled: !submitting,
+      dense: true,
+      graphiteActive: true,
       onChanged: onChanged,
       options: [
         CreateListingSegmentOption(
@@ -37,7 +39,7 @@ class ListingTypeDealSelector extends StatelessWidget {
         ),
         CreateListingSegmentOption(
           value: ListingType.both,
-          label: l10n.formatTypeBoth,
+          label: l10n.createListingDealBothShort,
         ),
       ],
     );
