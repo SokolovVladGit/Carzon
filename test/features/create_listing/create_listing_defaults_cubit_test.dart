@@ -247,6 +247,8 @@ void main() {
   testWidgets('late Moldova defaults preserve a selected Transnistria city', (
     tester,
   ) async {
+    CreateListingPage.debugRevealAllSteps = true;
+    addTearDown(() => CreateListingPage.debugRevealAllSteps = false);
     defaultsRepo.getGate = Completer();
     sl.registerFactory<CreateListingCubit>(() => cubit);
     registerIdleManualSmartFillCubit();

@@ -1122,6 +1122,24 @@ abstract class AppLocalizations {
   /// **'Мощность в л.с.'**
   String get listingEnginePowerHint;
 
+  /// No description provided for @listingEngineCylinders.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цилиндры'**
+  String get listingEngineCylinders;
+
+  /// No description provided for @listingDoors.
+  ///
+  /// In ru, this message translates to:
+  /// **'Двери'**
+  String get listingDoors;
+
+  /// No description provided for @listingSeats.
+  ///
+  /// In ru, this message translates to:
+  /// **'Места'**
+  String get listingSeats;
+
   /// No description provided for @listingRegistrationHint.
   ///
   /// In ru, this message translates to:
@@ -5319,7 +5337,7 @@ abstract class AppLocalizations {
   /// No description provided for @createListingSmartFillNoData.
   ///
   /// In ru, this message translates to:
-  /// **'Характеристики можно указать вручную.'**
+  /// **'Не удалось заполнить характеристики автоматически. Их можно указать вручную.'**
   String get createListingSmartFillNoData;
 
   /// No description provided for @createListingSmartFillFailed.
@@ -5327,6 +5345,30 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Не удалось подставить характеристики.'**
   String get createListingSmartFillFailed;
+
+  /// No description provided for @createListingSmartFillSheetEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'CARZON Smart Fill'**
+  String get createListingSmartFillSheetEyebrow;
+
+  /// No description provided for @createListingSmartFillSheetTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточним автомобиль'**
+  String get createListingSmartFillSheetTitle;
+
+  /// No description provided for @createListingSmartFillSheetHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ответьте на несколько вопросов, чтобы мы точнее заполнили характеристики.'**
+  String get createListingSmartFillSheetHelper;
+
+  /// No description provided for @createListingSmartFillPending.
+  ///
+  /// In ru, this message translates to:
+  /// **'Чтобы заполнить точнее, продолжите и ответьте на уточнение.'**
+  String get createListingSmartFillPending;
 
   /// No description provided for @createListingAdditionalDetails.
   ///
@@ -5387,6 +5429,24 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Мощность, л.с.'**
   String get createListingEnginePowerPlaceholder;
+
+  /// No description provided for @createListingEngineCylindersPlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цилиндры'**
+  String get createListingEngineCylindersPlaceholder;
+
+  /// No description provided for @createListingDoorsPlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Двери'**
+  String get createListingDoorsPlaceholder;
+
+  /// No description provided for @createListingSeatsPlaceholder.
+  ///
+  /// In ru, this message translates to:
+  /// **'Места'**
+  String get createListingSeatsPlaceholder;
 
   /// No description provided for @createListingRegistrationPlaceholder.
   ///
@@ -7865,6 +7925,102 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Характеристики автомобиля'**
   String get createListingCharacteristicsEditorTitle;
+
+  /// No description provided for @createListingStepContinue.
+  ///
+  /// In ru, this message translates to:
+  /// **'Далее'**
+  String get createListingStepContinue;
+
+  /// No description provided for @createListingExitTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти из создания объявления?'**
+  String get createListingExitTitle;
+
+  /// No description provided for @createListingExitBody.
+  ///
+  /// In ru, this message translates to:
+  /// **'Введённые данные не сохранятся.'**
+  String get createListingExitBody;
+
+  /// No description provided for @createListingExitStay.
+  ///
+  /// In ru, this message translates to:
+  /// **'Остаться'**
+  String get createListingExitStay;
+
+  /// No description provided for @createListingExitLeave.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выйти'**
+  String get createListingExitLeave;
+
+  /// No description provided for @createListingStepOf.
+  ///
+  /// In ru, this message translates to:
+  /// **'{current} из {total}'**
+  String createListingStepOf(int current, int total);
+
+  /// No description provided for @createListingVinAutofillHelper.
+  ///
+  /// In ru, this message translates to:
+  /// **'CARZON заполнит известные данные автомобиля автоматически.'**
+  String get createListingVinAutofillHelper;
+
+  /// No description provided for @createListingStepOfferTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Цена и пробег'**
+  String get createListingStepOfferTitle;
+
+  /// No description provided for @createListingStepContactTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Контакты и место'**
+  String get createListingStepContactTitle;
+
+  /// No description provided for @createListingFlowTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Создание объявления'**
+  String get createListingFlowTitle;
+
+  /// No description provided for @createListingStepVin.
+  ///
+  /// In ru, this message translates to:
+  /// **'VIN'**
+  String get createListingStepVin;
+
+  /// No description provided for @createListingStepPhotos.
+  ///
+  /// In ru, this message translates to:
+  /// **'Фото'**
+  String get createListingStepPhotos;
+
+  /// No description provided for @createListingStepDeal.
+  ///
+  /// In ru, this message translates to:
+  /// **'Сделка'**
+  String get createListingStepDeal;
+
+  /// No description provided for @createListingStepData.
+  ///
+  /// In ru, this message translates to:
+  /// **'Данные'**
+  String get createListingStepData;
+
+  /// No description provided for @createListingStepContacts.
+  ///
+  /// In ru, this message translates to:
+  /// **'Контакты'**
+  String get createListingStepContacts;
+
+  /// No description provided for @createListingStepDone.
+  ///
+  /// In ru, this message translates to:
+  /// **'Итог'**
+  String get createListingStepDone;
 }
 
 class _AppLocalizationsDelegate

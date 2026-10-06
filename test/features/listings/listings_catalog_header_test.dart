@@ -275,7 +275,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(ListingsBrandFilterRow), findsOneWidget);
-      expect(find.bySemanticsLabel(l10n.listingsBodyChipAll), findsOneWidget);
+      expect(find.bySemanticsLabel(l10n.listingBodyTypeSedan), findsOneWidget);
+      expect(find.bySemanticsLabel(l10n.listingsBodyChipAll), findsNothing);
+      expect(
+        find.bySemanticsLabel(l10n.brandFilterAllSemantics),
+        findsNothing,
+      );
     });
 
     testWidgets('Search nav has no active check when discovery is vanilla', (
@@ -345,8 +350,8 @@ void main() {
 
         expect(find.bySemanticsLabel(l10n.listingBodyTypeSuv), findsOneWidget);
         expect(find.text(l10n.listingBodyTypeSuv), findsNothing);
-        expect(find.bySemanticsLabel(l10n.listingsBodyChipAll), findsOneWidget);
-        expect(find.text(l10n.listingsBodyChipAll), findsNothing);
+        expect(find.bySemanticsLabel(l10n.listingBodyTypeSedan), findsOneWidget);
+        expect(find.bySemanticsLabel(l10n.listingsBodyChipAll), findsNothing);
 
         await tester.tap(find.bySemanticsLabel(l10n.listingBodyTypeSuv));
         await tester.pump();

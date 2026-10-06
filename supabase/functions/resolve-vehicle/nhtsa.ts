@@ -23,6 +23,8 @@ export type ResolverNormalizedFields = {
   year: number | null;
   bodyType: string | null;
   fuelType: string | null;
+  fuelTypeSecondary: string | null;
+  electrificationLevel: string | null;
   engine: string | null;
   transmission: string | null;
   manufacturer: string | null;
@@ -34,6 +36,7 @@ export type ResolverNormalizedFields = {
   series: string | null;
   driveType: string | null;
   doors: string | null;
+  seats: string | null;
   displacement: string | null;
   cylinders: string | null;
   grossVehicleWeightRating: string | null;
@@ -78,11 +81,12 @@ function parseYear(v: unknown): number | null {
   return n;
 }
 
-function parsePositiveIntString(v: unknown): string | null {
+/** Pure digits only, within 1..max. Anything else is unknown. */
+function parseBoundedCount(v: unknown, max: number): string | null {
   const s = trimOrNull(v);
-  if (!s) return null;
+  if (!s || !/^\d+$/.test(s)) return null;
   const n = Number.parseInt(s, 10);
-  if (!Number.isFinite(n) || n <= 0) return s;
+  if (!Number.isFinite(n) || n < 1 || n > max) return null;
   return `${n}`;
 }
 
@@ -170,6 +174,8 @@ export function mapResolverNhtsaVinValuesRow(row: NhtsaVinValuesRow): {
       year,
       bodyType,
       fuelType,
+      fuelTypeSecondary: trimOrNull(row["FuelTypeSecondary"]),
+      electrificationLevel: trimOrNull(row["ElectrificationLevel"]),
       engine,
       transmission,
       manufacturer: trimOrNull(row["Manufacturer"]),
@@ -180,10 +186,12 @@ export function mapResolverNhtsaVinValuesRow(row: NhtsaVinValuesRow): {
       trim: trimOrNull(row["Trim"]),
       series: trimOrNull(row["Series"]),
       driveType: trimOrNull(row["DriveType"]),
-      doors: parsePositiveIntString(row["Doors"]),
+      doors: parseBoundedCount(row["Doors"], 6),
+      seats: parseBoundedCount(row["Seats"], 15),
       displacement: formatDisplacementLiters(row["DisplacementL"]),
-      cylinders: parsePositiveIntString(
+      cylinders: parseBoundedCount(
         row["EngineCylinders"] ?? row["EngineNumberOfCylinders"],
+        16,
       ),
       grossVehicleWeightRating: trimOrNull(row["GVWR"]),
       market: "US_catalog_bias",

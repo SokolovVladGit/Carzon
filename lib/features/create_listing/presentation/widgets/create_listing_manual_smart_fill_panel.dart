@@ -4,7 +4,6 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../listings/domain/entities/listing.dart';
 import '../../../listings/presentation/utils/listing_formatters.dart';
 import '../../domain/entities/manual_smart_fill_refinement.dart';
-import '../../domain/entities/manual_smart_fill_result.dart';
 import '../bloc/manual_smart_fill_state.dart';
 import '../models/catalog_resolved_form_prefill.dart';
 import '../models/listing_preview_data.dart';
@@ -18,8 +17,6 @@ class CreateListingManualSmartFillPanel extends StatelessWidget {
     required this.state,
     required this.enabled,
     required this.filledSummary,
-    required this.onSelectOption,
-    required this.onDontKnow,
     required this.onRetry,
     this.onRestart,
   });
@@ -29,8 +26,6 @@ class CreateListingManualSmartFillPanel extends StatelessWidget {
   final ManualSmartFillState state;
   final bool enabled;
   final String filledSummary;
-  final ValueChanged<ManualSmartFillRefinementOption> onSelectOption;
-  final VoidCallback onDontKnow;
   final VoidCallback onRetry;
   final VoidCallback? onRestart;
 
@@ -61,15 +56,12 @@ class CreateListingManualSmartFillPanel extends StatelessWidget {
         state: state,
         enabled: enabled,
         filledSummary: filledSummary,
-        onSelectOption: onSelectOption,
-        onDontKnow: onDontKnow,
         onRestart: onRestart,
       ),
     };
   }
 }
 
-@visibleForTesting
 String manualSmartFillClarificationPrompt(
   AppLocalizations l10n,
   String attribute,
@@ -243,8 +235,6 @@ class _SmartFillModule extends StatelessWidget {
     required this.state,
     required this.enabled,
     required this.filledSummary,
-    required this.onSelectOption,
-    required this.onDontKnow,
     this.onRestart,
   });
 
@@ -253,14 +243,12 @@ class _SmartFillModule extends StatelessWidget {
   final ManualSmartFillState state;
   final bool enabled;
   final String filledSummary;
-  final ValueChanged<ManualSmartFillRefinementOption> onSelectOption;
-  final VoidCallback onDontKnow;
   final VoidCallback? onRestart;
 
   @override
   Widget build(BuildContext context) {
-    final showRestart = state.canRestart && onRestart != null;
-    final showCard = state.showClarification || showRestart;
+    final showRestart =
+        !state.showClarification && state.canRestart && onRestart != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -270,63 +258,24 @@ class _SmartFillModule extends StatelessWidget {
             theme: theme,
             summary: filledSummary,
           ),
-        if (showCard)
+        if (state.showClarification)
           Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: DecoratedBox(
-              decoration: createListingSectionSurfaceDecoration(theme),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(
-                  kCreateListingComposeRadius,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (state.showClarification)
-                      _RefinementBody(
-                        l10n: l10n,
-                        theme: theme,
-                        next: state.result?.nextRefinement,
-                        clarification: state.result?.clarification,
-                        enabled: enabled,
-                        onSelectOption: onSelectOption,
-                        onDontKnow: onDontKnow,
-                      ),
-                    if (showRestart) ...[
-                      if (state.showClarification)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: kCreateListingModulePad,
-                          ),
-                          child: ColoredBox(
-                            color: createListingHairlineColor(theme),
-                            child: const SizedBox(height: 1),
-                          ),
-                        ),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            12,
-                            state.showClarification ? 2 : 6,
-                            12,
-                            6,
-                          ),
-                          child: CreateListingSecondaryAction(
-                            key: const ValueKey(
-                              'create_listing_smart_fill_restart',
-                            ),
-                            label: l10n.createListingSmartFillRestart,
-                            enabled: enabled,
-                            footer: true,
-                            onPressed: onRestart!,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              l10n.createListingSmartFillPending,
+              key: const ValueKey('create_listing_smart_fill_pending'),
+              style: createListingSupportStyle(theme),
+            ),
+          ),
+        if (showRestart)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: CreateListingSecondaryAction(
+              key: const ValueKey('create_listing_smart_fill_restart'),
+              label: l10n.createListingSmartFillRestart,
+              enabled: enabled,
+              footer: true,
+              onPressed: onRestart!,
             ),
           ),
       ],
@@ -334,255 +283,8 @@ class _SmartFillModule extends StatelessWidget {
   }
 }
 
-class _RefinementBody extends StatelessWidget {
-  const _RefinementBody({
-    required this.l10n,
-    required this.theme,
-    required this.next,
-    required this.clarification,
-    required this.enabled,
-    required this.onSelectOption,
-    required this.onDontKnow,
-  });
 
-  final AppLocalizations l10n;
-  final ThemeData theme;
-  final ManualSmartFillNextRefinement? next;
-  final ManualSmartFillClarification? clarification;
-  final bool enabled;
-  final ValueChanged<ManualSmartFillRefinementOption> onSelectOption;
-  final VoidCallback onDontKnow;
-
-  @override
-  Widget build(BuildContext context) {
-    final kind =
-        next?.kind ??
-        parseManualSmartFillRefinementKind(clarification?.attribute);
-    if (kind == null) return const SizedBox.shrink();
-
-    final options = next != null
-        ? next!.options
-        : [
-            for (final option in clarification?.options ?? const [])
-              ManualSmartFillRefinementOption(
-                id: option.value,
-                kind: kind,
-                candidateCount: option.candidateCount ?? 0,
-                bodyType: kind == ManualSmartFillRefinementKind.body
-                    ? option.value
-                    : null,
-                fuelType: kind == ManualSmartFillRefinementKind.fuel
-                    ? option.value
-                    : null,
-                transmissionType:
-                    kind == ManualSmartFillRefinementKind.transmission
-                    ? option.value
-                    : null,
-              ),
-          ];
-
-    final labeled = <({ManualSmartFillRefinementOption option, String label})>[
-      for (final option in options)
-        if (_optionLabel(l10n, option) != null)
-          (option: option, label: _optionLabel(l10n, option)!),
-    ];
-    if (labeled.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      key: const ValueKey('create_listing_smart_fill_clarification'),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            manualSmartFillClarificationPrompt(l10n, kind.wireValue),
-            style: createListingQuestionStyle(theme)?.copyWith(
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-              letterSpacing: -0.22,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            l10n.createListingSmartFillSeveralVersions,
-            style: createListingSupportStyle(theme)?.copyWith(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.02,
-              color: theme.colorScheme.onSurface.withValues(
-                alpha: theme.brightness == Brightness.light ? 0.48 : 0.58,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (kind == ManualSmartFillRefinementKind.engine)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (final item in labeled)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: _EngineOptionTile(
-                      optionId: item.option.id,
-                      label: item.label,
-                      enabled: enabled,
-                      onPressed: () => onSelectOption(item.option),
-                    ),
-                  ),
-              ],
-            )
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final item in labeled)
-                  _RefinementChoice(
-                    choiceKey: ValueKey(
-                      'create_listing_smart_fill_option_${item.option.canonicalValue ?? item.option.id}',
-                    ),
-                    label: item.label,
-                    enabled: enabled,
-                    onPressed: () => onSelectOption(item.option),
-                  ),
-              ],
-            ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: CreateListingSecondaryAction(
-              key: const ValueKey('create_listing_smart_fill_dont_know'),
-              label: l10n.createListingSmartFillDontKnow,
-              enabled: enabled,
-              footer: true,
-              onPressed: onDontKnow,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RefinementChoice extends StatelessWidget {
-  const _RefinementChoice({
-    required this.choiceKey,
-    required this.label,
-    required this.enabled,
-    required this.onPressed,
-  });
-
-  final Key choiceKey;
-  final String label;
-  final bool enabled;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final radius = BorderRadius.circular(kCreateListingFieldRadius);
-    return Material(
-      key: choiceKey,
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: enabled ? onPressed : null,
-        borderRadius: radius,
-        splashColor: theme.colorScheme.onSurface.withValues(alpha: 0.06),
-        highlightColor: theme.colorScheme.onSurface.withValues(alpha: 0.04),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: createListingFieldFill(theme, hasValue: false),
-            borderRadius: radius,
-            border: Border.all(
-              color: createListingFieldBorder(theme, focused: false),
-              width: 0.7,
-            ),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 36),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Text(
-                label,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13.5,
-                  letterSpacing: -0.1,
-                  height: 1.15,
-                  color: createListingValueColor(theme, enabled: enabled),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EngineOptionTile extends StatelessWidget {
-  const _EngineOptionTile({
-    required this.optionId,
-    required this.label,
-    required this.enabled,
-    required this.onPressed,
-  });
-
-  final String optionId;
-  final String label;
-  final bool enabled;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final radius = BorderRadius.circular(kCreateListingFieldRadius);
-    return Material(
-      key: ValueKey('create_listing_smart_fill_option_$optionId'),
-      color: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: radius,
-        side: BorderSide(
-          color: createListingFieldBorder(theme, focused: false),
-          width: 0.7,
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: enabled ? onPressed : null,
-        borderRadius: radius,
-        splashColor: theme.colorScheme.onSurface.withValues(alpha: 0.06),
-        highlightColor: theme.colorScheme.onSurface.withValues(alpha: 0.04),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: createListingFieldFill(theme, hasValue: false),
-            borderRadius: radius,
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 44),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  label,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.1,
-                    height: 1.2,
-                    color: createListingValueColor(theme, enabled: enabled),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-String? _optionLabel(
+String? manualSmartFillRefinementOptionLabel(
   AppLocalizations l10n,
   ManualSmartFillRefinementOption option,
 ) {

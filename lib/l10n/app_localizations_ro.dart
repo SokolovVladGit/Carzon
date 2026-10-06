@@ -577,6 +577,15 @@ class AppLocalizationsRo extends AppLocalizations {
   String get listingEnginePowerHint => 'Putere in CP';
 
   @override
+  String get listingEngineCylinders => 'Cilindri';
+
+  @override
+  String get listingDoors => 'Uși';
+
+  @override
+  String get listingSeats => 'Locuri';
+
+  @override
   String get listingRegistrationHint => 'Ex.: Tiraspol, Chișinău';
 
   @override
@@ -2952,11 +2961,25 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get createListingSmartFillNoData =>
-      'Caracteristicile pot fi adăugate manual.';
+      'Caracteristicile nu au putut fi completate automat. Le poți adăuga manual.';
 
   @override
   String get createListingSmartFillFailed =>
       'Nu am putut completa caracteristicile.';
+
+  @override
+  String get createListingSmartFillSheetEyebrow => 'CARZON Smart Fill';
+
+  @override
+  String get createListingSmartFillSheetTitle => 'Clarificăm automobilul';
+
+  @override
+  String get createListingSmartFillSheetHelper =>
+      'Răspunde la câteva întrebări, ca să completăm caracteristicile mai precis.';
+
+  @override
+  String get createListingSmartFillPending =>
+      'Pentru o completare mai precisă, continuă și răspunde la clarificare.';
 
   @override
   String get createListingAdditionalDetails => 'Detalii suplimentare';
@@ -2990,6 +3013,15 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get createListingEnginePowerPlaceholder => 'Putere, CP';
+
+  @override
+  String get createListingEngineCylindersPlaceholder => 'Cilindri';
+
+  @override
+  String get createListingDoorsPlaceholder => 'Uși';
+
+  @override
+  String get createListingSeatsPlaceholder => 'Locuri';
 
   @override
   String get createListingRegistrationPlaceholder => 'Locul înmatriculării';
@@ -4427,4 +4459,55 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get createListingCharacteristicsEditorTitle =>
       'Caracteristicile automobilului';
+
+  @override
+  String get createListingStepContinue => 'Continuă';
+
+  @override
+  String get createListingExitTitle => 'Ieși din crearea anunțului?';
+
+  @override
+  String get createListingExitBody => 'Datele introduse nu vor fi salvate.';
+
+  @override
+  String get createListingExitStay => 'Rămâi';
+
+  @override
+  String get createListingExitLeave => 'Ieși';
+
+  @override
+  String createListingStepOf(int current, int total) {
+    return '$current din $total';
+  }
+
+  @override
+  String get createListingVinAutofillHelper =>
+      'CARZON completează automat datele cunoscute ale automobilului.';
+
+  @override
+  String get createListingStepOfferTitle => 'Preț și kilometraj';
+
+  @override
+  String get createListingStepContactTitle => 'Contact și locație';
+
+  @override
+  String get createListingFlowTitle => 'Crearea anunțului';
+
+  @override
+  String get createListingStepVin => 'VIN';
+
+  @override
+  String get createListingStepPhotos => 'Foto';
+
+  @override
+  String get createListingStepDeal => 'Ofertă';
+
+  @override
+  String get createListingStepData => 'Date';
+
+  @override
+  String get createListingStepContacts => 'Contacte';
+
+  @override
+  String get createListingStepDone => 'Final';
 }

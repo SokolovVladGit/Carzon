@@ -218,6 +218,17 @@ void main() {
     smartFillEvents.add(next);
   }
 
+  Future<void> openClarificationSheet(WidgetTester tester) async {
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_clarification')),
+      findsNothing,
+    );
+    final cont = find.byKey(const ValueKey('create_listing_step_continue'));
+    await tester.ensureVisible(cont);
+    await tester.tap(cont);
+    await tester.pumpAndSettle();
+  }
+
   Finder bodyTypeField() =>
       find.byKey(const ValueKey('create_listing_body_type_field'));
   Finder fuelField() => find.byKey(const ValueKey('create_listing_fuel_field'));
@@ -339,6 +350,22 @@ void main() {
     completeness: 0.9,
     warnings: [],
   );
+
+  Finder currentStepNumber(String number) {
+    return find.descendant(
+      of: find.byKey(const ValueKey('create_listing_step_marker_current')),
+      matching: find.text(number),
+    );
+  }
+
+  void expectCurrentStepIsData(WidgetTester tester) {
+    final data = tester.getCenter(find.text(ru.createListingStepData));
+    final marker = tester.getCenter(
+      find.byKey(const ValueKey('create_listing_step_marker_current')),
+    );
+    expect((marker.dx - data.dx).abs(), lessThan(24));
+    expect(currentStepNumber('2'), findsOneWidget);
+  }
 
   testWidgets('VIN idle does not lookup before manual identity', (
     tester,
@@ -545,11 +572,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await openClarificationSheet(tester);
     expect(
       find.byKey(const ValueKey('create_listing_smart_fill_clarification')),
       findsOneWidget,
     );
-    expect(find.text(ru.createListingSmartFillSeveralVersions), findsOneWidget);
+    expect(find.text(ru.createListingSmartFillSheetTitle), findsOneWidget);
     expect(find.text(ru.createListingSmartFillAskBody), findsOneWidget);
     expect(
       find.text(manualSmartFillOptionLabel(ru, 'body', 'wagon')!),
@@ -557,9 +585,11 @@ void main() {
     );
     expect(find.text('wagon'), findsNothing);
 
-    await tester.tap(
-      find.byKey(const ValueKey('create_listing_smart_fill_dont_know')),
+    final dontKnow = find.byKey(
+      const ValueKey('create_listing_smart_fill_dont_know'),
     );
+    await tester.ensureVisible(dontKnow);
+    await tester.tap(dontKnow);
     verify(smartFill.skipCurrent).called(1);
   });
 
@@ -583,9 +613,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(const ValueKey('create_listing_smart_fill_option_diesel')),
+    await openClarificationSheet(tester);
+    final diesel = find.byKey(
+      const ValueKey('create_listing_smart_fill_option_diesel'),
     );
+    await tester.ensureVisible(diesel);
+    await tester.tap(diesel);
     verify(() => smartFill.selectOption(any())).called(1);
   });
 
@@ -613,10 +646,20 @@ void main() {
       find.byKey(const ValueKey('create_listing_smart_fill_no_data')),
       findsOneWidget,
     );
+    expect(find.text(ru.createListingSmartFillNoData), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
     expect(
       find.byKey(const ValueKey('create_listing_publish_section')),
       findsOneWidget,
     );
+    final cont = find.byKey(const ValueKey('create_listing_step_continue'));
+    await tester.ensureVisible(cont);
+    await tester.tap(cont);
+    await tester.pumpAndSettle();
+    expectCurrentStepIsData(tester);
 
     await emitSmartFill(
       const ManualSmartFillState(status: ManualSmartFillStatus.failure),
@@ -625,6 +668,10 @@ void main() {
     expect(
       find.byKey(const ValueKey('create_listing_smart_fill_retry')),
       findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
     );
     expect(
       find.byKey(const ValueKey('create_listing_publish_section')),
@@ -987,7 +1034,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       tester.widget<Text>(find.byKey(ListingPreviewCard.specsKey)).data,
-      isNot(contains(formatListingBodyType(ru, ListingBodyType.suv))),
+      contains(formatListingBodyType(ru, ListingBodyType.suv)),
     );
     expect(
       tester.widget<Text>(find.byKey(ListingPreviewCard.specsKey)).data,
@@ -1052,6 +1099,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await openClarificationSheet(tester);
     expect(
       find.byKey(const ValueKey('create_listing_smart_fill_clarification')),
       findsOneWidget,
@@ -1256,6 +1304,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await openClarificationSheet(tester);
     expect(find.text(ru.createListingSmartFillAskTransmission), findsOneWidget);
     expect(
       find.text(
@@ -1300,9 +1349,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(const ValueKey('create_listing_smart_fill_option_diesel')),
+    await openClarificationSheet(tester);
+    final diesel = find.byKey(
+      const ValueKey('create_listing_smart_fill_option_diesel'),
     );
+    await tester.ensureVisible(diesel);
+    await tester.tap(diesel);
     await emitSmartFill(
       ManualSmartFillState(
         status: ManualSmartFillStatus.filled,
@@ -1367,6 +1419,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await openClarificationSheet(tester);
     expect(find.text(ru.createListingSmartFillAskEngine), findsOneWidget);
     expect(find.textContaining('1.0'), findsWidgets);
     await tester.tap(
@@ -1460,9 +1513,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(const ValueKey('create_listing_smart_fill_dont_know')),
+    await openClarificationSheet(tester);
+    final dontKnow = find.byKey(
+      const ValueKey('create_listing_smart_fill_dont_know'),
     );
+    await tester.ensureVisible(dontKnow);
+    await tester.tap(dontKnow);
     verify(smartFill.skipCurrent).called(1);
   });
 
@@ -1505,5 +1561,634 @@ void main() {
     await tester.enterText(powerField(), '110');
     await tester.pump();
     verify(smartFill.cancelForManualOverride).called(greaterThanOrEqualTo(1));
+  });
+
+  testWidgets('full consensus does not open the clarification sheet', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.filled,
+        result: okResult(body: 'suv', fuel: 'petrol', liters: 2, hp: 150),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+    expect(
+      find.text(formatListingBodyType(ru, ListingBodyType.suv)),
+      findsWidgets,
+    );
+    final cont = find.byKey(const ValueKey('create_listing_step_continue'));
+    await tester.ensureVisible(cont);
+    await tester.tap(cont);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+    expectCurrentStepIsData(tester);
+  });
+
+  testWidgets('terminal clarification closes the sheet and advances', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        query: ManualSmartFillQuery(
+          make: 'Skoda',
+          model: 'Octavia',
+          year: newestYear,
+        ),
+        result: okResult(
+          clarification: const ManualSmartFillClarification(
+            attribute: 'fuel',
+            options: [
+              ManualSmartFillClarificationOption(value: 'diesel'),
+              ManualSmartFillClarificationOption(value: 'petrol'),
+            ],
+          ),
+        ),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await openClarificationSheet(tester);
+    expect(currentStepNumber('1'), findsOneWidget);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.filled,
+        query: ManualSmartFillQuery(
+          make: 'Skoda',
+          model: 'Octavia',
+          year: newestYear,
+        ),
+        result: okResult(fuel: 'diesel'),
+        applyRevision: 2,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+    expect(
+      find.text(formatListingFuelType(ru, ListingFuelType.diesel)),
+      findsWidgets,
+    );
+    expectCurrentStepIsData(tester);
+  });
+
+  testWidgets('same sheet replaces the next clarification question', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    final query = ManualSmartFillQuery(
+      make: 'Skoda',
+      model: 'Octavia',
+      year: newestYear,
+    );
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        query: query,
+        result: okResult(
+          clarification: const ManualSmartFillClarification(
+            attribute: 'body',
+            options: [
+              ManualSmartFillClarificationOption(value: 'wagon'),
+              ManualSmartFillClarificationOption(value: 'sedan'),
+            ],
+          ),
+        ),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await openClarificationSheet(tester);
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('create_listing_smart_fill_option_wagon')),
+    );
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        query: query,
+        answers: const [
+          ManualSmartFillRefinementAnswer(
+            kind: ManualSmartFillRefinementKind.body,
+            optionId: 'wagon',
+          ),
+        ],
+        result: okResult(
+          body: 'wagon',
+          clarification: const ManualSmartFillClarification(
+            attribute: 'fuel',
+            options: [
+              ManualSmartFillClarificationOption(value: 'diesel'),
+              ManualSmartFillClarificationOption(value: 'petrol'),
+            ],
+          ),
+        ),
+        applyRevision: 2,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsOneWidget,
+    );
+    expect(find.text(ru.createListingSmartFillAskFuel), findsOneWidget);
+    expect(find.text(ru.createListingSmartFillAskBody), findsNothing);
+    expect(currentStepNumber('1'), findsOneWidget);
+    verify(() => smartFill.selectOption(any())).called(1);
+  });
+
+  testWidgets('dismissing the sheet does not answer and can resume', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        result: okResult(
+          clarification: const ManualSmartFillClarification(
+            attribute: 'body',
+            options: [
+              ManualSmartFillClarificationOption(value: 'wagon'),
+              ManualSmartFillClarificationOption(value: 'sedan'),
+            ],
+          ),
+        ),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await openClarificationSheet(tester);
+    await tester.tap(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet_close')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_pending')),
+      findsOneWidget,
+    );
+    verifyNever(smartFill.skipCurrent);
+    verifyNever(() => smartFill.selectOption(any()));
+    expect(currentStepNumber('1'), findsOneWidget);
+    await openClarificationSheet(tester);
+    expect(find.text(ru.createListingSmartFillAskBody), findsOneWidget);
+  });
+
+  testWidgets('a changed identity closes the open clarification sheet', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    final first = ManualSmartFillQuery(
+      make: 'Skoda',
+      model: 'Octavia',
+      year: newestYear,
+    );
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        query: first,
+        result: okResult(
+          clarification: const ManualSmartFillClarification(
+            attribute: 'body',
+            options: [
+              ManualSmartFillClarificationOption(value: 'wagon'),
+              ManualSmartFillClarificationOption(value: 'sedan'),
+            ],
+          ),
+        ),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await openClarificationSheet(tester);
+    await emitSmartFill(
+      const ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        query: ManualSmartFillQuery(make: 'BMW', model: 'X5', year: 2020),
+        result: ManualSmartFillResult(
+          resolution: ManualSmartFillResolution.ok,
+          identity: ManualSmartFillIdentity(
+            makeKey: 'bmw',
+            modelKey: 'x5',
+            year: 2020,
+          ),
+          consensus: ManualSmartFillConsensusSpecs(),
+          clarification: ManualSmartFillClarification(
+            attribute: 'fuel',
+            options: [
+              ManualSmartFillClarificationOption(value: 'diesel'),
+              ManualSmartFillClarificationOption(value: 'petrol'),
+            ],
+          ),
+        ),
+        applyRevision: 2,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+    expect(find.text(ru.createListingSmartFillAskBody), findsNothing);
+    verifyNever(smartFill.skipCurrent);
+    verifyNever(() => smartFill.selectOption(any()));
+  });
+
+  testWidgets('VIN authority closes a pending clarification sheet', (
+    tester,
+  ) async {
+    final controller = listenCreate();
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        result: okResult(
+          clarification: const ManualSmartFillClarification(
+            attribute: 'body',
+            options: [
+              ManualSmartFillClarificationOption(value: 'wagon'),
+              ManualSmartFillClarificationOption(value: 'sedan'),
+            ],
+          ),
+        ),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await openClarificationSheet(tester);
+    emitCreate(
+      controller,
+      vinConfirmed(
+        suggestion: octaviaVin,
+        identity: const ConfirmedVehicleIdentity(
+          make: 'Skoda',
+          model: 'Octavia',
+          year: 2018,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+    verify(smartFill.cancelForVinAuthority).called(greaterThanOrEqualTo(1));
+    verifyNever(smartFill.skipCurrent);
+    verifyNever(() => smartFill.selectOption(any()));
+  });
+
+  ManualSmartFillQuery octaviaQuery() => ManualSmartFillQuery(
+    make: 'Skoda',
+    model: 'Octavia',
+    year: newestYear,
+  );
+
+  Future<void> tapContinue(WidgetTester tester) async {
+    final cont = find.byKey(const ValueKey('create_listing_step_continue'));
+    await tester.ensureVisible(cont);
+    await tester.tap(cont);
+    await tester.pump();
+  }
+
+  testWidgets('Continue during loading does not advance immediately', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    clearInteractions(smartFill);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.loading,
+        query: octaviaQuery(),
+      ),
+    );
+    await tester.pump();
+    await tapContinue(tester);
+    expect(currentStepNumber('1'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('create_listing_step_continue_pending')),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const ValueKey('create_listing_step_continue')),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+    verifyNever(
+      () => smartFill.lookup(
+        make: any(named: 'make'),
+        model: any(named: 'model'),
+        year: any(named: 'year'),
+      ),
+    );
+  });
+
+  testWidgets('loading then filled advances to data', (tester) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.loading,
+        query: octaviaQuery(),
+      ),
+    );
+    await tester.pump();
+    await tapContinue(tester);
+    expect(currentStepNumber('1'), findsOneWidget);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.filled,
+        query: octaviaQuery(),
+        result: okResult(body: 'suv', fuel: 'petrol'),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+    expectCurrentStepIsData(tester);
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+    expect(
+      find.text(formatListingBodyType(ru, ListingBodyType.suv)),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('loading then clarification opens one sheet', (tester) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.loading,
+        query: octaviaQuery(),
+      ),
+    );
+    await tester.pump();
+    await tapContinue(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        query: octaviaQuery(),
+        result: okResult(
+          clarification: const ManualSmartFillClarification(
+            attribute: 'fuel',
+            options: [
+              ManualSmartFillClarificationOption(value: 'diesel'),
+              ManualSmartFillClarificationOption(value: 'petrol'),
+            ],
+          ),
+        ),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsOneWidget,
+    );
+    expect(find.text(ru.createListingSmartFillAskFuel), findsOneWidget);
+    expect(currentStepNumber('1'), findsOneWidget);
+  });
+
+  testWidgets('loading then noData advances without a sheet', (tester) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.loading,
+        query: octaviaQuery(),
+      ),
+    );
+    await tester.pump();
+    await tapContinue(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.noData,
+        query: octaviaQuery(),
+        applyRevision: 1,
+        result: ManualSmartFillResult(
+          resolution: ManualSmartFillResolution.noData,
+          identity: ManualSmartFillIdentity(
+            makeKey: 'skoda',
+            modelKey: 'octavia',
+            year: newestYear,
+          ),
+          consensus: const ManualSmartFillConsensusSpecs(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+    expectCurrentStepIsData(tester);
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_no_data')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('loading then failure still advances', (tester) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.loading,
+        query: octaviaQuery(),
+      ),
+    );
+    await tester.pump();
+    await tapContinue(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.failure,
+        query: octaviaQuery(),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+    expectCurrentStepIsData(tester);
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_retry')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('stale MMY result while waiting does not navigate', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.loading,
+        query: octaviaQuery(),
+      ),
+    );
+    await tester.pump();
+    await tapContinue(tester);
+    await emitSmartFill(
+      const ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        query: ManualSmartFillQuery(make: 'BMW', model: 'X5', year: 2020),
+        result: ManualSmartFillResult(
+          resolution: ManualSmartFillResolution.ok,
+          identity: ManualSmartFillIdentity(
+            makeKey: 'bmw',
+            modelKey: 'x5',
+            year: 2020,
+          ),
+          consensus: ManualSmartFillConsensusSpecs(),
+          clarification: ManualSmartFillClarification(
+            attribute: 'fuel',
+            options: [ManualSmartFillClarificationOption(value: 'diesel')],
+          ),
+        ),
+        applyRevision: 2,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(currentStepNumber('1'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey('create_listing_step_continue_pending')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('VIN authority while waiting does not continue manually', (
+    tester,
+  ) async {
+    final controller = listenCreate();
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.loading,
+        query: octaviaQuery(),
+      ),
+    );
+    await tester.pump();
+    await tapContinue(tester);
+    emitCreate(
+      controller,
+      vinConfirmed(
+        suggestion: octaviaVin,
+        identity: ConfirmedVehicleIdentity(
+          make: 'Skoda',
+          model: 'Octavia',
+          year: newestYear,
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(currentStepNumber('1'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsNothing,
+    );
+    verify(smartFill.cancelForVinAuthority).called(greaterThanOrEqualTo(1));
+  });
+
+  testWidgets('repeated Continue taps do not open a second sheet', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
+    await completeSkodaOctavia(tester);
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.loading,
+        query: octaviaQuery(),
+      ),
+    );
+    await tester.pump();
+    await tapContinue(tester);
+    final cont = find.byKey(const ValueKey('create_listing_step_continue'));
+    expect(tester.widget<FilledButton>(cont).onPressed, isNull);
+    await tester.tap(cont, warnIfMissed: false);
+    await tester.pump();
+    await emitSmartFill(
+      ManualSmartFillState(
+        status: ManualSmartFillStatus.needsClarification,
+        query: octaviaQuery(),
+        result: okResult(
+          clarification: const ManualSmartFillClarification(
+            attribute: 'body',
+            options: [
+              ManualSmartFillClarificationOption(value: 'wagon'),
+              ManualSmartFillClarificationOption(value: 'sedan'),
+            ],
+          ),
+        ),
+        applyRevision: 1,
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      find.byKey(const ValueKey('create_listing_smart_fill_sheet')),
+      findsOneWidget,
+    );
+    expect(currentStepNumber('1'), findsOneWidget);
   });
 }

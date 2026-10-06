@@ -113,6 +113,9 @@ void main() {
     );
     expect(withWarning.caution, ru.createListingVinSpecCaution);
     expect(withWarning.caution, isNot(contains('nhtsa')));
+    expect(withWarning.fuel, isNull);
+    expect(withWarning.body, isNull);
+    expect(withWarning.hasTechnicalLines, isFalse);
     expect(
       vinResolveDisplaySpec(
         vehicle: ram,

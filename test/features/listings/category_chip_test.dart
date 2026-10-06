@@ -584,11 +584,13 @@ void main() {
   });
 
   testWidgets(
-    'ListingsBrandFilterRow all-brands chip tints SVG in dark mode',
+    'ListingsBrandFilterRow starts with Toyota and selects nothing by default',
     (tester) async {
+      final l10n = lookupAppLocalizations(const Locale('ru'));
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.dark(),
+          locale: const Locale('ru'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
@@ -601,41 +603,21 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final svgs = tester.widgetList<SvgPicture>(find.byType(SvgPicture));
-      expect(svgs, isNotEmpty);
-      expect(svgs.first.colorFilter, isNotNull);
+      expect(
+        find.bySemanticsLabel(l10n.brandFilterBrandSemantics('Toyota')),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel(l10n.brandFilterAllSemantics), findsNothing);
+      final selected = tester.widgetList<Semantics>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.button == true &&
+              widget.properties.selected == true,
+        ),
+      );
+      expect(selected, isEmpty);
       expect(find.byKey(brandLogoDarkWellKey), findsNothing);
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets(
-    'ListingsBrandFilterRow all-brands chip selected in light uses neutral icon',
-    (tester) async {
-      final scheme = AppTheme.light().colorScheme;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: ListingsBrandFilterRow(
-              currentMake: null,
-              onBrandSelected: (_) {},
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final svgs = tester.widgetList<SvgPicture>(find.byType(SvgPicture));
-      expect(svgs, isNotEmpty);
-      final expected = AppTheme.discoveryClearChipIconColor(
-        scheme,
-        selected: true,
-      );
-      expect(svgs.first.colorFilter, ColorFilter.mode(expected, BlendMode.srcIn));
-      expect(expected, isNot(scheme.primary.withValues(alpha: 0.86)));
       expect(tester.takeException(), isNull);
     },
   );
@@ -668,10 +650,12 @@ void main() {
       expect(materials.length, greaterThan(2));
       expect(
         materials.first.color,
-        AppTheme.discoveryClearChipFill(scheme, selected: false),
+        AppTheme.discoveryBrandChipInactiveFill(scheme),
       );
-      expect(materials.elementAt(1).color, AppTheme.discoveryBrandChipInactiveFill(scheme));
-      expect(materials.elementAt(5).color, AppTheme.selectedChipFill(scheme));
+      expect(
+        materials.elementAt(4).color,
+        AppTheme.selectedChipFill(scheme),
+      );
     },
   );
 
@@ -699,7 +683,7 @@ void main() {
           matching: find.byType(Material),
         ),
       );
-      expect(materials.elementAt(1).color, Colors.white);
+      expect(materials.first.color, Colors.white);
     },
   );
 

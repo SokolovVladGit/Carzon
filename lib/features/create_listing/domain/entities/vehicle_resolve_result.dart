@@ -16,6 +16,10 @@ class VehicleResolveSuggestion extends Equatable {
     this.driveType,
     this.displacement,
     this.cylinders,
+    this.doors,
+    this.seats,
+    this.fuelTypeSecondary,
+    this.electrificationLevel,
   });
 
   final String? make;
@@ -30,6 +34,10 @@ class VehicleResolveSuggestion extends Equatable {
   final String? driveType;
   final String? displacement;
   final String? cylinders;
+  final String? doors;
+  final String? seats;
+  final String? fuelTypeSecondary;
+  final String? electrificationLevel;
 
   bool get hasCoreIdentity =>
       (make?.trim().isNotEmpty ?? false) &&
@@ -66,6 +74,10 @@ class VehicleResolveSuggestion extends Equatable {
     driveType,
     displacement,
     cylinders,
+    doors,
+    seats,
+    fuelTypeSecondary,
+    electrificationLevel,
   ];
 }
 

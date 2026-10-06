@@ -38,9 +38,9 @@ void main() {
     expect(catalogResolvedFuelType('other'), isNull);
   });
 
-  test('VIN mapper is not used for catalog hybrid or wagon', () {
+  test('VIN does not infer hybrid from a bare word; wagon is an exact class', () {
     expect(vinResolvedFuelType('hybrid'), isNull);
-    expect(vinResolvedBodyType('wagon'), isNull);
+    expect(vinResolvedBodyType('wagon'), ListingBodyType.wagon);
     expect(catalogResolvedFuelType('hybrid'), ListingFuelType.hybrid);
     expect(catalogResolvedBodyType('wagon'), ListingBodyType.wagon);
   });

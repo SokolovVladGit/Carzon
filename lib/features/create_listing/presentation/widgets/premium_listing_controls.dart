@@ -194,12 +194,15 @@ class PremiumPublishActionButton extends StatelessWidget {
         : baseFill;
     final onFill = kCreateListingActiveForeground;
 
+    final raised = createListingRaisedDecoration(
+      theme,
+      fill: fill,
+      prominent: !submitting,
+    );
     return DecoratedBox(
-      decoration: createListingRaisedDecoration(
-        theme,
-        fill: fill,
-        prominent: !submitting,
-      ),
+      decoration: theme.brightness == Brightness.dark
+          ? raised.copyWith(border: Border.all(color: const Color(0x47C4B5A4)))
+          : raised,
       child: Material(
         color: Colors.transparent,
         clipBehavior: Clip.antiAlias,

@@ -83,6 +83,7 @@ void main() {
     );
     sl.registerFactory<CreateListingCubit>(() => cubit);
     registerIdleManualSmartFillCubit();
+    CreateListingPage.debugRevealAllSteps = true;
     auth = _Auth();
     authEvents = StreamController<AuthState>();
     whenListen(
@@ -100,6 +101,7 @@ void main() {
   });
 
   tearDown(() async {
+    CreateListingPage.debugRevealAllSteps = false;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, null);
     await sl.reset();

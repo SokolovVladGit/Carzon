@@ -75,6 +75,9 @@ class Listing extends Equatable {
     this.fuelType,
     this.engineDisplacementLiters,
     this.enginePowerHp,
+    this.engineCylinders,
+    this.doors,
+    this.seats,
     this.drivetrain,
     this.transmissionType,
     this.registration,
@@ -118,6 +121,15 @@ class Listing extends Equatable {
 
   /// Metric horsepower (`engine_power_hp` / л.с.).
   final int? enginePowerHp;
+
+  /// Optional cylinder count (`engine_cylinders`). Null when unknown.
+  final int? engineCylinders;
+
+  /// Optional door count. Null when unknown.
+  final int? doors;
+
+  /// Optional seat count. Null when unknown.
+  final int? seats;
 
   final ListingDrivetrain? drivetrain;
 
@@ -175,6 +187,9 @@ class Listing extends Equatable {
     fuelType,
     engineDisplacementLiters,
     enginePowerHp,
+    engineCylinders,
+    doors,
+    seats,
     drivetrain,
     transmissionType,
     registration,

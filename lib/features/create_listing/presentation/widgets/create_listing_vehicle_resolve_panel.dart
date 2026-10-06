@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/vehicle_resolve_result.dart';
 import '../bloc/create_listing_state.dart';
-import '../models/vin_resolve_display.dart';
 import 'create_listing_compose_layout.dart';
 
 class CreateListingVehicleResolvePanel extends StatelessWidget {
@@ -13,7 +12,6 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
     required this.theme,
     required this.resolve,
     required this.enabled,
-    required this.onConfirm,
     required this.onEnterManual,
     required this.onRetry,
     this.compactMake = '',
@@ -26,7 +24,6 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
   final ThemeData theme;
   final CreateListingVehicleResolve resolve;
   final bool enabled;
-  final VoidCallback onConfirm;
   final VoidCallback onEnterManual;
   final VoidCallback onRetry;
   final String compactMake;
@@ -55,7 +52,6 @@ class CreateListingVehicleResolvePanel extends StatelessWidget {
         compactYear: compactYear,
         compactVariant: compactVariant,
         enabled: enabled,
-        onConfirm: onConfirm,
         onChangeManually: onEnterManual,
       ),
       CreateListingVinResolveStatus.partial => _MessageBlock(
@@ -272,7 +268,6 @@ class _ResolvedCard extends StatelessWidget {
     required this.compactYear,
     required this.compactVariant,
     required this.enabled,
-    required this.onConfirm,
     required this.onChangeManually,
   });
 
@@ -286,7 +281,6 @@ class _ResolvedCard extends StatelessWidget {
   final int? compactYear;
   final String? compactVariant;
   final bool enabled;
-  final VoidCallback onConfirm;
   final VoidCallback onChangeManually;
 
   @override
@@ -301,14 +295,15 @@ class _ResolvedCard extends StatelessWidget {
     );
     final titleStyle = theme.textTheme.titleMedium?.copyWith(
       fontWeight: FontWeight.w600,
-      letterSpacing: -0.2,
-      height: 1.2,
-      fontSize: 18,
+      letterSpacing: -0.25,
+      height: 1.15,
+      fontSize: 17,
       color: cs.onSurface.withValues(alpha: light ? 0.94 : 0.96),
     );
     final secondaryStyle = theme.textTheme.bodyMedium?.copyWith(
-      color: cs.onSurface.withValues(alpha: light ? 0.58 : 0.68),
-      height: 1.3,
+      color: cs.onSurface.withValues(alpha: light ? 0.62 : 0.72),
+      height: 1.25,
+      fontSize: 14,
     );
 
     final make = compactMake.trim().isNotEmpty
@@ -326,20 +321,9 @@ class _ResolvedCard extends StatelessWidget {
       model: model,
       year: year,
     );
-    final spec = vinResolveDisplaySpec(
-      vehicle: vehicle,
-      warnings: warnings,
-      l10n: l10n,
-    );
-    final specLines = _VinSpecLines(
-      spec: spec,
-      theme: theme,
-      secondaryStyle: secondaryStyle,
-    );
-    final cautionStyle = theme.textTheme.bodySmall?.copyWith(
-      color: cs.onSurfaceVariant,
-      height: 1.35,
-    );
+    final caution = warnings.isEmpty
+        ? null
+        : l10n.createListingVinSpecCaution;
 
     return Padding(
       padding: EdgeInsets.only(top: confirmed ? 4 : 10),
@@ -361,25 +345,25 @@ class _ResolvedCard extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(variant, style: secondaryStyle),
                 ],
-                specLines,
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 0,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    FilledButton(
-                      key: const ValueKey('create_listing_confirm_vehicle'),
-                      style: createListingConfirmButtonStyle(theme),
-                      onPressed: enabled ? onConfirm : null,
-                      child: Text(l10n.createListingConfirmVehicle),
+                if (caution != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    caution,
+                    key: const ValueKey('create_listing_vin_spec_caution'),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                      height: 1.35,
                     ),
-                    CreateListingSecondaryAction(
-                      label: l10n.createListingChangeManually,
-                      enabled: enabled,
-                      onPressed: onChangeManually,
-                    ),
-                  ],
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: CreateListingSecondaryAction(
+                    label: l10n.createListingChangeManually,
+                    enabled: enabled,
+                    onPressed: onChangeManually,
+                  ),
                 ),
               ] else
                 Column(
@@ -393,7 +377,7 @@ class _ResolvedCard extends StatelessWidget {
                       label: [
                         primary,
                         ?variant,
-                        ?spec.caution,
+                        ?caution,
                         l10n.createListingVehicleIdentifiedFromVin,
                       ].join('. '),
                       child: ExcludeSemantics(
@@ -405,20 +389,23 @@ class _ResolvedCard extends StatelessWidget {
                               const SizedBox(height: 3),
                               Text(variant, style: secondaryStyle),
                             ],
-                            if (spec.caution != null) ...[
+                            if (caution != null) ...[
                               const SizedBox(height: 8),
                               Text(
-                                spec.caution!,
+                                caution,
                                 key: const ValueKey(
                                   'create_listing_vin_spec_caution',
                                 ),
-                                style: cautionStyle,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                  height: 1.35,
+                                ),
                               ),
                             ],
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 6),
                             Text(
                               l10n.createListingVehicleIdentifiedFromVin,
-                              style: muted,
+                              style: muted?.copyWith(fontSize: 12, height: 1.2),
                             ),
                           ],
                         ),
@@ -442,67 +429,6 @@ class _ResolvedCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _VinSpecLines extends StatelessWidget {
-  const _VinSpecLines({
-    required this.spec,
-    required this.theme,
-    required this.secondaryStyle,
-  });
-
-  final VinResolveDisplaySpec spec;
-  final ThemeData theme;
-  final TextStyle? secondaryStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!spec.hasTechnicalLines && spec.caution == null) {
-      return const SizedBox.shrink();
-    }
-    final cs = theme.colorScheme;
-    return Column(
-      key: const ValueKey('create_listing_vin_spec_summary'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (spec.line1.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
-            spec.line1,
-            key: const ValueKey('create_listing_vin_spec_line1'),
-            style: secondaryStyle,
-          ),
-        ],
-        if (spec.line2.isNotEmpty) ...[
-          const SizedBox(height: 3),
-          Text(
-            spec.line2,
-            key: const ValueKey('create_listing_vin_spec_line2'),
-            style: secondaryStyle,
-          ),
-        ],
-        if (spec.body != null) ...[
-          const SizedBox(height: 3),
-          Text(
-            spec.body!,
-            key: const ValueKey('create_listing_vin_spec_body'),
-            style: secondaryStyle,
-          ),
-        ],
-        if (spec.caution != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            spec.caution!,
-            key: const ValueKey('create_listing_vin_spec_caution'),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: cs.onSurfaceVariant,
-              height: 1.35,
-            ),
-          ),
-        ],
-      ],
     );
   }
 }

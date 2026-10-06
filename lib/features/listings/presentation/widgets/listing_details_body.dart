@@ -158,6 +158,15 @@ class _DetailsList extends StatelessWidget {
           l10n.listingEnginePower,
           formatEnginePowerHpDisplay(l10n, listing.enginePowerHp),
         ),
+      if (listing.engineCylinders != null)
+        _DetailsRowData(
+          l10n.listingEngineCylinders,
+          '${listing.engineCylinders}',
+        ),
+      if (listing.doors != null)
+        _DetailsRowData(l10n.listingDoors, '${listing.doors}'),
+      if (listing.seats != null)
+        _DetailsRowData(l10n.listingSeats, '${listing.seats}'),
       if (listing.drivetrain != null)
         _DetailsRowData(
           l10n.listingDrivetrain,

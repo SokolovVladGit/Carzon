@@ -16,6 +16,9 @@ const _keys = [
   'createListingSmartFillRestart',
   'createListingSmartFillNoData',
   'createListingSmartFillFailed',
+  'createListingSmartFillSheetTitle',
+  'createListingSmartFillSheetHelper',
+  'createListingSmartFillPending',
 ];
 
 void main() {

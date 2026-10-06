@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,22 +41,29 @@ import '../bloc/create_listing_state.dart';
 import '../bloc/manual_smart_fill_cubit.dart';
 import '../bloc/manual_smart_fill_state.dart';
 import '../models/catalog_resolved_form_prefill.dart';
+import '../models/create_listing_draft_dirty.dart';
 import '../models/create_listing_photo_draft.dart';
+import '../models/create_listing_step.dart';
 import '../models/listing_preview_data.dart';
 import '../models/vin_resolved_form_prefill.dart';
+import '../widgets/create_listing_exit_dialog.dart';
 import '../widgets/create_listing_characteristics_facts.dart';
 import '../widgets/create_listing_compact_summary.dart';
 import '../widgets/create_listing_compose_layout.dart';
+import '../widgets/create_listing_step_chrome.dart';
+import '../widgets/create_listing_step_stage.dart';
 import '../widgets/create_listing_quiet_surface.dart';
 import '../widgets/create_listing_manual_identity_row.dart';
 import '../widgets/create_listing_mmy_row.dart';
 import '../widgets/listing_preview_card.dart';
 import '../widgets/create_listing_contact_notice.dart';
 import '../widgets/create_listing_manual_smart_fill_panel.dart';
+import '../widgets/create_listing_smart_fill_sheet.dart';
 import '../widgets/create_listing_media_section.dart';
 import '../widgets/create_listing_picker_field.dart';
 import '../widgets/create_listing_vehicle_resolve_panel.dart';
 import '../widgets/create_listing_vin_card.dart';
+import '../../domain/entities/manual_smart_fill_refinement.dart';
 import '../../domain/entities/manual_smart_fill_result.dart';
 import '../widgets/listing_body_type_pick_sheet.dart';
 import '../widgets/listing_type_deal_selector.dart';
@@ -73,17 +79,11 @@ typedef CreateListingImagePicker =
       required int imageQuality,
     });
 
-/// Extra scroll padding below the publish section beyond the device bottom inset.
-const double _kCreateListingScrollBottomExtra = 30;
-
-/// Minimum bottom inset for scroll padding when the OS reports no bottom safe area.
-const double _kCreateListingScrollBottomInsetFloor = 14;
-
 /// English catalog sentinel — persisted in `make` when the seller picks «Other» without text.
 final String _kListingBrandCatalogOther = kListingBrandCatalog.last; // "Other"
 
-class _VinCatalogTransmissionToken {
-  const _VinCatalogTransmissionToken({
+class _VinCatalogEnrichmentToken {
+  const _VinCatalogEnrichmentToken({
     required this.generation,
     required this.applyRevision,
     required this.normalizedVin,
@@ -103,6 +103,11 @@ class _VinCatalogTransmissionToken {
 }
 
 class CreateListingPage extends StatelessWidget {
+  /// Test-only. Old widget tests still exercise every field in one tree.
+  /// Production flow keeps this false.
+  @visibleForTesting
+  static bool debugRevealAllSteps = false;
+
   const CreateListingPage({
     super.key,
     @visibleForTesting this.imagePicker,
@@ -147,18 +152,27 @@ class _CreateListingView extends StatelessWidget {
         final unauthenticated =
             authState.status != AuthStatus.authenticated ||
             authState.user == null;
+        final heroDark = scheme.brightness == Brightness.dark;
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: unauthenticated
-              ? (scheme.brightness == Brightness.dark
+              ? (heroDark
                     ? SystemUiOverlayStyle.light
                     : SystemUiOverlayStyle.dark)
-              : const SystemUiOverlayStyle(
+              : heroDark
+              ? const SystemUiOverlayStyle(
                   statusBarColor: Colors.transparent,
                   statusBarIconBrightness: Brightness.light,
                   statusBarBrightness: Brightness.dark,
+                )
+              : const SystemUiOverlayStyle(
+                  statusBarColor: Colors.transparent,
+                  statusBarIconBrightness: Brightness.dark,
+                  statusBarBrightness: Brightness.light,
                 ),
           child: Scaffold(
-            backgroundColor: createListingCanvasColor(theme),
+            backgroundColor: unauthenticated
+                ? createListingCanvasColor(theme)
+                : CreateListingFlowShell.scaffoldFallback(scheme.brightness),
             appBar: unauthenticated
                 ? AppBar(
                     backgroundColor: createListingCanvasColor(theme),
@@ -174,22 +188,44 @@ class _CreateListingView extends StatelessWidget {
                         : SystemUiOverlayStyle.dark,
                   )
                 : null,
-            body: DecoratedBox(
-              decoration: createListingCanvasDecoration(theme),
-              child: unauthenticated
-                  ? AuthRequiredPrompt(
+            body: unauthenticated
+                ? DecoratedBox(
+                    decoration: createListingCanvasDecoration(theme),
+                    child: AuthRequiredPrompt(
                       icon: const Icon(Icons.lock_outline_rounded, size: 48),
                       message: l10n.createListingSignInRequired,
                       primaryButtonLabel: l10n.commonSignIn,
                       onPrimaryPressed: () => context.go(AppRoutes.signIn),
-                    )
-                  : _CreateListingForm(
-                      key: ValueKey(authState.user!.id),
-                      sellerId: authState.user!.id,
-                      imagePicker: imagePicker,
-                      vehicleModelCatalog: vehicleModelCatalog,
                     ),
-            ),
+                  )
+                : Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Positioned.fill(
+                        child: Image.asset(
+                          CreateListingFlowShell.backgroundAssetFor(
+                            scheme.brightness,
+                          ),
+                          key: CreateListingFlowShell.imageKey,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.topCenter,
+                          errorBuilder: (context, error, stackTrace) {
+                            return ColoredBox(
+                              color: CreateListingFlowShell.scaffoldFallback(
+                                scheme.brightness,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      _CreateListingForm(
+                        key: ValueKey(authState.user!.id),
+                        sellerId: authState.user!.id,
+                        imagePicker: imagePicker,
+                        vehicleModelCatalog: vehicleModelCatalog,
+                      ),
+                    ],
+                  ),
           ),
         );
       },
@@ -253,6 +289,9 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   ListingTransmissionType? _transmissionType;
   final _engineDisplacement = TextEditingController();
   final _enginePower = TextEditingController();
+  final _engineCylinders = TextEditingController();
+  final _doors = TextEditingController();
+  final _seats = TextEditingController();
   final _registration = TextEditingController();
   final _vin = TextEditingController();
   final _description = TextEditingController();
@@ -269,8 +308,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   bool _pickingImage = false;
   bool _scanningVin = false;
   int _lastAppliedResolveRevision = 0;
-  int _vinTransmissionFallbackGeneration = 0;
-  String? _vinTransmissionFallbackKey;
+  int _vinCatalogEnrichmentGeneration = 0;
+  String? _vinCatalogEnrichmentKey;
   int _lastAppliedDefaultsRevision = 0;
   bool _applyingListingDefaults = false;
   bool _makeFromVin = false;
@@ -282,6 +321,9 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   bool _drivetrainFromVin = false;
   bool _transmissionTypeFromVin = false;
   bool _engineDisplacementFromVin = false;
+  bool _engineCylindersFromVin = false;
+  bool _doorsFromVin = false;
+  bool _seatsFromVin = false;
   bool _bodyTypeFromCatalog = false;
   bool _fuelTypeFromCatalog = false;
   bool _engineDisplacementFromCatalog = false;
@@ -299,12 +341,26 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   bool _locationSummaryAllowed = false;
   bool _contactSummaryAllowed = false;
   bool _attemptedPublish = false;
+  bool _identityAttempted = false;
   bool _manualIdentityOpen = false;
+  bool _manualIdentityCollapsed = false;
+  CreateListingStep _step = CreateListingStep.identity;
+
+  /// When set, [Form.validate] only enforces fields that belong to this step.
+  /// Null means every field rule is active (interactive checks and Publish).
+  CreateListingStep? _validatingStep;
   bool _editingCharacteristics = false;
   bool _priceTouched = false;
+  bool _allowRoutePop = false;
+  bool _exitDialogOpen = false;
+  CreateListingExitBaseline _exitBaseline = const CreateListingExitBaseline();
   bool _mileageTouched = false;
   bool _cityTouched = false;
   bool _phoneTouched = false;
+  bool _clarificationSheetOpen = false;
+  bool _resolvingSmartFillContinue = false;
+  StreamSubscription<ManualSmartFillState>? _smartFillContinueSub;
+  Completer<ManualSmartFillState>? _smartFillContinueWait;
 
   @override
   void initState() {
@@ -319,8 +375,8 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   void didUpdateWidget(covariant _CreateListingForm oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.sellerId == widget.sellerId) return;
-    _vinTransmissionFallbackGeneration += 1;
-    _vinTransmissionFallbackKey = null;
+    _vinCatalogEnrichmentGeneration += 1;
+    _vinCatalogEnrichmentKey = null;
     _resetContactAndLocationForAccountSwitch();
     context.read<CreateListingCubit>().loadListingDefaults(
       userId: widget.sellerId,
@@ -343,15 +399,18 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     _contactSummaryAllowed = false;
     _attemptedPublish = false;
     _manualIdentityOpen = false;
+    _manualIdentityCollapsed = false;
     _priceTouched = false;
     _mileageTouched = false;
     _cityTouched = false;
     _phoneTouched = false;
+    _exitBaseline = const CreateListingExitBaseline();
+    _allowRoutePop = false;
   }
 
   @override
   void dispose() {
-    _vinTransmissionFallbackGeneration += 1;
+    _vinCatalogEnrichmentGeneration += 1;
     for (final c in [
       _model,
       _variant,
@@ -363,6 +422,9 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       _telegram,
       _engineDisplacement,
       _enginePower,
+      _engineCylinders,
+      _doors,
+      _seats,
       _registration,
       _vin,
       _description,
@@ -370,6 +432,11 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       c.dispose();
     }
     _smartFillDebounce?.cancel();
+    _smartFillContinueSub?.cancel();
+    final pending = _smartFillContinueWait;
+    if (pending != null && !pending.isCompleted) {
+      pending.complete(const ManualSmartFillState.idle());
+    }
     super.dispose();
   }
 
@@ -506,12 +573,16 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                 canonicalCity: _selectedCanonicalCity,
                 onTap: _openCitySheet,
                 borderRadius: kCreateListingFieldRadius,
-                validator: (_) => _deferredTextError(
-                  touched: _cityTouched,
-                  validate: () => !_manualCity && _selectedCanonicalCity == null
-                      ? l10n.validationRequired
-                      : null,
-                ),
+                validator: (_) {
+                  if (!_fieldRuleActive(CreateListingStep.contact)) return null;
+                  return _deferredTextError(
+                    touched: _cityTouched,
+                    validate: () =>
+                        !_manualCity && _selectedCanonicalCity == null
+                        ? l10n.validationRequired
+                        : null,
+                  );
+                },
                 decoration: createListingFieldDecoration(
                   theme,
                   hasValue: _selectedCanonicalCity != null || _manualCity,
@@ -534,10 +605,15 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                   ),
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
-                  validator: (v) => _deferredTextError(
-                    touched: _cityTouched,
-                    validate: () => _required(l10n, v),
-                  ),
+                  validator: (v) {
+                    if (!_fieldRuleActive(CreateListingStep.contact)) {
+                      return null;
+                    }
+                    return _deferredTextError(
+                      touched: _cityTouched,
+                      validate: () => _required(l10n, v),
+                    );
+                  },
                   enabled: !submitting,
                   onChanged: (_) {
                     if (_applyingListingDefaults) {
@@ -615,6 +691,12 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       _transmissionTypeFromVin || _transmissionTypeFromCatalog,
     );
     mark(_drivetrain != null, _drivetrainFromVin);
+    mark(
+      createListingHasMeaningfulText(_engineCylinders.text),
+      _engineCylindersFromVin,
+    );
+    mark(createListingHasMeaningfulText(_doors.text), _doorsFromVin);
+    mark(createListingHasMeaningfulText(_seats.text), _seatsFromVin);
     mark(createListingHasMeaningfulText(_registration.text), false);
     return automatic > 0 && seller == 0;
   }
@@ -626,6 +708,9 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         _transmissionType != null ||
         createListingHasMeaningfulText(_engineDisplacement.text) ||
         createListingHasMeaningfulText(_enginePower.text) ||
+        createListingHasMeaningfulText(_engineCylinders.text) ||
+        createListingHasMeaningfulText(_doors.text) ||
+        createListingHasMeaningfulText(_seats.text) ||
         createListingHasMeaningfulText(_registration.text);
   }
 
@@ -650,6 +735,9 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       drivetrain: _drivetrain,
       engineDisplacementLiters: _engineDisplacementFromField(),
       enginePowerHp: _enginePowerFromField(),
+      engineCylinders: _countFromField(_engineCylinders, max: 16),
+      doors: _countFromField(_doors, max: 6),
+      seats: _countFromField(_seats, max: 15),
     );
   }
 
@@ -816,6 +904,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       _bodyTypeFromCatalog = false;
       _bodyType = picked.value;
     });
+    _bumpVinCatalogEnrichment();
     _cancelProgressiveRefinementForSellerEdit();
   }
 
@@ -832,6 +921,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       _fuelTypeFromCatalog = false;
       _fuelType = picked;
     });
+    _bumpVinCatalogEnrichment();
     _cancelProgressiveRefinementForSellerEdit();
   }
 
@@ -891,6 +981,13 @@ class _CreateListingFormState extends State<_CreateListingForm> {
           _hasValidContact(context.l10n)) {
         _contactSummaryAllowed = true;
       }
+      _exitBaseline = _exitBaseline.copyWithApplied(
+        phone: prefill.contactPhone != null ? _phone.text : null,
+        telegram: prefill.telegramUsername != null ? _telegram.text : null,
+        whatsapp: prefill.whatsappEnabled != null ? _whatsappEnabled : null,
+        region: prefill.marketRegion != null ? _marketRegion : null,
+        city: prefill.city != null ? _city.text.trim() : null,
+      );
     });
     _applyingListingDefaults = false;
   }
@@ -979,16 +1076,38 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         _engineDisplacementFromVin = true;
         _engineDisplacementFromCatalog = false;
       }
+      if (vinMayReplaceField(
+            isEmpty: _engineCylinders.text.trim().isEmpty,
+            catalogOwned: false,
+          ) &&
+          prefill.engineCylinders != null) {
+        _engineCylinders.text = '${prefill.engineCylinders}';
+        _engineCylindersFromVin = true;
+      }
+      if (vinMayReplaceField(
+            isEmpty: _doors.text.trim().isEmpty,
+            catalogOwned: false,
+          ) &&
+          prefill.doors != null) {
+        _doors.text = '${prefill.doors}';
+        _doorsFromVin = true;
+      }
+      if (vinMayReplaceField(
+            isEmpty: _seats.text.trim().isEmpty,
+            catalogOwned: false,
+          ) &&
+          prefill.seats != null) {
+        _seats.text = '${prefill.seats}';
+        _seatsFromVin = true;
+      }
     });
     _applyingVinSpecs = false;
   }
 
-  void _scheduleVinCatalogTransmissionFallback(
-    CreateListingVehicleResolve resolve,
-  ) {
+  void _scheduleVinCatalogEnrichment(CreateListingVehicleResolve resolve) {
     final identity = resolve.confirmedIdentity;
     if (!resolve.confirmed || identity == null) return;
-    if (_transmissionType != null) return;
+    if (!_vinCatalogEnrichmentHasGap()) return;
     final key = [
       widget.sellerId,
       resolve.applyRevision,
@@ -997,10 +1116,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       identity.model,
       identity.year,
     ].join('|');
-    if (_vinTransmissionFallbackKey == key) return;
-    _vinTransmissionFallbackKey = key;
-    final token = _VinCatalogTransmissionToken(
-      generation: ++_vinTransmissionFallbackGeneration,
+    if (_vinCatalogEnrichmentKey == key) return;
+    _vinCatalogEnrichmentKey = key;
+    final token = _VinCatalogEnrichmentToken(
+      generation: ++_vinCatalogEnrichmentGeneration,
       applyRevision: resolve.applyRevision,
       normalizedVin: resolve.normalizedVin,
       sellerId: widget.sellerId,
@@ -1008,11 +1127,51 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       model: identity.model,
       year: identity.year,
     );
-    unawaited(_runVinCatalogTransmissionFallback(token));
+    unawaited(_runVinCatalogEnrichment(token));
   }
 
-  Future<void> _runVinCatalogTransmissionFallback(
-    _VinCatalogTransmissionToken token,
+  bool _vinCatalogEnrichmentHasGap() {
+    return _catalogGap(
+          isEmpty: _bodyType == null,
+          vinOwned: _bodyTypeFromVin,
+          catalogOwned: _bodyTypeFromCatalog,
+        ) ||
+        _catalogGap(
+          isEmpty: _fuelType == null,
+          vinOwned: _fuelTypeFromVin,
+          catalogOwned: _fuelTypeFromCatalog,
+        ) ||
+        _catalogGap(
+          isEmpty: _engineDisplacement.text.trim().isEmpty,
+          vinOwned: _engineDisplacementFromVin,
+          catalogOwned: _engineDisplacementFromCatalog,
+        ) ||
+        _catalogGap(
+          isEmpty: _enginePower.text.trim().isEmpty,
+          vinOwned: false,
+          catalogOwned: _enginePowerFromCatalog,
+        ) ||
+        _catalogGap(
+          isEmpty: _transmissionType == null,
+          vinOwned: _transmissionTypeFromVin,
+          catalogOwned: _transmissionTypeFromCatalog,
+        );
+  }
+
+  bool _catalogGap({
+    required bool isEmpty,
+    required bool vinOwned,
+    required bool catalogOwned,
+  }) {
+    return catalogMayFillField(
+      isEmpty: isEmpty,
+      vinOwned: vinOwned,
+      catalogOwned: catalogOwned,
+    );
+  }
+
+  Future<void> _runVinCatalogEnrichment(
+    _VinCatalogEnrichmentToken token,
   ) async {
     final Result<ManualSmartFillResult> result;
     try {
@@ -1024,23 +1183,107 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     } catch (_) {
       return;
     }
-    if (!_vinCatalogTransmissionFallbackCurrent(token)) return;
+    if (!_vinCatalogEnrichmentCurrent(token)) return;
     if (result is! Success<ManualSmartFillResult>) return;
-    final transmission = catalogConsensusTransmissionOnly(result.value);
-    if (transmission == null) return;
-    if (!_vinCatalogTransmissionFallbackCurrent(token)) return;
-    setState(() {
-      if (!_vinCatalogTransmissionFallbackCurrent(token)) return;
-      _transmissionType = transmission;
-      _transmissionTypeFromCatalog = true;
-      _transmissionTypeFromVin = false;
-    });
+    _applyVinCatalogEnrichment(token, result.value);
   }
 
-  bool _vinCatalogTransmissionFallbackCurrent(
-    _VinCatalogTransmissionToken token,
+  void _applyVinCatalogEnrichment(
+    _VinCatalogEnrichmentToken token,
+    ManualSmartFillResult result,
   ) {
-    if (!mounted || token.generation != _vinTransmissionFallbackGeneration) {
+    if (result.resolution != ManualSmartFillResolution.ok) return;
+    final blocked = _blockedCatalogKinds(result);
+    if (result.clarification != null &&
+        parseManualSmartFillRefinementKind(result.clarification!.attribute) ==
+            null &&
+        result.nextRefinement == null) {
+      return;
+    }
+    final prefill = catalogResolvedFormPrefill(result.consensus);
+    if (prefill.isEmpty) return;
+    if (!_vinCatalogEnrichmentCurrent(token)) return;
+    _applyingCatalogSpecs = true;
+    setState(() {
+      if (!_vinCatalogEnrichmentCurrent(token)) return;
+      if (!blocked.contains(ManualSmartFillRefinementKind.body) &&
+          _catalogGap(
+            isEmpty: _bodyType == null,
+            vinOwned: _bodyTypeFromVin,
+            catalogOwned: _bodyTypeFromCatalog,
+          ) &&
+          prefill.bodyType != null) {
+        _bodyType = prefill.bodyType;
+        _bodyTypeFromCatalog = true;
+        _bodyTypeFromVin = false;
+      }
+      if (!blocked.contains(ManualSmartFillRefinementKind.fuel) &&
+          _catalogGap(
+            isEmpty: _fuelType == null,
+            vinOwned: _fuelTypeFromVin,
+            catalogOwned: _fuelTypeFromCatalog,
+          ) &&
+          prefill.fuelType != null) {
+        _fuelType = prefill.fuelType;
+        _fuelTypeFromCatalog = true;
+        _fuelTypeFromVin = false;
+      }
+      final engineBlocked = blocked.contains(
+        ManualSmartFillRefinementKind.engine,
+      );
+      if (!engineBlocked &&
+          _catalogGap(
+            isEmpty: _engineDisplacement.text.trim().isEmpty,
+            vinOwned: _engineDisplacementFromVin,
+            catalogOwned: _engineDisplacementFromCatalog,
+          ) &&
+          prefill.engineDisplacementLiters != null) {
+        _engineDisplacement.text = formatCatalogDisplacementField(
+          prefill.engineDisplacementLiters!,
+        );
+        _engineDisplacementFromCatalog = true;
+        _engineDisplacementFromVin = false;
+      }
+      if (!engineBlocked &&
+          _catalogGap(
+            isEmpty: _enginePower.text.trim().isEmpty,
+            vinOwned: false,
+            catalogOwned: _enginePowerFromCatalog,
+          ) &&
+          prefill.enginePowerHp != null) {
+        _enginePower.text = '${prefill.enginePowerHp}';
+        _enginePowerFromCatalog = true;
+      }
+      if (!blocked.contains(ManualSmartFillRefinementKind.transmission) &&
+          _catalogGap(
+            isEmpty: _transmissionType == null,
+            vinOwned: _transmissionTypeFromVin,
+            catalogOwned: _transmissionTypeFromCatalog,
+          ) &&
+          prefill.transmissionType != null) {
+        _transmissionType = prefill.transmissionType;
+        _transmissionTypeFromCatalog = true;
+        _transmissionTypeFromVin = false;
+      }
+    });
+    _applyingCatalogSpecs = false;
+  }
+
+  Set<ManualSmartFillRefinementKind> _blockedCatalogKinds(
+    ManualSmartFillResult result,
+  ) {
+    final blocked = <ManualSmartFillRefinementKind>{};
+    final next = result.nextRefinement?.kind;
+    if (next != null) blocked.add(next);
+    final parsed = parseManualSmartFillRefinementKind(
+      result.clarification?.attribute,
+    );
+    if (parsed != null) blocked.add(parsed);
+    return blocked;
+  }
+
+  bool _vinCatalogEnrichmentCurrent(_VinCatalogEnrichmentToken token) {
+    if (!mounted || token.generation != _vinCatalogEnrichmentGeneration) {
       return false;
     }
     if (widget.sellerId != token.sellerId || _manualIdentityOpen) return false;
@@ -1072,12 +1315,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       final year = _yearFieldKey.currentState?.value;
       if (year != null && year != token.year) return false;
     }
-    if (_transmissionTypeFromVin) return false;
-    return catalogMayFillField(
-      isEmpty: _transmissionType == null,
-      vinOwned: _transmissionTypeFromVin,
-      catalogOwned: _transmissionTypeFromCatalog,
-    );
+    return true;
   }
 
   bool get _hasVinOwnedOptionalSpecs =>
@@ -1085,7 +1323,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       _fuelTypeFromVin ||
       _drivetrainFromVin ||
       _transmissionTypeFromVin ||
-      _engineDisplacementFromVin;
+      _engineDisplacementFromVin ||
+      _engineCylindersFromVin ||
+      _doorsFromVin ||
+      _seatsFromVin;
 
   void _invalidateAdoptedIdentity() {
     if (!_hasAdoptedIdentity && !_hasVinOwnedOptionalSpecs) return;
@@ -1107,9 +1348,13 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       if (_drivetrainFromVin) _drivetrain = null;
       if (_transmissionTypeFromVin) _transmissionType = null;
       if (_engineDisplacementFromVin) _engineDisplacement.clear();
+      if (_engineCylindersFromVin) _engineCylinders.clear();
+      if (_doorsFromVin) _doors.clear();
+      if (_seatsFromVin) _seats.clear();
       _makeFromVin = _modelFromVin = _yearFromVin = _variantFromVin = false;
       _bodyTypeFromVin = _fuelTypeFromVin = _drivetrainFromVin =
-          _transmissionTypeFromVin = _engineDisplacementFromVin = false;
+          _transmissionTypeFromVin = _engineDisplacementFromVin =
+              _engineCylindersFromVin = _doorsFromVin = _seatsFromVin = false;
       _hasAdoptedIdentity = false;
     });
   }
@@ -1127,6 +1372,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       _transmissionTypeFromCatalog = false;
       _transmissionType = picked;
     });
+    _bumpVinCatalogEnrichment();
     _cancelProgressiveRefinementForSellerEdit();
   }
 
@@ -1196,9 +1442,15 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   }
 
   bool get _revealVehicleIdentityErrors {
-    if (_attemptedPublish) return true;
+    if (_attemptedPublish || _identityAttempted) return true;
     return (_brandFieldKey.currentState?.hasInteractedByUser ?? false) ||
         (_yearFieldKey.currentState?.hasInteractedByUser ?? false);
+  }
+
+  bool _fieldRuleActive(CreateListingStep owner) {
+    final step = _validatingStep;
+    if (step == null || step == CreateListingStep.review) return true;
+    return step == owner;
   }
 
   String? _visibleVehicleIdentityError(FormFieldState<dynamic> field) {
@@ -1218,7 +1470,9 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         resolve.status == CreateListingVinResolveStatus.resolved) {
       return false;
     }
-    if (_manualIdentityOpen || _attemptedPublish) return true;
+    if (_manualIdentityOpen || _attemptedPublish || _identityAttempted) {
+      return true;
+    }
     return switch (resolve.status) {
       CreateListingVinResolveStatus.manual ||
       CreateListingVinResolveStatus.partial ||
@@ -1231,8 +1485,44 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     };
   }
 
+  /// Accordion visibility. Idle/manual follow the presentation flags.
+  /// Other resolve states keep [_showIdentityEditors].
+  bool _manualIdentityExpanded(CreateListingVehicleResolve resolve) {
+    if (resolve.confirmed &&
+        resolve.status == CreateListingVinResolveStatus.resolved) {
+      return false;
+    }
+    return switch (resolve.status) {
+      CreateListingVinResolveStatus.idle => _manualIdentityOpen,
+      CreateListingVinResolveStatus.manual =>
+        _manualIdentityOpen || !_manualIdentityCollapsed,
+      _ => _showIdentityEditors(resolve),
+    };
+  }
+
+  void _toggleManualIdentity() {
+    final resolve = context.read<CreateListingCubit>().state.vehicleResolve;
+    if (_manualIdentityExpanded(resolve)) {
+      setState(() {
+        _manualIdentityCollapsed = true;
+        _manualIdentityOpen = false;
+      });
+      return;
+    }
+    _manualIdentityCollapsed = false;
+    if (resolve.status == CreateListingVinResolveStatus.manual) {
+      setState(() => _manualIdentityOpen = true);
+      return;
+    }
+    _enterManualIdentity();
+  }
+
   void _enterManualIdentity() {
-    setState(() => _manualIdentityOpen = true);
+    _bumpVinCatalogEnrichment();
+    setState(() {
+      _manualIdentityOpen = true;
+      _manualIdentityCollapsed = false;
+    });
     context.read<CreateListingCubit>().enterManualMode();
     _onManualIdentityMaybeChanged(immediate: true);
   }
@@ -1374,6 +1664,18 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         _engineDisplacement.clear();
         _engineDisplacementFromVin = false;
       }
+      if (_engineCylindersFromVin) {
+        _engineCylinders.clear();
+        _engineCylindersFromVin = false;
+      }
+      if (_doorsFromVin) {
+        _doors.clear();
+        _doorsFromVin = false;
+      }
+      if (_seatsFromVin) {
+        _seats.clear();
+        _seatsFromVin = false;
+      }
     });
   }
 
@@ -1449,13 +1751,384 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     );
   }
 
-  void _submit() {
-    FocusScope.of(context).unfocus();
-    setState(() => _attemptedPublish = true);
-    final formValid = _formKey.currentState?.validate() ?? false;
-    if (!formValid) return;
+  void _confirmResolvedVinIfNeeded() {
+    final cubit = context.read<CreateListingCubit>();
+    final resolve = cubit.state.vehicleResolve;
+    final suggestion = resolve.suggestion;
+    if (resolve.confirmed) return;
+    if (resolve.status != CreateListingVinResolveStatus.resolved) return;
+    if (suggestion == null || !suggestion.vehicle.hasCoreIdentity) return;
+    if (suggestion.resolution != VehicleResolveResolution.resolved) return;
+    cubit.confirmSuggestion();
+    // Bloc listeners are asynchronous. Apply the confirmed identity before
+    // step validation so Continue can advance in the same turn.
+    final updated = cubit.state.vehicleResolve;
+    final identity = updated.confirmedIdentity;
+    if (!updated.confirmed || identity == null) return;
+    if (updated.applyRevision == _lastAppliedResolveRevision) return;
+    _lastAppliedResolveRevision = updated.applyRevision;
+    _applyConfirmedIdentity(identity);
+    context.read<ManualSmartFillCubit>().cancelForVinAuthority();
+    _applyConfirmedVinSpecs(
+      updated.suggestion?.vehicle,
+      warnings: updated.suggestion?.warnings ?? const [],
+    );
+    _scheduleVinCatalogEnrichment(updated);
+  }
 
+  bool _coreIdentityReady() {
+    return _effectiveMakeForSubmit().isNotEmpty &&
+        _effectiveModelForSubmit().isNotEmpty &&
+        _yearFieldKey.currentState?.value != null;
+  }
+
+  CreateListingStep? _firstInvalidStep(AppLocalizations l10n) {
+    if (_validateOptionalVin(l10n, _vin.text) != null) {
+      return CreateListingStep.identity;
+    }
+    if (_selectedBrandCatalogValue == null) return CreateListingStep.identity;
+    if (validateListingCustomMakeField(
+          l10n,
+          catalogKey: _selectedBrandCatalogValue,
+          customMakeText: _customBrand.text,
+        ) !=
+        null) {
+      return CreateListingStep.identity;
+    }
+    if ((_manualModel || _isCustomMake) &&
+        _required(l10n, _model.text) != null) {
+      return CreateListingStep.identity;
+    }
+    if (_effectiveModelForSubmit().isEmpty) return CreateListingStep.identity;
+    if (_yearFieldKey.currentState?.value == null) {
+      return CreateListingStep.identity;
+    }
+    if (_validateOptionalVariant(l10n, _variant.text) != null) {
+      return CreateListingStep.identity;
+    }
+    if (_validatePrice(l10n, _price.text) != null)
+      return CreateListingStep.offer;
+    if (_validateMileage(l10n, _mileage.text) != null) {
+      return CreateListingStep.offer;
+    }
+    if (_validateOptionalDisplacement(l10n, _engineDisplacement.text) != null ||
+        _validateOptionalPower(l10n, _enginePower.text) != null ||
+        _validateOptionalCount(l10n, _engineCylinders.text, max: 16) != null ||
+        _validateOptionalCount(l10n, _doors.text, max: 6) != null ||
+        _validateOptionalCount(l10n, _seats.text, max: 15) != null ||
+        _validateOptionalRegistration(l10n, _registration.text) != null) {
+      return CreateListingStep.characteristics;
+    }
+    final cityMissing = _manualCity
+        ? _required(l10n, _city.text) != null
+        : _selectedCanonicalCity == null;
+    if (cityMissing) return CreateListingStep.contact;
+    if (validatePhone(l10n, _phone.text) != null) {
+      return CreateListingStep.contact;
+    }
+    if (validateTelegramUsername(l10n, _telegram.text) != null) {
+      return CreateListingStep.contact;
+    }
+    return null;
+  }
+
+  bool get _draftIsDirty {
+    final confirmed =
+        _hasAdoptedIdentity ||
+        context.read<CreateListingCubit>().state.vehicleResolve.confirmed;
+    final model = _model.text.trim().isNotEmpty
+        ? _model.text
+        : (_selectedCanonicalModel ?? '');
+    return createListingRouteExitIsDirty(
+      vin: _vin.text,
+      identityConfirmed: confirmed,
+      make: '',
+      model: model,
+      customMake: _customBrand.text,
+      variant: _variant.text,
+      year: _yearFieldKey.currentState?.value,
+      brandChosen: _selectedBrandCatalogValue != null,
+      photoCount: _photoDrafts.length,
+      price: _price.text,
+      mileage: _mileage.text,
+      dealType: _type,
+      currency: _priceCurrency,
+      description: _description.text,
+      hasTechnicalValue:
+          _bodyType != null ||
+          _fuelType != null ||
+          _drivetrain != null ||
+          _transmissionType != null ||
+          _engineDisplacement.text.trim().isNotEmpty ||
+          _enginePower.text.trim().isNotEmpty ||
+          _registration.text.trim().isNotEmpty,
+      phone: _phone.text,
+      telegram: _telegram.text,
+      whatsapp: _whatsappEnabled,
+      region: _marketRegion,
+      city: _city.text,
+      baseline: _exitBaseline,
+    );
+  }
+
+  void _retreat() {
+    final previous = _step.previous;
+    if (previous == null) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _step = previous);
+  }
+
+  Future<void> _requestLeave() async {
+    if (!mounted || _allowRoutePop || _exitDialogOpen) return;
+    if (!_draftIsDirty) {
+      _completeLeave();
+      return;
+    }
+    _exitDialogOpen = true;
+    final leave = await showCreateListingExitDialog(context);
+    if (!mounted) return;
+    _exitDialogOpen = false;
+    if (!leave) return;
+    _completeLeave();
+  }
+
+  void _completeLeave() {
+    if (!mounted) return;
+    setState(() => _allowRoutePop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
+      if (navigator.canPop()) {
+        navigator.pop();
+      } else {
+        context.go(AppRoutes.listings);
+      }
+    });
+  }
+
+  CreateListingStepFragment _during(CreateListingStep step, Widget child) {
+    return CreateListingStepFragment(step: step, child: child);
+  }
+
+  Future<void> _onContinue() async {
+    FocusScope.of(context).unfocus();
     final l10n = context.l10n;
+    switch (_step) {
+      case CreateListingStep.identity:
+        final resolve = context.read<CreateListingCubit>().state.vehicleResolve;
+        if (resolve.status == CreateListingVinResolveStatus.resolving) return;
+        _confirmResolvedVinIfNeeded();
+        _identityAttempted = true;
+        _validatingStep = CreateListingStep.identity;
+        final formValid = _formKey.currentState?.validate() ?? false;
+        _validatingStep = null;
+        final ready = formValid && _coreIdentityReady();
+        if (!ready) {
+          setState(() {
+            _manualIdentityOpen = true;
+            _manualIdentityCollapsed = false;
+          });
+          return;
+        }
+        if (_resolvingSmartFillContinue || _clarificationSheetOpen) return;
+        final smartFill = context.read<ManualSmartFillCubit>();
+        if (smartFill.state.status == ManualSmartFillStatus.loading) {
+          await _continueWhenSmartFillSettles(smartFill);
+          return;
+        }
+        if (smartFill.state.showClarification) {
+          await _presentClarificationSheet(advanceWhenFinished: true);
+          return;
+        }
+        break;
+      case CreateListingStep.photos:
+        break;
+      case CreateListingStep.offer:
+        _priceTouched = true;
+        _mileageTouched = true;
+        _validatingStep = CreateListingStep.offer;
+        final formValid = _formKey.currentState?.validate() ?? false;
+        _validatingStep = null;
+        if (!formValid) {
+          setState(() {});
+          return;
+        }
+        break;
+      case CreateListingStep.characteristics:
+        _validatingStep = CreateListingStep.characteristics;
+        final formValid = _formKey.currentState?.validate() ?? false;
+        _validatingStep = null;
+        if (!formValid) {
+          setState(() => _editingCharacteristics = true);
+          return;
+        }
+        break;
+      case CreateListingStep.contact:
+        _cityTouched = true;
+        _phoneTouched = true;
+        _validatingStep = CreateListingStep.contact;
+        final formValid = _formKey.currentState?.validate() ?? false;
+        _validatingStep = null;
+        if (!formValid || !_hasValidLocation || !_hasValidContact(l10n)) {
+          setState(() {
+            _editingLocation = true;
+            _editingContact = true;
+          });
+          return;
+        }
+        break;
+      case CreateListingStep.review:
+        return;
+    }
+    final next = _step.next;
+    if (next == null) return;
+    setState(() => _step = next);
+  }
+
+  bool _smartFillContinueIsTerminal(
+    ManualSmartFillState state,
+    ManualSmartFillQuery? query,
+  ) {
+    if (state.status == ManualSmartFillStatus.idle) return true;
+    if (query != null && state.query != null && state.query != query) {
+      return true;
+    }
+    return state.status != ManualSmartFillStatus.loading;
+  }
+
+  Future<ManualSmartFillState> _awaitCurrentSmartFill(
+    ManualSmartFillCubit cubit,
+    ManualSmartFillQuery? query,
+  ) {
+    if (_smartFillContinueIsTerminal(cubit.state, query)) {
+      return Future.value(cubit.state);
+    }
+    final completer = Completer<ManualSmartFillState>();
+    _smartFillContinueWait = completer;
+    late final StreamSubscription<ManualSmartFillState> sub;
+    sub = cubit.stream.listen(
+      (state) {
+        if (!_smartFillContinueIsTerminal(state, query) ||
+            completer.isCompleted) {
+          return;
+        }
+        completer.complete(state);
+        sub.cancel();
+        if (identical(_smartFillContinueSub, sub)) {
+          _smartFillContinueSub = null;
+        }
+      },
+      onDone: () {
+        if (!completer.isCompleted) completer.complete(cubit.state);
+      },
+    );
+    _smartFillContinueSub = sub;
+    if (_smartFillContinueIsTerminal(cubit.state, query) &&
+        !completer.isCompleted) {
+      completer.complete(cubit.state);
+      sub.cancel();
+      _smartFillContinueSub = null;
+    }
+    return completer.future;
+  }
+
+  Future<void> _continueWhenSmartFillSettles(ManualSmartFillCubit cubit) async {
+    if (!mounted || _resolvingSmartFillContinue) return;
+    final query = cubit.state.query;
+    setState(() => _resolvingSmartFillContinue = true);
+    try {
+      final resolved = await _awaitCurrentSmartFill(cubit, query);
+      if (!mounted || _step != CreateListingStep.identity) return;
+      if (context.read<CreateListingCubit>().state.vehicleResolve.confirmed) {
+        return;
+      }
+      if (resolved.status == ManualSmartFillStatus.idle) return;
+      if (query != null && resolved.query != null && resolved.query != query) {
+        return;
+      }
+      if (resolved.showClarification) {
+        await _presentClarificationSheet(advanceWhenFinished: true);
+        return;
+      }
+      if (resolved.status == ManualSmartFillStatus.filled ||
+          resolved.status == ManualSmartFillStatus.noData ||
+          resolved.status == ManualSmartFillStatus.failure) {
+        final next = _step.next;
+        if (next == null) return;
+        setState(() => _step = next);
+      }
+    } finally {
+      if (mounted) setState(() => _resolvingSmartFillContinue = false);
+    }
+  }
+
+  Future<void> _presentClarificationSheet({
+    required bool advanceWhenFinished,
+  }) async {
+    if (!mounted || _clarificationSheetOpen) return;
+    final cubit = context.read<ManualSmartFillCubit>();
+    final opened = cubit.state;
+    if (!opened.showClarification) return;
+    final openedQuery = opened.query;
+    _clarificationSheetOpen = true;
+    var finished = false;
+    try {
+      finished =
+          await showCreateListingSmartFillSheet(
+            context: context,
+            cubit: cubit,
+            query: openedQuery,
+            onRestart: _restartProgressiveSmartFill,
+          ) ??
+          false;
+    } finally {
+      _clarificationSheetOpen = false;
+    }
+    if (!mounted || !advanceWhenFinished || !finished) return;
+    if (_step != CreateListingStep.identity) return;
+    final current = context.read<ManualSmartFillCubit>().state;
+    if (current.showClarification) return;
+    if (openedQuery != null && current.query != openedQuery) return;
+    if (current.status != ManualSmartFillStatus.filled &&
+        current.status != ManualSmartFillStatus.noData) {
+      return;
+    }
+    final next = _step.next;
+    if (next == null) return;
+    setState(() => _step = next);
+  }
+
+  void _submit() {
+    _bumpVinCatalogEnrichment();
+    FocusScope.of(context).unfocus();
+    final l10n = context.l10n;
+    _priceTouched = true;
+    _mileageTouched = true;
+    _cityTouched = true;
+    _phoneTouched = true;
+    _identityAttempted = true;
+    _attemptedPublish = true;
+    _validatingStep = null;
+    final formValid = _formKey.currentState?.validate() ?? false;
+    final invalidStep = _firstInvalidStep(l10n);
+    if (!formValid || invalidStep != null) {
+      setState(() {
+        if (invalidStep != null) _step = invalidStep;
+        if (invalidStep == CreateListingStep.identity) {
+          _manualIdentityOpen = true;
+          _manualIdentityCollapsed = false;
+        }
+        if (invalidStep == CreateListingStep.characteristics) {
+          _editingCharacteristics = true;
+        }
+        if (invalidStep == CreateListingStep.contact) {
+          _editingLocation = true;
+          _editingContact = true;
+        }
+      });
+      return;
+    }
+
     final priceEur = parseListingPublishPrice(_price.text);
     final mileageKm = parseListingPublishMileage(_mileage.text);
     if (priceEur == null || mileageKm == null) return;
@@ -1484,6 +2157,9 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       fuelType: _fuelType,
       engineDisplacementLiters: _engineDisplacementFromField(),
       enginePowerHp: _enginePowerFromField(),
+      engineCylinders: _countFromField(_engineCylinders, max: 16),
+      doors: _countFromField(_doors, max: 6),
+      seats: _countFromField(_seats, max: 15),
       drivetrain: _drivetrain,
       transmissionType: _transmissionType,
       registration: _registration.text.trim().isEmpty
@@ -1518,12 +2194,14 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       (v == null || v.trim().isEmpty) ? l10n.validationRequired : null;
 
   String? _validatePrice(AppLocalizations l10n, String? v) {
+    if (!_fieldRuleActive(CreateListingStep.offer)) return null;
     if (v == null || v.trim().isEmpty) return l10n.validationRequired;
     if (parseListingPublishPrice(v) == null) return l10n.validationPositive;
     return null;
   }
 
   String? _validateMileage(AppLocalizations l10n, String? v) {
+    if (!_fieldRuleActive(CreateListingStep.offer)) return null;
     if (v == null || v.trim().isEmpty) return l10n.validationRequired;
     final n = int.tryParse(v.trim());
     if (n == null || n < 0) return l10n.validationNonNegative;
@@ -1534,6 +2212,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   }
 
   String? _validateOptionalDisplacement(AppLocalizations l10n, String? v) {
+    if (!_fieldRuleActive(CreateListingStep.characteristics)) return null;
     if (v == null || v.trim().isEmpty) return null;
     final n = num.tryParse(v.trim().replaceAll(',', '.'));
     if (n == null || n <= 0) {
@@ -1546,6 +2225,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   }
 
   String? _validateOptionalPower(AppLocalizations l10n, String? v) {
+    if (!_fieldRuleActive(CreateListingStep.characteristics)) return null;
     if (v == null || v.trim().isEmpty) return null;
     final n = int.tryParse(v.trim());
     if (n == null || n <= 0) return l10n.validationEnginePowerPositive;
@@ -1554,6 +2234,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   }
 
   String? _validateOptionalVin(AppLocalizations l10n, String? v) {
+    if (!_fieldRuleActive(CreateListingStep.identity)) return null;
     if (ListingVin.isBlankInput(v)) return null;
     if (!ListingVin.isOptionalInputValid(v)) return l10n.validationVinInvalid;
     final normalized = ListingVin.normalizeOptional(v);
@@ -1566,6 +2247,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   }
 
   String? _validateOptionalVariant(AppLocalizations l10n, String? v) {
+    if (!_fieldRuleActive(CreateListingStep.identity)) return null;
     if (v == null || v.trim().isEmpty) return null;
     if (v.trim().length > kListingVariantMaxLength) {
       return l10n.listingVariantTooLong;
@@ -1574,6 +2256,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   }
 
   String? _validateOptionalRegistration(AppLocalizations l10n, String? v) {
+    if (!_fieldRuleActive(CreateListingStep.characteristics)) return null;
     if (v == null || v.trim().isEmpty) return null;
     if (v.trim().length > kListingRegistrationMaxLength) {
       return l10n.validationRegistrationTooLong;
@@ -1591,6 +2274,72 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     final t = _enginePower.text.trim();
     if (t.isEmpty) return null;
     return int.tryParse(t);
+  }
+
+  String? _validateOptionalCount(
+    AppLocalizations l10n,
+    String? v, {
+    required int max,
+  }) {
+    if (!_fieldRuleActive(CreateListingStep.characteristics)) return null;
+    return _countError(l10n, v, max: max);
+  }
+
+  String? _countError(AppLocalizations l10n, String? v, {required int max}) {
+    if (v == null || v.trim().isEmpty) return null;
+    final n = int.tryParse(v.trim());
+    if (n == null || n < 1 || n > max) return l10n.validationPositive;
+    return null;
+  }
+
+  int? _countFromField(TextEditingController controller, {required int max}) {
+    final t = controller.text.trim();
+    if (t.isEmpty) return null;
+    final n = int.tryParse(t);
+    if (n == null || n < 1 || n > max) return null;
+    return n;
+  }
+
+  Widget _countField({
+    required TextEditingController controller,
+    required Key fieldKey,
+    required String hint,
+    required int max,
+    required bool Function() fromVin,
+    required void Function() clearVin,
+    required ThemeData theme,
+    required AppLocalizations l10n,
+    required bool submitting,
+  }) {
+    return CreateListingTextSurface(
+      controller: controller,
+      builder: (context, hasValue) {
+        return TextFormField(
+          key: fieldKey,
+          controller: controller,
+          decoration: createListingFieldDecoration(
+            theme,
+            hintText: hint,
+            hasValue: hasValue,
+          ),
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          validator: (v) => _validateOptionalCount(l10n, v, max: max),
+          enabled: !submitting,
+          onChanged: (_) {
+            if (_applyingVinSpecs || _applyingCatalogSpecs) return;
+            _bumpVinCatalogEnrichment();
+            if (!fromVin()) return;
+            setState(clearVin);
+          },
+        );
+      },
+    );
+  }
+
+  void _bumpVinCatalogEnrichment() {
+    _vinCatalogEnrichmentGeneration += 1;
+    _vinCatalogEnrichmentKey = null;
   }
 
   Widget _collapsedPhoneCell({
@@ -1685,7 +2434,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
           final revision = state.vehicleResolve.applyRevision;
           final identity = state.vehicleResolve.confirmedIdentity;
           if (!state.vehicleResolve.confirmed) {
-            _vinTransmissionFallbackGeneration += 1;
+            _vinCatalogEnrichmentGeneration += 1;
           }
           if (identity == null) _invalidateAdoptedIdentity();
           if (state.vehicleResolve.confirmed) {
@@ -1702,7 +2451,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
               warnings: state.vehicleResolve.suggestion?.warnings ?? const [],
             );
             if (state.vehicleResolve.confirmed) {
-              _scheduleVinCatalogTransmissionFallback(state.vehicleResolve);
+              _scheduleVinCatalogEnrichment(state.vehicleResolve);
             }
           }
           final defaultsRevision = state.listingDefaults.applyRevision;
@@ -1712,6 +2461,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
             _applyListingDefaultsPrefill(state.listingDefaults.prefill);
           }
           if (state.status == CreateListingStatus.success) {
+            _allowRoutePop = true;
             ScaffoldMessenger.of(
               context,
             ).showSnackBar(SnackBar(content: Text(l10n.listingCreated)));
@@ -1748,7 +2498,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         builder: (context, state) {
           final submitting = state.status == CreateListingStatus.submitting;
           final contactCollapsed = _showContactSummary(l10n);
-          final editorsOpen = _showIdentityEditors(state.vehicleResolve);
+          final editorsOpen = _manualIdentityExpanded(state.vehicleResolve);
           final showManualRow =
               state.vehicleResolve.status ==
                   CreateListingVinResolveStatus.idle ||
@@ -1772,7 +2522,6 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         labelText: l10n.createListingPricePlaceholder,
                         floatingLabelBehavior: FloatingLabelBehavior.always,
                         hintText: null,
-                        isDense: true,
                         labelStyle: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(
                             alpha: 0.5,
@@ -1802,7 +2551,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                           minWidth: 40,
                           minHeight: 24,
                         ),
-                        contentPadding: const EdgeInsets.fromLTRB(0, 18, 4, 14),
+                        contentPadding: const EdgeInsets.fromLTRB(0, 20, 4, 16),
                         errorMaxLines: 3,
                         suffixIcon: PremiumListingCurrencyBar(
                           key: const ValueKey(
@@ -1844,16 +2593,43 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                 return TextFormField(
                   key: const ValueKey('create_listing_mileage_field'),
                   controller: _mileage,
-                  decoration: createListingFieldDecoration(
-                    theme,
-                    hintText: l10n.createListingMileagePlaceholder,
-                    hasValue: hasValue,
-                    prefixIcon: Icon(
-                      kCreateListingIconMileage,
-                      size: kCreateListingRowIconSize,
-                      color: createListingPassiveIconColor(theme),
-                    ),
-                  ),
+                  decoration:
+                      createListingFieldDecoration(
+                        theme,
+                        hintText: l10n.createListingMileagePlaceholder,
+                        hasValue: hasValue,
+                        prefixIcon: Icon(
+                          kCreateListingIconMileage,
+                          size: kCreateListingRowIconSize,
+                          color: createListingPassiveIconColor(theme),
+                        ),
+                      ).copyWith(
+                        labelText: l10n.listingFieldMileage,
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        labelStyle: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.5,
+                          ),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          height: 1.15,
+                        ),
+                        floatingLabelStyle: theme.textTheme.labelSmall
+                            ?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.5,
+                              ),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              height: 1.15,
+                            ),
+                        contentPadding: const EdgeInsets.fromLTRB(
+                          0,
+                          20,
+                          12,
+                          16,
+                        ),
+                      ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   validator: (v) => _deferredTextError(
@@ -1911,10 +2687,15 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                         contentPadding: const EdgeInsets.fromLTRB(0, 10, 12, 8),
                       ),
                   keyboardType: TextInputType.phone,
-                  validator: (v) => _deferredTextError(
-                    touched: _phoneTouched,
-                    validate: () => validatePhone(l10n, v),
-                  ),
+                  validator: (v) {
+                    if (!_fieldRuleActive(CreateListingStep.contact)) {
+                      return null;
+                    }
+                    return _deferredTextError(
+                      touched: _phoneTouched,
+                      validate: () => validatePhone(l10n, v),
+                    );
+                  },
                   enabled: !submitting,
                   onChanged: (_) {
                     if (_applyingListingDefaults) {
@@ -1957,7 +2738,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                           color: createListingContactIconColor(theme),
                         ),
                       ),
-                      validator: (v) => validateTelegramUsername(l10n, v),
+                      validator: (v) =>
+                          _fieldRuleActive(CreateListingStep.contact)
+                          ? validateTelegramUsername(l10n, v)
+                          : null,
                       enabled: !submitting,
                       onChanged: (_) {
                         if (_applyingListingDefaults) {
@@ -2008,783 +2792,1312 @@ class _CreateListingFormState extends State<_CreateListingForm> {
             customMakeText: _customBrand.text,
           );
 
-          final scrollBottom =
-              math.max(
-                MediaQuery.paddingOf(context).bottom,
-                _kCreateListingScrollBottomInsetFloor,
-              ) +
-              _kCreateListingScrollBottomExtra +
-              MediaQuery.viewInsetsOf(context).bottom;
-
-          return SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: EdgeInsets.only(bottom: scrollBottom),
-            child: Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  CreateListingVinCard(
-                    l10n: l10n,
-                    theme: theme,
-                    controller: _vin,
-                    enabled: !submitting,
-                    scanning: _scanningVin,
-                    onScan: _scanVin,
-                    onChanged: (v) =>
-                        context.read<CreateListingCubit>().onVinChanged(v),
-                    validator: (v) => _validateOptionalVin(l10n, v),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      kCreateListingPageHorizontalPadding,
-                      16,
-                      kCreateListingPageHorizontalPadding,
-                      0,
+          return PopScope(
+            canPop: _allowRoutePop,
+            onPopInvokedWithResult: (didPop, _) {
+              if (didPop || _allowRoutePop || _exitDialogOpen) return;
+              unawaited(_requestLeave());
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CreateListingFlowShell(
+                  step: _step,
+                  submitting: submitting,
+                  onStepBack: _retreat,
+                  onIdentityBack: () => unawaited(_requestLeave()),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: EdgeInsets.only(
+                      bottom: 16 + MediaQuery.viewInsetsOf(context).bottom,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (state.vehicleResolve.status !=
-                                CreateListingVinResolveStatus.idle &&
-                            !state.vehicleResolve.confirmed)
-                          const SizedBox(height: kCreateListingFieldGap),
-                        CreateListingVehicleResolvePanel(
-                          l10n: l10n,
-                          theme: theme,
-                          resolve: state.vehicleResolve,
-                          enabled: !submitting,
-                          compactMake: _effectiveMakeForSubmit(),
-                          compactModel: _effectiveModelForSubmit(),
-                          compactYear: _yearFieldKey.currentState?.value,
-                          compactVariant: _variantForSubmit(),
-                          onConfirm: () => context
-                              .read<CreateListingCubit>()
-                              .confirmSuggestion(),
-                          onEnterManual: _enterManualIdentity,
-                          onRetry: () =>
-                              context.read<CreateListingCubit>().retryResolve(),
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          kCreateListingPageHorizontalPadding,
+                          8,
+                          kCreateListingPageHorizontalPadding,
+                          0,
                         ),
-                        const SizedBox(height: kCreateListingInterSectionGap),
-                        KeyedSubtree(
-                          key: const ValueKey('create_listing_photos_section'),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Row(
+                        child: CreateListingStepStage(
+                          step: _step,
+                          revealAll: CreateListingPage.debugRevealAllSteps,
+                          fragments: [
+                            _during(
+                              CreateListingStep.identity,
+                              CreateListingVinCard(
+                                l10n: l10n,
+                                theme: theme,
+                                controller: _vin,
+                                enabled: !submitting,
+                                scanning: _scanningVin,
+                                onScan: _scanVin,
+                                onChanged: (v) => context
+                                    .read<CreateListingCubit>()
+                                    .onVinChanged(v),
+                                validator: (v) => _validateOptionalVin(l10n, v),
+                              ),
+                            ),
+                            _during(
+                              CreateListingStep.identity,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      l10n.createListingSectionPhotosLead,
-                                      style: createListingQuietTitleStyle(
-                                        theme,
-                                      ),
-                                    ),
-                                  ),
-                                  Text(
-                                    l10n.createListingPhotoCount(
-                                      _photoDrafts.length,
-                                    ),
-                                    style: createListingSupportStyle(theme)
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          letterSpacing: 0.2,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(
-                                height: kCreateListingHeadingToContentGap,
-                              ),
-                              CreateListingMediaSection(
-                                photos: _photoDrafts,
-                                pickingImage: _pickingImage,
-                                disabled: submitting,
-                                onAddPhoto: () => _addPhoto(context),
-                                onRemovePhotoAt: _removePhotoAt,
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (showManualRow) ...[
-                          const SizedBox(height: kCreateListingInterSectionGap),
-                          CreateListingManualIdentityRow(
-                            label: l10n.createListingManualVehicleTitle,
-                            enabled: !submitting,
-                            expanded: editorsOpen,
-                            onPressed: _enterManualIdentity,
-                          ),
-                        ],
-                        SizedBox(
-                          height: editorsOpen
-                              ? (showManualRow
-                                    ? kCreateListingFieldGap
-                                    : kCreateListingInterSectionGap)
-                              : 0,
-                        ),
-                        KeyedSubtree(
-                          key: const ValueKey('create_listing_vehicle_section'),
-                          child: Offstage(
-                            key: const ValueKey(
-                              'create_listing_identity_editors',
-                            ),
-                            offstage: !editorsOpen,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                CreateListingMmyRow(
-                                  make: FormField<String?>(
-                                    key: _brandFieldKey,
-                                    validator: (_) {
-                                      return _selectedBrandCatalogValue == null
-                                          ? l10n.validationRequired
-                                          : null;
-                                    },
-                                    builder: (fieldState) {
-                                      return CreateListingPickerField(
-                                        fieldKey: const ValueKey(
-                                          'create_listing_brand_field',
-                                        ),
-                                        compact: true,
-                                        caption: l10n.createListingBrandLabel,
-                                        label: l10n
-                                            .createListingMmyValuePlaceholder,
-                                        value: brandDisplay,
-                                        empty:
-                                            _selectedBrandCatalogValue == null,
-                                        enabled: !submitting,
-                                        errorText: _visibleVehicleIdentityError(
-                                          fieldState,
-                                        ),
-                                        onTap: () async {
-                                          await _openBrandSheet();
-                                          fieldState.didChange(
-                                            _selectedBrandCatalogValue,
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                  model: Builder(
-                                    builder: (context) {
-                                      final modelEnabled =
-                                          !submitting &&
-                                          _selectedBrandCatalogValue != null &&
-                                          !_isCustomMake;
-                                      final modelEmpty =
-                                          _selectedCanonicalModel == null &&
-                                          !_manualModel &&
-                                          !_isCustomMake;
-                                      return ListingModelSelectorField(
-                                        key: const ValueKey(
-                                          'create_listing_model_field',
-                                        ),
-                                        formFieldKey: _modelSelectorKey,
-                                        l10n: l10n,
-                                        enabled: modelEnabled,
-                                        dense: true,
-                                        caption: l10n.fieldModel,
-                                        manualMode:
-                                            _manualModel || _isCustomMake,
-                                        canonicalModel: _selectedCanonicalModel,
-                                        onTap: _openModelSheet,
-                                        placeholder:
-                                            _selectedBrandCatalogValue == null
-                                            ? l10n.createListingMmyValuePlaceholder
-                                            : null,
-                                        borderRadius: kCreateListingFieldRadius,
-                                        denseSurface:
-                                            ({
-                                              required hasValue,
-                                              required hasError,
-                                            }) => createListingSoftSurfaceDecoration(
-                                              theme,
-                                              visualState:
-                                                  resolveCreateListingFieldVisualState(
-                                                    enabled: modelEnabled,
-                                                    hasValue: hasValue,
-                                                    error: hasError,
-                                                  ),
-                                              hasValue: hasValue,
-                                              enabled: modelEnabled,
-                                              error: hasError,
-                                            ),
-                                        decoration:
-                                            createListingFieldDecoration(
-                                              theme,
-                                              hasValue: !modelEmpty,
-                                            ),
-                                      );
-                                    },
-                                  ),
-                                  year: FormField<int?>(
-                                    key: _yearFieldKey,
-                                    initialValue: null,
-                                    validator: (y) => y == null
-                                        ? l10n.validationRequired
-                                        : null,
-                                    builder: (fieldState) {
-                                      final yr = fieldState.value;
-                                      return CreateListingPickerField(
-                                        fieldKey: const ValueKey(
-                                          'create_listing_year_field',
-                                        ),
-                                        compact: true,
-                                        caption: l10n.fieldYear,
-                                        label: l10n
-                                            .createListingMmyValuePlaceholder,
-                                        value: yr == null ? '' : '$yr',
-                                        empty: yr == null,
-                                        enabled: !submitting,
-                                        errorText: _visibleVehicleIdentityError(
-                                          fieldState,
-                                        ),
-                                        onTap: () async {
-                                          final picked =
-                                              await showListingYearPickSheet(
-                                                context: context,
-                                                l10n: l10n,
-                                                selectedYear: yr,
-                                              );
-                                          if (!context.mounted) return;
-                                          if (picked != null) {
-                                            setState(() {
-                                              _yearFromVin = false;
-                                              fieldState.didChange(picked);
-                                            });
-                                            fieldState.validate();
-                                            _onManualIdentityMaybeChanged(
-                                              immediate: true,
-                                            );
-                                          }
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                                if (_selectedBrandCatalogValue ==
-                                    _kListingBrandCatalogOther) ...[
-                                  const SizedBox(
-                                    height: kCreateListingFieldGap,
-                                  ),
-                                  CreateListingTextSurface(
-                                    controller: _customBrand,
-                                    builder: (context, hasValue) {
-                                      return TextFormField(
-                                        key: const ValueKey(
-                                          'create_listing_custom_brand_field',
-                                        ),
-                                        controller: _customBrand,
-                                        decoration:
-                                            createListingFieldDecoration(
-                                              theme,
-                                              hintText: l10n
-                                                  .createListingCustomBrandHint,
-                                              hasValue: hasValue,
-                                            ),
-                                        textInputAction: TextInputAction.next,
-                                        enabled: !submitting,
-                                        onChanged: (_) {
-                                          setState(() => _makeFromVin = false);
-                                          _onManualIdentityMaybeChanged(
-                                            immediate: false,
-                                          );
-                                        },
-                                        validator: (v) =>
-                                            validateListingCustomMakeField(
-                                              l10n,
-                                              catalogKey:
-                                                  _selectedBrandCatalogValue,
-                                              customMakeText: v ?? '',
-                                            ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                                if (_manualModel || _isCustomMake) ...[
-                                  const SizedBox(
-                                    height: kCreateListingFieldGap,
-                                  ),
-                                  CreateListingTextSurface(
-                                    controller: _model,
-                                    builder: (context, hasValue) {
-                                      return TextFormField(
-                                        key: const ValueKey(
-                                          'create_listing_manual_model',
-                                        ),
-                                        controller: _model,
-                                        onChanged: (_) {
-                                          _modelFromVin = false;
-                                          _onManualIdentityMaybeChanged(
-                                            immediate: false,
-                                          );
-                                        },
-                                        decoration:
-                                            createListingFieldDecoration(
-                                              theme,
-                                              hintText: l10n
-                                                  .listingModelManualFieldLabel,
-                                              hasValue: hasValue,
-                                            ),
-                                        textInputAction: TextInputAction.next,
-                                        validator: (v) => _required(l10n, v),
-                                        enabled: !submitting,
-                                      );
-                                    },
-                                  ),
-                                ],
-                                const SizedBox(height: kCreateListingFieldGap),
-                                CreateListingTextSurface(
-                                  controller: _variant,
-                                  builder: (context, hasValue) {
-                                    return TextFormField(
-                                      key: const ValueKey(
-                                        'create_listing_variant_field',
-                                      ),
-                                      controller: _variant,
-                                      onChanged: (_) => _variantFromVin = false,
-                                      decoration: createListingFieldDecoration(
-                                        theme,
-                                        hintText: l10n.listingVariantLabel,
-                                        hasValue: hasValue,
-                                      ),
-                                      textInputAction: TextInputAction.next,
-                                      maxLength: kListingVariantMaxLength,
-                                      buildCounter:
-                                          (
-                                            context, {
-                                            required currentLength,
-                                            required isFocused,
-                                            maxLength,
-                                          }) => null,
-                                      validator: (v) =>
-                                          _validateOptionalVariant(l10n, v),
-                                      enabled: !submitting,
-                                    );
-                                  },
-                                ),
-                                const SizedBox(height: kCreateListingFieldGap),
-                                BlocBuilder<
-                                  ManualSmartFillCubit,
-                                  ManualSmartFillState
-                                >(
-                                  builder: (context, smartFill) {
-                                    if (state.vehicleResolve.confirmed ||
-                                        !_showIdentityEditors(
-                                          state.vehicleResolve,
-                                        )) {
-                                      return const SizedBox.shrink();
-                                    }
-                                    return CreateListingManualSmartFillPanel(
-                                      l10n: l10n,
-                                      theme: theme,
-                                      state: smartFill,
-                                      enabled: !submitting,
-                                      filledSummary: _smartFillFilledSummary(
-                                        l10n,
-                                      ),
-                                      onSelectOption: (option) {
-                                        context
-                                            .read<ManualSmartFillCubit>()
-                                            .selectOption(option);
-                                      },
-                                      onDontKnow: () => context
-                                          .read<ManualSmartFillCubit>()
-                                          .skipCurrent(),
-                                      onRestart: _restartProgressiveSmartFill,
-                                      onRetry: () => context
-                                          .read<ManualSmartFillCubit>()
-                                          .retry(),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: kCreateListingInterSectionGap),
-
-                        CreateListingQuietSurface(
-                          key: const ValueKey(
-                            'create_listing_characteristics_section',
-                          ),
-                          padding: const EdgeInsets.fromLTRB(12, 8, 8, 6),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Text(
-                                l10n.createListingVehicleDataTitle,
-                                style: createListingQuietTitleStyle(theme),
-                              ),
-                              if (!_editingCharacteristics &&
-                                  !_hasPopulatedCharacteristics() &&
-                                  !_showLocationSummary &&
-                                  parseListingPublishMileage(_mileage.text) ==
-                                      null) ...[
-                                const SizedBox(height: 2),
-                                LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    final scale = MediaQuery.textScalerOf(
-                                      context,
-                                    ).scale(1);
-                                    final hint = Text(
-                                      l10n.createListingCharacteristicsAutoHelper,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                            color: theme.colorScheme.onSurface
-                                                .withValues(alpha: 0.55),
-                                            height: 1.2,
-                                            fontSize: 13,
-                                          ),
-                                    );
-                                    final action = CreateListingManualEntryLink(
-                                      key: const ValueKey(
-                                        'create_listing_edit_characteristics',
-                                      ),
-                                      label: l10n
-                                          .createListingCharacteristicsEnterManually,
-                                      enabled: !submitting,
-                                      onPressed: _openCharacteristicsEditors,
-                                    );
-                                    if (constraints.maxWidth < 340 ||
-                                        scale > 1.15) {
-                                      return Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [hint, action],
-                                      );
-                                    }
-                                    return Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Expanded(child: hint),
-                                        Flexible(child: action),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ] else ...[
-                                if (_characteristicsFilledAutomatically())
                                   Padding(
-                                    padding: const EdgeInsets.only(
-                                      top: 2,
-                                      bottom: 10,
-                                    ),
+                                    padding: const EdgeInsets.only(bottom: 8),
                                     child: Text(
-                                      l10n.createListingCharacteristicsFilledAutomatically,
-                                      key: const ValueKey(
-                                        'create_listing_characteristics_auto_status',
-                                      ),
-                                      style: theme.textTheme.labelMedium
+                                      l10n.createListingVinAutofillHelper,
+                                      style: theme.textTheme.bodySmall
                                           ?.copyWith(
                                             color: theme.colorScheme.onSurface
                                                 .withValues(
                                                   alpha:
                                                       theme.brightness ==
                                                           Brightness.light
-                                                      ? 0.50
-                                                      : 0.62,
+                                                      ? 0.55
+                                                      : 0.68,
                                                 ),
-                                            fontWeight: FontWeight.w500,
-                                            letterSpacing: 0.15,
-                                            fontSize: 12,
-                                            height: 1.2,
+                                            height: 1.3,
                                           ),
                                     ),
-                                  )
-                                else
-                                  const SizedBox(height: 8),
-                                ListenableBuilder(
-                                  listenable: Listenable.merge([
-                                    _engineDisplacement,
-                                    _enginePower,
-                                    _registration,
-                                  ]),
-                                  builder: (context, _) {
-                                    return CreateListingCharacteristicsFacts(
-                                      facts: buildCreateListingTechnicalFacts(
-                                        l10n,
-                                        bodyType: _bodyType,
-                                        displacementLiters:
-                                            _engineDisplacementFromField(),
-                                        fuelType: _fuelType,
-                                        drivetrain: _drivetrain,
-                                        transmissionType: _transmissionType,
-                                        powerHp: _enginePowerFromField(),
-                                        year: _yearFieldKey.currentState?.value,
-                                        registration: _registration.text,
-                                      ),
-                                    );
-                                  },
-                                ),
-                                if (_showLocationSummary)
-                                  CreateListingCompactSummary(
-                                    key: const ValueKey(
-                                      'create_listing_location_summary',
-                                    ),
-                                    tapKey: const ValueKey(
-                                      'create_listing_change_location',
-                                    ),
-                                    icon: kCreateListingIconLocation,
-                                    label: l10n.createListingSectionLocation,
-                                    primary: _effectiveCityForSubmit(),
-                                    secondary: formatMarketRegion(
-                                      l10n,
-                                      _marketRegion,
-                                    ),
-                                    enabled: !submitting,
-                                    expanded: _editingLocation,
-                                    onPressed: _openLocationEditors,
                                   ),
-                                if (_showLocationSummary &&
-                                    _editingLocation) ...[
-                                  const SizedBox(
-                                    height: kCreateListingFieldGap,
-                                  ),
-                                  _locationEditors(
-                                    theme: theme,
+                                  if (state.vehicleResolve.status !=
+                                          CreateListingVinResolveStatus.idle &&
+                                      !state.vehicleResolve.confirmed)
+                                    const SizedBox(
+                                      height: kCreateListingFieldGap,
+                                    ),
+                                  CreateListingVehicleResolvePanel(
                                     l10n: l10n,
-                                    submitting: submitting,
-                                    offstage: false,
+                                    theme: theme,
+                                    resolve: state.vehicleResolve,
+                                    enabled: !submitting,
+                                    compactMake: _effectiveMakeForSubmit(),
+                                    compactModel: _effectiveModelForSubmit(),
+                                    compactYear:
+                                        _yearFieldKey.currentState?.value,
+                                    compactVariant: _variantForSubmit(),
+                                    onEnterManual: _enterManualIdentity,
+                                    onRetry: () => context
+                                        .read<CreateListingCubit>()
+                                        .retryResolve(),
                                   ),
                                 ],
-                                if (!_editingCharacteristics)
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                      top: _showLocationSummary ? 4 : 0,
-                                    ),
-                                    child: CreateListingManualEntryLink(
-                                      key: const ValueKey(
-                                        'create_listing_edit_characteristics',
-                                      ),
-                                      label:
-                                          l10n.createListingEditCharacteristics,
-                                      enabled: !submitting,
-                                      onPressed: _openCharacteristicsEditors,
-                                    ),
-                                  )
-                                else
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      top: 8,
-                                      bottom: 4,
-                                    ),
-                                    child: Text(
-                                      l10n.createListingCharacteristicsEditorTitle,
-                                      key: const ValueKey(
-                                        'create_listing_characteristics_editor_title',
-                                      ),
-                                      style:
-                                          (createListingQuietTitleStyle(
+                              ),
+                            ),
+                            _during(
+                              CreateListingStep.photos,
+                              KeyedSubtree(
+                                key: const ValueKey(
+                                  'create_listing_photos_section',
+                                ),
+                                child: CreateListingQuietSurface(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    14,
+                                    12,
+                                    14,
+                                    14,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              l10n.createListingSectionPhotosLead,
+                                              style:
+                                                  createListingQuietTitleStyle(
                                                     theme,
-                                                  ) ??
-                                                  const TextStyle())
-                                              .copyWith(
-                                                fontSize: 14,
-                                                height: 1.2,
-                                              ),
+                                                  ),
+                                            ),
+                                          ),
+                                          Text(
+                                            l10n.createListingPhotoCount(
+                                              _photoDrafts.length,
+                                            ),
+                                            style:
+                                                createListingSupportStyle(
+                                                  theme,
+                                                )?.copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                  letterSpacing: 0.2,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(
+                                        height:
+                                            kCreateListingHeadingToContentGap,
+                                      ),
+                                      CreateListingMediaSection(
+                                        photos: _photoDrafts,
+                                        pickingImage: _pickingImage,
+                                        disabled: submitting,
+                                        onAddPhoto: () => _addPhoto(context),
+                                        onRemovePhotoAt: _removePhotoAt,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            _during(
+                              CreateListingStep.identity,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  if (showManualRow) ...[
+                                    const SizedBox(
+                                      height: kCreateListingInterSectionGap,
+                                    ),
+                                    CreateListingManualIdentityRow(
+                                      label:
+                                          l10n.createListingManualVehicleTitle,
+                                      enabled: !submitting,
+                                      expanded: editorsOpen,
+                                      onPressed: _toggleManualIdentity,
+                                    ),
+                                  ],
+                                  SizedBox(
+                                    height: editorsOpen
+                                        ? (showManualRow
+                                              ? kCreateListingFieldGap
+                                              : kCreateListingInterSectionGap)
+                                        : 0,
+                                  ),
+                                  KeyedSubtree(
+                                    key: const ValueKey(
+                                      'create_listing_vehicle_section',
+                                    ),
+                                    child: Offstage(
+                                      key: const ValueKey(
+                                        'create_listing_identity_editors',
+                                      ),
+                                      offstage: !editorsOpen,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          CreateListingQuietSurface(
+                                            title: l10n
+                                                .createListingManualVehicleSubtitle,
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.stretch,
+                                              children: [
+                                                CreateListingMmyRow(
+                                                  make: FormField<String?>(
+                                                    key: _brandFieldKey,
+                                                    validator: (_) {
+                                                      if (!_fieldRuleActive(
+                                                        CreateListingStep
+                                                            .identity,
+                                                      )) {
+                                                        return null;
+                                                      }
+                                                      return _selectedBrandCatalogValue ==
+                                                              null
+                                                          ? l10n.validationRequired
+                                                          : null;
+                                                    },
+                                                    builder: (fieldState) {
+                                                      return CreateListingPickerField(
+                                                        fieldKey: const ValueKey(
+                                                          'create_listing_brand_field',
+                                                        ),
+                                                        compact: true,
+                                                        caption: l10n
+                                                            .createListingBrandLabel,
+                                                        label: l10n
+                                                            .createListingMmyValuePlaceholder,
+                                                        value: brandDisplay,
+                                                        empty:
+                                                            _selectedBrandCatalogValue ==
+                                                            null,
+                                                        enabled: !submitting,
+                                                        errorText:
+                                                            _visibleVehicleIdentityError(
+                                                              fieldState,
+                                                            ),
+                                                        onTap: () async {
+                                                          await _openBrandSheet();
+                                                          fieldState.didChange(
+                                                            _selectedBrandCatalogValue,
+                                                          );
+                                                        },
+                                                      );
+                                                    },
+                                                  ),
+                                                  model: Builder(
+                                                    builder: (context) {
+                                                      final modelEnabled =
+                                                          !submitting &&
+                                                          _selectedBrandCatalogValue !=
+                                                              null &&
+                                                          !_isCustomMake;
+                                                      final modelEmpty =
+                                                          _selectedCanonicalModel ==
+                                                              null &&
+                                                          !_manualModel &&
+                                                          !_isCustomMake;
+                                                      return ListingModelSelectorField(
+                                                        key: const ValueKey(
+                                                          'create_listing_model_field',
+                                                        ),
+                                                        formFieldKey:
+                                                            _modelSelectorKey,
+                                                        l10n: l10n,
+                                                        enabled: modelEnabled,
+                                                        dense: true,
+                                                        caption:
+                                                            l10n.fieldModel,
+                                                        manualMode:
+                                                            _manualModel ||
+                                                            _isCustomMake,
+                                                        canonicalModel:
+                                                            _selectedCanonicalModel,
+                                                        onTap: _openModelSheet,
+                                                        placeholder:
+                                                            _selectedBrandCatalogValue ==
+                                                                null
+                                                            ? l10n.createListingMmyValuePlaceholder
+                                                            : null,
+                                                        borderRadius:
+                                                            kCreateListingFieldRadius,
+                                                        denseSurface:
+                                                            ({
+                                                              required hasValue,
+                                                              required hasError,
+                                                            }) => createListingSoftSurfaceDecoration(
+                                                              theme,
+                                                              visualState:
+                                                                  resolveCreateListingFieldVisualState(
+                                                                    enabled:
+                                                                        modelEnabled,
+                                                                    hasValue:
+                                                                        hasValue,
+                                                                    error:
+                                                                        hasError,
+                                                                  ),
+                                                              hasValue:
+                                                                  hasValue,
+                                                              enabled:
+                                                                  modelEnabled,
+                                                              error: hasError,
+                                                            ),
+                                                        decoration:
+                                                            createListingFieldDecoration(
+                                                              theme,
+                                                              hasValue:
+                                                                  !modelEmpty,
+                                                            ),
+                                                      );
+                                                    },
+                                                  ),
+                                                  year: FormField<int?>(
+                                                    key: _yearFieldKey,
+                                                    initialValue: null,
+                                                    validator: (y) {
+                                                      if (!_fieldRuleActive(
+                                                        CreateListingStep
+                                                            .identity,
+                                                      )) {
+                                                        return null;
+                                                      }
+                                                      return y == null
+                                                          ? l10n.validationRequired
+                                                          : null;
+                                                    },
+                                                    builder: (fieldState) {
+                                                      final yr =
+                                                          fieldState.value;
+                                                      return CreateListingPickerField(
+                                                        fieldKey: const ValueKey(
+                                                          'create_listing_year_field',
+                                                        ),
+                                                        compact: true,
+                                                        caption: l10n.fieldYear,
+                                                        label: l10n
+                                                            .createListingMmyValuePlaceholder,
+                                                        value: yr == null
+                                                            ? ''
+                                                            : '$yr',
+                                                        empty: yr == null,
+                                                        enabled: !submitting,
+                                                        errorText:
+                                                            _visibleVehicleIdentityError(
+                                                              fieldState,
+                                                            ),
+                                                        onTap: () async {
+                                                          final picked =
+                                                              await showListingYearPickSheet(
+                                                                context:
+                                                                    context,
+                                                                l10n: l10n,
+                                                                selectedYear:
+                                                                    yr,
+                                                              );
+                                                          if (!context.mounted)
+                                                            return;
+                                                          if (picked != null) {
+                                                            setState(() {
+                                                              _yearFromVin =
+                                                                  false;
+                                                              fieldState
+                                                                  .didChange(
+                                                                    picked,
+                                                                  );
+                                                            });
+                                                            fieldState
+                                                                .validate();
+                                                            _onManualIdentityMaybeChanged(
+                                                              immediate: true,
+                                                            );
+                                                          }
+                                                        },
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                                if (_selectedBrandCatalogValue ==
+                                                    _kListingBrandCatalogOther) ...[
+                                                  const SizedBox(
+                                                    height:
+                                                        kCreateListingFieldGap,
+                                                  ),
+                                                  CreateListingTextSurface(
+                                                    controller: _customBrand,
+                                                    builder: (context, hasValue) {
+                                                      return TextFormField(
+                                                        key: const ValueKey(
+                                                          'create_listing_custom_brand_field',
+                                                        ),
+                                                        controller:
+                                                            _customBrand,
+                                                        decoration:
+                                                            createListingFieldDecoration(
+                                                              theme,
+                                                              hintText: l10n
+                                                                  .createListingCustomBrandHint,
+                                                              hasValue:
+                                                                  hasValue,
+                                                            ),
+                                                        textInputAction:
+                                                            TextInputAction
+                                                                .next,
+                                                        enabled: !submitting,
+                                                        onChanged: (_) {
+                                                          setState(
+                                                            () => _makeFromVin =
+                                                                false,
+                                                          );
+                                                          _onManualIdentityMaybeChanged(
+                                                            immediate: false,
+                                                          );
+                                                        },
+                                                        validator: (v) {
+                                                          if (!_fieldRuleActive(
+                                                            CreateListingStep
+                                                                .identity,
+                                                          )) {
+                                                            return null;
+                                                          }
+                                                          return validateListingCustomMakeField(
+                                                            l10n,
+                                                            catalogKey:
+                                                                _selectedBrandCatalogValue,
+                                                            customMakeText:
+                                                                v ?? '',
+                                                          );
+                                                        },
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
+                                                if (_manualModel ||
+                                                    _isCustomMake) ...[
+                                                  const SizedBox(
+                                                    height:
+                                                        kCreateListingFieldGap,
+                                                  ),
+                                                  CreateListingTextSurface(
+                                                    controller: _model,
+                                                    builder: (context, hasValue) {
+                                                      return TextFormField(
+                                                        key: const ValueKey(
+                                                          'create_listing_manual_model',
+                                                        ),
+                                                        controller: _model,
+                                                        onChanged: (_) {
+                                                          _modelFromVin = false;
+                                                          _onManualIdentityMaybeChanged(
+                                                            immediate: false,
+                                                          );
+                                                        },
+                                                        decoration:
+                                                            createListingFieldDecoration(
+                                                              theme,
+                                                              hintText: l10n
+                                                                  .listingModelManualFieldLabel,
+                                                              hasValue:
+                                                                  hasValue,
+                                                            ),
+                                                        textInputAction:
+                                                            TextInputAction
+                                                                .next,
+                                                        validator: (v) =>
+                                                            _fieldRuleActive(
+                                                              CreateListingStep
+                                                                  .identity,
+                                                            )
+                                                            ? _required(l10n, v)
+                                                            : null,
+                                                        enabled: !submitting,
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          CreateListingTextSurface(
+                                            controller: _variant,
+                                            builder: (context, hasValue) {
+                                              return TextFormField(
+                                                key: const ValueKey(
+                                                  'create_listing_variant_field',
+                                                ),
+                                                controller: _variant,
+                                                onChanged: (_) =>
+                                                    _variantFromVin = false,
+                                                decoration:
+                                                    createListingFieldDecoration(
+                                                      theme,
+                                                      hintText: l10n
+                                                          .listingVariantLabel,
+                                                      hasValue: hasValue,
+                                                    ),
+                                                textInputAction:
+                                                    TextInputAction.next,
+                                                maxLength:
+                                                    kListingVariantMaxLength,
+                                                buildCounter:
+                                                    (
+                                                      context, {
+                                                      required currentLength,
+                                                      required isFocused,
+                                                      maxLength,
+                                                    }) => null,
+                                                validator: (v) =>
+                                                    _validateOptionalVariant(
+                                                      l10n,
+                                                      v,
+                                                    ),
+                                                enabled: !submitting,
+                                              );
+                                            },
+                                          ),
+                                          const SizedBox(
+                                            height: kCreateListingFieldGap,
+                                          ),
+                                          BlocBuilder<
+                                            ManualSmartFillCubit,
+                                            ManualSmartFillState
+                                          >(
+                                            builder: (context, smartFill) {
+                                              if (state
+                                                      .vehicleResolve
+                                                      .confirmed ||
+                                                  !_showIdentityEditors(
+                                                    state.vehicleResolve,
+                                                  )) {
+                                                return const SizedBox.shrink();
+                                              }
+                                              return CreateListingManualSmartFillPanel(
+                                                l10n: l10n,
+                                                theme: theme,
+                                                state: smartFill,
+                                                enabled: !submitting,
+                                                filledSummary:
+                                                    _smartFillFilledSummary(
+                                                      l10n,
+                                                    ),
+                                                onRestart:
+                                                    _restartProgressiveSmartFill,
+                                                onRetry: () => context
+                                                    .read<
+                                                      ManualSmartFillCubit
+                                                    >()
+                                                    .retry(),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                              ],
-                              Offstage(
+                                ],
+                              ),
+                            ),
+
+                            _during(
+                              CreateListingStep.characteristics,
+                              CreateListingQuietSurface(
                                 key: const ValueKey(
-                                  'create_listing_additional_details',
+                                  'create_listing_characteristics_section',
                                 ),
-                                offstage: !_editingCharacteristics,
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  14,
+                                  16,
+                                  14,
+                                ),
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
                                   children: [
-                                    CreateListingResponsiveFieldRow(
-                                      start: CreateListingPickerField(
-                                        fieldKey: const ValueKey(
-                                          'create_listing_body_type_field',
-                                        ),
-                                        label: l10n.listingBodyTypeSectionTitle,
-                                        value: _bodyType == null
-                                            ? ''
-                                            : formatListingBodyType(
-                                                l10n,
-                                                _bodyType!,
-                                              ),
-                                        empty: _bodyType == null,
-                                        enabled: !submitting,
-                                        onTap: _openBodyTypeSheet,
-                                      ),
-                                      end: CreateListingPickerField(
-                                        fieldKey: const ValueKey(
-                                          'create_listing_fuel_field',
-                                        ),
-                                        label: l10n.listingFuelType,
-                                        value: _fuelType == null
-                                            ? ''
-                                            : formatListingFuelType(
-                                                l10n,
-                                                _fuelType!,
-                                              ),
-                                        empty: _fuelType == null,
-                                        enabled: !submitting,
-                                        onTap: _openFuelTypeSheet,
+                                    Text(
+                                      l10n.createListingVehicleDataTitle,
+                                      style: createListingQuietTitleStyle(
+                                        theme,
                                       ),
                                     ),
-                                    const SizedBox(
-                                      height: kCreateListingFieldGap,
-                                    ),
-                                    CreateListingResponsiveFieldRow(
-                                      start: CreateListingTextSurface(
-                                        controller: _engineDisplacement,
-                                        builder: (context, hasValue) {
-                                          return TextFormField(
-                                            key: const ValueKey(
-                                              'create_listing_engine_displacement_field',
-                                            ),
-                                            controller: _engineDisplacement,
-                                            decoration:
-                                                createListingFieldDecoration(
-                                                  theme,
-                                                  hintText: l10n
-                                                      .createListingEngineLitersPlaceholder,
-                                                  hasValue: hasValue,
+                                    if (!_editingCharacteristics &&
+                                        !_hasPopulatedCharacteristics()) ...[
+                                      const SizedBox(height: 2),
+                                      LayoutBuilder(
+                                        builder: (context, constraints) {
+                                          final scale = MediaQuery.textScalerOf(
+                                            context,
+                                          ).scale(1);
+                                          final hint = Text(
+                                            l10n.createListingCharacteristicsAutoHelper,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(
+                                                        alpha:
+                                                            theme.brightness ==
+                                                                Brightness.light
+                                                            ? 0.55
+                                                            : 0.68,
+                                                      ),
+                                                  height: 1.2,
+                                                  fontSize: 13,
                                                 ),
-                                            keyboardType:
-                                                const TextInputType.numberWithOptions(
-                                                  decimal: true,
-                                                ),
-                                            validator: (v) =>
-                                                _validateOptionalDisplacement(
-                                                  l10n,
-                                                  v,
-                                                ),
-                                            enabled: !submitting,
-                                            onChanged: (_) {
-                                              if (_applyingVinSpecs ||
-                                                  _applyingCatalogSpecs) {
-                                                return;
-                                              }
-                                              if (!_engineDisplacementFromVin &&
-                                                  !_engineDisplacementFromCatalog) {
-                                                return;
-                                              }
-                                              setState(() {
-                                                _engineDisplacementFromVin =
-                                                    false;
-                                                _engineDisplacementFromCatalog =
-                                                    false;
-                                              });
-                                              _cancelProgressiveRefinementForSellerEdit();
-                                            },
                                           );
-                                        },
-                                      ),
-                                      end: CreateListingTextSurface(
-                                        controller: _enginePower,
-                                        builder: (context, hasValue) {
-                                          return TextFormField(
+                                          final action = CreateListingManualEntryLink(
                                             key: const ValueKey(
-                                              'create_listing_engine_power_field',
+                                              'create_listing_edit_characteristics',
                                             ),
-                                            controller: _enginePower,
-                                            decoration:
-                                                createListingFieldDecoration(
-                                                  theme,
-                                                  hintText: l10n
-                                                      .createListingEnginePowerPlaceholder,
-                                                  hasValue: hasValue,
-                                                ),
-                                            keyboardType: TextInputType.number,
-                                            inputFormatters: [
-                                              FilteringTextInputFormatter
-                                                  .digitsOnly,
+                                            label: l10n
+                                                .createListingCharacteristicsEnterManually,
+                                            enabled: !submitting,
+                                            onPressed:
+                                                _openCharacteristicsEditors,
+                                          );
+                                          if (constraints.maxWidth < 340 ||
+                                              scale > 1.15) {
+                                            return Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [hint, action],
+                                            );
+                                          }
+                                          return Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Expanded(child: hint),
+                                              Flexible(child: action),
                                             ],
-                                            validator: (v) =>
-                                                _validateOptionalPower(l10n, v),
-                                            enabled: !submitting,
-                                            onChanged: (_) {
-                                              if (_applyingCatalogSpecs) {
-                                                return;
-                                              }
-                                              if (!_enginePowerFromCatalog) {
-                                                return;
-                                              }
-                                              setState(
-                                                () => _enginePowerFromCatalog =
-                                                    false,
-                                              );
-                                              _cancelProgressiveRefinementForSellerEdit();
-                                            },
                                           );
                                         },
                                       ),
-                                    ),
-                                    const SizedBox(
-                                      height: kCreateListingFieldGap,
-                                    ),
-                                    CreateListingResponsiveFieldRow(
-                                      start: CreateListingPickerField(
-                                        fieldKey: const ValueKey(
-                                          'create_listing_transmission_field',
-                                        ),
-                                        label: l10n.listingTransmission,
-                                        value: _transmissionType == null
-                                            ? ''
-                                            : formatListingTransmissionType(
-                                                l10n,
-                                                _transmissionType!,
+                                    ] else ...[
+                                      if (_characteristicsFilledAutomatically())
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 2,
+                                            bottom: 10,
+                                          ),
+                                          child: Text(
+                                            l10n.createListingCharacteristicsFilledAutomatically,
+                                            key: const ValueKey(
+                                              'create_listing_characteristics_auto_status',
+                                            ),
+                                            style: theme.textTheme.labelMedium
+                                                ?.copyWith(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(
+                                                        alpha:
+                                                            theme.brightness ==
+                                                                Brightness.light
+                                                            ? 0.50
+                                                            : 0.62,
+                                                      ),
+                                                  fontWeight: FontWeight.w500,
+                                                  letterSpacing: 0.15,
+                                                  fontSize: 12,
+                                                  height: 1.2,
+                                                ),
+                                          ),
+                                        )
+                                      else
+                                        const SizedBox(height: 8),
+                                      ListenableBuilder(
+                                        listenable: Listenable.merge([
+                                          _engineDisplacement,
+                                          _enginePower,
+                                          _engineCylinders,
+                                          _doors,
+                                          _seats,
+                                          _registration,
+                                        ]),
+                                        builder: (context, _) {
+                                          return CreateListingCharacteristicsFacts(
+                                            facts: buildCreateListingTechnicalFacts(
+                                              l10n,
+                                              bodyType: _bodyType,
+                                              displacementLiters:
+                                                  _engineDisplacementFromField(),
+                                              fuelType: _fuelType,
+                                              drivetrain: _drivetrain,
+                                              transmissionType:
+                                                  _transmissionType,
+                                              powerHp: _enginePowerFromField(),
+                                              engineCylinders: _countFromField(
+                                                _engineCylinders,
+                                                max: 16,
                                               ),
-                                        empty: _transmissionType == null,
-                                        enabled: !submitting,
-                                        onTap: _openTransmissionSheet,
-                                      ),
-                                      end: CreateListingPickerField(
-                                        fieldKey: const ValueKey(
-                                          'create_listing_drivetrain_field',
-                                        ),
-                                        label: l10n
-                                            .createListingDrivetrainNotSpecified,
-                                        value: _drivetrain == null
-                                            ? ''
-                                            : formatListingDrivetrain(
-                                                l10n,
-                                                _drivetrain!,
+                                              doors: _countFromField(
+                                                _doors,
+                                                max: 6,
                                               ),
-                                        empty: _drivetrain == null,
-                                        enabled: !submitting,
-                                        onTap: _openDrivetrainSheet,
+                                              seats: _countFromField(
+                                                _seats,
+                                                max: 15,
+                                              ),
+                                              registration: _registration.text,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      if (!_editingCharacteristics)
+                                        Padding(
+                                          padding: EdgeInsets.zero,
+                                          child: CreateListingManualEntryLink(
+                                            key: const ValueKey(
+                                              'create_listing_edit_characteristics',
+                                            ),
+                                            label: l10n
+                                                .createListingEditCharacteristics,
+                                            enabled: !submitting,
+                                            opticalLift: 3,
+                                            onPressed:
+                                                _openCharacteristicsEditors,
+                                          ),
+                                        )
+                                      else
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8,
+                                            bottom: 4,
+                                          ),
+                                          child: Text(
+                                            l10n.createListingCharacteristicsEditorTitle,
+                                            key: const ValueKey(
+                                              'create_listing_characteristics_editor_title',
+                                            ),
+                                            style:
+                                                (createListingQuietTitleStyle(
+                                                          theme,
+                                                        ) ??
+                                                        const TextStyle())
+                                                    .copyWith(
+                                                      fontSize: 14,
+                                                      height: 1.2,
+                                                    ),
+                                          ),
+                                        ),
+                                    ],
+                                    Offstage(
+                                      key: const ValueKey(
+                                        'create_listing_additional_details',
+                                      ),
+                                      offstage: !_editingCharacteristics,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          CreateListingResponsiveFieldRow(
+                                            start: CreateListingPickerField(
+                                              fieldKey: const ValueKey(
+                                                'create_listing_body_type_field',
+                                              ),
+                                              label: l10n
+                                                  .listingBodyTypeSectionTitle,
+                                              value: _bodyType == null
+                                                  ? ''
+                                                  : formatListingBodyType(
+                                                      l10n,
+                                                      _bodyType!,
+                                                    ),
+                                              empty: _bodyType == null,
+                                              enabled: !submitting,
+                                              onTap: _openBodyTypeSheet,
+                                            ),
+                                            end: CreateListingPickerField(
+                                              fieldKey: const ValueKey(
+                                                'create_listing_fuel_field',
+                                              ),
+                                              label: l10n.listingFuelType,
+                                              value: _fuelType == null
+                                                  ? ''
+                                                  : formatListingFuelType(
+                                                      l10n,
+                                                      _fuelType!,
+                                                    ),
+                                              empty: _fuelType == null,
+                                              enabled: !submitting,
+                                              onTap: _openFuelTypeSheet,
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: kCreateListingFieldGap,
+                                          ),
+                                          CreateListingResponsiveFieldRow(
+                                            start: CreateListingTextSurface(
+                                              controller: _engineDisplacement,
+                                              builder: (context, hasValue) {
+                                                return TextFormField(
+                                                  key: const ValueKey(
+                                                    'create_listing_engine_displacement_field',
+                                                  ),
+                                                  controller:
+                                                      _engineDisplacement,
+                                                  decoration:
+                                                      createListingFieldDecoration(
+                                                        theme,
+                                                        hintText: l10n
+                                                            .createListingEngineLitersPlaceholder,
+                                                        hasValue: hasValue,
+                                                      ),
+                                                  keyboardType:
+                                                      const TextInputType.numberWithOptions(
+                                                        decimal: true,
+                                                      ),
+                                                  validator: (v) =>
+                                                      _validateOptionalDisplacement(
+                                                        l10n,
+                                                        v,
+                                                      ),
+                                                  enabled: !submitting,
+                                                  onChanged: (_) {
+                                                    if (_applyingVinSpecs ||
+                                                        _applyingCatalogSpecs) {
+                                                      return;
+                                                    }
+                                                    if (!_engineDisplacementFromVin &&
+                                                        !_engineDisplacementFromCatalog) {
+                                                      return;
+                                                    }
+                                                    setState(() {
+                                                      _engineDisplacementFromVin =
+                                                          false;
+                                                      _engineDisplacementFromCatalog =
+                                                          false;
+                                                    });
+                                                    _bumpVinCatalogEnrichment();
+                                                    _cancelProgressiveRefinementForSellerEdit();
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                            end: CreateListingTextSurface(
+                                              controller: _enginePower,
+                                              builder: (context, hasValue) {
+                                                return TextFormField(
+                                                  key: const ValueKey(
+                                                    'create_listing_engine_power_field',
+                                                  ),
+                                                  controller: _enginePower,
+                                                  decoration:
+                                                      createListingFieldDecoration(
+                                                        theme,
+                                                        hintText: l10n
+                                                            .createListingEnginePowerPlaceholder,
+                                                        hasValue: hasValue,
+                                                      ),
+                                                  keyboardType:
+                                                      TextInputType.number,
+                                                  inputFormatters: [
+                                                    FilteringTextInputFormatter
+                                                        .digitsOnly,
+                                                  ],
+                                                  validator: (v) =>
+                                                      _validateOptionalPower(
+                                                        l10n,
+                                                        v,
+                                                      ),
+                                                  enabled: !submitting,
+                                                  onChanged: (_) {
+                                                    if (_applyingCatalogSpecs) {
+                                                      return;
+                                                    }
+                                                    if (!_enginePowerFromCatalog) {
+                                                      return;
+                                                    }
+                                                    setState(
+                                                      () =>
+                                                          _enginePowerFromCatalog =
+                                                              false,
+                                                    );
+                                                    _bumpVinCatalogEnrichment();
+                                                    _cancelProgressiveRefinementForSellerEdit();
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: kCreateListingFieldGap,
+                                          ),
+                                          CreateListingResponsiveFieldRow(
+                                            start: CreateListingPickerField(
+                                              fieldKey: const ValueKey(
+                                                'create_listing_transmission_field',
+                                              ),
+                                              label: l10n.listingTransmission,
+                                              value: _transmissionType == null
+                                                  ? ''
+                                                  : formatListingTransmissionType(
+                                                      l10n,
+                                                      _transmissionType!,
+                                                    ),
+                                              empty: _transmissionType == null,
+                                              enabled: !submitting,
+                                              onTap: _openTransmissionSheet,
+                                            ),
+                                            end: CreateListingPickerField(
+                                              fieldKey: const ValueKey(
+                                                'create_listing_drivetrain_field',
+                                              ),
+                                              label: l10n
+                                                  .createListingDrivetrainNotSpecified,
+                                              value: _drivetrain == null
+                                                  ? ''
+                                                  : formatListingDrivetrain(
+                                                      l10n,
+                                                      _drivetrain!,
+                                                    ),
+                                              empty: _drivetrain == null,
+                                              enabled: !submitting,
+                                              onTap: _openDrivetrainSheet,
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: kCreateListingFieldGap,
+                                          ),
+                                          CreateListingResponsiveFieldRow(
+                                            start: _countField(
+                                              controller: _engineCylinders,
+                                              fieldKey: const ValueKey(
+                                                'create_listing_engine_cylinders_field',
+                                              ),
+                                              hint: l10n
+                                                  .createListingEngineCylindersPlaceholder,
+                                              max: 16,
+                                              fromVin: () =>
+                                                  _engineCylindersFromVin,
+                                              clearVin: () =>
+                                                  _engineCylindersFromVin =
+                                                      false,
+                                              theme: theme,
+                                              l10n: l10n,
+                                              submitting: submitting,
+                                            ),
+                                            end: _countField(
+                                              controller: _doors,
+                                              fieldKey: const ValueKey(
+                                                'create_listing_doors_field',
+                                              ),
+                                              hint: l10n
+                                                  .createListingDoorsPlaceholder,
+                                              max: 6,
+                                              fromVin: () => _doorsFromVin,
+                                              clearVin: () =>
+                                                  _doorsFromVin = false,
+                                              theme: theme,
+                                              l10n: l10n,
+                                              submitting: submitting,
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            height: kCreateListingFieldGap,
+                                          ),
+                                          _countField(
+                                            controller: _seats,
+                                            fieldKey: const ValueKey(
+                                              'create_listing_seats_field',
+                                            ),
+                                            hint: l10n
+                                                .createListingSeatsPlaceholder,
+                                            max: 15,
+                                            fromVin: () => _seatsFromVin,
+                                            clearVin: () =>
+                                                _seatsFromVin = false,
+                                            theme: theme,
+                                            l10n: l10n,
+                                            submitting: submitting,
+                                          ),
+                                          const SizedBox(
+                                            height: kCreateListingFieldGap,
+                                          ),
+                                          CreateListingTextSurface(
+                                            controller: _registration,
+                                            builder: (context, hasValue) {
+                                              return TextFormField(
+                                                controller: _registration,
+                                                decoration:
+                                                    createListingFieldDecoration(
+                                                      theme,
+                                                      hintText: l10n
+                                                          .createListingRegistrationPlaceholder,
+                                                      hasValue: hasValue,
+                                                    ),
+                                                maxLength:
+                                                    kListingRegistrationMaxLength,
+                                                maxLines: 1,
+                                                buildCounter:
+                                                    (
+                                                      context, {
+                                                      required currentLength,
+                                                      required isFocused,
+                                                      maxLength,
+                                                    }) => null,
+                                                validator: (v) =>
+                                                    _validateOptionalRegistration(
+                                                      l10n,
+                                                      v,
+                                                    ),
+                                                enabled: !submitting,
+                                              );
+                                            },
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(
-                                      height: kCreateListingFieldGap,
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            _during(
+                              CreateListingStep.offer,
+                              Column(
+                                key: const ValueKey(
+                                  'create_listing_offer_section',
+                                ),
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  CreateListingQuietSurface(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      16,
+                                      16,
+                                      18,
                                     ),
+                                    child: priceField(),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  CreateListingQuietSurface(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      16,
+                                      16,
+                                      18,
+                                    ),
+                                    child: mileageField(),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            _during(
+                              CreateListingStep.contact,
+                              Column(
+                                key: const ValueKey(
+                                  'create_listing_contact_section',
+                                ),
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  CreateListingQuietSurface(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        if (!contactCollapsed) ...[
+                                          const CreateListingContactNotice(),
+                                          const SizedBox(
+                                            height: kCreateListingFieldGap,
+                                          ),
+                                        ],
+                                        contactCollapsed
+                                            ? _collapsedPhoneCell(
+                                                theme: theme,
+                                                l10n: l10n,
+                                                submitting: submitting,
+                                              )
+                                            : phoneField(),
+                                      ],
+                                    ),
+                                  ),
+                                  Offstage(
+                                    key: const ValueKey(
+                                      'create_listing_contact_editors',
+                                    ),
+                                    offstage: contactCollapsed,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                        top: contactCollapsed ? 0 : 8,
+                                      ),
+                                      child: contactCollapsed
+                                          ? contactChannels(includePhone: true)
+                                          : CreateListingQuietSurface(
+                                              child: contactChannels(
+                                                includePhone: false,
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            _during(
+                              CreateListingStep.contact,
+                              KeyedSubtree(
+                                key: const ValueKey(
+                                  'create_listing_location_section',
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    if (_showLocationSummary)
+                                      CreateListingCompactSummary(
+                                        key: const ValueKey(
+                                          'create_listing_location_summary',
+                                        ),
+                                        tapKey: const ValueKey(
+                                          'create_listing_change_location',
+                                        ),
+                                        icon: kCreateListingIconLocation,
+                                        label:
+                                            l10n.createListingSectionLocation,
+                                        primary: _effectiveCityForSubmit(),
+                                        secondary: formatMarketRegion(
+                                          l10n,
+                                          _marketRegion,
+                                        ),
+                                        enabled: !submitting,
+                                        expanded: _editingLocation,
+                                        onPressed: _openLocationEditors,
+                                      )
+                                    else ...[
+                                      Text(
+                                        l10n.createListingSectionLocation,
+                                        style: createListingQuietTitleStyle(
+                                          theme,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                    ],
+                                    if (_showLocationSummary &&
+                                        _editingLocation) ...[
+                                      const SizedBox(
+                                        height: kCreateListingFieldGap,
+                                      ),
+                                      _locationEditors(
+                                        theme: theme,
+                                        l10n: l10n,
+                                        submitting: submitting,
+                                        offstage: false,
+                                      ),
+                                    ],
+                                    if (!(_showLocationSummary &&
+                                        _editingLocation))
+                                      _locationEditors(
+                                        theme: theme,
+                                        l10n: l10n,
+                                        submitting: submitting,
+                                        offstage: _showLocationSummary,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            _during(
+                              CreateListingStep.offer,
+                              Column(
+                                key: const ValueKey(
+                                  'create_listing_type_section',
+                                ),
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  CreateListingQuietSurface(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              kCreateListingIconListingType,
+                                              size: kCreateListingEditIconSize,
+                                              color:
+                                                  createListingPassiveIconColor(
+                                                    theme,
+                                                  ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: Text(
+                                                l10n.createListingDealTypeLabel,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style:
+                                                    createListingQuietTitleStyle(
+                                                      theme,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(
+                                          height:
+                                              kCreateListingHeadingToContentGap,
+                                        ),
+                                        ListingTypeDealSelector(
+                                          l10n: l10n,
+                                          theme: theme,
+                                          value: _type,
+                                          submitting: submitting,
+                                          onChanged: (t) =>
+                                              setState(() => _type = t),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            _during(
+                              CreateListingStep.review,
+                              CreateListingQuietSurface(
+                                title: l10n.listingDetailsDescriptionSection,
+                                child: Column(
+                                  key: const ValueKey(
+                                    'create_listing_description_section',
+                                  ),
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
                                     CreateListingTextSurface(
-                                      controller: _registration,
+                                      controller: _description,
                                       builder: (context, hasValue) {
                                         return TextFormField(
-                                          controller: _registration,
-                                          decoration: createListingFieldDecoration(
-                                            theme,
-                                            hintText: l10n
-                                                .createListingRegistrationPlaceholder,
-                                            hasValue: hasValue,
+                                          key: const ValueKey(
+                                            'create_listing_description_field',
                                           ),
+                                          controller: _description,
+                                          minLines: 4,
+                                          maxLines: 8,
                                           maxLength:
-                                              kListingRegistrationMaxLength,
-                                          maxLines: 1,
+                                              kListingDescriptionMaxLength,
                                           buildCounter:
                                               (
                                                 context, {
                                                 required currentLength,
                                                 required isFocused,
                                                 maxLength,
-                                              }) => null,
-                                          validator: (v) =>
-                                              _validateOptionalRegistration(
-                                                l10n,
-                                                v,
+                                              }) {
+                                                return Text(
+                                                  '$currentLength / $maxLength',
+                                                  style: theme
+                                                      .textTheme
+                                                      .labelSmall
+                                                      ?.copyWith(
+                                                        color: theme
+                                                            .colorScheme
+                                                            .onSurface
+                                                            .withValues(
+                                                              alpha:
+                                                                  theme.brightness ==
+                                                                      Brightness
+                                                                          .light
+                                                                  ? 0.42
+                                                                  : 0.58,
+                                                            ),
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        letterSpacing: 0.3,
+                                                        height: 1.1,
+                                                      ),
+                                                );
+                                              },
+                                          decoration:
+                                              createListingFieldDecoration(
+                                                theme,
+                                                hintText: l10n
+                                                    .createListingDescriptionHint,
+                                                hasValue: hasValue,
+                                                separated: true,
+                                              ).copyWith(
+                                                hintStyle: theme
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      color: theme
+                                                          .colorScheme
+                                                          .onSurface
+                                                          .withValues(
+                                                            alpha:
+                                                                theme.brightness ==
+                                                                    Brightness
+                                                                        .light
+                                                                ? 0.42
+                                                                : 0.58,
+                                                          ),
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                      height: 1.35,
+                                                    ),
+                                                contentPadding:
+                                                    const EdgeInsets.fromLTRB(
+                                                      kCreateListingFieldHPad,
+                                                      16,
+                                                      kCreateListingFieldHPad,
+                                                      16,
+                                                    ),
                                               ),
                                           enabled: !submitting,
                                         );
@@ -2793,266 +4106,69 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                   ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
 
-                        const SizedBox(height: kCreateListingInterSectionGap),
-
-                        Column(
-                          key: const ValueKey('create_listing_contact_section'),
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            CreateListingQuietSurface(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  priceField(),
-                                  const SizedBox(
-                                    height: kCreateListingFieldGap,
-                                  ),
-                                  mileageField(),
-                                  const SizedBox(
-                                    height: kCreateListingFieldGap,
-                                  ),
-                                  if (!contactCollapsed) ...[
-                                    const CreateListingContactNotice(),
-                                    const SizedBox(
-                                      height: kCreateListingFieldGap,
-                                    ),
-                                  ],
-                                  contactCollapsed
-                                      ? _collapsedPhoneCell(
-                                          theme: theme,
+                            _during(
+                              CreateListingStep.review,
+                              KeyedSubtree(
+                                key: const ValueKey(
+                                  'create_listing_publish_section',
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    ListenableBuilder(
+                                      listenable: Listenable.merge([
+                                        _price,
+                                        _mileage,
+                                        _model,
+                                        _variant,
+                                        _customBrand,
+                                        _city,
+                                        _vin,
+                                        _engineDisplacement,
+                                        _enginePower,
+                                      ]),
+                                      builder: (context, _) {
+                                        return ListingPreviewCard(
+                                          data: _listingPreviewData(l10n),
                                           l10n: l10n,
-                                          submitting: submitting,
-                                        )
-                                      : phoneField(),
-                                ],
-                              ),
-                            ),
-                            Offstage(
-                              key: const ValueKey(
-                                'create_listing_contact_editors',
-                              ),
-                              offstage: contactCollapsed,
-                              child: Padding(
-                                padding: EdgeInsets.only(
-                                  top: contactCollapsed ? 0 : 8,
-                                ),
-                                child: contactCollapsed
-                                    ? contactChannels(includePhone: true)
-                                    : CreateListingQuietSurface(
-                                        child: contactChannels(
-                                          includePhone: false,
-                                        ),
-                                      ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        SizedBox(
-                          height: _showLocationSummary
-                              ? 0
-                              : kCreateListingInterSectionGap,
-                        ),
-
-                        KeyedSubtree(
-                          key: const ValueKey(
-                            'create_listing_location_section',
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              if (!_showLocationSummary) ...[
-                                Text(
-                                  l10n.createListingSectionLocation,
-                                  style: createListingQuietTitleStyle(theme),
-                                ),
-                                const SizedBox(height: 4),
-                              ],
-                              if (!(_showLocationSummary && _editingLocation))
-                                _locationEditors(
-                                  theme: theme,
-                                  l10n: l10n,
-                                  submitting: submitting,
-                                  offstage: _showLocationSummary,
-                                ),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(
-                          height: _showLocationSummary
-                              ? kCreateListingFieldGap
-                              : kCreateListingInterSectionGap,
-                        ),
-
-                        Column(
-                          key: const ValueKey('create_listing_type_section'),
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  kCreateListingIconListingType,
-                                  size: kCreateListingEditIconSize,
-                                  color: createListingPassiveIconColor(theme),
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    l10n.createListingDealTypeLabel,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style:
-                                        (createListingQuietTitleStyle(theme) ??
-                                                const TextStyle())
-                                            .copyWith(
-                                              fontSize: 13,
-                                              height: 1.15,
-                                            ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(
-                              height: kCreateListingHeadingToContentGap,
-                            ),
-                            ListingTypeDealSelector(
-                              l10n: l10n,
-                              theme: theme,
-                              value: _type,
-                              submitting: submitting,
-                              onChanged: (t) => setState(() => _type = t),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: kCreateListingInterSectionGap),
-
-                        Column(
-                          key: const ValueKey(
-                            'create_listing_description_section',
-                          ),
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              l10n.listingDetailsDescriptionSection,
-                              style: createListingQuietTitleStyle(theme),
-                            ),
-                            const SizedBox(
-                              height: kCreateListingHeadingToContentGap,
-                            ),
-                            CreateListingTextSurface(
-                              controller: _description,
-                              builder: (context, hasValue) {
-                                return TextFormField(
-                                  key: const ValueKey(
-                                    'create_listing_description_field',
-                                  ),
-                                  controller: _description,
-                                  minLines: 3,
-                                  maxLines: 8,
-                                  maxLength: kListingDescriptionMaxLength,
-                                  buildCounter:
-                                      (
-                                        context, {
-                                        required currentLength,
-                                        required isFocused,
-                                        maxLength,
-                                      }) {
-                                        return Text(
-                                          '$currentLength / $maxLength',
-                                          style: theme.textTheme.labelSmall
-                                              ?.copyWith(
-                                                color: theme
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withValues(alpha: 0.42),
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w500,
-                                                letterSpacing: 0.3,
-                                                height: 1.1,
-                                              ),
                                         );
                                       },
-                                  decoration:
-                                      createListingFieldDecoration(
-                                        theme,
-                                        hintText:
-                                            l10n.createListingDescriptionHint,
-                                        hasValue: hasValue,
-                                        separated: true,
-                                      ).copyWith(
-                                        hintStyle: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                              color: theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.42),
-                                              fontWeight: FontWeight.w400,
-                                              height: 1.35,
-                                            ),
-                                        contentPadding:
-                                            const EdgeInsets.fromLTRB(
-                                              kCreateListingFieldHPad,
-                                              12,
-                                              kCreateListingFieldHPad,
-                                              12,
-                                            ),
+                                    ),
+                                    if (CreateListingPage
+                                        .debugRevealAllSteps) ...[
+                                      const SizedBox(
+                                        height: kCreateListingFinishingGap,
                                       ),
-                                  enabled: !submitting,
-                                );
-                              },
+                                      PremiumPublishActionButton(
+                                        theme: theme,
+                                        l10n: l10n,
+                                        submitting: submitting,
+                                        onPressed: _submit,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
-
-                        const SizedBox(height: kCreateListingFinishingGap),
-
-                        KeyedSubtree(
-                          key: const ValueKey('create_listing_publish_section'),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              ListenableBuilder(
-                                listenable: Listenable.merge([
-                                  _price,
-                                  _mileage,
-                                  _model,
-                                  _variant,
-                                  _customBrand,
-                                  _city,
-                                  _vin,
-                                  _engineDisplacement,
-                                  _enginePower,
-                                ]),
-                                builder: (context, _) {
-                                  return ListingPreviewCard(
-                                    data: _listingPreviewData(l10n),
-                                    l10n: l10n,
-                                  );
-                                },
-                              ),
-                              const SizedBox(
-                                height: kCreateListingFinishingGap,
-                              ),
-                              PremiumPublishActionButton(
-                                theme: theme,
-                                l10n: l10n,
-                                submitting: submitting,
-                                onPressed: _submit,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: kCreateListingInterSectionGap),
-                      ],
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                CreateListingStepFooter(
+                  step: _step,
+                  submitting: submitting,
+                  continueBusy: _resolvingSmartFillContinue,
+                  onContinue: _onContinue,
+                  onPublish: _submit,
+                  l10n: l10n,
+                  theme: theme,
+                ),
+              ],
             ),
           );
         },

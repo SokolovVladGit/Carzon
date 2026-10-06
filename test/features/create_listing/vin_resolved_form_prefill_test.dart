@@ -18,12 +18,29 @@ void main() {
         ),
         ListingBodyType.suv,
       );
+      expect(vinResolvedBodyType('Wagon'), ListingBodyType.wagon);
+      expect(vinResolvedBodyType('Hatchback'), ListingBodyType.hatchback);
+      expect(
+        vinResolvedBodyType('Hatchback/Liftback/Notchback'),
+        ListingBodyType.hatchback,
+      );
+      expect(vinResolvedBodyType('Coupe'), ListingBodyType.coupe);
+      expect(
+        vinResolvedBodyType('Convertible/Cabriolet'),
+        ListingBodyType.convertible,
+      );
+      expect(vinResolvedBodyType('Minivan'), ListingBodyType.minivan);
+      expect(vinResolvedBodyType('Van'), ListingBodyType.van);
+      expect(vinResolvedBodyType('Cargo Van'), ListingBodyType.van);
       expect(vinResolvedBodyType('Truck'), isNull);
       expect(vinResolvedBodyType('Incomplete Vehicle'), isNull);
       expect(vinResolvedBodyType('Crossover'), isNull);
-      expect(vinResolvedBodyType('Wagon'), isNull);
-      expect(vinResolvedBodyType('Hatchback'), isNull);
       expect(vinResolvedBodyType('Pickup Truck'), isNull);
+      expect(
+        vinResolvedBodyType('Crossover Utility Vehicle (CUV)'),
+        isNull,
+      );
+      expect(vinResolvedBodyType('other'), isNull);
       expect(vinResolvedBodyType(null), isNull);
     });
   });
@@ -34,11 +51,65 @@ void main() {
       expect(vinResolvedFuelType('Petrol'), ListingFuelType.petrol);
       expect(vinResolvedFuelType('Diesel'), ListingFuelType.diesel);
       expect(vinResolvedFuelType('Electric'), ListingFuelType.electric);
+      expect(
+        vinResolvedFuelType(
+          'Gasoline',
+          electrification: 'PHEV (Plug-in Hybrid Electric Vehicle)',
+        ),
+        ListingFuelType.plugInHybrid,
+      );
+      expect(
+        vinResolvedFuelType(
+          'Gasoline',
+          electrification: 'HEV (Hybrid Electric Vehicle) - Level Unknown',
+        ),
+        ListingFuelType.hybrid,
+      );
+      expect(
+        vinResolvedFuelType(
+          'Electric',
+          electrification: 'BEV (Battery Electric Vehicle)',
+        ),
+        ListingFuelType.electric,
+      );
+      expect(
+        vinResolvedFuelType(
+          null,
+          electrification: 'Strong HEV (Hybrid Electric Vehicle)',
+        ),
+        ListingFuelType.hybrid,
+      );
+      expect(vinResolvedFuelType('LPG'), ListingFuelType.lpg);
+      expect(
+        vinResolvedFuelType('Compressed Natural Gas (CNG)'),
+        ListingFuelType.cng,
+      );
       expect(vinResolvedFuelType('Hybrid'), isNull);
       expect(vinResolvedFuelType('Plug-in Hybrid'), isNull);
       expect(vinResolvedFuelType('Flex Fuel'), isNull);
       expect(vinResolvedFuelType('Gasoline/E-85'), isNull);
-      expect(vinResolvedFuelType('CNG'), isNull);
+      expect(
+        vinResolvedFuelType(
+          'Gasoline',
+          secondary: 'Electric',
+          electrification: 'PHEV (Plug-in Hybrid Electric Vehicle)',
+        ),
+        isNull,
+      );
+      expect(
+        vinResolvedFuelType(
+          'Electric',
+          electrification: 'HEV (Hybrid Electric Vehicle) - Level Unknown',
+        ),
+        isNull,
+      );
+      expect(
+        vinResolvedFuelType(
+          'Gasoline',
+          electrification: 'FCEV (Fuel Cell Electric Vehicle)',
+        ),
+        isNull,
+      );
       expect(vinResolvedFuelType('unknown'), isNull);
     });
   });
@@ -118,6 +189,9 @@ void main() {
       expect(prefill.transmissionType, ListingTransmissionType.automatic);
       expect(prefill.drivetrain, ListingDrivetrain.fourWheel);
       expect(prefill.engineDisplacementLiters, 6.2);
+      expect(prefill.engineCylinders, isNull);
+      expect(prefill.doors, isNull);
+      expect(prefill.seats, isNull);
       expect(formatVinDisplacementField(6.2), '6.2');
     });
 
@@ -141,6 +215,44 @@ void main() {
           driveType: '4x2',
           displacement: 'huge',
         ),
+      );
+      expect(prefill.isEmpty, isTrue);
+    });
+
+    test('maps explicit cylinder, door, and seat counts', () {
+      final prefill = vinResolvedFormPrefill(
+        const VehicleResolveSuggestion(
+          make: 'Honda',
+          model: 'Accord',
+          year: 2003,
+          cylinders: '6',
+          doors: '4',
+          seats: '5',
+        ),
+      );
+      expect(prefill.engineCylinders, 6);
+      expect(prefill.doors, 4);
+      expect(prefill.seats, 5);
+      expect(vinResolvedCount('0', max: 16), isNull);
+      expect(vinResolvedCount('V6', max: 16), isNull);
+      expect(vinResolvedCount('24', max: 16), isNull);
+      expect(vinResolvedCount('7', max: 6), isNull);
+      expect(vinResolvedCount('16', max: 15), isNull);
+    });
+
+    test('caution blanks counts as well as other optional specs', () {
+      final prefill = vinResolvedFormPrefill(
+        const VehicleResolveSuggestion(
+          make: 'Honda',
+          model: 'Accord',
+          year: 2003,
+          bodyType: 'Sedan/Saloon',
+          fuelType: 'Gasoline',
+          cylinders: '4',
+          doors: '4',
+          seats: '5',
+        ),
+        warnings: const ['nhtsa_catalog_decode_caution'],
       );
       expect(prefill.isEmpty, isTrue);
     });

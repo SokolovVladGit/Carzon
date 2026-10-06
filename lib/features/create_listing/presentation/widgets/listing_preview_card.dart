@@ -40,7 +40,7 @@ class ListingPreviewCard extends StatelessWidget {
     'create_listing_listing_preview_type_badge',
   );
 
-  static const double _cardRadius = 16;
+  static const double _cardRadius = 18;
   @visibleForTesting
   static const double compactCoverHeight = 68;
   @visibleForTesting
@@ -74,34 +74,24 @@ class ListingPreviewCard extends StatelessWidget {
       else if (showRegionInMeta)
         formatMarketRegion(l10n, data.marketRegion),
     ]);
-    final fuelTransmission = listingPreviewJoin([
+    final specLine = listingPreviewJoin([
+      if (data.bodyType != null) formatListingBodyType(l10n, data.bodyType!),
       if (data.fuelType != null) formatListingFuelType(l10n, data.fuelType!),
+      if (data.engineDisplacementLiters != null)
+        formatEngineDisplacementForDisplay(l10n, data.engineDisplacementLiters),
+      if (data.enginePowerHp != null)
+        formatEnginePowerHpDisplay(l10n, data.enginePowerHp),
       if (data.transmissionType != null)
         formatListingTransmissionType(l10n, data.transmissionType!),
     ]);
-    final measure = data.engineDisplacementLiters != null
-        ? formatEngineDisplacementForDisplay(
-            l10n,
-            data.engineDisplacementLiters,
-          )
-        : data.enginePowerHp != null
-        ? formatEnginePowerHpDisplay(l10n, data.enginePowerHp)
-        : null;
-    final String specLine;
-    final String? detailLine;
-    if (fuelTransmission.isNotEmpty) {
-      specLine = fuelTransmission;
-      detailLine = measure;
-    } else if (data.drivetrain != null) {
-      specLine = formatListingDrivetrain(l10n, data.drivetrain!);
-      detailLine = null;
-    } else if (data.bodyType != null) {
-      specLine = formatListingBodyType(l10n, data.bodyType!);
-      detailLine = null;
-    } else {
-      specLine = measure ?? '';
-      detailLine = null;
-    }
+    final detailLine = listingPreviewJoin([
+      if (data.drivetrain != null)
+        formatListingDrivetrain(l10n, data.drivetrain!),
+      if (data.engineCylinders != null)
+        '${l10n.listingEngineCylinders} ${data.engineCylinders}',
+      if (data.doors != null) '${l10n.listingDoors} ${data.doors}',
+      if (data.seats != null) '${l10n.listingSeats} ${data.seats}',
+    ]);
     final variant = data.variant;
 
     final semantics = [
@@ -111,7 +101,7 @@ class ListingPreviewCard extends StatelessWidget {
       priceLabel,
       if (metaLine.isNotEmpty) metaLine,
       if (specLine.isNotEmpty) specLine,
-      if (detailLine != null && detailLine.isNotEmpty) detailLine,
+      if (detailLine.isNotEmpty) detailLine,
       data.hasCover
           ? l10n.createListingPreviewCoverLabel
           : l10n.createListingPreviewAddPhotoHint,
@@ -174,7 +164,7 @@ class _PreviewVisualCard extends StatelessWidget {
   final bool priceIncomplete;
   final String metaLine;
   final String specLine;
-  final String? detailLine;
+  final String detailLine;
 
   @override
   Widget build(BuildContext context) {
@@ -194,9 +184,20 @@ class _PreviewVisualCard extends StatelessWidget {
     return DecoratedBox(
       key: ListingPreviewCard.cardKey,
       decoration: BoxDecoration(
-        color: panelBg,
+        color: isDark ? panelBg : const Color(0xFFFFFCF8),
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: borderColor),
+        border: Border.all(
+          color: isDark ? borderColor : const Color(0xFFE6D9CC),
+        ),
+        boxShadow: isDark
+            ? null
+            : const [
+                BoxShadow(
+                  color: Color(0x107A6A58),
+                  blurRadius: 12,
+                  offset: Offset(0, 3),
+                ),
+              ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(radius),
@@ -369,7 +370,7 @@ class _PreviewInfoPanel extends StatelessWidget {
   final bool priceIncomplete;
   final String metaLine;
   final String specLine;
-  final String? detailLine;
+  final String detailLine;
 
   @override
   Widget build(BuildContext context) {
@@ -386,7 +387,7 @@ class _PreviewInfoPanel extends StatelessWidget {
                   ? scheme.onSurface.withValues(alpha: isDark ? 0.70 : 0.62)
                   : scheme.onSurface,
               letterSpacing: priceIncomplete ? -0.1 : -0.35,
-              height: 1.1,
+              height: 1.25,
             );
     final titleStyle = theme.textTheme.titleSmall?.copyWith(
       fontWeight: FontWeight.w700,
@@ -401,16 +402,19 @@ class _PreviewInfoPanel extends StatelessWidget {
       height: 1.2,
     );
     final metaStyle = theme.textTheme.bodySmall?.copyWith(
-      color: scheme.onSurface.withValues(alpha: isDark ? 0.58 : 0.50),
+      color: scheme.onSurface.withValues(alpha: isDark ? 0.64 : 0.50),
       height: 1.25,
       fontSize: 12,
       fontWeight: FontWeight.w500,
     );
     final specStyle = metaStyle?.copyWith(
-      color: scheme.onSurface.withValues(alpha: isDark ? 0.66 : 0.58),
+      color: scheme.onSurface.withValues(alpha: isDark ? 0.72 : 0.58),
+      height: isDark ? 1.35 : 1.25,
       fontWeight: FontWeight.w500,
       letterSpacing: 0.12,
     );
+    final detailStyle = metaStyle?.copyWith(height: isDark ? 1.35 : 1.25);
+    final factLines = isDark ? 3 : 2;
 
     final brandPath = getBrandIconPath(data.make);
     final showBrand = !isBrandIconDefaultAssetPath(brandPath);
@@ -476,22 +480,22 @@ class _PreviewInfoPanel extends StatelessWidget {
             ),
           ],
           if (specLine.isNotEmpty) ...[
-            const SizedBox(height: 2),
+            SizedBox(height: isDark ? 4 : 2),
             Text(
               specLine,
               key: ListingPreviewCard.specsKey,
               style: specStyle,
-              maxLines: 1,
+              maxLines: factLines,
               overflow: TextOverflow.ellipsis,
             ),
           ],
-          if (detailLine != null && detailLine!.isNotEmpty) ...[
-            const SizedBox(height: 2),
+          if (detailLine.isNotEmpty) ...[
+            SizedBox(height: isDark ? 4 : 2),
             Text(
-              detailLine!,
+              detailLine,
               key: ListingPreviewCard.detailKey,
-              style: metaStyle,
-              maxLines: 1,
+              style: detailStyle,
+              maxLines: factLines,
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -616,7 +620,7 @@ class _PreviewChip extends StatelessWidget {
                 fontSize: 10.5,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.2,
-                height: 1.1,
+                height: 1.25,
               ),
             ),
           ),

@@ -55,8 +55,46 @@ Deno.test("resolver mapper fills shared identity and spec strings", () => {
   assertEquals(normalized.driveType, "4x2");
   assertEquals(normalized.displacement, "3 L");
   assertEquals(normalized.cylinders, "6");
+  assertEquals(normalized.doors, "4");
+  assertEquals(normalized.seats, null);
+  assertEquals(normalized.fuelTypeSecondary, null);
+  assertEquals(normalized.electrificationLevel, null);
   assertEquals(normalized.market, "US_catalog_bias");
   assertEquals(normalized.warnings, []);
+});
+
+Deno.test("resolver count fields stay null unless they are a plausible integer", () => {
+  const { normalized } = mapResolverNhtsaVinValuesRow({
+    Doors: "4 doors",
+    EngineCylinders: "0",
+    Seats: "5",
+    FuelTypeSecondary: "Diesel",
+    ElectrificationLevel: "PHEV (Plug-in Hybrid Electric Vehicle)",
+  });
+  assertEquals(normalized.doors, null);
+  assertEquals(normalized.cylinders, null);
+  assertEquals(normalized.seats, "5");
+  assertEquals(normalized.fuelTypeSecondary, "Diesel");
+  assertEquals(
+    normalized.electrificationLevel,
+    "PHEV (Plug-in Hybrid Electric Vehicle)",
+  );
+  assertEquals(
+    mapResolverNhtsaVinValuesRow({ Seats: "40" }).normalized.seats,
+    null,
+  );
+  assertEquals(
+    mapResolverNhtsaVinValuesRow({ Doors: "4" }).normalized.doors,
+    "4",
+  );
+  assertEquals(
+    mapResolverNhtsaVinValuesRow({ EngineCylinders: "16" }).normalized.cylinders,
+    "16",
+  );
+  assertEquals(
+    mapResolverNhtsaVinValuesRow({ EngineCylinders: "24" }).normalized.cylinders,
+    null,
+  );
 });
 
 Deno.test("resolver mapper keeps decode errors internal on the normalized object", () => {

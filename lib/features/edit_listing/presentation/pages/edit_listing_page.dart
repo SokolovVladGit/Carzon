@@ -310,6 +310,9 @@ class _EditListingFormState extends State<_EditListingForm> {
   ListingTransmissionType? _transmissionType;
   late final TextEditingController _engineDisplacement;
   late final TextEditingController _enginePower;
+  late final TextEditingController _engineCylinders;
+  late final TextEditingController _doors;
+  late final TextEditingController _seats;
   late final TextEditingController _registration;
   late final TextEditingController _vin;
   late final TextEditingController _description;
@@ -374,6 +377,11 @@ class _EditListingFormState extends State<_EditListingForm> {
     _enginePower = TextEditingController(
       text: l.enginePowerHp == null ? '' : '${l.enginePowerHp}',
     );
+    _engineCylinders = TextEditingController(
+      text: l.engineCylinders == null ? '' : '${l.engineCylinders}',
+    );
+    _doors = TextEditingController(text: l.doors == null ? '' : '${l.doors}');
+    _seats = TextEditingController(text: l.seats == null ? '' : '${l.seats}');
     _registration = TextEditingController(text: l.registration ?? '');
     _vin = TextEditingController(text: widget.ownerVinNormalizedForEdit ?? '');
     _description = TextEditingController(text: l.description ?? '');
@@ -420,6 +428,9 @@ class _EditListingFormState extends State<_EditListingForm> {
       _telegram,
       _engineDisplacement,
       _enginePower,
+      _engineCylinders,
+      _doors,
+      _seats,
       _registration,
       _vin,
       _description,
@@ -704,6 +715,21 @@ class _EditListingFormState extends State<_EditListingForm> {
     return int.tryParse(t);
   }
 
+  String? _validateOptionalCount(AppLocalizations l10n, String? v, int max) {
+    if (v == null || v.trim().isEmpty) return null;
+    final n = int.tryParse(v.trim());
+    if (n == null || n < 1 || n > max) return l10n.validationPositive;
+    return null;
+  }
+
+  int? _countFromField(TextEditingController controller, int max) {
+    final t = controller.text.trim();
+    if (t.isEmpty) return null;
+    final n = int.tryParse(t);
+    if (n == null || n < 1 || n > max) return null;
+    return n;
+  }
+
   String? _validateOptionalVin(AppLocalizations l10n, String? v) {
     if (ListingVin.isBlankInput(v)) return null;
     if (!ListingVin.isOptionalInputValid(v)) return l10n.validationVinInvalid;
@@ -748,6 +774,9 @@ class _EditListingFormState extends State<_EditListingForm> {
       fuelType: _fuelType,
       engineDisplacementLiters: _engineDisplacementFromField(),
       enginePowerHp: _enginePowerFromField(),
+      engineCylinders: _countFromField(_engineCylinders, 16),
+      doors: _countFromField(_doors, 6),
+      seats: _countFromField(_seats, 15),
       drivetrain: _drivetrain,
       transmissionType: _transmissionType,
       registration: _registration.text.trim().isEmpty
@@ -1235,6 +1264,63 @@ class _EditListingFormState extends State<_EditListingForm> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (v) => _validateOptionalPower(l10n, v),
+                    enabled: !submitting,
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    key: const ValueKey('edit_listing_engine_cylinders_field'),
+                    controller: _engineCylinders,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.listingEngineCylinders,
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) => _validateOptionalCount(l10n, v, 16),
+                    enabled: !submitting,
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    key: const ValueKey('edit_listing_doors_field'),
+                    controller: _doors,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.listingDoors,
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) => _validateOptionalCount(l10n, v, 6),
+                    enabled: !submitting,
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    key: const ValueKey('edit_listing_seats_field'),
+                    controller: _seats,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface.withValues(
+                        alpha: .22,
+                      ),
+                      labelText: l10n.listingSeats,
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) => _validateOptionalCount(l10n, v, 15),
                     enabled: !submitting,
                   ),
                   const SizedBox(height: 14),

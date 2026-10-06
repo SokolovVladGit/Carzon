@@ -59,7 +59,7 @@ void main() {
     );
   }
 
-  testWidgets('photo 0 is the large cover tile', (tester) async {
+  testWidgets('photo 0 is the cover tile in the 3x3 grid', (tester) async {
     await tester.pumpWidget(
       mediaHost(
         photos: [photo(0), photo(1), photo(2)],
@@ -75,8 +75,9 @@ void main() {
     final side = tester.getSize(
       find.byKey(const ValueKey('create_listing_photo_1')),
     );
-    expect(cover.width, greaterThan(side.width));
-    expect(cover.height, greaterThan(side.height * 1.5));
+    expect((cover.width - side.width).abs(), lessThan(2));
+    expect((cover.height - side.height).abs(), lessThan(2));
+    expect((cover.width - cover.height).abs(), lessThan(2));
     expect(
       tester.getTopLeft(find.byKey(CreateListingMediaSection.coverKey)).dx,
       lessThan(
@@ -99,9 +100,36 @@ void main() {
     );
   });
 
-  testWidgets('photos 1-4 sit in the right grid and 5-8 in the strip', (
-    tester,
-  ) async {
+  testWidgets('empty gallery renders all nine positions', (tester) async {
+    await tester.pumpWidget(
+      mediaHost(
+        photos: const <CreateListingPhotoDraft>[],
+        onAdd: () {},
+        onRemove: (_) {},
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('create_listing_add_photo')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('create_listing_photo_placeholder')),
+      findsNWidgets(8),
+    );
+    expect(find.text(l10n.createListingCoverBadge), findsNothing);
+    final section = tester.getRect(
+      find.byKey(CreateListingMediaSection.phase3TestKey),
+    );
+    final add = tester.getRect(
+      find.byKey(const ValueKey('create_listing_add_photo')),
+    );
+    expect(add.left, closeTo(section.left, 1));
+    expect(add.top, closeTo(section.top, 1));
+    expect((add.width - add.height).abs(), lessThan(2));
+    expect(section.height, closeTo(add.height * 3 + 16, 2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('nine photos fill a 3x3 grid', (tester) async {
     await tester.pumpWidget(
       mediaHost(
         photos: [for (var i = 0; i < 9; i++) photo(i)],
@@ -133,15 +161,16 @@ void main() {
       find.byKey(const ValueKey('create_listing_photo_8')),
     );
 
-    expect(photo1.left, greaterThan(cover.left));
-    expect(photo2.left, greaterThan(photo1.left));
-    expect((photo1.top - photo2.top).abs(), lessThan(2));
-    expect(photo3.top, greaterThan(photo1.top));
-    expect(photo4.left, greaterThan(photo3.left));
-    expect(photo4.top, greaterThan(photo2.bottom - 2));
-    expect(photo5.top, greaterThan(cover.bottom - 1));
-    expect(photo8.top, greaterThan(cover.bottom - 1));
-    expect(photo5.left, closeTo(cover.left, 1));
+    expect(photo1.left, greaterThan(cover.right - 1));
+    expect(photo2.left, greaterThan(photo1.right - 1));
+    expect((photo1.top - cover.top).abs(), lessThan(2));
+    expect((photo2.top - cover.top).abs(), lessThan(2));
+    expect(photo3.top, greaterThan(cover.bottom - 1));
+    expect(photo4.left, greaterThan(photo3.right - 1));
+    expect((photo4.top - photo3.top).abs(), lessThan(2));
+    expect(photo5.left, greaterThan(photo4.right - 1));
+    expect((photo5.top - photo3.top).abs(), lessThan(2));
+    expect(photo8.top, greaterThan(photo5.bottom - 1));
     expect(photo8.right, closeTo(photo2.right, 1));
     final photo6 = tester.getRect(
       find.byKey(const ValueKey('create_listing_photo_6')),
@@ -152,8 +181,9 @@ void main() {
     expect(photo5.width, closeTo(photo6.width, 1));
     expect(photo6.width, closeTo(photo7.width, 1));
     expect(photo7.width, closeTo(photo8.width, 1));
-    expect(photo5.width, greaterThan(76));
-    expect(photo6.left - photo5.right, closeTo(photo8.left - photo7.right, 1));
+    expect((photo5.width - cover.width).abs(), lessThan(2));
+    expect(photo6.left, closeTo(cover.left, 1));
+    expect(photo7.left - photo6.right, closeTo(photo8.left - photo7.right, 1));
     expect(
       find.byKey(const ValueKey('create_listing_add_photo')),
       findsNothing,
@@ -161,9 +191,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('partial secondary row stays constrained until three cells', (
-    tester,
-  ) async {
+  testWidgets('open slots stay in the 3x3 at the same size', (tester) async {
     await tester.pumpWidget(
       mediaHost(
         photos: [for (var i = 0; i < 6; i++) photo(i)],
@@ -184,10 +212,14 @@ void main() {
     final add = tester.getRect(
       find.byKey(const ValueKey('create_listing_add_photo')),
     );
-    expect(secondary.width, 76);
-    expect(add.width, 76);
-    expect(add.right, lessThan(side.right - 40));
-    expect(secondary.left, closeTo(cover.left, 1));
+    expect((add.width - cover.width).abs(), lessThan(2));
+    expect(add.top, greaterThan(secondary.bottom - 1));
+    expect(add.left, closeTo(cover.left, 1));
+    expect(add.right, lessThan(side.right));
+    expect(
+      find.byKey(const ValueKey('create_listing_photo_placeholder')),
+      findsNWidgets(2),
+    );
 
     await tester.pumpWidget(
       mediaHost(
@@ -200,19 +232,19 @@ void main() {
     final fullRight = tester.getRect(
       find.byKey(const ValueKey('create_listing_photo_2')),
     );
-    final first = tester.getRect(
-      find.byKey(const ValueKey('create_listing_photo_5')),
-    );
     final second = tester.getRect(
       find.byKey(const ValueKey('create_listing_photo_6')),
     );
     final addSlot = tester.getRect(
       find.byKey(const ValueKey('create_listing_add_photo')),
     );
-    expect(first.left, closeTo(cover.left, 1));
-    expect(addSlot.right, closeTo(fullRight.right, 1));
-    expect(first.width, closeTo(second.width, 1));
-    expect(second.width, closeTo(addSlot.width, 1));
+    final last = tester.getRect(
+      find.byKey(const ValueKey('create_listing_photo_placeholder')),
+    );
+    expect(second.left, closeTo(cover.left, 1));
+    expect(addSlot.left, greaterThan(second.right - 1));
+    expect(last.right, closeTo(fullRight.right, 1));
+    expect((second.width - addSlot.width).abs(), lessThan(2));
     expect(tester.takeException(), isNull);
   });
 
@@ -293,12 +325,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(
-      (tester.widget<Image>(find.byKey(CreateListingVinCard.imageKey)).image
-              as AssetImage)
-          .assetName,
-      'assets/bg/car_bg_listing.png',
-    );
+    expect(find.byKey(CreateListingVinCard.heroKey), findsOneWidget);
+    expect(find.byType(Image), findsNothing);
     await tester.enterText(
       find.byKey(const ValueKey('create_listing_vin_field')),
       'WVWZZZ',
@@ -365,6 +393,72 @@ void main() {
     expect(scanBorder.top.width, 1.25);
     expect(scanBorder.top.color.a, greaterThan(0.4));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('17-character VIN fits beside scan at 375 and 390', (
+    tester,
+  ) async {
+    const vinText = '1HGBH41JXMN109186';
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    for (final width in [375.0, 390.0]) {
+      tester.view.physicalSize = Size(width, 844);
+      tester.view.devicePixelRatio = 1;
+      final controller = TextEditingController(text: vinText);
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('ru'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Padding(
+              padding: const EdgeInsets.all(16),
+              child: CreateListingVinCard(
+                l10n: l10n,
+                theme: AppTheme.light(),
+                controller: controller,
+                enabled: true,
+                scanning: false,
+                onScan: () {},
+                onChanged: (_) {},
+                validator: (_) => null,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      final field = tester.getRect(
+        find.byKey(const ValueKey('create_listing_vin_field')),
+      );
+      final scan = tester.getRect(
+        find.byKey(const ValueKey('create_listing_scan_vin')),
+      );
+      expect(field.right, lessThanOrEqualTo(scan.left + 1));
+      expect((field.center.dy - scan.center.dy).abs(), lessThan(8));
+      expect(field.width, greaterThan(190));
+      expect(scan.width, inInclusiveRange(76, 112));
+      expect(scan.height, greaterThanOrEqualTo(44));
+      final editable = tester.widget<EditableText>(
+        find.descendant(
+          of: find.byKey(const ValueKey('create_listing_vin_field')),
+          matching: find.byType(EditableText),
+        ),
+      );
+      expect(editable.controller.text, vinText);
+      expect(editable.style.fontSize, 15);
+      expect(editable.style.letterSpacing, lessThanOrEqualTo(0.35));
+      expect(
+        editable.style.fontFeatures,
+        contains(const FontFeature.tabularFigures()),
+      );
+      // Real-device cap width is well under the test font. 9px × 17 leaves
+      // the field's content box (padding 12 + 8) with room at 375.
+      expect(field.width - 20, greaterThan(17 * 9));
+    }
   });
 
   testWidgets('dark gallery does not throw', (tester) async {

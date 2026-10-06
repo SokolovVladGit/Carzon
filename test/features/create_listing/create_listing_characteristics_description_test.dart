@@ -167,7 +167,7 @@ void main() {
             matching: find.byType(EditableText),
           ),
         );
-        expect(description.minLines, 3);
+        expect(description.minLines, 4);
         expect(find.textContaining('/ 8000'), findsOneWidget);
 
         final descriptionSection = find.byKey(
@@ -277,12 +277,12 @@ void main() {
       await selectFourWheelDrivetrain(tester);
 
       await tester.scrollUntilVisible(
-        find.byKey(ListingPreviewCard.specsKey),
+        find.byKey(ListingPreviewCard.detailKey),
         200,
         scrollable: find.byType(Scrollable).first,
       );
       expect(
-        tester.widget<Text>(find.byKey(ListingPreviewCard.specsKey)).data,
+        tester.widget<Text>(find.byKey(ListingPreviewCard.detailKey)).data,
         contains(ru.listingDrivetrainFourWheel),
       );
     });
@@ -349,7 +349,7 @@ void main() {
     expect(find.text(ru.listingTransmissionAutomatic), findsOneWidget);
   });
 
-  test('fourth cell prefers transmission, then power, then fuel', () {
+  test('every non-null characteristic is shown', () {
     List<String> labels({
       ListingTransmissionType? transmission,
       int? power,
@@ -374,6 +374,7 @@ void main() {
         ru.compareRowEngine,
         ru.compareRowDrivetrain,
         ru.compareRowTransmission,
+        ru.compareRowPower,
       ],
     );
     expect(labels(power: 200), [
@@ -386,12 +387,48 @@ void main() {
       ru.listingFieldBodyType,
       ru.compareRowEngine,
       ru.compareRowDrivetrain,
-      ru.listingFuelType,
     ]);
+    final full = buildCreateListingTechnicalFacts(
+      ru,
+      bodyType: ListingBodyType.sedan,
+      fuelType: ListingFuelType.petrol,
+      displacementLiters: 2,
+      powerHp: 150,
+      transmissionType: ListingTransmissionType.automatic,
+      drivetrain: ListingDrivetrain.fwd,
+      engineCylinders: 4,
+      doors: 4,
+      seats: 5,
+      registration: 'MD',
+    );
+    expect(full.map((fact) => fact.label), [
+      ru.listingFieldBodyType,
+      ru.compareRowEngine,
+      ru.compareRowDrivetrain,
+      ru.compareRowTransmission,
+      ru.compareRowPower,
+      ru.listingEngineCylinders,
+      ru.listingDoors,
+      ru.listingSeats,
+      ru.compareRowRegistration,
+    ]);
+    expect(full.map((fact) => fact.label), isNot(contains(ru.listingFuelType)));
+    expect(
+      full.firstWhere((fact) => fact.label == ru.listingEngineCylinders).value,
+      '4',
+    );
+    expect(
+      full.firstWhere((fact) => fact.label == ru.listingDoors).value,
+      '4',
+    );
+    expect(
+      full.firstWhere((fact) => fact.label == ru.listingSeats).value,
+      '5',
+    );
   });
 
-  test('fuel stays on the engine line only when it is not its own cell', () {
-    final withTransmission = buildCreateListingTechnicalFacts(
+  test('fuel and displacement share one engine fact', () {
+    final combined = buildCreateListingTechnicalFacts(
       ru,
       bodyType: ListingBodyType.pickup,
       displacementLiters: 2,
@@ -399,50 +436,119 @@ void main() {
       drivetrain: ListingDrivetrain.awd,
       transmissionType: ListingTransmissionType.automatic,
     );
-    expect(withTransmission, hasLength(4));
+    expect(combined.map((fact) => fact.label), [
+      ru.listingFieldBodyType,
+      ru.compareRowEngine,
+      ru.compareRowDrivetrain,
+      ru.compareRowTransmission,
+    ]);
     expect(
-      withTransmission
-          .firstWhere((fact) => fact.label == ru.compareRowEngine)
-          .value,
-      '${formatEngineDisplacementForDisplay(ru, 2)} · ${ru.listingFuelTypePetrol}',
+      combined.firstWhere((fact) => fact.label == ru.compareRowEngine).value,
+      '${ru.listingFuelTypePetrol} · ${formatEngineDisplacementForDisplay(ru, 2)}',
     );
     expect(
-      withTransmission.map((fact) => fact.label),
+      combined.map((fact) => fact.label),
       isNot(contains(ru.listingFuelType)),
     );
-
-    final fuelFourth = buildCreateListingTechnicalFacts(
-      ru,
-      bodyType: ListingBodyType.pickup,
-      displacementLiters: 2,
-      fuelType: ListingFuelType.petrol,
-      drivetrain: ListingDrivetrain.awd,
-    );
-    expect(fuelFourth, hasLength(4));
-    expect(
-      fuelFourth.firstWhere((fact) => fact.label == ru.compareRowEngine).value,
-      formatEngineDisplacementForDisplay(ru, 2),
-    );
-    expect(
-      fuelFourth.firstWhere((fact) => fact.label == ru.listingFuelType).value,
-      ru.listingFuelTypePetrol,
-    );
-    expect(
-      fuelFourth.map((fact) => fact.value).join(' '),
-      isNot(contains('—')),
-    );
-    expect(fuelFourth.map((fact) => fact.value), isNot(contains('Неизвестно')));
+    expect(combined.map((fact) => fact.value).join(' '), isNot(contains('—')));
+    expect(combined.map((fact) => fact.value), isNot(contains('Неизвестно')));
 
     final fuelOnly = buildCreateListingTechnicalFacts(
       ru,
       fuelType: ListingFuelType.petrol,
     );
     expect(fuelOnly, hasLength(1));
-    expect(fuelOnly.single.label, ru.listingFuelType);
+    expect(fuelOnly.single.label, ru.compareRowEngine);
     expect(fuelOnly.single.value, ru.listingFuelTypePetrol);
+
+    final displacementOnly = buildCreateListingTechnicalFacts(
+      ru,
+      displacementLiters: 2,
+    );
+    expect(displacementOnly, hasLength(1));
+    expect(displacementOnly.single.label, ru.compareRowEngine);
+    expect(
+      displacementOnly.single.value,
+      formatEngineDisplacementForDisplay(ru, 2),
+    );
+
+    final electric = buildCreateListingTechnicalFacts(
+      ru,
+      fuelType: ListingFuelType.electric,
+    );
+    expect(electric.single.label, ru.compareRowEngine);
+    expect(electric.single.value, ru.listingFuelTypeElectric);
+    expect(
+      electric.map((fact) => fact.label),
+      isNot(contains(ru.listingFuelType)),
+    );
+
+    expect(
+      buildCreateListingTechnicalFacts(
+        ru,
+        fuelType: ListingFuelType.diesel,
+        displacementLiters: 2,
+      ).single.value,
+      '${ru.listingFuelTypeDiesel} · ${formatEngineDisplacementForDisplay(ru, 2)}',
+    );
+    expect(
+      buildCreateListingTechnicalFacts(
+        ru,
+        fuelType: ListingFuelType.hybrid,
+        displacementLiters: 2.5,
+      ).single.value,
+      '${ru.listingFuelTypeHybrid} · ${formatEngineDisplacementForDisplay(ru, 2.5)}',
+    );
+    expect(
+      buildCreateListingTechnicalFacts(
+        ru,
+        fuelType: ListingFuelType.diesel,
+      ).single.value,
+      ru.listingFuelTypeDiesel,
+    );
+
+    final bodyOnly = buildCreateListingTechnicalFacts(
+      ru,
+      bodyType: ListingBodyType.pickup,
+    );
+    expect(bodyOnly.map((fact) => fact.label), [ru.listingFieldBodyType]);
   });
 
-  test('missing drivetrain still fills four cells from later real facts', () {
+  test('Ford Maverick VIN facts skip missing transmission doors and seats', () {
+    final facts = buildCreateListingTechnicalFacts(
+      ru,
+      bodyType: ListingBodyType.pickup,
+      fuelType: ListingFuelType.petrol,
+      displacementLiters: 2,
+      drivetrain: ListingDrivetrain.awd,
+      engineCylinders: 4,
+    );
+    expect(facts.map((fact) => fact.label), [
+      ru.listingFieldBodyType,
+      ru.compareRowEngine,
+      ru.compareRowDrivetrain,
+      ru.listingEngineCylinders,
+    ]);
+    expect(
+      facts.firstWhere((fact) => fact.label == ru.compareRowEngine).value,
+      '${ru.listingFuelTypePetrol} · ${formatEngineDisplacementForDisplay(ru, 2)}',
+    );
+    expect(
+      facts.firstWhere((fact) => fact.label == ru.listingEngineCylinders).value,
+      '4',
+    );
+    expect(
+      facts.map((fact) => fact.value).join(' '),
+      isNot(contains('цилиндр')),
+    );
+    expect(facts.map((fact) => fact.label), isNot(contains(ru.listingFuelType)));
+    expect(
+      facts.map((fact) => fact.label),
+      isNot(contains(ru.compareRowTransmission)),
+    );
+  });
+
+  test('missing drivetrain still shows the combined engine and year', () {
     final facts = buildCreateListingTechnicalFacts(
       ru,
       bodyType: ListingBodyType.sedan,
@@ -450,20 +556,15 @@ void main() {
       fuelType: ListingFuelType.petrol,
       year: 2018,
     );
-    expect(facts, hasLength(4));
+    expect(facts, hasLength(3));
     expect(facts.map((fact) => fact.label), [
       ru.listingFieldBodyType,
       ru.compareRowEngine,
-      ru.listingFuelType,
       ru.compareRowYear,
     ]);
     expect(
       facts.firstWhere((fact) => fact.label == ru.compareRowEngine).value,
-      formatEngineDisplacementForDisplay(ru, 1.8),
-    );
-    expect(
-      facts.firstWhere((fact) => fact.label == ru.listingFuelType).value,
-      ru.listingFuelTypePetrol,
+      '${ru.listingFuelTypePetrol} · ${formatEngineDisplacementForDisplay(ru, 1.8)}',
     );
     expect(
       facts.firstWhere((fact) => fact.label == ru.compareRowYear).value,
@@ -560,24 +661,137 @@ void main() {
       final body = tester.getRect(find.text(ru.listingFieldBodyType));
       final engine = tester.getRect(find.text(ru.compareRowEngine));
       final drive = tester.getRect(find.text(ru.compareRowDrivetrain));
-      final fuel = tester.getRect(find.text(ru.listingFuelType));
+      expect(find.text(ru.listingFuelType), findsNothing);
       expect(engine.left, greaterThan(body.left));
       expect((body.top - engine.top).abs(), lessThan(2));
       expect(drive.top, greaterThan(body.bottom));
-      expect(fuel.left, greaterThan(drive.left));
-      expect((drive.top - fuel.top).abs(), lessThan(2));
+      expect((drive.left - body.left).abs(), lessThan(2));
+      expect((drive.width - body.width).abs(), lessThan(2));
+      expect(drive.right, lessThan(body.right + body.width));
       expectFits(ru.listingDrivetrainAwd);
+      expectFits(
+        '${ru.listingFuelTypePetrol} · ${formatEngineDisplacementForDisplay(ru, 2)}',
+      );
       final cells = tester
           .renderObjectList<RenderBox>(find.byType(DecoratedBox))
           .map((cell) => cell.size)
           .where((size) => size.width > 40)
           .toList();
-      expect(cells, hasLength(4));
+      expect(cells, hasLength(3));
       expect(cells.map((size) => size.height).toSet(), hasLength(1));
       expect(cells.map((size) => size.width).toSet(), hasLength(1));
     }
     await pumpAt(334, AppTheme.dark());
     expect(tester.takeException(), isNull);
-    expect(find.text(ru.listingFuelTypePetrol), findsOneWidget);
+    expect(
+      find.text(
+        '${ru.listingFuelTypePetrol} · ${formatEngineDisplacementForDisplay(ru, 2)}',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('odd fact counts stay left-aligned in the two-column flow', (
+    tester,
+  ) async {
+    Future<void> pumpCount(int count) async {
+      final facts = buildCreateListingTechnicalFacts(
+        ru,
+        bodyType: ListingBodyType.pickup,
+        fuelType: count >= 2 ? ListingFuelType.petrol : null,
+        displacementLiters: count >= 2 ? 2 : null,
+        drivetrain: count >= 3 ? ListingDrivetrain.awd : null,
+        transmissionType: count >= 4
+            ? ListingTransmissionType.automatic
+            : null,
+        powerHp: count >= 5 ? 250 : null,
+        engineCylinders: count >= 6 ? 4 : null,
+        doors: count >= 7 ? 4 : null,
+        seats: count >= 8 ? 5 : null,
+      );
+      expect(facts, hasLength(count));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 360,
+                child: CreateListingCharacteristicsFacts(facts: facts),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      final body = tester.getRect(find.text(ru.listingFieldBodyType));
+      final last = tester.getRect(find.text(facts.last.label));
+      if (count.isOdd) {
+        expect((last.left - body.left).abs(), lessThan(2));
+        expect((last.width - body.width).abs(), lessThan(2));
+      } else {
+        expect(last.left, greaterThan(body.left));
+        expect((last.width - body.width).abs(), lessThan(2));
+      }
+    }
+
+    for (final count in [4, 5, 6, 7, 8]) {
+      await pumpCount(count);
+    }
+  });
+
+  testWidgets('all nine facts render without clipping or a fuel tile', (
+    tester,
+  ) async {
+    final facts = buildCreateListingTechnicalFacts(
+      ru,
+      bodyType: ListingBodyType.pickup,
+      fuelType: ListingFuelType.petrol,
+      displacementLiters: 2,
+      drivetrain: ListingDrivetrain.awd,
+      transmissionType: ListingTransmissionType.automatic,
+      powerHp: 250,
+      engineCylinders: 4,
+      doors: 4,
+      seats: 5,
+      registration: 'MD',
+    );
+    expect(facts, hasLength(9));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 360,
+              child: CreateListingCharacteristicsFacts(facts: facts),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    expect(find.text(ru.listingFuelType), findsNothing);
+    final seen = <String>{};
+    for (final fact in facts) {
+      if (!seen.add(fact.value)) continue;
+      final matches = find.text(fact.value);
+      expect(matches, findsWidgets);
+      for (final element in matches.evaluate()) {
+        final paragraph = element.renderObject! as RenderParagraph;
+        expect(paragraph.didExceedMaxLines, isFalse);
+      }
+    }
+    final body = tester.getRect(find.text(ru.listingFieldBodyType));
+    final power = tester.getRect(find.text(ru.compareRowPower));
+    final doors = tester.getRect(find.text(ru.listingDoors));
+    final registration = tester.getRect(find.text(ru.compareRowRegistration));
+    expect((power.left - body.left).abs(), lessThan(2));
+    expect((doors.left - body.left).abs(), lessThan(2));
+    expect((registration.left - body.left).abs(), lessThan(2));
+    expect((power.width - body.width).abs(), lessThan(2));
+    expect((registration.width - body.width).abs(), lessThan(2));
   });
 }

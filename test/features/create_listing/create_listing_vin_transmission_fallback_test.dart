@@ -223,9 +223,12 @@ void main() {
   Finder summary() =>
       find.byKey(const ValueKey('create_listing_characteristics_summary'));
 
-  testWidgets('VIN transmission is kept and catalog is not called', (
+  testWidgets('VIN transmission is kept when catalog fills only power', (
     tester,
   ) async {
+    stubPeek(
+      Success(catalog(transmission: 'manual', power: 186)),
+    );
     final controller = await pumpPage(tester);
     await emitConfirmed(
       tester,
@@ -243,13 +246,21 @@ void main() {
       ),
       findsOneWidget,
     );
-    verifyNever(
-      () => smartFill.peekIdentityConsensus(
-        make: any(named: 'make'),
-        model: any(named: 'model'),
-        year: any(named: 'year'),
+    expect(find.text(ru.listingTransmissionManual), findsNothing);
+    expect(
+      find.descendant(
+        of: summary(),
+        matching: find.text(formatEnginePowerHpDisplay(ru, 186)),
       ),
+      findsOneWidget,
     );
+    verify(
+      () => smartFill.peekIdentityConsensus(
+        make: 'Ford',
+        model: 'Maverick',
+        year: 2024,
+      ),
+    ).called(1);
     verifyNever(
       () => smartFill.lookup(
         make: any(named: 'make'),
@@ -290,7 +301,13 @@ void main() {
     );
     expect(find.text(ru.listingBodyTypeSuv), findsNothing);
     expect(find.text(ru.listingFuelTypeDiesel), findsNothing);
-    expect(find.text(ru.compareRowPower), findsNothing);
+    expect(
+      find.descendant(
+        of: summary(),
+        matching: find.text(formatEnginePowerHpDisplay(ru, 200)),
+      ),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const ValueKey('create_listing_smart_fill_clarification')),
       findsNothing,
@@ -358,26 +375,19 @@ void main() {
     expect(find.text(ru.listingTransmissionAutomatic), findsNothing);
     final displacement = formatEngineDisplacementForDisplay(ru, 2);
     expect(
-      find.descendant(of: summary(), matching: find.text(displacement)),
-      findsOneWidget,
-    );
-    expect(
       find.descendant(
         of: summary(),
-        matching: find.text('$displacement · ${ru.listingFuelTypePetrol}'),
+        matching: find.text('${ru.listingFuelTypePetrol} · $displacement'),
       ),
-      findsNothing,
+      findsOneWidget,
     );
     expect(
       find.descendant(of: summary(), matching: find.text(ru.listingFuelType)),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
-      find.descendant(
-        of: summary(),
-        matching: find.text(ru.listingFuelTypePetrol),
-      ),
-      findsOneWidget,
+      find.descendant(of: summary(), matching: find.text(displacement)),
+      findsNothing,
     );
     expect(
       find.descendant(of: summary(), matching: find.text('—')),
@@ -432,7 +442,7 @@ void main() {
     expect(
       find.descendant(
         of: summaryFinder,
-        matching: find.text('$displacement · ${ru.listingFuelTypePetrol}'),
+        matching: find.text('${ru.listingFuelTypePetrol} · $displacement'),
       ),
       findsOneWidget,
     );
