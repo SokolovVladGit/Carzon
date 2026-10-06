@@ -25,11 +25,15 @@ export type PublicVehicleSuggestion = {
   series: string | null;
   bodyType: string | null;
   fuelType: string | null;
+  fuelTypeSecondary: string | null;
+  electrificationLevel: string | null;
   engine: string | null;
   transmission: string | null;
   driveType: string | null;
   displacement: string | null;
   cylinders: string | null;
+  doors: string | null;
+  seats: string | null;
 };
 
 export type PublicResolveSuccess = {
@@ -152,11 +156,15 @@ export function publicVehicleFromNormalized(
     series: textOrNull(data.series),
     bodyType: textOrNull(data.bodyType),
     fuelType: textOrNull(data.fuelType),
+    fuelTypeSecondary: textOrNull(data.fuelTypeSecondary),
+    electrificationLevel: textOrNull(data.electrificationLevel),
     engine: textOrNull(data.engine),
     transmission: textOrNull(data.transmission),
     driveType: textOrNull(data.driveType),
     displacement: textOrNull(data.displacement),
     cylinders: textOrNull(data.cylinders),
+    doors: textOrNull(data.doors),
+    seats: textOrNull(data.seats),
   };
 }
 
@@ -234,11 +242,15 @@ export function assertPublicAllowList(
     series: src.series,
     bodyType: src.bodyType,
     fuelType: src.fuelType,
+    fuelTypeSecondary: src.fuelTypeSecondary,
+    electrificationLevel: src.electrificationLevel,
     engine: src.engine,
     transmission: src.transmission,
     driveType: src.driveType,
     displacement: src.displacement,
     cylinders: src.cylinders,
+    doors: src.doors,
+    seats: src.seats,
   };
   return {
     ok: true,

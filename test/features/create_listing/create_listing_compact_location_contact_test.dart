@@ -241,12 +241,19 @@ void main() {
     expect((phoneSummary.width - price.width).abs(), lessThan(12));
     expect(
       find.descendant(
+        of: find.byKey(const ValueKey('create_listing_location_section')),
+        matching: locationSummary(),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
         of: find.byKey(
           const ValueKey('create_listing_characteristics_section'),
         ),
         matching: locationSummary(),
       ),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.descendant(
@@ -263,7 +270,7 @@ void main() {
             find.byKey(const ValueKey('create_listing_location_section')),
           )
           .height,
-      0,
+      greaterThan(0),
     );
     expect(locationEditors(tester).offstage, isTrue);
     expect(contactEditors(tester).offstage, isTrue);
@@ -283,12 +290,13 @@ void main() {
       findsNothing,
     );
     final section = tester.getSize(
-      find.byKey(const ValueKey('create_listing_characteristics_section')),
+      find.byKey(const ValueKey('create_listing_location_section')),
     );
     final surface = tester.getSize(
       find.byKey(const ValueKey('create_listing_location_surface')),
     );
-    expect((section.width - 20 - surface.width).abs(), lessThan(2));
+    expect(surface.width, lessThanOrEqualTo(section.width));
+    expect((section.width - surface.width).abs(), lessThan(24));
     final surfaceDecoration =
         tester
                 .widget<DecoratedBox>(
@@ -303,7 +311,7 @@ void main() {
         of: find.byKey(
           const ValueKey('create_listing_characteristics_section'),
         ),
-        matching: find.text(ru.createListingEditCharacteristics),
+        matching: find.text(ru.createListingCharacteristicsEnterManually),
       ),
       findsOneWidget,
     );
@@ -483,9 +491,7 @@ void main() {
     expect(locationEditors(tester).offstage, isFalse);
     expect(
       find.descendant(
-        of: find.byKey(
-          const ValueKey('create_listing_characteristics_section'),
-        ),
+        of: find.byKey(const ValueKey('create_listing_location_section')),
         matching: find.byKey(const ValueKey('create_listing_location_editors')),
       ),
       findsOneWidget,
@@ -885,7 +891,10 @@ void main() {
       next: defaultsState(region: MarketRegion.moldova, city: 'Chișinău'),
     );
     expect(locationSummary(), findsOneWidget);
-    expect(find.text(ro.createListingEditCharacteristics), findsOneWidget);
+    expect(
+      find.text(ro.createListingCharacteristicsEnterManually),
+      findsOneWidget,
+    );
     expect(find.text(ro.createListingSectionLocation), findsOneWidget);
     expect(
       find.descendant(

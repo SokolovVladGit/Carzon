@@ -32,6 +32,9 @@ class EditListingInput extends Equatable {
     this.fuelType,
     this.engineDisplacementLiters,
     this.enginePowerHp,
+    this.engineCylinders,
+    this.doors,
+    this.seats,
     this.drivetrain,
     this.transmissionType,
     this.registration,
@@ -71,6 +74,9 @@ class EditListingInput extends Equatable {
   final ListingFuelType? fuelType;
   final double? engineDisplacementLiters;
   final int? enginePowerHp;
+  final int? engineCylinders;
+  final int? doors;
+  final int? seats;
   final ListingDrivetrain? drivetrain;
   final ListingTransmissionType? transmissionType;
   final String? registration;
@@ -101,6 +107,9 @@ class EditListingInput extends Equatable {
     fuelType,
     engineDisplacementLiters,
     enginePowerHp,
+    engineCylinders,
+    doors,
+    seats,
     drivetrain,
     transmissionType,
     registration,

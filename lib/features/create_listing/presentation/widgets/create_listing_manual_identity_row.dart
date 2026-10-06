@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import 'create_listing_compose_layout.dart';
@@ -34,15 +32,17 @@ class CreateListingManualIdentityRow extends StatelessWidget {
       label: label,
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         child: InkWell(
           onTap: enabled ? onPressed : null,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           child: Ink(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: cs.onSurface.withValues(alpha: light ? 0.12 : 0.20),
+                color: light
+                    ? const Color(0xFFE6D9CC)
+                    : cs.onSurface.withValues(alpha: 0.20),
               ),
             ),
             child: ConstrainedBox(
@@ -77,13 +77,12 @@ class CreateListingManualIdentityRow extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Transform.rotate(
-                      angle: expanded ? math.pi / 2 : 0,
-                      child: Icon(
-                        kCreateListingIconChevronRight,
-                        size: kCreateListingChevronSize,
-                        color: createListingChevronColor(theme),
-                      ),
+                    Icon(
+                      expanded
+                          ? kCreateListingIconChevronUp
+                          : kCreateListingIconChevronDown,
+                      size: kCreateListingChevronSize,
+                      color: createListingChevronColor(theme),
                     ),
                   ],
                 ),

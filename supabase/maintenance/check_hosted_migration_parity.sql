@@ -106,7 +106,8 @@ expected AS (
             ('20260913200000', 'listing_engagement_telemetry',               'listings'),
             ('20260914153331', 'seller_listing_demand',                      'listings'),
             ('20260914154128', 'seller_listing_demand_stable_fix',            'listings'),
-            ('20260914160658', 'seller_analytics_summary_stable_fix',         'listings')
+            ('20260914160658', 'seller_analytics_summary_stable_fix',         'listings'),
+            ('20261006170000', 'listing_vin_counts',                         'listings')
            ) AS t(version, migration_name, category)
 ),
 hosted AS (
@@ -161,7 +162,7 @@ info_rows AS (
            'parity_check_scope'::text AS migration_name,
            'meta'::text AS category,
            'INFO'::text AS status,
-           'Read-only parity check for 86 repo migrations under supabase/migrations/. '
+           'Read-only parity check for 87 repo migrations under supabase/migrations/. '
            || 'Compares hosted supabase_migrations.schema_migrations by version only. '
            || 'Staging preferred; safe on a single production project (SELECT only).'::text
            AS details,

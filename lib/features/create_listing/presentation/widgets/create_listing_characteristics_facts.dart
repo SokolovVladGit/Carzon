@@ -7,9 +7,8 @@ import 'create_listing_compose_layout.dart';
 
 /// Collapsed technical facts. Presentation only: never invents a value.
 ///
-/// Takes the first four real facts in priority order: body, engine,
-/// drivetrain, transmission, power, fuel, year, registration. Fuel leaves
-/// the engine line only when it is one of those four cells.
+/// Every non-null characteristic is shown. Year is an identity field and is
+/// omitted unless a caller still passes it.
 List<CreateListingCharacteristicFact> buildCreateListingTechnicalFacts(
   AppLocalizations l10n, {
   ListingBodyType? bodyType,
@@ -18,6 +17,9 @@ List<CreateListingCharacteristicFact> buildCreateListingTechnicalFacts(
   ListingDrivetrain? drivetrain,
   ListingTransmissionType? transmissionType,
   int? powerHp,
+  int? engineCylinders,
+  int? doors,
+  int? seats,
   int? year,
   String? registration,
 }) {
@@ -30,106 +32,75 @@ List<CreateListingCharacteristicFact> buildCreateListingTechnicalFacts(
   final displacementShown = displacementText == null || displacementText.isEmpty
       ? null
       : displacementText;
+  final engineParts = [?fuelText, ?displacementShown];
+  final engineValue = engineParts.isEmpty ? null : engineParts.join(' · ');
   final registrationText = registration?.trim();
   final registrationShown = registrationText == null || registrationText.isEmpty
       ? null
       : registrationText;
 
-  final slots = <({bool engine, CreateListingCharacteristicFact fact})>[
+  return [
     if (bodyType != null)
-      (
-        engine: false,
-        fact: CreateListingCharacteristicFact(
-          icon: kCreateListingIconBody,
-          label: l10n.listingFieldBodyType,
-          value: formatListingBodyType(l10n, bodyType),
-        ),
+      CreateListingCharacteristicFact(
+        icon: kCreateListingIconBody,
+        label: l10n.listingFieldBodyType,
+        value: formatListingBodyType(l10n, bodyType),
       ),
-    if (displacementShown != null)
-      (
-        engine: true,
-        fact: CreateListingCharacteristicFact(
-          icon: kCreateListingIconEngine,
-          label: l10n.compareRowEngine,
-          value: displacementShown,
-        ),
+    if (engineValue != null)
+      CreateListingCharacteristicFact(
+        icon: kCreateListingIconEngine,
+        label: l10n.compareRowEngine,
+        value: engineValue,
       ),
     if (drivetrain != null)
-      (
-        engine: false,
-        fact: CreateListingCharacteristicFact(
-          icon: kCreateListingIconDrivetrain,
-          label: l10n.compareRowDrivetrain,
-          value: formatListingDrivetrain(l10n, drivetrain),
-        ),
+      CreateListingCharacteristicFact(
+        icon: kCreateListingIconDrivetrain,
+        label: l10n.compareRowDrivetrain,
+        value: formatListingDrivetrain(l10n, drivetrain),
       ),
     if (transmissionType != null)
-      (
-        engine: false,
-        fact: CreateListingCharacteristicFact(
-          icon: kCreateListingIconTransmission,
-          label: l10n.compareRowTransmission,
-          value: formatListingTransmissionType(l10n, transmissionType),
-        ),
+      CreateListingCharacteristicFact(
+        icon: kCreateListingIconTransmission,
+        label: l10n.compareRowTransmission,
+        value: formatListingTransmissionType(l10n, transmissionType),
       ),
     if (powerHp != null)
-      (
-        engine: false,
-        fact: CreateListingCharacteristicFact(
-          icon: kCreateListingIconPower,
-          label: l10n.compareRowPower,
-          value: formatEnginePowerHpDisplay(l10n, powerHp),
-        ),
+      CreateListingCharacteristicFact(
+        icon: kCreateListingIconPower,
+        label: l10n.compareRowPower,
+        value: formatEnginePowerHpDisplay(l10n, powerHp),
       ),
-    if (fuelText != null)
-      (
-        engine: false,
-        fact: CreateListingCharacteristicFact(
-          icon: kCreateListingIconFuel,
-          label: l10n.listingFuelType,
-          value: fuelText,
-        ),
+    if (engineCylinders != null)
+      CreateListingCharacteristicFact(
+        icon: kCreateListingIconCylinders,
+        label: l10n.listingEngineCylinders,
+        value: '$engineCylinders',
+      ),
+    if (doors != null)
+      CreateListingCharacteristicFact(
+        icon: kCreateListingIconDoors,
+        label: l10n.listingDoors,
+        value: '$doors',
+      ),
+    if (seats != null)
+      CreateListingCharacteristicFact(
+        icon: kCreateListingIconSeats,
+        label: l10n.listingSeats,
+        value: '$seats',
       ),
     if (year != null)
-      (
-        engine: false,
-        fact: CreateListingCharacteristicFact(
-          icon: kCreateListingIconYear,
-          label: l10n.compareRowYear,
-          value: '$year',
-        ),
+      CreateListingCharacteristicFact(
+        icon: kCreateListingIconYear,
+        label: l10n.compareRowYear,
+        value: '$year',
       ),
     if (registrationShown != null)
-      (
-        engine: false,
-        fact: CreateListingCharacteristicFact(
-          icon: kCreateListingIconRegistration,
-          label: l10n.compareRowRegistration,
-          value: registrationShown,
-        ),
+      CreateListingCharacteristicFact(
+        icon: kCreateListingIconRegistration,
+        label: l10n.compareRowRegistration,
+        value: registrationShown,
       ),
   ];
-
-  final selected = slots.take(4).toList();
-  final fuelKept = selected.any(
-    (slot) => slot.fact.label == l10n.listingFuelType,
-  );
-  if (!fuelKept && fuelText != null) {
-    final engineIndex = selected.indexWhere((slot) => slot.engine);
-    if (engineIndex >= 0) {
-      final engine = selected[engineIndex].fact;
-      selected[engineIndex] = (
-        engine: true,
-        fact: CreateListingCharacteristicFact(
-          icon: engine.icon,
-          label: engine.label,
-          value: '${engine.value} · $fuelText',
-        ),
-      );
-    }
-  }
-
-  return [for (final slot in selected) slot.fact];
 }
 
 /// Two-column characteristics summary. Empty facts render nothing.
@@ -246,13 +217,16 @@ class _FactCell extends StatelessWidget {
       child: DecoratedBox(
         decoration: createListingFactSurfaceDecoration(theme),
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  CreateListingFactIconChip(icon: fact.icon),
+                  CreateListingFactIconChip(
+                    icon: fact.icon,
+                    strengthened: true,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -264,7 +238,7 @@ class _FactCell extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 fact.value,
                 maxLines: 2,
@@ -282,7 +256,7 @@ class _FactCell extends StatelessWidget {
 TextStyle _factLabelStyle(ThemeData theme, ColorScheme cs) {
   return theme.textTheme.labelSmall?.copyWith(
         color: cs.onSurface.withValues(
-          alpha: theme.brightness == Brightness.light ? 0.52 : 0.66,
+          alpha: theme.brightness == Brightness.light ? 0.68 : 0.76,
         ),
         fontWeight: FontWeight.w500,
         fontSize: 11,
@@ -332,7 +306,7 @@ double _tallestFactCellHeight(
         (label.height > kCreateListingFactIconChipExtent
             ? label.height
             : kCreateListingFactIconChipExtent) +
-        4 +
+        6 +
         value.height;
     if (height > tallest) tallest = height;
   }

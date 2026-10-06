@@ -59,7 +59,7 @@ class CreateListingCompactSummary extends StatelessWidget {
             borderRadius: BorderRadius.circular(kCreateListingFactRadius),
             onTap: enabled ? onPressed : null,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+              padding: const EdgeInsets.fromLTRB(10, 10, 8, 10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -84,7 +84,7 @@ class CreateListingCompactSummary extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.labelSmall?.copyWith(
                                   color: cs.onSurface.withValues(
-                                    alpha: light ? 0.52 : 0.66,
+                                    alpha: light ? 0.64 : 0.72,
                                   ),
                                   fontWeight: FontWeight.w500,
                                   fontSize: 11,
@@ -114,7 +114,7 @@ class CreateListingCompactSummary extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: cs.onSurface.withValues(
-                                    alpha: light ? 0.48 : 0.60,
+                                    alpha: light ? 0.58 : 0.68,
                                   ),
                                   fontWeight: FontWeight.w500,
                                   fontSize: 12,

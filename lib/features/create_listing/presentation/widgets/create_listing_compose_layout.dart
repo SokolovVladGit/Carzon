@@ -77,6 +77,9 @@ const IconData kCreateListingIconPower = LucideIcons.zap;
 const IconData kCreateListingIconFuel = CarzonIcons.fuel;
 const IconData kCreateListingIconYear = CarzonIcons.calendar;
 const IconData kCreateListingIconRegistration = LucideIcons.clipboardList;
+const IconData kCreateListingIconCylinders = LucideIcons.hash;
+const IconData kCreateListingIconDoors = LucideIcons.doorOpen;
+const IconData kCreateListingIconSeats = LucideIcons.users;
 const IconData kCreateListingIconMileage = CarzonIcons.gauge;
 const IconData kCreateListingIconLocation = LucideIcons.navigation;
 
@@ -94,19 +97,13 @@ BoxDecoration createListingFactSurfaceDecoration(ThemeData theme) {
   final radius = BorderRadius.circular(kCreateListingFactRadius);
   if (light) {
     return BoxDecoration(
-      color: const Color(0xFFF6F5F3),
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFFDFEFE), Color(0xFFF2F4F6), Color(0xFFF7F6F4)],
-        stops: [0.0, 0.55, 1.0],
-      ),
+      color: const Color(0xFFFFFCF8),
       borderRadius: radius,
       boxShadow: [
         BoxShadow(
-          color: const Color(0xFF2C3338).withValues(alpha: 0.045),
-          blurRadius: 8,
-          offset: const Offset(0, 2),
+          color: const Color(0xFF7A6A58).withValues(alpha: 0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 3),
         ),
       ],
     );
@@ -139,7 +136,7 @@ BoxDecoration createListingFactIconChipDecoration(ThemeData theme) {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: light
-          ? const [Color(0xFFFFFFFF), Color(0xFFE8EEF3)]
+          ? const [Color(0xFFFFFCF8), Color(0xFFF3EBE3)]
           : [
               Color.alphaBlend(
                 cs.onSurface.withValues(alpha: 0.18),
@@ -190,7 +187,7 @@ BoxDecoration createListingCeramicPlaceholderDecoration(
         stops: const [0.0, 0.42, 1.0],
       ),
       border: Border.all(
-        color: prominent ? const Color(0xFFE4D8C8) : const Color(0xFFEADFD4),
+        color: prominent ? const Color(0xFFD9CBBA) : const Color(0xFFF0E6DC),
       ),
     );
   }
@@ -222,7 +219,7 @@ BoxDecoration createListingCeramicPlaceholderDecoration(
             ],
     ),
     border: Border.all(
-      color: cs.onSurface.withValues(alpha: prominent ? 0.16 : 0.09),
+      color: cs.onSurface.withValues(alpha: prominent ? 0.26 : 0.18),
     ),
   );
 }
@@ -242,24 +239,32 @@ Color createListingPassiveIconColor(ThemeData theme) {
 }
 
 /// Leading glyph on a frosted fact, location, or phone summary.
+///
+/// [strengthened] raises only the glyph alpha. Size, badge fill, and
+/// geometry stay on the shared chip. Location and phone leave it off.
 class CreateListingFactIconChip extends StatelessWidget {
-  const CreateListingFactIconChip({super.key, required this.icon});
+  const CreateListingFactIconChip({
+    super.key,
+    required this.icon,
+    this.strengthened = false,
+  });
 
   final IconData icon;
+  final bool strengthened;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final light = theme.brightness == Brightness.light;
+    final color = strengthened
+        ? theme.colorScheme.onSurface.withValues(alpha: light ? 0.57 : 0.71)
+        : createListingPassiveIconColor(theme);
     return SizedBox(
       width: kCreateListingFactIconChipExtent,
       height: kCreateListingFactIconChipExtent,
       child: DecoratedBox(
         decoration: createListingFactIconChipDecoration(theme),
-        child: Icon(
-          icon,
-          size: 16,
-          color: createListingPassiveIconColor(theme),
-        ),
+        child: Icon(icon, size: 16, color: color),
       ),
     );
   }
@@ -267,7 +272,7 @@ class CreateListingFactIconChip extends StatelessWidget {
 
 Color createListingChevronColor(ThemeData theme) {
   final light = theme.brightness == Brightness.light;
-  return theme.colorScheme.onSurface.withValues(alpha: light ? 0.40 : 0.50);
+  return theme.colorScheme.onSurface.withValues(alpha: light ? 0.58 : 0.70);
 }
 
 Color createListingEditIconColor(ThemeData theme, {required bool enabled}) {
@@ -278,18 +283,29 @@ Color createListingEditIconColor(ThemeData theme, {required bool enabled}) {
   return theme.colorScheme.onSurface.withValues(alpha: light ? 0.82 : 0.90);
 }
 
-/// Section card above the canvas. Border carries the separation, not shadow.
+/// Warm ivory card. A hairline border and a soft shadow, not a hard outline.
 BoxDecoration createListingSectionSurfaceDecoration(ThemeData theme) {
   final cs = theme.colorScheme;
   final light = theme.brightness == Brightness.light;
   return BoxDecoration(
     color: light
-        ? const Color(0xFFFFFDFB)
+        ? const Color(0xFFFFFCF8)
         : Color.alphaBlend(cs.onSurface.withValues(alpha: 0.055), cs.surface),
-    borderRadius: BorderRadius.circular(kCreateListingComposeRadius),
+    borderRadius: BorderRadius.circular(18),
     border: Border.all(
-      color: cs.onSurface.withValues(alpha: light ? 0.07 : 0.14),
+      color: light
+          ? const Color(0xFFE6D9CC)
+          : cs.onSurface.withValues(alpha: 0.14),
     ),
+    boxShadow: light
+        ? const [
+            BoxShadow(
+              color: Color(0x107A6A58),
+              blurRadius: 12,
+              offset: Offset(0, 3),
+            ),
+          ]
+        : null,
   );
 }
 
@@ -733,28 +749,6 @@ BoxDecoration createListingRaisedDecoration(
   return createListingSoftSurfaceDecoration(theme, lift: lift, fill: fill);
 }
 
-ButtonStyle createListingConfirmButtonStyle(ThemeData theme) {
-  final cs = theme.colorScheme;
-  final light = theme.brightness == Brightness.light;
-  return FilledButton.styleFrom(
-    backgroundColor: cs.onSurface.withValues(alpha: light ? 0.92 : 0.94),
-    foregroundColor: cs.surface,
-    disabledBackgroundColor: cs.onSurface.withValues(alpha: 0.22),
-    disabledForegroundColor: cs.surface.withValues(alpha: 0.70),
-    elevation: 0,
-    shadowColor: Colors.transparent,
-    minimumSize: const Size(44, 44),
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(kCreateListingFieldRadius),
-    ),
-    textStyle: theme.textTheme.labelLarge?.copyWith(
-      fontWeight: FontWeight.w600,
-      letterSpacing: -0.1,
-    ),
-  );
-}
-
 ButtonStyle createListingSecondaryActionStyle(
   ThemeData theme, {
   bool footer = false,
@@ -1017,9 +1011,9 @@ InputDecoration createListingFieldDecoration(
     }),
     contentPadding: EdgeInsets.fromLTRB(
       prefixIcon == null ? kCreateListingFieldHPad : 0,
-      13,
+      16,
       kCreateListingFieldHPad,
-      13,
+      16,
     ),
   );
 }
@@ -1134,11 +1128,15 @@ class CreateListingManualEntryLink extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.enabled = true,
+    this.opticalLift = 0,
   });
 
   final String label;
   final VoidCallback onPressed;
   final bool enabled;
+
+  /// Paints the label higher inside the 44pt hit target. Layout size stays.
+  final double opticalLift;
 
   @override
   Widget build(BuildContext context) {
@@ -1158,34 +1156,40 @@ class CreateListingManualEntryLink extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    kCreateListingIconEdit,
-                    size: kCreateListingEditIconSize,
-                    color: createListingEditIconColor(theme, enabled: enabled),
-                  ),
-                  const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: enabled
-                            ? cs.onSurface.withValues(
-                                alpha: theme.brightness == Brightness.light
-                                    ? 0.88
-                                    : 0.94,
-                              )
-                            : cs.onSurface.withValues(alpha: 0.32),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13.5,
+              child: Transform.translate(
+                offset: Offset(0, -opticalLift),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      kCreateListingIconEdit,
+                      size: kCreateListingEditIconSize,
+                      color: createListingEditIconColor(
+                        theme,
+                        enabled: enabled,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: enabled
+                              ? cs.onSurface.withValues(
+                                  alpha: theme.brightness == Brightness.light
+                                      ? 0.88
+                                      : 0.94,
+                                )
+                              : cs.onSurface.withValues(alpha: 0.32),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

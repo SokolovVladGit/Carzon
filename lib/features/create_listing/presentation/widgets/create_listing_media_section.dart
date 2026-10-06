@@ -8,7 +8,7 @@ import 'create_listing_compose_layout.dart';
 import '../../domain/constants/listing_gallery_limits.dart';
 import '../models/create_listing_photo_draft.dart';
 
-/// Cover-first gallery. Index 0 is the large tile. Max [kMaxListingPhotos].
+/// Nine equal slots. Index 0 is the cover. Max [kMaxListingPhotos].
 class CreateListingMediaSection extends StatelessWidget {
   const CreateListingMediaSection({
     super.key,
@@ -35,24 +35,22 @@ class CreateListingMediaSection extends StatelessWidget {
     final canMutate = !disabled && !pickingImage;
     final canAdd = canMutate && photos.length < kMaxListingPhotos;
 
+    const gap = 8.0;
     return LayoutBuilder(
       key: phase3TestKey,
       builder: (context, constraints) {
-        final gap = 6.0;
-        final width = constraints.maxWidth;
-        final mainW = (width - gap) * 0.58;
-        final sideW = width - gap - mainW;
-        final mainH = mainW * 0.78;
+        final tile = (constraints.maxWidth - gap * 2) / 3;
 
-        Widget cell(int index, {required bool cover, required bool large}) {
-          final tile = index < photos.length
+        Widget cell(int index) {
+          final filled = index < photos.length;
+          final child = filled
               ? _PhotoTile(
-                  key: cover
+                  key: index == 0
                       ? coverKey
                       : ValueKey('create_listing_photo_$index'),
                   index: index,
                   bytes: photos[index].bytes,
-                  isCover: cover,
+                  isCover: index == 0,
                   coverBadge: l10n.createListingCoverBadge,
                   tooltipRemove: l10n.createListingRemovePhoto,
                   enabled: canMutate,
@@ -65,136 +63,33 @@ class CreateListingMediaSection extends StatelessWidget {
                   label: l10n.createListingAddPhoto,
                   busy: pickingImage && index == photos.length,
                   enabled: canAdd,
-                  large: large,
                   onTap: onAddPhoto,
                   theme: theme,
                 );
-          return SizedBox.expand(child: tile);
-        }
-
-        final showStrip = photos.length >= 5;
-
-        Widget sideCell(int index) {
-          return Expanded(child: cell(index, cover: false, large: false));
+          return SizedBox.expand(child: child);
         }
 
         return Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(
-              height: mainH,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    width: mainW,
-                    child: cell(0, cover: true, large: true),
-                  ),
-                  SizedBox(width: gap),
-                  SizedBox(
-                    width: sideW,
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              sideCell(1),
-                              SizedBox(width: gap),
-                              sideCell(2),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: gap),
-                        Expanded(
-                          child: Row(
-                            children: [
-                              sideCell(3),
-                              SizedBox(width: gap),
-                              sideCell(4),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (showStrip) ...[
-              const SizedBox(height: 8),
-              _SecondaryPhotoRow(
-                height: 76,
-                gap: gap,
-                constrainedTile: 76,
-                children: [
-                  for (var i = 5; i < photos.length; i++)
-                    _PhotoTile(
-                      key: ValueKey('create_listing_photo_$i'),
-                      index: i,
-                      bytes: photos[i].bytes,
-                      isCover: false,
-                      coverBadge: l10n.createListingCoverBadge,
-                      tooltipRemove: l10n.createListingRemovePhoto,
-                      enabled: canMutate,
-                      onRemove: () => onRemovePhotoAt(i),
-                      theme: theme,
-                    ),
-                  if (photos.length < kMaxListingPhotos)
-                    _EmptySlot(
-                      primary: true,
-                      showPlaceholderKey: false,
-                      large: false,
-                      label: l10n.createListingAddPhoto,
-                      busy: pickingImage,
-                      enabled: canAdd,
-                      onTap: onAddPhoto,
-                      theme: theme,
-                    ),
-                ],
+            for (var row = 0; row < 3; row++) ...[
+              if (row > 0) const SizedBox(height: gap),
+              SizedBox(
+                height: tile,
+                child: Row(
+                  children: [
+                    for (var col = 0; col < 3; col++) ...[
+                      if (col > 0) const SizedBox(width: gap),
+                      Expanded(child: cell(row * 3 + col)),
+                    ],
+                  ],
+                ),
               ),
             ],
           ],
         );
       },
-    );
-  }
-}
-
-/// Bottom gallery row. Three or four cells share the full width.
-/// One or two cells stay a fixed tile so a single photo does not stretch.
-class _SecondaryPhotoRow extends StatelessWidget {
-  const _SecondaryPhotoRow({
-    required this.height,
-    required this.gap,
-    required this.constrainedTile,
-    required this.children,
-  });
-
-  final double height;
-  final double gap;
-  final double constrainedTile;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final expand = children.length >= 3;
-    return SizedBox(
-      height: height,
-      child: Row(
-        children: [
-          for (var i = 0; i < children.length; i++) ...[
-            if (i > 0) SizedBox(width: gap),
-            if (expand)
-              Expanded(child: children[i])
-            else
-              SizedBox(
-                width: constrainedTile,
-                height: height,
-                child: children[i],
-              ),
-          ],
-        ],
-      ),
     );
   }
 }
@@ -224,33 +119,34 @@ class _PhotoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = theme.colorScheme;
-    final hit = isCover ? 44.0 : 36.0;
+    const hit = 36.0;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(isCover ? 16 : 12),
+      borderRadius: BorderRadius.circular(16),
       child: Stack(
         fit: StackFit.expand,
         children: [
           Image.memory(bytes, fit: BoxFit.cover, gaplessPlayback: true),
           if (isCover)
             Positioned(
-              left: 8,
-              bottom: 8,
+              left: 6,
+              bottom: 6,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: kCreateListingActiveFill.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(8),
+                  color: kCreateListingActiveFill.withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+                    horizontal: 6,
+                    vertical: 3,
                   ),
                   child: Text(
                     coverBadge,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: kCreateListingActiveForeground,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10,
+                      height: 1.1,
                     ),
                   ),
                 ),
@@ -292,12 +188,10 @@ class _EmptySlot extends StatelessWidget {
     required this.label,
     required this.busy,
     required this.enabled,
-    required this.large,
     required this.onTap,
     required this.theme,
   });
 
-  final bool large;
   final bool primary;
   final bool showPlaceholderKey;
   final String label;
@@ -311,11 +205,12 @@ class _EmptySlot extends StatelessWidget {
     final cs = theme.colorScheme;
     final light = theme.brightness == Brightness.light;
     final iconColor = cs.onSurface.withValues(
-      alpha: large ? (light ? 0.58 : 0.72) : (light ? 0.40 : 0.52),
+      alpha: primary ? (light ? 0.55 : 0.7) : (light ? 0.32 : 0.42),
     );
-    final sheen = large ? (light ? 0.42 : 0.10) : (light ? 0.20 : 0.05);
+    final sheen = light ? 0.22 : 0.07;
+    final sheenTint = light ? Colors.white : const Color(0xFFF3EBE3);
 
-    final radius = large ? 16.0 : 12.0;
+    const radius = 16.0;
     final shape = BorderRadius.circular(radius);
     return Material(
       color: Colors.transparent,
@@ -330,7 +225,7 @@ class _EmptySlot extends StatelessWidget {
         child: Ink(
           decoration: createListingCeramicPlaceholderDecoration(
             theme,
-            prominent: large,
+            prominent: primary,
             radius: radius,
           ),
           child: busy
@@ -353,8 +248,8 @@ class _EmptySlot extends StatelessWidget {
                             begin: Alignment.topLeft,
                             end: const Alignment(0.2, 0.85),
                             colors: [
-                              Colors.white.withValues(alpha: sheen),
-                              Colors.white.withValues(alpha: 0),
+                              sheenTint.withValues(alpha: sheen),
+                              sheenTint.withValues(alpha: 0),
                             ],
                           ),
                         ),
@@ -366,14 +261,14 @@ class _EmptySlot extends StatelessWidget {
                         children: [
                           Icon(
                             CarzonIcons.addPhoto,
-                            size: large ? 28 : 18,
+                            size: primary ? 22 : 18,
                             color: iconColor,
                           ),
-                          if (primary && large) ...[
-                            const SizedBox(height: 6),
+                          if (primary) ...[
+                            const SizedBox(height: 4),
                             Padding(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
+                                horizontal: 4,
                               ),
                               child: Text(
                                 label,
@@ -383,7 +278,8 @@ class _EmptySlot extends StatelessWidget {
                                 style: theme.textTheme.labelSmall?.copyWith(
                                   color: iconColor,
                                   fontWeight: FontWeight.w600,
-                                  height: 1.15,
+                                  fontSize: 11,
+                                  height: 1.1,
                                 ),
                               ),
                             ),

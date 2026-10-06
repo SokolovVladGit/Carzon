@@ -209,6 +209,9 @@ class SupabaseEditListingRemoteDataSource
       ..['p_variant'] = _nullableTrimListingField(input.variant)
       ..['p_engine_displacement_liters'] = input.engineDisplacementLiters
       ..['p_engine_power_hp'] = input.enginePowerHp
+      ..['p_engine_cylinders'] = input.engineCylinders
+      ..['p_doors'] = input.doors
+      ..['p_seats'] = input.seats
       ..['p_drivetrain'] = input.drivetrain == null
           ? null
           : listingDrivetrainToDbValue(input.drivetrain!)

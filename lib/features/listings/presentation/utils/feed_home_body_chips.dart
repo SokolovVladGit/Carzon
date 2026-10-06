@@ -12,12 +12,6 @@ List<FeedBodyChipDescriptor> feedHomeBodyChipDescriptors(
 ) {
   return [
     FeedBodyChipDescriptor(
-      id: 'all',
-      label: l10n.listingsBodyChipAll,
-      icon: Icons.directions_car_outlined,
-      svgAssetPath: '$_bodyChipSvgPrefix/all_bodies.svg',
-    ),
-    FeedBodyChipDescriptor(
       id: ListingBodyType.sedan.name,
       label: l10n.listingBodyTypeSedan,
       icon: Icons.directions_car_outlined,

@@ -634,13 +634,16 @@ void main() {
       expect(
         tester.widget<Text>(find.byKey(ListingPreviewCard.specsKey)).data,
         listingPreviewJoin([
+          ru.listingBodyTypePickup,
           ru.listingFuelTypePetrol,
+          formatEngineDisplacementForDisplay(ru, 6.2),
+          formatEnginePowerHpDisplay(ru, 702),
           ru.listingTransmissionAutomatic,
         ]),
       );
       expect(
         tester.widget<Text>(find.byKey(ListingPreviewCard.detailKey)).data,
-        formatEngineDisplacementForDisplay(ru, 6.2),
+        ru.listingDrivetrainFourWheel,
       );
       expect(
         tester.widget<Text>(find.byKey(ListingPreviewCard.specsKey)).data,
@@ -890,13 +893,13 @@ void main() {
 
       await pumpAt(size: const Size(390, 844), textScale: 1);
       expect(find.byKey(ListingPreviewCard.specsKey), findsOneWidget);
-      expect(find.byKey(ListingPreviewCard.detailKey), findsOneWidget);
+      expect(find.byKey(ListingPreviewCard.detailKey), findsNothing);
       expect(find.text('Toyota Corolla'), findsOneWidget);
       final card = tester.getSize(find.byKey(ListingPreviewCard.cardKey));
       expect(card.height, lessThan(ListingPreviewCard.sideCoverExtent + 24));
 
       await pumpAt(size: const Size(375, 812), textScale: 1);
-      expect(find.byKey(ListingPreviewCard.detailKey), findsOneWidget);
+      expect(find.byKey(ListingPreviewCard.detailKey), findsNothing);
 
       await pumpAt(size: const Size(320, 568), textScale: 1);
       await pumpAt(size: const Size(390, 844), textScale: 1.3);

@@ -36,6 +36,9 @@ class ListingPreviewData {
     this.drivetrain,
     this.engineDisplacementLiters,
     this.enginePowerHp,
+    this.engineCylinders,
+    this.doors,
+    this.seats,
   });
 
   final Uint8List? coverBytes;
@@ -57,6 +60,9 @@ class ListingPreviewData {
   final ListingDrivetrain? drivetrain;
   final double? engineDisplacementLiters;
   final int? enginePowerHp;
+  final int? engineCylinders;
+  final int? doors;
+  final int? seats;
 
   bool get hasCover => coverBytes != null && coverBytes!.isNotEmpty;
 }
@@ -99,6 +105,9 @@ ListingPreviewData listingPreviewDataFromCreateForm({
   ListingDrivetrain? drivetrain,
   double? engineDisplacementLiters,
   int? enginePowerHp,
+  int? engineCylinders,
+  int? doors,
+  int? seats,
 }) {
   final yearForTitle = year != null && year > 0 ? year : 0;
   return ListingPreviewData(
@@ -132,7 +141,15 @@ ListingPreviewData listingPreviewDataFromCreateForm({
       engineDisplacementLiters,
     ),
     enginePowerHp: listingPreviewEnginePowerHp(enginePowerHp),
+    engineCylinders: listingPreviewCount(engineCylinders, max: 16),
+    doors: listingPreviewCount(doors, max: 6),
+    seats: listingPreviewCount(seats, max: 15),
   );
+}
+
+int? listingPreviewCount(int? raw, {required int max}) {
+  if (raw == null || raw < 1 || raw > max) return null;
+  return raw;
 }
 
 /// Guards engine power to the same bounds the publish RPC accepts (0, 3000].

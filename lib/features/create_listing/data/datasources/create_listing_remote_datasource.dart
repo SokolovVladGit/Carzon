@@ -177,6 +177,9 @@ class SupabaseCreateListingRemoteDataSource
       params['p_variant'] = _nullableTrim(input.variant);
       params['p_engine_displacement_liters'] = input.engineDisplacementLiters;
       params['p_engine_power_hp'] = input.enginePowerHp;
+      params['p_engine_cylinders'] = input.engineCylinders;
+      params['p_doors'] = input.doors;
+      params['p_seats'] = input.seats;
       params['p_drivetrain'] = input.drivetrain == null
           ? null
           : listingDrivetrainToDbValue(input.drivetrain!);

@@ -578,6 +578,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get listingEnginePowerHint => 'Мощность в л.с.';
 
   @override
+  String get listingEngineCylinders => 'Цилиндры';
+
+  @override
+  String get listingDoors => 'Двери';
+
+  @override
+  String get listingSeats => 'Места';
+
+  @override
   String get listingRegistrationHint => 'Например: Тирасполь, Кишинёв';
 
   @override
@@ -2947,11 +2956,25 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get createListingSmartFillNoData =>
-      'Характеристики можно указать вручную.';
+      'Не удалось заполнить характеристики автоматически. Их можно указать вручную.';
 
   @override
   String get createListingSmartFillFailed =>
       'Не удалось подставить характеристики.';
+
+  @override
+  String get createListingSmartFillSheetEyebrow => 'CARZON Smart Fill';
+
+  @override
+  String get createListingSmartFillSheetTitle => 'Уточним автомобиль';
+
+  @override
+  String get createListingSmartFillSheetHelper =>
+      'Ответьте на несколько вопросов, чтобы мы точнее заполнили характеристики.';
+
+  @override
+  String get createListingSmartFillPending =>
+      'Чтобы заполнить точнее, продолжите и ответьте на уточнение.';
 
   @override
   String get createListingAdditionalDetails => 'Дополнительные сведения';
@@ -2985,6 +3008,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get createListingEnginePowerPlaceholder => 'Мощность, л.с.';
+
+  @override
+  String get createListingEngineCylindersPlaceholder => 'Цилиндры';
+
+  @override
+  String get createListingDoorsPlaceholder => 'Двери';
+
+  @override
+  String get createListingSeatsPlaceholder => 'Места';
 
   @override
   String get createListingRegistrationPlaceholder => 'Место регистрации';
@@ -4423,4 +4455,55 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get createListingCharacteristicsEditorTitle =>
       'Характеристики автомобиля';
+
+  @override
+  String get createListingStepContinue => 'Далее';
+
+  @override
+  String get createListingExitTitle => 'Выйти из создания объявления?';
+
+  @override
+  String get createListingExitBody => 'Введённые данные не сохранятся.';
+
+  @override
+  String get createListingExitStay => 'Остаться';
+
+  @override
+  String get createListingExitLeave => 'Выйти';
+
+  @override
+  String createListingStepOf(int current, int total) {
+    return '$current из $total';
+  }
+
+  @override
+  String get createListingVinAutofillHelper =>
+      'CARZON заполнит известные данные автомобиля автоматически.';
+
+  @override
+  String get createListingStepOfferTitle => 'Цена и пробег';
+
+  @override
+  String get createListingStepContactTitle => 'Контакты и место';
+
+  @override
+  String get createListingFlowTitle => 'Создание объявления';
+
+  @override
+  String get createListingStepVin => 'VIN';
+
+  @override
+  String get createListingStepPhotos => 'Фото';
+
+  @override
+  String get createListingStepDeal => 'Сделка';
+
+  @override
+  String get createListingStepData => 'Данные';
+
+  @override
+  String get createListingStepContacts => 'Контакты';
+
+  @override
+  String get createListingStepDone => 'Итог';
 }

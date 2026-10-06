@@ -6,6 +6,7 @@ import 'package:carzon/core/utils/result.dart';
 import 'package:carzon/features/create_listing/domain/entities/manual_smart_fill_refinement.dart';
 import 'package:carzon/features/create_listing/domain/entities/manual_smart_fill_result.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/create_listing_cubit.dart';
+import 'package:carzon/features/create_listing/presentation/pages/create_listing_page.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/manual_smart_fill_cubit.dart';
 import 'package:carzon/features/create_listing/presentation/bloc/manual_smart_fill_state.dart';
 import 'package:carzon/features/create_listing/presentation/widgets/create_listing_compose_layout.dart';
@@ -20,6 +21,9 @@ void stubCreateListingVinResolve(
   CreateListingCubit cubit, {
   bool registerSmartFill = true,
 }) {
+  // Legacy page tests still exercise every field in one tree.
+  // The step-flow tests turn this back off.
+  CreateListingPage.debugRevealAllSteps = true;
   when(() => cubit.onVinChanged(any())).thenReturn(null);
   when(cubit.enterManualMode).thenReturn(null);
   when(cubit.confirmSuggestion).thenReturn(null);
@@ -140,17 +144,7 @@ Future<void> expandCreateListingAdditionalDetails(WidgetTester tester) async {
 }
 
 Future<void> _revealCreateListing(WidgetTester tester, Finder finder) async {
-  final scrollable = find.ancestor(
-    of: finder,
-    matching: find.byType(Scrollable),
-  );
-  if (scrollable.evaluate().isEmpty) return;
-  final state = tester.state<ScrollableState>(scrollable.first);
-  final top = tester.getTopLeft(finder).dy;
-  final target = (state.position.pixels + top - 72).clamp(
-    state.position.minScrollExtent,
-    state.position.maxScrollExtent,
-  );
-  state.position.jumpTo(target);
+  if (finder.evaluate().isEmpty) return;
+  await tester.ensureVisible(finder);
   await tester.pump();
 }

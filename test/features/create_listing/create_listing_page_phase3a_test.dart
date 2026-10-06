@@ -1,7 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:carzon/app/di/injection.dart';
 import 'package:carzon/core/theme/app_theme.dart';
-import 'package:carzon/core/widgets/app_back_button.dart';
 import 'package:carzon/core/widgets/floating_capsule_nav.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
@@ -303,7 +302,7 @@ void main() {
       await tester.pumpWidget(wrap());
       await tester.pump();
 
-      expect(find.byType(AppBackButton), findsOneWidget);
+      expect(find.byKey(const ValueKey('create_listing_back')), findsOneWidget);
       expect(find.byType(FloatingCapsuleNav), findsNothing);
       expect(
         find.byKey(CreateListingMediaSection.phase3TestKey),
@@ -379,6 +378,7 @@ void main() {
         'create_listing_photos_section',
         'create_listing_vehicle_section',
         'create_listing_characteristics_section',
+        'create_listing_offer_section',
         'create_listing_contact_section',
         'create_listing_location_section',
         'create_listing_type_section',
@@ -393,18 +393,21 @@ void main() {
         expect(section, findsOneWidget);
       }
       for (var i = 1; i < sections.length; i++) {
-        expect(
-          tester.getTopLeft(sections[i - 1]).dy,
-          lessThan(tester.getTopLeft(sections[i]).dy),
-        );
+        final previousTop = tester.getTopLeft(sections[i - 1]).dy;
+        final nextTop = tester.getTopLeft(sections[i]).dy;
+        if (tester.getSize(sections[i - 1]).height > 1) {
+          expect(previousTop, lessThan(nextTop));
+        } else {
+          expect(previousTop, lessThanOrEqualTo(nextTop));
+        }
       }
 
-      final vehicle = sections[0];
-      final contact = sections[3];
-      final location = sections[4];
-      final type = sections[5];
+      final photos = sections[0];
+      final contact = sections[4];
+      final location = sections[5];
+      final type = sections[6];
       final characteristics = sections[2];
-      final publish = sections[7];
+      final publish = sections[8];
       final city = find.byKey(const ValueKey('create_listing_city_field'));
       final region = find.byKey(
         const ValueKey('create_listing_region_selector'),
@@ -417,7 +420,7 @@ void main() {
       expect(city, findsOneWidget);
       expect(region, findsOneWidget);
       expect(find.byType(MarketPlacementSelector), findsOneWidget);
-      expect(find.descendant(of: vehicle, matching: city), findsNothing);
+      expect(find.descendant(of: photos, matching: city), findsNothing);
       expect(find.descendant(of: type, matching: region), findsNothing);
       expect(find.descendant(of: location, matching: region), findsOneWidget);
       expect(find.descendant(of: location, matching: city), findsOneWidget);
@@ -592,7 +595,7 @@ void main() {
       expect(find.text(l10n.createListingAddPhoto), findsOneWidget);
       expect(
         find.byKey(const ValueKey('create_listing_photo_placeholder')),
-        findsNWidgets(4),
+        findsNWidgets(8),
       );
       expect(find.text(l10n.createListingPhotoSlotFront), findsNothing);
       expect(find.text(l10n.createListingPhotoSlotBack), findsNothing);
@@ -721,10 +724,17 @@ void main() {
     expect(phone.width, greaterThan(280));
     expect(
       find.descendant(
-        of: contact,
+        of: find.byKey(const ValueKey('create_listing_offer_section')),
         matching: find.byKey(const ValueKey('create_listing_mileage_field')),
       ),
       findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: contact,
+        matching: find.byKey(const ValueKey('create_listing_mileage_field')),
+      ),
+      findsNothing,
     );
     expect(tester.takeException(), isNull);
 
@@ -821,7 +831,7 @@ void main() {
     expect(phone.width, greaterThan(280));
     expect(
       find.descendant(
-        of: find.byKey(const ValueKey('create_listing_contact_section')),
+        of: find.byKey(const ValueKey('create_listing_offer_section')),
         matching: find.byKey(const ValueKey('create_listing_mileage_field')),
       ),
       findsOneWidget,
@@ -1437,7 +1447,14 @@ void main() {
     );
     final mileage = find.byKey(const ValueKey('create_listing_mileage_field'));
     expect(mileage, findsOneWidget);
-    expect(find.descendant(of: contact, matching: mileage), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('create_listing_offer_section')),
+        matching: mileage,
+      ),
+      findsOneWidget,
+    );
+    expect(find.descendant(of: contact, matching: mileage), findsNothing);
     expect(find.descendant(of: vehicleData, matching: mileage), findsNothing);
 
     await revealCreateListingMileageField(tester);

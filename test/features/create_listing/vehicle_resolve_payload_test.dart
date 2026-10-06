@@ -47,6 +47,10 @@ void main() {
       expect(result.vehicle.driveType, 'AWD/All-Wheel Drive');
       expect(result.vehicle.displacement, '3.0');
       expect(result.vehicle.cylinders, '6');
+      expect(result.vehicle.doors, isNull);
+      expect(result.vehicle.seats, isNull);
+      expect(result.vehicle.fuelTypeSecondary, isNull);
+      expect(result.vehicle.electrificationLevel, isNull);
       expect(result.vehicle.hasCoreIdentity, isTrue);
       expect(result.vehicle.variantHint, 'xDrive30d');
       expect(result.completeness, 0.82);

@@ -10,6 +10,9 @@ class VinResolvedFormPrefill {
     this.transmissionType,
     this.drivetrain,
     this.engineDisplacementLiters,
+    this.engineCylinders,
+    this.doors,
+    this.seats,
   });
 
   final ListingBodyType? bodyType;
@@ -17,13 +20,19 @@ class VinResolvedFormPrefill {
   final ListingTransmissionType? transmissionType;
   final ListingDrivetrain? drivetrain;
   final double? engineDisplacementLiters;
+  final int? engineCylinders;
+  final int? doors;
+  final int? seats;
 
   bool get isEmpty =>
       bodyType == null &&
       fuelType == null &&
       transmissionType == null &&
       drivetrain == null &&
-      engineDisplacementLiters == null;
+      engineDisplacementLiters == null &&
+      engineCylinders == null &&
+      doors == null &&
+      seats == null;
 }
 
 VinResolvedFormPrefill vinResolvedFormPrefill(
@@ -35,38 +44,128 @@ VinResolvedFormPrefill vinResolvedFormPrefill(
   }
   return VinResolvedFormPrefill(
     bodyType: vinResolvedBodyType(vehicle.bodyType),
-    fuelType: vinResolvedFuelType(vehicle.fuelType),
+    fuelType: vinResolvedFuelType(
+      vehicle.fuelType,
+      secondary: vehicle.fuelTypeSecondary,
+      electrification: vehicle.electrificationLevel,
+    ),
     transmissionType: vinResolvedTransmissionType(vehicle.transmission),
     drivetrain: vinResolvedDrivetrain(vehicle.driveType),
     engineDisplacementLiters: vinResolvedDisplacementLiters(
       vehicle.displacement,
     ),
+    engineCylinders: vinResolvedCount(vehicle.cylinders, max: 16),
+    doors: vinResolvedCount(vehicle.doors, max: 6),
+    seats: vinResolvedCount(vehicle.seats, max: 15),
   );
 }
 
+/// Exact NHTSA `BodyClass` strings only. No substring matching.
 ListingBodyType? vinResolvedBodyType(String? raw) {
   final hay = _norm(raw);
   if (hay == null) return null;
   return switch (hay) {
-    'pickup' || 'pick-up' || 'pick up' => ListingBodyType.pickup,
     'sedan' || 'saloon' || 'sedan/saloon' => ListingBodyType.sedan,
-    'suv' || 'sport utility vehicle' => ListingBodyType.suv,
-    _ =>
-      hay.startsWith('sport utility vehicle (suv)')
-          ? ListingBodyType.suv
-          : null,
+    'hatchback' || 'hatchback/liftback/notchback' => ListingBodyType.hatchback,
+    'wagon' => ListingBodyType.wagon,
+    'suv' ||
+    'sport utility vehicle' ||
+    'sport utility vehicle (suv)/multi-purpose vehicle (mpv)' =>
+      ListingBodyType.suv,
+    'coupe' => ListingBodyType.coupe,
+    'convertible' ||
+    'cabriolet' ||
+    'convertible/cabriolet' => ListingBodyType.convertible,
+    'minivan' => ListingBodyType.minivan,
+    'pickup' || 'pick-up' || 'pick up' => ListingBodyType.pickup,
+    'van' || 'cargo van' => ListingBodyType.van,
+    _ => null,
   };
 }
 
-ListingFuelType? vinResolvedFuelType(String? raw) {
+/// Deterministic fuel from primary, secondary, and electrification.
+///
+/// A non-empty value that is not in the explicit tables is unknown.
+/// Disagreeing fuels stay null. Electrification never invents a hybrid
+/// from a model name.
+ListingFuelType? vinResolvedFuelType(
+  String? primary, {
+  String? secondary,
+  String? electrification,
+}) {
+  final primaryCategory = _explicitFuel(primary);
+  final secondaryCategory = _explicitFuel(secondary);
+  final electrified = _explicitElectrification(electrification);
+  if (_presentUnmapped(primary, primaryCategory)) return null;
+  if (_presentUnmapped(secondary, secondaryCategory)) return null;
+  if (_presentUnmapped(electrification, electrified)) return null;
+  if (primaryCategory != null &&
+      secondaryCategory != null &&
+      primaryCategory != secondaryCategory) {
+    return null;
+  }
+  final base = primaryCategory ?? secondaryCategory;
+  if (electrified == null) return base;
+  if (!_electrificationCompatible(electrified, base)) return null;
+  return electrified;
+}
+
+int? vinResolvedCount(String? raw, {required int max}) {
+  final hay = raw?.trim();
+  if (hay == null || hay.isEmpty || !RegExp(r'^\d+$').hasMatch(hay)) {
+    return null;
+  }
+  final n = int.tryParse(hay);
+  if (n == null || n < 1 || n > max) return null;
+  return n;
+}
+
+ListingFuelType? _explicitFuel(String? raw) {
   final hay = _norm(raw);
   if (hay == null) return null;
-  if (_isAmbiguousFuel(hay)) return null;
   return switch (hay) {
     'gasoline' || 'petrol' => ListingFuelType.petrol,
     'diesel' => ListingFuelType.diesel,
     'electric' || 'battery electric' || 'bev' => ListingFuelType.electric,
+    'lpg' || 'liquefied petroleum gas (propane or lpg)' => ListingFuelType.lpg,
+    'cng' || 'compressed natural gas (cng)' => ListingFuelType.cng,
     _ => null,
+  };
+}
+
+ListingFuelType? _explicitElectrification(String? raw) {
+  final hay = _norm(raw);
+  if (hay == null) return null;
+  return switch (hay) {
+    'bev (battery electric vehicle)' => ListingFuelType.electric,
+    'hev (hybrid electric vehicle) - level unknown' ||
+    'strong hev (hybrid electric vehicle)' ||
+    'mild hev (hybrid electric vehicle)' => ListingFuelType.hybrid,
+    'phev (plug-in hybrid electric vehicle)' => ListingFuelType.plugInHybrid,
+    _ => null,
+  };
+}
+
+bool _presentUnmapped(String? raw, ListingFuelType? mapped) {
+  final hay = _norm(raw);
+  return hay != null && mapped == null;
+}
+
+bool _electrificationCompatible(ListingFuelType electrified, ListingFuelType? base) {
+  if (base == null) return true;
+  return switch (electrified) {
+    ListingFuelType.plugInHybrid =>
+      base == ListingFuelType.petrol ||
+          base == ListingFuelType.diesel ||
+          base == ListingFuelType.electric ||
+          base == ListingFuelType.plugInHybrid,
+    ListingFuelType.hybrid =>
+      base == ListingFuelType.petrol ||
+          base == ListingFuelType.diesel ||
+          base == ListingFuelType.hybrid,
+    ListingFuelType.electric =>
+      base == ListingFuelType.electric,
+    _ => false,
   };
 }
 
@@ -136,18 +235,6 @@ double? vinResolvedDisplacementLiters(String? raw) {
 
 String formatVinDisplacementField(double liters) {
   return liters.toStringAsFixed(3).replaceFirst(RegExp(r'\.?0+$'), '');
-}
-
-bool _isAmbiguousFuel(String hay) {
-  return hay.contains('hybrid') ||
-      hay.contains('flex') ||
-      hay.contains('e85') ||
-      hay.contains('ethanol') ||
-      hay.contains('plug') ||
-      hay.contains('lpg') ||
-      hay.contains('cng') ||
-      hay.contains('bifuel') ||
-      hay.contains('/');
 }
 
 String? _norm(String? raw) {

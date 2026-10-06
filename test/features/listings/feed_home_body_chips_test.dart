@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('feed body-type quick-filter icon optical scale', () {
     test('balanced body types use default scale 1.0', () {
-      for (final chipId in ['all', 'sedan', 'suv', 'hatchback']) {
+      for (final chipId in ['sedan', 'suv', 'hatchback']) {
         expect(
           listingBodyTypeQuickFilterIconScale(chipId),
           1.0,
@@ -31,7 +31,6 @@ void main() {
 
     test('override map keys match feed chip ids', () {
       const feedChipIds = {
-        'all',
         'sedan',
         'suv',
         'hatchback',

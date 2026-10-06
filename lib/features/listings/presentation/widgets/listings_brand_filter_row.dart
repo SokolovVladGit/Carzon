@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -25,16 +24,10 @@ class ListingsBrandFilterRow extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(20, 6, 24, 6),
-        itemCount: kListingBrandFeedQuickFilterCatalog.length + 1,
+        itemCount: kListingBrandFeedQuickFilterCatalog.length,
         separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
-          if (index == 0) {
-            return _BrandTile.all(
-              selected: listingBrandFeedQuickFilterAllSelected(currentMake),
-              onTap: () => onBrandSelected(null),
-            );
-          }
-          final brand = kListingBrandFeedQuickFilterCatalog[index - 1];
+          final brand = kListingBrandFeedQuickFilterCatalog[index];
           return _BrandTile.brand(
             make: brand,
             selected: listingBrandFeedQuickFilterIsSelected(currentMake, brand),
@@ -52,25 +45,9 @@ class _BrandTile extends StatelessWidget {
     required this.onTap,
     required this.semanticsLabel,
     required this.assetPath,
-    required this.fallbackIcon,
     this.monogram,
     this.logoOpticalScale = 1.0,
-    this.allBrandsAssetPath,
   });
-
-  factory _BrandTile.all({
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return _BrandTile._(
-      selected: selected,
-      onTap: onTap,
-      semanticsLabel: null,
-      assetPath: null,
-      fallbackIcon: null,
-      allBrandsAssetPath: _allBrandsAsset,
-    );
-  }
 
   factory _BrandTile.brand({
     required String make,
@@ -84,7 +61,6 @@ class _BrandTile extends StatelessWidget {
       onTap: onTap,
       semanticsLabel: make,
       assetPath: useMonogram ? null : resolvedPath,
-      fallbackIcon: null,
       monogram: useMonogram ? listingBrandFeedQuickFilterMonogram(make) : null,
       logoOpticalScale: useMonogram
           ? 1.0
@@ -94,18 +70,13 @@ class _BrandTile extends StatelessWidget {
 
   final bool selected;
   final VoidCallback onTap;
-  final String? semanticsLabel;
+  final String semanticsLabel;
   final String? assetPath;
-  final IconData? fallbackIcon;
   final String? monogram;
   final double logoOpticalScale;
-  final String? allBrandsAssetPath;
-
-  static const String _allBrandsAsset = 'assets/categories/svg/all_brands.svg';
 
   static const double _size = 48;
   static const double _logoSize = 30;
-  static const double _allBrandsIconSize = 32;
   static const double _brandTileSelectedPillWidth = 20;
   static const double _brandTileSelectedPillHeight = 3;
   static const double _brandTileSelectedPillBottomInset = 4;
@@ -118,15 +89,9 @@ class _BrandTile extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final l10n = context.l10n;
 
-    final label = semanticsLabel != null
-        ? l10n.brandFilterBrandSemantics(semanticsLabel!)
-        : l10n.brandFilterAllSemantics;
+    final label = l10n.brandFilterBrandSemantics(semanticsLabel);
 
-    final isClearChip = allBrandsAssetPath != null;
-
-    final bg = isClearChip
-        ? AppTheme.discoveryClearChipFill(scheme, selected: selected)
-        : selected
+    final bg = selected
         ? (isDark
               ? AppTheme.selectedChipFill(scheme)
               : Color.alphaBlend(
@@ -137,9 +102,7 @@ class _BrandTile extends StatelessWidget {
               ? AppTheme.discoveryBrandChipInactiveFill(scheme)
               : Colors.white);
 
-    final borderColor = isClearChip
-        ? AppTheme.discoveryClearChipBorder(scheme, selected: selected)
-        : selected
+    final borderColor = selected
         ? (isDark
               ? scheme.primary.withValues(alpha: 0.55)
               : scheme.primary.withValues(alpha: 0.38))
@@ -149,39 +112,19 @@ class _BrandTile extends StatelessWidget {
 
     final borderWidth = selected ? 2.0 : 1.0;
 
-    final clearIconColor = AppTheme.discoveryClearChipIconColor(
-      scheme,
-      selected: selected,
-    );
-
     final shadow = BoxShadow(
-      color: isClearChip && isDark && !selected
-          ? scheme.primary.withValues(alpha: 0.10)
-          : selected
+      color: selected
           ? scheme.primary.withValues(alpha: isDark ? 0.18 : 0.12)
-          : isDark && !isClearChip
+          : isDark
           ? scheme.primary.withValues(alpha: 0.08)
-          : scheme.shadow.withValues(alpha: isDark ? 0.16 : 0.025),
+          : scheme.shadow.withValues(alpha: 0.025),
       blurRadius: selected ? 12 : (isDark ? 8 : 6),
       spreadRadius: selected ? 0.5 : 0,
       offset: Offset(0, selected ? 3 : 2),
     );
 
-    Widget glyph;
-    if (allBrandsAssetPath != null) {
-      glyph = SvgPicture.asset(
-        allBrandsAssetPath!,
-        width: _allBrandsIconSize,
-        height: _allBrandsIconSize,
-        fit: BoxFit.contain,
-        colorFilter: ColorFilter.mode(clearIconColor, BlendMode.srcIn),
-        errorBuilder: (context, error, _) => Icon(
-          Icons.grid_view_rounded,
-          size: _logoSize,
-          color: clearIconColor,
-        ),
-      );
-    } else if (assetPath != null) {
+    final Widget glyph;
+    if (assetPath != null) {
       glyph = BrandLogoGlyph.readableOnDark(
         context: context,
         assetPath: assetPath!,
@@ -189,8 +132,6 @@ class _BrandTile extends StatelessWidget {
       );
     } else if (monogram != null) {
       glyph = _BrandMonogramMark(monogram: monogram!, selected: selected);
-    } else if (fallbackIcon != null) {
-      glyph = Icon(fallbackIcon, size: _logoSize, color: scheme.primary);
     } else {
       glyph = const SizedBox.shrink();
     }
@@ -201,7 +142,7 @@ class _BrandTile extends StatelessWidget {
       label: label,
       container: true,
       child: Tooltip(
-        message: semanticsLabel ?? l10n.brandFilterAllSemantics,
+        message: semanticsLabel,
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(_radius),
