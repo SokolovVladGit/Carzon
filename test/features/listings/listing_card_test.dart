@@ -286,7 +286,7 @@ void main() {
       expect(image.alignment, const Alignment(0, 0.45));
     });
 
-    testWidgets('featured variant renders a 4:3 cover, keeps the region badge, '
+    testWidgets('featured variant renders a 16:9 cover, keeps the region badge, '
         'and still drops the exchange/type badge', (tester) async {
       await pumpLocalizedWidget(
         tester,
@@ -300,7 +300,7 @@ void main() {
         ),
       );
 
-      expect(coverAspectRatio(tester), closeTo(4 / 3, 1e-9));
+      expect(coverAspectRatio(tester), closeTo(16 / 9, 1e-9));
       expect(find.text(l10n.regionTransnistria), findsOneWidget);
       expect(find.text(l10n.formatTypeExchange), findsNothing);
       // Price, title and meta (mileage + city) still render — the
