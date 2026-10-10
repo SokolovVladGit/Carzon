@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:68189143516:android:3b6c17bc502936f3af4f19",
+        "android_client_info": {
+          "package_name": "com.carzon.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpn2azpK1FJn4N7cO2AkmTF2yeM67-fUk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:68189143516:android:6767c93141add768af4f19",
         "android_client_info": {
           "package_name": "com.example.carzon"

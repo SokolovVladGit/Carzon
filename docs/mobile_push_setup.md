@@ -23,7 +23,7 @@ Default when unset: **off** (no Firebase bootstrap, no token registration).
 
 ## Android
 
-1. **Firebase Console** — register an Android app with package name **`com.example.carzon`**
+1. **Firebase Console** — register an Android app with package name **`com.carzon.app`**
    (must match `applicationId` in `android/app/build.gradle.kts`).
 2. Download **`google-services.json`** and place at:
    **`android/app/google-services.json`**
