@@ -227,6 +227,16 @@ void main() {
       await recoveryStream.close();
     });
 
+    test('signup confirmation and token refresh stay authenticated', () async {
+      await cubit.bootstrap();
+
+      authStream.add(user);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(cubit.state.status, AuthStatus.authenticated);
+      expect(cubit.state.user, user);
+    });
+
     test('recovery event latches passwordRecovery and later auth events '
         'do not demote it', () async {
       await cubit.bootstrap();
@@ -267,6 +277,27 @@ void main() {
       },
     );
 
+    test(
+      'abandoned recovery then signedIn is authenticated, not passwordRecovery',
+      () async {
+        await cubit.bootstrap();
+        recoveryStream.add(null);
+        await Future<void>.delayed(Duration.zero);
+        expect(cubit.state.status, AuthStatus.passwordRecovery);
+
+        cubit.clearPasswordRecovery();
+        expect(cubit.state.status, AuthStatus.unauthenticated);
+
+        authStream.add(user);
+        await Future<void>.delayed(Duration.zero);
+        expect(cubit.state.status, AuthStatus.authenticated);
+        expect(cubit.state.user, user);
+
+        cubit.clearPasswordRecovery();
+        expect(cubit.state.status, AuthStatus.authenticated);
+      },
+    );
+
     test('signOut exits the recovery latch', () async {
       await cubit.bootstrap();
       recoveryStream.add(null);
@@ -282,19 +313,20 @@ void main() {
       expect(cubit.state.status, AuthStatus.authenticated);
     });
 
-    test('markUnauthenticatedAfterAccountDeletion clears session without signOut', () {
-      cubit.emit(const AuthState.authenticated(user));
-      cubit.markUnauthenticatedAfterAccountDeletion();
-      expect(cubit.state.status, AuthStatus.unauthenticated);
-      expect(cubit.state.publicFeedRefreshNonce, 1);
-    });
+    test(
+      'markUnauthenticatedAfterAccountDeletion clears session without signOut',
+      () {
+        cubit.emit(const AuthState.authenticated(user));
+        cubit.markUnauthenticatedAfterAccountDeletion();
+        expect(cubit.state.status, AuthStatus.unauthenticated);
+        expect(cubit.state.publicFeedRefreshNonce, 1);
+      },
+    );
 
     test(
       'markUnauthenticatedAfterAccountDeletion increments public feed refresh nonce',
       () {
-        cubit.emit(
-          const AuthState.authenticated(user),
-        );
+        cubit.emit(const AuthState.authenticated(user));
         cubit.markUnauthenticatedAfterAccountDeletion();
         cubit.markUnauthenticatedAfterAccountDeletion();
         expect(cubit.state.publicFeedRefreshNonce, 2);

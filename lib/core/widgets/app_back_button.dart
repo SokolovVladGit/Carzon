@@ -25,6 +25,7 @@ class AppBackButton extends StatelessWidget {
     super.key,
     this.fallback = AppRoutes.listings,
     this.tooltip,
+    this.onPressed,
   });
 
   /// Route to navigate to when there is no back stack. Defaults to the
@@ -36,18 +37,23 @@ class AppBackButton extends StatelessWidget {
   /// via [BackButtonIcon] / [Tooltip].
   final String? tooltip;
 
+  /// Replaces the default pop / fallback navigation when set.
+  final VoidCallback? onPressed;
+
   @override
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: tooltip ?? MaterialLocalizations.of(context).backButtonTooltip,
       icon: const BackButtonIcon(),
-      onPressed: () {
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go(fallback);
-        }
-      },
+      onPressed:
+          onPressed ??
+          () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(fallback);
+            }
+          },
     );
   }
 }

@@ -14,6 +14,12 @@ abstract interface class AuthRepository {
     required String password,
   });
 
+  /// Native Google Sign-In → Supabase `signInWithIdToken`.
+  Future<Result<AuthUser>> signInWithGoogle();
+
+  /// Native Sign in with Apple → Supabase `signInWithIdToken`.
+  Future<Result<AuthUser>> signInWithApple();
+
   /// Signs up a new email/password account.
   ///
   /// Returns:
@@ -29,6 +35,10 @@ abstract interface class AuthRepository {
     required String email,
     required String password,
   });
+
+  /// Resends the signup confirmation email for an account that already
+  /// exists and is waiting on email confirmation.
+  Future<Result<void>> resendSignupConfirmation(String email);
 
   Future<Result<void>> signOut();
 

@@ -9,6 +9,7 @@ class AuthUserModel extends AuthUser {
     required super.email,
     super.fullName,
     super.avatarUrl,
+    super.hasEmailPasswordIdentity,
   });
 
   factory AuthUserModel.fromSupabase(Map<String, dynamic> json) {
@@ -19,6 +20,29 @@ class AuthUserModel extends AuthUser {
       email: (json['email'] as String?) ?? '',
       fullName: metadata['full_name'] as String?,
       avatarUrl: metadata['avatar_url'] as String?,
+      hasEmailPasswordIdentity: emailPasswordIdentityFromJson(json),
     );
+  }
+
+  /// `false` only when identities/providers were present and none is `email`.
+  /// Missing identity data stays `true` so password-change is not hidden.
+  static bool emailPasswordIdentityFromJson(Map<String, dynamic> json) {
+    final identities = json['identities'];
+    if (identities is List) {
+      return identities.any((raw) {
+        if (raw is Map) {
+          return raw['provider']?.toString() == 'email';
+        }
+        return false;
+      });
+    }
+    final appMetadata = json['app_metadata'];
+    if (appMetadata is Map) {
+      final providers = appMetadata['providers'];
+      if (providers is List) {
+        return providers.map((e) => e.toString()).contains('email');
+      }
+    }
+    return true;
   }
 }

@@ -17,6 +17,28 @@ void main() {
     dotenv.testLoad(fileInput: '');
   });
 
+  group('Env.google native config', () {
+    test('is unconfigured and Android-disabled when unset', () {
+      dotenv.testLoad(fileInput: '');
+      expect(Env.googleWebClientId, isNull);
+      expect(Env.googleIosClientId, isNull);
+      expect(Env.googleNativeSignInConfigured, isFalse);
+      expect(Env.googleAndroidSignInEnabled, isFalse);
+    });
+
+    test('is configured when both client IDs are present', () {
+      dotenv.testLoad(
+        fileInput: '''
+GOOGLE_WEB_CLIENT_ID=web.apps.googleusercontent.com
+GOOGLE_IOS_CLIENT_ID=ios.apps.googleusercontent.com
+GOOGLE_ANDROID_SIGN_IN_ENABLED=true
+''',
+      );
+      expect(Env.googleNativeSignInConfigured, isTrue);
+      expect(Env.googleAndroidSignInEnabled, isTrue);
+    });
+  });
+
   group('Env.pushNotificationsEnabled', () {
     test('is false when unset', () {
       dotenv.testLoad(

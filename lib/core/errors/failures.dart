@@ -35,6 +35,11 @@ class AuthFailure extends Failure {
   const AuthFailure(super.message);
 }
 
+/// User dismissed a native Google / Apple sheet. Presentation stays silent.
+class AuthCancelledFailure extends Failure {
+  const AuthCancelledFailure() : super('cancelled');
+}
+
 class NetworkFailure extends Failure {
   const NetworkFailure(super.message);
 }

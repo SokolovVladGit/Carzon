@@ -5,13 +5,18 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/app_router.dart';
 import '../../../../core/l10n/app_localizations_x.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../domain/social/social_auth_availability.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/auth_editorial_header.dart';
 import '../widgets/auth_page_scaffold.dart';
+import '../widgets/social_auth_buttons.dart';
 
 class SignInPage extends StatefulWidget {
-  const SignInPage({super.key});
+  const SignInPage({super.key, this.availability});
+
+  /// Test override. Production uses [SocialAuthAvailability.fromEnv].
+  final SocialAuthAvailability? availability;
 
   @override
   State<SignInPage> createState() => _SignInPageState();
@@ -55,6 +60,8 @@ class _SignInPageState extends State<SignInPage> {
         },
         builder: (context, state) {
           final loading = state.status == AuthStatus.authenticating;
+          final availability =
+              widget.availability ?? SocialAuthAvailability.fromEnv();
           return AuthPageBody(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -63,9 +70,23 @@ class _SignInPageState extends State<SignInPage> {
                 AuthEditorialHeader(
                   eyebrow: l10n.signInEyebrow,
                   title: l10n.signInTitle,
-                  subtitle: l10n.signInSubtitle,
                 ),
                 const SizedBox(height: 28),
+                if (availability.hasAny) ...[
+                  SocialAuthButtons(
+                    googleLabel: l10n.signInContinueGoogle,
+                    appleLabel: l10n.signInContinueApple,
+                    separatorLabel: l10n.signInSocialSeparator,
+                    showGoogle: availability.googleEnabled,
+                    showApple: availability.appleEnabled,
+                    loading: loading,
+                    onGooglePressed: () =>
+                        context.read<AuthCubit>().signInWithGoogle(),
+                    onApplePressed: () =>
+                        context.read<AuthCubit>().signInWithApple(),
+                  ),
+                  const SizedBox(height: 22),
+                ],
                 AuthFormSection(
                   child: Form(
                     key: _formKey,
@@ -137,13 +158,6 @@ class _SignInPageState extends State<SignInPage> {
                         accent: true,
                         onPressed: () => context.go(AppRoutes.signUp),
                       ),
-                      const SizedBox(height: 18),
-                      AuthLinkButton(
-                        label: l10n.legalLink,
-                        loading: loading,
-                        muted: true,
-                        onPressed: () => context.go(AppRoutes.terms),
-                      ),
                     ],
                   ),
                 ),
@@ -168,5 +182,9 @@ String _authErrorMessage(AppLocalizations l10n, AuthErrorKind? kind) {
     AuthErrorKind.signUpEmailTaken => l10n.userErrorEmailAlreadyRegistered,
     AuthErrorKind.signUpWeakPassword => l10n.userErrorWeakPassword,
     AuthErrorKind.signOutFailed => l10n.signOutFailedRetry,
+    AuthErrorKind.googleSignInFailed => l10n.signInGoogleFailed,
+    AuthErrorKind.appleSignInFailed => l10n.signInAppleFailed,
+    AuthErrorKind.identityAlreadyExists => l10n.signInIdentityAlreadyExists,
+    AuthErrorKind.socialAuthNotConfigured => l10n.signInSocialUnavailable,
   };
 }

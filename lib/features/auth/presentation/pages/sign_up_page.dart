@@ -18,10 +18,9 @@ import '../widgets/auth_page_scaffold.dart';
 /// [AuthCubit.bootstrap]. It reacts to [AuthState] transitions:
 ///
 ///   * [AuthStatus.authenticated] → navigate to the listings feed.
-///   * [AuthStatus.needsEmailConfirmation] → show a localized message
-///     and leave the user on this page; the confirmation link will
-///     establish the session and `onAuthStateChange` will handle the
-///     transition.
+///   * [AuthStatus.needsEmailConfirmation] → open the confirmation page.
+///     The confirmation link establishes the session later; that page
+///     leaves for Home when [AuthStatus.authenticated] arrives.
 ///   * [AuthStatus.error] → surface a localized message via SnackBar.
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -84,13 +83,9 @@ class _SignUpPageState extends State<SignUpPage> {
             case AuthStatus.authenticated:
               context.go(AppRoutes.listings);
             case AuthStatus.needsEmailConfirmation:
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(
-                    content: Text(_authInfoMessage(l10n, state.infoKind)),
-                  ),
-                );
+              context.go(
+                AppRoutes.confirmEmailLocation(_emailCtrl.text.trim()),
+              );
             case AuthStatus.error:
               ScaffoldMessenger.of(context)
                 ..hideCurrentSnackBar()
@@ -210,12 +205,6 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 }
 
-String _authInfoMessage(AppLocalizations l10n, AuthInfoKind? kind) {
-  return switch (kind) {
-    AuthInfoKind.signUpConfirmEmail || null => l10n.signUpConfirmEmail,
-  };
-}
-
 String _signUpErrorMessage(AppLocalizations l10n, AuthErrorKind? kind) {
   return switch (kind) {
     null => l10n.signUpFailedRetry,
@@ -226,5 +215,9 @@ String _signUpErrorMessage(AppLocalizations l10n, AuthErrorKind? kind) {
     AuthErrorKind.signInInvalidCredentials => l10n.signInInvalidCredentials,
     AuthErrorKind.signInFailed => l10n.signInFailedRetry,
     AuthErrorKind.signOutFailed => l10n.signOutFailedRetry,
+    AuthErrorKind.googleSignInFailed => l10n.signInGoogleFailed,
+    AuthErrorKind.appleSignInFailed => l10n.signInAppleFailed,
+    AuthErrorKind.identityAlreadyExists => l10n.signInIdentityAlreadyExists,
+    AuthErrorKind.socialAuthNotConfigured => l10n.signInSocialUnavailable,
   };
 }

@@ -11,6 +11,7 @@ import '../core/services/supabase_service.dart';
 import '../core/l10n/app_locale_cubit.dart';
 import '../core/theme/theme_mode_cubit.dart';
 import '../core/utils/logger.dart';
+import '../features/auth/presentation/auth_callback_navigation.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/auth/presentation/bloc/auth_state.dart';
 import '../features/compare/presentation/cubit/compare_cubit.dart';
@@ -137,6 +138,7 @@ Future<void> bootstrap() async {
       await sl<PushNotificationRegistrationService>().start();
 
       await sl<AuthDeepLinkService>().initialize();
+      openPasswordResetIfRecovery(sl<GoRouter>(), auth.state);
 
       runApp(const CarzonApp());
     },

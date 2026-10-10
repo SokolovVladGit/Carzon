@@ -10,6 +10,7 @@ import '../core/l10n/app_locale_cubit.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_mode_cubit.dart';
 import '../l10n/app_localizations.dart';
+import '../features/auth/presentation/auth_callback_navigation.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/auth/presentation/bloc/auth_state.dart';
 import '../features/compare/presentation/cubit/compare_cubit.dart';
@@ -24,7 +25,6 @@ import '../features/notifications/services/message_push_tap_handler.dart';
 import '../features/notifications/services/push_notification_registration_service.dart';
 import '../features/sellers/presentation/bloc/self_seller_visual_cubit.dart';
 import 'di/injection.dart';
-import 'router/app_router.dart';
 
 class CarzonApp extends StatefulWidget {
   const CarzonApp({super.key});
@@ -47,6 +47,7 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    openPasswordResetIfRecovery(sl<GoRouter>(), sl<AuthCubit>().state);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _updateUnreadPolling(sl<AuthCubit>().state);
@@ -254,7 +255,8 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
             listenWhen: (prev, curr) =>
                 prev.status != curr.status &&
                 curr.status == AuthStatus.passwordRecovery,
-            listener: (_, _) => sl<GoRouter>().go(AppRoutes.resetPassword),
+            listener: (_, state) =>
+                openPasswordResetIfRecovery(sl<GoRouter>(), state),
           ),
         ],
         child: BlocBuilder<ThemeModeCubit, ThemeModeState>(

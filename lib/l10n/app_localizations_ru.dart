@@ -2425,7 +2425,32 @@ class AppLocalizationsRu extends AppLocalizations {
   String get signInForgotPassword => 'Забыли пароль?';
 
   @override
-  String get signInCreateAccount => 'Создать аккаунт';
+  String get signInCreateAccount => 'Нет аккаунта? Создать';
+
+  @override
+  String get signInContinueGoogle => 'Продолжить с Google';
+
+  @override
+  String get signInContinueApple => 'Продолжить с Apple';
+
+  @override
+  String get signInSocialSeparator => 'или';
+
+  @override
+  String get signInGoogleFailed =>
+      'Не удалось войти через Google. Попробуйте ещё раз.';
+
+  @override
+  String get signInAppleFailed =>
+      'Не удалось войти через Apple. Попробуйте ещё раз.';
+
+  @override
+  String get signInIdentityAlreadyExists =>
+      'Для этого email уже существует аккаунт. Войдите способом, который использовали раньше.';
+
+  @override
+  String get signInSocialUnavailable =>
+      'Вход через этот сервис сейчас недоступен.';
 
   @override
   String get legalLink => 'Условия и конфиденциальность';
@@ -2465,6 +2490,33 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get signUpConfirmEmail =>
       'Проверьте почту, чтобы подтвердить аккаунт.';
+
+  @override
+  String get confirmEmailEyebrow => 'CARZON · РЕГИСТРАЦИЯ';
+
+  @override
+  String get confirmEmailTitle => 'Подтвердите почту';
+
+  @override
+  String get confirmEmailSentTo => 'Мы отправили письмо на:';
+
+  @override
+  String get confirmEmailInstructions =>
+      'Перейдите по ссылке в письме, чтобы завершить регистрацию.';
+
+  @override
+  String get confirmEmailResend => 'Отправить ещё раз';
+
+  @override
+  String get confirmEmailResendSuccess => 'Письмо отправлено ещё раз.';
+
+  @override
+  String get confirmEmailResendFailed =>
+      'Не удалось отправить письмо. Попробуйте ещё раз.';
+
+  @override
+  String get confirmEmailResendRateLimited =>
+      'Слишком много попыток. Подождите немного и попробуйте снова.';
 
   @override
   String get forgotPasswordTitle => 'Восстановление пароля';

@@ -5,7 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/auth_user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/social/social_auth_error_mapper.dart';
 import '../../domain/usecases/get_current_user.dart';
+import '../../domain/usecases/sign_in_with_apple.dart';
+import '../../domain/usecases/sign_in_with_google.dart';
 import '../../domain/usecases/sign_in_with_password.dart';
 import '../../domain/usecases/sign_out.dart';
 import '../../domain/usecases/sign_up_with_password.dart';
@@ -19,11 +22,15 @@ class AuthCubit extends Cubit<AuthState> {
     required SignInWithPassword signInWithPassword,
     required SignUpWithPassword signUpWithPassword,
     required SignOut signOut,
+    SignInWithGoogle? signInWithGoogle,
+    SignInWithApple? signInWithApple,
   }) : _repository = repository,
        _getCurrentUser = getCurrentUser,
        _signInWithPassword = signInWithPassword,
        _signUpWithPassword = signUpWithPassword,
        _signOut = signOut,
+       _signInWithGoogle = signInWithGoogle ?? SignInWithGoogle(repository),
+       _signInWithApple = signInWithApple ?? SignInWithApple(repository),
        super(const AuthState.unknown());
 
   final AuthRepository _repository;
@@ -31,6 +38,8 @@ class AuthCubit extends Cubit<AuthState> {
   final SignInWithPassword _signInWithPassword;
   final SignUpWithPassword _signUpWithPassword;
   final SignOut _signOut;
+  final SignInWithGoogle _signInWithGoogle;
+  final SignInWithApple _signInWithApple;
 
   StreamSubscription<AuthUser?>? _authSub;
   StreamSubscription<void>? _recoverySub;
@@ -90,6 +99,37 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
+  Future<void> signInWithGoogle() async {
+    if (state.status == AuthStatus.authenticating) {
+      return;
+    }
+    emit(const AuthState.authenticating());
+    final result = await _signInWithGoogle();
+    result.fold(
+      (failure) => emit(_socialFailureState(failure, isApple: false)),
+      (user) => emit(AuthState.authenticated(user)),
+    );
+  }
+
+  Future<void> signInWithApple() async {
+    if (state.status == AuthStatus.authenticating) {
+      return;
+    }
+    emit(const AuthState.authenticating());
+    final result = await _signInWithApple();
+    result.fold(
+      (failure) => emit(_socialFailureState(failure, isApple: true)),
+      (user) => emit(AuthState.authenticated(user)),
+    );
+  }
+
+  AuthState _socialFailureState(Failure failure, {required bool isApple}) {
+    if (failure is AuthCancelledFailure) {
+      return const AuthState.unauthenticated();
+    }
+    return AuthState.error(_socialErrorKind(failure, isApple: isApple));
+  }
+
   /// Creates a new account and, depending on the Supabase project
   /// settings, either signs the user in immediately or asks them to
   /// confirm their email:
@@ -98,12 +138,10 @@ class AuthCubit extends Cubit<AuthState> {
   ///     `onAuthStateChange` subscription established by [bootstrap]
   ///     will also observe this transition and keep the two sources in
   ///     sync.
-  ///   * `Success(null)` → [AuthState.needsEmailConfirmation] is emitted
-  ///     with [AuthInfoKind.signUpConfirmEmail]. The widget resolves
-  ///     the user-visible message via `AppLocalizations`. The session
-  ///     will be established later via the confirmation deep-link, at
-  ///     which point the same `onAuthStateChange` stream emits
-  ///     authenticated.
+  ///   * `Success(null)` → [AuthState.needsEmailConfirmation]. The sign-up
+  ///     page opens the confirmation screen. The session is established
+  ///     later via the confirmation deep link, which emits a normal
+  ///     signed-in event — not [AuthStatus.passwordRecovery].
   ///   * Failure → [AuthState.error] with a mapped [AuthErrorKind]
   ///     (network, duplicate email heuristic, generic, …).
   Future<void> signUp({required String email, required String password}) async {
@@ -209,6 +247,27 @@ class AuthCubit extends Cubit<AuthState> {
       }
     }
     return AuthErrorKind.signUpFailed;
+  }
+
+  static AuthErrorKind _socialErrorKind(
+    Failure failure, {
+    required bool isApple,
+  }) {
+    if (failure is NetworkFailure) {
+      return AuthErrorKind.networkConnectivity;
+    }
+    final raw = failure.message;
+    if (raw == SocialAuthMessages.identityAlreadyExists ||
+        SocialAuthMessages.isIdentityCollision(raw)) {
+      return AuthErrorKind.identityAlreadyExists;
+    }
+    if (raw == SocialAuthMessages.googleNotConfigured ||
+        raw == SocialAuthMessages.appleNotConfigured) {
+      return AuthErrorKind.socialAuthNotConfigured;
+    }
+    return isApple
+        ? AuthErrorKind.appleSignInFailed
+        : AuthErrorKind.googleSignInFailed;
   }
 
   @override

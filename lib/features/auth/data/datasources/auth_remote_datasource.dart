@@ -14,6 +14,23 @@ abstract interface class AuthRemoteDataSource {
     required String password,
   });
 
+  Future<AuthUserModel> signInWithGoogleIdToken({
+    required String idToken,
+    required String accessToken,
+  });
+
+  Future<AuthUserModel> signInWithAppleIdToken({
+    required String idToken,
+    required String nonce,
+  });
+
+  /// Seeds `full_name` / given / family on auth metadata only when empty.
+  /// Does not touch `seller_profiles`.
+  Future<AuthUserModel?> seedAuthFullNameIfAbsent({
+    String? givenName,
+    String? familyName,
+  });
+
   /// Returns the signed-up user when Supabase also established an active
   /// session (email confirmation disabled in the project), or `null` when
   /// the sign-up succeeded but no session was issued (email confirmation
@@ -22,7 +39,16 @@ abstract interface class AuthRemoteDataSource {
   Future<AuthUserModel?> signUpWithPassword({
     required String email,
     required String password,
+    String? emailRedirectTo,
   });
+
+  /// Resends the signup confirmation email. [emailRedirectTo] must be the
+  /// same auth callback used by [signUpWithPassword].
+  Future<void> resendSignupConfirmation({
+    required String email,
+    String? emailRedirectTo,
+  });
+
   Future<void> signOut();
 
   /// Requests a password-reset email for [email]. Supabase intentionally
@@ -103,9 +129,14 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
   Future<AuthUserModel?> signUpWithPassword({
     required String email,
     required String password,
+    String? emailRedirectTo,
   }) async {
     try {
-      final response = await _auth.signUp(email: email, password: password);
+      final response = await _auth.signUp(
+        email: email,
+        password: password,
+        emailRedirectTo: emailRedirectTo,
+      );
       // Supabase behavior:
       //   * Email confirmation disabled → `session` and `user` both set.
       //     We return the user so the caller can treat the caller as
@@ -131,6 +162,131 @@ class SupabaseAuthRemoteDataSource implements AuthRemoteDataSource {
     } catch (e, st) {
       throw ServerException(
         'Unexpected sign-up error',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<void> resendSignupConfirmation({
+    required String email,
+    String? emailRedirectTo,
+  }) async {
+    try {
+      await _auth.resend(
+        type: sb.OtpType.signup,
+        email: email,
+        emailRedirectTo: emailRedirectTo,
+      );
+    } on sb.AuthException catch (e, st) {
+      throw AuthException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      throw ServerException(
+        'Unexpected confirmation-resend error',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<AuthUserModel> signInWithGoogleIdToken({
+    required String idToken,
+    required String accessToken,
+  }) async {
+    try {
+      final response = await _auth.signInWithIdToken(
+        provider: sb.OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
+      );
+      final user = response.user;
+      if (user == null) {
+        throw AuthException('Sign-in returned no user.');
+      }
+      return AuthUserModel.fromSupabase(user.toJson());
+    } on sb.AuthException catch (e, st) {
+      throw AuthException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is AuthException) rethrow;
+      throw ServerException(
+        'Unexpected Google sign-in error',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<AuthUserModel> signInWithAppleIdToken({
+    required String idToken,
+    required String nonce,
+  }) async {
+    try {
+      final response = await _auth.signInWithIdToken(
+        provider: sb.OAuthProvider.apple,
+        idToken: idToken,
+        nonce: nonce,
+      );
+      final user = response.user;
+      if (user == null) {
+        throw AuthException('Sign-in returned no user.');
+      }
+      return AuthUserModel.fromSupabase(user.toJson());
+    } on sb.AuthException catch (e, st) {
+      throw AuthException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is AuthException) rethrow;
+      throw ServerException(
+        'Unexpected Apple sign-in error',
+        cause: e,
+        stackTrace: st,
+      );
+    }
+  }
+
+  @override
+  Future<AuthUserModel?> seedAuthFullNameIfAbsent({
+    String? givenName,
+    String? familyName,
+  }) async {
+    final given = givenName?.trim();
+    final family = familyName?.trim();
+    final parts = <String>[
+      if (given != null && given.isNotEmpty) given,
+      if (family != null && family.isNotEmpty) family,
+    ];
+    if (parts.isEmpty) return currentUser();
+
+    final user = _auth.currentUser;
+    if (user == null) return null;
+
+    final existing = user.userMetadata?['full_name'];
+    if (existing is String && existing.trim().isNotEmpty) {
+      return AuthUserModel.fromSupabase(user.toJson());
+    }
+
+    try {
+      final response = await _auth.updateUser(
+        sb.UserAttributes(
+          data: <String, dynamic>{
+            'full_name': parts.join(' '),
+            if (given != null && given.isNotEmpty) 'given_name': given,
+            if (family != null && family.isNotEmpty) 'family_name': family,
+          },
+        ),
+      );
+      final updated = response.user ?? _auth.currentUser;
+      return updated == null
+          ? null
+          : AuthUserModel.fromSupabase(updated.toJson());
+    } on sb.AuthException catch (e, st) {
+      throw AuthException(e.message, cause: e, stackTrace: st);
+    } catch (e, st) {
+      if (e is AuthException) rethrow;
+      throw ServerException(
+        'Unexpected auth metadata update error',
         cause: e,
         stackTrace: st,
       );

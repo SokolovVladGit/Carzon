@@ -54,6 +54,18 @@ enum AuthErrorKind {
 
   /// Sign-out failed (usually transient network error).
   signOutFailed,
+
+  /// Native Google sign-in failed (missing token, SDK, or Supabase).
+  googleSignInFailed,
+
+  /// Native Apple sign-in failed (missing token, SDK, or Supabase).
+  appleSignInFailed,
+
+  /// Email already exists under a different auth provider. No auto-link.
+  identityAlreadyExists,
+
+  /// Provider IDs / native config are missing in this build.
+  socialAuthNotConfigured,
 }
 
 class AuthState extends Equatable {
