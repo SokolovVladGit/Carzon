@@ -2424,7 +2424,32 @@ class AppLocalizationsRo extends AppLocalizations {
   String get signInForgotPassword => 'Ați uitat parola?';
 
   @override
-  String get signInCreateAccount => 'Creați un cont';
+  String get signInCreateAccount => 'Nu aveți cont? Creați';
+
+  @override
+  String get signInContinueGoogle => 'Continuați cu Google';
+
+  @override
+  String get signInContinueApple => 'Continuați cu Apple';
+
+  @override
+  String get signInSocialSeparator => 'sau';
+
+  @override
+  String get signInGoogleFailed =>
+      'Conectarea cu Google a eșuat. Încercați din nou.';
+
+  @override
+  String get signInAppleFailed =>
+      'Conectarea cu Apple a eșuat. Încercați din nou.';
+
+  @override
+  String get signInIdentityAlreadyExists =>
+      'Există deja un cont pentru acest e-mail. Conectați-vă cu metoda folosită anterior.';
+
+  @override
+  String get signInSocialUnavailable =>
+      'Conectarea prin acest serviciu nu este disponibilă acum.';
 
   @override
   String get legalLink => 'Termeni și confidențialitate';
@@ -2465,6 +2490,33 @@ class AppLocalizationsRo extends AppLocalizations {
   @override
   String get signUpConfirmEmail =>
       'Verificați e-mailul pentru a vă confirma contul.';
+
+  @override
+  String get confirmEmailEyebrow => 'CARZON · ÎNREGISTRARE';
+
+  @override
+  String get confirmEmailTitle => 'Confirmați e-mailul';
+
+  @override
+  String get confirmEmailSentTo => 'Am trimis un mesaj la:';
+
+  @override
+  String get confirmEmailInstructions =>
+      'Deschideți linkul din e-mail pentru a finaliza înregistrarea.';
+
+  @override
+  String get confirmEmailResend => 'Trimite din nou';
+
+  @override
+  String get confirmEmailResendSuccess => 'Am trimis e-mailul din nou.';
+
+  @override
+  String get confirmEmailResendFailed =>
+      'Nu am putut trimite e-mailul. Încercați din nou.';
+
+  @override
+  String get confirmEmailResendRateLimited =>
+      'Prea multe încercări. Așteptați puțin și încercați din nou.';
 
   @override
   String get forgotPasswordTitle => 'Recuperarea parolei';

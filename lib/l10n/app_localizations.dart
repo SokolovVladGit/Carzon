@@ -4413,8 +4413,50 @@ abstract class AppLocalizations {
   /// No description provided for @signInCreateAccount.
   ///
   /// In ru, this message translates to:
-  /// **'Создать аккаунт'**
+  /// **'Нет аккаунта? Создать'**
   String get signInCreateAccount;
+
+  /// No description provided for @signInContinueGoogle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продолжить с Google'**
+  String get signInContinueGoogle;
+
+  /// No description provided for @signInContinueApple.
+  ///
+  /// In ru, this message translates to:
+  /// **'Продолжить с Apple'**
+  String get signInContinueApple;
+
+  /// No description provided for @signInSocialSeparator.
+  ///
+  /// In ru, this message translates to:
+  /// **'или'**
+  String get signInSocialSeparator;
+
+  /// No description provided for @signInGoogleFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось войти через Google. Попробуйте ещё раз.'**
+  String get signInGoogleFailed;
+
+  /// No description provided for @signInAppleFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось войти через Apple. Попробуйте ещё раз.'**
+  String get signInAppleFailed;
+
+  /// No description provided for @signInIdentityAlreadyExists.
+  ///
+  /// In ru, this message translates to:
+  /// **'Для этого email уже существует аккаунт. Войдите способом, который использовали раньше.'**
+  String get signInIdentityAlreadyExists;
+
+  /// No description provided for @signInSocialUnavailable.
+  ///
+  /// In ru, this message translates to:
+  /// **'Вход через этот сервис сейчас недоступен.'**
+  String get signInSocialUnavailable;
 
   /// No description provided for @legalLink.
   ///
@@ -4487,6 +4529,54 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Проверьте почту, чтобы подтвердить аккаунт.'**
   String get signUpConfirmEmail;
+
+  /// No description provided for @confirmEmailEyebrow.
+  ///
+  /// In ru, this message translates to:
+  /// **'CARZON · РЕГИСТРАЦИЯ'**
+  String get confirmEmailEyebrow;
+
+  /// No description provided for @confirmEmailTitle.
+  ///
+  /// In ru, this message translates to:
+  /// **'Подтвердите почту'**
+  String get confirmEmailTitle;
+
+  /// No description provided for @confirmEmailSentTo.
+  ///
+  /// In ru, this message translates to:
+  /// **'Мы отправили письмо на:'**
+  String get confirmEmailSentTo;
+
+  /// No description provided for @confirmEmailInstructions.
+  ///
+  /// In ru, this message translates to:
+  /// **'Перейдите по ссылке в письме, чтобы завершить регистрацию.'**
+  String get confirmEmailInstructions;
+
+  /// No description provided for @confirmEmailResend.
+  ///
+  /// In ru, this message translates to:
+  /// **'Отправить ещё раз'**
+  String get confirmEmailResend;
+
+  /// No description provided for @confirmEmailResendSuccess.
+  ///
+  /// In ru, this message translates to:
+  /// **'Письмо отправлено ещё раз.'**
+  String get confirmEmailResendSuccess;
+
+  /// No description provided for @confirmEmailResendFailed.
+  ///
+  /// In ru, this message translates to:
+  /// **'Не удалось отправить письмо. Попробуйте ещё раз.'**
+  String get confirmEmailResendFailed;
+
+  /// No description provided for @confirmEmailResendRateLimited.
+  ///
+  /// In ru, this message translates to:
+  /// **'Слишком много попыток. Подождите немного и попробуйте снова.'**
+  String get confirmEmailResendRateLimited;
 
   /// No description provided for @forgotPasswordTitle.
   ///

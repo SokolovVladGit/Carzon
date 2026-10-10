@@ -1,0 +1,14 @@
+# Copy to android/key.properties. That file is gitignored.
+# storeFile is resolved from android/app/ (relative) or as an absolute path.
+# Prefer a keystore stored outside this repository.
+#
+# Environment overrides, used only when the matching property is absent:
+#   CARZON_UPLOAD_STORE_FILE
+#   CARZON_UPLOAD_STORE_PASSWORD
+#   CARZON_UPLOAD_KEY_ALIAS
+#   CARZON_UPLOAD_KEY_PASSWORD
+
+storeFile=/absolute/path/to/carzon-upload.jks
+storePassword=REPLACE_ME
+keyAlias=REPLACE_ME
+keyPassword=REPLACE_ME

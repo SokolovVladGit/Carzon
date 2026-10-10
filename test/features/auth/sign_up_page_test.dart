@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
+import 'package:carzon/app/router/app_router.dart';
+import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:carzon/features/auth/presentation/pages/sign_up_page.dart';
@@ -7,21 +11,42 @@ import 'package:carzon/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 import '../../helpers/l10n_test_helpers.dart';
 
 class _MockAuthCubit extends MockCubit<AuthState> implements AuthCubit {}
 
-Widget _wrap(AuthCubit cubit) {
-  return MaterialApp(
+Widget _routerWrap(AuthCubit cubit) {
+  final router = GoRouter(
+    initialLocation: AppRoutes.signUp,
+    routes: [
+      GoRoute(
+        path: AppRoutes.signUp,
+        builder: (_, _) => BlocProvider<AuthCubit>.value(
+          value: cubit,
+          child: const SignUpPage(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.confirmEmail,
+        builder: (_, state) => Text(
+          'confirm:${state.uri.queryParameters['email']}',
+          key: const Key('confirm-email-route'),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.listings,
+        builder: (_, _) => const Text('home', key: Key('home-route')),
+      ),
+    ],
+  );
+  return MaterialApp.router(
     locale: const Locale('ru'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: BlocProvider<AuthCubit>.value(
-      value: cubit,
-      child: const SignUpPage(),
-    ),
+    routerConfig: router,
   );
 }
 
@@ -46,7 +71,7 @@ void main() {
   testWidgets(
     'shows email, password, confirm password, Create account and Sign in',
     (tester) async {
-      await tester.pumpWidget(_wrap(cubit));
+      await tester.pumpWidget(_routerWrap(cubit));
 
       expect(find.byType(AuthEditorialHeader), findsOneWidget);
       expect(
@@ -80,7 +105,7 @@ void main() {
   testWidgets('password mismatch: submit does not call AuthCubit.signUp', (
     tester,
   ) async {
-    await tester.pumpWidget(_wrap(cubit));
+    await tester.pumpWidget(_routerWrap(cubit));
 
     await tester.enterText(
       find.widgetWithText(TextFormField, l10n.authFieldEmail),
@@ -117,7 +142,7 @@ void main() {
         ),
       ).thenAnswer((_) async {});
 
-      await tester.pumpWidget(_wrap(cubit));
+      await tester.pumpWidget(_routerWrap(cubit));
 
       await tester.enterText(
         find.widgetWithText(TextFormField, l10n.authFieldEmail),
@@ -142,23 +167,50 @@ void main() {
   );
 
   testWidgets(
-    'needsEmailConfirmation: shows the check-your-email message via SnackBar',
+    'needsEmailConfirmation opens the confirmation page with the entered email',
     (tester) async {
+      final states = StreamController<AuthState>();
+      addTearDown(states.close);
       when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
       whenListen(
         cubit,
-        Stream<AuthState>.fromIterable(const [
-          AuthState.authenticating(),
-          AuthState.needsEmailConfirmation(),
-        ]),
+        states.stream,
         initialState: const AuthState.unauthenticated(),
       );
 
-      await tester.pumpWidget(_wrap(cubit));
+      await tester.pumpWidget(_routerWrap(cubit));
+      await tester.enterText(
+        find.widgetWithText(TextFormField, l10n.authFieldEmail),
+        'new@carzon.test',
+      );
+      states.add(const AuthState.needsEmailConfirmation());
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
 
-      expect(find.text(l10n.signUpConfirmEmail), findsOneWidget);
+      expect(find.text('confirm:new@carzon.test'), findsOneWidget);
+      expect(find.text(l10n.signUpConfirmEmail), findsNothing);
     },
   );
+
+  testWidgets('authenticated signup leaves for home', (tester) async {
+    final states = StreamController<AuthState>();
+    addTearDown(states.close);
+    when(() => cubit.state).thenReturn(const AuthState.unauthenticated());
+    whenListen(
+      cubit,
+      states.stream,
+      initialState: const AuthState.unauthenticated(),
+    );
+
+    await tester.pumpWidget(_routerWrap(cubit));
+    states.add(
+      const AuthState.authenticated(
+        AuthUser(id: 'u1', email: 'new@carzon.test'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byKey(const Key('home-route')), findsOneWidget);
+  });
 }

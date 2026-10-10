@@ -19,7 +19,7 @@ import 'vin_present_latin_badge.dart';
 ///   * [regular] — the default feed/grid variant: 16:9 cover with a
 ///     light info panel overlapping the image's bottom edge.
 ///   * [featured] — the "feature listing" variant used for the first
-///     card of the home feed: taller 4:3 cover and slightly larger
+///     card of the home feed: same 16:9 cover and slightly larger
 ///     price type in the panel. Exchange/type badges stay regular-only;
 ///     the market region badge is shown on both variants.
 enum ListingCardVariant { regular, featured }
@@ -28,7 +28,7 @@ enum ListingCardVariant { regular, featured }
 /// My Listings surfaces. Renders a single [Listing] as a modern,
 /// marketplace-style card:
 ///
-///   * a big rounded cover image (16:9 regular, 4:3 featured) wrapped
+///   * a big rounded cover image (16:9) wrapped
 ///     in a [Hero] so feed → details transitions animate the photo,
 ///   * a light rounded info panel that **overlaps the bottom of the
 ///     image** and carries price, title (make + model), a muted meta
@@ -181,7 +181,7 @@ class _ListingCardState extends State<ListingCard> {
             setState(() => _pressed = highlighted);
           },
           child: _OverlapCardLayout(
-            aspectRatio: isFeatured ? 4 / 3 : 16 / 9,
+            aspectRatio: 16 / 9,
             overlap: ListingCard._overlap,
             horizontalMargin: ListingCard._panelInset,
             children: [

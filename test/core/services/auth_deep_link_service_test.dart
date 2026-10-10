@@ -48,24 +48,42 @@ void main() {
       );
     });
 
-    test('accepts URIs carrying Supabase auth tokens in query or fragment', () {
-      expect(
-        AuthDeepLinkService.isAuthCallback(
-          Uri.parse('https://example.com/cb?code=xyz'),
-        ),
-        isTrue,
-      );
-      expect(
-        AuthDeepLinkService.isAuthCallback(
-          Uri.parse(
-            'https://example.com/cb#access_token=abc&refresh_token=def',
+    test(
+      'rejects URIs that only carry an auth-looking query on another host',
+      () {
+        expect(
+          AuthDeepLinkService.isAuthCallback(
+            Uri.parse('https://example.com/cb?code=xyz'),
           ),
+          isFalse,
+        );
+        expect(
+          AuthDeepLinkService.isAuthCallback(
+            Uri.parse(
+              'https://example.com/cb#access_token=abc&refresh_token=def',
+            ),
+          ),
+          isFalse,
+        );
+        expect(
+          AuthDeepLinkService.isAuthCallback(
+            Uri.parse('carzon://listing?code=xyz'),
+          ),
+          isFalse,
+        );
+      },
+    );
+
+    test('accepts auth-callback URIs with a code or token', () {
+      expect(
+        AuthDeepLinkService.isAuthCallback(
+          Uri.parse('carzon://auth-callback?code=xyz'),
         ),
         isTrue,
       );
       expect(
         AuthDeepLinkService.isAuthCallback(
-          Uri.parse('https://example.com/cb?error_description=expired'),
+          Uri.parse('carzon://auth-callback?error_description=expired'),
         ),
         isTrue,
       );
@@ -96,6 +114,28 @@ void main() {
       await service.dispose();
     });
 
+    test('forwards a signup-confirmation callback', () async {
+      when(() => parser.handleAuthUrl(any())).thenAnswer((_) async {});
+      final uri = Uri.parse('carzon://auth-callback?code=signup-code');
+
+      final handled = await service.handleUri(uri);
+
+      expect(handled, isTrue);
+      verify(() => parser.handleAuthUrl(uri)).called(1);
+    });
+
+    test('forwards a password-recovery callback', () async {
+      when(() => parser.handleAuthUrl(any())).thenAnswer((_) async {});
+      final uri = Uri.parse(
+        'carzon://auth-callback?code=recovery-code&type=recovery',
+      );
+
+      final handled = await service.handleUri(uri);
+
+      expect(handled, isTrue);
+      verify(() => parser.handleAuthUrl(uri)).called(1);
+    });
+
     test('forwards carzon:// auth-callback URIs to the parser', () async {
       when(() => parser.handleAuthUrl(any())).thenAnswer((_) async {});
       final uri = Uri.parse('carzon://auth-callback#access_token=abc');
@@ -107,7 +147,9 @@ void main() {
     });
 
     test('ignores unrelated URIs without invoking the parser', () async {
-      final handled = await service.handleUri(Uri.parse('https://example.com'));
+      final handled = await service.handleUri(
+        Uri.parse('https://example.com/cb?code=xyz'),
+      );
 
       expect(handled, isFalse);
       verifyNever(() => parser.handleAuthUrl(any()));

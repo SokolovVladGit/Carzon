@@ -26,26 +26,47 @@ class ResetPasswordPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(
-        leading: const AppBackButton(fallback: AppRoutes.signIn),
-        title: Text(l10n.resetPasswordTitle),
-      ),
-      body: BlocBuilder<AuthCubit, AuthState>(
-        builder: (context, auth) {
-          if (auth.status != AuthStatus.passwordRecovery) {
-            return _NoRecoverySessionView(
-              onBack: () => context.go(AppRoutes.signIn),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        leaveResetPassword(context);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: AppBackButton(
+            fallback: AppRoutes.signIn,
+            onPressed: () => leaveResetPassword(context),
+          ),
+          title: Text(l10n.resetPasswordTitle),
+        ),
+        body: BlocBuilder<AuthCubit, AuthState>(
+          builder: (context, auth) {
+            if (auth.status != AuthStatus.passwordRecovery) {
+              return _NoRecoverySessionView(
+                onBack: () => leaveResetPassword(context),
+              );
+            }
+            return BlocProvider(
+              create: (_) => sl<ResetPasswordCubit>(),
+              child: const _ResetPasswordForm(),
             );
-          }
-          return BlocProvider(
-            create: (_) => sl<ResetPasswordCubit>(),
-            child: const _ResetPasswordForm(),
-          );
-        },
+          },
+        ),
       ),
     );
   }
+}
+
+/// Clears the recovery latch, then returns to sign-in.
+///
+/// Used for Back, system pop, the no-session CTA, and successful reset.
+/// [AuthCubit.clearPasswordRecovery] is idempotent.
+@visibleForTesting
+void leaveResetPassword(BuildContext context) {
+  context.read<AuthCubit>().clearPasswordRecovery();
+  if (!context.mounted) return;
+  context.go(AppRoutes.signIn);
 }
 
 class _NoRecoverySessionView extends StatelessWidget {
@@ -127,10 +148,7 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
               ..showSnackBar(
                 SnackBar(content: Text(l10n.resetPasswordSuccess)),
               );
-            // Clear the latched recovery flag before navigating so the
-            // rest of the app resumes normal auth routing.
-            context.read<AuthCubit>().clearPasswordRecovery();
-            context.go(AppRoutes.signIn);
+            leaveResetPassword(context);
           case ResetPasswordStatus.failure:
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()

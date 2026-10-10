@@ -150,18 +150,21 @@ class _SettingsPageState extends State<SettingsPage> {
                             onTap: () => context.push(AppRoutes.profile),
                           ),
                           ProfileMutedDivider(scheme: scheme, isDark: isDark),
-                          ProfileSettingsNavigationRow(
-                            rowKey: const ValueKey<String>(
-                              'settings_change_password_row',
+                          if (auth.user?.hasEmailPasswordIdentity ?? true) ...[
+                            ProfileSettingsNavigationRow(
+                              rowKey: const ValueKey<String>(
+                                'settings_change_password_row',
+                              ),
+                              icon: CarzonIcons.lock,
+                              title: l10n.profileChangePasswordTitle,
+                              subtitle: l10n.profileChangePasswordSubtitle,
+                              theme: theme,
+                              scheme: scheme,
+                              onTap: () =>
+                                  context.push(AppRoutes.changePassword),
                             ),
-                            icon: CarzonIcons.lock,
-                            title: l10n.profileChangePasswordTitle,
-                            subtitle: l10n.profileChangePasswordSubtitle,
-                            theme: theme,
-                            scheme: scheme,
-                            onTap: () => context.push(AppRoutes.changePassword),
-                          ),
-                          ProfileMutedDivider(scheme: scheme, isDark: isDark),
+                            ProfileMutedDivider(scheme: scheme, isDark: isDark),
+                          ],
                           ProfileSettingsNavigationRow(
                             rowKey: const ValueKey<String>(
                               'settings_sign_out_row',

@@ -43,6 +43,15 @@ class Env {
   static const String _listingShareBaseUrl = String.fromEnvironment(
     'CARZON_LISTING_SHARE_BASE_URL',
   );
+  static const String _googleWebClientId = String.fromEnvironment(
+    'GOOGLE_WEB_CLIENT_ID',
+  );
+  static const String _googleIosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
+  );
+  static const String _googleAndroidSignInEnabled = String.fromEnvironment(
+    'GOOGLE_ANDROID_SIGN_IN_ENABLED',
+  );
 
   /// Keys the app cannot run without.
   static const List<String> requiredKeys = <String>[
@@ -126,6 +135,40 @@ class Env {
   static bool get listingSharingEnabled {
     final value = listingShareBaseUrl;
     return value != null && _isProductionListingShareBaseUrl(value);
+  }
+
+  /// Web OAuth client ID used as Google `serverClientId` (not a secret).
+  static String? get googleWebClientId =>
+      _optionalNonEmpty(_googleWebClientId, 'GOOGLE_WEB_CLIENT_ID');
+
+  /// iOS OAuth client ID for native Google Sign-In (not a secret).
+  static String? get googleIosClientId =>
+      _optionalNonEmpty(_googleIosClientId, 'GOOGLE_IOS_CLIENT_ID');
+
+  /// Native Google IDs are present enough for iOS `initialize`.
+  static bool get googleNativeSignInConfigured {
+    final web = googleWebClientId;
+    final ios = googleIosClientId;
+    return web != null && ios != null;
+  }
+
+  /// Android Google button stays hidden until this is explicitly enabled.
+  /// Do not set until Android OAuth / Play signing SHA is actually configured.
+  static bool get googleAndroidSignInEnabled {
+    final raw = _optionalNonEmpty(
+      _googleAndroidSignInEnabled,
+      'GOOGLE_ANDROID_SIGN_IN_ENABLED',
+    );
+    if (raw == null) return false;
+    switch (raw.trim().toLowerCase()) {
+      case '1':
+      case 'true':
+      case 'yes':
+      case 'on':
+        return true;
+      default:
+        return false;
+    }
   }
 
   /// Client FCM bootstrap flag. Default **false** when unset or empty.

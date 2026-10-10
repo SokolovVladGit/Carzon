@@ -31,6 +31,11 @@ class AuthException extends AppException {
   AuthException(super.message, {super.cause, super.stackTrace});
 }
 
+/// User dismissed a native Google / Apple sheet. Not a technical failure.
+class AuthCancelledException extends AppException {
+  AuthCancelledException() : super('cancelled');
+}
+
 class NetworkException extends AppException {
   NetworkException(super.message, {super.cause, super.stackTrace});
 }

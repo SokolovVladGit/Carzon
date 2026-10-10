@@ -533,6 +533,39 @@ void main() {
     expect(find.byKey(_settingsTestChangePasswordStubKey), findsOneWidget);
   });
 
+  testWidgets('hides change password when user has no email identity', (
+    tester,
+  ) async {
+    when(() => authCubit.state).thenReturn(
+      const AuthState(
+        status: AuthStatus.authenticated,
+        user: AuthUser(
+          id: 'user-1',
+          email: 'seller@example.com',
+          hasEmailPasswordIdentity: false,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      _settingsTestApp(
+        authCubit: authCubit,
+        themeModeCubit: themeModeCubit,
+        appLocaleCubit: appLocaleCubit,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('settings_change_password_row')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('settings_sign_out_row')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('Settings navigates to notification settings', (tester) async {
     await tester.pumpWidget(
       _settingsTestApp(

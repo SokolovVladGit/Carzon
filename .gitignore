@@ -44,6 +44,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android upload signing material. Never commit a keystore or key.properties.
+key.properties
+*.jks
+*.keystore
+
 # Environment files (commit only .env.client.example — placeholders)
 .env
 .env.local

@@ -60,6 +60,11 @@
 		Supabase auth callback deep link (password recovery / email
 		confirmation). Keep in sync with the Android intent-filter and
 		the SUPABASE_PASSWORD_RESET_REDIRECT_URL env variable.
+
+		Google native Sign-In also needs a CFBundleURLTypes entry whose
+		scheme is the REVERSED_CLIENT_ID from the iOS OAuth client /
+		GoogleService-Info.plist. Do not invent that value. Keep the
+		existing `carzon` scheme when adding it.
 	-->
 	<key>CFBundleURLTypes</key>
 	<array>

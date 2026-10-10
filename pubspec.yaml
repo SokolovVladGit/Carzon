@@ -69,6 +69,11 @@ dependencies:
   flutter_local_notifications: ^21.0.0
   share_plus: ^12.0.2
 
+  # Native Google / Apple ID-token auth (no browser OAuth).
+  google_sign_in: ^7.2.0
+  sign_in_with_apple: ^7.0.1
+  crypto: ^3.0.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

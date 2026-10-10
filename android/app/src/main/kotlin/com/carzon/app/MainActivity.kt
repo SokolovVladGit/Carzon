@@ -1,4 +1,4 @@
-package com.example.carzon
+package com.carzon.app
 
 import io.flutter.embedding.android.FlutterActivity
 

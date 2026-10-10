@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/l10n/app_localizations_x.dart';
 import '../../features/compare/presentation/pages/compare_page.dart';
 import '../../features/account/presentation/pages/delete_account_page.dart';
+import '../../features/auth/presentation/pages/confirm_email_page.dart';
 import '../../features/auth/presentation/pages/change_password_page.dart';
 import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/reset_password_page.dart';
@@ -39,6 +40,7 @@ class AppRoutes {
 
   static const signIn = '/sign-in';
   static const signUp = '/sign-up';
+  static const confirmEmail = '/confirm-email';
   static const forgotPassword = '/forgot-password';
   static const resetPassword = '/reset-password';
   static const changePassword = '/change-password';
@@ -67,6 +69,13 @@ class AppRoutes {
   static const filterAlert = '/filter-alert';
   static const blockedUsers = '/blocked-users';
   static const sellerProfile = '/sellers/:sellerId';
+
+  static String confirmEmailLocation(String email) {
+    return Uri(
+      path: confirmEmail,
+      queryParameters: {'email': email},
+    ).toString();
+  }
 
   static String listingDetailsPath(String id) => '/listings/$id';
   static String editListingPath(String id) => '/listings/$id/edit';
@@ -129,6 +138,11 @@ class AppRouter {
       routes: [
         GoRoute(path: AppRoutes.signIn, builder: (_, _) => const SignInPage()),
         GoRoute(path: AppRoutes.signUp, builder: (_, _) => const SignUpPage()),
+        GoRoute(
+          path: AppRoutes.confirmEmail,
+          builder: (_, state) =>
+              ConfirmEmailPage(email: state.uri.queryParameters['email'] ?? ''),
+        ),
         GoRoute(
           path: AppRoutes.forgotPassword,
           builder: (_, _) => const ForgotPasswordPage(),

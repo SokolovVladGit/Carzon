@@ -15,16 +15,15 @@ import '../widgets/listing_details_contact_bar.dart';
 import '../widgets/listing_details_content_panel.dart';
 import '../widgets/listing_details_hero.dart';
 
-/// Landscape 4:3 hero height from the available width (`height = width * 3/4`).
+/// Landscape 16:9 hero height from the available width (`height = width * 9/16`).
 ///
-/// Clamped so compact phones keep room for overlay controls and large
-/// phones do not return to a near-square crop.
+/// Invalid widths fall back to the 390 px phone height.
 @visibleForTesting
 double listingDetailsHeroHeightForWidth(double width) {
   if (!width.isFinite || width <= 0) {
-    return 292.5;
+    return 390 * 9 / 16;
   }
-  return (width * 3 / 4).clamp(270.0, 320.0);
+  return width * 9 / 16;
 }
 
 class ListingDetailsPage extends StatelessWidget {
