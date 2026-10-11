@@ -2093,5 +2093,21 @@
   "createListingStepDeal": "Ofertă",
   "createListingStepData": "Date",
   "createListingStepContacts": "Contacte",
-  "createListingStepDone": "Final"
+  "createListingStepDone": "Final",
+  "createListingQuickChoicesMore": "Altele",
+  "createListingQuickChoiceAskDrivetrain": "Precizați tracțiunea",
+  "createListingQuickChoiceAskTransmission": "Precizați cutia de viteze",
+  "createListingQuickChoiceAskDoors": "Precizați numărul de uși",
+  "createListingQuickChoiceAskSeats": "Precizați numărul de locuri",
+  "createListingQuickChoiceAskCylinders": "Precizați numărul de cilindri",
+  "createListingQuickChoiceHint": "Alegeți varianta, dacă o cunoașteți",
+  "createListingQuickChoicesMoreCount": "{count, plural, one{Încă {count} caracteristică} few{Încă {count} caracteristici} other{Încă {count} caracteristici}}",
+  "@createListingQuickChoicesMoreCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "createListingQuickChoicesCollapse": "Ascundeți caracteristicile suplimentare",
+  "createListingCharacteristicsFilledFromVinAndSeller": "Din VIN și răspunsurile dvs.",
+  "createListingCharacteristicsFilledFromCatalogAndSeller": "Din catalog și răspunsurile dvs."
 }

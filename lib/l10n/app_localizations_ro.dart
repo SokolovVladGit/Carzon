@@ -4566,4 +4566,52 @@ class AppLocalizationsRo extends AppLocalizations {
 
   @override
   String get createListingStepDone => 'Final';
+
+  @override
+  String get createListingQuickChoicesMore => 'Altele';
+
+  @override
+  String get createListingQuickChoiceAskDrivetrain => 'Precizați tracțiunea';
+
+  @override
+  String get createListingQuickChoiceAskTransmission =>
+      'Precizați cutia de viteze';
+
+  @override
+  String get createListingQuickChoiceAskDoors => 'Precizați numărul de uși';
+
+  @override
+  String get createListingQuickChoiceAskSeats => 'Precizați numărul de locuri';
+
+  @override
+  String get createListingQuickChoiceAskCylinders =>
+      'Precizați numărul de cilindri';
+
+  @override
+  String get createListingQuickChoiceHint =>
+      'Alegeți varianta, dacă o cunoașteți';
+
+  @override
+  String createListingQuickChoicesMoreCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Încă $count caracteristici',
+      few: 'Încă $count caracteristici',
+      one: 'Încă $count caracteristică',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get createListingQuickChoicesCollapse =>
+      'Ascundeți caracteristicile suplimentare';
+
+  @override
+  String get createListingCharacteristicsFilledFromVinAndSeller =>
+      'Din VIN și răspunsurile dvs.';
+
+  @override
+  String get createListingCharacteristicsFilledFromCatalogAndSeller =>
+      'Din catalog și răspunsurile dvs.';
 }

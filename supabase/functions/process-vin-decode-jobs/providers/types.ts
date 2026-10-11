@@ -15,6 +15,8 @@ export type VinDecoderNormalizedFields = {
   year: number | null;
   bodyType: string | null;
   fuelType: string | null;
+  fuelTypeSecondary: string | null;
+  electrificationLevel: string | null;
   engine: string | null;
   transmission: string | null;
   manufacturer: string | null;
@@ -26,6 +28,7 @@ export type VinDecoderNormalizedFields = {
   series: string | null;
   driveType: string | null;
   doors: string | null;
+  seats: string | null;
   displacement: string | null;
   cylinders: string | null;
   grossVehicleWeightRating: string | null;

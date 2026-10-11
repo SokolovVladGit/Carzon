@@ -2548,8 +2548,23 @@ void main() {
     );
     controller.add(confirmed);
     await tester.pumpAndSettle();
-    expect(find.text(ru.listingTransmissionAutomatic), findsNothing);
-    expect(find.text(ru.listingTransmissionManual), findsNothing);
+    final summary = find.byKey(
+      const ValueKey('create_listing_characteristics_summary'),
+    );
+    expect(
+      find.descendant(
+        of: summary,
+        matching: find.text(ru.listingTransmissionAutomatic),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: summary,
+        matching: find.text(ru.listingTransmissionManual),
+      ),
+      findsNothing,
+    );
     await expandCreateListingAdditionalDetails(tester);
     expect(
       find.descendant(

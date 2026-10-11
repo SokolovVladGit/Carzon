@@ -29,12 +29,13 @@ function parseYear(v: unknown): number | null {
   return n;
 }
 
-function parsePositiveIntString(v: unknown): string | null {
+/** Positive integers become decimal digit strings. Non-numeric text is unchanged. */
+export function parsePositiveIntString(v: unknown): string | null {
   const s = trimOrNull(v);
   if (!s) return null;
   const n = Number.parseInt(s, 10);
   if (!Number.isFinite(n) || n <= 0) return s;
-  return '$n';
+  return `${n}`;
 }
 
 function formatDisplacementLiters(v: unknown): string | null {
@@ -121,6 +122,8 @@ export function mapNhtsaVinValuesRow(row: NhtsaVinValuesRow): {
     year,
     bodyType,
     fuelType,
+    fuelTypeSecondary: trimOrNull(row["FuelTypeSecondary"]),
+    electrificationLevel: trimOrNull(row["ElectrificationLevel"]),
     engine,
     transmission,
     manufacturer: trimOrNull(row["Manufacturer"]),
@@ -132,6 +135,7 @@ export function mapNhtsaVinValuesRow(row: NhtsaVinValuesRow): {
     series: trimOrNull(row["Series"]),
     driveType: trimOrNull(row["DriveType"]),
     doors: parsePositiveIntString(row["Doors"]),
+    seats: parsePositiveIntString(row["Seats"]),
     displacement: formatDisplacementLiters(row["DisplacementL"]),
     cylinders: parsePositiveIntString(
       row["EngineCylinders"] ?? row["EngineNumberOfCylinders"],

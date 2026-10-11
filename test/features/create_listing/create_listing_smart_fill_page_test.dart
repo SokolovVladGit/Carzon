@@ -769,7 +769,9 @@ void main() {
     );
   });
 
-  testWidgets('MMY change clears only catalog-owned values', (tester) async {
+  testWidgets('MMY change clears technical values from the previous car', (
+    tester,
+  ) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
     await completeSkodaOctavia(tester);
@@ -799,7 +801,7 @@ void main() {
         of: bodyTypeField(),
         matching: find.text(formatListingBodyType(ru, ListingBodyType.sedan)),
       ),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.descendant(
@@ -867,7 +869,7 @@ void main() {
     verify(smartFill.cancelForVinAuthority).called(greaterThanOrEqualTo(1));
   });
 
-  testWidgets('confirmed VIN does not replace seller-owned field', (
+  testWidgets('confirmed VIN for a different year replaces seller body', (
     tester,
   ) async {
     final controller = listenCreate();
@@ -899,6 +901,13 @@ void main() {
         matching: find.text(
           formatListingBodyType(ru, ListingBodyType.hatchback),
         ),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: bodyTypeField(),
+        matching: find.text(formatListingBodyType(ru, ListingBodyType.sedan)),
       ),
       findsOneWidget,
     );
@@ -1868,11 +1877,8 @@ void main() {
     verifyNever(() => smartFill.selectOption(any()));
   });
 
-  ManualSmartFillQuery octaviaQuery() => ManualSmartFillQuery(
-    make: 'Skoda',
-    model: 'Octavia',
-    year: newestYear,
-  );
+  ManualSmartFillQuery octaviaQuery() =>
+      ManualSmartFillQuery(make: 'Skoda', model: 'Octavia', year: newestYear);
 
   Future<void> tapContinue(WidgetTester tester) async {
     final cont = find.byKey(const ValueKey('create_listing_step_continue'));

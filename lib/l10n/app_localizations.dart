@@ -8117,6 +8117,72 @@ abstract class AppLocalizations {
   /// In ru, this message translates to:
   /// **'Итог'**
   String get createListingStepDone;
+
+  /// No description provided for @createListingQuickChoicesMore.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ещё'**
+  String get createListingQuickChoicesMore;
+
+  /// No description provided for @createListingQuickChoiceAskDrivetrain.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточните привод'**
+  String get createListingQuickChoiceAskDrivetrain;
+
+  /// No description provided for @createListingQuickChoiceAskTransmission.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточните коробку передач'**
+  String get createListingQuickChoiceAskTransmission;
+
+  /// No description provided for @createListingQuickChoiceAskDoors.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточните число дверей'**
+  String get createListingQuickChoiceAskDoors;
+
+  /// No description provided for @createListingQuickChoiceAskSeats.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточните число мест'**
+  String get createListingQuickChoiceAskSeats;
+
+  /// No description provided for @createListingQuickChoiceAskCylinders.
+  ///
+  /// In ru, this message translates to:
+  /// **'Уточните число цилиндров'**
+  String get createListingQuickChoiceAskCylinders;
+
+  /// No description provided for @createListingQuickChoiceHint.
+  ///
+  /// In ru, this message translates to:
+  /// **'Выберите вариант, если знаете'**
+  String get createListingQuickChoiceHint;
+
+  /// No description provided for @createListingQuickChoicesMoreCount.
+  ///
+  /// In ru, this message translates to:
+  /// **'{count, plural, one{Ещё {count} характеристика} few{Ещё {count} характеристики} many{Ещё {count} характеристик} other{Ещё {count} характеристик}}'**
+  String createListingQuickChoicesMoreCount(int count);
+
+  /// No description provided for @createListingQuickChoicesCollapse.
+  ///
+  /// In ru, this message translates to:
+  /// **'Скрыть дополнительные'**
+  String get createListingQuickChoicesCollapse;
+
+  /// No description provided for @createListingCharacteristicsFilledFromVinAndSeller.
+  ///
+  /// In ru, this message translates to:
+  /// **'По VIN и вашим ответам'**
+  String get createListingCharacteristicsFilledFromVinAndSeller;
+
+  /// No description provided for @createListingCharacteristicsFilledFromCatalogAndSeller.
+  ///
+  /// In ru, this message translates to:
+  /// **'По каталогу и вашим ответам'**
+  String get createListingCharacteristicsFilledFromCatalogAndSeller;
 }
 
 class _AppLocalizationsDelegate

@@ -42,12 +42,14 @@ import '../bloc/manual_smart_fill_cubit.dart';
 import '../bloc/manual_smart_fill_state.dart';
 import '../models/catalog_resolved_form_prefill.dart';
 import '../models/create_listing_draft_dirty.dart';
+import '../models/create_listing_quick_choices.dart';
 import '../models/create_listing_photo_draft.dart';
 import '../models/create_listing_step.dart';
 import '../models/listing_preview_data.dart';
 import '../models/vin_resolved_form_prefill.dart';
 import '../widgets/create_listing_exit_dialog.dart';
 import '../widgets/create_listing_characteristics_facts.dart';
+import '../widgets/create_listing_characteristic_quick_picks.dart';
 import '../widgets/create_listing_compact_summary.dart';
 import '../widgets/create_listing_compose_layout.dart';
 import '../widgets/create_listing_step_chrome.dart';
@@ -81,6 +83,8 @@ typedef CreateListingImagePicker =
 
 /// English catalog sentinel — persisted in `make` when the seller picks «Other» without text.
 final String _kListingBrandCatalogOther = kListingBrandCatalog.last; // "Other"
+
+enum _CharacteristicStatusCaption { none, automatic, mixed, catalogAndSeller }
 
 class _VinCatalogEnrichmentToken {
   const _VinCatalogEnrichmentToken({
@@ -329,12 +333,21 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   bool _engineDisplacementFromCatalog = false;
   bool _enginePowerFromCatalog = false;
   bool _transmissionTypeFromCatalog = false;
+  bool _bodyTypeFromSellerChoice = false;
+  bool _fuelTypeFromSellerChoice = false;
+  bool _engineDisplacementFromSellerChoice = false;
+  bool _enginePowerFromSellerChoice = false;
+  bool _transmissionTypeFromSellerChoice = false;
   bool _applyingVinSpecs = false;
   bool _applyingCatalogSpecs = false;
   Timer? _smartFillDebounce;
   String? _lastSmartFillMake;
   String? _lastSmartFillModel;
   int? _lastSmartFillYear;
+  String? _factsBoundVin;
+  String? _factsBoundMake;
+  String? _factsBoundModel;
+  int? _factsBoundYear;
   bool _hasAdoptedIdentity = false;
   bool _editingLocation = false;
   bool _editingContact = false;
@@ -472,9 +485,20 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     return _selectedCanonicalModel?.trim() ?? '';
   }
 
-  void _applyBrandPick(String picked) {
-    _makeFromVin = false;
+  bool _sameManualMake(ListingBrandPickApply applied) {
+    if (applied.catalogKey != _selectedBrandCatalogValue) return false;
+    if (applied.catalogKey != _kListingBrandCatalogOther) return true;
+    return applied.customMakeText.trim() == _customBrand.text.trim();
+  }
+
+  /// Returns whether the catalog make actually changed.
+  bool _applyBrandPick(String picked) {
     final applied = applyListingBrandPick(picked);
+    if (_sameManualMake(applied)) {
+      _makeFromVin = false;
+      return false;
+    }
+    _makeFromVin = false;
     _selectedBrandCatalogValue = applied.catalogKey;
     if (applied.catalogKey == _kListingBrandCatalogOther) {
       _customBrand.text = applied.customMakeText;
@@ -483,6 +507,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     }
     _clearModelSelection();
     _onManualIdentityMaybeChanged(immediate: true);
+    return true;
   }
 
   Future<void> _openModelSheet() async {
@@ -495,6 +520,17 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       catalog: _catalog,
     );
     if (!mounted || picked == null) return;
+    final sameKnownModel =
+        !picked.manual &&
+        !_manualModel &&
+        picked.canonicalValue != null &&
+        picked.canonicalValue == _selectedCanonicalModel;
+    if (sameKnownModel || (picked.manual && _manualModel)) {
+      if (_modelFromVin) {
+        setState(() => _modelFromVin = false);
+      }
+      return;
+    }
     setState(() {
       _modelFromVin = false;
       _variantFromVin = false;
@@ -662,43 +698,98 @@ class _CreateListingFormState extends State<_CreateListingForm> {
   bool _showContactSummary(AppLocalizations l10n) =>
       _contactSummaryAllowed && _hasValidContact(l10n) && !_editingContact;
 
-  /// True only when every populated characteristic came from VIN or catalog.
-  /// Mixed or seller-owned data returns false so the UI stays neutral.
-  bool _characteristicsFilledAutomatically() {
-    var automatic = 0;
+  /// Caption for the facts card. Provenance flags stay the only source.
+  _CharacteristicStatusCaption _characteristicStatusCaption({
+    required bool vinConfirmed,
+  }) {
+    var vinFacts = 0;
+    var silentCatalog = 0;
     var seller = 0;
-    void mark(bool present, bool fromAutomatic) {
+    var catalogDerived = 0;
+    void mark({
+      required bool present,
+      required bool fromVin,
+      required bool fromCatalog,
+      required bool fromSellerChoice,
+    }) {
       if (!present) return;
-      if (fromAutomatic) {
-        automatic++;
-      } else {
-        seller++;
-      }
+      if (fromVin) vinFacts++;
+      if (fromCatalog && !fromSellerChoice) silentCatalog++;
+      final sellerEntered = fromSellerChoice || (!fromVin && !fromCatalog);
+      if (sellerEntered) seller++;
+      if (fromCatalog || fromSellerChoice) catalogDerived++;
     }
 
-    mark(_bodyType != null, _bodyTypeFromVin || _bodyTypeFromCatalog);
-    mark(_fuelType != null, _fuelTypeFromVin || _fuelTypeFromCatalog);
     mark(
-      createListingHasMeaningfulText(_engineDisplacement.text),
-      _engineDisplacementFromVin || _engineDisplacementFromCatalog,
+      present: _bodyType != null,
+      fromVin: _bodyTypeFromVin,
+      fromCatalog: _bodyTypeFromCatalog,
+      fromSellerChoice: _bodyTypeFromSellerChoice,
     );
     mark(
-      createListingHasMeaningfulText(_enginePower.text),
-      _enginePowerFromCatalog,
+      present: _fuelType != null,
+      fromVin: _fuelTypeFromVin,
+      fromCatalog: _fuelTypeFromCatalog,
+      fromSellerChoice: _fuelTypeFromSellerChoice,
     );
     mark(
-      _transmissionType != null,
-      _transmissionTypeFromVin || _transmissionTypeFromCatalog,
+      present: createListingHasMeaningfulText(_engineDisplacement.text),
+      fromVin: _engineDisplacementFromVin,
+      fromCatalog: _engineDisplacementFromCatalog,
+      fromSellerChoice: _engineDisplacementFromSellerChoice,
     );
-    mark(_drivetrain != null, _drivetrainFromVin);
     mark(
-      createListingHasMeaningfulText(_engineCylinders.text),
-      _engineCylindersFromVin,
+      present: createListingHasMeaningfulText(_enginePower.text),
+      fromVin: false,
+      fromCatalog: _enginePowerFromCatalog,
+      fromSellerChoice: _enginePowerFromSellerChoice,
     );
-    mark(createListingHasMeaningfulText(_doors.text), _doorsFromVin);
-    mark(createListingHasMeaningfulText(_seats.text), _seatsFromVin);
-    mark(createListingHasMeaningfulText(_registration.text), false);
-    return automatic > 0 && seller == 0;
+    mark(
+      present: _transmissionType != null,
+      fromVin: _transmissionTypeFromVin,
+      fromCatalog: _transmissionTypeFromCatalog,
+      fromSellerChoice: _transmissionTypeFromSellerChoice,
+    );
+    mark(
+      present: _drivetrain != null,
+      fromVin: _drivetrainFromVin,
+      fromCatalog: false,
+      fromSellerChoice: false,
+    );
+    mark(
+      present: createListingHasMeaningfulText(_engineCylinders.text),
+      fromVin: _engineCylindersFromVin,
+      fromCatalog: false,
+      fromSellerChoice: false,
+    );
+    mark(
+      present: createListingHasMeaningfulText(_doors.text),
+      fromVin: _doorsFromVin,
+      fromCatalog: false,
+      fromSellerChoice: false,
+    );
+    mark(
+      present: createListingHasMeaningfulText(_seats.text),
+      fromVin: _seatsFromVin,
+      fromCatalog: false,
+      fromSellerChoice: false,
+    );
+    mark(
+      present: createListingHasMeaningfulText(_registration.text),
+      fromVin: false,
+      fromCatalog: false,
+      fromSellerChoice: false,
+    );
+    if (seller == 0 && (vinFacts + silentCatalog) > 0) {
+      return _CharacteristicStatusCaption.automatic;
+    }
+    if (vinConfirmed && vinFacts > 0 && seller > 0) {
+      return _CharacteristicStatusCaption.mixed;
+    }
+    if (catalogDerived > 0 && seller > 0) {
+      return _CharacteristicStatusCaption.catalogAndSeller;
+    }
+    return _CharacteristicStatusCaption.none;
   }
 
   bool _hasPopulatedCharacteristics() {
@@ -871,6 +962,12 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     );
 
     if (!mounted || picked == null) return;
+    if (_sameManualMake(applyListingBrandPick(picked))) {
+      if (_makeFromVin) {
+        setState(() => _makeFromVin = false);
+      }
+      return;
+    }
 
     setState(() => _applyBrandPick(picked));
 
@@ -902,6 +999,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     setState(() {
       _bodyTypeFromVin = false;
       _bodyTypeFromCatalog = false;
+      _bodyTypeFromSellerChoice = false;
       _bodyType = picked.value;
     });
     _bumpVinCatalogEnrichment();
@@ -919,6 +1017,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     setState(() {
       _fuelTypeFromVin = false;
       _fuelTypeFromCatalog = false;
+      _fuelTypeFromSellerChoice = false;
       _fuelType = picked;
     });
     _bumpVinCatalogEnrichment();
@@ -937,6 +1036,100 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       _drivetrainFromVin = false;
       _drivetrain = picked;
     });
+  }
+
+  void _selectQuickDrivetrain(ListingDrivetrain value) {
+    setState(() {
+      _drivetrainFromVin = false;
+      _drivetrain = value;
+    });
+  }
+
+  void _selectQuickTransmission(ListingTransmissionType value) {
+    setState(() {
+      _transmissionTypeFromVin = false;
+      _transmissionTypeFromCatalog = false;
+      _transmissionTypeFromSellerChoice = false;
+      _transmissionType = value;
+    });
+    _bumpVinCatalogEnrichment();
+    _cancelProgressiveRefinementForSellerEdit();
+  }
+
+  void _selectQuickCount({
+    required TextEditingController controller,
+    required void Function() clearVin,
+    required int value,
+  }) {
+    setState(() {
+      controller.text = '$value';
+      clearVin();
+    });
+    _bumpVinCatalogEnrichment();
+  }
+
+  Widget _characteristicQuickChoices({
+    required CreateListingVehicleResolve resolve,
+    required bool submitting,
+  }) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([_engineCylinders, _doors, _seats]),
+      builder: (context, _) {
+        final missing = createListingMissingQuickChoices(
+          CreateListingQuickChoiceValues(
+            drivetrain: _drivetrain,
+            transmissionType: _transmissionType,
+            doors: _countFromField(_doors, max: kCreateListingQuickDoorMax),
+            seats: _countFromField(_seats, max: kCreateListingQuickSeatMax),
+            engineCylinders: _countFromField(
+              _engineCylinders,
+              max: kCreateListingQuickCylinderMax,
+            ),
+          ),
+        );
+        final year = _yearFieldKey.currentState?.value;
+        if (!createListingQuickChoicesVisible(
+          onCharacteristicsStep: true,
+          vinConfirmed: resolve.confirmed,
+          manualIdentityReady:
+              _effectiveMakeForSubmit().isNotEmpty &&
+              _effectiveModelForSubmit().isNotEmpty &&
+              year != null,
+          resolving: resolve.status == CreateListingVinResolveStatus.resolving,
+          missing: missing,
+        )) {
+          return const SizedBox.shrink();
+        }
+        return Offstage(
+          offstage: _step != CreateListingStep.characteristics,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: CreateListingCharacteristicQuickPicks(
+              key: const ValueKey('create_listing_quick_choices'),
+              missing: missing,
+              enabled: !submitting,
+              onDrivetrain: _selectQuickDrivetrain,
+              onTransmission: _selectQuickTransmission,
+              onDoors: (value) => _selectQuickCount(
+                controller: _doors,
+                clearVin: () => _doorsFromVin = false,
+                value: value,
+              ),
+              onSeats: (value) => _selectQuickCount(
+                controller: _seats,
+                clearVin: () => _seatsFromVin = false,
+                value: value,
+              ),
+              onCylinders: (value) => _selectQuickCount(
+                controller: _engineCylinders,
+                clearVin: () => _engineCylindersFromVin = false,
+                value: value,
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _applyListingDefaultsPrefill(SellerListingDefaultsPrefill prefill) {
@@ -1042,6 +1235,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         _bodyType = prefill.bodyType;
         _bodyTypeFromVin = true;
         _bodyTypeFromCatalog = false;
+        _bodyTypeFromSellerChoice = false;
       }
       if (vinMayReplaceField(
             isEmpty: _fuelType == null,
@@ -1051,6 +1245,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         _fuelType = prefill.fuelType;
         _fuelTypeFromVin = true;
         _fuelTypeFromCatalog = false;
+        _fuelTypeFromSellerChoice = false;
       }
       if (vinMayReplaceField(
             isEmpty: _transmissionType == null,
@@ -1060,6 +1255,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         _transmissionType = prefill.transmissionType;
         _transmissionTypeFromVin = true;
         _transmissionTypeFromCatalog = false;
+        _transmissionTypeFromSellerChoice = false;
       }
       if (_drivetrain == null && prefill.drivetrain != null) {
         _drivetrain = prefill.drivetrain;
@@ -1075,6 +1271,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         );
         _engineDisplacementFromVin = true;
         _engineDisplacementFromCatalog = false;
+        _engineDisplacementFromSellerChoice = false;
       }
       if (vinMayReplaceField(
             isEmpty: _engineCylinders.text.trim().isEmpty,
@@ -1216,6 +1413,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         _bodyType = prefill.bodyType;
         _bodyTypeFromCatalog = true;
         _bodyTypeFromVin = false;
+        _bodyTypeFromSellerChoice = false;
       }
       if (!blocked.contains(ManualSmartFillRefinementKind.fuel) &&
           _catalogGap(
@@ -1227,6 +1425,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         _fuelType = prefill.fuelType;
         _fuelTypeFromCatalog = true;
         _fuelTypeFromVin = false;
+        _fuelTypeFromSellerChoice = false;
       }
       final engineBlocked = blocked.contains(
         ManualSmartFillRefinementKind.engine,
@@ -1243,6 +1442,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         );
         _engineDisplacementFromCatalog = true;
         _engineDisplacementFromVin = false;
+        _engineDisplacementFromSellerChoice = false;
       }
       if (!engineBlocked &&
           _catalogGap(
@@ -1253,6 +1453,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
           prefill.enginePowerHp != null) {
         _enginePower.text = '${prefill.enginePowerHp}';
         _enginePowerFromCatalog = true;
+        _enginePowerFromSellerChoice = false;
       }
       if (!blocked.contains(ManualSmartFillRefinementKind.transmission) &&
           _catalogGap(
@@ -1264,6 +1465,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         _transmissionType = prefill.transmissionType;
         _transmissionTypeFromCatalog = true;
         _transmissionTypeFromVin = false;
+        _transmissionTypeFromSellerChoice = false;
       }
     });
     _applyingCatalogSpecs = false;
@@ -1370,6 +1572,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     setState(() {
       _transmissionTypeFromVin = false;
       _transmissionTypeFromCatalog = false;
+      _transmissionTypeFromSellerChoice = false;
       _transmissionType = picked;
     });
     _bumpVinCatalogEnrichment();
@@ -1544,11 +1747,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         model != _lastSmartFillModel ||
         year != _lastSmartFillYear;
     if (mmyChanged) {
-      _clearCatalogOwnedSpecs();
-      _clearStaleVinOwnedOptionalSpecs(
-        currentMake: make,
-        currentModel: model,
-        currentYear: year,
+      _releaseTechnicalFactsForManualIdentity(
+        make: make,
+        model: model,
+        year: year,
       );
       _lastSmartFillMake = make;
       _lastSmartFillModel = model;
@@ -1591,6 +1793,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
       return;
     }
     _clearCatalogOwnedSpecs();
+    _clearSellerSmartFillSpecs();
     context.read<ManualSmartFillCubit>().restart();
   }
 
@@ -1626,128 +1829,345 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     });
   }
 
-  void _clearStaleVinOwnedOptionalSpecs({
-    required String currentMake,
-    required String currentModel,
-    required int? currentYear,
+  bool get _factsIdentityBound =>
+      _factsBoundMake != null &&
+      _factsBoundMake!.isNotEmpty &&
+      _factsBoundModel != null &&
+      _factsBoundModel!.isNotEmpty &&
+      _factsBoundYear != null;
+
+  void _bindFactsIdentity({
+    required String? vin,
+    required String make,
+    required String model,
+    required int? year,
   }) {
-    if (!_hasVinOwnedOptionalSpecs) return;
-    final identity = context
-        .read<CreateListingCubit>()
-        .state
-        .vehicleResolve
-        .confirmedIdentity;
-    if (identity != null &&
-        identity.make == currentMake &&
-        identity.model == currentModel &&
-        identity.year == currentYear) {
+    _factsBoundVin = vin;
+    _factsBoundMake = make;
+    _factsBoundModel = model;
+    _factsBoundYear = year;
+  }
+
+  String? _factsVinToken(String? vin) {
+    final trimmed = vin?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
+  }
+
+  void _releaseTechnicalFactsForManualIdentity({
+    required String make,
+    required String model,
+    required int? year,
+  }) {
+    final complete = make.isNotEmpty && model.isNotEmpty && year != null;
+    if (!_factsIdentityBound) {
+      if (complete) {
+        _bindFactsIdentity(vin: null, make: make, model: model, year: year);
+      }
       return;
     }
+    if (make == _factsBoundMake &&
+        model == _factsBoundModel &&
+        year == _factsBoundYear) {
+      return;
+    }
+    _invalidateTechnicalFactsForIdentityReplacement();
+    if (complete) {
+      _bindFactsIdentity(vin: null, make: make, model: model, year: year);
+    } else {
+      _factsBoundVin = null;
+      _factsBoundMake = null;
+      _factsBoundModel = null;
+      _factsBoundYear = null;
+    }
+  }
+
+  void _releaseTechnicalFactsForIncomingIdentity(
+    CreateListingVehicleResolve resolve,
+  ) {
+    final identity = resolve.confirmedIdentity;
+    if (identity == null) return;
+    final nextVin = _factsVinToken(resolve.normalizedVin);
+    if (!_factsIdentityBound) {
+      _bindFactsIdentity(
+        vin: nextVin,
+        make: identity.make,
+        model: identity.model,
+        year: identity.year,
+      );
+      return;
+    }
+    if (nextVin != null && nextVin == _factsBoundVin) return;
+    final matchingManual =
+        _factsBoundVin == null &&
+        identity.make == _factsBoundMake &&
+        identity.model == _factsBoundModel &&
+        identity.year == _factsBoundYear;
+    if (matchingManual) {
+      _factsBoundVin = nextVin;
+      return;
+    }
+    _invalidateTechnicalFactsForIdentityReplacement();
+    _bindFactsIdentity(
+      vin: nextVin,
+      make: identity.make,
+      model: identity.model,
+      year: identity.year,
+    );
+  }
+
+  void _invalidateTechnicalFactsForIdentityReplacement() {
+    _bumpVinCatalogEnrichment();
+    context.read<ManualSmartFillCubit>().reset();
     setState(() {
-      if (_bodyTypeFromVin) {
-        _bodyType = null;
-        _bodyTypeFromVin = false;
-      }
-      if (_fuelTypeFromVin) {
-        _fuelType = null;
-        _fuelTypeFromVin = false;
-      }
-      if (_drivetrainFromVin) {
-        _drivetrain = null;
-        _drivetrainFromVin = false;
-      }
-      if (_transmissionTypeFromVin) {
-        _transmissionType = null;
-        _transmissionTypeFromVin = false;
-      }
-      if (_engineDisplacementFromVin) {
-        _engineDisplacement.clear();
-        _engineDisplacementFromVin = false;
-      }
-      if (_engineCylindersFromVin) {
-        _engineCylinders.clear();
-        _engineCylindersFromVin = false;
-      }
-      if (_doorsFromVin) {
-        _doors.clear();
-        _doorsFromVin = false;
-      }
-      if (_seatsFromVin) {
-        _seats.clear();
-        _seatsFromVin = false;
-      }
+      _bodyType = null;
+      _fuelType = null;
+      _drivetrain = null;
+      _transmissionType = null;
+      _engineDisplacement.clear();
+      _enginePower.clear();
+      _engineCylinders.clear();
+      _doors.clear();
+      _seats.clear();
+      _variant.clear();
+      _registration.clear();
+      _variantFromVin = false;
+      _bodyTypeFromVin = false;
+      _fuelTypeFromVin = false;
+      _drivetrainFromVin = false;
+      _transmissionTypeFromVin = false;
+      _engineDisplacementFromVin = false;
+      _engineCylindersFromVin = false;
+      _doorsFromVin = false;
+      _seatsFromVin = false;
+      _bodyTypeFromCatalog = false;
+      _fuelTypeFromCatalog = false;
+      _engineDisplacementFromCatalog = false;
+      _enginePowerFromCatalog = false;
+      _transmissionTypeFromCatalog = false;
+      _bodyTypeFromSellerChoice = false;
+      _fuelTypeFromSellerChoice = false;
+      _engineDisplacementFromSellerChoice = false;
+      _enginePowerFromSellerChoice = false;
+      _transmissionTypeFromSellerChoice = false;
     });
   }
 
-  void _applyCatalogSpecs(ManualSmartFillConsensusSpecs specs) {
+  void _commitConfirmedVehicle(CreateListingVehicleResolve resolve) {
+    final identity = resolve.confirmedIdentity;
+    if (identity == null) return;
+    if (resolve.applyRevision <= _lastAppliedResolveRevision) return;
+    _releaseTechnicalFactsForIncomingIdentity(resolve);
+    _lastAppliedResolveRevision = resolve.applyRevision;
+    _applyConfirmedIdentity(identity);
+    context.read<ManualSmartFillCubit>().cancelForVinAuthority();
+    _applyConfirmedVinSpecs(
+      resolve.suggestion?.vehicle,
+      warnings: resolve.suggestion?.warnings ?? const [],
+    );
+    if (resolve.confirmed) _scheduleVinCatalogEnrichment(resolve);
+  }
+
+  void _applyCatalogSpecs(
+    ManualSmartFillConsensusSpecs specs, {
+    Set<ManualSmartFillRefinementKind> sellerKinds = const {},
+  }) {
     final prefill = catalogResolvedFormPrefill(specs);
     if (prefill.isEmpty) return;
+    final sellerFuel =
+        sellerKinds.contains(ManualSmartFillRefinementKind.fuel) ||
+        sellerKinds.contains(ManualSmartFillRefinementKind.engine);
+    final sellerEngine = sellerKinds.contains(
+      ManualSmartFillRefinementKind.engine,
+    );
     _applyingCatalogSpecs = true;
     setState(() {
-      if (catalogMayFillField(
-            isEmpty: _bodyType == null,
-            vinOwned: _bodyTypeFromVin,
-            catalogOwned: _bodyTypeFromCatalog,
-          ) &&
-          prefill.bodyType != null) {
-        _bodyType = prefill.bodyType;
-        _bodyTypeFromCatalog = true;
-      }
-      if (catalogMayFillField(
-            isEmpty: _fuelType == null,
-            vinOwned: _fuelTypeFromVin,
-            catalogOwned: _fuelTypeFromCatalog,
-          ) &&
-          prefill.fuelType != null) {
-        _fuelType = prefill.fuelType;
-        _fuelTypeFromCatalog = true;
-      }
-      if (catalogMayFillField(
-            isEmpty: _engineDisplacement.text.trim().isEmpty,
-            vinOwned: _engineDisplacementFromVin,
-            catalogOwned: _engineDisplacementFromCatalog,
-          ) &&
-          prefill.engineDisplacementLiters != null) {
-        _engineDisplacement.text = formatCatalogDisplacementField(
-          prefill.engineDisplacementLiters!,
-        );
-        _engineDisplacementFromCatalog = true;
-      }
-      if (catalogMayFillField(
-            isEmpty: _enginePower.text.trim().isEmpty,
-            vinOwned: false,
-            catalogOwned: _enginePowerFromCatalog,
-          ) &&
-          prefill.enginePowerHp != null) {
-        _enginePower.text = '${prefill.enginePowerHp}';
-        _enginePowerFromCatalog = true;
-      }
-      if (catalogMayFillField(
-            isEmpty: _transmissionType == null,
-            vinOwned: _transmissionTypeFromVin,
-            catalogOwned: _transmissionTypeFromCatalog,
-          ) &&
-          prefill.transmissionType != null) {
-        _transmissionType = prefill.transmissionType;
-        _transmissionTypeFromCatalog = true;
-      }
+      _assignCatalogOrSeller(
+        sellerConfirmed: sellerKinds.contains(
+          ManualSmartFillRefinementKind.body,
+        ),
+        hasValue: prefill.bodyType != null,
+        isEmpty: _bodyType == null,
+        vinOwned: _bodyTypeFromVin,
+        catalogOwned: _bodyTypeFromCatalog,
+        sellerOwned: _bodyTypeFromSellerChoice,
+        writeSeller: () {
+          _bodyType = prefill.bodyType;
+          _bodyTypeFromSellerChoice = true;
+          _bodyTypeFromCatalog = false;
+          _bodyTypeFromVin = false;
+        },
+        writeCatalog: () {
+          _bodyType = prefill.bodyType;
+          _bodyTypeFromCatalog = true;
+          _bodyTypeFromSellerChoice = false;
+        },
+      );
+      _assignCatalogOrSeller(
+        sellerConfirmed: sellerFuel,
+        hasValue: prefill.fuelType != null,
+        isEmpty: _fuelType == null,
+        vinOwned: _fuelTypeFromVin,
+        catalogOwned: _fuelTypeFromCatalog,
+        sellerOwned: _fuelTypeFromSellerChoice,
+        writeSeller: () {
+          _fuelType = prefill.fuelType;
+          _fuelTypeFromSellerChoice = true;
+          _fuelTypeFromCatalog = false;
+          _fuelTypeFromVin = false;
+        },
+        writeCatalog: () {
+          _fuelType = prefill.fuelType;
+          _fuelTypeFromCatalog = true;
+          _fuelTypeFromSellerChoice = false;
+        },
+      );
+      _assignCatalogOrSeller(
+        sellerConfirmed: sellerEngine,
+        hasValue: prefill.engineDisplacementLiters != null,
+        isEmpty: _engineDisplacement.text.trim().isEmpty,
+        vinOwned: _engineDisplacementFromVin,
+        catalogOwned: _engineDisplacementFromCatalog,
+        sellerOwned: _engineDisplacementFromSellerChoice,
+        writeSeller: () {
+          _engineDisplacement.text = formatCatalogDisplacementField(
+            prefill.engineDisplacementLiters!,
+          );
+          _engineDisplacementFromSellerChoice = true;
+          _engineDisplacementFromCatalog = false;
+          _engineDisplacementFromVin = false;
+        },
+        writeCatalog: () {
+          _engineDisplacement.text = formatCatalogDisplacementField(
+            prefill.engineDisplacementLiters!,
+          );
+          _engineDisplacementFromCatalog = true;
+          _engineDisplacementFromSellerChoice = false;
+        },
+      );
+      _assignCatalogOrSeller(
+        sellerConfirmed: sellerEngine,
+        hasValue: prefill.enginePowerHp != null,
+        isEmpty: _enginePower.text.trim().isEmpty,
+        vinOwned: false,
+        catalogOwned: _enginePowerFromCatalog,
+        sellerOwned: _enginePowerFromSellerChoice,
+        writeSeller: () {
+          _enginePower.text = '${prefill.enginePowerHp}';
+          _enginePowerFromSellerChoice = true;
+          _enginePowerFromCatalog = false;
+        },
+        writeCatalog: () {
+          _enginePower.text = '${prefill.enginePowerHp}';
+          _enginePowerFromCatalog = true;
+          _enginePowerFromSellerChoice = false;
+        },
+      );
+      _assignCatalogOrSeller(
+        sellerConfirmed: sellerKinds.contains(
+          ManualSmartFillRefinementKind.transmission,
+        ),
+        hasValue: prefill.transmissionType != null,
+        isEmpty: _transmissionType == null,
+        vinOwned: _transmissionTypeFromVin,
+        catalogOwned: _transmissionTypeFromCatalog,
+        sellerOwned: _transmissionTypeFromSellerChoice,
+        writeSeller: () {
+          _transmissionType = prefill.transmissionType;
+          _transmissionTypeFromSellerChoice = true;
+          _transmissionTypeFromCatalog = false;
+          _transmissionTypeFromVin = false;
+        },
+        writeCatalog: () {
+          _transmissionType = prefill.transmissionType;
+          _transmissionTypeFromCatalog = true;
+          _transmissionTypeFromSellerChoice = false;
+        },
+      );
     });
     _applyingCatalogSpecs = false;
   }
 
-  String _smartFillFilledSummary(AppLocalizations l10n) {
-    if (!_bodyTypeFromCatalog &&
-        !_fuelTypeFromCatalog &&
-        !_engineDisplacementFromCatalog) {
-      return '';
+  /// Explicit Smart Fill answers outrank silent catalog and VIN fills.
+  /// A later response does not replace a choice already stored for this identity.
+  void _assignCatalogOrSeller({
+    required bool sellerConfirmed,
+    required bool hasValue,
+    required bool isEmpty,
+    required bool vinOwned,
+    required bool catalogOwned,
+    required bool sellerOwned,
+    required void Function() writeSeller,
+    required void Function() writeCatalog,
+  }) {
+    if (!hasValue) return;
+    if (sellerConfirmed) {
+      final lockedByEditor =
+          !isEmpty && !vinOwned && !catalogOwned && !sellerOwned;
+      if (lockedByEditor || (sellerOwned && !isEmpty)) return;
+      writeSeller();
+      return;
     }
+    if (sellerOwned) return;
+    if (!catalogMayFillField(
+      isEmpty: isEmpty,
+      vinOwned: vinOwned,
+      catalogOwned: catalogOwned,
+    )) {
+      return;
+    }
+    writeCatalog();
+  }
+
+  void _clearSellerSmartFillSpecs() {
+    if (!_bodyTypeFromSellerChoice &&
+        !_fuelTypeFromSellerChoice &&
+        !_engineDisplacementFromSellerChoice &&
+        !_enginePowerFromSellerChoice &&
+        !_transmissionTypeFromSellerChoice) {
+      return;
+    }
+    setState(() {
+      if (_bodyTypeFromSellerChoice) {
+        _bodyType = null;
+        _bodyTypeFromSellerChoice = false;
+      }
+      if (_fuelTypeFromSellerChoice) {
+        _fuelType = null;
+        _fuelTypeFromSellerChoice = false;
+      }
+      if (_engineDisplacementFromSellerChoice) {
+        _engineDisplacement.clear();
+        _engineDisplacementFromSellerChoice = false;
+      }
+      if (_enginePowerFromSellerChoice) {
+        _enginePower.clear();
+        _enginePowerFromSellerChoice = false;
+      }
+      if (_transmissionTypeFromSellerChoice) {
+        _transmissionType = null;
+        _transmissionTypeFromSellerChoice = false;
+      }
+    });
+  }
+
+  String _smartFillFilledSummary(AppLocalizations l10n) {
+    final body = (_bodyTypeFromCatalog || _bodyTypeFromSellerChoice)
+        ? _bodyType
+        : null;
+    final fuel = (_fuelTypeFromCatalog || _fuelTypeFromSellerChoice)
+        ? _fuelType
+        : null;
+    final displacement =
+        (_engineDisplacementFromCatalog || _engineDisplacementFromSellerChoice)
+        ? _engineDisplacementFromField()
+        : null;
+    if (body == null && fuel == null && displacement == null) return '';
     return manualSmartFillFilledSummary(
       l10n,
-      bodyType: _bodyTypeFromCatalog ? _bodyType : null,
-      fuelType: _fuelTypeFromCatalog ? _fuelType : null,
-      displacementLiters: _engineDisplacementFromCatalog
-          ? _engineDisplacementFromField()
-          : null,
+      bodyType: body,
+      fuelType: fuel,
+      displacementLiters: displacement,
     );
   }
 
@@ -1765,15 +2185,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
     final updated = cubit.state.vehicleResolve;
     final identity = updated.confirmedIdentity;
     if (!updated.confirmed || identity == null) return;
-    if (updated.applyRevision == _lastAppliedResolveRevision) return;
-    _lastAppliedResolveRevision = updated.applyRevision;
-    _applyConfirmedIdentity(identity);
-    context.read<ManualSmartFillCubit>().cancelForVinAuthority();
-    _applyConfirmedVinSpecs(
-      updated.suggestion?.vehicle,
-      warnings: updated.suggestion?.warnings ?? const [],
-    );
-    _scheduleVinCatalogEnrichment(updated);
+    _commitConfirmedVehicle(updated);
   }
 
   bool _coreIdentityReady() {
@@ -2427,11 +2839,21 @@ class _CreateListingFormState extends State<_CreateListingForm> {
         if (context.read<CreateListingCubit>().state.vehicleResolve.confirmed) {
           return;
         }
-        _applyCatalogSpecs(result.consensus);
+        final query = smartFill.query;
+        final year = _yearFieldKey.currentState?.value;
+        if (query != null &&
+            (query.make != _effectiveMakeForSubmit() ||
+                query.model != _effectiveModelForSubmit() ||
+                query.year != year)) {
+          return;
+        }
+        _applyCatalogSpecs(
+          result.consensus,
+          sellerKinds: {for (final answer in smartFill.answers) answer.kind},
+        );
       },
       child: BlocConsumer<CreateListingCubit, CreateListingState>(
         listener: (context, state) {
-          final revision = state.vehicleResolve.applyRevision;
           final identity = state.vehicleResolve.confirmedIdentity;
           if (!state.vehicleResolve.confirmed) {
             _vinCatalogEnrichmentGeneration += 1;
@@ -2442,18 +2864,7 @@ class _CreateListingFormState extends State<_CreateListingForm> {
           } else if (!_showIdentityEditors(state.vehicleResolve)) {
             context.read<ManualSmartFillCubit>().reset();
           }
-          if (revision != _lastAppliedResolveRevision && identity != null) {
-            _lastAppliedResolveRevision = revision;
-            _applyConfirmedIdentity(identity);
-            context.read<ManualSmartFillCubit>().cancelForVinAuthority();
-            _applyConfirmedVinSpecs(
-              state.vehicleResolve.suggestion?.vehicle,
-              warnings: state.vehicleResolve.suggestion?.warnings ?? const [],
-            );
-            if (state.vehicleResolve.confirmed) {
-              _scheduleVinCatalogEnrichment(state.vehicleResolve);
-            }
-          }
+          _commitConfirmedVehicle(state.vehicleResolve);
           final defaultsRevision = state.listingDefaults.applyRevision;
           if (defaultsRevision != _lastAppliedDefaultsRevision &&
               defaultsRevision > 0) {
@@ -3146,21 +3557,31 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                                               );
                                                           if (!context.mounted)
                                                             return;
-                                                          if (picked != null) {
-                                                            setState(() {
-                                                              _yearFromVin =
-                                                                  false;
-                                                              fieldState
-                                                                  .didChange(
-                                                                    picked,
-                                                                  );
-                                                            });
-                                                            fieldState
-                                                                .validate();
-                                                            _onManualIdentityMaybeChanged(
-                                                              immediate: true,
-                                                            );
+                                                          if (picked == null) {
+                                                            return;
                                                           }
+                                                          if (picked == yr) {
+                                                            if (_yearFromVin) {
+                                                              setState(
+                                                                () =>
+                                                                    _yearFromVin =
+                                                                        false,
+                                                              );
+                                                            }
+                                                            return;
+                                                          }
+                                                          setState(() {
+                                                            _yearFromVin =
+                                                                false;
+                                                            fieldState
+                                                                .didChange(
+                                                                  picked,
+                                                                );
+                                                          });
+                                                          fieldState.validate();
+                                                          _onManualIdentityMaybeChanged(
+                                                            immediate: true,
+                                                          );
                                                         },
                                                       );
                                                     },
@@ -3360,6 +3781,10 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                   16,
                                   14,
                                 ),
+                                trailing: _characteristicQuickChoices(
+                                  resolve: state.vehicleResolve,
+                                  submitting: submitting,
+                                ),
                                 child: Column(
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
@@ -3427,38 +3852,6 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                         },
                                       ),
                                     ] else ...[
-                                      if (_characteristicsFilledAutomatically())
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 2,
-                                            bottom: 10,
-                                          ),
-                                          child: Text(
-                                            l10n.createListingCharacteristicsFilledAutomatically,
-                                            key: const ValueKey(
-                                              'create_listing_characteristics_auto_status',
-                                            ),
-                                            style: theme.textTheme.labelMedium
-                                                ?.copyWith(
-                                                  color: theme
-                                                      .colorScheme
-                                                      .onSurface
-                                                      .withValues(
-                                                        alpha:
-                                                            theme.brightness ==
-                                                                Brightness.light
-                                                            ? 0.50
-                                                            : 0.62,
-                                                      ),
-                                                  fontWeight: FontWeight.w500,
-                                                  letterSpacing: 0.15,
-                                                  fontSize: 12,
-                                                  height: 1.2,
-                                                ),
-                                          ),
-                                        )
-                                      else
-                                        const SizedBox(height: 8),
                                       ListenableBuilder(
                                         listenable: Listenable.merge([
                                           _engineDisplacement,
@@ -3469,31 +3862,96 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                           _registration,
                                         ]),
                                         builder: (context, _) {
-                                          return CreateListingCharacteristicsFacts(
-                                            facts: buildCreateListingTechnicalFacts(
-                                              l10n,
-                                              bodyType: _bodyType,
-                                              displacementLiters:
-                                                  _engineDisplacementFromField(),
-                                              fuelType: _fuelType,
-                                              drivetrain: _drivetrain,
-                                              transmissionType:
-                                                  _transmissionType,
-                                              powerHp: _enginePowerFromField(),
-                                              engineCylinders: _countFromField(
-                                                _engineCylinders,
-                                                max: 16,
+                                          final caption =
+                                              _characteristicStatusCaption(
+                                                vinConfirmed: state
+                                                    .vehicleResolve
+                                                    .confirmed,
+                                              );
+                                          final captionText = switch (caption) {
+                                            _CharacteristicStatusCaption
+                                                .automatic =>
+                                              l10n.createListingCharacteristicsFilledAutomatically,
+                                            _CharacteristicStatusCaption
+                                                .mixed =>
+                                              l10n.createListingCharacteristicsFilledFromVinAndSeller,
+                                            _CharacteristicStatusCaption
+                                                .catalogAndSeller =>
+                                              l10n.createListingCharacteristicsFilledFromCatalogAndSeller,
+                                            _CharacteristicStatusCaption.none =>
+                                              null,
+                                          };
+                                          return Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.stretch,
+                                            children: [
+                                              if (captionText == null)
+                                                const SizedBox(height: 8)
+                                              else
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        top: 2,
+                                                        bottom: 10,
+                                                      ),
+                                                  child: Text(
+                                                    captionText,
+                                                    key: const ValueKey(
+                                                      'create_listing_characteristics_auto_status',
+                                                    ),
+                                                    style: theme
+                                                        .textTheme
+                                                        .labelMedium
+                                                        ?.copyWith(
+                                                          color: theme
+                                                              .colorScheme
+                                                              .onSurface
+                                                              .withValues(
+                                                                alpha:
+                                                                    theme.brightness ==
+                                                                        Brightness
+                                                                            .light
+                                                                    ? 0.50
+                                                                    : 0.62,
+                                                              ),
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          letterSpacing: 0.15,
+                                                          fontSize: 12,
+                                                          height: 1.2,
+                                                        ),
+                                                  ),
+                                                ),
+                                              CreateListingCharacteristicsFacts(
+                                                facts: buildCreateListingTechnicalFacts(
+                                                  l10n,
+                                                  bodyType: _bodyType,
+                                                  displacementLiters:
+                                                      _engineDisplacementFromField(),
+                                                  fuelType: _fuelType,
+                                                  drivetrain: _drivetrain,
+                                                  transmissionType:
+                                                      _transmissionType,
+                                                  powerHp:
+                                                      _enginePowerFromField(),
+                                                  engineCylinders:
+                                                      _countFromField(
+                                                        _engineCylinders,
+                                                        max: 16,
+                                                      ),
+                                                  doors: _countFromField(
+                                                    _doors,
+                                                    max: 6,
+                                                  ),
+                                                  seats: _countFromField(
+                                                    _seats,
+                                                    max: 15,
+                                                  ),
+                                                  registration:
+                                                      _registration.text,
+                                                ),
                                               ),
-                                              doors: _countFromField(
-                                                _doors,
-                                                max: 6,
-                                              ),
-                                              seats: _countFromField(
-                                                _seats,
-                                                max: 15,
-                                              ),
-                                              registration: _registration.text,
-                                            ),
+                                            ],
                                           );
                                         },
                                       ),
@@ -3613,13 +4071,16 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                                       return;
                                                     }
                                                     if (!_engineDisplacementFromVin &&
-                                                        !_engineDisplacementFromCatalog) {
+                                                        !_engineDisplacementFromCatalog &&
+                                                        !_engineDisplacementFromSellerChoice) {
                                                       return;
                                                     }
                                                     setState(() {
                                                       _engineDisplacementFromVin =
                                                           false;
                                                       _engineDisplacementFromCatalog =
+                                                          false;
+                                                      _engineDisplacementFromSellerChoice =
                                                           false;
                                                     });
                                                     _bumpVinCatalogEnrichment();
@@ -3659,14 +4120,16 @@ class _CreateListingFormState extends State<_CreateListingForm> {
                                                     if (_applyingCatalogSpecs) {
                                                       return;
                                                     }
-                                                    if (!_enginePowerFromCatalog) {
+                                                    if (!_enginePowerFromCatalog &&
+                                                        !_enginePowerFromSellerChoice) {
                                                       return;
                                                     }
-                                                    setState(
-                                                      () =>
-                                                          _enginePowerFromCatalog =
-                                                              false,
-                                                    );
+                                                    setState(() {
+                                                      _enginePowerFromCatalog =
+                                                          false;
+                                                      _enginePowerFromSellerChoice =
+                                                          false;
+                                                    });
                                                     _bumpVinCatalogEnrichment();
                                                     _cancelProgressiveRefinementForSellerEdit();
                                                   },
