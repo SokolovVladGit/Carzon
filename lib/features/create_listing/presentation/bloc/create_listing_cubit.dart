@@ -37,6 +37,7 @@ class CreateListingCubit extends Cubit<CreateListingState> {
     GetMyListingDefaults? getMyListingDefaults,
     SaveMyListingDefaults? saveMyListingDefaults,
     this.resolveDebounce = const Duration(milliseconds: 400),
+    this.resolveRequestTimeout = resolveRequestTimeoutLimit,
   }) : _createListingV2 = createListingV2,
        _uploadSequential = uploadListingImagesSequential,
        _deleteStaging = deleteUploadedListingImagesBestEffort,
@@ -55,7 +56,16 @@ class CreateListingCubit extends Cubit<CreateListingState> {
   final ResolveVehicle _resolveVehicle;
   final GetMyListingDefaults? _getMyListingDefaults;
   final SaveMyListingDefaults? _saveMyListingDefaults;
+
+  /// Hung `resolve-vehicle` invoke bound.
+  ///
+  /// The edge function aborts NHTSA at 15s and returns HTTP 504. This limit
+  /// is longer, so that response still wins. A socket that never completes
+  /// becomes [VehicleResolveFailureKind.upstreamTimeout].
+  static const Duration resolveRequestTimeoutLimit = Duration(seconds: 25);
+
   final Duration resolveDebounce;
+  final Duration resolveRequestTimeout;
   final String? Function() _readCurrentUserId;
   StreamSubscription<String?>? _authSubscription;
   String? _currentUserId;
@@ -361,7 +371,12 @@ class CreateListingCubit extends Cubit<CreateListingState> {
       ),
     );
 
-    final result = await _resolveVehicle(vin: normalized);
+    final result = await _resolveVehicle(vin: normalized).timeout(
+      resolveRequestTimeout,
+      onTimeout: () => const FailureResult(
+        VehicleResolveFailure(VehicleResolveFailureKind.upstreamTimeout),
+      ),
+    );
     if (isClosed) return;
     if (generation != _resolveGeneration ||
         state.vehicleResolve.normalizedVin != normalized) {

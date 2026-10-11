@@ -10,6 +10,7 @@ import '../core/l10n/app_locale_cubit.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_mode_cubit.dart';
 import '../l10n/app_localizations.dart';
+import '../core/services/auth_deep_link_service.dart';
 import '../features/auth/presentation/auth_callback_navigation.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/auth/presentation/bloc/auth_state.dart';
@@ -42,12 +43,19 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
   String? _unreadSyncUserId;
   Timer? _unreadPollTimer;
   bool _isForeground = true;
+  StreamSubscription<void>? _recoveryRejectionSub;
+  final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     openPasswordResetIfRecovery(sl<GoRouter>(), sl<AuthCubit>().state);
+    if (sl.isRegistered<AuthDeepLinkService>()) {
+      _recoveryRejectionSub = sl<AuthDeepLinkService>().bindRecoveryRejection(
+        _onInvalidRecoveryLink,
+      );
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _updateUnreadPolling(sl<AuthCubit>().state);
@@ -61,9 +69,20 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _recoveryRejectionSub?.cancel();
     _unreadPollTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _onInvalidRecoveryLink() {
+    final router = sl<GoRouter>();
+    final opened = presentInvalidRecoveryLink(router);
+    if (opened) return;
+    final l10n = lookupAppLocalizations(sl<AppLocaleCubit>().state.locale);
+    _scaffoldMessengerKey.currentState
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.recoveryLinkInvalid)));
   }
 
   @override
@@ -263,6 +282,7 @@ class _CarzonAppState extends State<CarzonApp> with WidgetsBindingObserver {
           builder: (context, themeState) =>
               BlocBuilder<AppLocaleCubit, AppLocaleState>(
                 builder: (context, localeState) => MaterialApp.router(
+                  scaffoldMessengerKey: _scaffoldMessengerKey,
                   title: AppConstants.appName,
                   theme: AppTheme.light(),
                   darkTheme: AppTheme.dark(),

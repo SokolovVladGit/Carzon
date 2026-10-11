@@ -68,6 +68,37 @@ void main() {
   );
 
   blocTest<AuthCubit, AuthState>(
+    'Google provider failure stays recoverable',
+    build: () {
+      when(() => repo.signInWithGoogle()).thenAnswer(
+        (_) async =>
+            const FailureResult(AuthFailure(SocialAuthMessages.googleFailed)),
+      );
+      return cubit;
+    },
+    act: (c) => c.signInWithGoogle(),
+    expect: () => const [
+      AuthState.authenticating(),
+      AuthState.error(AuthErrorKind.googleSignInFailed),
+    ],
+  );
+
+  blocTest<AuthCubit, AuthState>(
+    'Google network failure stays recoverable',
+    build: () {
+      when(() => repo.signInWithGoogle()).thenAnswer(
+        (_) async => const FailureResult(NetworkFailure('offline')),
+      );
+      return cubit;
+    },
+    act: (c) => c.signInWithGoogle(),
+    expect: () => const [
+      AuthState.authenticating(),
+      AuthState.error(AuthErrorKind.networkConnectivity),
+    ],
+  );
+
+  blocTest<AuthCubit, AuthState>(
     'Apple success becomes authenticated',
     build: () {
       when(

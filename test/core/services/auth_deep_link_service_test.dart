@@ -263,6 +263,54 @@ void main() {
       await appLinks.dispose();
     });
 
+    test('cold-start expired recovery is reported once', () async {
+      final parser = _MockAuthUrlHandler();
+      when(
+        () => parser.handleAuthUrl(any()),
+      ).thenThrow(sb.AuthException('otp_expired'));
+      final uri = Uri.parse('carzon://auth-callback?code=used&type=recovery');
+      final appLinks = _FakeAppLinks(initialLink: uri);
+      final service = AuthDeepLinkService(
+        authUrlHandler: parser,
+        appLinks: appLinks,
+      );
+
+      await service.initialize();
+      appLinks.emit(uri);
+      await Future<void>.delayed(Duration.zero);
+
+      var reports = 0;
+      final sub = service.bindRecoveryRejection(() => reports++);
+      expect(reports, 1);
+      verify(() => parser.handleAuthUrl(uri)).called(1);
+
+      await sub.cancel();
+      await service.dispose();
+      await appLinks.dispose();
+    });
+
+    test(
+      'signup confirmation failure does not report a recovery rejection',
+      () async {
+        final parser = _MockAuthUrlHandler();
+        when(
+          () => parser.handleAuthUrl(any()),
+        ).thenThrow(sb.AuthException('otp_expired'));
+        final service = AuthDeepLinkService(authUrlHandler: parser);
+
+        await service.handleUri(
+          Uri.parse('carzon://auth-callback?code=signup&type=signup'),
+        );
+
+        var reports = 0;
+        final sub = service.bindRecoveryRejection(() => reports++);
+        expect(reports, 0);
+
+        await sub.cancel();
+        await service.dispose();
+      },
+    );
+
     test('initialize() is idempotent', () async {
       final parser = _MockAuthUrlHandler();
       final appLinks = _FakeAppLinks(initialLink: null);

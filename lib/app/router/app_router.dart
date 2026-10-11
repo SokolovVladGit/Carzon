@@ -145,7 +145,12 @@ class AppRouter {
         ),
         GoRoute(
           path: AppRoutes.forgotPassword,
-          builder: (_, _) => const ForgotPasswordPage(),
+          builder: (_, state) {
+            final extra = state.extra;
+            final invalid =
+                extra is ForgotPasswordLaunch && extra.invalidRecoveryLink;
+            return ForgotPasswordPage(invalidRecoveryLink: invalid);
+          },
         ),
         GoRoute(
           path: AppRoutes.resetPassword,

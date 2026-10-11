@@ -127,6 +127,27 @@ void main() {
 
   Future<void> flushDebounce() => Future<void>.delayed(Duration.zero);
 
+  CreateListingCubit cubitWithTimeout(Duration timeout) {
+    return CreateListingCubit(
+      currentUserId: () => 's1',
+      createListingV2: CreateListingV2(createRepo),
+      uploadListingImagesSequential: UploadListingImagesSequential(imageRepo),
+      deleteUploadedListingImagesBestEffort:
+          DeleteUploadedListingImagesBestEffort(imageRepo),
+      resolveVehicle: ResolveVehicle(resolver),
+      resolveDebounce: Duration.zero,
+      resolveRequestTimeout: timeout,
+    );
+  }
+
+  Future<void> waitFor(bool Function() ready) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 2));
+    while (!ready()) {
+      expect(DateTime.now().isBefore(deadline), isTrue);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+  }
+
   test('applicable bad checksum does not invoke resolver', () async {
     cubit.onVinChanged(_vinChecksumInvalid);
     await flushDebounce();
@@ -394,5 +415,126 @@ void main() {
     expect(cubit.state.vehicleResolve.confirmed, isFalse);
     expect(cubit.state.vehicleResolve.confirmedIdentity, isNull);
     expect(cubit.state.vehicleResolve.applyRevision, 1);
+  });
+
+  test(
+    'VIN timeout enters a retryable failure and ignores the late result',
+    () async {
+      const timeout = Duration(milliseconds: 40);
+      await cubit.close();
+      cubit = cubitWithTimeout(timeout);
+      resolver.pending[_vinA] = Completer<Result<VehicleResolveResult>>();
+
+      cubit.onVinChanged(_vinA);
+      await flushDebounce();
+      expect(
+        cubit.state.vehicleResolve.status,
+        CreateListingVinResolveStatus.resolving,
+      );
+
+      await waitFor(
+        () =>
+            cubit.state.vehicleResolve.status ==
+            CreateListingVinResolveStatus.failure,
+      );
+
+      expect(
+        cubit.state.vehicleResolve.failureKind,
+        VehicleResolveFailureKind.upstreamTimeout,
+      );
+      expect(cubit.state.vehicleResolve.normalizedVin, _vinA);
+      expect(cubit.state.vehicleResolve.suggestion, isNull);
+      expect(resolver.calls, [_vinA]);
+
+      resolver.pending[_vinA]!.complete(
+        Success(_resolved(make: 'Honda', model: 'Civic')),
+      );
+      await flushDebounce();
+
+      expect(
+        cubit.state.vehicleResolve.status,
+        CreateListingVinResolveStatus.failure,
+      );
+      expect(cubit.state.vehicleResolve.suggestion, isNull);
+      expect(
+        cubit.state.vehicleResolve.failureKind,
+        VehicleResolveFailureKind.upstreamTimeout,
+      );
+    },
+  );
+
+  test('VIN retry after timeout accepts a fresh result', () async {
+    const timeout = Duration(milliseconds: 40);
+    await cubit.close();
+    cubit = cubitWithTimeout(timeout);
+    resolver.pending[_vinA] = Completer<Result<VehicleResolveResult>>();
+
+    cubit.onVinChanged(_vinA);
+    await flushDebounce();
+    await waitFor(
+      () =>
+          cubit.state.vehicleResolve.status ==
+          CreateListingVinResolveStatus.failure,
+    );
+
+    resolver.pending.remove(_vinA);
+    resolver.next = Success(_resolved());
+    await cubit.retryResolve();
+
+    expect(resolver.calls, [_vinA, _vinA]);
+    expect(
+      cubit.state.vehicleResolve.status,
+      CreateListingVinResolveStatus.resolved,
+    );
+    expect(cubit.state.vehicleResolve.suggestion?.vehicle.make, 'BMW');
+    expect(cubit.state.vehicleResolve.failureKind, isNull);
+  });
+
+  test('VIN timeout keeps an already adopted identity', () async {
+    const timeout = Duration(milliseconds: 40);
+    await cubit.close();
+    cubit = cubitWithTimeout(timeout);
+    resolver.next = Success(_resolved());
+
+    cubit.onVinChanged(_vinA);
+    await flushDebounce();
+    await flushDebounce();
+    cubit.confirmSuggestion();
+    final identity = cubit.state.vehicleResolve.confirmedIdentity!;
+    final revision = cubit.state.vehicleResolve.applyRevision;
+
+    resolver.pending[_vinA] = Completer<Result<VehicleResolveResult>>();
+    resolver.next = null;
+    final pendingRetry = cubit.retryResolve();
+    await waitFor(
+      () =>
+          cubit.state.vehicleResolve.status ==
+          CreateListingVinResolveStatus.failure,
+    );
+    await pendingRetry;
+
+    expect(cubit.state.vehicleResolve.confirmedIdentity, identity);
+    expect(identity.make, 'BMW');
+    expect(identity.model, 'X5');
+    expect(identity.year, 2020);
+    expect(cubit.state.vehicleResolve.applyRevision, revision);
+    expect(cubit.state.vehicleResolve.normalizedVin, _vinA);
+    expect(cubit.state.vehicleResolve.suggestion, isNull);
+  });
+
+  test('closing the cubit during VIN resolve drops the late result', () async {
+    resolver.pending[_vinA] = Completer<Result<VehicleResolveResult>>();
+    cubit.onVinChanged(_vinA);
+    await flushDebounce();
+    expect(
+      cubit.state.vehicleResolve.status,
+      CreateListingVinResolveStatus.resolving,
+    );
+
+    await cubit.close();
+    resolver.pending[_vinA]!.complete(Success(_resolved(make: 'Honda')));
+    await flushDebounce();
+
+    expect(cubit.isClosed, isTrue);
   });
 }

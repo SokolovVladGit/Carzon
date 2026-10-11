@@ -2540,6 +2540,10 @@ class AppLocalizationsRo extends AppLocalizations {
   String get forgotPasswordEmailEmpty => 'Introduceți adresa dvs. de e-mail.';
 
   @override
+  String get recoveryLinkInvalid =>
+      'Linkul de resetare a parolei este invalid sau a expirat. Solicitați un e-mail nou.';
+
+  @override
   String get backToSignIn => 'Întoarcere la intrare';
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -58,14 +60,34 @@ class ResetPasswordPage extends StatelessWidget {
   }
 }
 
-/// Clears the recovery latch, then returns to sign-in.
+/// Clears the recovery latch without signing out, then returns to sign-in.
 ///
-/// Used for Back, system pop, the no-session CTA, and successful reset.
-/// [AuthCubit.clearPasswordRecovery] is idempotent.
+/// Used for Back, system pop, and the no-session CTA. A user who already
+/// had a session keeps it. Successful reset uses [completeResetPassword].
 @visibleForTesting
 void leaveResetPassword(BuildContext context) {
   context.read<AuthCubit>().clearPasswordRecovery();
   if (!context.mounted) return;
+  context.go(AppRoutes.signIn);
+}
+
+/// Signs out the recovery session, then opens sign-in only if that
+/// sign-out actually ended the session.
+@visibleForTesting
+Future<void> completeResetPassword(BuildContext context) async {
+  final ended = await context.read<AuthCubit>().completePasswordRecovery();
+  if (!context.mounted) return;
+  final l10n = context.l10n;
+  final messenger = ScaffoldMessenger.of(context);
+  if (!ended) {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.signOutFailedRetry)));
+    return;
+  }
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(l10n.resetPasswordSuccess)));
   context.go(AppRoutes.signIn);
 }
 
@@ -143,12 +165,7 @@ class _ResetPasswordFormState extends State<_ResetPasswordForm> {
       listener: (context, state) {
         switch (state.status) {
           case ResetPasswordStatus.success:
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                SnackBar(content: Text(l10n.resetPasswordSuccess)),
-              );
-            leaveResetPassword(context);
+            unawaited(completeResetPassword(context));
           case ResetPasswordStatus.failure:
             ScaffoldMessenger.of(context)
               ..hideCurrentSnackBar()

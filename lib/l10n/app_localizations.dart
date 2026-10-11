@@ -4614,6 +4614,12 @@ abstract class AppLocalizations {
   /// **'Введите email.'**
   String get forgotPasswordEmailEmpty;
 
+  /// No description provided for @recoveryLinkInvalid.
+  ///
+  /// In ru, this message translates to:
+  /// **'Ссылка для сброса пароля недействительна или устарела. Запросите новое письмо.'**
+  String get recoveryLinkInvalid;
+
   /// No description provided for @backToSignIn.
   ///
   /// In ru, this message translates to:

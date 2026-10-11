@@ -241,53 +241,82 @@ void main() {
     expect(router.routeInformationProvider.value.uri.path, AppRoutes.signIn);
   });
 
-  testWidgets(
-    'successful reset still clears the latch and leaves for sign-in',
-    (tester) async {
-      stubAuth(const AuthState.passwordRecovery(user));
-      when(auth.clearPasswordRecovery).thenReturn(null);
-      final resetStates = StreamController<ResetPasswordState>.broadcast();
-      addTearDown(resetStates.close);
-      whenListen(
-        reset,
-        resetStates.stream,
-        initialState: const ResetPasswordState.idle(),
-      );
+  testWidgets('successful reset signs out and leaves for sign-in', (
+    tester,
+  ) async {
+    stubAuth(const AuthState.passwordRecovery(user));
+    when(() => auth.completePasswordRecovery()).thenAnswer((_) async => true);
+    final resetStates = StreamController<ResetPasswordState>.broadcast();
+    addTearDown(resetStates.close);
+    whenListen(
+      reset,
+      resetStates.stream,
+      initialState: const ResetPasswordState.idle(),
+    );
 
-      final router = GoRouter(
-        initialLocation: AppRoutes.resetPassword,
-        routes: [
-          GoRoute(
-            path: AppRoutes.signIn,
-            builder: (_, _) => const Text('sign-in', key: Key('sign-in-route')),
-          ),
-          GoRoute(
-            path: AppRoutes.resetPassword,
-            builder: (_, _) => BlocProvider<AuthCubit>.value(
-              value: auth,
-              child: const ResetPasswordPage(),
-            ),
-          ),
-        ],
-      );
-
-      await tester.pumpWidget(
-        MaterialApp.router(
-          locale: const Locale('ru'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          routerConfig: router,
+    final router = GoRouter(
+      initialLocation: AppRoutes.resetPassword,
+      routes: [
+        GoRoute(
+          path: AppRoutes.signIn,
+          builder: (_, _) => const Text('sign-in', key: Key('sign-in-route')),
         ),
-      );
-      await tester.pump();
+        GoRoute(
+          path: AppRoutes.resetPassword,
+          builder: (_, _) => BlocProvider<AuthCubit>.value(
+            value: auth,
+            child: const ResetPasswordPage(),
+          ),
+        ),
+      ],
+    );
 
-      resetStates.add(const ResetPasswordState.success());
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(
+      MaterialApp.router(
+        locale: const Locale('ru'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ),
+    );
+    await tester.pump();
 
-      verify(auth.clearPasswordRecovery).called(1);
-      expect(find.byKey(const Key('sign-in-route')), findsOneWidget);
-    },
-  );
+    resetStates.add(const ResetPasswordState.success());
+    await tester.pumpAndSettle();
+
+    verify(() => auth.completePasswordRecovery()).called(1);
+    verifyNever(auth.clearPasswordRecovery);
+    expect(find.byKey(const Key('sign-in-route')), findsOneWidget);
+  });
+
+  testWidgets('failed recovery sign-out stays on reset and keeps the latch', (
+    tester,
+  ) async {
+    stubAuth(const AuthState.passwordRecovery(user));
+    when(() => auth.completePasswordRecovery()).thenAnswer((_) async => false);
+    final resetStates = StreamController<ResetPasswordState>.broadcast();
+    addTearDown(resetStates.close);
+    whenListen(
+      reset,
+      resetStates.stream,
+      initialState: const ResetPasswordState.idle(),
+    );
+
+    await tester.pumpWidget(_wrap(auth));
+    await tester.pump();
+
+    resetStates.add(const ResetPasswordState.success());
+    await tester.pump();
+    await tester.pump();
+
+    verify(() => auth.completePasswordRecovery()).called(1);
+    verifyNever(auth.clearPasswordRecovery);
+    expect(find.text(l10n.signOutFailedRetry), findsOneWidget);
+    expect(
+      find.widgetWithText(FilledButton, l10n.resetPasswordSubmit),
+      findsOneWidget,
+    );
+  });
 
   testWidgets(
     'signedIn after abandoning reset stays authenticated and off /reset-password',

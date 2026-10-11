@@ -45,12 +45,20 @@ class AuthCubit extends Cubit<AuthState> {
   StreamSubscription<void>? _recoverySub;
 
   /// Latches to true when Supabase emits a password-recovery event and
-  /// is cleared via [clearPasswordRecovery] after the reset-password
-  /// flow completes (success or explicit exit). While latched, normal
+  /// is cleared via [clearPasswordRecovery] on explicit exit, or via
+  /// [completePasswordRecovery] after a successful password update only
+  /// when sign-out actually ends the session. While latched, normal
   /// `authStateChanges` emissions preserve the `passwordRecovery`
   /// status so a late `signedIn`/`tokenRefreshed` event does not demote
   /// the state back to `authenticated` and defeat the reset-page guard.
   bool _inPasswordRecovery = false;
+
+  /// Bumped when a newer auth attempt or a recovery event starts, so a
+  /// late sign-in / sign-up / social completion cannot overwrite recovery.
+  int _attemptGeneration = 0;
+
+  /// Ignores auth-stream emissions while a recovery sign-out is in flight.
+  bool _completingRecovery = false;
 
   Future<void> bootstrap() async {
     final result = await _getCurrentUser();
@@ -65,6 +73,7 @@ class AuthCubit extends Cubit<AuthState> {
 
     _authSub?.cancel();
     _authSub = _repository.authStateChanges.listen((user) {
+      if (_completingRecovery) return;
       if (_inPasswordRecovery) {
         emit(AuthState.passwordRecovery(user));
         return;
@@ -82,44 +91,52 @@ class AuthCubit extends Cubit<AuthState> {
 
     _recoverySub?.cancel();
     _recoverySub = _repository.passwordRecoveryEvents.listen((_) {
+      if (_completingRecovery || isClosed) return;
+      _invalidateAttempts();
       _inPasswordRecovery = true;
       emit(AuthState.passwordRecovery(state.user));
     });
   }
 
   Future<void> signIn({required String email, required String password}) async {
-    if (state.status == AuthStatus.authenticating) {
+    if (state.status == AuthStatus.authenticating || _inPasswordRecovery) {
       return;
     }
+    final attempt = _beginAttempt();
     emit(const AuthState.authenticating());
     final result = await _signInWithPassword(email: email, password: password);
     result.fold(
-      (failure) => emit(AuthState.error(_signInErrorKind(failure))),
-      (user) => emit(AuthState.authenticated(user)),
+      (failure) =>
+          _emitAttempt(attempt, AuthState.error(_signInErrorKind(failure))),
+      (user) => _emitAttempt(attempt, AuthState.authenticated(user)),
     );
   }
 
   Future<void> signInWithGoogle() async {
-    if (state.status == AuthStatus.authenticating) {
+    if (state.status == AuthStatus.authenticating || _inPasswordRecovery) {
       return;
     }
+    final attempt = _beginAttempt();
     emit(const AuthState.authenticating());
     final result = await _signInWithGoogle();
     result.fold(
-      (failure) => emit(_socialFailureState(failure, isApple: false)),
-      (user) => emit(AuthState.authenticated(user)),
+      (failure) =>
+          _emitAttempt(attempt, _socialFailureState(failure, isApple: false)),
+      (user) => _emitAttempt(attempt, AuthState.authenticated(user)),
     );
   }
 
   Future<void> signInWithApple() async {
-    if (state.status == AuthStatus.authenticating) {
+    if (state.status == AuthStatus.authenticating || _inPasswordRecovery) {
       return;
     }
+    final attempt = _beginAttempt();
     emit(const AuthState.authenticating());
     final result = await _signInWithApple();
     result.fold(
-      (failure) => emit(_socialFailureState(failure, isApple: true)),
-      (user) => emit(AuthState.authenticated(user)),
+      (failure) =>
+          _emitAttempt(attempt, _socialFailureState(failure, isApple: true)),
+      (user) => _emitAttempt(attempt, AuthState.authenticated(user)),
     );
   }
 
@@ -145,20 +162,23 @@ class AuthCubit extends Cubit<AuthState> {
   ///   * Failure → [AuthState.error] with a mapped [AuthErrorKind]
   ///     (network, duplicate email heuristic, generic, …).
   Future<void> signUp({required String email, required String password}) async {
-    if (state.status == AuthStatus.authenticating) {
+    if (state.status == AuthStatus.authenticating || _inPasswordRecovery) {
       return;
     }
+    final attempt = _beginAttempt();
     emit(const AuthState.authenticating());
     final result = await _signUpWithPassword(email: email, password: password);
-    result.fold((failure) => emit(AuthState.error(_signUpErrorKind(failure))), (
-      user,
-    ) {
-      if (user == null) {
-        emit(const AuthState.needsEmailConfirmation());
-      } else {
-        emit(AuthState.authenticated(user));
-      }
-    });
+    result.fold(
+      (failure) =>
+          _emitAttempt(attempt, AuthState.error(_signUpErrorKind(failure))),
+      (user) {
+        if (user == null) {
+          _emitAttempt(attempt, const AuthState.needsEmailConfirmation());
+        } else {
+          _emitAttempt(attempt, AuthState.authenticated(user));
+        }
+      },
+    );
   }
 
   Future<void> signOut() async {
@@ -187,14 +207,15 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
-  /// Called by the reset-password flow after a successful password
-  /// update (or an explicit exit) so subsequent auth-state events
-  /// resume normal authenticated/unauthenticated routing instead of
-  /// staying latched on `passwordRecovery`.
+  /// Called when the user leaves reset without changing the password.
+  ///
+  /// Does not sign out. A recovery session that already belongs to a
+  /// user stays authenticated after the latch drops.
   void clearPasswordRecovery() {
     if (!_inPasswordRecovery && state.status != AuthStatus.passwordRecovery) {
       return;
     }
+    _invalidateAttempts();
     _inPasswordRecovery = false;
     final user = state.user;
     emit(
@@ -204,6 +225,49 @@ class AuthCubit extends Cubit<AuthState> {
             )
           : AuthState.authenticated(user),
     );
+  }
+
+  /// Ends the recovery session after a successful password update.
+  ///
+  /// Returns true only when sign-out succeeded and cubit state is
+  /// unauthenticated. A failed sign-out keeps the recovery latch and
+  /// does not report the user as signed out.
+  Future<bool> completePasswordRecovery() async {
+    if (!_inPasswordRecovery && state.status != AuthStatus.passwordRecovery) {
+      return state.user == null && state.status == AuthStatus.unauthenticated;
+    }
+    _invalidateAttempts();
+    _completingRecovery = true;
+    final result = await _signOut();
+    _completingRecovery = false;
+    if (isClosed) return false;
+    return result.fold(
+      (_) {
+        _inPasswordRecovery = true;
+        emit(AuthState.passwordRecovery(state.user));
+        return false;
+      },
+      (_) {
+        _inPasswordRecovery = false;
+        emit(
+          AuthState.unauthenticated(
+            publicFeedRefreshNonce: state.publicFeedRefreshNonce,
+          ),
+        );
+        return true;
+      },
+    );
+  }
+
+  int _beginAttempt() => ++_attemptGeneration;
+
+  void _invalidateAttempts() => _attemptGeneration++;
+
+  void _emitAttempt(int attempt, AuthState next) {
+    if (isClosed || attempt != _attemptGeneration || _inPasswordRecovery) {
+      return;
+    }
+    emit(next);
   }
 
   /// Maps a sign-in [Failure] to an [AuthErrorKind] so the widget layer

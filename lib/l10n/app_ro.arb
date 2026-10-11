@@ -861,6 +861,7 @@
   "forgotPasswordSuccess": "Dacă există un cont cu un astfel de e-mail, am trimis instrucțiuni despre cum să vă resetați parola.",
   "forgotPasswordFailedRetry": "Trimiterea e-mailului a eșuat. Încearcă din nou.",
   "forgotPasswordEmailEmpty": "Introduceți adresa dvs. de e-mail.",
+  "recoveryLinkInvalid": "Linkul de resetare a parolei este invalid sau a expirat. Solicitați un e-mail nou.",
   "backToSignIn": "Întoarcere la intrare",
   "resetPasswordTitle": "Parolă Nouă",
   "resetPasswordNoSession": "Deschideți linkul de resetare din e-mail pentru a continua.",
