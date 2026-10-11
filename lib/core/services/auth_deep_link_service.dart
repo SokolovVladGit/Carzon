@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:app_links/app_links.dart';
+import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 import '../utils/logger.dart';
@@ -63,6 +65,10 @@ class AuthDeepLinkService {
 
   StreamSubscription<Uri>? _linkSub;
   bool _initialized = false;
+  final StreamController<void> _recoveryRejections =
+      StreamController<void>.broadcast();
+  final Set<String> _seenCallbackIdentities = <String>{};
+  int _pendingRecoveryRejections = 0;
 
   /// Custom URL scheme registered in Android's AndroidManifest.xml
   /// intent-filter and iOS's CFBundleURLTypes. Keep this in sync with
@@ -80,6 +86,24 @@ class AuthDeepLinkService {
   static bool isAuthCallback(Uri uri) {
     return uri.scheme.toLowerCase() == kCustomScheme &&
         uri.host.toLowerCase() == 'auth-callback';
+  }
+
+  /// Recovery callbacks only. Signup confirmation and other auth
+  /// callbacks on the same host are not treated as password-reset links.
+  static bool isRecoveryCallback(Uri uri) {
+    if (!isAuthCallback(uri)) return false;
+    return _authParameter(uri, 'type') == 'recovery';
+  }
+
+  static String? _authParameter(Uri uri, String key) {
+    final query = uri.queryParameters[key]?.trim().toLowerCase();
+    if (query != null && query.isNotEmpty) return query;
+    if (uri.fragment.isEmpty) return null;
+    final fragment = Uri.splitQueryString(
+      uri.fragment,
+    )[key]?.trim().toLowerCase();
+    if (fragment == null || fragment.isEmpty) return null;
+    return fragment;
   }
 
   /// Subscribes to the incoming-link stream and replays the cold-start
@@ -115,29 +139,65 @@ class AuthDeepLinkService {
   /// or not the parse itself succeeded), `false` when ignored.
   Future<bool> handleUri(Uri uri) => _handleUri(uri);
 
+  /// Subscribes to rejected recovery callbacks.
+  ///
+  /// Replays callbacks that arrived before the first listener, including
+  /// a cold-start link handled inside [initialize]. The same callback is
+  /// reported once even if the platform delivers it twice.
+  StreamSubscription<void> bindRecoveryRejection(void Function() onRejected) {
+    final subscription = _recoveryRejections.stream.listen((_) => onRejected());
+    final pending = _pendingRecoveryRejections;
+    _pendingRecoveryRejections = 0;
+    for (var i = 0; i < pending; i++) {
+      onRejected();
+    }
+    return subscription;
+  }
+
   Future<bool> _handleUri(Uri uri) async {
     if (!isAuthCallback(uri)) {
       _logger.debug('Ignoring non-auth URI');
       return false;
     }
+    if (!_seenCallbackIdentities.add(_callbackIdentity(uri))) {
+      return true;
+    }
     try {
       await _authUrlHandler.handleAuthUrl(uri);
       _logger.info('Processed auth callback URI');
-    } on sb.AuthException catch (e, st) {
-      // Common causes: expired / already-consumed recovery link. The
-      // UI stays on whatever screen the user is on; AuthCubit will
-      // simply not latch `passwordRecovery`.
-      _logger.warn('Supabase rejected auth URL: ${e.message}');
-      _logger.debug(st.toString());
+    } on sb.AuthException {
+      _logger.warn('Supabase rejected auth callback');
+      if (isRecoveryCallback(uri)) {
+        _signalRecoveryRejection();
+      }
     } catch (e, st) {
       _logger.error('Unexpected error handling auth URL', e, st);
+      if (isRecoveryCallback(uri)) {
+        _signalRecoveryRejection();
+      }
     }
     return true;
+  }
+
+  void _signalRecoveryRejection() {
+    if (_recoveryRejections.isClosed) return;
+    if (_recoveryRejections.hasListener) {
+      _recoveryRejections.add(null);
+      return;
+    }
+    _pendingRecoveryRejections++;
+  }
+
+  String _callbackIdentity(Uri uri) {
+    return sha256.convert(utf8.encode(uri.toString())).toString();
   }
 
   Future<void> dispose() async {
     await _linkSub?.cancel();
     _linkSub = null;
     _initialized = false;
+    _seenCallbackIdentities.clear();
+    _pendingRecoveryRejections = 0;
+    await _recoveryRejections.close();
   }
 }

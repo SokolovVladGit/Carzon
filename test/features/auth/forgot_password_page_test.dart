@@ -33,6 +33,20 @@ void main() {
     await sl.reset();
   });
 
+  testWidgets('shows a nontechnical message for an invalid recovery link', (
+    tester,
+  ) async {
+    await pumpLocalizedWidget(
+      tester,
+      const ForgotPasswordPage(invalidRecoveryLink: true),
+    );
+
+    expect(find.byKey(const Key('recovery-link-invalid')), findsOneWidget);
+    expect(find.text(l10n.recoveryLinkInvalid), findsOneWidget);
+    expect(find.textContaining('token'), findsNothing);
+    expect(find.textContaining('carzon://'), findsNothing);
+  });
+
   testWidgets('renders email field, submit button, and back navigation', (
     tester,
   ) async {

@@ -61,10 +61,9 @@
 		confirmation). Keep in sync with the Android intent-filter and
 		the SUPABASE_PASSWORD_RESET_REDIRECT_URL env variable.
 
-		Google native Sign-In also needs a CFBundleURLTypes entry whose
-		scheme is the REVERSED_CLIENT_ID from the iOS OAuth client /
-		GoogleService-Info.plist. Do not invent that value. Keep the
-		existing `carzon` scheme when adding it.
+		Google native Sign-In returns through the reversed iOS OAuth
+		client ID. That scheme is separate from `carzon`. Do not replace
+		this entry with the Web client ID.
 	-->
 	<key>CFBundleURLTypes</key>
 	<array>
@@ -76,6 +75,16 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>carzon</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.carzon.google-sign-in</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.68189143516-ahrske7madnpca3jrqtl87sfl3npp2j2</string>
 			</array>
 		</dict>
 	</array>

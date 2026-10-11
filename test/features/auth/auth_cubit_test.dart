@@ -324,6 +324,170 @@ void main() {
     );
 
     test(
+      'completePasswordRecovery signs out and stays unauthenticated',
+      () async {
+        await cubit.bootstrap();
+        recoveryStream.add(null);
+        await Future<void>.delayed(Duration.zero);
+        authStream.add(user);
+        await Future<void>.delayed(Duration.zero);
+
+        final ended = await cubit.completePasswordRecovery();
+
+        expect(ended, isTrue);
+        expect(cubit.state.status, AuthStatus.unauthenticated);
+        expect(cubit.state.user, isNull);
+        verify(() => repo.signOut()).called(1);
+
+        authStream.add(user);
+        await Future<void>.delayed(Duration.zero);
+        expect(cubit.state.status, AuthStatus.authenticated);
+      },
+    );
+
+    test(
+      'completePasswordRecovery keeps recovery when sign-out fails',
+      () async {
+        when(() => repo.signOut()).thenAnswer(
+          (_) async => const FailureResult<void>(AuthFailure('network')),
+        );
+        await cubit.bootstrap();
+        recoveryStream.add(null);
+        await Future<void>.delayed(Duration.zero);
+        authStream.add(user);
+        await Future<void>.delayed(Duration.zero);
+
+        final ended = await cubit.completePasswordRecovery();
+
+        expect(ended, isFalse);
+        expect(cubit.state.status, AuthStatus.passwordRecovery);
+        expect(cubit.state.user, user);
+      },
+    );
+
+    test('late signIn failure cannot overwrite recovery', () async {
+      final gate = Completer<Result<AuthUser>>();
+      when(
+        () => repo.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) => gate.future);
+      await cubit.bootstrap();
+
+      final pending = cubit.signIn(email: 'a@b.c', password: 'secret1');
+      await Future<void>.value();
+      recoveryStream.add(null);
+      await Future<void>.delayed(Duration.zero);
+      gate.complete(const FailureResult(AuthFailure('invalid login')));
+      await pending;
+
+      expect(cubit.state.status, AuthStatus.passwordRecovery);
+    });
+
+    test('late signIn success cannot overwrite recovery', () async {
+      final gate = Completer<Result<AuthUser>>();
+      when(
+        () => repo.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) => gate.future);
+      await cubit.bootstrap();
+
+      final pending = cubit.signIn(email: 'a@b.c', password: 'secret1');
+      await Future<void>.value();
+      recoveryStream.add(null);
+      await Future<void>.delayed(Duration.zero);
+      gate.complete(const Success(user));
+      await pending;
+
+      expect(cubit.state.status, AuthStatus.passwordRecovery);
+    });
+
+    test('late signUp success cannot overwrite recovery', () async {
+      final gate = Completer<Result<AuthUser?>>();
+      when(
+        () => repo.signUpWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) => gate.future);
+      await cubit.bootstrap();
+
+      final pending = cubit.signUp(email: 'a@b.c', password: 'secret1');
+      await Future<void>.value();
+      recoveryStream.add(null);
+      await Future<void>.delayed(Duration.zero);
+      gate.complete(const Success<AuthUser?>(user));
+      await pending;
+
+      expect(cubit.state.status, AuthStatus.passwordRecovery);
+    });
+
+    test('Google sign-in does not start during password recovery', () async {
+      when(
+        () => repo.signInWithGoogle(),
+      ).thenAnswer((_) async => const Success(user));
+      await cubit.bootstrap();
+      recoveryStream.add(null);
+      await Future<void>.delayed(Duration.zero);
+
+      await cubit.signInWithGoogle();
+
+      expect(cubit.state.status, AuthStatus.passwordRecovery);
+      verifyNever(() => repo.signInWithGoogle());
+    });
+
+    test('late Google success cannot overwrite recovery', () async {
+      final gate = Completer<Result<AuthUser>>();
+      when(() => repo.signInWithGoogle()).thenAnswer((_) => gate.future);
+      await cubit.bootstrap();
+
+      final pending = cubit.signInWithGoogle();
+      await Future<void>.value();
+      recoveryStream.add(null);
+      await Future<void>.delayed(Duration.zero);
+      gate.complete(const Success(user));
+      await pending;
+
+      expect(cubit.state.status, AuthStatus.passwordRecovery);
+    });
+
+    test('late Apple completion cannot overwrite recovery', () async {
+      final gate = Completer<Result<AuthUser>>();
+      when(() => repo.signInWithApple()).thenAnswer((_) => gate.future);
+      await cubit.bootstrap();
+
+      final pending = cubit.signInWithApple();
+      await Future<void>.value();
+      recoveryStream.add(null);
+      await Future<void>.delayed(Duration.zero);
+      gate.complete(const FailureResult(AuthCancelledFailure()));
+      await pending;
+
+      expect(cubit.state.status, AuthStatus.passwordRecovery);
+    });
+
+    test('signIn still authenticates after recovery is cleared', () async {
+      when(
+        () => repo.signInWithPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenAnswer((_) async => const Success(user));
+      await cubit.bootstrap();
+      recoveryStream.add(null);
+      await Future<void>.delayed(Duration.zero);
+      cubit.clearPasswordRecovery();
+
+      await cubit.signIn(email: 'a@b.c', password: 'secret1');
+
+      expect(cubit.state.status, AuthStatus.authenticated);
+      expect(cubit.state.user, user);
+    });
+
+    test(
       'markUnauthenticatedAfterAccountDeletion increments public feed refresh nonce',
       () {
         cubit.emit(const AuthState.authenticated(user));

@@ -10,6 +10,7 @@ import '../core/services/auth_deep_link_service.dart';
 import '../core/services/supabase_service.dart';
 import '../core/l10n/app_locale_cubit.dart';
 import '../core/theme/theme_mode_cubit.dart';
+import '../core/utils/app_error_reporting.dart';
 import '../core/utils/logger.dart';
 import '../features/auth/presentation/auth_callback_navigation.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
@@ -47,6 +48,7 @@ Future<void> bootstrap() async {
   await runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      installAppErrorHandlers(logger);
 
       final missing = Env.missingKeys();
       if (missing.isNotEmpty) {
@@ -143,7 +145,7 @@ Future<void> bootstrap() async {
       runApp(const CarzonApp());
     },
     (error, stackTrace) {
-      logger.error('Uncaught zone error', error, stackTrace);
+      reportZoneError(logger, error, stackTrace);
     },
   );
 }

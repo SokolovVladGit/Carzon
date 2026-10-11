@@ -67,6 +67,12 @@ void main() {
         (result as FailureResult<AuthUser>).failure,
         isA<AuthCancelledFailure>(),
       );
+      verifyNever(
+        () => remote.signInWithGoogleIdToken(
+          idToken: any(named: 'idToken'),
+          accessToken: any(named: 'accessToken'),
+        ),
+      );
     });
 
     test('missing token is mapped', () async {

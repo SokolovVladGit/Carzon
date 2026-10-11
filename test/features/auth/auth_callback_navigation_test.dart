@@ -1,6 +1,7 @@
 import 'package:carzon/app/router/app_router.dart';
 import 'package:carzon/features/auth/domain/entities/auth_user.dart';
 import 'package:carzon/features/auth/presentation/auth_callback_navigation.dart';
+import 'package:carzon/features/auth/presentation/pages/forgot_password_page.dart';
 import 'package:carzon/features/auth/presentation/bloc/auth_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,6 +23,18 @@ void main() {
         GoRoute(
           path: AppRoutes.resetPassword,
           builder: (_, _) => const Text('reset', key: Key('reset-route')),
+        ),
+        GoRoute(
+          path: AppRoutes.forgotPassword,
+          builder: (_, state) {
+            final extra = state.extra;
+            final invalid =
+                extra is ForgotPasswordLaunch && extra.invalidRecoveryLink;
+            return Text(
+              invalid ? 'forgot-invalid' : 'forgot',
+              key: const Key('forgot-route'),
+            );
+          },
         ),
       ],
     );
@@ -54,6 +67,20 @@ void main() {
 
     expect(find.byKey(const Key('reset-route')), findsOneWidget);
   });
+
+  testWidgets(
+    'invalid recovery opens forgot-password once with the launch flag',
+    (tester) async {
+      final goRouter = router();
+
+      expect(presentInvalidRecoveryLink(goRouter), isTrue);
+      await tester.pumpWidget(MaterialApp.router(routerConfig: goRouter));
+
+      expect(find.text('forgot-invalid'), findsOneWidget);
+      expect(presentInvalidRecoveryLink(goRouter), isFalse);
+      expect(find.text('forgot-invalid'), findsOneWidget);
+    },
+  );
 
   test('authenticated and confirmation states do not open reset', () {
     final goRouter = router();

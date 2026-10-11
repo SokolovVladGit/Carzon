@@ -18,20 +18,31 @@ import '../widgets/auth_page_scaffold.dart';
 /// confirmation after the backend accepts the request, regardless of
 /// whether an account exists for the submitted email. Only transport
 /// / server failures surface as a snackbar.
+/// Route extra for [AppRoutes.forgotPassword].
+class ForgotPasswordLaunch {
+  const ForgotPasswordLaunch({this.invalidRecoveryLink = false});
+
+  final bool invalidRecoveryLink;
+}
+
 class ForgotPasswordPage extends StatelessWidget {
-  const ForgotPasswordPage({super.key});
+  const ForgotPasswordPage({super.key, this.invalidRecoveryLink = false});
+
+  final bool invalidRecoveryLink;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<ForgotPasswordCubit>(),
-      child: const _ForgotPasswordView(),
+      child: _ForgotPasswordView(invalidRecoveryLink: invalidRecoveryLink),
     );
   }
 }
 
 class _ForgotPasswordView extends StatefulWidget {
-  const _ForgotPasswordView();
+  const _ForgotPasswordView({required this.invalidRecoveryLink});
+
+  final bool invalidRecoveryLink;
 
   @override
   State<_ForgotPasswordView> createState() => _ForgotPasswordViewState();
@@ -84,9 +95,7 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
           final loading = state.status == ForgotPasswordStatus.submitting;
 
           if (state.status == ForgotPasswordStatus.success) {
-            return _SuccessView(
-              onBack: () => context.go(AppRoutes.signIn),
-            );
+            return _SuccessView(onBack: () => context.go(AppRoutes.signIn));
           }
 
           return AuthPageBody(
@@ -99,6 +108,14 @@ class _ForgotPasswordViewState extends State<_ForgotPasswordView> {
                   title: l10n.forgotPasswordTitle,
                   subtitle: l10n.forgotPasswordIntro,
                 ),
+                if (widget.invalidRecoveryLink) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.recoveryLinkInvalid,
+                    key: const Key('recovery-link-invalid'),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 const SizedBox(height: 28),
                 AuthFormSection(
                   child: Form(

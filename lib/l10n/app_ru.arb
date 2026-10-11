@@ -1144,6 +1144,7 @@
   "forgotPasswordSuccess": "Если аккаунт с такой почтой существует, мы отправили инструкции по сбросу пароля.",
   "forgotPasswordFailedRetry": "Не удалось отправить письмо. Попробуйте ещё раз.",
   "forgotPasswordEmailEmpty": "Введите email.",
+  "recoveryLinkInvalid": "Ссылка для сброса пароля недействительна или устарела. Запросите новое письмо.",
   "backToSignIn": "Вернуться ко входу",
 
   "resetPasswordTitle": "Новый пароль",

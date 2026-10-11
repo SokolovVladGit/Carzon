@@ -1,3 +1,4 @@
+import 'package:carzon/core/config/env.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Manual compile-time define smoke test.
@@ -32,9 +33,23 @@ void main() {
 
       const url = String.fromEnvironment('SUPABASE_URL');
       const anon = String.fromEnvironment('SUPABASE_ANON_KEY');
+      const iosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
+      const webClientId = String.fromEnvironment('GOOGLE_WEB_CLIENT_ID');
 
       expect(url.isNotEmpty, isTrue, reason: 'SUPABASE_URL is empty');
       expect(anon.isNotEmpty, isTrue, reason: 'SUPABASE_ANON_KEY is empty');
+      expect(url.startsWith('https://'), isTrue);
+      expect(
+        iosClientId,
+        '68189143516-ahrske7madnpca3jrqtl87sfl3npp2j2.apps.googleusercontent.com',
+      );
+      expect(
+        webClientId,
+        '68189143516-o1l6ks0phe0fg6n429023b6k8pbugese.apps.googleusercontent.com',
+      );
+      expect(Env.googleNativeSignInConfigured, isTrue);
+      expect(Env.googleAndroidSignInEnabled, isFalse);
+      expect(iosClientId, isNot(webClientId));
     },
     skip: !runSmoke ? 'Set RUN_CLIENT_DEFINE_SMOKE=true to run' : false,
   );

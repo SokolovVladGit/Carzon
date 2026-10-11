@@ -2540,6 +2540,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get forgotPasswordEmailEmpty => 'Введите email.';
 
   @override
+  String get recoveryLinkInvalid =>
+      'Ссылка для сброса пароля недействительна или устарела. Запросите новое письмо.';
+
+  @override
   String get backToSignIn => 'Вернуться ко входу';
 
   @override
