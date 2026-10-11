@@ -226,9 +226,7 @@ void main() {
   testWidgets('VIN transmission is kept when catalog fills only power', (
     tester,
   ) async {
-    stubPeek(
-      Success(catalog(transmission: 'manual', power: 186)),
-    );
+    stubPeek(Success(catalog(transmission: 'manual', power: 186)));
     final controller = await pumpPage(tester);
     await emitConfirmed(
       tester,
@@ -372,7 +370,13 @@ void main() {
       findsOneWidget,
     );
     expect(find.text(ru.compareRowTransmission), findsNothing);
-    expect(find.text(ru.listingTransmissionAutomatic), findsNothing);
+    expect(
+      find.descendant(
+        of: summary(),
+        matching: find.text(ru.listingTransmissionAutomatic),
+      ),
+      findsNothing,
+    );
     final displacement = formatEngineDisplacementForDisplay(ru, 2);
     expect(
       find.descendant(
@@ -604,7 +608,13 @@ void main() {
     );
     pending.first.complete(Success(catalog(transmission: 'automatic')));
     await tester.pumpAndSettle();
-    expect(find.text(ru.listingTransmissionAutomatic), findsNothing);
+    expect(
+      find.descendant(
+        of: summary(),
+        matching: find.text(ru.listingTransmissionAutomatic),
+      ),
+      findsNothing,
+    );
     pending.last.complete(Success(catalog()));
     await tester.pumpAndSettle();
     expect(find.text(ru.compareRowTransmission), findsNothing);
@@ -685,7 +695,13 @@ void main() {
     await tester.pumpAndSettle();
     pending.complete(Success(catalog(transmission: 'automatic')));
     await tester.pumpAndSettle();
-    expect(find.text(ru.listingTransmissionAutomatic), findsNothing);
+    expect(
+      find.descendant(
+        of: summary(),
+        matching: find.text(ru.listingTransmissionAutomatic),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('submitting rejects a late consensus', (tester) async {
@@ -708,7 +724,13 @@ void main() {
     pending.complete(Success(catalog(transmission: 'automatic')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
-    expect(find.text(ru.listingTransmissionAutomatic), findsNothing);
+    expect(
+      find.descendant(
+        of: summary(),
+        matching: find.text(ru.listingTransmissionAutomatic),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('a later VIN transmission replaces catalog consensus', (

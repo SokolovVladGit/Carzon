@@ -182,7 +182,10 @@ ListingTransmissionType? vinResolvedTransmissionType(String? raw) {
   final automatic = hay.contains('automatic');
   final manual = RegExp(r'\bmanual\b').hasMatch(hay);
   final cvt =
-      hay == 'cvt' || hay.startsWith('cvt ') || hay == 'continuously variable';
+      hay == 'cvt' ||
+      hay.startsWith('cvt ') ||
+      hay == 'continuously variable' ||
+      hay == 'continuously variable transmission (cvt)';
   if (automatic && manual) return null;
   if (cvt && !automatic && !manual) return ListingTransmissionType.cvt;
   if (automatic) return ListingTransmissionType.automatic;

@@ -34,7 +34,9 @@ void stubCreateListingVinResolve(
   }
 }
 
-MockManualSmartFillCubit registerIdleManualSmartFillCubit() {
+MockManualSmartFillCubit registerIdleManualSmartFillCubit({
+  Stream<ManualSmartFillState>? states,
+}) {
   registerFallbackValue(
     const ManualSmartFillRefinementOption(
       id: 'fallback',
@@ -47,7 +49,7 @@ MockManualSmartFillCubit registerIdleManualSmartFillCubit() {
   when(() => cubit.state).thenReturn(const ManualSmartFillState.idle());
   whenListen(
     cubit,
-    const Stream<ManualSmartFillState>.empty(),
+    states ?? const Stream<ManualSmartFillState>.empty(),
     initialState: const ManualSmartFillState.idle(),
   );
   when(

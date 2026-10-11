@@ -4562,4 +4562,50 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get createListingStepDone => 'Итог';
+
+  @override
+  String get createListingQuickChoicesMore => 'Ещё';
+
+  @override
+  String get createListingQuickChoiceAskDrivetrain => 'Уточните привод';
+
+  @override
+  String get createListingQuickChoiceAskTransmission =>
+      'Уточните коробку передач';
+
+  @override
+  String get createListingQuickChoiceAskDoors => 'Уточните число дверей';
+
+  @override
+  String get createListingQuickChoiceAskSeats => 'Уточните число мест';
+
+  @override
+  String get createListingQuickChoiceAskCylinders => 'Уточните число цилиндров';
+
+  @override
+  String get createListingQuickChoiceHint => 'Выберите вариант, если знаете';
+
+  @override
+  String createListingQuickChoicesMoreCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ещё $count характеристик',
+      many: 'Ещё $count характеристик',
+      few: 'Ещё $count характеристики',
+      one: 'Ещё $count характеристика',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get createListingQuickChoicesCollapse => 'Скрыть дополнительные';
+
+  @override
+  String get createListingCharacteristicsFilledFromVinAndSeller =>
+      'По VIN и вашим ответам';
+
+  @override
+  String get createListingCharacteristicsFilledFromCatalogAndSeller =>
+      'По каталогу и вашим ответам';
 }

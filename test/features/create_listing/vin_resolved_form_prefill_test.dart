@@ -129,7 +129,21 @@ void main() {
         ListingTransmissionType.manual,
       );
       expect(vinResolvedTransmissionType('CVT'), ListingTransmissionType.cvt);
+      expect(
+        vinResolvedTransmissionType(
+          'Continuously Variable Transmission (CVT)',
+        ),
+        ListingTransmissionType.cvt,
+      );
+      expect(
+        vinResolvedTransmissionType('Automatic (CVT)'),
+        ListingTransmissionType.automatic,
+      );
       expect(vinResolvedTransmissionType('DCT'), isNull);
+      expect(
+        vinResolvedTransmissionType('Dual Clutch Transmission (CVT)'),
+        isNull,
+      );
       expect(vinResolvedTransmissionType('Dual Clutch'), isNull);
       expect(vinResolvedTransmissionType('Automated Manual'), isNull);
       expect(vinResolvedTransmissionType('Robotic'), isNull);
@@ -255,6 +269,34 @@ void main() {
         warnings: const ['nhtsa_catalog_decode_caution'],
       );
       expect(prefill.isEmpty, isTrue);
+    });
+
+    test('Corolla NHTSA facts fill safe specs and leave 4x2 and HP empty', () {
+      final prefill = vinResolvedFormPrefill(
+        const VehicleResolveSuggestion(
+          make: 'TOYOTA',
+          model: 'Corolla',
+          year: 2022,
+          trim: 'LE',
+          bodyType: 'Sedan/Saloon',
+          fuelType: 'Gasoline',
+          transmission: 'Continuously Variable Transmission (CVT)',
+          driveType: '4x2',
+          displacement: '1.8 L',
+          cylinders: '4',
+          doors: '4',
+          seats: '5',
+        ),
+      );
+      expect(prefill.bodyType, ListingBodyType.sedan);
+      expect(prefill.fuelType, ListingFuelType.petrol);
+      expect(prefill.engineDisplacementLiters, 1.8);
+      expect(prefill.transmissionType, ListingTransmissionType.cvt);
+      expect(prefill.engineCylinders, 4);
+      expect(prefill.doors, 4);
+      expect(prefill.seats, 5);
+      expect(prefill.drivetrain, isNull);
+      expect(vinResolvedCount(r'$n', max: 16), isNull);
     });
   });
 }

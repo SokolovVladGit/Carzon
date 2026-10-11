@@ -1,6 +1,10 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import { mapNhtsaVinValuesRow } from "../process-vin-decode-jobs/providers/nhtsa_provider.ts";
 import {
+  buildPublicSuccess,
+  isInteractiveCachePayload,
+} from "./resolve.ts";
+import {
   decodeNhtsaVinValues,
   mapResolverNhtsaVinValuesRow,
   type NhtsaHttpClient,
@@ -120,6 +124,11 @@ Deno.test("parity: shared fields match process-vin-decode-jobs mapper", () => {
     "series",
     "driveType",
     "displacement",
+    "doors",
+    "seats",
+    "cylinders",
+    "fuelTypeSecondary",
+    "electrificationLevel",
     "manufacturer",
     "plantCountry",
     "plantCity",
@@ -207,4 +216,89 @@ Deno.test("decodeNhtsaVinValues invalid JSON is unavailable", async () => {
   };
   const result = await decodeNhtsaVinValues("1HGBH41JXMN109186", http);
   assertEquals(result, { ok: false, kind: "unavailable" });
+});
+
+const COROLLA_ROW: NhtsaVinValuesRow = {
+  Make: "TOYOTA",
+  Model: "Corolla",
+  ModelYear: "2022",
+  Trim: "LE",
+  Series: "ZRE212L",
+  BodyClass: "Sedan/Saloon",
+  FuelTypePrimary: "Gasoline",
+  FuelTypeSecondary: "",
+  ElectrificationLevel: "",
+  DisplacementL: "1.8",
+  EngineCylinders: "4",
+  Doors: "4",
+  Seats: "5",
+  TransmissionStyle: "Continuously Variable Transmission (CVT)",
+  DriveType: "4x2",
+  EngineHP: "139",
+  EngineHP_to: "148",
+  EngineConfiguration: "In-Line",
+  EngineModel: "2ZR-FAE",
+  ErrorCode: "0",
+};
+
+Deno.test("Corolla fixture: resolver and worker expose the same safe facts", () => {
+  const resolver = mapResolverNhtsaVinValuesRow(COROLLA_ROW).normalized;
+  const worker = mapNhtsaVinValuesRow(COROLLA_ROW).normalized;
+  const shared = [
+    "make",
+    "model",
+    "year",
+    "trim",
+    "bodyType",
+    "fuelType",
+    "fuelTypeSecondary",
+    "electrificationLevel",
+    "transmission",
+    "driveType",
+    "displacement",
+    "cylinders",
+    "doors",
+    "seats",
+  ] as const;
+  for (const key of shared) {
+    assertEquals(worker[key], resolver[key], key);
+  }
+  assertEquals(resolver.make, "TOYOTA");
+  assertEquals(resolver.model, "Corolla");
+  assertEquals(resolver.year, 2022);
+  assertEquals(resolver.bodyType, "Sedan/Saloon");
+  assertEquals(resolver.fuelType, "Gasoline");
+  assertEquals(resolver.displacement, "1.8 L");
+  assertEquals(
+    resolver.transmission,
+    "Continuously Variable Transmission (CVT)",
+  );
+  assertEquals(resolver.cylinders, "4");
+  assertEquals(resolver.doors, "4");
+  assertEquals(resolver.seats, "5");
+  assertEquals(typeof resolver.cylinders, "string");
+  assertEquals(typeof resolver.doors, "string");
+  assertEquals(typeof resolver.seats, "string");
+  assertEquals(resolver.driveType, "4x2");
+  assertEquals(resolver.warnings, []);
+  const encoded = JSON.stringify(resolver);
+  assertEquals(encoded.includes("139"), false);
+  assertEquals(encoded.includes("148"), false);
+  assertEquals(encoded.includes("EngineHP"), false);
+
+  const workerCache = {
+    ...worker,
+    warnings: worker.warnings,
+  } as unknown as Record<string, unknown>;
+  assertEquals(isInteractiveCachePayload(workerCache), true);
+  const published = buildPublicSuccess(workerCache);
+  assertEquals(published.vehicle.cylinders, "4");
+  assertEquals(published.vehicle.doors, "4");
+  assertEquals(published.vehicle.seats, "5");
+  assertEquals(published.vehicle.driveType, "4x2");
+  assertEquals(
+    published.vehicle.transmission,
+    "Continuously Variable Transmission (CVT)",
+  );
+  assertEquals(published.vehicle.displacement, "1.8 L");
 });

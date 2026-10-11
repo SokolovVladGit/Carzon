@@ -5,6 +5,7 @@ import {
   buildPublicSuccess,
   cacheWriteFromNormalized,
   classifyResolution,
+  isInteractiveCachePayload,
   isReusableCacheRow,
   resolveVehicleFromVin,
   type CacheReadRow,
@@ -169,14 +170,31 @@ Deno.test("public success allow-list strips internal fields", () => {
   assertEquals(body.resolution, "resolved");
 });
 
-Deno.test("reusable cache requires decoded + future ttl + normalized_data", () => {
+Deno.test("reusable cache requires decoded + future ttl + interactive payload", () => {
   const future = "2026-10-07T12:00:00.000Z";
+  assertEquals(
+    isReusableCacheRow({
+      decode_status: "decoded",
+      ttl_until: future,
+      normalized_data: normalized() as unknown as Record<string, unknown>,
+    }, FIXED_NOW),
+    true,
+  );
   assertEquals(
     isReusableCacheRow({
       decode_status: "decoded",
       ttl_until: future,
       normalized_data: { make: "HONDA" },
     }, FIXED_NOW),
+    false,
+  );
+  assertEquals(
+    isInteractiveCachePayload(
+      normalized({ seats: null, cylinders: null, doors: null }) as unknown as Record<
+        string,
+        unknown
+      >,
+    ),
     true,
   );
   assertEquals(
@@ -380,4 +398,67 @@ Deno.test("cacheWriteFromNormalized is compatible with worker cache contract", (
   assertEquals(write.provider_version, "decode-vin-values-v2");
   assertEquals(write.source_metadata.providerId, "nhtsa_vpic");
   assertEquals(typeof write.normalized_data.decodeErrorCode, "string");
+});
+
+Deno.test("malformed worker cache is not reused and a fresh decode replaces it", async () => {
+  const poisoned = {
+    ...normalized(),
+    cylinders: "$n",
+    doors: "$n",
+    seats: "$n",
+  } as unknown as Record<string, unknown>;
+  const legacyWorker = { ...poisoned };
+  delete legacyWorker.seats;
+  delete legacyWorker.fuelTypeSecondary;
+  delete legacyWorker.electrificationLevel;
+
+  assertEquals(isInteractiveCachePayload(poisoned), false);
+  assertEquals(isInteractiveCachePayload(legacyWorker), false);
+  assertEquals(
+    isReusableCacheRow({
+      decode_status: "decoded",
+      ttl_until: "2026-10-07T12:00:00.000Z",
+      normalized_data: poisoned,
+    }, FIXED_NOW),
+    false,
+  );
+
+  const cache = memoryCache({
+    decode_status: "decoded",
+    ttl_until: "2026-10-07T12:00:00.000Z",
+    normalized_data: poisoned,
+  });
+  let providerCalls = 0;
+  const fresh = normalized({
+    make: "TOYOTA",
+    model: "Corolla",
+    year: 2022,
+    cylinders: "4",
+    doors: "4",
+    seats: "5",
+    transmission: "Continuously Variable Transmission (CVT)",
+    driveType: "4x2",
+    displacement: "1.8 L",
+  });
+  const outcome = await resolveVehicleFromVin(SAMPLE, {
+    now: () => FIXED_NOW,
+    cache,
+    decodeNhtsa: () => {
+      providerCalls += 1;
+      return Promise.resolve({ ok: true, normalized: fresh, latencyMs: 8 });
+    },
+  });
+
+  assertEquals(providerCalls, 1);
+  assertEquals(cache.writes.length, 1);
+  assertEquals(cache.writes[0].normalized_data.cylinders, "4");
+  assertEquals(cache.writes[0].normalized_data.doors, "4");
+  assertEquals(cache.writes[0].normalized_data.seats, "5");
+  assertEquals(outcome.ok, true);
+  if (!outcome.ok) return;
+  assertEquals(outcome.vehicle.cylinders, "4");
+  assertEquals(outcome.vehicle.doors, "4");
+  assertEquals(outcome.vehicle.seats, "5");
+  assertEquals(JSON.stringify(outcome).includes("$n"), false);
+  assertEquals(JSON.stringify(cache.writes[0].normalized_data).includes("EngineHP"), false);
 });

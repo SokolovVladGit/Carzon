@@ -185,6 +185,37 @@ export function buildPublicSuccess(
   };
 }
 
+const INTERACTIVE_CONTRACT_KEYS = [
+  "seats",
+  "fuelTypeSecondary",
+  "electrificationLevel",
+] as const;
+
+/**
+ * Shared-cache row the interactive resolver can apply.
+ * Null optional counts are valid. A missing contract key, or a non-digit
+ * count such as the worker placeholder "$n", is not.
+ */
+export function isInteractiveCachePayload(
+  data: Record<string, unknown>,
+): boolean {
+  for (const key of INTERACTIVE_CONTRACT_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(data, key)) return false;
+  }
+  for (const key of ["cylinders", "doors", "seats"] as const) {
+    if (!isReusableCountValue(data[key])) return false;
+  }
+  return true;
+}
+
+function isReusableCountValue(value: unknown): boolean {
+  if (value == null) return true;
+  if (typeof value !== "string") return false;
+  if (!/^\d+$/.test(value)) return false;
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) && n >= 1;
+}
+
 export function isReusableCacheRow(
   row: CacheReadRow | null,
   now: Date,
@@ -194,6 +225,7 @@ export function isReusableCacheRow(
   if (row.normalized_data == null || typeof row.normalized_data !== "object") {
     return false;
   }
+  if (!isInteractiveCachePayload(row.normalized_data)) return false;
   if (!row.ttl_until) return false;
   const ttl = Date.parse(row.ttl_until);
   if (!Number.isFinite(ttl) || ttl <= now.getTime()) return false;

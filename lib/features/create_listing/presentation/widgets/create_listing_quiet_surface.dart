@@ -11,6 +11,7 @@ class CreateListingQuietSurface extends StatelessWidget {
     this.title,
     this.helper,
     this.icon,
+    this.trailing,
   });
 
   final Widget child;
@@ -18,6 +19,9 @@ class CreateListingQuietSurface extends StatelessWidget {
   final String? title;
   final String? helper;
   final IconData? icon;
+
+  /// Sits under the card, outside its surface. Null keeps the card alone.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -29,12 +33,10 @@ class CreateListingQuietSurface extends StatelessWidget {
         icon != null ||
         (titleText != null && titleText.isNotEmpty) ||
         (helperText != null && helperText.isNotEmpty);
-    final ink = light
-        ? const Color(0xFF3F3832)
-        : theme.colorScheme.onSurface;
+    final ink = light ? const Color(0xFF3F3832) : theme.colorScheme.onSurface;
     final muted = ink.withValues(alpha: light ? 0.58 : 0.68);
 
-    return DecoratedBox(
+    final card = DecoratedBox(
       decoration: createListingSectionSurfaceDecoration(theme),
       child: Padding(
         padding: padding,
@@ -67,8 +69,9 @@ class CreateListingQuietSurface extends StatelessWidget {
                             if (titleText != null && titleText.isNotEmpty)
                               Text(
                                 titleText,
-                                style: createListingQuietTitleStyle(theme)
-                                    ?.copyWith(color: ink),
+                                style: createListingQuietTitleStyle(
+                                  theme,
+                                )?.copyWith(color: ink),
                               ),
                             if (helperText != null &&
                                 helperText.isNotEmpty) ...[
@@ -93,6 +96,13 @@ class CreateListingQuietSurface extends StatelessWidget {
               )
             : child,
       ),
+    );
+    final footer = trailing;
+    if (footer == null) return card;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [card, footer],
     );
   }
 }

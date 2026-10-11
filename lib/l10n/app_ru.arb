@@ -2225,5 +2225,21 @@
   "createListingStepDeal": "Сделка",
   "createListingStepData": "Данные",
   "createListingStepContacts": "Контакты",
-  "createListingStepDone": "Итог"
+  "createListingStepDone": "Итог",
+  "createListingQuickChoicesMore": "Ещё",
+  "createListingQuickChoiceAskDrivetrain": "Уточните привод",
+  "createListingQuickChoiceAskTransmission": "Уточните коробку передач",
+  "createListingQuickChoiceAskDoors": "Уточните число дверей",
+  "createListingQuickChoiceAskSeats": "Уточните число мест",
+  "createListingQuickChoiceAskCylinders": "Уточните число цилиндров",
+  "createListingQuickChoiceHint": "Выберите вариант, если знаете",
+  "createListingQuickChoicesMoreCount": "{count, plural, one{Ещё {count} характеристика} few{Ещё {count} характеристики} many{Ещё {count} характеристик} other{Ещё {count} характеристик}}",
+  "@createListingQuickChoicesMoreCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "createListingQuickChoicesCollapse": "Скрыть дополнительные",
+  "createListingCharacteristicsFilledFromVinAndSeller": "По VIN и вашим ответам",
+  "createListingCharacteristicsFilledFromCatalogAndSeller": "По каталогу и вашим ответам"
 }
